@@ -34,7 +34,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement/customerstatementdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger/factoringledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
@@ -42,7 +44,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder/paymentreminderdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -240,7 +244,7 @@ func (g *generator) cashRestoreSending(ctx context.Context, st *cashState) error
 	if !sending.lateChanged && !sending.remindersChange && !sending.statementChange {
 		return nil
 	}
-	bc := tenantdb.BillingControls
+	bc := billingcontroldb.BillingControls
 	var sets []keel.Assignment
 	if sending.lateChanged {
 		sets = append(sets, bc.LateChargeAssessmentMode.To(sending.lateCharges))
@@ -278,7 +282,7 @@ func (g *generator) cashLoad(ctx context.Context) (*cashState, error) {
 	}
 
 	var err error
-	if st.billing, err = firstOrNil(ctx, g.db, tenantdb.BillingControls.Query()); err != nil {
+	if st.billing, err = firstOrNil(ctx, g.db, billingcontroldb.BillingControls.Query()); err != nil {
 		return nil, fmt.Errorf("load billing control: %w", err)
 	}
 	if st.accounting, err = g.accountingControl(ctx); err != nil {
@@ -342,7 +346,7 @@ func (g *generator) cashLoadFactoring(ctx context.Context) (*cashFactoring, erro
 		recourse:    make(map[pulid.ID]factoring.Recourse),
 	}
 
-	fsi := factoringdb.SubmissionItems
+	fsi := factoringsubmissiondb.SubmissionItems
 	charged, err := fsi.Pick(fsi.InvoiceID).
 		Where(fsi.Status.Eq(factoringsubmission.SubmissionItemStatusChargedBack)).
 		All(ctx, g.db)
@@ -495,7 +499,7 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 	if err != nil {
 		return fmt.Errorf("load credit memo applications: %w", err)
 	}
-	fre := factoringdb.ReserveEntries
+	fre := factoringledgerdb.ReserveEntries
 	factorApps, err := keel.Into[cashApplicationRow](ctx, g.db, fre.Where(
 		fre.CustomerID.In(ids...),
 		fre.ARMinor.Ne(0),
@@ -541,7 +545,7 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error {
 	if st.accounting != nil &&
 		st.accounting.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
-		ac := tenantdb.AccountingControls
+		ac := accountingcontroldb.AccountingControls
 		if _, err := ac.Where(keel.True()).
 			Update(ctx, g.db, ac.ReconciliationMode.To(accountingcontrol.ReconciliationModeWarnOnly)); err != nil {
 			return fmt.Errorf("enable bank reconciliation: %w", err)
@@ -554,7 +558,7 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 	}
 
 	b := st.billing
-	bc := tenantdb.BillingControls
+	bc := billingcontroldb.BillingControls
 	var sets []keel.Assignment
 	if b.LateChargeAssessmentMode == billingcontrol.LateChargeAssessmentModeDisabled ||
 		b.LateChargeAssessmentMode == "" {

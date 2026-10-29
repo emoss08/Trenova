@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol/agentcontroldb"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -210,7 +210,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	assert.Zero(t, count(100), "an organization without consent has nothing to train on")
 	assert.Empty(t, weekly())
 
-	controls := tenantdb.AgentControls
+	controls := agentcontroldb.AgentControls
 	updated, err := controls.Where(keel.True()).Update(ctx, db, controls.AITrainingConsent.To(true))
 	require.NoError(t, err)
 	if updated == 0 {

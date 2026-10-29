@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -118,7 +118,7 @@ func (r *repository) HasActivity(
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		runs := agentdb.AgentRuns
-		turns := conversationdb.AssistantTurns
+		turns := conversationturndb.AssistantTurns
 		usage := aiusagedb.AIUsageRecords
 		var ran, talked, used bool
 		err := keel.Batch(ctx, r.db.Keel(ctx),

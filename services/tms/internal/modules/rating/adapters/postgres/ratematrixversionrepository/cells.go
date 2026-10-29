@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell/ratematrixcelldb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"go.uber.org/zap"
@@ -20,7 +20,7 @@ type axisColumns struct {
 }
 
 func columnsForAxis(position int16) (axisColumns, bool) {
-	c := ratematrixdb.RateMatrixCells
+	c := ratematrixcelldb.RateMatrixCells
 
 	switch position {
 	case 0:
@@ -37,7 +37,7 @@ func columnsForAxis(position int16) (axisColumns, bool) {
 }
 
 func versionCells(key ratematrixversion.VersionKey) *keel.Query[*ratematrixcell.RateMatrixCell] {
-	c := ratematrixdb.RateMatrixCells
+	c := ratematrixcelldb.RateMatrixCells
 
 	return c.Where(c.RateMatrixID.Eq(key.RateMatrixID), c.VersionNumber.Eq(key.VersionNumber))
 }
@@ -52,7 +52,7 @@ func tableCellsQuery(
 		}
 	}
 
-	return q.Order(ratematrixdb.RateMatrixCells.ID.Asc())
+	return q.Order(ratematrixcelldb.RateMatrixCells.ID.Asc())
 }
 
 func (r *repository) LoadTableCells(
@@ -91,7 +91,7 @@ func (r *repository) ListTableCells(
 				return nil, nil
 			}
 
-			c := ratematrixdb.RateMatrixCells
+			c := ratematrixcelldb.RateMatrixCells
 			wanted := versionKeys(keys)
 			cells, err := c.With(wanted).
 				Join(wanted, matchesKey(wanted, c.RateMatrixID.Col, c.VersionNumber.Col)...).

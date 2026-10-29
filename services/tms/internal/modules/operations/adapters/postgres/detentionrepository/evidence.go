@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence/detentionevidencedb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,7 +68,7 @@ func (r *evidenceRepository) Append(
 			entry.Sequence = sequence
 			entry.Seal()
 
-			if err = detentiondb.DetentionEvidences.Create(ctx, db, entry); err != nil {
+			if err = detentionevidencedb.DetentionEvidences.Create(ctx, db, entry); err != nil {
 				log.Error("failed to append detention evidence", zap.Error(err))
 				return nil, evidenceErrors.Map(err, entry.ID.String())
 			}
@@ -95,7 +96,7 @@ func latestLink(
 	occurrenceID pulid.ID,
 	lock ...keel.LockStrength,
 ) (prevHash string, sequence int32, err error) {
-	e := detentiondb.DetentionEvidences
+	e := detentionevidencedb.DetentionEvidences
 	q := e.Pick(e.Hash, e.Sequence).
 		Where(e.DetentionOccurrenceID.Eq(occurrenceID)).
 		Order(e.Sequence.Desc())
@@ -122,7 +123,7 @@ func (r *evidenceRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*detentionevidence.DetentionEvidence, error) {
-			e := detentiondb.DetentionEvidences
+			e := detentionevidencedb.DetentionEvidences
 			entities, err := e.Where(e.DetentionOccurrenceID.Eq(req.OccurrenceID)).
 				Order(e.Sequence.Asc()).
 				All(ctx, r.db.Keel(ctx))

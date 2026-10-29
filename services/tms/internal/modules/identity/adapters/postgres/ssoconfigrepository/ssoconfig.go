@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -123,7 +123,7 @@ func (r *repository) find(
 	organizationID pulid.ID,
 	provider sso.SSOProvider,
 ) (*sso.SSOConfig, error) {
-	sc := tenantdb.SSOConfigs
+	sc := ssodb.SSOConfigs
 	return forTenant(
 		ctx,
 		sc.Query(),
@@ -159,7 +159,7 @@ func (r *repository) Save(
 	entity *sso.SSOConfig,
 ) (*sso.SSOConfig, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*sso.SSOConfig, error) {
-		sc := tenantdb.SSOConfigs
+		sc := ssodb.SSOConfigs
 		db := r.db.Keel(ctx)
 
 		existing, err := r.find(ctx, entity.OrganizationID, entity.Provider)

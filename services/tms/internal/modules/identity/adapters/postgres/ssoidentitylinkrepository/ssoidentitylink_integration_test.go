@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -42,7 +42,7 @@ func TestSSOIdentityLinks_BindOneSubjectToOneUserPerProvider(t *testing.T) {
 		OIDCRedirectURL:  "https://app.example.com/callback",
 		OIDCScopes:       []string{"openid", "email"},
 	}
-	require.NoError(t, tenantdb.SSOConfigs.Create(ctx, db, cfg))
+	require.NoError(t, ssodb.SSOConfigs.Create(ctx, db, cfg))
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	link := &sso.SSOIdentityLink{

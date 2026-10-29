@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentadditionalchargerepository"
@@ -1166,7 +1166,7 @@ func insertShipmentControl(
 		AllowMoveRemovals:            true,
 		CheckHazmatSegregation:       true,
 	}
-	require.NoError(t, tenantdb.ShipmentControls.Create(
+	require.NoError(t, shipmentcontroldb.ShipmentControls.Create(
 		integrationTenantContext(ctx, tenantInfo),
 		db,
 		entity,

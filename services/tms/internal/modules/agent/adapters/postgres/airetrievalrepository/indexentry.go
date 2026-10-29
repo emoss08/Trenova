@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -540,7 +540,7 @@ func staleSourceQuery(
 ) (keel.Projection, bool) {
 	switch req.SourceType {
 	case airetrieval.SourceTypeMemory:
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		return staleSources(
 			m.Query(),
 			staleSource{ID: m.ID, UpdatedAt: m.UpdatedAt},

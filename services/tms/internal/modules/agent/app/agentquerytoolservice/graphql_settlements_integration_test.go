@@ -45,10 +45,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode/paycodedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense/payexpensedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -169,7 +174,7 @@ func (s *settlementRows) payCode(
 		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 		Status: "Active", Direction: direction, Code: "PC" + label, Name: "Pay code " + label,
 	}
-	if err := driverpaydb.PayCodes.Create(ctx, s.admin, row); err != nil {
+	if err := paycodedb.PayCodes.Create(ctx, s.admin, row); err != nil {
 		return pulid.Nil, err
 	}
 
@@ -307,7 +312,7 @@ func settlementListCases(
 					CurrencyCode: settlementCurrency, Description: "Lumper fee " + label,
 					IncurredDate: now - day, SubmittedByUserID: tenant.Actor.UserID,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.Expenses, row, &row.ID)
+				return insertWithID(ctx, rows.admin, payexpensedb.Expenses, row, &row.ID)
 			},
 		},
 		{
@@ -333,7 +338,7 @@ func settlementListCases(
 					BalanceMinor: 50_000, AnnualInterestRate: decimal.NewFromFloat(0.02),
 					OpenedDate: now - 30*day, ClosedDate: closedDate, CurrencyCode: settlementCurrency,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.EscrowAccounts, row, &row.ID)
+				return insertWithID(ctx, rows.admin, payescrowdb.EscrowAccounts, row, &row.ID)
 			},
 		},
 		{
@@ -353,7 +358,7 @@ func settlementListCases(
 					Reference: "ADV" + label, IssuedDate: now - day, AmountMinor: 20_000,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.PayAdvances, row, &row.ID)
+				return insertWithID(ctx, rows.admin, payadvancedb.PayAdvances, row, &row.ID)
 			},
 		},
 		{
@@ -383,7 +388,13 @@ func settlementListCases(
 					Description: "Insurance " + label, AmountMinor: 7_500, StartDate: now - 30*day,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.RecurringDeductions, row, &row.ID)
+				return insertWithID(
+					ctx,
+					rows.admin,
+					recurringpaydb.RecurringDeductions,
+					row,
+					&row.ID,
+				)
 			},
 		},
 		{
@@ -408,7 +419,7 @@ func settlementListCases(
 					Description: "Per diem " + label, AmountMinor: 6_000, StartDate: now - 30*day,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.RecurringEarnings, row, &row.ID)
+				return insertWithID(ctx, rows.admin, recurringpaydb.RecurringEarnings, row, &row.ID)
 			},
 		},
 	}

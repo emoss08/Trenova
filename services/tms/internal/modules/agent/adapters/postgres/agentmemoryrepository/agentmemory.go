@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -51,7 +51,7 @@ func (r *repository) Create(
 	entity *agentmemory.Memory,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
-		if err := agentdb.Memories.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := agentmemorydb.Memories.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent memory", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent memory: %w", err)
@@ -78,7 +78,7 @@ type retireSupersededParams struct {
 }
 
 func (r *repository) retireSuperseded(ctx context.Context, p retireSupersededParams) error {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	if _, err := m.Where(m.ID.Eq(p.id), m.Status.In(replaceableStatuses()...)).Update(
 		ctx,
 		r.db.Keel(ctx),
@@ -101,7 +101,7 @@ func (r *repository) Update(
 	entity *agentmemory.Memory,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		err := m.Save(
 			ctx,
 			r.db.Keel(ctx),
@@ -131,7 +131,7 @@ func (r *repository) GetByID(
 	req agentmemoryports.GetAgentMemoryByIDRequest,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
-		entity, err := agentdb.Memories.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := agentmemorydb.Memories.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, memoryErrors.Map(err, req.ID.String())
 		}
@@ -149,7 +149,7 @@ func (r *repository) ListByIDs(
 			return []*agentmemory.Memory{}, nil
 		}
 
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		entities, err := m.Where(m.ID.In(req.IDs...)).
 			Limit(len(req.IDs)).
 			List(ctx, r.db.Keel(ctx))
@@ -170,7 +170,7 @@ func (r *repository) ListReplacements(
 			return []*agentmemory.Memory{}, nil
 		}
 
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		entities, err := m.Where(
 			m.SupersedesID.In(req.ReplacedIDs...),
 			m.Status.In(agentmemory.ReplacingMemoryStatuses()...),
@@ -196,7 +196,7 @@ func (r *repository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				agentdb.Memories.Query(),
+				agentmemorydb.Memories.Query(),
 				&listquery.Request[agentmemory.Memory]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
@@ -227,7 +227,7 @@ func (r *repository) ListActive(
 			return []*agentmemory.Memory{}, nil
 		}
 
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		scope := make([]keel.Pred, 0, len(req.Subjects)+2)
 		if req.OrganizationWide {
 			scope = append(scope, keel.And(m.SubjectType.IsNull(), m.ToolName.IsNull()))
@@ -294,7 +294,7 @@ func searchQuery(
 	req *agentmemoryports.SearchAgentMemoriesRequest,
 	match *textMatch,
 ) *keel.Query[*agentmemory.Memory] {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	var subject keel.Pred
 	if req.Subject != nil {
 		subject = keel.And(m.SubjectType.Eq(req.Subject.Type), m.SubjectID.Eq(req.Subject.ID))
@@ -345,7 +345,7 @@ func (r *repository) FindActive(
 	req agentmemoryports.FindActiveAgentMemoryRequest,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		subject := m.SubjectType.IsNull()
 		if req.Subject != nil {
 			subject = keel.And(m.SubjectType.Eq(req.Subject.Type), m.SubjectID.Eq(req.Subject.ID))
@@ -381,7 +381,7 @@ func (r *repository) CountActive(
 	req agentmemoryports.CountActiveAgentMemoriesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		count, err := agentdb.Memories.Where(activeOnly(req.Now)).Count(ctx, r.db.Keel(ctx))
+		count, err := agentmemorydb.Memories.Where(activeOnly(req.Now)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count active agent memories", zap.Error(err))
 
@@ -397,7 +397,7 @@ func (r *repository) SetStatus(
 	req agentmemoryports.SetAgentMemoryStatusQuery,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		sets := []keel.Assignment{m.Status.To(req.Status), m.UpdatedAt.To(req.At)}
 		if req.Status == agentmemory.MemoryStatusRetired {
 			sets = append(sets, m.RetiredAt.To(req.At), setID(m.RetiredByUserID, req.ByUserID))
@@ -429,7 +429,7 @@ func (r *repository) Review(
 	req agentmemoryports.ReviewAgentMemoryQuery,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		n, err := m.Where(
 			m.ID.Eq(req.ID),
 			m.Version.Eq(req.Version),
@@ -466,7 +466,7 @@ func (r *repository) MarkUsed(
 			return nil
 		}
 
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		if _, err := m.Where(m.ID.In(req.IDs...)).Update(
 			ctx,
 			r.db.Keel(ctx),
@@ -492,7 +492,7 @@ func (r *repository) ListSuggestionContext(
 			limit = maxSuggestionContextLimit
 		}
 
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		rows, err := m.Where(keel.Or(
 			keel.And(
 				activeOnly(req.Now),
@@ -530,7 +530,7 @@ func (r *repository) ResolveSuggestion(
 	req agentmemoryports.ResolveAgentMemorySuggestionRequest,
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		from := []agentmemory.MemoryStatus{agentmemory.MemoryStatusSuggested}
 		if req.Reconsidered {
 			from = append(from, agentmemory.MemoryStatusDismissed)
@@ -583,7 +583,7 @@ func (r *repository) ResolveSuggestion(
 }
 
 func activation(req *agentmemoryports.ResolveAgentMemorySuggestionRequest) []keel.Assignment {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	scope := req.Scope
 	if !scope.IsValid() {
 		scope = agentmemory.MemoryScopeAgent
@@ -627,7 +627,7 @@ func activation(req *agentmemoryports.ResolveAgentMemorySuggestionRequest) []kee
 // prompt for no agent in particular carries none of the agent's, and one for
 // nobody in particular none of anybody's.
 func forAgent(agentID pulid.ID, reader agentmemory.MemoryReader) keel.Pred {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 
 	return keel.Or(
 		m.Scope.Eq(agentmemory.MemoryScopeOrganization),
@@ -642,7 +642,7 @@ func forAgent(agentID pulid.ID, reader agentmemory.MemoryReader) keel.Pred {
 // forPerson is, as alternatives, the memories kept for the reader and for
 // their roles; nil when the reader is nobody in particular.
 func forPerson(reader agentmemory.MemoryReader) keel.Pred {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	if reader.UserID.IsNil() && len(reader.RoleIDs) == 0 {
 		return nil
 	}
@@ -662,7 +662,7 @@ func forPerson(reader agentmemory.MemoryReader) keel.Pred {
 // sameReaders keeps the rows read by exactly the readers the new memory
 // would be: the same agent, the same person or the same role.
 func sameReaders(req *agentmemoryports.FindActiveAgentMemoryRequest) keel.Pred {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	switch req.Scope {
 	case agentmemory.MemoryScopeAgent:
 		return keel.And(
@@ -700,7 +700,7 @@ func activeOnly(now int64) keel.Pred {
 }
 
 func keptOnly(now int64, includeSuggested bool) keel.Pred {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	status := m.Status.Eq(agentmemory.MemoryStatusActive)
 	if includeSuggested {
 		status = m.Status.In(agentmemory.MemoryStatusActive, agentmemory.MemoryStatusSuggested)
@@ -719,7 +719,7 @@ func replaceableStatuses() []agentmemory.MemoryStatus {
 // taintsLast puts a memory that taints the turns reading it after one that
 // does not: a clean one, or a tainted one a person has reviewed.
 func taintsLast() keel.Order {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 
 	return keel.CaseInt64().
 		When(keel.And(keel.BoolOf(m.Tainted), m.ReviewedAt.IsNull()), orderRank(1)).
@@ -729,7 +729,7 @@ func taintsLast() keel.Order {
 
 func activeFirst() keel.Order {
 	return keel.CaseInt64().
-		When(agentdb.Memories.Status.Eq(agentmemory.MemoryStatusActive), orderRank(0)).
+		When(agentmemorydb.Memories.Status.Eq(agentmemory.MemoryStatusActive), orderRank(0)).
 		Else(orderRank(1)).
 		Asc()
 }
@@ -737,7 +737,7 @@ func activeFirst() keel.Order {
 // kindOrder puts instructions before corrections before procedures before
 // facts, the order a prompt reads them in.
 func kindOrder() keel.Order {
-	kind := agentdb.Memories.Kind
+	kind := agentmemorydb.Memories.Kind
 
 	return keel.CaseInt64().
 		When(kind.Eq(agentmemory.MemoryKindInstruction), orderRank(0)).
@@ -748,7 +748,7 @@ func kindOrder() keel.Order {
 }
 
 func candidateOrder() keel.Order {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 
 	return keel.CaseInt64().
 		When(m.SubjectType.IsNotNull(), orderRank(0)).

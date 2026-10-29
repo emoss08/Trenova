@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
@@ -209,7 +210,7 @@ func (r *watchtowerReader) ListFailedSubmissions(
 }
 
 func failedSubmissions(limit int) *keel.Query[*factoringsubmission.Submission] {
-	sub := factoringdb.Submissions
+	sub := factoringsubmissiondb.Submissions
 	return sub.Pick(
 		sub.ID,
 		sub.Number,
@@ -247,8 +248,8 @@ func (r *watchtowerReader) ListUnfundedSubmissions(
 func unfundedSubmissions(
 	req *factoringwatchtowerports.ListUnfundedSubmissionsRequest,
 ) *keel.Query[*factoringsubmission.Submission] {
-	sub := factoringdb.Submissions
-	item := factoringdb.SubmissionItems
+	sub := factoringsubmissiondb.Submissions
+	item := factoringsubmissiondb.SubmissionItems
 	agr := factoringdb.Agreements
 	fac := sub.FactoringCompany()
 	dueAt := sub.SentAt.Add(agr.FundingDays.Mul(keel.Int64(86400)))
@@ -300,7 +301,7 @@ func (r *watchtowerReader) ListChargebacksDue(
 func chargebacksDueSoon(
 	req *factoringwatchtowerports.ListChargebacksDueRequest,
 ) *keel.Query[*factoringsubmission.SubmissionItem] {
-	item := factoringdb.SubmissionItems
+	item := factoringsubmissiondb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()
 	deadline := item.FundedOn.Add(agr.ChargebackWindowDays.Mul(keel.Int64(86400)))

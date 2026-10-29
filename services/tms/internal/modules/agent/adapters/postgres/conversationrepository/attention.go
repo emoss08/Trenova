@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,9 +33,9 @@ func threadAttentionQuery(
 	req *conversationports.ListThreadAttentionRequest,
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
-	pl := agentdb.AgentPlans
+	pl := agentplandb.AgentPlans
 	run := agentdb.AgentRuns
-	tr := conversationdb.AssistantTurns
+	tr := conversationturndb.AssistantTurns
 
 	pendingPlans := keel.Scalar(pl.Join(run, run.ID.EqCol(pl.RunID)).
 		Pick(keel.Count()).

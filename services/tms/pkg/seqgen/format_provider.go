@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +40,7 @@ func (p *formatProvider) GetFormat(
 ) (*sequenceconfig.SequenceFormat, error) {
 	var cfg *sequenceconfig.SequenceConfig
 	err := p.db.RunDetached(ctx, true, func(ctx context.Context) error {
-		sc := tenantdb.SequenceConfigs
+		sc := sequenceconfigdb.SequenceConfigs
 		var err error
 		cfg, err = sc.Where(
 			sc.SequenceType.Eq(sequenceType),

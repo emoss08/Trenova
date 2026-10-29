@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -108,7 +108,7 @@ func applyAccountingDefaults(ctx context.Context, db *keel.DB, scope tenantscope
 		)
 	}
 
-	c := tenantdb.AccountingControls
+	c := accountingcontroldb.AccountingControls
 	_, err = tenantscope.Scoped(ctx, c.Where(
 		c.OrganizationID.Eq(scope.OrganizationID),
 		c.BusinessUnitID.Eq(scope.BusinessUnitID),

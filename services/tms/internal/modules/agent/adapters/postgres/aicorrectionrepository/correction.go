@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection/aicorrectiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval/extractionevaldb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol/agentcontroldb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -302,7 +302,7 @@ func (r *repository) weeklyTotals(
 
 func trainingConsent(allTenants bool) keel.Pred {
 	c := aicorrectiondb.Corrections
-	consent := tenantdb.AgentControls.As("training_consent")
+	consent := agentcontroldb.AgentControls.As("training_consent")
 
 	return keel.Exists(crossing(consent.Where(
 		consent.OrganizationID.EqCol(c.OrganizationID),

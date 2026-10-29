@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -44,7 +44,7 @@ func (r *repository) GetByOrgID(
 	orgID pulid.ID,
 ) (*billingcontrol.BillingControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingcontrol.BillingControl, error) {
-		bc := tenantdb.BillingControls
+		bc := billingcontroldb.BillingControls
 		entity, err := bc.Where(bc.OrganizationID.Eq(orgID)).
 			Cache(resultcache.Settings()...).
 			One(ctx, r.db.Keel(ctx))
@@ -68,7 +68,7 @@ func (r *repository) ListAutomaticTransfer(
 		ctx,
 		"list organizations that transfer freight to billing automatically",
 	)
-	bc := tenantdb.BillingControls
+	bc := billingcontroldb.BillingControls
 	return r.listAll(
 		ctx,
 		"list automatic transfer billing controls",
@@ -83,7 +83,7 @@ func (r *repository) ListPaymentReminders(
 	return r.listAll(
 		ctx,
 		"list payment reminder billing controls",
-		tenantdb.BillingControls.PaymentRemindersEnabled.IsTrue(),
+		billingcontroldb.BillingControls.PaymentRemindersEnabled.IsTrue(),
 	)
 }
 
@@ -94,7 +94,7 @@ func (r *repository) ListMonthlyStatements(
 	return r.listAll(
 		ctx,
 		"list monthly statement billing controls",
-		tenantdb.BillingControls.MonthlyStatementsEnabled.IsTrue(),
+		billingcontroldb.BillingControls.MonthlyStatementsEnabled.IsTrue(),
 	)
 }
 
@@ -107,7 +107,7 @@ func (r *repository) listAll(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*billingcontrol.BillingControl, error) {
-			items, err := tenantdb.BillingControls.AllTenants().
+			items, err := billingcontroldb.BillingControls.AllTenants().
 				Where(filter).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -124,7 +124,7 @@ func (r *repository) Update(
 	entity *billingcontrol.BillingControl,
 ) (*billingcontrol.BillingControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingcontrol.BillingControl, error) {
-		if err := tenantdb.BillingControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := billingcontroldb.BillingControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error(
 				"failed to update billing control",
 				zap.String("orgID", entity.OrganizationID.String()),

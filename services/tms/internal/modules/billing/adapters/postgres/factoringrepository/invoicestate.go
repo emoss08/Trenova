@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness/factoringreadinessdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -74,7 +76,7 @@ func (r *invoiceStateRepository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringreadiness.InvoiceState, error) {
-			st := factoringdb.InvoiceStates
+			st := factoringreadinessdb.InvoiceStates
 			entity, err := st.Where(st.InvoiceID.Eq(req.InvoiceID)).One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, invoiceStateErrors.Map(err, req.InvoiceID.String())
@@ -98,7 +100,7 @@ func (r *invoiceStateRepository) ListByInvoiceIDs(
 				return result, nil
 			}
 
-			st := factoringdb.InvoiceStates
+			st := factoringreadinessdb.InvoiceStates
 			rows, err := st.Where(st.InvoiceID.In(req.InvoiceIDs...)).
 				Limit(len(req.InvoiceIDs)).
 				List(ctx, r.db.Keel(ctx))
@@ -121,7 +123,7 @@ func (r *invoiceStateRepository) Upsert(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
-		st := factoringdb.InvoiceStates
+		st := factoringreadinessdb.InvoiceStates
 		ready := factoringreadiness.VerdictReady
 		stillReady := func(col keel.Int64Col) keel.Int64Expr {
 			return keel.CaseInt64().
@@ -197,7 +199,7 @@ func stateScope(
 	req *factoringports.ListInvoiceStateConnectionRequest,
 	term string,
 ) *keel.Query[*factoringreadiness.InvoiceState] {
-	st := factoringdb.InvoiceStates
+	st := factoringreadinessdb.InvoiceStates
 	return st.Where(
 		keel.When(term != "", searchStates(term)),
 		keel.When(len(req.Verdicts) > 0, st.Verdict.In(req.Verdicts...)),
@@ -210,7 +212,7 @@ func stateScope(
 }
 
 func searchStates(term string) keel.Pred {
-	st := factoringdb.InvoiceStates
+	st := factoringreadinessdb.InvoiceStates
 	cus := st.Customer()
 	return keel.Or(
 		st.Invoice().Number.ContainsFold(term),
@@ -225,7 +227,7 @@ func (r *invoiceStateRepository) ClaimReadyAnnouncement(
 	req *factoringports.ClaimReadyAnnouncementRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		st := factoringdb.InvoiceStates
+		st := factoringreadinessdb.InvoiceStates
 		n, err := st.Where(
 			st.InvoiceID.Eq(req.InvoiceID),
 			st.Verdict.Eq(factoringreadiness.VerdictReady),
@@ -248,7 +250,7 @@ func (r *invoiceStateRepository) ListReadyUnsubmitted(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*factoringreadiness.InvoiceState, error) {
-			st := factoringdb.InvoiceStates
+			st := factoringreadinessdb.InvoiceStates
 			rows, err := st.Where(
 				st.Verdict.Eq(factoringreadiness.VerdictReady),
 				st.ReadySince.Lte(req.ReadyBefore),
@@ -297,7 +299,7 @@ func (r *invoiceStateRepository) ListCandidateInvoiceIDs(
 func candidateInvoices(req *factoringports.ListCandidateInvoicesRequest) keel.Projection {
 	limit := boundedLimit(req.Limit, maxCandidateBatch)
 	inv := invoicedb.Invoices
-	st := factoringdb.InvoiceStates
+	st := factoringreadinessdb.InvoiceStates
 	after := req.AfterInvoiceID.IsNotNil()
 
 	candidates := keel.CTE("candidates", []string{"id"}, keel.Union(
@@ -421,7 +423,7 @@ func (r *invoiceStateRepository) GetSummary(
 }
 
 func verdictTotals(readyBefore int64) *keel.Query[*factoringreadiness.InvoiceState] {
-	st := factoringdb.InvoiceStates
+	st := factoringreadinessdb.InvoiceStates
 	late := st.ReadySince.Lte(readyBefore)
 	return st.Group(st.Verdict).
 		Pick(
@@ -439,7 +441,7 @@ func verdictTotals(readyBefore int64) *keel.Query[*factoringreadiness.InvoiceSta
 }
 
 func fundedTotals() *keel.Query[*factoringsubmission.SubmissionItem] {
-	item := factoringdb.SubmissionItems
+	item := factoringsubmissiondb.SubmissionItems
 	return item.Pick(
 		keel.Count(),
 		keel.NumericOf(item.FaceMinor.Sum()).Coalesce(0),
@@ -449,8 +451,8 @@ func fundedTotals() *keel.Query[*factoringsubmission.SubmissionItem] {
 }
 
 func chargebacksDue(before int64) *keel.Query[*factoringsubmission.SubmissionItem] {
-	item := factoringdb.SubmissionItems
-	sub := factoringdb.Submissions
+	item := factoringsubmissiondb.SubmissionItems
+	sub := factoringsubmissiondb.Submissions
 	agr := factoringdb.Agreements
 	return item.Pick(
 		keel.Count(),

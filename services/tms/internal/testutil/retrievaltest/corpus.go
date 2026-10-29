@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
@@ -303,7 +303,7 @@ func SeedMemories(t *testing.T, ctx context.Context, db *keel.DB, seed MemorySee
 			definitionID := seed.AgentDefinitionID
 			memory.AgentDefinitionID = &definitionID
 		}
-		err := agentdb.Memories.Create(tenantContext(ctx, seed.Tenant), db, memory)
+		err := agentmemorydb.Memories.Create(tenantContext(ctx, seed.Tenant), db, memory)
 		require.NoError(t, err, item.Key)
 
 		corpus.add(item.Key, memory.ID)

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +27,7 @@ func TestGetByTenantSeedsEveryRequiredSequenceOnceThenReadsThem(t *testing.T) {
 	tctx := data.Ctx(ctx)
 	req := tenantports.GetSequenceConfigRequest{TenantInfo: data.Info()}
 
-	sc := tenantdb.SequenceConfigs
+	sc := sequenceconfigdb.SequenceConfigs
 	_, err := dbtx.Write(tctx, conn, func(ctx context.Context) (int64, error) {
 		return sc.Where(sc.SequenceType.In(sequenceconfig.RequiredSequenceTypes()...)).
 			Delete(ctx, conn.Keel(ctx))

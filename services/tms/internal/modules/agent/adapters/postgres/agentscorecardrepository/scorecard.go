@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -180,7 +182,7 @@ func proposalsQuery(req *agentports.ScorecardRequest) *keel.Query[*agent.AgentPr
 // step still Started, whose outcome nobody recorded, as unknown. The ranking
 // is done in SQL, so only the few reasons kept per verdict leave the database.
 func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[*keel.Row] {
-	step := agentdb.AgentRunSteps
+	step := agentrunstepdb.AgentRunSteps
 	labelled := keel.CTE("labelled", []string{"tool_name", "verdict", "reason"}, step.
 		Pick(
 			step.ToolName,
@@ -278,7 +280,7 @@ func foldVerdicts(rows []verdictRow) []agentevaluation.ToolVerdictCount {
 }
 
 func exceptionsQuery(req *agentports.ScorecardRequest) *keel.Query[*agentexception.AgentException] {
-	e := agentdb.AgentExceptions
+	e := agentexceptiondb.AgentExceptions
 	run := agentdb.AgentRuns
 
 	return e.Join(run, run.ID.EqCol(e.RunID)).

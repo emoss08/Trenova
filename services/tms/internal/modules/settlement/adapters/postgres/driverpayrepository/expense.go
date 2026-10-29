@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense/payexpensedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -41,7 +41,7 @@ func (r *driverExpenseRepository) Create(
 	entity *payexpense.Expense,
 ) (*payexpense.Expense, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*payexpense.Expense, error) {
-		if err := driverpaydb.Expenses.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := payexpensedb.Expenses.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, expenseErrors.Map(err, entity.ID.String())
 		}
 
@@ -54,7 +54,7 @@ func (r *driverExpenseRepository) Update(
 	entity *payexpense.Expense,
 ) (*payexpense.Expense, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*payexpense.Expense, error) {
-		if err := driverpaydb.Expenses.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := payexpensedb.Expenses.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, expenseErrors.Map(err, entity.ID.String())
 		}
 
@@ -62,7 +62,7 @@ func (r *driverExpenseRepository) Update(
 	})
 }
 
-func expenseLoads(e *driverpaydb.ExpensesTable) []keel.Loader {
+func expenseLoads(e *payexpensedb.ExpensesTable) []keel.Loader {
 	return []keel.Loader{e.Worker(), e.PayCode(), e.ReviewedBy()}
 }
 
@@ -71,7 +71,7 @@ func (r *driverExpenseRepository) GetByID(
 	req driverpayports.GetDriverExpenseByIDRequest,
 ) (*payexpense.Expense, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*payexpense.Expense, error) {
-		e := driverpaydb.Expenses
+		e := payexpensedb.Expenses
 		entity, err := e.Where(e.ID.Eq(req.ID)).
 			Load(expenseLoads(e)...).
 			One(ctx, r.db.Keel(ctx))
@@ -91,7 +91,7 @@ func (r *driverExpenseRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*payexpense.Expense], error) {
-			e := driverpaydb.Expenses
+			e := payexpensedb.Expenses
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -124,7 +124,7 @@ func (r *driverExpenseRepository) ListForWorker(
 			limit = defaultWorkerExpenseLimit
 		}
 
-		e := driverpaydb.Expenses
+		e := payexpensedb.Expenses
 		items, err := e.Where(
 			e.WorkerID.Eq(req.WorkerID),
 			when(len(req.Statuses) > 0, e.Status.In(req.Statuses...)),
@@ -147,7 +147,7 @@ func (r *driverExpenseRepository) ListApprovedForWorker(
 	workerID pulid.ID,
 ) ([]*payexpense.Expense, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*payexpense.Expense, error) {
-		e := driverpaydb.Expenses
+		e := payexpensedb.Expenses
 		items, err := e.Where(
 			e.WorkerID.Eq(workerID),
 			e.Status.Eq(payexpense.ExpenseStatusApproved),
@@ -168,7 +168,7 @@ func (r *driverExpenseRepository) CountPending(
 	_ pagination.TenantInfo,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		e := driverpaydb.Expenses
+		e := payexpensedb.Expenses
 		count, err := e.Where(e.Status.Eq(payexpense.ExpenseStatusPending)).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {

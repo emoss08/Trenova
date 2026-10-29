@@ -10,15 +10,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation/agentevaluationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent/agentruneventdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -98,7 +103,7 @@ func (r *sourceRepository) ListTurns(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
-			turn := conversationdb.AssistantTurns
+			turn := conversationturndb.AssistantTurns
 			rows, err := keyset(
 				turn.Query(),
 				turn.UpdatedAt,
@@ -142,7 +147,7 @@ func (r *sourceRepository) ListSteps(
 		"project agent steps into the AI audit chain across every organization",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
-		step := agentdb.AgentRunSteps
+		step := agentrunstepdb.AgentRunSteps
 		rows, err := keyset(
 			step.Where(step.Kind.Eq(string(agentruntimeports.RunStepTool))),
 			step.UpdatedAt, step.ID, page,
@@ -164,7 +169,7 @@ func (r *sourceRepository) ListEvents(
 		"project agent events into the AI audit chain across every organization",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunevent.AgentRunEvent, error) {
-		event := agentdb.AgentRunEvents
+		event := agentruneventdb.AgentRunEvents
 		rows, err := keyset(
 			event.Where(event.Kind.In(projectedEventKinds...)),
 			event.CreatedAt, event.ID, page,
@@ -205,7 +210,7 @@ func (r *sourceRepository) ListDecisions(
 		"project proposal decisions into the AI audit chain across every organization",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdecision.AgentDecision, error) {
-		d := agentdb.AgentDecisions
+		d := agentdecisiondb.AgentDecisions
 		rows, err := keyset(
 			d.Omit(d.Preview).Where(d.ProposalID.IsNotNull()),
 			d.CreatedAt, d.ID, page,
@@ -251,7 +256,7 @@ func (r *sourceRepository) TurnsByIDs(
 				return []*conversationturn.AssistantTurn{}, nil
 			}
 
-			turn := conversationdb.AssistantTurns
+			turn := conversationturndb.AssistantTurns
 			rows, err := turn.Where(turn.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("read assistant turns by id: %w", err)
@@ -275,7 +280,7 @@ func (r *sourceRepository) TurnsByRunIDs(
 				return []*conversationturn.AssistantTurn{}, nil
 			}
 
-			turn := conversationdb.AssistantTurns
+			turn := conversationturndb.AssistantTurns
 			rows, err := turn.Where(turn.RunID.In(runIDs...)).All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("read assistant turns by run: %w", err)
@@ -298,7 +303,7 @@ func (r *sourceRepository) TurnsInWindow(
 				return make([]*conversationturn.AssistantTurn, 0), nil
 			}
 
-			turn := conversationdb.AssistantTurns
+			turn := conversationturndb.AssistantTurns
 			rows, err := turn.
 				Where(
 					turn.ThreadID.In(req.ThreadIDs...),
@@ -350,7 +355,7 @@ func (r *sourceRepository) EvaluationsByIDs(
 			return []*agentevaluation.Evaluation{}, nil
 		}
 
-		ev := agentdb.Evaluations
+		ev := agentevaluationdb.Evaluations
 		rows, err := ev.
 			Pick(
 				ev.ID,
@@ -404,7 +409,7 @@ func (r *sourceRepository) StartedToolSteps(
 			return []*agentrunstep.AgentRunStep{}, nil
 		}
 
-		step := agentdb.AgentRunSteps
+		step := agentrunstepdb.AgentRunSteps
 		rows, err := step.AllTenants().
 			Where(
 				step.OrganizationID.Eq(tenantInfo.OrgID),
@@ -448,7 +453,7 @@ func (r *sourceRepository) ToolStepCalls(
 				callIDs = append(callIDs, call.CallID)
 			}
 
-			step := agentdb.AgentRunSteps
+			step := agentrunstepdb.AgentRunSteps
 			rows, err := keel.Into[ownedCall](ctx, r.db.Keel(ctx), step.
 				Where(
 					step.OwnerID.In(owners...),

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
@@ -154,7 +155,7 @@ func (r *sourceRepository) turn(
 	message *conversation.Message,
 ) (*conversationturn.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationturn.AssistantTurn, error) {
-		t := conversationdb.AssistantTurns
+		t := conversationturndb.AssistantTurns
 		turn, err := t.Where(t.ThreadID.Eq(message.ThreadID), t.CreatedAt.Lte(message.CreatedAt)).
 			Order(t.CreatedAt.Desc()).
 			First(ctx, r.db.Keel(ctx))

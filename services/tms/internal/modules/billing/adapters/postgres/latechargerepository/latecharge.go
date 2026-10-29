@@ -11,11 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge/latechargedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,7 +64,7 @@ func candidatesQuery(asOf int64, customerIDs []pulid.ID) *keel.Query[*invoice.In
 	inv := invoicedb.Invoices
 	cus := customerdb.Customers
 	cbp := customerdb.CustomerBillingProfiles
-	dispute := invoicedb.InvoiceDisputes
+	dispute := invoicedisputedb.InvoiceDisputes
 	graceEnds := inv.DueDate.Add(
 		keel.CastInt64(cbp.GracePeriodDays).Mul(keel.Int64(receivablesql.SecondsPerDay)),
 	)
@@ -344,7 +345,7 @@ func (r *repository) ListLateChargeTenants(
 		if limit <= 0 {
 			limit = defaultTenantLimit
 		}
-		bc := tenantdb.BillingControls
+		bc := billingcontroldb.BillingControls
 		records, err := keel.Into[tenantRecord](ctx, r.db.Keel(ctx), bc.
 			AllTenants().
 			Pick(bc.OrganizationID, bc.BusinessUnitID).

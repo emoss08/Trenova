@@ -18,11 +18,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait/agentwaitdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis/analysisdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal/extensionportaldb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch/extensionwebwatchdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
@@ -31,8 +33,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer/billingtransferdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger/factoringledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance/factoringremittancedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
@@ -85,15 +91,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode/paycodedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense/payexpensedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse/dotclearinghousedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom/dotrandomdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety/fleetsafetydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline/workerdisciplinedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot/workerdotdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury/workerinjurydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
@@ -147,12 +162,12 @@ var minters = map[permission.Resource]minter{
 	),
 	permission.ResourceDocument:            prefixed(documentdb.DocumentsSchema()),
 	permission.ResourceInvoice:             prefixed(invoicedb.InvoicesSchema()),
-	permission.ResourceInvoiceDispute:      prefixed(invoicedb.InvoiceDisputesSchema()),
+	permission.ResourceInvoiceDispute:      prefixed(invoicedisputedb.InvoiceDisputesSchema()),
 	permission.ResourceFactoringAgreement:  prefixed(factoringdb.AgreementsSchema()),
 	permission.ResourceFactoringNoa:        prefixed(factoringdb.NoasSchema()),
-	permission.ResourceFactoringSubmission: prefixed(factoringdb.SubmissionsSchema()),
-	permission.ResourceFactoringReserve:    prefixed(factoringdb.ReserveEntriesSchema()),
-	permission.ResourceFactoringRemittance: prefixed(factoringdb.RemittancesSchema()),
+	permission.ResourceFactoringSubmission: prefixed(factoringsubmissiondb.SubmissionsSchema()),
+	permission.ResourceFactoringReserve:    prefixed(factoringledgerdb.ReserveEntriesSchema()),
+	permission.ResourceFactoringRemittance: prefixed(factoringremittancedb.RemittancesSchema()),
 	permission.ResourceInvoiceRun:          prefixed(invoicerundb.InvoiceRunsSchema()),
 	permission.ResourceRateAgreement:       prefixed(rateagreementdb.RateAgreementsSchema()),
 	permission.ResourceCustomerPayment:     prefixed(customerpaymentdb.PaymentsSchema()),
@@ -170,7 +185,7 @@ var minters = map[permission.Resource]minter{
 	permission.ResourcePerformanceReview: prefixed(
 		workerreviewdb.PerformanceReviewsSchema(),
 	),
-	permission.ResourceWorkerInjury:      prefixed(workersafetydb.WorkerInjuriesSchema()),
+	permission.ResourceWorkerInjury:      prefixed(workerinjurydb.WorkerInjuriesSchema()),
 	permission.ResourceWorkerLeave:       prefixed(workerleavedb.WorkerLeaveCasesSchema()),
 	permission.ResourceDriverSettlement:  prefixed(driversettlementdb.SettlementsSchema()),
 	permission.ResourceSettlementDispute: prefixed(driversettlementdb.DisputesSchema()),
@@ -178,7 +193,7 @@ var minters = map[permission.Resource]minter{
 	permission.ResourceOrganization:      prefixed(tenantdb.OrganizationsSchema()),
 	permission.ResourceUser:              prefixed(tenantdb.UsersSchema()),
 	permission.ResourceAgentRun:          prefixed(agentdb.AgentRunsSchema()),
-	permission.ResourceAgentMemory:       prefixed(agentdb.MemoriesSchema()),
+	permission.ResourceAgentMemory:       prefixed(agentmemorydb.MemoriesSchema()),
 	permission.ResourceInsight:           prefixed(insightdb.InsightsSchema()),
 	permission.ResourceTableChangeAlert: prefixed(
 		tablechangealertdb.TCASubscriptionsSchema(),
@@ -232,12 +247,12 @@ var minters = map[permission.Resource]minter{
 	permission.ResourceJournalEntry:         prefixed(journalentrydb.JournalEntriesSchema()),
 	permission.ResourceBankReceipt:          prefixed(bankreceiptdb.BankReceiptsSchema()),
 	permission.ResourceBankReceiptWorkItem:  prefixed(bankreceiptworkitemdb.WorkItemsSchema()),
-	permission.ResourcePayCode:              prefixed(driverpaydb.PayCodesSchema()),
-	permission.ResourcePayAdvance:           prefixed(driverpaydb.PayAdvancesSchema()),
-	permission.ResourceEscrowAccount:        prefixed(driverpaydb.EscrowAccountsSchema()),
-	permission.ResourceRecurringDeduction:   prefixed(driverpaydb.RecurringDeductionsSchema()),
-	permission.ResourceRecurringEarning:     prefixed(driverpaydb.RecurringEarningsSchema()),
-	permission.ResourceDriverExpense:        prefixed(driverpaydb.ExpensesSchema()),
+	permission.ResourcePayCode:              prefixed(paycodedb.PayCodesSchema()),
+	permission.ResourcePayAdvance:           prefixed(payadvancedb.PayAdvancesSchema()),
+	permission.ResourceEscrowAccount:        prefixed(payescrowdb.EscrowAccountsSchema()),
+	permission.ResourceRecurringDeduction:   prefixed(recurringpaydb.RecurringDeductionsSchema()),
+	permission.ResourceRecurringEarning:     prefixed(recurringpaydb.RecurringEarningsSchema()),
+	permission.ResourceDriverExpense:        prefixed(payexpensedb.ExpensesSchema()),
 	permission.ResourceFuelCard:             prefixed(fuelpurchasedb.FuelCardsSchema()),
 	permission.ResourceFuelPurchase:         prefixed(fuelpurchasedb.FuelPurchasesSchema()),
 	permission.ResourceFuelPurchaseImport:   prefixed(fuelpurchasedb.ImportBatchesSchema()),
@@ -252,7 +267,7 @@ var minters = map[permission.Resource]minter{
 		workercredentialdb.WorkerCredentialTypesSchema(),
 	),
 	permission.ResourceWorkerRecognition: prefixed(
-		workersafetydb.WorkerRecognitionsSchema(),
+		workerdisciplinedb.WorkerRecognitionsSchema(),
 	),
 	permission.ResourceWorkerDOTTest: prefixed(workerdotdb.WorkerDOTTestsSchema()),
 	permission.ResourceTrainingCourse: prefixed(
@@ -328,10 +343,10 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindAIAuditExport:      prefixed(aiauditdb.AIAuditExportsSchema()),
 	permission.KindAssistantThread:    prefixed(conversationdb.ThreadsSchema()),
 	permission.KindWait:               prefixed(agentwaitdb.WaitsSchema()),
-	permission.KindPortalSite:         prefixed(agentextensiondb.PortalSitesSchema()),
-	permission.KindPortalRun:          prefixed(agentextensiondb.PortalRunsSchema()),
+	permission.KindPortalSite:         prefixed(extensionportaldb.PortalSitesSchema()),
+	permission.KindPortalRun:          prefixed(extensionportaldb.PortalRunsSchema()),
 	permission.KindAnalysisRun:        prefixed(analysisdb.RunsSchema()),
-	permission.KindWebWatch:           prefixed(agentextensiondb.WebWatchesSchema()),
+	permission.KindWebWatch:           prefixed(extensionwebwatchdb.WebWatchesSchema()),
 	permission.KindWatchtowerItem:     prefixed(watchtowerdb.ItemsSchema()),
 	permission.KindAccountingConnection: prefixed(
 		accountingconnectiondb.AccountingConnectionsSchema(),
@@ -387,7 +402,7 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindUSState:           prefixed(usstatedb.UsStatesSchema()),
 	permission.KindPayEvent:          prefixed(driversettlementdb.PayEventsSchema()),
 	permission.KindPayProfile:        prefixed(driverpaydb.PayProfilesSchema()),
-	permission.KindPayAssignment:     prefixed(driverpaydb.WorkerPayAssignmentsSchema()),
+	permission.KindPayAssignment:     prefixed(payassignmentdb.WorkerPayAssignmentsSchema()),
 	permission.KindPayrollExport:     prefixed(timesheetdb.PayrollExportsSchema()),
 	permission.KindShiftAssignment: prefixed(
 		workerscheduledb.WorkerShiftAssignmentsSchema(),
@@ -396,7 +411,7 @@ var kindMinters = map[permission.RecordKind]minter{
 		workerchecklistdb.WorkerChecklistItemsSchema(),
 	),
 	permission.KindSafetyViolation: prefixed(
-		workersafetydb.WorkerSafetyViolationsSchema(),
+		fleetsafetydb.WorkerSafetyViolationsSchema(),
 	),
 	permission.KindLeaveDay: prefixed(workerleavedb.WorkerLeaveEntriesSchema()),
 }

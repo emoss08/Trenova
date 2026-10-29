@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline/workerdisciplinedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -170,7 +171,7 @@ func (r *repository) ListActions(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
-			a := workersafetydb.WorkerDisciplinaryActions
+			a := workerdisciplinedb.WorkerDisciplinaryActions
 			loads := listquery.When(req.IncludeEvent, a.SafetyEvent())
 			loads = append(loads, listquery.When(req.IncludeActors, a.IssuedBy())...)
 
@@ -196,7 +197,7 @@ func (r *repository) GetActionByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerdiscipline.WorkerDisciplinaryAction, error) {
-			a := workersafetydb.WorkerDisciplinaryActions
+			a := workerdisciplinedb.WorkerDisciplinaryActions
 			entity, err := a.Where(a.ID.Eq(req.ID)).
 				Load(listquery.When(req.IncludeEvent, a.SafetyEvent())...).
 				One(ctx, r.db.Keel(ctx))
@@ -217,7 +218,7 @@ func (r *repository) CreateAction(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerdiscipline.WorkerDisciplinaryAction, error) {
-			err := workersafetydb.WorkerDisciplinaryActions.Create(ctx, r.db.Keel(ctx), entity)
+			err := workerdisciplinedb.WorkerDisciplinaryActions.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create disciplinary action", zap.Error(err))
 				return nil, actionErrors.Map(err, entity.ID.String())
@@ -236,7 +237,7 @@ func (r *repository) UpdateAction(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerdiscipline.WorkerDisciplinaryAction, error) {
-			err := workersafetydb.WorkerDisciplinaryActions.Save(ctx, r.db.Keel(ctx), entity)
+			err := workerdisciplinedb.WorkerDisciplinaryActions.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update disciplinary action", zap.Error(err))
 				return nil, actionErrors.Map(err, entity.ID.String())
@@ -255,7 +256,7 @@ func (r *repository) ListRecognitions(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerdiscipline.WorkerRecognition, error) {
-			rc := workersafetydb.WorkerRecognitions
+			rc := workerdisciplinedb.WorkerRecognitions
 			entities, err := rc.Where(
 				rc.WorkerID.Eq(req.WorkerID),
 				keel.When(req.VisibleOnly, rc.VisibleToWorker.IsTrue()),
@@ -281,7 +282,7 @@ func (r *repository) GetRecognitionByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerdiscipline.WorkerRecognition, error) {
-			entity, err := workersafetydb.WorkerRecognitions.Get(ctx, r.db.Keel(ctx), req.ID)
+			entity, err := workerdisciplinedb.WorkerRecognitions.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
 				return nil, recognitionErrors.Map(err, req.ID.String())
 			}
@@ -299,7 +300,7 @@ func (r *repository) CreateRecognition(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*workerdiscipline.WorkerRecognition, error) {
-			if err := workersafetydb.WorkerRecognitions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := workerdisciplinedb.WorkerRecognitions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to create recognition", zap.Error(err))
 				return nil, recognitionErrors.Map(err, entity.ID.String())
 			}
@@ -314,7 +315,7 @@ func (r *repository) DeleteRecognition(
 	req *workersafetyports.GetWorkerRecognitionByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		rc := workersafetydb.WorkerRecognitions
+		rc := workerdisciplinedb.WorkerRecognitions
 		rows, err := rc.Where(rc.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete recognition", zap.Error(err))
@@ -327,7 +328,7 @@ func (r *repository) DeleteRecognition(
 
 func lapsedQuery(req *workersafetyports.ListWorkersWithLapsedPointsRequest) *keel.Query[*keel.Row] {
 	e := workersafetydb.WorkerSafetyEvents
-	a := workersafetydb.WorkerDisciplinaryActions
+	a := workerdisciplinedb.WorkerDisciplinaryActions
 
 	events := e.AllTenants().
 		Pick(e.WorkerID, e.OrganizationID, e.BusinessUnitID).

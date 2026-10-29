@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue/conversationqueuedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ type queueTally struct {
 }
 
 func inScope(scope *assistantturnports.AssistantQueueScope) keel.Pred {
-	q := conversationdb.QueuedMessages
+	q := conversationqueuedb.QueuedMessages
 
 	return keel.And(
 		q.ThreadID.Eq(scope.ThreadID),
@@ -55,7 +55,7 @@ func inScope(scope *assistantturnports.AssistantQueueScope) keel.Pred {
 }
 
 func inOrder() []keel.Order {
-	q := conversationdb.QueuedMessages
+	q := conversationqueuedb.QueuedMessages
 
 	return []keel.Order{q.Position.Asc(), q.CreatedAt.Asc(), q.ID.Asc()}
 }
@@ -63,19 +63,19 @@ func inOrder() []keel.Order {
 func listQuery(
 	scope *assistantturnports.AssistantQueueScope,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
-	return conversationdb.QueuedMessages.Where(inScope(scope)).Order(inOrder()...)
+	return conversationqueuedb.QueuedMessages.Where(inScope(scope)).Order(inOrder()...)
 }
 
 func getQuery(
 	req *assistantturnports.QueuedMessageRequest,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
-	q := conversationdb.QueuedMessages
+	q := conversationqueuedb.QueuedMessages
 
 	return q.Where(inScope(&req.Scope), q.ID.Eq(req.ID))
 }
 
 func tallyQuery(threadID pulid.ID) *keel.Query[*conversationqueue.QueuedMessage] {
-	q := conversationdb.QueuedMessages
+	q := conversationqueuedb.QueuedMessages
 
 	return q.Pick(keel.Count(), keel.Int64Of(q.Position.Max()).Coalesce(0)).
 		Where(inScope(&assistantturnports.AssistantQueueScope{ThreadID: threadID}))
@@ -85,7 +85,7 @@ func editQuery(
 	entity *conversationqueue.QueuedMessage,
 	version int64,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
-	q := conversationdb.QueuedMessages
+	q := conversationqueuedb.QueuedMessages
 
 	return q.Where(
 		inScope(
@@ -102,13 +102,13 @@ func editQuery(
 func reorderQuery(
 	req *assistantturnports.ReorderQueuedMessagesRequest,
 ) *keel.Query[*conversationqueue.QueuedMessage] {
-	q := conversationdb.QueuedMessages
+	q := conversationqueuedb.QueuedMessages
 
 	return q.Where(inScope(&req.Scope), q.ID.In(req.IDs...))
 }
 
 func reorderPosition(ids []pulid.ID) keel.Assignment {
-	q := conversationdb.QueuedMessages
+	q := conversationqueuedb.QueuedMessages
 
 	return q.Position.ToExpr(keel.ArrayPosition(
 		pulid.Map(ids, func(id pulid.ID) string { return id.String() }),
@@ -190,7 +190,7 @@ func (r *repository) Insert(
 			}
 
 			entity.Position = tally.Last + 1
-			if err = conversationdb.QueuedMessages.Create(ctx, db, entity); err != nil {
+			if err = conversationqueuedb.QueuedMessages.Create(ctx, db, entity); err != nil {
 				r.l.Error("failed to queue a message",
 					zap.String("thread", entity.ThreadID.String()),
 					zap.Error(err),
@@ -211,7 +211,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*conversationqueue.QueuedMessage, error) {
-			q := conversationdb.QueuedMessages
+			q := conversationqueuedb.QueuedMessages
 			rows, err := editQuery(entity, entity.Version).UpdateReturning(
 				ctx,
 				r.db.Keel(ctx),
@@ -242,7 +242,7 @@ func (r *repository) MarkSteer(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*conversationqueue.QueuedMessage, error) {
-			q := conversationdb.QueuedMessages
+			q := conversationqueuedb.QueuedMessages
 			rows, err := getQuery(req).UpdateReturning(ctx, r.db.Keel(ctx), q.Steer.To(true))
 			if err != nil {
 				return nil, err
@@ -279,7 +279,7 @@ func (r *repository) DeleteMany(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		q := conversationdb.QueuedMessages
+		q := conversationqueuedb.QueuedMessages
 		_, err := q.Where(inScope(&req.Scope), q.ID.In(req.IDs...)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to clear read queued messages",
@@ -359,7 +359,7 @@ func (r *repository) claim(
 		return nil, assistantturnports.ErrQueueEmpty
 	}
 	if err == nil {
-		err = conversationdb.QueuedMessages.DeleteRow(ctx, db, entity)
+		err = conversationqueuedb.QueuedMessages.DeleteRow(ctx, db, entity)
 		if errors.Is(err, keel.ErrNotFound) {
 			return nil, assistantturnports.ErrQueueEmpty
 		}
@@ -377,7 +377,7 @@ func (r *repository) claim(
 
 func (r *repository) Restore(ctx context.Context, entity *conversationqueue.QueuedMessage) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := conversationdb.QueuedMessages.CreateOrSkip(
+		_, err := conversationqueuedb.QueuedMessages.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),
 			[]*conversationqueue.QueuedMessage{entity},

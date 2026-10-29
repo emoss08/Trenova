@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
@@ -468,7 +469,7 @@ func (r *factsRepository) ActiveUsers(
 			limit = agentprofileports.MaxActiveUsers
 		}
 
-		turn := conversationdb.AssistantTurns
+		turn := conversationturndb.AssistantTurns
 		uom := tenantdb.OrganizationMemberships
 		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), turn.
 			Join(uom, uom.UserID.EqCol(turn.UserID)).

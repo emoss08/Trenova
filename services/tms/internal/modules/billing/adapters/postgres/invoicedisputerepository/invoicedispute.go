@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +41,7 @@ func (r *repository) Create(
 ) (*invoicedispute.InvoiceDispute, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicedispute.InvoiceDispute, error) {
 		entity.SyncMinor()
-		if err := invoicedb.InvoiceDisputes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := invoicedisputedb.InvoiceDisputes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, disputeErrors.Map(err, entity.ID.String())
 		}
 
@@ -55,7 +55,7 @@ func (r *repository) Update(
 ) (*invoicedispute.InvoiceDispute, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicedispute.InvoiceDispute, error) {
 		entity.SyncMinor()
-		if err := invoicedb.InvoiceDisputes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := invoicedisputedb.InvoiceDisputes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, disputeErrors.Map(err, entity.ID.String())
 		}
 
@@ -68,7 +68,7 @@ func (r *repository) GetByID(
 	req invoiceports.GetInvoiceDisputeByIDRequest,
 ) (*invoicedispute.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicedispute.InvoiceDispute, error) {
-		entity, err := invoicedb.InvoiceDisputes.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := invoicedisputedb.InvoiceDisputes.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, disputeErrors.Map(err, req.ID.String())
 		}
@@ -82,7 +82,7 @@ func (r *repository) GetOpenByInvoiceID(
 	req invoiceports.GetOpenInvoiceDisputeRequest,
 ) (*invoicedispute.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicedispute.InvoiceDispute, error) {
-		d := invoicedb.InvoiceDisputes
+		d := invoicedisputedb.InvoiceDisputes
 		entity, err := d.Where(
 			d.InvoiceID.Eq(req.InvoiceID),
 			d.Status.Eq(invoicedispute.DisputeCaseStatusOpen),
@@ -108,7 +108,7 @@ func (r *repository) ListByInvoiceIDs(
 				return result, nil
 			}
 
-			d := invoicedb.InvoiceDisputes
+			d := invoicedisputedb.InvoiceDisputes
 			rows, err := d.Where(d.InvoiceID.In(req.InvoiceIDs...)).
 				Order(d.OpenedAt.Desc(), d.ID.Desc()).
 				All(ctx, r.db.Keel(ctx))

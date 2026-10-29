@@ -12,8 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -23,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -105,8 +108,8 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 	insert(ctx, t, db, conversationdb.Threads.Handle, thread)
 	turn.ThreadID, compaction.ThreadID = thread.ID, thread.ID
 	insert(ctx, t, db, agentdb.AgentRuns.Handle, run, stopped)
-	insert(ctx, t, db, conversationdb.AssistantTurns.Handle, turn, compaction)
-	insert(ctx, t, db, agentdb.AgentExceptions.Handle, &agentexception.AgentException{
+	insert(ctx, t, db, conversationturndb.AssistantTurns.Handle, turn, compaction)
+	insert(ctx, t, db, agentexceptiondb.AgentExceptions.Handle, &agentexception.AgentException{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, RunID: stopped.ID,
 		Category: agentexception.CategoryUnableToDiagnose, SubjectType: agent.SubjectShipment,
 		SubjectID: stopped.SubjectID, AttemptSummary: "could not", Evidence: []agentevidence.EvidenceRef{},
@@ -146,7 +149,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 	}
 	insert(ctx, t, db, aiusagedb.AIUsageRecords.Handle, usage...)
 	backdateUsage(ctx, t, db, usage...)
-	insert(ctx, t, db, agentdb.AgentRunSteps.Handle,
+	insert(ctx, t, db, agentrunstepdb.AgentRunSteps.Handle,
 		&agentrunstep.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(

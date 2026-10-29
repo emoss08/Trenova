@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol/dashcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -68,7 +68,7 @@ func (r *repository) GetOrCreate(
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*dashcontrol.DashControl]{
 		Find: r.selectControl,
 		Create: func(ctx context.Context) error {
-			dc := tenantdb.DashControls
+			dc := dashcontroldb.DashControls
 			if _, err := dc.CreateOrSkip(
 				ctx,
 				r.db.Keel(ctx),
@@ -90,7 +90,7 @@ func (r *repository) GetOrCreate(
 
 func (r *repository) selectControl(ctx context.Context) (*dashcontrol.DashControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dashcontrol.DashControl, error) {
-		return tenantdb.DashControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
+		return dashcontroldb.DashControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -99,7 +99,7 @@ func (r *repository) Update(
 	entity *dashcontrol.DashControl,
 ) (*dashcontrol.DashControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dashcontrol.DashControl, error) {
-		dc := tenantdb.DashControls
+		dc := dashcontroldb.DashControls
 		if err := dc.Save(
 			ctx,
 			r.db.Keel(ctx),

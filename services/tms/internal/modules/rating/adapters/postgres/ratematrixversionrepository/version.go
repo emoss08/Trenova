@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion/ratematrixversiondb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,7 +53,7 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ratematrixversion.RateMatrixVersion, error) {
-			if err := ratematrixdb.RateMatrixVersions.Create(ctx, r.db.Keel(ctx), version); err != nil {
+			if err := ratematrixversiondb.RateMatrixVersions.Create(ctx, r.db.Keel(ctx), version); err != nil {
 				r.l.Error("failed to create rate matrix version",
 					zap.String("matrixId", version.RateMatrixID.String()),
 					zap.Int64("versionNumber", version.VersionNumber),
@@ -74,7 +75,7 @@ func (r *repository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ratematrixversion.RateMatrixVersion, error) {
-			v := ratematrixdb.RateMatrixVersions
+			v := ratematrixversiondb.RateMatrixVersions
 			entity, err := v.Where(
 				v.RateMatrixID.Eq(req.RateMatrixID),
 				v.VersionNumber.Eq(req.VersionNumber),
@@ -105,7 +106,7 @@ func (r *repository) List(
 			}
 			limit = min(limit, maxHistoryLimit)
 
-			v := ratematrixdb.RateMatrixVersions
+			v := ratematrixversiondb.RateMatrixVersions
 			versions, err := v.Where(v.RateMatrixID.Eq(req.RateMatrixID)).
 				Load(v.PublishedBy()).
 				Order(v.VersionNumber.Desc()).
@@ -154,7 +155,7 @@ func (r *repository) GetByKeys(
 func versionsByKeysQuery(
 	keys []ratematrixversion.VersionKey,
 ) *keel.Query[*ratematrixversion.RateMatrixVersion] {
-	v := ratematrixdb.RateMatrixVersions
+	v := ratematrixversiondb.RateMatrixVersions
 	wanted := versionKeys(keys)
 
 	return v.With(wanted).
@@ -172,7 +173,7 @@ func servedMatrices() []keel.Pred {
 }
 
 func servedQuery() *keel.Query[*ratematrixversion.RateMatrixVersion] {
-	v := ratematrixdb.RateMatrixVersions
+	v := ratematrixversiondb.RateMatrixVersions
 	rm := ratematrixdb.RateMatrixes
 
 	return v.Join(

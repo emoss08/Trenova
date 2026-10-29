@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
@@ -69,8 +71,8 @@ func (r *repository) Totals(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentports.AgentActivityTotals, error) {
 		runs := agentdb.AgentRuns
 		proposals := agentdb.AgentProposals
-		exceptions := agentdb.AgentExceptions
-		decisions := agentdb.AgentDecisions
+		exceptions := agentexceptiondb.AgentExceptions
+		decisions := agentdecisiondb.AgentDecisions
 
 		var (
 			runRow      runTotals

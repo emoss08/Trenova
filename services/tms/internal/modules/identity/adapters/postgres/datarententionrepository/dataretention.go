@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention/dataretentiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -49,7 +49,7 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*dataretention.DataRetention], error) {
-			entities, err := tenantdb.DataRetentions.AllTenants().All(ctx, r.db.Keel(ctx))
+			entities, err := dataretentiondb.DataRetentions.AllTenants().All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list data retentions", zap.Error(err))
 				return nil, err
@@ -69,7 +69,7 @@ func (r *repository) Get(
 	_ tenantports.GetDataRetentionRequest,
 ) (*dataretention.DataRetention, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dataretention.DataRetention, error) {
-		entity, err := tenantdb.DataRetentions.Cache(resultcache.Settings()...).
+		entity, err := dataretentiondb.DataRetentions.Cache(resultcache.Settings()...).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, dataRetentionErrors.Map(err, "")
@@ -84,7 +84,7 @@ func (r *repository) Update(
 	entity *dataretention.DataRetention,
 ) (*dataretention.DataRetention, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dataretention.DataRetention, error) {
-		if err := tenantdb.DataRetentions.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := dataretentiondb.DataRetentions.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error(
 				"failed to update data retention",
 				zap.String("orgID", entity.OrganizationID.String()),
@@ -120,7 +120,7 @@ func (r *repository) Upsert(
 			return nil, err
 		}
 
-		dr := tenantdb.DataRetentions
+		dr := dataretentiondb.DataRetentions
 		if _, err = dr.Upsert(
 			ctx,
 			r.db.Keel(ctx),

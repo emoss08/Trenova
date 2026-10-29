@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell/ratematrixcelldb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion/ratematrixversiondb"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -38,7 +40,7 @@ func insertPublishedMatrix(ctx context.Context, db *keel.DB, seeded *seededMatri
 	}
 
 	published := ratematrixversion.CopyPublished(matrix, seeded.cells, 1, pulid.Nil)
-	if err := ratematrixdb.RateMatrixVersions.Create(ctx, db, published.Version); err != nil {
+	if err := ratematrixversiondb.RateMatrixVersions.Create(ctx, db, published.Version); err != nil {
 		return fmt.Errorf("insert rate matrix version %s: %w", matrix.Code, err)
 	}
 
@@ -51,7 +53,7 @@ func insertPublishedMatrix(ctx context.Context, db *keel.DB, seeded *seededMatri
 	if len(cells) == 0 {
 		return nil
 	}
-	if err := ratematrixdb.RateMatrixCells.CreateMany(ctx, db, cells); err != nil {
+	if err := ratematrixcelldb.RateMatrixCells.CreateMany(ctx, db, cells); err != nil {
 		return fmt.Errorf("insert rate matrix cells %s: %w", matrix.Code, err)
 	}
 	return nil

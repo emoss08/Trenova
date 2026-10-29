@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
@@ -101,7 +102,7 @@ func invoiceMentions(terms mentionTerms) keel.Projection {
 }
 
 func invoiceDisputeMentions(terms mentionTerms) keel.Projection {
-	d := invoicedb.InvoiceDisputes
+	d := invoicedisputedb.InvoiceDisputes
 	i := invoicedb.Invoices
 
 	return d.Join(i, i.ID.EqCol(d.InvoiceID)).

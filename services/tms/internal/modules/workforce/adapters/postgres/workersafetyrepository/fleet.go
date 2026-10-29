@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety/fleetsafetydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
@@ -187,7 +188,7 @@ func fleetBasicsQuery(
 	req *workersafetyports.FleetSafetyRequest,
 ) *keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workersafetydb.WorkerSafetyEvents
-	v := workersafetydb.WorkerSafetyViolations
+	v := fleetsafetydb.WorkerSafetyViolations
 	since := timeutils.AddMonthsUTC(req.Now, -workersafety.SafetyPointsRetentionMonths)
 	bucket := csaBucketExpr(req.Now)
 
@@ -238,7 +239,7 @@ func (r *repository) FleetEventBasics(
 		r.db,
 		func(ctx context.Context) ([]workersafetyports.FleetSafetyEventBasicRow, error) {
 			e := workersafetydb.WorkerSafetyEvents
-			v := workersafetydb.WorkerSafetyViolations
+			v := fleetsafetydb.WorkerSafetyViolations
 			since := timeutils.AddMonthsUTC(req.Now, -workersafety.SafetyPointsRetentionMonths)
 			bucket := csaBucketExpr(req.Now)
 

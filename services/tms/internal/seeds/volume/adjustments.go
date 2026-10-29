@@ -20,9 +20,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
@@ -293,7 +294,11 @@ func (p *adjPools) take(pool []*shipmentRecord, accept func(*shipmentRecord) boo
 }
 
 func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
-	control, err := firstOrNil(ctx, g.db, tenantdb.InvoiceAdjustmentControls.Query())
+	control, err := firstOrNil(
+		ctx,
+		g.db,
+		invoiceadjustmentcontroldb.InvoiceAdjustmentControls.Query(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("load invoice adjustment control: %w", err)
 	}
@@ -321,7 +326,7 @@ func (g *generator) adjLoadSetup(ctx context.Context) (*adjSetup, error) {
 			return nil, codeErr
 		}
 		if id, ok := byCode[adjAccountWriteOff]; ok {
-			ac := tenantdb.AccountingControls
+			ac := accountingcontroldb.AccountingControls
 			if _, err = ac.Where(ac.DefaultWriteOffAccountID.IsNull()).
 				Update(ctx, g.db, ac.DefaultWriteOffAccountID.To(id)); err != nil {
 				return nil, fmt.Errorf("set default write-off account: %w", err)

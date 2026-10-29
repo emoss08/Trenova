@@ -33,7 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -227,7 +227,7 @@ func TestCloseFiscalYearIsBlockedWithoutARetainedEarningsAccount(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	ctx, f := setupCloseFixture(t, ctx, db)
-	ac := tenantdb.AccountingControls
+	ac := accountingcontroldb.AccountingControls
 	_, err := ac.Where(keel.True()).Update(ctx, db, ac.DefaultRetainedEarningsAccountID.ToNull())
 	require.NoError(t, err)
 
@@ -424,7 +424,7 @@ func TestClosePreviewReportsAnARDifference(t *testing.T) {
 	// Unenforced, so it is reported but does not block.
 	assert.True(t, plan.CanClose)
 
-	ac := tenantdb.AccountingControls
+	ac := accountingcontroldb.AccountingControls
 	_, err = ac.Where(keel.True()).Update(ctx, db,
 		ac.RequireReconciliationToClose.To(true),
 		ac.ReconciliationMode.To(accountingcontrol.ReconciliationModeBlockPosting),
@@ -501,7 +501,7 @@ func setupCloseFixture(
 	revenueID := accountWithCategory(t, ctx, db, accounttype.CategoryRevenue)
 	retainedID := accountWithCategory(t, ctx, db, accounttype.CategoryEquity)
 
-	ac := tenantdb.AccountingControls
+	ac := accountingcontroldb.AccountingControls
 	_, err := ac.Where(keel.True()).
 		Update(ctx, db, ac.DefaultRetainedEarningsAccountID.To(retainedID))
 	require.NoError(t, err)
@@ -679,7 +679,7 @@ func accountWithCategory(
 func defaultARAccount(t *testing.T, ctx context.Context, db *keel.DB) pulid.ID {
 	t.Helper()
 
-	control, err := tenantdb.AccountingControls.Query().First(ctx, db)
+	control, err := accountingcontroldb.AccountingControls.Query().First(ctx, db)
 	require.NoError(t, err)
 
 	return control.DefaultARAccountID

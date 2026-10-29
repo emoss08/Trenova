@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal/extensionportaldb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
 )
@@ -65,7 +65,7 @@ func (s *OutboundChannelsSeed) Run(ctx context.Context, sr *seed.Run) error {
 		Enabled:        true,
 		CreatedByID:    admin.ID,
 	}
-	if err = agentextensiondb.PortalSites.Create(ctx, db, site); err != nil {
+	if err = extensionportaldb.PortalSites.Create(ctx, db, site); err != nil {
 		return fmt.Errorf("insert portal site: %w", err)
 	}
 

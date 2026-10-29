@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent/billingqueueeventdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
@@ -29,8 +30,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -367,7 +368,7 @@ func (g *generator) bilConfigureAccounts(
 		return err
 	}
 
-	ac := tenantdb.AccountingControls
+	ac := accountingcontroldb.AccountingControls
 	defaults := []struct {
 		column keelkinds.PulidIDCol
 		code   string
@@ -1615,7 +1616,7 @@ func (g *generator) bilWrite(ctx context.Context, tx *keel.DB, rows *bilRows) er
 		}, false); err != nil {
 		return err
 	}
-	if err := bilInsert(ctx, tx, billingqueuedb.ItemEvents.Handle, rows.events,
+	if err := bilInsert(ctx, tx, billingqueueeventdb.ItemEvents.Handle, rows.events,
 		func(r *billingqueueevent.ItemEvent) stamp {
 			return stamp{id: r.ID, created: r.At}
 		}, true); err != nil {

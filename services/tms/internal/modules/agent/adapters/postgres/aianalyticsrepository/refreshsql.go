@@ -4,6 +4,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -11,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -108,7 +110,7 @@ func unitInsertColumns(w *aianalyticsdb.WorkUnitsTable, withDecisionRun bool) []
 	)
 }
 
-func stepCause(s *agentdb.AgentRunStepsTable) keel.StringExpr {
+func stepCause(s *agentrunstepdb.AgentRunStepsTable) keel.StringExpr {
 	cause := s.Outcome.Text("cause")
 	verdict := s.Outcome.Text("verdict")
 	reason := s.Outcome.Text("reason")
@@ -298,7 +300,7 @@ func runOwners(req *unitRefresh) *keel.CTETable {
 }
 
 func turnOwners(req *unitRefresh) *keel.CTETable {
-	o := conversationdb.AssistantTurns
+	o := conversationturndb.AssistantTurns
 
 	return keel.CTE("owners", ownerColumns, o.
 		Pick(
@@ -376,7 +378,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 		Where(u.OwnerKind.Eq(src.ownerKind), u.OwnerID.InQuery(owners.Query().Pick(owners.Col("id")))).
 		Group(u.OwnerID))
 
-	s := agentdb.AgentRunSteps
+	s := agentrunstepdb.AgentRunSteps
 	stepCauses := keel.Rows("c", []string{"cause"}, stepCause(s))
 	cause := stepCauses.Col("cause")
 	modelCauses := sliceutils.Strings(aianalytics.ModelCauses())
@@ -400,7 +402,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) *keel.Query[*keel.Row]
 		).
 		Group(s.OwnerID))
 
-	e := agentdb.AgentExceptions
+	e := agentexceptiondb.AgentExceptions
 	decisionRun := owners.Col("decision_run_id")
 	handed := keel.CTE("handed", []string{"run_id"}, e.
 		Pick(e.RunID).
@@ -560,7 +562,7 @@ func clearUnitToolsQuery(stamp int64) *keel.Query[*aianalytics.UnitTool] {
 
 func unitToolsSource(stamp int64) *keel.Query[*aianalytics.WorkUnit] {
 	w := aianalyticsdb.WorkUnits
-	s := agentdb.AgentRunSteps
+	s := agentrunstepdb.AgentRunSteps
 	stepCauses := keel.Rows("c", []string{"cause"}, stepCause(s))
 	cause := stepCauses.Col("cause")
 

@@ -1,8 +1,8 @@
 package factoringtransportservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -10,7 +10,7 @@ import (
 func EnvelopeColumns() []kernelports.EnvelopeColumn {
 	return []kernelports.EnvelopeColumn{{
 		Name:  "factoring transport SFTP secret",
-		Value: factoringdb.Transports.SftpSecret,
+		Value: factoringsubmissiondb.Transports.SftpSecret,
 		Scopes: func(row *kernelports.EnvelopeRow, _ string) []kernelports.SecretScope {
 			return []kernelports.SecretScope{*transportSecretScope(
 				row.Tenant,

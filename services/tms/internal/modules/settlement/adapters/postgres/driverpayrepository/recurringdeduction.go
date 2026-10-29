@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -38,7 +38,7 @@ func (r *recurringDeductionRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*recurringpay.RecurringDeduction], error) {
-			rd := driverpaydb.RecurringDeductions
+			rd := recurringpaydb.RecurringDeductions
 			q := rd.Where(
 				searchPred(req.Filter.Query, rd.Description),
 				when(!req.WorkerID.IsNil(), rd.WorkerID.Eq(req.WorkerID)),
@@ -63,7 +63,7 @@ func (r *recurringDeductionRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*recurringpay.RecurringDeduction], error) {
-			rd := driverpaydb.RecurringDeductions
+			rd := recurringpaydb.RecurringDeductions
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -96,7 +96,7 @@ func (r *recurringDeductionRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringpay.RecurringDeduction, error) {
-			rd := driverpaydb.RecurringDeductions
+			rd := recurringpaydb.RecurringDeductions
 			entity, err := rd.Where(rd.ID.Eq(req.ID)).
 				Load(rd.Worker(), rd.PayCode()).
 				One(ctx, r.db.Keel(ctx))
@@ -117,7 +117,7 @@ func (r *recurringDeductionRepository) ListActiveForWorker(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*recurringpay.RecurringDeduction, error) {
-			rd := driverpaydb.RecurringDeductions
+			rd := recurringpaydb.RecurringDeductions
 			items, err := rd.Where(
 				rd.WorkerID.Eq(req.WorkerID),
 				rd.Status.Eq(recurringpay.DeductionStatusActive),
@@ -141,7 +141,7 @@ func (r *recurringDeductionRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringpay.RecurringDeduction, error) {
-			if err := driverpaydb.RecurringDeductions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := recurringpaydb.RecurringDeductions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				return nil, recurringDeductionErrors.Map(err, entity.ID.String())
 			}
 
@@ -161,7 +161,7 @@ func (r *recurringDeductionRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringpay.RecurringDeduction, error) {
-			rd := driverpaydb.RecurringDeductions
+			rd := recurringpaydb.RecurringDeductions
 			if err := rd.Save(
 				ctx,
 				r.db.Keel(ctx),

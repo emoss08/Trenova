@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell/ratematrixcelldb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion/ratematrixversiondb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,14 +79,14 @@ func publishGrid(
 	require.NoError(t, ratematrixdb.RateMatrixes.Create(ctx, db, matrix))
 	require.NoError(t, ratematrixdb.RateMatrixDimensions.CreateMany(ctx, db, matrix.Dimensions))
 	if len(draftCells) > 0 {
-		require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, db, draftCells))
+		require.NoError(t, ratematrixcelldb.RateMatrixCells.CreateMany(ctx, db, draftCells))
 	}
 
 	published := ratematrixversion.CopyPublished(matrix, draftCells, 1, pulid.Nil)
-	require.NoError(t, ratematrixdb.RateMatrixVersions.Create(ctx, db, published.Version))
+	require.NoError(t, ratematrixversiondb.RateMatrixVersions.Create(ctx, db, published.Version))
 	require.NoError(t, ratematrixdb.RateMatrixDimensions.CreateMany(ctx, db, published.Dimensions))
 	if len(published.Cells) > 0 {
-		require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, db, published.Cells))
+		require.NoError(t, ratematrixcelldb.RateMatrixCells.CreateMany(ctx, db, published.Cells))
 	}
 
 	return matrix
@@ -125,7 +127,7 @@ func TestTableReadsServeTheTariffHostByVersion(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, stamp)
 
-	rc := ratematrixdb.RateMatrixCells
+	rc := ratematrixcelldb.RateMatrixCells
 	_, err = rc.Where(rc.RateMatrixID.Eq(grid.ID), rc.VersionNumber.Eq(ratematrix.DraftVersion)).
 		Update(ctx, db, rc.Value.To(decimal.RequireFromString("7.77")))
 	require.NoError(t, err)
@@ -220,7 +222,7 @@ func TestPostalRangesListOncePerAxis(t *testing.T) {
 		cell.VersionNumber = 1
 		cell.Value = decimal.NewFromInt(1)
 	}
-	require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, db, cells))
+	require.NoError(t, ratematrixcelldb.RateMatrixCells.CreateMany(ctx, db, cells))
 
 	versions := ratematrixversionrepository.New(ratematrixversionrepository.Params{
 		DB:     rdb.Conn,

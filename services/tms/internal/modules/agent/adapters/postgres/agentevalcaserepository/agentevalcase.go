@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation/agentevaluationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
@@ -227,7 +229,7 @@ func (r *repository) ListCaptureCandidates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]agentqualityports.EvalCaseCaptureCandidate, error) {
-			d := agentdb.AgentDecisions
+			d := agentdecisiondb.AgentDecisions
 			p := agentdb.AgentProposals
 			run := agentdb.AgentRuns
 			captured := agentqualitydb.EvalCases.As("captured")
@@ -379,7 +381,7 @@ func (r *repository) ListSamplingCases(
 		r.db,
 		func(ctx context.Context) ([]agentqualitysuite.SamplingCase, error) {
 			c := agentqualitydb.EvalCases
-			ev := agentdb.Evaluations
+			ev := agentevaluationdb.Evaluations
 
 			lastFailure := keel.Scalar(ev.
 				Pick(keel.CaseInt64().

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -46,7 +46,7 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*agentexception.AgentException], error) {
-			e := agentdb.AgentExceptions
+			e := agentexceptiondb.AgentExceptions
 			result, err := listquery.List(
 				ctx,
 				r.db.Keel(ctx),
@@ -78,7 +78,7 @@ func (r *repository) ListByIDs(
 				return []*agentexception.AgentException{}, nil
 			}
 
-			e := agentdb.AgentExceptions
+			e := agentexceptiondb.AgentExceptions
 			entities, err := e.Where(e.ID.In(req.IDs...)).
 				Limit(len(req.IDs)).
 				List(ctx, r.db.Keel(ctx))
@@ -104,7 +104,7 @@ func (r *repository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				agentdb.AgentExceptions.Query(),
+				agentexceptiondb.AgentExceptions.Query(),
 				&listquery.Request[agentexception.AgentException]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
@@ -126,7 +126,7 @@ func (r *repository) GetByID(
 	req agentports.GetAgentExceptionByIDRequest,
 ) (*agentexception.AgentException, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentexception.AgentException, error) {
-		entity, err := agentdb.AgentExceptions.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := agentexceptiondb.AgentExceptions.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			r.l.Error(
 				"failed to get agent exception",
@@ -145,7 +145,7 @@ func (r *repository) Create(
 	entity *agentexception.AgentException,
 ) (*agentexception.AgentException, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentexception.AgentException, error) {
-		if err := agentdb.AgentExceptions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := agentexceptiondb.AgentExceptions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent exception", zap.Error(err))
 			return nil, exceptionErrors.Map(err, entity.ID.String())
 		}
@@ -159,7 +159,7 @@ func (r *repository) UpdateResolution(
 	req agentports.UpdateAgentExceptionResolutionRequest,
 ) (*agentexception.AgentException, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentexception.AgentException, error) {
-		e := agentdb.AgentExceptions
+		e := agentexceptiondb.AgentExceptions
 		rows, err := e.Where(e.ID.Eq(req.ID)).UpdateReturning(
 			ctx,
 			r.db.Keel(ctx),

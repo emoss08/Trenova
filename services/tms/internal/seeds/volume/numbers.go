@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -63,7 +63,7 @@ func (s *sequenceStore) GetNextSequenceBatch(
 		return []int64{}, nil
 	}
 
-	sq := tenantdb.Sequences
+	sq := sequenceconfigdb.Sequences
 	current, err := keel.WriteValue(ctx, s.db, func(ctx context.Context) (int64, error) {
 		row := &sequenceconfig.Sequence{
 			ID:              pulid.MustNew("seq_"),
@@ -112,7 +112,7 @@ func (s *sequenceStore) UpdateLastGenerated(
 	ctx context.Context,
 	req *seqgen.LastGeneratedRequest,
 ) error {
-	sq := tenantdb.Sequences
+	sq := sequenceconfigdb.Sequences
 	if _, err := sq.Where(
 		sq.SequenceType.Eq(req.Type),
 		sq.Year.Eq(int16(req.Year)),   //nolint:gosec // a calendar year
@@ -133,7 +133,7 @@ func (p *formatProvider) GetFormat(
 	sequenceType sequenceconfig.SequenceType,
 	_, _ pulid.ID,
 ) (*sequenceconfig.SequenceFormat, error) {
-	sc := tenantdb.SequenceConfigs
+	sc := sequenceconfigdb.SequenceConfigs
 	cfg, err := sc.Where(sc.SequenceType.Eq(sequenceType)).First(ctx, p.db)
 	if errors.Is(err, keel.ErrNotFound) {
 		return sequenceconfig.DefaultSequenceFormat(sequenceType)

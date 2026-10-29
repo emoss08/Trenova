@@ -4,14 +4,16 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal/extensionportaldb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch/extensionwebwatchdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func EnvelopeColumns() []kernelports.EnvelopeColumn {
 	extension := agentextensiondb.Extensions
-	site := agentextensiondb.PortalSites
-	watch := agentextensiondb.WebWatches
+	site := extensionportaldb.PortalSites
+	watch := extensionwebwatchdb.WebWatches
 	extensionType := kernelports.EnvelopeColumnName(extension.Type)
 
 	return []kernelports.EnvelopeColumn{

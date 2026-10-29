@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,7 +38,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	builder := newValidatorBuilderWithIntegrationRepo(p.IntegrationRepo)
 
 	if p.DB != nil {
-		checker := keelcheck.NewChecker(p.DB, tenantdb.AccountingControlsSchema())
+		checker := keelcheck.NewChecker(p.DB, accountingcontroldb.AccountingControlsSchema())
 		builder.
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker)

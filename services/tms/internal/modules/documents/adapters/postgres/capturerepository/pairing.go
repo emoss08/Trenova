@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing/capturepairingdb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -41,7 +41,7 @@ func (r *pairingRepository) Create(
 		"record a pairing request that belongs to no organization until a person claims it",
 	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capturepairing.CapturePairing, error) {
-		if err := capturedb.CapturePairings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := capturepairingdb.CapturePairings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, err
 		}
 
@@ -55,7 +55,7 @@ func (r *pairingRepository) Update(
 ) (*capturepairing.CapturePairing, error) {
 	ctx = dbscope.WithSystem(ctx, "update a pairing that may not belong to an organization yet")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capturepairing.CapturePairing, error) {
-		if err := capturedb.CapturePairings.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := capturepairingdb.CapturePairings.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, pairingErrors.Map(err, entity.ID.String())
 		}
 
@@ -74,7 +74,7 @@ func (r *pairingRepository) GetByDeviceCodeHash(
 		"resolve a pairing device code before it is bound to an organization",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capturepairing.CapturePairing, error) {
-		p := capturedb.CapturePairings
+		p := capturepairingdb.CapturePairings
 		entity, err := p.Where(p.DeviceCodeHash.Eq(hash)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, pairingErrors.Map(err, "")
@@ -93,7 +93,7 @@ func (r *pairingRepository) GetOpenByUserCode(
 		"find an unclaimed pairing by the code a person typed; it has no organization yet",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capturepairing.CapturePairing, error) {
-		p := capturedb.CapturePairings
+		p := capturepairingdb.CapturePairings
 		entity, err := p.Where(p.UserCode.Eq(userCode), p.Status.In(openPairingStatuses...)).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -107,7 +107,7 @@ func (r *pairingRepository) GetOpenByUserCode(
 func (r *pairingRepository) ExpireStale(ctx context.Context, now int64) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire abandoned pairings across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		p := capturedb.CapturePairings
+		p := capturepairingdb.CapturePairings
 		n, err := p.Where(p.Status.In(openPairingStatuses...), p.ExpiresAt.Lte(now)).Update(
 			ctx,
 			r.db.Keel(ctx),

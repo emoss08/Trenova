@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline/workerdisciplinedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
@@ -167,10 +168,10 @@ func (s *WorkerSafetySeed) seedWorker(
 		return err
 	}
 	actions := s.actionsFor(refs, wrk, index, events)
-	if err := workersafetydb.WorkerDisciplinaryActions.CreateMany(ctx, db, actions); err != nil {
+	if err := workerdisciplinedb.WorkerDisciplinaryActions.CreateMany(ctx, db, actions); err != nil {
 		return err
 	}
-	if err := workersafetydb.WorkerRecognitions.CreateMany(ctx, db, s.recognitionsFor(refs, wrk, index)); err != nil {
+	if err := workerdisciplinedb.WorkerRecognitions.CreateMany(ctx, db, s.recognitionsFor(refs, wrk, index)); err != nil {
 		return err
 	}
 	if review := s.reviewFor(refs, wrk, index); review != nil {

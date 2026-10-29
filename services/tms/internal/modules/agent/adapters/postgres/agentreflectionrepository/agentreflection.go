@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection/agentreflectiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -48,7 +48,7 @@ func (r *repository) Claim(
 ) (*agentreflection.Reflection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentreflection.Reflection, error) {
 		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
-			return agentdb.Reflections.Create(ctx, r.db.Keel(ctx), entity)
+			return agentreflectiondb.Reflections.Create(ctx, r.db.Keel(ctx), entity)
 		})
 		if err == nil {
 			return entity, nil
@@ -75,7 +75,7 @@ func (r *repository) claimed(
 	ctx context.Context,
 	entity *agentreflection.Reflection,
 ) (*agentreflection.Reflection, error) {
-	rf := agentdb.Reflections
+	rf := agentreflectiondb.Reflections
 	subject := keel.And(
 		idIs(rf.ThreadID, entity.ThreadID),
 		rf.ThroughSequence.Eq(int64(entity.ThroughSequence)),
@@ -97,7 +97,7 @@ func (r *repository) GetByID(
 	req agentports.GetAgentReflectionRequest,
 ) (*agentreflection.Reflection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentreflection.Reflection, error) {
-		entity, err := agentdb.Reflections.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := agentreflectiondb.Reflections.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, reflectionErrors.Map(err, req.ID.String())
 		}
@@ -111,7 +111,7 @@ func (r *repository) Update(
 	entity *agentreflection.Reflection,
 ) (*agentreflection.Reflection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentreflection.Reflection, error) {
-		rf := agentdb.Reflections
+		rf := agentreflectiondb.Reflections
 		err := rf.Save(
 			ctx,
 			r.db.Keel(ctx),
@@ -146,7 +146,7 @@ func (r *repository) ThreadReflectedThrough(
 	req agentports.ThreadReflectedThroughRequest,
 ) (int, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (int, bool, error) {
-		rf := agentdb.Reflections
+		rf := agentreflectiondb.Reflections
 		latest, err := rf.Pick(rf.ThroughSequence).
 			Where(
 				rf.SubjectType.Eq(agentreflection.ReflectionSubjectThread),
@@ -177,7 +177,7 @@ func (r *repository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				agentdb.Reflections.Query(),
+				agentreflectiondb.Reflections.Query(),
 				&listquery.Request[agentreflection.Reflection]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,

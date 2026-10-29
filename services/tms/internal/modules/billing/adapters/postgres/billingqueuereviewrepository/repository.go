@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent/billingqueueeventdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
@@ -257,7 +258,7 @@ func (r *repository) CreateEvents(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := billingqueuedb.ItemEvents.CreateMany(ctx, r.db.Keel(ctx), events)
+		err := billingqueueeventdb.ItemEvents.CreateMany(ctx, r.db.Keel(ctx), events)
 		return eventErrors.Map(err, "")
 	})
 }
@@ -275,7 +276,7 @@ func (r *repository) ListEvents(
 				limit = 30
 			}
 
-			e := billingqueuedb.ItemEvents
+			e := billingqueueeventdb.ItemEvents
 			var (
 				total  int64
 				events []*billingqueueevent.ItemEvent

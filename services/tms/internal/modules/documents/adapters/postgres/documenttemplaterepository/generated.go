@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument/generateddocumentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -46,7 +46,7 @@ func (r *generatedRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*generateddocument.GeneratedDocument], error) {
-			g := documenttemplatedb.GeneratedDocuments
+			g := generateddocumentdb.GeneratedDocuments
 			result, err := listquery.List(
 				ctx,
 				r.db.Keel(ctx),
@@ -83,7 +83,7 @@ func (r *generatedRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*generateddocument.GeneratedDocument, error) {
-			g := documenttemplatedb.GeneratedDocuments
+			g := generateddocumentdb.GeneratedDocuments
 			entity, err := g.Where(g.ID.Eq(req.GeneratedDocumentID)).
 				Load(g.TemplateVersion()).
 				One(ctx, r.db.Keel(ctx))
@@ -105,7 +105,7 @@ func (r *generatedRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*generateddocument.GeneratedDocument, error) {
-			err := documenttemplatedb.GeneratedDocuments.Create(ctx, r.db.Keel(ctx), entity)
+			err := generateddocumentdb.GeneratedDocuments.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create generated document", zap.Error(err))
 				return nil, generatedErrors.Map(err, entity.ID.String())
@@ -126,7 +126,7 @@ func (r *generatedRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*generateddocument.GeneratedDocument, error) {
-			err := documenttemplatedb.GeneratedDocuments.Save(ctx, r.db.Keel(ctx), entity)
+			err := generateddocumentdb.GeneratedDocuments.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error(
 					"failed to update generated document",

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -45,7 +45,7 @@ func (r *repository) GetByOrgID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
-			ac := tenantdb.AccountingControls
+			ac := accountingcontroldb.AccountingControls
 			entity, err := ac.Where(ac.OrganizationID.Eq(orgID)).
 				Cache(resultcache.Settings()...).
 				One(ctx, r.db.Keel(ctx))
@@ -72,7 +72,8 @@ func (r *repository) ListAll(ctx context.Context) ([]*accountingcontrol.Accounti
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
-			entities, err := tenantdb.AccountingControls.AllTenants().All(ctx, r.db.Keel(ctx))
+			entities, err := accountingcontroldb.AccountingControls.AllTenants().
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list accounting controls", zap.Error(err))
 				return nil, err
@@ -91,7 +92,7 @@ func (r *repository) ListWithScheduledPeriodClose(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
-			ac := tenantdb.AccountingControls
+			ac := accountingcontroldb.AccountingControls
 			entities, err := ac.AllTenants().
 				Where(
 					ac.PeriodCloseMode.Eq(accountingcontrol.PeriodCloseModeSystemScheduled),
@@ -119,7 +120,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
-			if err := tenantdb.AccountingControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := accountingcontroldb.AccountingControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error(
 					"failed to update accounting control",
 					zap.String("orgID", entity.OrganizationID.String()),

@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantchapterrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -96,7 +96,7 @@ func (h *harness) turn(
 		CreatedAt:      createdAt,
 		UpdatedAt:      createdAt,
 	}
-	require.NoError(t, conversationdb.AssistantTurns.Create(h.ctx, h.db, turn))
+	require.NoError(t, conversationturndb.AssistantTurns.Create(h.ctx, h.db, turn))
 
 	return turn
 }

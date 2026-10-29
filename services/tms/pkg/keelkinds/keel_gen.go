@@ -5,6 +5,13 @@ package keelkinds
 import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -121,6 +128,574 @@ func (c AccountingproviderSyncModeCol) In(vs ...accountingprovider.SyncMode) kee
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c AccountingproviderSyncModeCol) NotIn(vs ...accountingprovider.SyncMode) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// AgenttemplateTemplateCol is a column of agenttemplate.Template values.
+type AgenttemplateTemplateCol struct{ keel.StringCol }
+
+func (c AgenttemplateTemplateCol) Eq(v agenttemplate.Template) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c AgenttemplateTemplateCol) Ne(v agenttemplate.Template) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c AgenttemplateTemplateCol) Gt(v agenttemplate.Template) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c AgenttemplateTemplateCol) Gte(v agenttemplate.Template) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AgenttemplateTemplateCol) Lt(v agenttemplate.Template) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c AgenttemplateTemplateCol) Lte(v agenttemplate.Template) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AgenttemplateTemplateCol) IsDistinctFrom(v agenttemplate.Template) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AgenttemplateTemplateCol) Between(lo, hi agenttemplate.Template) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AgenttemplateTemplateCol) To(v agenttemplate.Template) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AgenttemplateTemplateCol) In(vs ...agenttemplate.Template) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AgenttemplateTemplateCol) NotIn(vs ...agenttemplate.Template) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// AgenttriggerEventKindCol is a column of agenttrigger.EventKind values.
+type AgenttriggerEventKindCol struct{ keel.StringCol }
+
+func (c AgenttriggerEventKindCol) Eq(v agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c AgenttriggerEventKindCol) Ne(v agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c AgenttriggerEventKindCol) Gt(v agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c AgenttriggerEventKindCol) Gte(v agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AgenttriggerEventKindCol) Lt(v agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c AgenttriggerEventKindCol) Lte(v agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AgenttriggerEventKindCol) IsDistinctFrom(v agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AgenttriggerEventKindCol) Between(lo, hi agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AgenttriggerEventKindCol) To(v agenttrigger.EventKind) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AgenttriggerEventKindCol) In(vs ...agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AgenttriggerEventKindCol) NotIn(vs ...agenttrigger.EventKind) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// AiplatformPlatformCol is a column of aiplatform.Platform values.
+type AiplatformPlatformCol struct{ keel.StringCol }
+
+func (c AiplatformPlatformCol) Eq(v aiplatform.Platform) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c AiplatformPlatformCol) Ne(v aiplatform.Platform) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c AiplatformPlatformCol) Gt(v aiplatform.Platform) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c AiplatformPlatformCol) Gte(v aiplatform.Platform) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AiplatformPlatformCol) Lt(v aiplatform.Platform) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c AiplatformPlatformCol) Lte(v aiplatform.Platform) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AiplatformPlatformCol) IsDistinctFrom(v aiplatform.Platform) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AiplatformPlatformCol) Between(lo, hi aiplatform.Platform) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AiplatformPlatformCol) To(v aiplatform.Platform) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AiplatformPlatformCol) In(vs ...aiplatform.Platform) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AiplatformPlatformCol) NotIn(vs ...aiplatform.Platform) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// AireasoningReasoningEffortCol is a column of aireasoning.ReasoningEffort values.
+type AireasoningReasoningEffortCol struct{ keel.StringCol }
+
+func (c AireasoningReasoningEffortCol) Eq(v aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c AireasoningReasoningEffortCol) Ne(v aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c AireasoningReasoningEffortCol) Gt(v aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c AireasoningReasoningEffortCol) Gte(v aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AireasoningReasoningEffortCol) Lt(v aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c AireasoningReasoningEffortCol) Lte(v aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AireasoningReasoningEffortCol) IsDistinctFrom(v aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AireasoningReasoningEffortCol) Between(lo, hi aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AireasoningReasoningEffortCol) To(v aireasoning.ReasoningEffort) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AireasoningReasoningEffortCol) In(vs ...aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AireasoningReasoningEffortCol) NotIn(vs ...aireasoning.ReasoningEffort) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// AireasoningThinkingStyleCol is a column of aireasoning.ThinkingStyle values.
+type AireasoningThinkingStyleCol struct{ keel.StringCol }
+
+func (c AireasoningThinkingStyleCol) Eq(v aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c AireasoningThinkingStyleCol) Ne(v aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c AireasoningThinkingStyleCol) Gt(v aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c AireasoningThinkingStyleCol) Gte(v aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AireasoningThinkingStyleCol) Lt(v aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c AireasoningThinkingStyleCol) Lte(v aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AireasoningThinkingStyleCol) IsDistinctFrom(v aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AireasoningThinkingStyleCol) Between(lo, hi aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AireasoningThinkingStyleCol) To(v aireasoning.ThinkingStyle) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AireasoningThinkingStyleCol) In(vs ...aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AireasoningThinkingStyleCol) NotIn(vs ...aireasoning.ThinkingStyle) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// AitaskTaskCol is a column of aitask.Task values.
+type AitaskTaskCol struct{ keel.StringCol }
+
+func (c AitaskTaskCol) Eq(v aitask.Task) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c AitaskTaskCol) Ne(v aitask.Task) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c AitaskTaskCol) Gt(v aitask.Task) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c AitaskTaskCol) Gte(v aitask.Task) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c AitaskTaskCol) Lt(v aitask.Task) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c AitaskTaskCol) Lte(v aitask.Task) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c AitaskTaskCol) IsDistinctFrom(v aitask.Task) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AitaskTaskCol) Between(lo, hi aitask.Task) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AitaskTaskCol) To(v aitask.Task) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c AitaskTaskCol) In(vs ...aitask.Task) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c AitaskTaskCol) NotIn(vs ...aitask.Task) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelEnrollmentModeCol is a column of carrierintel.EnrollmentMode values.
+type CarrierintelEnrollmentModeCol struct{ keel.StringCol }
+
+func (c CarrierintelEnrollmentModeCol) Eq(v carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelEnrollmentModeCol) Ne(v carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelEnrollmentModeCol) Gt(v carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelEnrollmentModeCol) Gte(v carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelEnrollmentModeCol) Lt(v carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelEnrollmentModeCol) Lte(v carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelEnrollmentModeCol) IsDistinctFrom(v carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelEnrollmentModeCol) Between(lo, hi carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelEnrollmentModeCol) To(v carrierintel.EnrollmentMode) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelEnrollmentModeCol) In(vs ...carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelEnrollmentModeCol) NotIn(vs ...carrierintel.EnrollmentMode) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelLookupDepthCol is a column of carrierintel.LookupDepth values.
+type CarrierintelLookupDepthCol struct{ keel.StringCol }
+
+func (c CarrierintelLookupDepthCol) Eq(v carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelLookupDepthCol) Ne(v carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelLookupDepthCol) Gt(v carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelLookupDepthCol) Gte(v carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelLookupDepthCol) Lt(v carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelLookupDepthCol) Lte(v carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelLookupDepthCol) IsDistinctFrom(v carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelLookupDepthCol) Between(lo, hi carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelLookupDepthCol) To(v carrierintel.LookupDepth) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelLookupDepthCol) In(vs ...carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelLookupDepthCol) NotIn(vs ...carrierintel.LookupDepth) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelPurposeCol is a column of carrierintel.Purpose values.
+type CarrierintelPurposeCol struct{ keel.StringCol }
+
+func (c CarrierintelPurposeCol) Eq(v carrierintel.Purpose) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelPurposeCol) Ne(v carrierintel.Purpose) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelPurposeCol) Gt(v carrierintel.Purpose) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelPurposeCol) Gte(v carrierintel.Purpose) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelPurposeCol) Lt(v carrierintel.Purpose) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelPurposeCol) Lte(v carrierintel.Purpose) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelPurposeCol) IsDistinctFrom(v carrierintel.Purpose) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelPurposeCol) Between(lo, hi carrierintel.Purpose) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelPurposeCol) To(v carrierintel.Purpose) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelPurposeCol) In(vs ...carrierintel.Purpose) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelPurposeCol) NotIn(vs ...carrierintel.Purpose) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelRiskLevelCol is a column of carrierintel.RiskLevel values.
+type CarrierintelRiskLevelCol struct{ keel.StringCol }
+
+func (c CarrierintelRiskLevelCol) Eq(v carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelRiskLevelCol) Ne(v carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelRiskLevelCol) Gt(v carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelRiskLevelCol) Gte(v carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelRiskLevelCol) Lt(v carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelRiskLevelCol) Lte(v carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelRiskLevelCol) IsDistinctFrom(v carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelRiskLevelCol) Between(lo, hi carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelRiskLevelCol) To(v carrierintel.RiskLevel) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelRiskLevelCol) In(vs ...carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelRiskLevelCol) NotIn(vs ...carrierintel.RiskLevel) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelRuleActionCol is a column of carrierintel.RuleAction values.
+type CarrierintelRuleActionCol struct{ keel.StringCol }
+
+func (c CarrierintelRuleActionCol) Eq(v carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelRuleActionCol) Ne(v carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelRuleActionCol) Gt(v carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelRuleActionCol) Gte(v carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelRuleActionCol) Lt(v carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelRuleActionCol) Lte(v carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelRuleActionCol) IsDistinctFrom(v carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelRuleActionCol) Between(lo, hi carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelRuleActionCol) To(v carrierintel.RuleAction) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelRuleActionCol) In(vs ...carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelRuleActionCol) NotIn(vs ...carrierintel.RuleAction) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelSectionCol is a column of carrierintel.Section values.
+type CarrierintelSectionCol struct{ keel.StringCol }
+
+func (c CarrierintelSectionCol) Eq(v carrierintel.Section) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelSectionCol) Ne(v carrierintel.Section) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelSectionCol) Gt(v carrierintel.Section) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelSectionCol) Gte(v carrierintel.Section) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelSectionCol) Lt(v carrierintel.Section) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelSectionCol) Lte(v carrierintel.Section) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelSectionCol) IsDistinctFrom(v carrierintel.Section) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelSectionCol) Between(lo, hi carrierintel.Section) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelSectionCol) To(v carrierintel.Section) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelSectionCol) In(vs ...carrierintel.Section) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelSectionCol) NotIn(vs ...carrierintel.Section) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelSeverityCol is a column of carrierintel.Severity values.
+type CarrierintelSeverityCol struct{ keel.StringCol }
+
+func (c CarrierintelSeverityCol) Eq(v carrierintel.Severity) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelSeverityCol) Ne(v carrierintel.Severity) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelSeverityCol) Gt(v carrierintel.Severity) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelSeverityCol) Gte(v carrierintel.Severity) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelSeverityCol) Lt(v carrierintel.Severity) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelSeverityCol) Lte(v carrierintel.Severity) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelSeverityCol) IsDistinctFrom(v carrierintel.Severity) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelSeverityCol) Between(lo, hi carrierintel.Severity) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelSeverityCol) To(v carrierintel.Severity) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelSeverityCol) In(vs ...carrierintel.Severity) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelSeverityCol) NotIn(vs ...carrierintel.Severity) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelSubjectTypeCol is a column of carrierintel.SubjectType values.
+type CarrierintelSubjectTypeCol struct{ keel.StringCol }
+
+func (c CarrierintelSubjectTypeCol) Eq(v carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelSubjectTypeCol) Ne(v carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelSubjectTypeCol) Gt(v carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelSubjectTypeCol) Gte(v carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelSubjectTypeCol) Lt(v carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelSubjectTypeCol) Lte(v carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelSubjectTypeCol) IsDistinctFrom(v carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelSubjectTypeCol) Between(lo, hi carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelSubjectTypeCol) To(v carrierintel.SubjectType) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelSubjectTypeCol) In(vs ...carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelSubjectTypeCol) NotIn(vs ...carrierintel.SubjectType) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelUnitTypeCol is a column of carrierintel.UnitType values.
+type CarrierintelUnitTypeCol struct{ keel.StringCol }
+
+func (c CarrierintelUnitTypeCol) Eq(v carrierintel.UnitType) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelUnitTypeCol) Ne(v carrierintel.UnitType) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelUnitTypeCol) Gt(v carrierintel.UnitType) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelUnitTypeCol) Gte(v carrierintel.UnitType) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelUnitTypeCol) Lt(v carrierintel.UnitType) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelUnitTypeCol) Lte(v carrierintel.UnitType) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelUnitTypeCol) IsDistinctFrom(v carrierintel.UnitType) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelUnitTypeCol) Between(lo, hi carrierintel.UnitType) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelUnitTypeCol) To(v carrierintel.UnitType) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelUnitTypeCol) In(vs ...carrierintel.UnitType) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelUnitTypeCol) NotIn(vs ...carrierintel.UnitType) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// CarrierintelruleRuleCodeCol is a column of carrierintelrule.RuleCode values.
+type CarrierintelruleRuleCodeCol struct{ keel.StringCol }
+
+func (c CarrierintelruleRuleCodeCol) Eq(v carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c CarrierintelruleRuleCodeCol) Ne(v carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c CarrierintelruleRuleCodeCol) Gt(v carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c CarrierintelruleRuleCodeCol) Gte(v carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c CarrierintelruleRuleCodeCol) Lt(v carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c CarrierintelruleRuleCodeCol) Lte(v carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c CarrierintelruleRuleCodeCol) IsDistinctFrom(v carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c CarrierintelruleRuleCodeCol) Between(lo, hi carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c CarrierintelruleRuleCodeCol) To(v carrierintelrule.RuleCode) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c CarrierintelruleRuleCodeCol) In(vs ...carrierintelrule.RuleCode) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c CarrierintelruleRuleCodeCol) NotIn(vs ...carrierintelrule.RuleCode) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

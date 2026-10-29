@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -213,7 +213,8 @@ func (r *payablesRepository) accountingControl(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingcontrol.AccountingControl, error) {
-			control, err := tenantdb.AccountingControls.Query().First(ctx, r.db.Keel(ctx))
+			control, err := accountingcontroldb.AccountingControls.Query().
+				First(ctx, r.db.Keel(ctx))
 			if err != nil {
 				if dberror.IsNotFoundError(err) {
 					return nil, nil //nolint:nilnil // a tenant without an accounting control has no default accounts

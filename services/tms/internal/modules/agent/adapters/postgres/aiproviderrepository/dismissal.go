@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal/aiproviderdismissaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"go.uber.org/fx"
 )
@@ -37,7 +37,7 @@ func (r *dismissalRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*aiproviderdismissal.FailureDismissal, error) {
-			d := aiproviderdb.FailureDismissals
+			d := aiproviderdismissaldb.FailureDismissals
 			dismissals, err := d.Where(d.UserID.Eq(req.UserID)).All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list provider failure dismissals: %w", err)
@@ -52,7 +52,7 @@ func (r *dismissalRepository) Upsert(
 	dismissal *aiproviderdismissal.FailureDismissal,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		d := aiproviderdb.FailureDismissals
+		d := aiproviderdismissaldb.FailureDismissals
 		_, err := d.Upsert(ctx, r.db.Keel(ctx), []*aiproviderdismissal.FailureDismissal{dismissal},
 			keel.OnConflict(d.OrganizationID, d.BusinessUnitID, d.UserID, d.ProviderID).
 				Update(d.FailureAt).
@@ -70,7 +70,7 @@ func (r *dismissalRepository) Delete(
 	req *aiproviderports.DeleteFailureDismissalRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		d := aiproviderdb.FailureDismissals
+		d := aiproviderdismissaldb.FailureDismissals
 		_, err := d.Where(d.UserID.Eq(req.UserID), d.ProviderID.Eq(req.ProviderID)).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {

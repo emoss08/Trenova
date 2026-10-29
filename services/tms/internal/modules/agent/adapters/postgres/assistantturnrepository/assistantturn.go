@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,7 +67,7 @@ func prepareTurn(turn *conversationturn.AssistantTurn) {
 func getByIDQuery(
 	req *assistantturnports.GetAssistantTurnRequest,
 ) *keel.Query[*conversationturn.AssistantTurn] {
-	at := conversationdb.AssistantTurns
+	at := conversationturndb.AssistantTurns
 
 	return at.Where(
 		at.ID.Eq(req.ID),
@@ -77,7 +78,7 @@ func getByIDQuery(
 func activeQuery(
 	req *assistantturnports.ActiveAssistantTurnRequest,
 ) *keel.Query[*conversationturn.AssistantTurn] {
-	at := conversationdb.AssistantTurns
+	at := conversationturndb.AssistantTurns
 
 	return at.Where(
 		at.ThreadID.Eq(req.ThreadID),
@@ -89,7 +90,7 @@ func activeQuery(
 func liveTurnsQuery(
 	req *assistantturnports.ListLiveAssistantTurnsRequest,
 ) *keel.Query[*conversationturn.AssistantTurn] {
-	at := conversationdb.AssistantTurns
+	at := conversationturndb.AssistantTurns
 	th := conversationdb.Threads.As("live_thread")
 
 	return at.Join(th, th.ID.EqCol(at.ThreadID)).
@@ -107,7 +108,7 @@ func liveThreadTitlesQuery(
 	th := conversationdb.Threads
 
 	return th.Pick(th.ID, th.Title.Coalesce("")).Where(
-		th.ID.InQuery(liveTurnsQuery(req).Pick(conversationdb.AssistantTurns.ThreadID)),
+		th.ID.InQuery(liveTurnsQuery(req).Pick(conversationturndb.AssistantTurns.ThreadID)),
 	)
 }
 
@@ -120,7 +121,7 @@ func (r *repository) Start(
 		r.db,
 		func(ctx context.Context) (*conversationturn.AssistantTurn, error) {
 			prepareTurn(turn)
-			if err := conversationdb.AssistantTurns.Create(ctx, r.db.Keel(ctx), turn); err != nil {
+			if err := conversationturndb.AssistantTurns.Create(ctx, r.db.Keel(ctx), turn); err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, assistantturnports.ErrTurnAlreadyRunning
 				}
@@ -178,7 +179,7 @@ func (r *repository) ListLive(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*assistantturnports.LiveAssistantTurn, error) {
-			at := conversationdb.AssistantTurns
+			at := conversationturndb.AssistantTurns
 			var (
 				turns  []*conversationturn.AssistantTurn
 				titles []threadTitle
@@ -224,7 +225,7 @@ func (r *repository) RecordFingerprint(
 			return nil
 		}
 
-		at := conversationdb.AssistantTurns
+		at := conversationturndb.AssistantTurns
 		if _, err := at.Where(at.ID.Eq(req.ID)).
 			Update(ctx, r.db.Keel(ctx), at.Fingerprint.To(req.Fingerprint)); err != nil {
 			return fmt.Errorf("record the agent a turn ran as: %w", err)
@@ -239,7 +240,7 @@ func (r *repository) Complete(
 	req assistantturnports.CompleteAssistantTurnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		at := conversationdb.AssistantTurns
+		at := conversationturndb.AssistantTurns
 		sets := []keel.Assignment{
 			at.Status.To(req.Status),
 			at.CompletedAt.To(timeutils.NowUnix()),
@@ -272,7 +273,7 @@ func (r *repository) MarkWorkflow(
 	workflowID string,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		at := conversationdb.AssistantTurns
+		at := conversationturndb.AssistantTurns
 		_, err := at.Where(at.ID.Eq(id), at.Status.In(liveStatuses...)).Update(
 			ctx,
 			r.db.Keel(ctx),

@@ -324,7 +324,7 @@ var itemsTable = schema.Table{
 		{Name: "summary", Quoted: `"summary"`, Field: "Summary", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Summary`, JSON: `summary`},
 		{Name: "subject_type", Quoted: `"subject_type"`, Field: "SubjectType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject Type`, Doc: `SubjectType and SubjectID name the record an agent would work on if the item is handed to one; EventKind is the event that hand-off publishes. Empty when the source has no agent subject.`, JSON: `subjectType`, Enum: enumAgentSubjectType[:]},
 		{Name: "subject_id", Quoted: `"subject_id"`, Field: "SubjectID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject ID`, JSON: `subjectId`},
-		{Name: "event_kind", Quoted: `"event_kind"`, Field: "EventKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Event Kind`, JSON: `eventKind`, Enum: enumAgentEventKind[:]},
+		{Name: "event_kind", Quoted: `"event_kind"`, Field: "EventKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Event Kind`, JSON: `eventKind`, Enum: enumAgenttriggerEventKind[:]},
 		{Name: "path", Quoted: `"path"`, Field: "Path", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Path`, Doc: `Path opens the source record. It is built by the server and validated like an insight's link, so a stored path can only be an application path.`, JSON: `path`},
 		{Name: "occurred_at", Quoted: `"occurred_at"`, Field: "OccurredAt", Kind: schema.KindInt64, Flags: 0, Label: `Occurred At`, JSON: `occurredAt`},
 		{Name: "resolved_at", Quoted: `"resolved_at"`, Field: "ResolvedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Resolved At`, JSON: `resolvedAt`},
@@ -390,7 +390,7 @@ type ItemsTable struct {
 	Summary           keel.StringCol
 	SubjectType       agentdb.SubjectTypeCol
 	SubjectID         keelkinds.PulidIDCol
-	EventKind         agentdb.EventKindCol
+	EventKind         keelkinds.AgenttriggerEventKindCol
 	Path              keel.StringCol
 	OccurredAt        keel.Int64Col
 	ResolvedAt        keel.Int64Col
@@ -436,7 +436,7 @@ var Items = &ItemsTable{
 	Summary:           keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 7}},
 	SubjectType:       agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 8}}},
 	SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 9}}},
-	EventKind:         agentdb.EventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 10}}},
+	EventKind:         keelkinds.AgenttriggerEventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 10}}},
 	Path:              keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 11}},
 	OccurredAt:        keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 12}},
 	ResolvedAt:        keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 13}},
@@ -483,7 +483,7 @@ func BuildItems(r *keel.Ref) *ItemsTable {
 		Summary:           keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		SubjectType:       agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		EventKind:         agentdb.EventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		EventKind:         keelkinds.AgenttriggerEventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Path:              keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		OccurredAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		ResolvedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -907,7 +907,36 @@ func valueRead(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-var enumAgentEventKind = [...]schema.EnumValue{
+var enumAgentSubjectType = [...]schema.EnumValue{
+	{Value: `BillingQueueItem`, Label: `Subject Billing Queue Item`},
+	{Value: `ShipmentMove`, Label: `Subject Shipment Move`},
+	{Value: `AssistantThread`, Label: `Subject Assistant Thread`},
+	{Value: `Shipment`, Label: `Subject Shipment`},
+	{Value: `Document`, Label: `Subject Document`},
+	{Value: `Organization`, Label: `Subject Organization`},
+	{Value: `Insight`, Label: `Subject Insight`},
+	{Value: `BankReceipt`, Label: `Subject Bank Receipt`},
+	{Value: `DetentionOccurrence`, Label: `Subject Detention Occurrence`, Doc: `SubjectDetentionOccurrence is one clock at one stop: the desk's unit of work, not the shipment it hangs off, so two clocks on the same shipment are two subjects and two runs.`},
+	{Value: `Worker`, Label: `Subject Worker`, Doc: `SubjectWorker is the person, not the credential, because a driver with three papers coming due is one conversation with one renewal packet.`},
+	{Value: `CarrierIntelEvent`, Label: `Subject Carrier Intel Event`},
+	{Value: `EDIInboundFile`, Label: `Subject EDI Inbound File`},
+	{Value: `InboundMessage`, Label: `Subject Inbound Message`, Doc: `SubjectInboundMessage is the message, not the shipment or customer it turned out to be about: what a desk works on is the piece of mail, and two messages about one shipment are two things to answer.`},
+	{Value: `Report`, Label: `Subject Report`, Doc: `SubjectReport is a saved report definition. A report that cannot be built as asked is a case about the report, not about an insight.`},
+	{Value: `Dashboard`, Label: `Subject Dashboard`},
+	{Value: `AccountingConnection`, Label: `Subject Accounting Connection`},
+	{Value: `FormulaTemplate`, Label: `Subject Formula Template`},
+	{Value: `FormulaLibrary`, Label: `Subject Formula Library`},
+	{Value: `AccountingSyncRecord`, Label: `Subject Accounting Sync Record`},
+	{Value: `AccountingInboundChange`, Label: `Subject Accounting Inbound`},
+	{Value: `AccountingDriftFinding`, Label: `Subject Accounting Drift`},
+	{Value: `Invoice`, Label: `Subject Invoice`},
+	{Value: `InvoiceDispute`, Label: `Subject Invoice Dispute`},
+	{Value: `FactoringNoa`, Label: `Subject Factoring NOA`},
+	{Value: `FactoringSubmission`, Label: `Subject Factoring Submission`},
+	{Value: `FactoringRemittance`, Label: `Subject Factoring Remittance`},
+}
+
+var enumAgenttriggerEventKind = [...]schema.EnumValue{
 	{Value: `billing_queue.item_exception`, Label: `Event Billing Queue Item Exception`},
 	{Value: `billing_queue.item_on_hold`, Label: `Event Billing Queue Item On Hold`},
 	{Value: `shipment_move.unassigned`, Label: `Event Shipment Move Unassigned`},
@@ -939,35 +968,6 @@ var enumAgentEventKind = [...]schema.EnumValue{
 	{Value: `factoring.submission_funded`, Label: `Event Factoring Submission Funded`},
 	{Value: `factoring.chargeback_due`, Label: `Event Factoring Chargeback Due`},
 	{Value: `factoring.remittance_staged`, Label: `Event Factoring Remittance Staged`},
-}
-
-var enumAgentSubjectType = [...]schema.EnumValue{
-	{Value: `BillingQueueItem`, Label: `Subject Billing Queue Item`},
-	{Value: `ShipmentMove`, Label: `Subject Shipment Move`},
-	{Value: `AssistantThread`, Label: `Subject Assistant Thread`},
-	{Value: `Shipment`, Label: `Subject Shipment`},
-	{Value: `Document`, Label: `Subject Document`},
-	{Value: `Organization`, Label: `Subject Organization`},
-	{Value: `Insight`, Label: `Subject Insight`},
-	{Value: `BankReceipt`, Label: `Subject Bank Receipt`},
-	{Value: `DetentionOccurrence`, Label: `Subject Detention Occurrence`, Doc: `SubjectDetentionOccurrence is one clock at one stop: the desk's unit of work, not the shipment it hangs off, so two clocks on the same shipment are two subjects and two runs.`},
-	{Value: `Worker`, Label: `Subject Worker`, Doc: `SubjectWorker is the person, not the credential, because a driver with three papers coming due is one conversation with one renewal packet.`},
-	{Value: `CarrierIntelEvent`, Label: `Subject Carrier Intel Event`},
-	{Value: `EDIInboundFile`, Label: `Subject EDI Inbound File`},
-	{Value: `InboundMessage`, Label: `Subject Inbound Message`, Doc: `SubjectInboundMessage is the message, not the shipment or customer it turned out to be about: what a desk works on is the piece of mail, and two messages about one shipment are two things to answer.`},
-	{Value: `Report`, Label: `Subject Report`, Doc: `SubjectReport is a saved report definition. A report that cannot be built as asked is a case about the report, not about an insight.`},
-	{Value: `Dashboard`, Label: `Subject Dashboard`},
-	{Value: `AccountingConnection`, Label: `Subject Accounting Connection`},
-	{Value: `FormulaTemplate`, Label: `Subject Formula Template`},
-	{Value: `FormulaLibrary`, Label: `Subject Formula Library`},
-	{Value: `AccountingSyncRecord`, Label: `Subject Accounting Sync Record`},
-	{Value: `AccountingInboundChange`, Label: `Subject Accounting Inbound`},
-	{Value: `AccountingDriftFinding`, Label: `Subject Accounting Drift`},
-	{Value: `Invoice`, Label: `Subject Invoice`},
-	{Value: `InvoiceDispute`, Label: `Subject Invoice Dispute`},
-	{Value: `FactoringNoa`, Label: `Subject Factoring NOA`},
-	{Value: `FactoringSubmission`, Label: `Subject Factoring Submission`},
-	{Value: `FactoringRemittance`, Label: `Subject Factoring Remittance`},
 }
 
 var enumDueSource = [...]schema.EnumValue{

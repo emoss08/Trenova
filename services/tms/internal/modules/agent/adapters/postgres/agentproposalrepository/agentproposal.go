@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -280,7 +281,7 @@ func (r *repository) ExpirePending(
 	ctx = dbscope.WithSystem(ctx, "expire stale agent proposals across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		p := agentdb.AgentProposals
-		plan := agentdb.AgentPlans
+		plan := agentplandb.AgentPlans
 		n, err := p.AllTenants().
 			Where(
 				p.Status.Eq(agent.ProposalStatusPending),

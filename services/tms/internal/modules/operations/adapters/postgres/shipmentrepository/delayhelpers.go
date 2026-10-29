@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -67,7 +67,7 @@ func (r *repository) ListAutoDelayShipmentTenants(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with automatic shipment delay on")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		sc := tenantdb.ShipmentControls
+		sc := shipmentcontroldb.ShipmentControls
 		return r.controlTenants(ctx, sc.AutoDelayShipments.IsTrue(), limit)
 	})
 }
@@ -86,7 +86,7 @@ func (r *repository) controlTenants(
 		limit = defaultSweepLimit
 	}
 
-	sc := tenantdb.ShipmentControls
+	sc := shipmentcontroldb.ShipmentControls
 	rows, err := keel.Into[controlTenant](ctx, r.db.Keel(ctx), sc.AllTenants().
 		Pick(sc.OrganizationID, sc.BusinessUnitID).
 		Where(enabled).
@@ -197,7 +197,7 @@ func autoDelayedShipmentIDs(currentTime int64, t tenancy) *keel.Query[*shipment.
 	st := shipmentdb.Stops.As("auto_stp")
 	sm := shipmentdb.ShipmentMoves.As("auto_sm")
 	sp := shipmentdb.Shipments.As("auto_sp")
-	sc := tenantdb.ShipmentControls.As("auto_sc")
+	sc := shipmentcontroldb.ShipmentControls.As("auto_sc")
 	windowEnd := st.ScheduledWindowEnd.Coalesce(st.ScheduledWindowStart)
 	minutes := sc.AutoDelayShipmentsThreshold.Coalesce(shipmentstate.DefaultDelayThresholdMinutes)
 

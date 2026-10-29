@@ -19,9 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol/carriersettlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
@@ -236,7 +236,11 @@ func (g *generator) csBrokeredMoves() []*csMove {
 }
 
 func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
-	control, err := firstOrNil(ctx, g.db, tenantdb.CarrierSettlementControls.Query())
+	control, err := firstOrNil(
+		ctx,
+		g.db,
+		carriersettlementcontroldb.CarrierSettlementControls.Query(),
+	)
 	switch {
 	case err != nil:
 		return nil, fmt.Errorf("load carrier settlement control: %w", err)
@@ -249,7 +253,7 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 			PeriodEndDayOfWeek: 6,
 			PayDelayDays:       5,
 		}
-		if err = tenantdb.CarrierSettlementControls.Create(ctx, g.db, control); err != nil {
+		if err = carriersettlementcontroldb.CarrierSettlementControls.Create(ctx, g.db, control); err != nil {
 			return nil, fmt.Errorf("create carrier settlement control: %w", err)
 		}
 	}
@@ -300,7 +304,7 @@ func (g *generator) csConfigureAccounts(ctx context.Context, setup *csSetup) err
 		return err
 	}
 
-	csc := tenantdb.CarrierSettlementControls
+	csc := carriersettlementcontroldb.CarrierSettlementControls
 	var sets []keel.Assignment
 	if id, ok := byCode[csAccountExpense]; ok && setup.expense.IsNil() {
 		sets = append(sets, csc.DefaultPurchasedTransportationAccountID.To(id))

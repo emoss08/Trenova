@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument/generateddocumentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -345,7 +346,7 @@ func TestAVersionThatProducedADocumentCannotBeDeleted(t *testing.T) {
 		FileName:          "notice.pdf",
 		Status:            generateddocument.GenerationStatusPending,
 	}
-	err := documenttemplatedb.GeneratedDocuments.Create(f.ctx, f.db, generated)
+	err := generateddocumentdb.GeneratedDocuments.Create(f.ctx, f.db, generated)
 	require.NoError(t, err)
 
 	// The repository refuses a non-draft delete, so this drives the constraint
@@ -371,7 +372,7 @@ func TestACompletedGeneratedDocumentMustRecordWhereItLanded(t *testing.T) {
 		Status:         generateddocument.GenerationStatusCompleted,
 	}
 
-	err := documenttemplatedb.GeneratedDocuments.Create(f.ctx, f.db, generated)
+	err := generateddocumentdb.GeneratedDocuments.Create(f.ctx, f.db, generated)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "chk_generated_documents_completed")
 }

@@ -8,9 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent/billingqueueeventdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance/factoringremittancedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
@@ -25,10 +28,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense/payexpensedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 )
 
@@ -43,7 +50,7 @@ func backdater[T any](h keel.Handle[*T]) tableBackdate {
 var tableBackdates = map[string]tableBackdate{
 	"additional_charges":      backdater(shipmentdb.AdditionalCharges.Handle),
 	"assignments":             backdater(shipmentdb.Assignments.Handle),
-	"billing_queue_events":    backdater(billingqueuedb.ItemEvents.Handle),
+	"billing_queue_events":    backdater(billingqueueeventdb.ItemEvents.Handle),
 	"billing_queue_items":     backdater(billingqueuedb.BillingQueueItems.Handle),
 	"carrier_assignments":     backdater(shipmentdb.CarrierAssignments.Handle),
 	"carrier_cost_events":     backdater(carriersettlementdb.CostEvents.Handle),
@@ -65,7 +72,7 @@ var tableBackdates = map[string]tableBackdate{
 	"customer_payment_applications":     backdater(customerpaymentdb.Applications.Handle),
 	"customer_payments":                 backdater(customerpaymentdb.Payments.Handle),
 	"customers":                         backdater(customerdb.Customers.Handle),
-	"driver_expenses":                   backdater(driverpaydb.Expenses.Handle),
+	"driver_expenses":                   backdater(payexpensedb.Expenses.Handle),
 	"driver_pay_events":                 backdater(driversettlementdb.PayEvents.Handle),
 	"driver_settlement_batches":         backdater(driversettlementdb.SettlementBatches.Handle),
 	"driver_settlement_lines":           backdater(driversettlementdb.SettlementLines.Handle),
@@ -73,16 +80,16 @@ var tableBackdates = map[string]tableBackdate{
 	"edi_carrier_invoices":              backdater(edicarrierinvoicedb.CarrierInvoices.Handle),
 	"edi_messages":                      backdater(edimessagedb.EDIMessages.Handle),
 	"edi_partners":                      backdater(edidb.EDIPartners.Handle),
-	"escrow_accounts":                   backdater(driverpaydb.EscrowAccounts.Handle),
-	"escrow_transactions":               backdater(driverpaydb.EscrowTransactions.Handle),
+	"escrow_accounts":                   backdater(payescrowdb.EscrowAccounts.Handle),
+	"escrow_transactions":               backdater(payescrowdb.EscrowTransactions.Handle),
 	"factoring_agreements":              backdater(factoringdb.Agreements.Handle),
 	"factoring_companies":               backdater(factoringcompanydb.FactoringCompanies.Handle),
 	"factoring_fee_tiers":               backdater(factoringdb.FeeTiers.Handle),
-	"factoring_remittance_lines":        backdater(factoringdb.RemittanceLines.Handle),
-	"factoring_remittances":             backdater(factoringdb.Remittances.Handle),
-	"factoring_submission_items":        backdater(factoringdb.SubmissionItems.Handle),
-	"factoring_submissions":             backdater(factoringdb.Submissions.Handle),
-	"factoring_transports":              backdater(factoringdb.Transports.Handle),
+	"factoring_remittance_lines":        backdater(factoringremittancedb.RemittanceLines.Handle),
+	"factoring_remittances":             backdater(factoringremittancedb.Remittances.Handle),
+	"factoring_submission_items":        backdater(factoringsubmissiondb.SubmissionItems.Handle),
+	"factoring_submissions":             backdater(factoringsubmissiondb.Submissions.Handle),
+	"factoring_transports":              backdater(factoringsubmissiondb.Transports.Handle),
 	"fuel_cards":                        backdater(fuelpurchasedb.FuelCards.Handle),
 	"fuel_purchase_import_rows":         backdater(fuelpurchasedb.ImportRows.Handle),
 	"fuel_purchases":                    backdater(fuelpurchasedb.FuelPurchases.Handle),
@@ -114,10 +121,10 @@ var tableBackdates = map[string]tableBackdate{
 	"journal_entries":      backdater(journalentrydb.JournalEntries.Handle),
 	"journal_entry_lines":  backdater(journalentrydb.JournalEntryLines.Handle),
 	"orders":               backdater(orderdb.Orders.Handle),
-	"pay_advances":         backdater(driverpaydb.PayAdvances.Handle),
+	"pay_advances":         backdater(payadvancedb.PayAdvances.Handle),
 	"rate_confirmations":   backdater(rateconfirmationdb.RateConfirmations.Handle),
-	"recurring_deductions": backdater(driverpaydb.RecurringDeductions.Handle),
-	"recurring_earnings":   backdater(driverpaydb.RecurringEarnings.Handle),
+	"recurring_deductions": backdater(recurringpaydb.RecurringDeductions.Handle),
+	"recurring_earnings":   backdater(recurringpaydb.RecurringEarnings.Handle),
 	"settlement_disputes":  backdater(driversettlementdb.Disputes.Handle),
 	"shipment_comment_acknowledgments": backdater(
 		shipmentdb.ShipmentCommentAcknowledgments.Handle,
@@ -129,7 +136,7 @@ var tableBackdates = map[string]tableBackdate{
 	"shipment_moves":            backdater(shipmentdb.ShipmentMoves.Handle),
 	"shipments":                 backdater(shipmentdb.Shipments.Handle),
 	"stops":                     backdater(shipmentdb.Stops.Handle),
-	"worker_pay_assignments":    backdater(driverpaydb.WorkerPayAssignments.Handle),
+	"worker_pay_assignments":    backdater(payassignmentdb.WorkerPayAssignments.Handle),
 	"worker_profiles":           backdater(workerdb.WorkerProfiles.Handle),
 	"worker_pto":                backdater(workerdb.WorkerPTOs.Handle),
 	"workers":                   backdater(workerdb.Workers.Handle),

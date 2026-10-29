@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -485,7 +486,7 @@ func invoiceRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.Invoice] {
 }
 
 func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoicedispute.InvoiceDispute] {
-	d := invoicedb.InvoiceDisputes
+	d := invoicedisputedb.InvoiceDisputes
 
 	return d.Pick(
 		d.ID,

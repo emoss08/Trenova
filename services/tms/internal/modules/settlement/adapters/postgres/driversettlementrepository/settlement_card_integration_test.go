@@ -10,11 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driverpayrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driversettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -63,7 +64,7 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 		RecoveredMinor: 20000,
 		CurrencyCode:   "USD",
 	}
-	require.NoError(t, driverpaydb.PayAdvances.Create(ctx, db, advance))
+	require.NoError(t, payadvancedb.PayAdvances.Create(ctx, db, advance))
 	escrow := &payescrow.EscrowAccount{
 		ID:                pulid.MustNew("escr_"),
 		OrganizationID:    tenant.OrgID,
@@ -75,7 +76,7 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 		OpenedDate:        1_780_000_000,
 		CurrencyCode:      "USD",
 	}
-	require.NoError(t, driverpaydb.EscrowAccounts.Create(ctx, db, escrow))
+	require.NoError(t, payescrowdb.EscrowAccounts.Create(ctx, db, escrow))
 
 	settlements := make([]*driversettlement.Settlement, 0, 2)
 	for _, number := range []string{"DS-CARD-1", "DS-CARD-2"} {

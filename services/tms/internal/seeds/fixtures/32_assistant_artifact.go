@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -111,9 +112,9 @@ func (s *AssistantArtifactSeed) loadRefs(
 	}
 
 	refs.plan = new(agentplan.AgentPlan)
-	if refs.plan, err = agentdb.AgentPlans.AllTenants().Where(
-		agentdb.AgentPlans.OrganizationID.Eq(org.ID),
-		agentdb.AgentPlans.BusinessUnitID.Eq(org.BusinessUnitID),
+	if refs.plan, err = agentplandb.AgentPlans.AllTenants().Where(
+		agentplandb.AgentPlans.OrganizationID.Eq(org.ID),
+		agentplandb.AgentPlans.BusinessUnitID.Eq(org.BusinessUnitID),
 	).First(ctx, db); err != nil {
 		return nil, fmt.Errorf("load plan: %w", err)
 	}

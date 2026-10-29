@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol/agentqualitycontroldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -55,7 +56,7 @@ func (r *controlRepository) Get(
 	_ pagination.TenantInfo,
 ) (*agentqualitycontrol.Control, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualitycontrol.Control, error) {
-		entity, err := agentqualitydb.Controls.Cache(resultcache.Settings()...).
+		entity, err := agentqualitycontroldb.Controls.Cache(resultcache.Settings()...).
 			First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, controlErrors.Map(err, "")
@@ -78,7 +79,7 @@ func (r *controlRepository) Upsert(
 			return nil, err
 		}
 
-		c := agentqualitydb.Controls
+		c := agentqualitycontroldb.Controls
 		if existing == nil {
 			entity.ID = pulid.Nil
 			entity.Version = 0
@@ -228,7 +229,7 @@ func (r *controlRepository) ListScheduleTargets(
 				return targets, nil
 			}
 
-			c := agentqualitydb.Controls
+			c := agentqualitycontroldb.Controls
 			controls, err := c.AllTenants().
 				Where(c.OrganizationID.In(orgIDs...)).
 				All(ctx, r.db.Keel(ctx))

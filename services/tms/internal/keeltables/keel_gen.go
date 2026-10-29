@@ -23,17 +23,33 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief/accountingbriefdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation/agentevaluationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview/agentpreviewdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile/agentprofiledb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol/agentqualitycontroldb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite/agentqualitysuitedb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection/agentreflectiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent/agentruneventdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt/agenttestpromptdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust/agenttooltrustdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion/agentversiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait/agentwaitdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection/aicorrectiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback/aifeedbackdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal/aiproviderdismissaldb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetraining/airetrainingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining/aitrainingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup/aituneupdb"
@@ -42,8 +58,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter/conversationchapterdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue/conversationqueuedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule/conversationscheduledb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase/deskcasedb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal/extensionportaldb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch/extensionwebwatchdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief/shipmentbriefdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat/shipmentimportchatdb"
@@ -51,7 +72,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun/billingapprovalrundb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent/billingqueueeventdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuefilterpreset/billingqueuefilterpresetdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer/billingtransferdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection/collectiondb"
@@ -60,12 +83,22 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement/customerstatementdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger/factoringledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness/factoringreadinessdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance/factoringremittancedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare/invoicesharedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge/latechargedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder/paymentreminderdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet/capturecoversheetdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing/capturepairingdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile/captureprofiledb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest/capturerequestdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction/documentaiextractiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
@@ -76,6 +109,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval/extractionevaldb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout/extractionrolloutdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow/extractionshadowdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument/generateddocumentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
@@ -93,11 +127,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol/agentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey/apikeydb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol/carriersettlementcontroldb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol/dashcontroldb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention/dataretentiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol/documentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap/instancebootstrapdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding/onboardingdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset/passwordresetdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription/subscriptiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
@@ -105,6 +152,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence/detentionevidencedb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice/detentionnoticedb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy/detentionpolicydb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft/documentshipmentdraftdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
@@ -120,7 +170,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert/weatheralertdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol/carrierintelcontroldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment/carrierintelenrollmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent/carrierinteleventdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride/carrierinteloverridedb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot/carrierintelsnapshotdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage/carrierintelusagedb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification/carrierintelverificationdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation/distancecalculationdb"
@@ -138,6 +194,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport/rateimportdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell/ratematrixcelldb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview/ratematrixreviewdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion/ratematrixversiondb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote/ratequotedb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation/ratesimulationdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone/ratezonedb"
@@ -157,10 +216,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit/paybenefitdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode/paycodedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense/payexpensedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation/approvaldelegationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse/dotclearinghousedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom/dotrandomdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety/fleetsafetydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation/portalinvitationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange/profilechangedb"
@@ -170,7 +237,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline/workerdisciplinedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot/workerdotdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury/workerinjurydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy/workerpolicydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
@@ -204,7 +273,7 @@ func All() []*schema.Table {
 		accountingbackfilldb.AccountingBackfillsSchema(),
 		accountingbriefdb.BriefsSchema(),
 		accountingconnectiondb.AccountingConnectionsSchema(),
-		tenantdb.AccountingControlsSchema(),
+		accountingcontroldb.AccountingControlsSchema(),
 		accountingdriftdb.AccountingDriftFindingsSchema(),
 		accountinginbounddb.AccountingInboundChangesSchema(),
 		accountingmappingdb.AccountingMappingsSchema(),
@@ -215,37 +284,37 @@ func All() []*schema.Table {
 		accountingconnectiondb.AccountingWebhookSubscriptionsSchema(),
 		shipmentdb.AdditionalChargesSchema(),
 		analysisdb.RunsSchema(),
-		tenantdb.AgentControlsSchema(),
-		agentdb.AgentDecisionsSchema(),
-		agentdefinitiondb.DefinitionVersionsSchema(),
+		agentcontroldb.AgentControlsSchema(),
+		agentdecisiondb.AgentDecisionsSchema(),
+		agentversiondb.DefinitionVersionsSchema(),
 		agentdefinitiondb.DefinitionsSchema(),
 		agentqualitydb.EvalCasesSchema(),
-		agentdb.EvaluationsSchema(),
-		agentdb.AgentExceptionsSchema(),
+		agentevaluationdb.EvaluationsSchema(),
+		agentexceptiondb.AgentExceptionsSchema(),
 		agentextensiondb.ExtensionUsageDailiesSchema(),
 		agentextensiondb.ExtensionsSchema(),
-		agentdb.MemoriesSchema(),
-		agentdb.MemoryPreferencesSchema(),
-		agentdb.AgentPlansSchema(),
-		agentextensiondb.PortalRunsSchema(),
-		agentextensiondb.PortalSitesSchema(),
+		agentmemorydb.MemoriesSchema(),
+		agentmemorydb.MemoryPreferencesSchema(),
+		agentplandb.AgentPlansSchema(),
+		extensionportaldb.PortalRunsSchema(),
+		extensionportaldb.PortalSitesSchema(),
 		agentprofiledb.GuidancesSchema(),
 		agentprofiledb.ProfilesSchema(),
-		agentdb.ProposalBaselinesSchema(),
+		agentpreviewdb.ProposalBaselinesSchema(),
 		agentdb.AgentProposalsSchema(),
-		agentqualitydb.ControlsSchema(),
-		agentdb.ReflectionsSchema(),
-		agentdb.AgentRunEventsSchema(),
-		agentdb.AgentRunStepsSchema(),
+		agentqualitycontroldb.ControlsSchema(),
+		agentreflectiondb.ReflectionsSchema(),
+		agentruneventdb.AgentRunEventsSchema(),
+		agentrunstepdb.AgentRunStepsSchema(),
 		agentdb.AgentRunsSchema(),
 		agentsuggestiondb.SuggestionsSchema(),
-		agentqualitydb.SuiteRunsSchema(),
-		agentdefinitiondb.TestPromptsSchema(),
-		agentdb.ToolRuleOverridesSchema(),
-		agentdb.ToolTrustsSchema(),
+		agentqualitysuitedb.SuiteRunsSchema(),
+		agenttestpromptdb.TestPromptsSchema(),
+		agenttooltrustdb.ToolRuleOverridesSchema(),
+		agenttooltrustdb.ToolTrustsSchema(),
 		agentwaitdb.WaitsSchema(),
-		agentextensiondb.WebWatchFindingsSchema(),
-		agentextensiondb.WebWatchesSchema(),
+		extensionwebwatchdb.WebWatchFindingsSchema(),
+		extensionwebwatchdb.WebWatchesSchema(),
 		aianalyticsdb.RefreshStatesSchema(),
 		aiauditdb.AIAuditChainHeadsSchema(),
 		aiauditdb.AIAuditEventsSchema(),
@@ -257,10 +326,10 @@ func All() []*schema.Table {
 		airetrievaldb.EmbeddingsSchema(),
 		aifeedbackdb.FeedbacksSchema(),
 		airetrievaldb.IndexEntriesSchema(),
-		aiproviderdb.FailureDismissalsSchema(),
+		aiproviderdismissaldb.FailureDismissalsSchema(),
 		aianalyticsdb.ProviderHoursSchema(),
 		aiproviderdb.ProvidersSchema(),
-		aitrainingdb.RetrainingCyclesSchema(),
+		airetrainingdb.RetrainingCyclesSchema(),
 		airetrievaldb.SettingsesSchema(),
 		settingversiondb.SettingVersionsSchema(),
 		aitrainingdb.TrainingExportRecordsSchema(),
@@ -277,57 +346,57 @@ func All() []*schema.Table {
 		assistantartifactdb.ArtifactsSchema(),
 		briefingdb.BriefingsSchema(),
 		conversationdb.MessagesSchema(),
-		conversationdb.QueuedMessagesSchema(),
-		conversationdb.ChaptersSchema(),
+		conversationqueuedb.QueuedMessagesSchema(),
+		conversationchapterdb.ChaptersSchema(),
 		conversationdb.ThreadsSchema(),
-		conversationdb.AssistantTurnsSchema(),
+		conversationturndb.AssistantTurnsSchema(),
 		auditdb.DLQEntriesSchema(),
 		auditdb.EntriesSchema(),
 		iamdb.AuthEventsSchema(),
 		bankreceiptbatchdb.BankReceiptBatchesSchema(),
 		bankreceiptworkitemdb.WorkItemsSchema(),
 		bankreceiptdb.BankReceiptsSchema(),
-		driverpaydb.BenefitPlansSchema(),
-		tenantdb.BillingControlsSchema(),
-		billingqueuedb.ItemEventsSchema(),
+		paybenefitdb.BenefitPlansSchema(),
+		billingcontroldb.BillingControlsSchema(),
+		billingqueueeventdb.ItemEventsSchema(),
 		billingqueuefilterpresetdb.BillingQueueFilterPresetsSchema(),
 		billingqueuedb.IssuesSchema(),
 		billingqueuedb.BillingQueueItemsSchema(),
 		billingtransferdb.BillingTransferRunItemsSchema(),
 		billingtransferdb.BillingTransferRunsSchema(),
-		billingqueuedb.ApprovalRunItemsSchema(),
-		billingqueuedb.ApprovalRunsSchema(),
+		billingapprovalrundb.ApprovalRunItemsSchema(),
+		billingapprovalrundb.ApprovalRunsSchema(),
 		bulkeditdb.BulkEditsSchema(),
 		tenantdb.BusinessUnitsSchema(),
 		capturedb.CaptureBatchesSchema(),
-		capturedb.CaptureCoverSheetsSchema(),
+		capturecoversheetdb.CaptureCoverSheetsSchema(),
 		capturedb.CaptureDevicesSchema(),
 		capturedb.CaptureItemsSchema(),
 		capturedb.CapturePagesSchema(),
-		capturedb.CapturePairingsSchema(),
-		capturedb.CaptureProfilesSchema(),
-		capturedb.CaptureRequestsSchema(),
+		capturepairingdb.CapturePairingsSchema(),
+		captureprofiledb.CaptureProfilesSchema(),
+		capturerequestdb.CaptureRequestsSchema(),
 		shipmentdb.CarrierAssignmentAccessorialsSchema(),
 		shipmentdb.CarrierAssignmentsSchema(),
 		carriercapacitydb.PostingsSchema(),
 		carrierdb.CarrierContactsSchema(),
 		carriersettlementdb.CostEventsSchema(),
 		carrierdb.CarrierEDIChannelsSchema(),
-		carrierinteldb.CarrierEquipmentVerificationsSchema(),
+		carrierintelverificationdb.CarrierEquipmentVerificationsSchema(),
 		carrierdb.CarrierInsurancePoliciesSchema(),
-		carrierinteldb.CarrierIntelControlsSchema(),
-		carrierinteldb.CarrierIntelEventsSchema(),
-		carrierinteldb.CarrierIntelFeedStatesSchema(),
-		carrierinteldb.CarrierIntelOverridesSchema(),
-		carrierinteldb.CarrierIntelRawPayloadsSchema(),
-		carrierinteldb.CarrierIntelSnapshotsSchema(),
-		carrierinteldb.CarrierIntelUsageDailiesSchema(),
-		carrierinteldb.CarrierIntelUsageRecordsSchema(),
+		carrierintelcontroldb.CarrierIntelControlsSchema(),
+		carrierinteleventdb.CarrierIntelEventsSchema(),
+		carrierintelenrollmentdb.CarrierIntelFeedStatesSchema(),
+		carrierinteloverridedb.CarrierIntelOverridesSchema(),
+		carrierintelsnapshotdb.CarrierIntelRawPayloadsSchema(),
+		carrierintelsnapshotdb.CarrierIntelSnapshotsSchema(),
+		carrierintelusagedb.CarrierIntelUsageDailiesSchema(),
+		carrierintelusagedb.CarrierIntelUsageRecordsSchema(),
 		carriersettlementdb.InvoiceMatchesSchema(),
 		carriersettlementdb.LedgerEntriesSchema(),
-		carrierinteldb.CarrierMonitoringEnrollmentsSchema(),
+		carrierintelenrollmentdb.CarrierMonitoringEnrollmentsSchema(),
 		carriersettlementdb.CarrierSettlementBatchesSchema(),
-		tenantdb.CarrierSettlementControlsSchema(),
+		carriersettlementcontroldb.CarrierSettlementControlsSchema(),
 		carriersettlementdb.CarrierSettlementLinesSchema(),
 		carriersettlementdb.CarrierSettlementsSchema(),
 		checkcalldb.TrackingLinksSchema(),
@@ -357,14 +426,14 @@ func All() []*schema.Table {
 		customertrackingdb.LinksSchema(),
 		customertrackingdb.ProfilesSchema(),
 		customerdb.CustomersSchema(),
-		tenantdb.DashControlsSchema(),
+		dashcontroldb.DashControlsSchema(),
 		dataentrycontroldb.DataEntryControlsSchema(),
-		tenantdb.DataRetentionsSchema(),
-		detentiondb.DetentionEvidencesSchema(),
-		detentiondb.DetentionNoticesSchema(),
+		dataretentiondb.DataRetentionsSchema(),
+		detentionevidencedb.DetentionEvidencesSchema(),
+		detentionnoticedb.DetentionNoticesSchema(),
 		detentiondb.DetentionOccurrencesSchema(),
-		detentiondb.DetentionPoliciesSchema(),
-		detentiondb.DetentionPolicyTiersSchema(),
+		detentionpolicydb.DetentionPoliciesSchema(),
+		detentionpolicydb.DetentionPolicyTiersSchema(),
 		dispatchcontroldb.DispatchControlsSchema(),
 		distancecalculationdb.RunsSchema(),
 		distancecontroldb.DistanceControlsSchema(),
@@ -374,7 +443,7 @@ func All() []*schema.Table {
 		documentaiextractiondb.ExtractionsSchema(),
 		documentcontentdb.PagesSchema(),
 		documentcontentdb.ContentsSchema(),
-		tenantdb.DocumentControlsSchema(),
+		documentcontroldb.DocumentControlsSchema(),
 		documentpacketruledb.DocumentPacketRulesSchema(),
 		documentsearchprojectiondb.ProjectionsSchema(),
 		documentshipmentdraftdb.DocumentShipmentDraftsSchema(),
@@ -388,7 +457,7 @@ func All() []*schema.Table {
 		dotrandomdb.DOTRandomDrawEntriesSchema(),
 		dotrandomdb.DOTRandomDrawsSchema(),
 		dotrandomdb.DOTRandomPoolsSchema(),
-		driverpaydb.ExpensesSchema(),
+		payexpensedb.ExpensesSchema(),
 		driversettlementdb.PayEventsSchema(),
 		driverpaydb.PayProfileComponentsSchema(),
 		driverpaydb.PayProfilesSchema(),
@@ -428,8 +497,8 @@ func All() []*schema.Table {
 		equipmentcontinuitydb.EquipmentContinuitiesSchema(),
 		equipmentmanufacturerdb.EquipmentManufacturersSchema(),
 		equipmenttypedb.EquipmentTypesSchema(),
-		driverpaydb.EscrowAccountsSchema(),
-		driverpaydb.EscrowTransactionsSchema(),
+		payescrowdb.EscrowAccountsSchema(),
+		payescrowdb.EscrowTransactionsSchema(),
 		exchangeratedb.SettlementQuotesSchema(),
 		exchangeratedb.ExchangeRatesSchema(),
 		iamdb.ExternalIdentitiesSchema(),
@@ -445,15 +514,15 @@ func All() []*schema.Table {
 		factoringdb.AgreementsSchema(),
 		factoringcompanydb.FactoringCompaniesSchema(),
 		factoringdb.FeeTiersSchema(),
-		factoringdb.InvoiceStatesSchema(),
+		factoringreadinessdb.InvoiceStatesSchema(),
 		factoringdb.NoasSchema(),
-		factoringdb.RemittanceLinesSchema(),
-		factoringdb.RemittanceProfilesSchema(),
-		factoringdb.RemittancesSchema(),
-		factoringdb.ReserveEntriesSchema(),
-		factoringdb.SubmissionItemsSchema(),
-		factoringdb.SubmissionsSchema(),
-		factoringdb.TransportsSchema(),
+		factoringremittancedb.RemittanceLinesSchema(),
+		factoringremittancedb.RemittanceProfilesSchema(),
+		factoringremittancedb.RemittancesSchema(),
+		factoringledgerdb.ReserveEntriesSchema(),
+		factoringsubmissiondb.SubmissionItemsSchema(),
+		factoringsubmissiondb.SubmissionsSchema(),
+		factoringsubmissiondb.TransportsSchema(),
 		fiscalperioddb.FiscalPeriodsSchema(),
 		fiscalyeardb.FiscalYearsSchema(),
 		fleetcodedb.FleetCodesSchema(),
@@ -474,7 +543,7 @@ func All() []*schema.Table {
 		fuelpurchasedb.FuelPurchasesSchema(),
 		fuelsurchargedb.FuelSurchargeProgramsSchema(),
 		fuelsurchargedb.FuelSurchargeTableRowsSchema(),
-		documenttemplatedb.GeneratedDocumentsSchema(),
+		generateddocumentdb.GeneratedDocumentsSchema(),
 		glbalancedb.GLAccountPeriodBalancesSchema(),
 		glaccountdb.GLAccountsSchema(),
 		hazardousmaterialdb.HazardousMaterialsSchema(),
@@ -499,14 +568,14 @@ func All() []*schema.Table {
 		integrationdb.IntegrationsSchema(),
 		invoiceadjustmentdb.InvoiceAdjustmentBatchItemsSchema(),
 		invoiceadjustmentdb.InvoiceAdjustmentBatchesSchema(),
-		tenantdb.InvoiceAdjustmentControlsSchema(),
+		invoiceadjustmentcontroldb.InvoiceAdjustmentControlsSchema(),
 		invoiceadjustmentdb.InvoiceAdjustmentDocumentReferencesSchema(),
 		invoiceadjustmentdb.InvoiceAdjustmentLinesSchema(),
 		invoiceadjustmentdb.InvoiceAdjustmentSnapshotsSchema(),
 		invoiceadjustmentdb.InvoiceAdjustmentsSchema(),
 		invoicedb.AttachmentsSchema(),
 		invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroupsSchema(),
-		invoicedb.InvoiceDisputesSchema(),
+		invoicedisputedb.InvoiceDisputesSchema(),
 		invoicedb.DocumentShareTokensSchema(),
 		invoicedb.EmailAttemptAttachmentsSchema(),
 		invoicedb.EmailAttemptsSchema(),
@@ -516,7 +585,7 @@ func All() []*schema.Table {
 		invoicerundb.InvoiceRunGroupItemsSchema(),
 		invoicerundb.InvoiceRunGroupsSchema(),
 		invoicerundb.InvoiceRunsSchema(),
-		invoicedb.InvoiceSharesSchema(),
+		invoicesharedb.InvoiceSharesSchema(),
 		invoicedb.InvoicesSchema(),
 		workerdb.JobPositionsSchema(),
 		journalentrydb.JournalBatchesSchema(),
@@ -546,11 +615,11 @@ func All() []*schema.Table {
 		onboardingdb.OnboardingsSchema(),
 		subscriptiondb.SubscriptionsSchema(),
 		tenantdb.OrganizationsSchema(),
-		workersafetydb.OSHAAnnualSummariesSchema(),
+		workerinjurydb.OSHAAnnualSummariesSchema(),
 		pagefavoritedb.PageFavoritesSchema(),
-		tenantdb.PasswordResetTokensSchema(),
-		driverpaydb.PayAdvancesSchema(),
-		driverpaydb.PayCodesSchema(),
+		passwordresetdb.PasswordResetTokensSchema(),
+		payadvancedb.PayAdvancesSchema(),
+		paycodedb.PayCodesSchema(),
 		timesheetdb.PayrollExportsSchema(),
 		workerreviewdb.PerformanceReviewTemplatesSchema(),
 		workerreviewdb.PerformanceReviewsSchema(),
@@ -569,17 +638,17 @@ func All() []*schema.Table {
 		rateimportdb.RateImportBatchesSchema(),
 		rateimportdb.RateImportRowsSchema(),
 		ratematrixdb.RateMatrixesSchema(),
-		ratematrixdb.RateMatrixCellsSchema(),
+		ratematrixcelldb.RateMatrixCellsSchema(),
 		ratematrixdb.RateMatrixDimensionsSchema(),
-		ratematrixdb.RateMatrixReviewsSchema(),
-		ratematrixdb.RateMatrixVersionsSchema(),
+		ratematrixreviewdb.RateMatrixReviewsSchema(),
+		ratematrixversiondb.RateMatrixVersionsSchema(),
 		ratequotedb.RateQuotesSchema(),
 		ratesimulationdb.RateSimulationResultsSchema(),
 		ratesimulationdb.RateSimulationsSchema(),
 		ratezonedb.RateZoneMembersSchema(),
 		ratezonedb.RateZonesSchema(),
-		driverpaydb.RecurringDeductionsSchema(),
-		driverpaydb.RecurringEarningsSchema(),
+		recurringpaydb.RecurringDeductionsSchema(),
+		recurringpaydb.RecurringEarningsSchema(),
 		recurringshipmentdb.RecurringShipmentRunsSchema(),
 		recurringshipmentdb.RecurringShipmentsSchema(),
 		reportdb.ReportCatalogVersionsSchema(),
@@ -602,12 +671,12 @@ func All() []*schema.Table {
 		iamdb.SCIMDirectoriesSchema(),
 		iamdb.SCIMGroupRoleMappingsSchema(),
 		iamdb.SCIMTokensSchema(),
-		tenantdb.SequenceConfigsSchema(),
-		tenantdb.SequencesSchema(),
+		sequenceconfigdb.SequenceConfigsSchema(),
+		sequenceconfigdb.SequencesSchema(),
 		servicefailuredb.ReasonCodesSchema(),
 		servicefailuredb.ServiceFailuresSchema(),
 		servicetypedb.ServiceTypesSchema(),
-		tenantdb.SettlementControlsSchema(),
+		settlementcontroldb.SettlementControlsSchema(),
 		driversettlementdb.DisputesSchema(),
 		workerscheduledb.ShiftSwapRequestsSchema(),
 		workerscheduledb.ShiftTemplatesSchema(),
@@ -616,7 +685,7 @@ func All() []*schema.Table {
 		shipmentdb.ShipmentCommentMentionsSchema(),
 		shipmentdb.ShipmentCommentsSchema(),
 		shipmentdb.ShipmentCommoditiesSchema(),
-		tenantdb.ShipmentControlsSchema(),
+		shipmentcontroldb.ShipmentControlsSchema(),
 		shipmenteventdb.EventsSchema(),
 		shipmentholddb.ShipmentHoldsSchema(),
 		shipmentimportchatdb.ConversationsSchema(),
@@ -628,8 +697,8 @@ func All() []*schema.Table {
 		shipmentdb.ShipmentsSchema(),
 		sidebarpreferencedb.SidebarPreferencesSchema(),
 		journalsourcedb.SourceJournalLinksSchema(),
-		tenantdb.SSOConfigsSchema(),
-		tenantdb.SSOIdentityLinksSchema(),
+		ssodb.SSOConfigsSchema(),
+		ssodb.SSOIdentityLinksSchema(),
 		stopetadb.StopETAsSchema(),
 		shipmentdb.StopsSchema(),
 		storedmileagedb.StoredMileagesSchema(),
@@ -671,7 +740,7 @@ func All() []*schema.Table {
 		weatheralertdb.ActivitiesSchema(),
 		weatheralertdb.WeatherAlertsSchema(),
 		workerscheduledb.WorkerAvailabilityPreferencesSchema(),
-		driverpaydb.WorkerBenefitEnrollmentsSchema(),
+		paybenefitdb.WorkerBenefitEnrollmentsSchema(),
 		workerchecklistdb.WorkerChecklistItemsSchema(),
 		workerchecklistdb.WorkerChecklistTemplateItemsSchema(),
 		workerchecklistdb.WorkerChecklistTemplatesSchema(),
@@ -679,7 +748,7 @@ func All() []*schema.Table {
 		dotclearinghousedb.WorkerClearinghouseQueriesSchema(),
 		workercredentialdb.WorkerCredentialTypesSchema(),
 		workercredentialdb.WorkerCredentialsSchema(),
-		workersafetydb.WorkerDisciplinaryActionsSchema(),
+		workerdisciplinedb.WorkerDisciplinaryActionsSchema(),
 		workerdotdb.WorkerDOTTestsSchema(),
 		workerdotdb.WorkerDOTViolationsSchema(),
 		employmentdb.WorkerEmploymentEventsSchema(),
@@ -687,10 +756,10 @@ func All() []*schema.Table {
 		telematicsdb.WorkerHOSLogsSchema(),
 		telematicsdb.WorkerHOSStatesSchema(),
 		telematicsdb.WorkerHOSViolationsSchema(),
-		workersafetydb.WorkerInjuriesSchema(),
+		workerinjurydb.WorkerInjuriesSchema(),
 		workerleavedb.WorkerLeaveCasesSchema(),
 		workerleavedb.WorkerLeaveEntriesSchema(),
-		driverpaydb.WorkerPayAssignmentsSchema(),
+		payassignmentdb.WorkerPayAssignmentsSchema(),
 		workerpolicydb.WorkerPoliciesSchema(),
 		workerpolicydb.WorkerPolicyAcknowledgementsSchema(),
 		portalinvitationdb.PortalInvitationsSchema(),
@@ -700,9 +769,9 @@ func All() []*schema.Table {
 		ptodb.WorkerPTOBalancesSchema(),
 		ptodb.WorkerPTOLedgerEntriesSchema(),
 		ptodb.WorkerPTOPolicyAssignmentsSchema(),
-		workersafetydb.WorkerRecognitionsSchema(),
+		workerdisciplinedb.WorkerRecognitionsSchema(),
 		workersafetydb.WorkerSafetyEventsSchema(),
-		workersafetydb.WorkerSafetyViolationsSchema(),
+		fleetsafetydb.WorkerSafetyViolationsSchema(),
 		workerscheduledb.WorkerShiftAssignmentsSchema(),
 		workertrainingdb.WorkerTrainingRecordsSchema(),
 		workerdb.WorkersSchema(),

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
@@ -27,7 +27,7 @@ type Validator struct {
 func NewValidator(p ValidatorParams) *Validator {
 	checker := keelcheck.NewChecker(
 		p.DB,
-		tenantdb.InvoiceAdjustmentControlsSchema(),
+		invoiceadjustmentcontroldb.InvoiceAdjustmentControlsSchema(),
 	)
 
 	return &Validator{

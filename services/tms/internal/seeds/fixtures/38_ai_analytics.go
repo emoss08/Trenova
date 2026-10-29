@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
@@ -731,13 +732,13 @@ func (s *AIAnalyticsSeed) write(
 	if err := insertChunks(ctx, db, "analytics proposals", agentdb.AgentProposals.Handle, proposals); err != nil {
 		return err
 	}
-	if err := insertChunks(ctx, db, "analytics decisions", agentdb.AgentDecisions.Handle, decisions); err != nil {
+	if err := insertChunks(ctx, db, "analytics decisions", agentdecisiondb.AgentDecisions.Handle, decisions); err != nil {
 		return err
 	}
 	if err := backdate(ctx, db, agentdb.AgentProposals.Handle, proposalIDs, decidedAts); err != nil {
 		return err
 	}
-	if err := backdate(ctx, db, agentdb.AgentDecisions.Handle, decisionIDs, decidedAts); err != nil {
+	if err := backdate(ctx, db, agentdecisiondb.AgentDecisions.Handle, decisionIDs, decidedAts); err != nil {
 		return err
 	}
 

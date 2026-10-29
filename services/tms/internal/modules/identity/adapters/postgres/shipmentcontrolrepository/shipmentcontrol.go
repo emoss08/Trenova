@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -45,7 +45,7 @@ func (r *repository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentcontrol.ShipmentControl, error) {
-			entity, err := tenantdb.ShipmentControls.Cache(resultcache.Settings()...).
+			entity, err := shipmentcontroldb.ShipmentControls.Cache(resultcache.Settings()...).
 				One(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, shipmentControlErrors.Map(err, req.TenantInfo.OrgID.String())
@@ -65,7 +65,7 @@ func (r *repository) ListDetentionEngineTenants(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with the detention engine on")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		sc := tenantdb.ShipmentControls
+		sc := shipmentcontroldb.ShipmentControls
 		q := sc.AllTenants().
 			Pick(sc.OrganizationID, sc.BusinessUnitID).
 			Where(sc.UseDetentionPolicyEngine.IsTrue()).
@@ -100,7 +100,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentcontrol.ShipmentControl, error) {
-			if err := tenantdb.ShipmentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := shipmentcontroldb.ShipmentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error(
 					"failed to update shipment control",
 					zap.String("orgID", entity.OrganizationID.String()),

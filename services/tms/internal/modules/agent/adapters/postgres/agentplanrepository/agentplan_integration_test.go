@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -82,7 +83,7 @@ func (h *planHarness) plan(t *testing.T, run *agent.AgentRun) *agentplan.AgentPl
 		Status:         agentplan.PlanStatusPending,
 		StepCount:      2,
 	}
-	require.NoError(t, agentdb.AgentPlans.Create(h.ctx, h.admin, plan))
+	require.NoError(t, agentplandb.AgentPlans.Create(h.ctx, h.admin, plan))
 
 	return plan
 }
@@ -90,7 +91,7 @@ func (h *planHarness) plan(t *testing.T, run *agent.AgentRun) *agentplan.AgentPl
 func (h *planHarness) read(t *testing.T, id pulid.ID) *agentplan.AgentPlan {
 	t.Helper()
 
-	plan, err := agentdb.AgentPlans.Get(h.ctx, h.admin, id)
+	plan, err := agentplandb.AgentPlans.Get(h.ctx, h.admin, id)
 	require.NoError(t, err)
 
 	return plan

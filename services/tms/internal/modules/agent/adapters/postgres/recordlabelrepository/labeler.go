@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
@@ -168,7 +169,7 @@ var sources = map[permission.Resource]source{
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceFactoringSubmission: func(ids []pulid.ID) projection {
-		t := factoringdb.Submissions
+		t := factoringsubmissiondb.Submissions
 		return t.Pick(t.ID, labelText(t.Number)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceInvoice: func(ids []pulid.ID) projection {

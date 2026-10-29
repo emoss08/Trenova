@@ -10,12 +10,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol/documentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol/dataentrycontroldb"
@@ -29,19 +34,19 @@ func CreateControls(ctx context.Context, db *keel.DB, scope tenantscope.Scope) e
 
 	accountingControl := accountingcontrol.NewDefaultAccountingControl(org, bu)
 	accountingControl.ID = pulid.MustNew("ac_")
-	if err := tenantdb.AccountingControls.Create(ctx, db, accountingControl); err != nil {
+	if err := accountingcontroldb.AccountingControls.Create(ctx, db, accountingControl); err != nil {
 		return fmt.Errorf("create accounting control: %w", err)
 	}
 
 	billingControl := billingcontrol.NewDefaultBillingControl(org, bu)
 	billingControl.ID = pulid.MustNew("bc_")
-	if err := tenantdb.BillingControls.Create(ctx, db, billingControl); err != nil {
+	if err := billingcontroldb.BillingControls.Create(ctx, db, billingControl); err != nil {
 		return fmt.Errorf("create billing control: %w", err)
 	}
 
 	invoiceAdjustmentControl := invoiceadjustmentcontrol.NewDefaultInvoiceAdjustmentControl(org, bu)
 	invoiceAdjustmentControl.ID = pulid.MustNew("iac_")
-	if err := tenantdb.InvoiceAdjustmentControls.Create(
+	if err := invoiceadjustmentcontroldb.InvoiceAdjustmentControls.Create(
 		ctx,
 		db,
 		invoiceAdjustmentControl,
@@ -59,7 +64,7 @@ func CreateControls(ctx context.Context, db *keel.DB, scope tenantscope.Scope) e
 
 	shipmentControl := shipmentcontrol.NewDefaultShipmentControl(org, bu)
 	shipmentControl.ID = pulid.MustNew("sc_")
-	if err := tenantdb.ShipmentControls.Create(ctx, db, shipmentControl); err != nil {
+	if err := shipmentcontroldb.ShipmentControls.Create(ctx, db, shipmentControl); err != nil {
 		return fmt.Errorf("create shipment control: %w", err)
 	}
 
@@ -71,7 +76,7 @@ func CreateControls(ctx context.Context, db *keel.DB, scope tenantscope.Scope) e
 		scope.OrganizationID,
 		scope.BusinessUnitID,
 	)
-	if err := tenantdb.DocumentControls.Create(ctx, db, documentControl); err != nil {
+	if err := documentcontroldb.DocumentControls.Create(ctx, db, documentControl); err != nil {
 		return fmt.Errorf("create document control: %w", err)
 	}
 
@@ -164,7 +169,7 @@ func CreateSequences(ctx context.Context, db *keel.DB, scope tenantscope.Scope) 
 		})
 	}
 
-	s := tenantdb.Sequences
+	s := sequenceconfigdb.Sequences
 	if _, err := s.CreateOrSkip(
 		ctx,
 		db,

@@ -4,7 +4,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
@@ -210,7 +212,7 @@ func taskCellsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.Wo
 }
 
 func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agentdecision.AgentDecision] {
-	d := agentdb.AgentDecisions
+	d := agentdecisiondb.AgentDecisions
 	p := agentdb.AgentProposals
 	w := aianalyticsdb.WorkUnits
 	keys := deploymentColumns(w)
@@ -359,7 +361,7 @@ func toolCausesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*aian
 func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*keel.Row] {
 	t := aianalyticsdb.UnitTools
 	w := aianalyticsdb.WorkUnits
-	s := agentdb.AgentRunSteps
+	s := agentrunstepdb.AgentRunSteps
 	latest := t.FinishedAt.Max()
 	candidates := keel.CTE("candidates", []string{colUnitID, "finished_at"}, t.
 		Pick(t.UnitID, latest).

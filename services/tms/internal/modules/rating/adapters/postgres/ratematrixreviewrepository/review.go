@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview/ratematrixreviewdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -52,7 +53,7 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ratematrixreview.RateMatrixReview, error) {
-			if err := ratematrixdb.RateMatrixReviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := ratematrixreviewdb.RateMatrixReviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to record rate matrix review",
 					zap.String("matrixId", entity.RateMatrixID.String()),
 					zap.Error(err),
@@ -78,7 +79,7 @@ func (r *repository) ListByMatrix(
 				limit = defaultHistoryLimit
 			}
 
-			rv := ratematrixdb.RateMatrixReviews
+			rv := ratematrixreviewdb.RateMatrixReviews
 			reviews, err := rv.Where(rv.RateMatrixID.Eq(req.RateMatrixID)).
 				Load(rv.Actor(), rv.RequestedReviewer()).
 				Order(rv.CreatedAt.Desc()).
@@ -103,7 +104,7 @@ func (r *repository) Latest(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ratematrixreview.RateMatrixReview, error) {
-			rv := ratematrixdb.RateMatrixReviews
+			rv := ratematrixreviewdb.RateMatrixReviews
 			review, err := rv.Where(rv.RateMatrixID.Eq(rateMatrixID)).
 				Order(rv.CreatedAt.Desc(), rv.ID.Desc()).
 				First(ctx, r.db.Keel(ctx))

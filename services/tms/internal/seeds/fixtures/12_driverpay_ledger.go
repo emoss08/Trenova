@@ -10,13 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementjournal"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -153,9 +153,9 @@ func (s *DriverPayLedgerSeed) configureAccountingControl(
 	orgID, buID pulid.ID,
 	accounts map[string]pulid.ID,
 ) error {
-	control, err := tenantdb.AccountingControls.AllTenants().Where(
-		tenantdb.AccountingControls.OrganizationID.Eq(orgID),
-		tenantdb.AccountingControls.BusinessUnitID.Eq(buID),
+	control, err := accountingcontroldb.AccountingControls.AllTenants().Where(
+		accountingcontroldb.AccountingControls.OrganizationID.Eq(orgID),
+		accountingcontroldb.AccountingControls.BusinessUnitID.Eq(buID),
 	).First(ctx, db)
 	if err != nil {
 		if errors.Is(err, keel.ErrNotFound) {
@@ -167,7 +167,7 @@ func (s *DriverPayLedgerSeed) configureAccountingControl(
 		return nil
 	}
 
-	ac := tenantdb.AccountingControls
+	ac := accountingcontroldb.AccountingControls
 	if _, err = ac.AllTenants().Where(
 		ac.OrganizationID.Eq(orgID),
 		ac.BusinessUnitID.Eq(buID),
@@ -364,7 +364,7 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		rows = append(rows, earning)
 	}
 
-	if err = driverpaydb.RecurringEarnings.CreateMany(ctx, db, rows); err != nil {
+	if err = recurringpaydb.RecurringEarnings.CreateMany(ctx, db, rows); err != nil {
 		return fmt.Errorf("insert recurring earnings: %w", err)
 	}
 

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -64,7 +64,7 @@ func (r *repository) GetOrCreate(
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*settlementcontrol.SettlementControl]{
 		Find: r.selectControl,
 		Create: func(ctx context.Context) error {
-			sc := tenantdb.SettlementControls
+			sc := settlementcontroldb.SettlementControls
 			if _, err := sc.CreateOrSkip(
 				ctx,
 				r.db.Keel(ctx),
@@ -91,7 +91,7 @@ func (r *repository) selectControl(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*settlementcontrol.SettlementControl, error) {
-			return tenantdb.SettlementControls.Cache(resultcache.Settings()...).
+			return settlementcontroldb.SettlementControls.Cache(resultcache.Settings()...).
 				One(ctx, r.db.Keel(ctx))
 		},
 	)
@@ -105,7 +105,7 @@ func (r *repository) ListAutoGenerate(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*settlementcontrol.SettlementControl, error) {
-			sc := tenantdb.SettlementControls
+			sc := settlementcontroldb.SettlementControls
 			items, err := sc.AllTenants().
 				Where(sc.AutoGenerateBatches.IsTrue()).
 				All(ctx, r.db.Keel(ctx))
@@ -126,7 +126,8 @@ func (r *repository) ListAll(ctx context.Context) ([]*settlementcontrol.Settleme
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*settlementcontrol.SettlementControl, error) {
-			items, err := tenantdb.SettlementControls.AllTenants().All(ctx, r.db.Keel(ctx))
+			items, err := settlementcontroldb.SettlementControls.AllTenants().
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list settlement controls: %w", err)
 			}
@@ -143,7 +144,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*settlementcontrol.SettlementControl, error) {
-			sc := tenantdb.SettlementControls
+			sc := settlementcontroldb.SettlementControls
 			if err := sc.Save(
 				ctx,
 				r.db.Keel(ctx),

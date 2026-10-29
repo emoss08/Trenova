@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -71,7 +71,7 @@ func (r *repository) ListAutoCancelShipmentTenants(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with automatic shipment cancellation on")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		sc := tenantdb.ShipmentControls
+		sc := shipmentcontroldb.ShipmentControls
 		return r.controlTenants(ctx, sc.AutoCancelShipments.IsTrue(), limit)
 	})
 }
@@ -163,7 +163,7 @@ func autoCancelableShipments(
 
 func controlledAutoCancelIDs(currentTime int64, t tenancy) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments.As("cancel_sp")
-	sc := tenantdb.ShipmentControls.As("cancel_sc")
+	sc := shipmentcontroldb.ShipmentControls.As("cancel_sc")
 	days := sc.AutoCancelShipmentsThreshold.Coalesce(shipmentstate.DefaultAutoCancelThresholdDays)
 
 	q := sp.Pick(sp.ID).

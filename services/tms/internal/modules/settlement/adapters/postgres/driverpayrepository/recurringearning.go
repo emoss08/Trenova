@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -38,7 +38,7 @@ func (r *recurringEarningRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*recurringpay.RecurringEarning], error) {
-			re := driverpaydb.RecurringEarnings
+			re := recurringpaydb.RecurringEarnings
 			q := re.Where(
 				searchPred(req.Filter.Query, re.Description),
 				when(!req.WorkerID.IsNil(), re.WorkerID.Eq(req.WorkerID)),
@@ -63,7 +63,7 @@ func (r *recurringEarningRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*recurringpay.RecurringEarning], error) {
-			re := driverpaydb.RecurringEarnings
+			re := recurringpaydb.RecurringEarnings
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -93,7 +93,7 @@ func (r *recurringEarningRepository) GetByID(
 	req driverpayports.GetRecurringEarningByIDRequest,
 ) (*recurringpay.RecurringEarning, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*recurringpay.RecurringEarning, error) {
-		re := driverpaydb.RecurringEarnings
+		re := recurringpaydb.RecurringEarnings
 		entity, err := re.Where(re.ID.Eq(req.ID)).
 			Load(re.Worker(), re.PayCode()).
 			One(ctx, r.db.Keel(ctx))
@@ -113,7 +113,7 @@ func (r *recurringEarningRepository) ListActiveForWorker(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*recurringpay.RecurringEarning, error) {
-			re := driverpaydb.RecurringEarnings
+			re := recurringpaydb.RecurringEarnings
 			items, err := re.Where(
 				re.WorkerID.Eq(req.WorkerID),
 				re.Status.Eq(recurringpay.EarningStatusActive),
@@ -134,7 +134,7 @@ func (r *recurringEarningRepository) Create(
 	entity *recurringpay.RecurringEarning,
 ) (*recurringpay.RecurringEarning, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*recurringpay.RecurringEarning, error) {
-		if err := driverpaydb.RecurringEarnings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := recurringpaydb.RecurringEarnings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, recurringEarningErrors.Map(err, entity.ID.String())
 		}
 
@@ -150,7 +150,7 @@ func (r *recurringEarningRepository) Update(
 	entity *recurringpay.RecurringEarning,
 ) (*recurringpay.RecurringEarning, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*recurringpay.RecurringEarning, error) {
-		re := driverpaydb.RecurringEarnings
+		re := recurringpaydb.RecurringEarnings
 		if err := re.Save(
 			ctx,
 			r.db.Keel(ctx),

@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -106,7 +106,7 @@ func (r *repository) GetMemories(
 			return []*agentmemory.Memory{}, err
 		}
 
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		memories, err := m.Where(m.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read memories to index: %w", err)

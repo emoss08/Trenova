@@ -10,16 +10,19 @@ import (
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence/detentionevidencedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice/detentionnoticedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy/detentionpolicydb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -35,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -338,7 +342,7 @@ func (s *DetentionSeed) loadDetentionPayRates(
 	}
 
 	now := timeutils.NowUnix()
-	wpa := driverpaydb.WorkerPayAssignments
+	wpa := payassignmentdb.WorkerPayAssignments
 	w := workerdb.Workers
 	comp := driverpaydb.PayProfileComponents
 	rows, err := keel.Into[workerDetentionRate](ctx, db, wpa.AllTenants().
@@ -630,7 +634,7 @@ func (s *DetentionSeed) ensurePolicies(
 			continue
 		}
 
-		if err = detentiondb.DetentionPolicies.Create(ctx, db, def.policy); err != nil {
+		if err = detentionpolicydb.DetentionPolicies.Create(ctx, db, def.policy); err != nil {
 			return nil, fmt.Errorf("insert detention policy %s: %w", def.policy.Code, err)
 		}
 
@@ -641,7 +645,7 @@ func (s *DetentionSeed) ensurePolicies(
 				tier.OrganizationID = refs.orgID
 				tier.DetentionPolicyID = def.policy.ID
 			}
-			if err = detentiondb.DetentionPolicyTiers.CreateMany(ctx, db, def.tiers); err != nil {
+			if err = detentionpolicydb.DetentionPolicyTiers.CreateMany(ctx, db, def.tiers); err != nil {
 				return nil, fmt.Errorf("insert tiers for %s: %w", def.policy.Code, err)
 			}
 			def.policy.Tiers = def.tiers
@@ -661,10 +665,10 @@ func (s *DetentionSeed) findPolicy(
 	refs *detentionRefs,
 	code string,
 ) (*detentionpolicy.DetentionPolicy, error) {
-	policy, err := detentiondb.DetentionPolicies.AllTenants().Where(
-		detentiondb.DetentionPolicies.OrganizationID.Eq(refs.orgID),
-		detentiondb.DetentionPolicies.BusinessUnitID.Eq(refs.buID),
-		detentiondb.DetentionPolicies.Code.Eq(code),
+	policy, err := detentionpolicydb.DetentionPolicies.AllTenants().Where(
+		detentionpolicydb.DetentionPolicies.OrganizationID.Eq(refs.orgID),
+		detentionpolicydb.DetentionPolicies.BusinessUnitID.Eq(refs.buID),
+		detentionpolicydb.DetentionPolicies.Code.Eq(code),
 	).First(ctx, db)
 	if err != nil {
 		if errors.Is(err, keel.ErrNotFound) {
@@ -677,11 +681,11 @@ func (s *DetentionSeed) findPolicy(
 		return policy, nil
 	}
 
-	tiers, err := detentiondb.DetentionPolicyTiers.AllTenants().Where(
-		detentiondb.DetentionPolicyTiers.OrganizationID.Eq(refs.orgID),
-		detentiondb.DetentionPolicyTiers.BusinessUnitID.Eq(refs.buID),
-		detentiondb.DetentionPolicyTiers.DetentionPolicyID.Eq(policy.ID),
-	).Order(detentiondb.DetentionPolicyTiers.FromMinute.Asc()).All(ctx, db)
+	tiers, err := detentionpolicydb.DetentionPolicyTiers.AllTenants().Where(
+		detentionpolicydb.DetentionPolicyTiers.OrganizationID.Eq(refs.orgID),
+		detentionpolicydb.DetentionPolicyTiers.BusinessUnitID.Eq(refs.buID),
+		detentionpolicydb.DetentionPolicyTiers.DetentionPolicyID.Eq(policy.ID),
+	).Order(detentionpolicydb.DetentionPolicyTiers.FromMinute.Asc()).All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get tiers for detention policy %s: %w", code, err)
 	}
@@ -703,7 +707,7 @@ func (s *DetentionSeed) enablePolicyEngine(
 		return errors.New("default detention policy is missing")
 	}
 
-	sc := tenantdb.ShipmentControls
+	sc := shipmentcontroldb.ShipmentControls
 	_, err := sc.AllTenants().Where(
 		sc.OrganizationID.Eq(refs.orgID),
 		sc.BusinessUnitID.Eq(refs.buID),
@@ -1643,7 +1647,7 @@ func (s *DetentionSeed) persistOccurrence(
 	}
 
 	if len(entries) > 0 {
-		if err := detentiondb.DetentionEvidences.CreateMany(ctx, db, entries); err != nil {
+		if err := detentionevidencedb.DetentionEvidences.CreateMany(ctx, db, entries); err != nil {
 			return fmt.Errorf("insert detention evidence: %w", err)
 		}
 	}
@@ -2007,7 +2011,7 @@ func (s *DetentionSeed) createNotice(
 		notice.ProviderMessageID = "seed-" + notice.ID.String()
 	}
 
-	if err := detentiondb.DetentionNotices.Create(ctx, db, notice); err != nil {
+	if err := detentionnoticedb.DetentionNotices.Create(ctx, db, notice); err != nil {
 		return fmt.Errorf("insert detention notice: %w", err)
 	}
 

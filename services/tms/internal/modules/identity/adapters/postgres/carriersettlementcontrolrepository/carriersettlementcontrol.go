@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol/carriersettlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -62,7 +62,7 @@ func (r *repository) GetOrCreate(
 		dbtx.GetOrCreateSpec[*carriersettlementcontrol.CarrierSettlementControl]{
 			Find: r.selectControl,
 			Create: func(ctx context.Context) error {
-				cc := tenantdb.CarrierSettlementControls
+				cc := carriersettlementcontroldb.CarrierSettlementControls
 				if _, err := cc.CreateOrSkip(
 					ctx,
 					r.db.Keel(ctx),
@@ -90,7 +90,7 @@ func (r *repository) selectControl(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error) {
-			return tenantdb.CarrierSettlementControls.Cache(resultcache.Settings()...).
+			return carriersettlementcontroldb.CarrierSettlementControls.Cache(resultcache.Settings()...).
 				One(ctx, r.db.Keel(ctx))
 		},
 	)
@@ -104,7 +104,7 @@ func (r *repository) ListAutoGenerate(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carriersettlementcontrol.CarrierSettlementControl, error) {
-			cc := tenantdb.CarrierSettlementControls
+			cc := carriersettlementcontroldb.CarrierSettlementControls
 			items, err := cc.AllTenants().
 				Where(cc.AutoGenerateBatches.IsTrue()).
 				All(ctx, r.db.Keel(ctx))
@@ -124,7 +124,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error) {
-			cc := tenantdb.CarrierSettlementControls
+			cc := carriersettlementcontroldb.CarrierSettlementControls
 			if err := cc.Save(
 				ctx,
 				r.db.Keel(ctx),

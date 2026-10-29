@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell/ratematrixcelldb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -254,7 +255,7 @@ func seedRateMatrix(
 			Value: decimal.RequireFromString("2.15"),
 		})
 	}
-	require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, admin, cells))
+	require.NoError(t, ratematrixcelldb.RateMatrixCells.CreateMany(ctx, admin, cells))
 
 	return matrix.ID.String()
 }

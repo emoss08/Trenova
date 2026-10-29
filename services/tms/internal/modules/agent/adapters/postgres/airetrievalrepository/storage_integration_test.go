@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/database/dbcli"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
@@ -235,7 +235,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	)
 
 	third := h.insertMemory(t, "Receiver needs appointments a day ahead")
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	_, err = m.Where(m.ID.Eq(first.ID)).Update(h.ctx, h.db, m.UpdatedAt.To(now+100))
 	require.NoError(t, err)
 
@@ -334,7 +334,7 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 	assert.True(t, settings.ID.IsNil(), "an organization without a row reads the defaults")
 	assert.True(t, settings.MemoryEnabled)
 
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	_, err = m.Where(m.ID.Eq(memory.ID)).Delete(h.ctx, h.db)
 	require.NoError(t, err, "deleting a source works without the vector triggers")
 }
@@ -389,7 +389,7 @@ func TestEnableVector_InstallsTheSchemaAMigrationSkipped(t *testing.T) {
 func (h *harness) deleteMemory(t *testing.T, id pulid.ID) {
 	t.Helper()
 
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	_, err := m.Where(m.ID.Eq(id)).Delete(h.ctx, h.db)
 	require.NoError(t, err)
 }

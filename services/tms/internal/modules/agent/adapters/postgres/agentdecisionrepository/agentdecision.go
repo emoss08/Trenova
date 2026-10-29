@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,7 +42,7 @@ func (r *repository) GetByID(
 	req agentports.GetAgentDecisionByIDRequest,
 ) (*agentdecision.AgentDecision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdecision.AgentDecision, error) {
-		entity, err := agentdb.AgentDecisions.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := agentdecisiondb.AgentDecisions.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			r.l.Error(
 				"failed to get agent decision",
@@ -61,7 +61,7 @@ func (r *repository) Create(
 	entity *agentdecision.AgentDecision,
 ) (*agentdecision.AgentDecision, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentdecision.AgentDecision, error) {
-		if err := agentdb.AgentDecisions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := agentdecisiondb.AgentDecisions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent decision", zap.Error(err))
 			return nil, decisionErrors.Map(err, entity.ID.String())
 		}
@@ -79,7 +79,7 @@ func (r *repository) ListByProposals(
 			return []*agentdecision.AgentDecision{}, nil
 		}
 
-		d := agentdb.AgentDecisions
+		d := agentdecisiondb.AgentDecisions
 		rows, err := d.Where(d.ProposalID.In(req.ProposalIDs...), d.UndoneAt.IsNull()).
 			Order(d.CreatedAt.Desc()).
 			All(ctx, r.db.Keel(ctx))
@@ -102,7 +102,7 @@ func (r *repository) ListByCommitWorkflow(
 			return []*agentdecision.AgentDecision{}, nil
 		}
 
-		d := agentdb.AgentDecisions
+		d := agentdecisiondb.AgentDecisions
 		rows, err := d.Where(d.CommitWorkflowID.Eq(req.WorkflowID)).
 			Order(d.CreatedAt.Asc(), d.ID.Asc()).
 			All(ctx, r.db.Keel(ctx))
@@ -142,7 +142,7 @@ func (r *repository) settle(
 			return []pulid.ID{}, nil
 		}
 
-		d := agentdb.AgentDecisions
+		d := agentdecisiondb.AgentDecisions
 		sets := []keel.Assignment{d.UpdatedAt.To(req.At), d.Version.ToExpr(d.Version)}
 		switch {
 		case !undo:

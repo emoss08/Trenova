@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -230,7 +231,7 @@ func (r *payProfileRepository) CountActiveAssignments(
 	profileID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		wpa := driverpaydb.WorkerPayAssignments
+		wpa := payassignmentdb.WorkerPayAssignments
 		count, err := wpa.Where(
 			wpa.PayProfileID.Eq(profileID),
 			openAfterNow(wpa.EffectiveTo),
@@ -257,7 +258,7 @@ func (r *payProfileRepository) CountActiveAssignmentsByIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		wpa := driverpaydb.WorkerPayAssignments
+		wpa := payassignmentdb.WorkerPayAssignments
 		rows, err := keel.Into[profileCount](
 			ctx,
 			r.db.Keel(ctx),

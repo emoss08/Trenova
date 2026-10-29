@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest/capturerequestdb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -48,7 +48,7 @@ func (r *requestRepository) Create(
 	entity *capturerequest.CaptureRequest,
 ) (*capturerequest.CaptureRequest, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capturerequest.CaptureRequest, error) {
-		if err := capturedb.CaptureRequests.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := capturerequestdb.CaptureRequests.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, err
 		}
 
@@ -61,7 +61,7 @@ func (r *requestRepository) Update(
 	entity *capturerequest.CaptureRequest,
 ) (*capturerequest.CaptureRequest, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capturerequest.CaptureRequest, error) {
-		if err := capturedb.CaptureRequests.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := capturerequestdb.CaptureRequests.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, requestErrors.Map(err, entity.ID.String())
 		}
 
@@ -74,7 +74,7 @@ func (r *requestRepository) GetByID(
 	req captureports.GetCaptureRequestByIDRequest,
 ) (*capturerequest.CaptureRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capturerequest.CaptureRequest, error) {
-		cr := capturedb.CaptureRequests
+		cr := capturerequestdb.CaptureRequests
 		entity, err := cr.Where(cr.ID.Eq(req.ID)).Load(cr.CaptureProfile()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, requestErrors.Map(err, req.ID.String())
@@ -92,7 +92,7 @@ func (r *requestRepository) ListOpen(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*capturerequest.CaptureRequest, error) {
-			cr := capturedb.CaptureRequests
+			cr := capturerequestdb.CaptureRequests
 			return orEmptyRequests(cr.Where(
 				cr.DeviceID.Eq(req.DeviceID),
 				cr.Status.In(openRequestStatuses...),
@@ -117,7 +117,7 @@ func (r *requestRepository) ListForTarget(
 				limit = maxRequestsForTarget
 			}
 
-			cr := capturedb.CaptureRequests
+			cr := capturerequestdb.CaptureRequests
 			return orEmptyRequests(cr.Where(
 				cr.TargetType.Eq(req.TargetType),
 				cr.TargetID.Eq(req.TargetID),
@@ -140,7 +140,7 @@ func (r *requestRepository) ListExpired(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*capturerequest.CaptureRequest, error) {
-			cr := capturedb.CaptureRequests
+			cr := capturerequestdb.CaptureRequests
 			return orEmptyRequests(cr.AllTenants().
 				Where(cr.Status.In(waitingRequestStatuses...), cr.ExpiresAt.Lte(now)).
 				Order(cr.ExpiresAt.Asc()).

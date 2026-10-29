@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -155,7 +156,7 @@ func firstOrNil[T any](ctx context.Context, db *keel.DB, q *keel.Query[*T]) (*T,
 func (g *generator) accountingControl(
 	ctx context.Context,
 ) (*accountingcontrol.AccountingControl, error) {
-	control, err := firstOrNil(ctx, g.db, tenantdb.AccountingControls.Query())
+	control, err := firstOrNil(ctx, g.db, accountingcontroldb.AccountingControls.Query())
 	if err != nil {
 		return nil, fmt.Errorf("load accounting control: %w", err)
 	}

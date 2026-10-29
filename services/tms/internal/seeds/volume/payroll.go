@@ -10,20 +10,27 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol/dashcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode/paycodedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense/payexpensedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -208,7 +215,7 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 		allowDisputes: true,
 	}
 
-	control, err := firstOrNil(ctx, g.db, tenantdb.SettlementControls.Query())
+	control, err := firstOrNil(ctx, g.db, settlementcontroldb.SettlementControls.Query())
 	switch {
 	case err != nil:
 		return nil, fmt.Errorf("load settlement control: %w", err)
@@ -225,7 +232,7 @@ func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 	}
 	setup.control = control
 
-	dash, err := firstOrNil(ctx, g.db, tenantdb.DashControls.Query())
+	dash, err := firstOrNil(ctx, g.db, dashcontroldb.DashControls.Query())
 	if err != nil {
 		return nil, fmt.Errorf("load dash control: %w", err)
 	}
@@ -312,7 +319,7 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *payS
 			Description:    "Non-taxable reimbursement of a driver-paid trip expense",
 		})
 	}
-	pc := driverpaydb.PayCodes
+	pc := paycodedb.PayCodes
 	inserted, err := pc.CreateOrSkip(
 		ctx,
 		tx,
@@ -344,7 +351,7 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *payS
 	for i, r := range rows {
 		stamps[i] = stamp{id: r.ID, created: at, updated: at}
 	}
-	return backdate(ctx, tx, driverpaydb.PayCodes.Handle, stamps)
+	return backdate(ctx, tx, paycodedb.PayCodes.Handle, stamps)
 }
 
 func payComponent(
@@ -2425,23 +2432,30 @@ func (g *generator) payWrite(
 	}{
 		{
 			"worker_pay_assignments",
-			func() error { return insertRows(ctx, tx, driverpaydb.WorkerPayAssignments.Handle, rows.assignments) },
+			func() error {
+				return insertRows(
+					ctx,
+					tx,
+					payassignmentdb.WorkerPayAssignments.Handle,
+					rows.assignments,
+				)
+			},
 		},
 		{
 			"escrow_accounts",
-			func() error { return insertRows(ctx, tx, driverpaydb.EscrowAccounts.Handle, rows.escrows) },
+			func() error { return insertRows(ctx, tx, payescrowdb.EscrowAccounts.Handle, rows.escrows) },
 		},
 		{
 			"recurring_deductions",
-			func() error { return insertRows(ctx, tx, driverpaydb.RecurringDeductions.Handle, rows.deductions) },
+			func() error { return insertRows(ctx, tx, recurringpaydb.RecurringDeductions.Handle, rows.deductions) },
 		},
 		{
 			"recurring_earnings",
-			func() error { return insertRows(ctx, tx, driverpaydb.RecurringEarnings.Handle, rows.earnings) },
+			func() error { return insertRows(ctx, tx, recurringpaydb.RecurringEarnings.Handle, rows.earnings) },
 		},
 		{
 			"pay_advances",
-			func() error { return insertRows(ctx, tx, driverpaydb.PayAdvances.Handle, rows.advances) },
+			func() error { return insertRows(ctx, tx, payadvancedb.PayAdvances.Handle, rows.advances) },
 		},
 		{
 			"driver_settlement_batches",
@@ -2461,11 +2475,11 @@ func (g *generator) payWrite(
 		},
 		{
 			"escrow_transactions",
-			func() error { return insertRows(ctx, tx, driverpaydb.EscrowTransactions.Handle, rows.escrowTxs) },
+			func() error { return insertRows(ctx, tx, payescrowdb.EscrowTransactions.Handle, rows.escrowTxs) },
 		},
 		{
 			"driver_expenses",
-			func() error { return insertRows(ctx, tx, driverpaydb.Expenses.Handle, rows.expenses) },
+			func() error { return insertRows(ctx, tx, payexpensedb.Expenses.Handle, rows.expenses) },
 		},
 		{
 			"settlement_disputes",

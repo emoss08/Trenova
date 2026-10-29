@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/resultcache"
@@ -44,7 +44,7 @@ func (r *repository) GetByOrgID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
-			iac := tenantdb.InvoiceAdjustmentControls
+			iac := invoiceadjustmentcontroldb.InvoiceAdjustmentControls
 			entity, err := iac.Where(iac.OrganizationID.Eq(orgID)).
 				Cache(resultcache.Settings()...).
 				One(ctx, r.db.Keel(ctx))
@@ -70,7 +70,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
-			if err := tenantdb.InvoiceAdjustmentControls.Save(
+			if err := invoiceadjustmentcontroldb.InvoiceAdjustmentControls.Save(
 				ctx,
 				r.db.Keel(ctx),
 				entity,

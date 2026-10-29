@@ -22,9 +22,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger/factoringledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness/factoringreadinessdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance/factoringremittancedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -305,11 +309,11 @@ func (g *generator) facFactors(
 	if err != nil {
 		return nil, fmt.Errorf("load factoring agreements: %w", err)
 	}
-	transports, err := factoringdb.Transports.Query().All(ctx, tx)
+	transports, err := factoringsubmissiondb.Transports.Query().All(ctx, tx)
 	if err != nil {
 		return nil, fmt.Errorf("load factoring transports: %w", err)
 	}
-	rp := factoringdb.RemittanceProfiles
+	rp := factoringremittancedb.RemittanceProfiles
 	profiles, err := rp.Pick(rp.FactoringCompanyID).All(ctx, tx)
 	if err != nil {
 		return nil, fmt.Errorf("load remittance profiles: %w", err)
@@ -494,7 +498,7 @@ func (g *generator) facFactors(
 			return insertRows(ctx, tx, factoringdb.FeeTiers.Handle, newTiers)
 		}, nil},
 		{"factoring_transports", len(newTransports), func() error {
-			return insertRows(ctx, tx, factoringdb.Transports.Handle, newTransports)
+			return insertRows(ctx, tx, factoringsubmissiondb.Transports.Handle, newTransports)
 		}, transportStamps},
 	}
 	for _, step := range steps {
@@ -2184,10 +2188,10 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 			)
 		}
 	}
-	if err := insertRows(ctx, tx, factoringdb.Submissions.Handle, subs); err != nil {
+	if err := insertRows(ctx, tx, factoringsubmissiondb.Submissions.Handle, subs); err != nil {
 		return fmt.Errorf("insert factoring submissions: %w", err)
 	}
-	if err := insertRows(ctx, tx, factoringdb.SubmissionItems.Handle, items); err != nil {
+	if err := insertRows(ctx, tx, factoringsubmissiondb.SubmissionItems.Handle, items); err != nil {
 		return fmt.Errorf("insert factoring submission items: %w", err)
 	}
 
@@ -2197,10 +2201,10 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 		a.line.MatchStatus = factoringremittance.RemittanceLineMatched
 		a.line.ReserveEntryID = pulid.Nil
 	}
-	if err := insertRows(ctx, tx, factoringdb.Remittances.Handle, run.remittances); err != nil {
+	if err := insertRows(ctx, tx, factoringremittancedb.Remittances.Handle, run.remittances); err != nil {
 		return fmt.Errorf("insert factoring remittances: %w", err)
 	}
-	if err := insertRows(ctx, tx, factoringdb.RemittanceLines.Handle, run.lines); err != nil {
+	if err := insertRows(ctx, tx, factoringremittancedb.RemittanceLines.Handle, run.lines); err != nil {
 		return fmt.Errorf("insert factoring remittance lines: %w", err)
 	}
 	profileMarks := make([]stamp, 0, len(run.profiles))
@@ -2210,14 +2214,14 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 			stamp{id: p.ID, created: p.CreatedAt, updated: p.CreatedAt},
 		)
 	}
-	if err := insertRows(ctx, tx, factoringdb.RemittanceProfiles.Handle, run.profiles); err != nil {
+	if err := insertRows(ctx, tx, factoringremittancedb.RemittanceProfiles.Handle, run.profiles); err != nil {
 		return fmt.Errorf("insert factoring remittance profiles: %w", err)
 	}
 
 	if err := g.bilWrite(ctx, tx, run.rows); err != nil {
 		return err
 	}
-	if err := insertRows(ctx, tx, factoringdb.ReserveEntries.Handle, run.entries); err != nil {
+	if err := insertRows(ctx, tx, factoringledgerdb.ReserveEntries.Handle, run.entries); err != nil {
 		return fmt.Errorf("insert factoring reserve entries: %w", err)
 	}
 
@@ -2228,7 +2232,7 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 			lineIDs = append(lineIDs, lineID.String())
 			entryIDs = append(entryIDs, entryID.String())
 		}
-		rl := factoringdb.RemittanceLines
+		rl := factoringremittancedb.RemittanceLines
 		d := keel.Unnest("d", []string{"id", "reserve_entry_id"}, lineIDs, entryIDs)
 		if _, err := rl.With(d).Join(d, d.Col("id").EqCol(rl.ID)).Where(keel.True()).Update(
 			ctx,
@@ -2244,7 +2248,7 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 	if err := g.facUpdateInvoices(ctx, tx, run); err != nil {
 		return err
 	}
-	if err := insertRows(ctx, tx, factoringdb.InvoiceStates.Handle, run.states); err != nil {
+	if err := insertRows(ctx, tx, factoringreadinessdb.InvoiceStates.Handle, run.states); err != nil {
 		return fmt.Errorf("insert factoring invoice states: %w", err)
 	}
 
@@ -2262,7 +2266,7 @@ func (g *generator) facWrite(ctx context.Context, tx *keel.DB, run *facRun) erro
 		}
 	}
 	if len(profileMarks) > 0 {
-		if err := backdate(ctx, tx, factoringdb.RemittanceProfiles.Handle, profileMarks); err != nil {
+		if err := backdate(ctx, tx, factoringremittancedb.RemittanceProfiles.Handle, profileMarks); err != nil {
 			return err
 		}
 	}

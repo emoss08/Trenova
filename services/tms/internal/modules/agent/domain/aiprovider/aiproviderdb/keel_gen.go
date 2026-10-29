@@ -3,10 +3,6 @@
 package aiproviderdb
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"context"
 	"unsafe"
 
@@ -16,143 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
-
-// failureDismissalsTable is the schema of aiproviderdismissal.FailureDismissal.
-var failureDismissalsTable = schema.Table{
-	Name:   "ai_provider_failure_dismissals",
-	Quoted: `"ai_provider_failure_dismissals"`,
-	Alias:  "apfd",
-	Model:  "aiproviderdismissal.FailureDismissal",
-	Label:  `Failure Dismissal`,
-	Plural: `Failure Dismissals`,
-	Doc:    `FailureDismissal is one person putting away the notice that a provider is failing. It holds only up to the failure they saw: a newer failure brings the notice back.`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, JSON: `userId`},
-		{Name: "provider_id", Quoted: `"provider_id"`, Field: "ProviderID", Kind: schema.KindString, Flags: 0, Label: `Provider ID`, JSON: `providerId`},
-		{Name: "failure_at", Quoted: `"failure_at"`, Field: "FailureAt", Kind: schema.KindInt64, Flags: 0, Label: `Failure At`, Doc: `FailureAt is the last failure the person saw when they dismissed it.`, JSON: `failureAt`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{3, 4, 5},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 6,
-	AutoUpdate: -1,
-	IDPrefix:   "aipfd_",
-	New:        newFailureDismissal,
-	NewN:       newNFailureDismissal,
-	Size:       unsafe.Sizeof(aiproviderdismissal.FailureDismissal{}),
-	Ptr:        ptrFailureDismissal,
-	Value:      valueFailureDismissal,
-}
-
-var failureDismissalsRef = keel.Ref{Table: &failureDismissalsTable}
-
-// FailureDismissalsTable is the table of aiproviderdismissal.FailureDismissal.
-type FailureDismissalsTable struct {
-	keel.Handle[*aiproviderdismissal.FailureDismissal]
-	ID             keelkinds.PulidIDCol
-	BusinessUnitID keelkinds.PulidIDCol
-	OrganizationID keelkinds.PulidIDCol
-	UserID         keelkinds.PulidIDCol
-	ProviderID     keelkinds.PulidIDCol
-	FailureAt      keel.Int64Col
-	CreatedAt      keel.Int64Col
-}
-
-// FailureDismissals references the ai_provider_failure_dismissals table.
-var FailureDismissals = &FailureDismissalsTable{
-	Handle:         keel.Handle[*aiproviderdismissal.FailureDismissal]{Ref: &failureDismissalsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 3}}},
-	ProviderID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 4}}},
-	FailureAt:      keel.Int64Col{Col: keel.Col{Ref: &failureDismissalsRef, Index: 5}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &failureDismissalsRef, Index: 6}},
-}
-
-// BuildFailureDismissals builds the handle of ai_provider_failure_dismissals for ref. Generated relation and alias methods call it.
-func BuildFailureDismissals(r *keel.Ref) *FailureDismissalsTable {
-	return &FailureDismissalsTable{
-		Handle:         keel.Handle[*aiproviderdismissal.FailureDismissal]{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ProviderID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		FailureAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-	}
-}
-
-// FailureDismissalsSchema returns the schema of ai_provider_failure_dismissals.
-func FailureDismissalsSchema() *schema.Table { return &failureDismissalsTable }
-
-// As returns a handle that references ai_provider_failure_dismissals under its own alias.
-func (t *FailureDismissalsTable) As(alias string) *FailureDismissalsTable {
-	return keel.Alias(t.Ref, alias, BuildFailureDismissals)
-}
-
-// Get returns the ai_provider_failure_dismissals row with the given key, or keel.ErrNotFound.
-func (t *FailureDismissalsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aiproviderdismissal.FailureDismissal, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newFailureDismissal() unsafe.Pointer { return unsafe.Pointer(new(aiproviderdismissal.FailureDismissal)) }
-
-func newNFailureDismissal(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]aiproviderdismissal.FailureDismissal, n)))
-}
-
-func ptrFailureDismissal(p unsafe.Pointer, c int32) any {
-	r := (*aiproviderdismissal.FailureDismissal)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.UserID))
-	case 4:
-		return (*string)(unsafe.Pointer(&r.ProviderID))
-	case 5:
-		return &r.FailureAt
-	case 6:
-		return &r.CreatedAt
-	}
-	return nil
-}
-
-func valueFailureDismissal(p unsafe.Pointer, c int32) any {
-	r := (*aiproviderdismissal.FailureDismissal)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.UserID)
-	case 4:
-		return string(r.ProviderID)
-	case 5:
-		return r.FailureAt
-	case 6:
-		return r.CreatedAt
-	}
-	return nil
-}
 
 // providersTable is the schema of aiprovider.Provider.
 var providersTable = schema.Table{
@@ -177,9 +36,9 @@ var providersTable = schema.Table{
 		{Name: "structured_output_mode", Quoted: `"structured_output_mode"`, Field: "StructuredOutputMode", Kind: schema.KindString, Flags: 0, Label: `Structured Output Mode`, JSON: `structuredOutputMode`, Enum: enumStructuredOutputMode[:]},
 		{Name: "max_tokens", Quoted: `"max_tokens"`, Field: "MaxTokens", Kind: schema.KindInt64, Flags: 0, Label: `Max Tokens`, JSON: `maxTokens`},
 		{Name: "context_window", Quoted: `"context_window"`, Field: "ContextWindowTokens", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Context Window Tokens`, Doc: `ContextWindowTokens is the model's context window, in tokens, when the operator knows it better than the model id does: a self-hosted model served with a shorter context than its family's, or an id nothing here can place. Nil reads the window off the model id.`, JSON: `contextWindow`},
-		{Name: "reasoning_effort", Quoted: `"reasoning_effort"`, Field: "ReasoningEffort", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reasoning Effort`, Doc: `ReasoningEffort asks a model that can think to do so before answering. Off is the default: the parameter is refused by models without it.`, JSON: `reasoningEffort`, Enum: enumReasoningEffort[:]},
-		{Name: "thinking_style", Quoted: `"thinking_style"`, Field: "ThinkingStyle", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Thinking Style`, Doc: `ThinkingStyle says how a Claude model behind an id the adapter cannot read takes thinking. Auto reads the id.`, JSON: `thinkingStyle`, Enum: enumThinkingStyle[:]},
-		{Name: "platform", Quoted: `"platform"`, Field: "Platform", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Platform`, Doc: `Platform is the service an Anthropic Messages provider reaches Claude through, and PlatformSettings what that service needs besides the credential. Every other kind is called directly.`, JSON: `platform`, Enum: enumPlatform[:]},
+		{Name: "reasoning_effort", Quoted: `"reasoning_effort"`, Field: "ReasoningEffort", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reasoning Effort`, Doc: `ReasoningEffort asks a model that can think to do so before answering. Off is the default: the parameter is refused by models without it.`, JSON: `reasoningEffort`, Enum: enumAireasoningReasoningEffort[:]},
+		{Name: "thinking_style", Quoted: `"thinking_style"`, Field: "ThinkingStyle", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Thinking Style`, Doc: `ThinkingStyle says how a Claude model behind an id the adapter cannot read takes thinking. Auto reads the id.`, JSON: `thinkingStyle`, Enum: enumAireasoningThinkingStyle[:]},
+		{Name: "platform", Quoted: `"platform"`, Field: "Platform", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Platform`, Doc: `Platform is the service an Anthropic Messages provider reaches Claude through, and PlatformSettings what that service needs besides the credential. Every other kind is called directly.`, JSON: `platform`, Enum: enumAiplatformPlatform[:]},
 		{Name: "platform_settings", Quoted: `"platform_settings"`, Field: "PlatformSettings", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Platform Settings`, JSON: `platformSettings`},
 		{Name: "advisor_enabled", Quoted: `"advisor_enabled"`, Field: "AdvisorEnabled", Kind: schema.KindBool, Flags: 0, Label: `Advisor Enabled`, Doc: `AdvisorEnabled has every chat call routed to this provider declare Anthropic's advisor tool, so the model consults AdvisorModel (empty is DefaultAdvisorModel) mid-reply. Off by default: each consultation is billed at the advisor's price.`, JSON: `advisorEnabled`},
 		{Name: "advisor_model", Quoted: `"advisor_model"`, Field: "AdvisorModel", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Advisor Model`, JSON: `advisorModel`},
@@ -250,9 +109,9 @@ type ProvidersTable struct {
 	StructuredOutputMode     StructuredOutputModeCol
 	MaxTokens                keel.Int64Col
 	ContextWindowTokens      keel.Int64Col
-	ReasoningEffort          ReasoningEffortCol
-	ThinkingStyle            ThinkingStyleCol
-	Platform                 PlatformCol
+	ReasoningEffort          keelkinds.AireasoningReasoningEffortCol
+	ThinkingStyle            keelkinds.AireasoningThinkingStyleCol
+	Platform                 keelkinds.AiplatformPlatformCol
 	PlatformSettings         keel.JSONBCol
 	AdvisorEnabled           keel.BoolCol
 	AdvisorModel             keel.StringCol
@@ -303,9 +162,9 @@ var Providers = &ProvidersTable{
 	StructuredOutputMode:     StructuredOutputModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 10}}},
 	MaxTokens:                keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 11}},
 	ContextWindowTokens:      keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 12}},
-	ReasoningEffort:          ReasoningEffortCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 13}}},
-	ThinkingStyle:            ThinkingStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 14}}},
-	Platform:                 PlatformCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 15}}},
+	ReasoningEffort:          keelkinds.AireasoningReasoningEffortCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 13}}},
+	ThinkingStyle:            keelkinds.AireasoningThinkingStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 14}}},
+	Platform:                 keelkinds.AiplatformPlatformCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 15}}},
 	PlatformSettings:         keel.JSONBCol{Col: keel.Col{Ref: &providersRef, Index: 16}},
 	AdvisorEnabled:           keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 17}},
 	AdvisorModel:             keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 18}},
@@ -357,9 +216,9 @@ func BuildProviders(r *keel.Ref) *ProvidersTable {
 		StructuredOutputMode:     StructuredOutputModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		MaxTokens:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ContextWindowTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		ReasoningEffort:          ReasoningEffortCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		ThinkingStyle:            ThinkingStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		Platform:                 PlatformCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		ReasoningEffort:          keelkinds.AireasoningReasoningEffortCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ThinkingStyle:            keelkinds.AireasoningThinkingStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		Platform:                 keelkinds.AiplatformPlatformCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		PlatformSettings:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
 		AdvisorEnabled:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
 		AdvisorModel:             keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
@@ -714,6 +573,30 @@ func beforeCreateProvider(ctx context.Context, p unsafe.Pointer) error {
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
+var enumAiplatformPlatform = [...]schema.EnumValue{
+	{Value: `Direct`, Label: `Direct`, Doc: `PlatformDirect calls the provider's base URL with its API key: the Claude API itself, or anything that serves the Messages API the same way.`},
+	{Value: `Bedrock`, Label: `Bedrock`, Doc: `PlatformBedrock is Amazon Bedrock's Messages endpoint.`},
+	{Value: `VertexAI`, Label: `Vertex AI`, Doc: `PlatformVertexAI is Google Vertex AI's Anthropic publisher models.`},
+	{Value: `ClaudePlatformAWS`, Label: `Claude AWS`, Doc: `PlatformClaudeAWS is Claude Platform on AWS, the Claude API run by Anthropic and billed through AWS.`},
+	{Value: `ClaudePlatformGoogleCloud`, Label: `Claude Google Cloud`, Doc: `PlatformClaudeGoogleCloud is Claude Platform on Google Cloud.`},
+	{Value: `Foundry`, Label: `Foundry`, Doc: `PlatformFoundry is Microsoft Foundry.`},
+}
+
+var enumAireasoningReasoningEffort = [...]schema.EnumValue{
+	{Value: `Off`, Label: `Reasoning Off`},
+	{Value: `None`, Label: `Reasoning None`},
+	{Value: `Minimal`, Label: `Reasoning Minimal`},
+	{Value: `Low`, Label: `Reasoning Low`},
+	{Value: `Medium`, Label: `Reasoning Medium`},
+	{Value: `High`, Label: `Reasoning High`},
+}
+
+var enumAireasoningThinkingStyle = [...]schema.EnumValue{
+	{Value: `Auto`, Label: `Auto`},
+	{Value: `Effort`, Label: `Effort`},
+	{Value: `Budget`, Label: `Budget`},
+}
+
 var enumCapAction = [...]schema.EnumValue{
 	{Value: `Next`, Label: `Next`},
 	{Value: `Stop`, Label: `Stop`},
@@ -731,34 +614,10 @@ var enumKind = [...]schema.EnumValue{
 	{Value: `OpenAIChat`, Label: `Open AI Chat`},
 }
 
-var enumPlatform = [...]schema.EnumValue{
-	{Value: `Direct`, Label: `Direct`, Doc: `PlatformDirect calls the provider's base URL with its API key: the Claude API itself, or anything that serves the Messages API the same way.`},
-	{Value: `Bedrock`, Label: `Bedrock`, Doc: `PlatformBedrock is Amazon Bedrock's Messages endpoint.`},
-	{Value: `VertexAI`, Label: `Vertex AI`, Doc: `PlatformVertexAI is Google Vertex AI's Anthropic publisher models.`},
-	{Value: `ClaudePlatformAWS`, Label: `Claude AWS`, Doc: `PlatformClaudeAWS is Claude Platform on AWS, the Claude API run by Anthropic and billed through AWS.`},
-	{Value: `ClaudePlatformGoogleCloud`, Label: `Claude Google Cloud`, Doc: `PlatformClaudeGoogleCloud is Claude Platform on Google Cloud.`},
-	{Value: `Foundry`, Label: `Foundry`, Doc: `PlatformFoundry is Microsoft Foundry.`},
-}
-
-var enumReasoningEffort = [...]schema.EnumValue{
-	{Value: `Off`, Label: `Reasoning Off`},
-	{Value: `None`, Label: `Reasoning None`},
-	{Value: `Minimal`, Label: `Reasoning Minimal`},
-	{Value: `Low`, Label: `Reasoning Low`},
-	{Value: `Medium`, Label: `Reasoning Medium`},
-	{Value: `High`, Label: `Reasoning High`},
-}
-
 var enumStructuredOutputMode = [...]schema.EnumValue{
 	{Value: `JSONSchema`, Label: `Structured Output JSON Schema`, Doc: `StructuredOutputJSONSchema means the endpoint enforces the supplied schema server-side and the response is guaranteed to conform.`},
 	{Value: `JSONMode`, Label: `Structured Output JSON Mode`, Doc: `StructuredOutputJSONMode means the endpoint guarantees syntactically valid JSON but not adherence to the schema, so the shape is validated on receipt.`},
 	{Value: `Prompted`, Label: `Structured Output Prompted`, Doc: `StructuredOutputPrompted means the schema is carried in the prompt and nothing is guaranteed. The response is fenced, repaired, and validated.`},
-}
-
-var enumThinkingStyle = [...]schema.EnumValue{
-	{Value: `Auto`, Label: `Auto`},
-	{Value: `Effort`, Label: `Effort`},
-	{Value: `Budget`, Label: `Budget`},
 }
 
 // CapActionCol is a column of aiprovider.CapAction values.
@@ -842,66 +701,6 @@ func (c KindCol) NotIn(vs ...aiprovider.Kind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// PlatformCol is a column of aiplatform.Platform values.
-type PlatformCol struct{ keel.StringCol }
-
-func (c PlatformCol) Eq(v aiplatform.Platform) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PlatformCol) Ne(v aiplatform.Platform) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PlatformCol) Gt(v aiplatform.Platform) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PlatformCol) Gte(v aiplatform.Platform) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PlatformCol) Lt(v aiplatform.Platform) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PlatformCol) Lte(v aiplatform.Platform) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c PlatformCol) IsDistinctFrom(v aiplatform.Platform) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c PlatformCol) Between(lo, hi aiplatform.Platform) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c PlatformCol) To(v aiplatform.Platform) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c PlatformCol) In(vs ...aiplatform.Platform) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c PlatformCol) NotIn(vs ...aiplatform.Platform) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// ReasoningEffortCol is a column of aireasoning.ReasoningEffort values.
-type ReasoningEffortCol struct{ keel.StringCol }
-
-func (c ReasoningEffortCol) Eq(v aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ReasoningEffortCol) Ne(v aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ReasoningEffortCol) Gt(v aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c ReasoningEffortCol) Gte(v aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ReasoningEffortCol) Lt(v aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c ReasoningEffortCol) Lte(v aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c ReasoningEffortCol) IsDistinctFrom(v aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c ReasoningEffortCol) Between(lo, hi aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c ReasoningEffortCol) To(v aireasoning.ReasoningEffort) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c ReasoningEffortCol) In(vs ...aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c ReasoningEffortCol) NotIn(vs ...aireasoning.ReasoningEffort) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
 // StructuredOutputModeCol is a column of aiprovider.StructuredOutputMode values.
 type StructuredOutputModeCol struct{ keel.StringCol }
 
@@ -936,55 +735,5 @@ func (c StructuredOutputModeCol) In(vs ...aiprovider.StructuredOutputMode) keel.
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c StructuredOutputModeCol) NotIn(vs ...aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// TaskCol is a column of aitask.Task values.
-type TaskCol struct{ keel.StringCol }
-
-func (c TaskCol) Eq(v aitask.Task) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TaskCol) Ne(v aitask.Task) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TaskCol) Gt(v aitask.Task) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TaskCol) Gte(v aitask.Task) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TaskCol) Lt(v aitask.Task) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TaskCol) Lte(v aitask.Task) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c TaskCol) IsDistinctFrom(v aitask.Task) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c TaskCol) Between(lo, hi aitask.Task) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c TaskCol) To(v aitask.Task) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c TaskCol) In(vs ...aitask.Task) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
-func (c TaskCol) NotIn(vs ...aitask.Task) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// ThinkingStyleCol is a column of aireasoning.ThinkingStyle values.
-type ThinkingStyleCol struct{ keel.StringCol }
-
-func (c ThinkingStyleCol) Eq(v aireasoning.ThinkingStyle) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ThinkingStyleCol) Ne(v aireasoning.ThinkingStyle) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ThinkingStyleCol) Gt(v aireasoning.ThinkingStyle) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ThinkingStyleCol) Gte(v aireasoning.ThinkingStyle) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ThinkingStyleCol) Lt(v aireasoning.ThinkingStyle) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ThinkingStyleCol) Lte(v aireasoning.ThinkingStyle) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c ThinkingStyleCol) IsDistinctFrom(v aireasoning.ThinkingStyle) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c ThinkingStyleCol) Between(lo, hi aireasoning.ThinkingStyle) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c ThinkingStyleCol) To(v aireasoning.ThinkingStyle) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c ThinkingStyleCol) In(vs ...aireasoning.ThinkingStyle) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c ThinkingStyleCol) NotIn(vs ...aireasoning.ThinkingStyle) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

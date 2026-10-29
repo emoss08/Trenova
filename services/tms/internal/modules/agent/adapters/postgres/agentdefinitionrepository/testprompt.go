@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt/agenttestpromptdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
@@ -32,7 +32,7 @@ func (r *testPromptRepository) List(
 	req *agentdefinitionports.ListAgentTestPromptsRequest,
 ) ([]*agenttestprompt.TestPrompt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agenttestprompt.TestPrompt, error) {
-		p := agentdefinitiondb.TestPrompts
+		p := agenttestpromptdb.TestPrompts
 		prompts, err := p.Where(p.AgentDefinitionID.Eq(req.AgentDefinitionID)).
 			Order(p.CreatedAt.Asc(), p.ID.Asc()).
 			Limit(agenttestprompt.MaxTestPrompts).
@@ -49,7 +49,7 @@ func (r *testPromptRepository) Count(
 	req *agentdefinitionports.ListAgentTestPromptsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		p := agentdefinitiondb.TestPrompts
+		p := agenttestpromptdb.TestPrompts
 		count, err := p.Where(p.AgentDefinitionID.Eq(req.AgentDefinitionID)).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -64,7 +64,7 @@ func (r *testPromptRepository) Create(
 	prompt *agenttestprompt.TestPrompt,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if err := agentdefinitiondb.TestPrompts.Create(ctx, r.db.Keel(ctx), prompt); err != nil {
+		if err := agenttestpromptdb.TestPrompts.Create(ctx, r.db.Keel(ctx), prompt); err != nil {
 			return fmt.Errorf("keep agent test prompt: %w", err)
 		}
 		return nil
@@ -76,7 +76,7 @@ func (r *testPromptRepository) Delete(
 	req *agentdefinitionports.DeleteAgentTestPromptRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		p := agentdefinitiondb.TestPrompts
+		p := agenttestpromptdb.TestPrompts
 		n, err := p.Where(p.AgentDefinitionID.Eq(req.AgentDefinitionID), p.ID.Eq(req.ID)).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {

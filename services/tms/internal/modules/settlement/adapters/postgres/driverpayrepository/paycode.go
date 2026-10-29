@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode/paycodedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -40,7 +40,7 @@ func (r *payCodeRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*paycode.PayCode], error) {
-			pc := driverpaydb.PayCodes
+			pc := paycodedb.PayCodes
 			q := pc.Where(
 				searchPred(req.Filter.Query, pc.Code, pc.Name),
 				when(req.Direction != "", pc.Direction.Eq(req.Direction)),
@@ -64,7 +64,7 @@ func (r *payCodeRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*paycode.PayCode], error) {
-			pc := driverpaydb.PayCodes
+			pc := paycodedb.PayCodes
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -92,7 +92,7 @@ func (r *payCodeRepository) ListActive(
 	req driverpayports.ListActivePayCodesRequest,
 ) ([]*paycode.PayCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*paycode.PayCode, error) {
-		pc := driverpaydb.PayCodes
+		pc := paycodedb.PayCodes
 		items, err := pc.Where(
 			pc.Status.Eq(domaintypes.StatusActive),
 			when(req.Direction != "", pc.Direction.Eq(req.Direction)),
@@ -113,7 +113,7 @@ func (r *payCodeRepository) SelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*paycode.PayCode], error) {
-			pc := driverpaydb.PayCodes
+			pc := paycodedb.PayCodes
 			q := pc.Pick(
 				pc.ID,
 				pc.Code,
@@ -151,7 +151,7 @@ func (r *payCodeRepository) GetByID(
 	req driverpayports.GetPayCodeByIDRequest,
 ) (*paycode.PayCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*paycode.PayCode, error) {
-		pc := driverpaydb.PayCodes
+		pc := paycodedb.PayCodes
 		entity, err := pc.Where(pc.ID.Eq(req.ID)).
 			Load(pc.GLAccount()).
 			One(ctx, r.db.Keel(ctx))
@@ -173,7 +173,7 @@ func (r *payCodeRepository) GetByIDs(
 			return []*paycode.PayCode{}, nil
 		}
 
-		pc := driverpaydb.PayCodes
+		pc := paycodedb.PayCodes
 		items, err := pc.Where(pc.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("get pay codes by ids: %w", err)
@@ -188,7 +188,7 @@ func (r *payCodeRepository) Create(
 	entity *paycode.PayCode,
 ) (*paycode.PayCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*paycode.PayCode, error) {
-		if err := driverpaydb.PayCodes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := paycodedb.PayCodes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, payCodeErrors.Map(err, entity.ID.String())
 		}
 
@@ -204,7 +204,7 @@ func (r *payCodeRepository) Update(
 	entity *paycode.PayCode,
 ) (*paycode.PayCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*paycode.PayCode, error) {
-		pc := driverpaydb.PayCodes
+		pc := paycodedb.PayCodes
 		if err := pc.Save(
 			ctx,
 			r.db.Keel(ctx),
@@ -249,7 +249,7 @@ func (r *payCodeRepository) EnsureSystemDefaults(
 			})
 		}
 
-		pc := driverpaydb.PayCodes
+		pc := paycodedb.PayCodes
 		if _, err := pc.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol/documentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/resultcache"
@@ -68,7 +68,7 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentcontrol.DocumentControl, error) {
-			if err := tenantdb.DocumentControls.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := documentcontroldb.DocumentControls.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				return nil, documentControlErrors.Map(err, entity.ID.String())
 			}
 
@@ -85,7 +85,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentcontrol.DocumentControl, error) {
-			if err := tenantdb.DocumentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := documentcontroldb.DocumentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 				return nil, documentControlErrors.Map(err, entity.ID.String())
 			}
 
@@ -103,7 +103,7 @@ func (r *repository) GetOrCreate(
 			return dbtx.Read(ctx, r.db, r.find)
 		},
 		Create: func(ctx context.Context) error {
-			dc := tenantdb.DocumentControls
+			dc := documentcontroldb.DocumentControls
 			_, err := dc.CreateOrSkip(
 				ctx,
 				r.db.Keel(ctx),
@@ -132,5 +132,6 @@ func (r *repository) GetOrCreate(
 }
 
 func (r *repository) find(ctx context.Context) (*documentcontrol.DocumentControl, error) {
-	return tenantdb.DocumentControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
+	return documentcontroldb.DocumentControls.Cache(resultcache.Settings()...).
+		One(ctx, r.db.Keel(ctx))
 }

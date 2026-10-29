@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,7 @@ func (r *workerPayAssignmentRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+			wpa := payassignmentdb.WorkerPayAssignments
 			entity, err := wpa.Where(wpa.ID.Eq(id)).
 				Load(wpa.PayProfile()).
 				One(ctx, r.db.Keel(ctx))
@@ -60,7 +60,7 @@ func (r *workerPayAssignmentRepository) GetEffectiveForWorker(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+			wpa := payassignmentdb.WorkerPayAssignments
 			entity, err := wpa.Where(
 				wpa.WorkerID.Eq(req.WorkerID),
 				wpa.EffectiveFrom.Lte(req.AsOf),
@@ -89,7 +89,7 @@ func (r *workerPayAssignmentRepository) ListForWorker(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*payassignment.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+			wpa := payassignmentdb.WorkerPayAssignments
 			items, err := wpa.Where(wpa.WorkerID.Eq(req.WorkerID)).
 				Load(wpa.PayProfile()).
 				Order(wpa.EffectiveFrom.Desc()).
@@ -112,7 +112,7 @@ func (r *workerPayAssignmentRepository) ListForProfile(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*payassignment.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+			wpa := payassignmentdb.WorkerPayAssignments
 			items, err := wpa.Where(
 				wpa.PayProfileID.Eq(profileID),
 				openAfterNow(wpa.EffectiveTo),
@@ -137,7 +137,7 @@ func (r *workerPayAssignmentRepository) ListOverlapping(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*payassignment.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+			wpa := payassignmentdb.WorkerPayAssignments
 			overlap := openAfter(wpa.EffectiveTo, entity.EffectiveFrom)
 			if entity.EffectiveTo != nil {
 				overlap = keel.And(wpa.EffectiveFrom.Lt(*entity.EffectiveTo), overlap)
@@ -165,7 +165,7 @@ func (r *workerPayAssignmentRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
-			if err := driverpaydb.WorkerPayAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := payassignmentdb.WorkerPayAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				return nil, assignmentErrors.Map(err, entity.ID.String())
 			}
 
@@ -182,7 +182,7 @@ func (r *workerPayAssignmentRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+			wpa := payassignmentdb.WorkerPayAssignments
 			if err := wpa.Save(
 				ctx,
 				r.db.Keel(ctx),
@@ -208,7 +208,7 @@ func (r *workerPayAssignmentRepository) Delete(
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := driverpaydb.WorkerPayAssignments.DeleteRow(
+		err := payassignmentdb.WorkerPayAssignments.DeleteRow(
 			ctx,
 			r.db.Keel(ctx),
 			&payassignment.WorkerPayAssignment{ID: id},

@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,7 +40,7 @@ func (r *transportRepository) Get(
 	req factoringsubmissionports.GetTransportRequest,
 ) (*factoringsubmission.Transport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringsubmission.Transport, error) {
-		t := factoringdb.Transports
+		t := factoringsubmissiondb.Transports
 		entity, err := t.Where(t.FactoringCompanyID.Eq(req.FactoringCompanyID)).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -56,7 +56,7 @@ func (r *transportRepository) Create(
 	entity *factoringsubmission.Transport,
 ) (*factoringsubmission.Transport, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoringsubmission.Transport, error) {
-		if err := factoringdb.Transports.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := factoringsubmissiondb.Transports.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, translateTransportError(err, entity.ID)
 		}
 
@@ -69,7 +69,7 @@ func (r *transportRepository) Update(
 	entity *factoringsubmission.Transport,
 ) (*factoringsubmission.Transport, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoringsubmission.Transport, error) {
-		t := factoringdb.Transports
+		t := factoringsubmissiondb.Transports
 		if err := t.SaveExcept(ctx, r.db.Keel(ctx), entity, t.FactoringCompanyID); err != nil {
 			return nil, translateTransportError(err, entity.ID)
 		}
@@ -83,7 +83,7 @@ func (r *transportRepository) RecordTest(
 	entity *factoringsubmission.Transport,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		t := factoringdb.Transports
+		t := factoringsubmissiondb.Transports
 		_, err := t.Where(t.ID.Eq(entity.ID)).Update(ctx, r.db.Keel(ctx),
 			t.LastTestedAt.ToExpr(keel.Val(entity.LastTestedAt)),
 			t.LastTestError.ToExpr(keel.Val(stringutils.NilIfEmpty(entity.LastTestError))),

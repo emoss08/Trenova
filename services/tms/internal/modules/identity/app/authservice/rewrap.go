@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
@@ -15,7 +15,7 @@ var knownSSOProviders = []sso.SSOProvider{sso.SSOProviderAzureAD, sso.SSOProvide
 
 func EnvelopeColumns() []kernelports.EnvelopeColumn {
 	idp := iamdb.IdentityProviders
-	ssoConfigs := tenantdb.SSOConfigs
+	ssoConfigs := ssodb.SSOConfigs
 	slug := kernelports.EnvelopeColumnName(idp.Slug)
 	provider := kernelports.EnvelopeColumnName(ssoConfigs.Provider)
 	return []kernelports.EnvelopeColumn{

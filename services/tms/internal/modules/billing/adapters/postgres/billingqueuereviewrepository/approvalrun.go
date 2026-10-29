@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun/billingapprovalrundb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +29,7 @@ func (r *repository) CreateApprovalRun(
 		func(ctx context.Context) (*billingapprovalrun.ApprovalRun, error) {
 			db := r.db.Keel(ctx)
 			run := req.Run
-			if err := billingqueuedb.ApprovalRuns.Create(ctx, db, run); err != nil {
+			if err := billingapprovalrundb.ApprovalRuns.Create(ctx, db, run); err != nil {
 				return nil, runErrors.Map(err, run.ID.String())
 			}
 
@@ -45,7 +45,7 @@ func (r *repository) CreateApprovalRun(
 				})
 			}
 			if len(items) > 0 {
-				if err := billingqueuedb.ApprovalRunItems.CreateMany(ctx, db, items); err != nil {
+				if err := billingapprovalrundb.ApprovalRunItems.CreateMany(ctx, db, items); err != nil {
 					return nil, runItemErrors.Map(err, run.ID.String())
 				}
 			}
@@ -57,7 +57,7 @@ func (r *repository) CreateApprovalRun(
 }
 
 func approvalRunWithItems() *keel.Query[*billingapprovalrun.ApprovalRun] {
-	run := billingqueuedb.ApprovalRuns
+	run := billingapprovalrundb.ApprovalRuns
 	items := run.Items()
 	return run.Load(items.Order(items.Sequence.Asc()))
 }
@@ -67,7 +67,7 @@ func (r *repository) GetApprovalRun(
 	req *billingqueueports.GetApprovalRunRequest,
 ) (*billingapprovalrun.ApprovalRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingapprovalrun.ApprovalRun, error) {
-		run := billingqueuedb.ApprovalRuns
+		run := billingapprovalrundb.ApprovalRuns
 		q := run.Query()
 		if req.IncludeItems {
 			q = approvalRunWithItems()
@@ -89,7 +89,7 @@ func (r *repository) GetApprovalRunByKey(
 ) (*billingapprovalrun.ApprovalRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingapprovalrun.ApprovalRun, error) {
 		entity, err := approvalRunWithItems().
-			Where(billingqueuedb.ApprovalRuns.IdempotencyKey.Eq(key)).
+			Where(billingapprovalrundb.ApprovalRuns.IdempotencyKey.Eq(key)).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, runErrors.Map(err, "")
@@ -100,7 +100,7 @@ func (r *repository) GetApprovalRunByKey(
 }
 
 func scheduledRun(runID pulid.ID) *keel.Query[*billingapprovalrun.ApprovalRun] {
-	run := billingqueuedb.ApprovalRuns
+	run := billingapprovalrundb.ApprovalRuns
 	return run.Where(
 		run.ID.Eq(runID),
 		run.Status.Eq(billingapprovalrun.ApprovalRunScheduled),
@@ -113,7 +113,7 @@ func (r *repository) MarkApprovalRunRunning(
 	req *billingqueueports.MarkApprovalRunRunningRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		run := billingqueuedb.ApprovalRuns
+		run := billingapprovalrundb.ApprovalRuns
 		n, err := scheduledRun(req.RunID).Update(ctx, r.db.Keel(ctx),
 			run.Status.To(billingapprovalrun.ApprovalRunRunning),
 			run.StartedAt.To(timeutils.NowUnix()),
@@ -133,7 +133,7 @@ func (r *repository) RequestApprovalRunUndo(
 	req *billingqueueports.RequestApprovalRunUndoRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		run := billingqueuedb.ApprovalRuns
+		run := billingapprovalrundb.ApprovalRuns
 		n, err := scheduledRun(req.RunID).Update(ctx, r.db.Keel(ctx),
 			run.CancelRequestedAt.To(timeutils.NowUnix()),
 			run.CancelRequestedByID.ToExpr(keel.Val(req.RequestedByID)),
@@ -151,7 +151,7 @@ func (r *repository) SetApprovalRunWorkflow(
 	req *billingqueueports.MarkApprovalRunRunningRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		run := billingqueuedb.ApprovalRuns
+		run := billingapprovalrundb.ApprovalRuns
 		_, err := run.Where(run.ID.Eq(req.RunID)).Update(ctx, r.db.Keel(ctx),
 			run.TemporalWorkflowID.To(req.TemporalWorkflowID),
 			run.TemporalRunID.To(req.TemporalRunID),
@@ -172,7 +172,7 @@ func (r *repository) ListPendingApprovalRunItems(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*billingapprovalrun.ApprovalRunItem, error) {
-			item := billingqueuedb.ApprovalRunItems
+			item := billingapprovalrundb.ApprovalRunItems
 			items, err := item.Where(
 				item.RunID.Eq(runID),
 				item.Status.Eq(billingapprovalrun.ApprovalItemPending),
@@ -195,7 +195,7 @@ func (r *repository) RecordApprovalRunItem(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		entry := req.Item
-		item := billingqueuedb.ApprovalRunItems
+		item := billingapprovalrundb.ApprovalRunItems
 		_, err := item.Where(
 			item.RunID.Eq(entry.RunID),
 			item.ItemID.Eq(entry.ItemID),
@@ -234,7 +234,7 @@ func (r *repository) FinalizeApprovalRun(
 				leftover = billingapprovalrun.ApprovalFailureUnexpected
 			}
 
-			item := billingqueuedb.ApprovalRunItems
+			item := billingapprovalrundb.ApprovalRunItems
 			if _, err := item.Where(
 				item.RunID.Eq(req.RunID),
 				item.Status.Eq(billingapprovalrun.ApprovalItemPending),
@@ -257,7 +257,7 @@ func (r *repository) FinalizeApprovalRun(
 				return nil, err
 			}
 
-			run := billingqueuedb.ApprovalRuns
+			run := billingapprovalrundb.ApprovalRuns
 			if _, err = run.Where(run.ID.Eq(req.RunID)).Update(ctx, db,
 				run.Status.To(req.Status),
 				run.FailureMessage.ToExpr(keel.Val(nullable(req.FailureMessage))),

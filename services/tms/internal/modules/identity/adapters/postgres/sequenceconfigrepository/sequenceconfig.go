@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -120,7 +120,7 @@ func withDefaults(
 }
 
 func (r *repository) listRequired(ctx context.Context) ([]*sequenceconfig.SequenceConfig, error) {
-	sc := tenantdb.SequenceConfigs
+	sc := sequenceconfigdb.SequenceConfigs
 	requiredTypes := sequenceconfig.RequiredSequenceTypes()
 
 	return sc.Where(sc.SequenceType.In(requiredTypes...)).
@@ -161,7 +161,7 @@ func (r *repository) UpdateByTenant(
 			}
 
 			if len(configs) > 0 {
-				sc := tenantdb.SequenceConfigs
+				sc := sequenceconfigdb.SequenceConfigs
 				if _, err := sc.Upsert(
 					ctx,
 					r.db.Keel(ctx),
@@ -218,7 +218,7 @@ func (r *repository) ensureDefaults(ctx context.Context, orgID, buID pulid.ID) e
 		return nil
 	}
 
-	sc := tenantdb.SequenceConfigs
+	sc := sequenceconfigdb.SequenceConfigs
 	if _, err := sc.CreateOrSkip(
 		ctx,
 		r.db.Keel(ctx),

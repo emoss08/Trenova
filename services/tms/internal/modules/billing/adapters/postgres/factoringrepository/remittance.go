@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance/factoringremittancedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -52,7 +53,7 @@ func (r *remittanceRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringremittance.Remittance, error) {
-			if err := factoringdb.Remittances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := factoringremittancedb.Remittances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				return nil, remittanceErrors.Map(err, entity.ID.String())
 			}
 
@@ -69,7 +70,7 @@ func (r *remittanceRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringremittance.Remittance, error) {
-			rem := factoringdb.Remittances
+			rem := factoringremittancedb.Remittances
 			err := rem.SaveExcept(ctx, r.db.Keel(ctx), entity,
 				rem.FactoringCompanyID,
 				rem.Source,
@@ -109,7 +110,7 @@ func (r *remittanceRepository) get(
 	req factoringremittanceports.GetRemittanceRequest,
 ) (*factoringremittance.Remittance, error) {
 	db := r.db.Keel(ctx)
-	rem := factoringdb.Remittances
+	rem := factoringremittancedb.Remittances
 	q := rem.Where(rem.ID.Eq(req.ID)).Load(rem.FactoringCompany())
 	if req.ForUpdate {
 		q = q.Lock(keel.ForUpdate)
@@ -122,9 +123,9 @@ func (r *remittanceRepository) get(
 		return entity, nil
 	}
 
-	lines := withMatchedItem(factoringdb.RemittanceLines.Query()).
-		Where(factoringdb.RemittanceLines.RemittanceID.Eq(entity.ID)).
-		Order(factoringdb.RemittanceLines.RowNumber.Asc())
+	lines := withMatchedItem(factoringremittancedb.RemittanceLines.Query()).
+		Where(factoringremittancedb.RemittanceLines.RemittanceID.Eq(entity.ID)).
+		Order(factoringremittancedb.RemittanceLines.RowNumber.Asc())
 	if req.ForUpdate {
 		lines = lines.Lock(keel.ForUpdate)
 	}
@@ -139,7 +140,7 @@ func (r *remittanceRepository) get(
 func withMatchedItem(
 	q *keel.Query[*factoringremittance.RemittanceLine],
 ) *keel.Query[*factoringremittance.RemittanceLine] {
-	line := factoringdb.RemittanceLines
+	line := factoringremittancedb.RemittanceLines
 	item := line.SubmissionItem()
 	return q.
 		Compute(line.MatchedInvoice, item.InvoiceNumber.Coalesce("")).
@@ -151,7 +152,7 @@ func (r *remittanceRepository) FindByInboundDocument(
 	req *factoringremittanceports.FindRemittanceByDocumentRequest,
 ) (*factoringremittance.Remittance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringremittance.Remittance, error) {
-		rem := factoringdb.Remittances
+		rem := factoringremittancedb.Remittances
 		entity, err := rem.Where(
 			rem.InboundMessageID.Eq(req.InboundMessageID),
 			rem.DocumentID.Eq(req.DocumentID),
@@ -173,7 +174,7 @@ func (r *remittanceRepository) ListConnection(
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*factoringremittance.Remittance], error) {
 			filter, term := withoutQuery(req.Filter)
-			rem := factoringdb.Remittances
+			rem := factoringremittancedb.Remittances
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -212,7 +213,7 @@ func (r *remittanceRepository) ListLineConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*factoringremittance.RemittanceLine], error) {
-			line := factoringdb.RemittanceLines
+			line := factoringremittancedb.RemittanceLines
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -245,7 +246,7 @@ func (r *remittanceRepository) ReplaceLines(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
-		line := factoringdb.RemittanceLines
+		line := factoringremittancedb.RemittanceLines
 		if _, err := line.Where(line.RemittanceID.Eq(remittance.ID)).Delete(ctx, db); err != nil {
 			return remittanceLineErrors.Map(err, remittance.ID.String())
 		}
@@ -316,7 +317,7 @@ func lineOutcomes(
 		reserves[i] = l.ReserveEntryID
 	}
 
-	line := factoringdb.RemittanceLines
+	line := factoringremittancedb.RemittanceLines
 	outcome := keel.Unnest("outcome", []string{
 		"id", "kind", "match_status", "matched_by", "submission_item_id", "score",
 		"reason", "suggestions", "ignored_reason", "reserve_entry_id",
@@ -376,7 +377,7 @@ func (r *remittanceRepository) ListCandidates(
 func remittanceCandidates(
 	req *factoringremittanceports.ListRemittanceCandidatesRequest,
 ) *keel.Query[*factoringsubmission.SubmissionItem] {
-	item := factoringdb.SubmissionItems
+	item := factoringsubmissiondb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()
 	invoiceMatch, amountMatch := candidateMatch(
@@ -407,7 +408,7 @@ func remittanceCandidates(
 }
 
 func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMatch keel.Pred) {
-	item := factoringdb.SubmissionItems
+	item := factoringsubmissiondb.SubmissionItems
 	normalized := item.InvoiceNumber.RegexpReplace("[^[:alnum:]]", "", "g").Upper()
 	tolerance := keel.Int64(minCandidateTolerance).Greatest(item.ExpectedFeeMinor)
 	amt := keel.Unnest("amt", []string{"v"}, amounts)
@@ -470,7 +471,7 @@ func (r *remittanceRepository) ListOpen(
 }
 
 func openRemittances(limit int) *keel.Query[*factoringremittance.Remittance] {
-	rem := factoringdb.Remittances
+	rem := factoringremittancedb.Remittances
 	fac := rem.FactoringCompany()
 	return rem.Pick(
 		rem.ID,
@@ -505,7 +506,7 @@ func (r *remittanceRepository) GetProfile(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringremittance.RemittanceProfile, error) {
-			p := factoringdb.RemittanceProfiles
+			p := factoringremittancedb.RemittanceProfiles
 			profile, err := p.Where(p.FactoringCompanyID.Eq(req.FactoringCompanyID)).
 				One(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -523,7 +524,7 @@ func (r *remittanceRepository) SaveProfile(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
-		p := factoringdb.RemittanceProfiles
+		p := factoringremittancedb.RemittanceProfiles
 		_, err := p.Upsert(ctx, db, []*factoringremittance.RemittanceProfile{profile},
 			keel.OnConflict(p.OrganizationID, p.BusinessUnitID, p.FactoringCompanyID).
 				Update(p.Mapping, p.HeaderSignature),

@@ -12,8 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust/agenttooltrustdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -513,7 +516,7 @@ func (s *AgentActivitySeed) insertPlan(
 		StepCount: 3,
 		ExpiresAt: refs.now + 3*activitySeedDay,
 	}
-	if err = agentdb.AgentPlans.Create(ctx, db, plan); err != nil {
+	if err = agentplandb.AgentPlans.Create(ctx, db, plan); err != nil {
 		return fmt.Errorf("insert plan: %w", err)
 	}
 
@@ -659,7 +662,7 @@ func (s *AgentActivitySeed) insertFailures(
 		},
 	}
 	for _, exception := range exceptions {
-		if err = agentdb.AgentExceptions.Create(ctx, db, exception); err != nil {
+		if err = agentexceptiondb.AgentExceptions.Create(ctx, db, exception); err != nil {
 			return fmt.Errorf("insert exception %s: %w", exception.Category, err)
 		}
 	}
@@ -679,7 +682,7 @@ func (s *AgentActivitySeed) insertTrust(
 	refs *activitySeedRefs,
 ) error {
 	rows := trustRows(refs)
-	if err := agentdb.ToolTrusts.CreateMany(ctx, db, rows); err != nil {
+	if err := agenttooltrustdb.ToolTrusts.CreateMany(ctx, db, rows); err != nil {
 		return fmt.Errorf("insert tool trust: %w", err)
 	}
 

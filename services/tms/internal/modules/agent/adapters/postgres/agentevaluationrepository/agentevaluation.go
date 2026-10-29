@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation/agentevaluationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -45,7 +45,7 @@ func (r *repository) Create(
 	entity *agentevaluation.Evaluation,
 ) (*agentevaluation.Evaluation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentevaluation.Evaluation, error) {
-		if err := agentdb.Evaluations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := agentevaluationdb.Evaluations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent evaluation", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent evaluation: %w", err)
@@ -62,7 +62,7 @@ func (r *repository) Update(
 	entity *agentevaluation.Evaluation,
 ) (*agentevaluation.Evaluation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentevaluation.Evaluation, error) {
-		e := agentdb.Evaluations
+		e := agentevaluationdb.Evaluations
 		err := e.Save(
 			ctx,
 			r.db.Keel(ctx),
@@ -104,7 +104,7 @@ func (r *repository) GetByID(
 	req agentports.GetAgentEvaluationByIDRequest,
 ) (*agentevaluation.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentevaluation.Evaluation, error) {
-		entity, err := agentdb.Evaluations.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := agentevaluationdb.Evaluations.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, evaluationErrors.Map(err, req.ID.String())
 		}
@@ -121,7 +121,7 @@ func (r *repository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*agentevaluation.Evaluation], error) {
-			e := agentdb.Evaluations
+			e := agentevaluationdb.Evaluations
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -149,7 +149,7 @@ func (r *repository) CreateMany(ctx context.Context, entities []*agentevaluation
 			return nil
 		}
 
-		if err := agentdb.Evaluations.CreateMany(ctx, r.db.Keel(ctx), entities); err != nil {
+		if err := agentevaluationdb.Evaluations.CreateMany(ctx, r.db.Keel(ctx), entities); err != nil {
 			r.l.Error("failed to create suite evaluations", zap.Error(err))
 
 			return fmt.Errorf("create suite evaluations: %w", err)
@@ -169,7 +169,7 @@ func (r *repository) ListBySuiteRun(
 			limit = maxSuitePage
 		}
 
-		e := agentdb.Evaluations
+		e := agentevaluationdb.Evaluations
 		entities, err := e.Where(e.SuiteRunID.Eq(req.SuiteRunID), e.SuiteOrdinal.Gt(int64(req.AfterOrdinal))).
 			Order(e.SuiteOrdinal.Asc()).
 			Limit(limit).
@@ -187,7 +187,7 @@ func (r *repository) SkipPendingBySuiteRun(
 	req agentports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		e := agentdb.Evaluations
+		e := agentevaluationdb.Evaluations
 		n, err := e.Where(
 			e.SuiteRunID.Eq(req.SuiteRunID),
 			e.Status.Eq(agentevaluation.EvaluationStatusPending),

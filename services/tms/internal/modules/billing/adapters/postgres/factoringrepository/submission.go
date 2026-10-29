@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -48,7 +48,7 @@ func (r *submissionRepository) Create(
 		r.db,
 		func(ctx context.Context) (*factoringsubmission.Submission, error) {
 			db := r.db.Keel(ctx)
-			if err := factoringdb.Submissions.Create(ctx, db, entity); err != nil {
+			if err := factoringsubmissiondb.Submissions.Create(ctx, db, entity); err != nil {
 				return nil, translateSubmissionError(err, entity.ID)
 			}
 			if len(entity.Items) == 0 {
@@ -58,7 +58,7 @@ func (r *submissionRepository) Create(
 				item.SubmissionID = entity.ID
 				item.Position = idx + 1
 			}
-			if err := factoringdb.SubmissionItems.CreateMany(ctx, db, entity.Items); err != nil {
+			if err := factoringsubmissiondb.SubmissionItems.CreateMany(ctx, db, entity.Items); err != nil {
 				return nil, translateSubmissionError(err, entity.ID)
 			}
 
@@ -75,7 +75,7 @@ func (r *submissionRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringsubmission.Submission, error) {
-			s := factoringdb.Submissions
+			s := factoringsubmissiondb.Submissions
 			err := s.SaveExcept(ctx, r.db.Keel(ctx), entity,
 				s.Number,
 				s.FactoringCompanyID,
@@ -106,7 +106,7 @@ func (r *submissionRepository) updateItemStatuses(
 	entity *factoringsubmission.Submission,
 ) error {
 	db := r.db.Keel(ctx)
-	item := factoringdb.SubmissionItems
+	item := factoringsubmissiondb.SubmissionItems
 	for _, row := range entity.Items {
 		if row == nil || row.ID.IsNil() {
 			continue
@@ -137,7 +137,7 @@ func (r *submissionRepository) SetDocuments(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
-		s := factoringdb.Submissions
+		s := factoringsubmissiondb.Submissions
 		n, err := s.Where(s.ID.Eq(req.SubmissionID)).Update(ctx, db,
 			s.SchedulePDFDocumentID.ToExpr(keel.Val(req.SchedulePDFDocumentID)),
 			s.ScheduleCSVDocumentID.ToExpr(keel.Val(req.ScheduleCSVDocumentID)),
@@ -161,7 +161,7 @@ func (r *submissionRepository) SetDocuments(
 			documentIDs = append(documentIDs, documentID)
 		}
 
-		item := factoringdb.SubmissionItems
+		item := factoringsubmissiondb.SubmissionItems
 		packets := keel.Unnest("packets", []string{"id", "document_id"}, itemIDs, documentIDs)
 		_, err = item.With(packets).
 			Join(packets, packets.Col("id").EqCol(item.ID)).
@@ -176,7 +176,7 @@ func (r *submissionRepository) SetDocuments(
 }
 
 func submissionWithItems() *keel.Query[*factoringsubmission.Submission] {
-	s := factoringdb.Submissions
+	s := factoringsubmissiondb.Submissions
 	items := s.Items()
 	return s.Load(items.Order(items.Position.Asc()))
 }
@@ -186,7 +186,7 @@ func (r *submissionRepository) GetByID(
 	req factoringsubmissionports.GetSubmissionRequest,
 ) (*factoringsubmission.Submission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringsubmission.Submission, error) {
-		s := factoringdb.Submissions
+		s := factoringsubmissiondb.Submissions
 		q := s.Query()
 		if req.IncludeItems {
 			q = submissionWithItems()
@@ -207,7 +207,7 @@ func (r *submissionRepository) GetByIdempotencyKey(
 ) (*factoringsubmission.Submission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringsubmission.Submission, error) {
 		entity, err := submissionWithItems().
-			Where(factoringdb.Submissions.IdempotencyKey.Eq(req.IdempotencyKey)).
+			Where(factoringsubmissiondb.Submissions.IdempotencyKey.Eq(req.IdempotencyKey)).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, submissionErrors.Map(err, "")
@@ -249,7 +249,7 @@ func submissionScope(
 	req *factoringsubmissionports.ListSubmissionConnectionRequest,
 	term string,
 ) *keel.Query[*factoringsubmission.Submission] {
-	s := factoringdb.Submissions
+	s := factoringsubmissiondb.Submissions
 	items := s.Items()
 	return s.Where(
 		keel.When(term != "", keel.Or(
@@ -302,8 +302,8 @@ func (r *submissionRepository) ListLiveItems(
 func liveItems(
 	req *factoringsubmissionports.ListLiveItemsRequest,
 ) *keel.Query[*factoringsubmission.SubmissionItem] {
-	item := factoringdb.SubmissionItems
-	sub := factoringdb.Submissions
+	item := factoringsubmissiondb.SubmissionItems
+	sub := factoringsubmissiondb.Submissions
 	return item.Pick(item.InvoiceID, item.SubmissionID, sub.Number, sub.Status, item.ID, item.Status).
 		Join(sub, sub.ID.EqCol(item.SubmissionID)).
 		Where(
@@ -335,7 +335,7 @@ func (r *submissionRepository) ListItemsBySubmissionIDs(
 				)
 			}
 
-			item := factoringdb.SubmissionItems
+			item := factoringsubmissiondb.SubmissionItems
 			rows, err := item.Where(item.SubmissionID.In(req.SubmissionIDs...)).
 				Order(item.SubmissionID.Asc(), item.Position.Asc()).
 				All(ctx, r.db.Keel(ctx))
@@ -385,7 +385,7 @@ func (r *submissionRepository) ClaimChargebackWarning(
 	req factoringsubmissionports.ClaimChargebackWarningRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		item := factoringdb.SubmissionItems
+		item := factoringsubmissiondb.SubmissionItems
 		n, err := item.Where(
 			item.ID.Eq(req.ItemID),
 			item.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
@@ -421,7 +421,7 @@ func (r *submissionRepository) GetByIDs(
 				)
 			}
 
-			s := factoringdb.Submissions
+			s := factoringsubmissiondb.Submissions
 			rows, err := s.Where(s.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, err

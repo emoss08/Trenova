@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -30,10 +30,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode/paycodedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -722,12 +727,12 @@ func (s *DriverPaySeed) ensurePayAssignments(
 		profileIDs[profiles[i].Name] = profiles[i].ID
 	}
 
-	assigned, err := driverpaydb.WorkerPayAssignments.AllTenants().
-		Pick(driverpaydb.WorkerPayAssignments.WorkerID).
+	assigned, err := payassignmentdb.WorkerPayAssignments.AllTenants().
+		Pick(payassignmentdb.WorkerPayAssignments.WorkerID).
 		Where(
-			driverpaydb.WorkerPayAssignments.OrganizationID.Eq(refs.orgID),
-			driverpaydb.WorkerPayAssignments.BusinessUnitID.Eq(refs.buID),
-			driverpaydb.WorkerPayAssignments.EffectiveTo.IsNull(),
+			payassignmentdb.WorkerPayAssignments.OrganizationID.Eq(refs.orgID),
+			payassignmentdb.WorkerPayAssignments.BusinessUnitID.Eq(refs.buID),
+			payassignmentdb.WorkerPayAssignments.EffectiveTo.IsNull(),
 		).
 		All(ctx, db)
 	if err != nil {
@@ -764,7 +769,7 @@ func (s *DriverPaySeed) ensurePayAssignments(
 			SplitPercent:   decimal.NewFromInt(100),
 			CreatedByID:    refs.adminID,
 		}
-		if err := driverpaydb.WorkerPayAssignments.Create(ctx, db, assignment); err != nil {
+		if err := payassignmentdb.WorkerPayAssignments.Create(ctx, db, assignment); err != nil {
 			return fmt.Errorf("insert pay assignment for %s: %w", workerKey, err)
 		}
 		created++
@@ -806,10 +811,10 @@ func (s *DriverPaySeed) ensureEscrowAccounts(
 			continue
 		}
 
-		existing, err := driverpaydb.EscrowAccounts.AllTenants().Where(
-			driverpaydb.EscrowAccounts.OrganizationID.Eq(refs.orgID),
-			driverpaydb.EscrowAccounts.BusinessUnitID.Eq(refs.buID),
-			driverpaydb.EscrowAccounts.WorkerID.Eq(w.ID),
+		existing, err := payescrowdb.EscrowAccounts.AllTenants().Where(
+			payescrowdb.EscrowAccounts.OrganizationID.Eq(refs.orgID),
+			payescrowdb.EscrowAccounts.BusinessUnitID.Eq(refs.buID),
+			payescrowdb.EscrowAccounts.WorkerID.Eq(w.ID),
 		).First(ctx, db)
 		if err == nil {
 			accounts[def.workerKey] = existing
@@ -831,7 +836,7 @@ func (s *DriverPaySeed) ensureEscrowAccounts(
 			OpenedDate:         now - (120 * 86400),
 			CurrencyCode:       "USD",
 		}
-		if err = driverpaydb.EscrowAccounts.Create(ctx, db, account); err != nil {
+		if err = payescrowdb.EscrowAccounts.Create(ctx, db, account); err != nil {
 			return nil, fmt.Errorf("insert escrow account for %s: %w", def.workerKey, err)
 		}
 
@@ -850,7 +855,7 @@ func (s *DriverPaySeed) ensureEscrowAccounts(
 				CreatedByID:       refs.adminID,
 			})
 		}
-		if err = driverpaydb.EscrowTransactions.CreateMany(ctx, db, txs); err != nil {
+		if err = payescrowdb.EscrowTransactions.CreateMany(ctx, db, txs); err != nil {
 			return nil, fmt.Errorf("insert escrow transactions for %s: %w", def.workerKey, err)
 		}
 
@@ -887,18 +892,18 @@ func ensurePayCodes(
 			IsSystem:              true,
 		})
 	}
-	pc := driverpaydb.PayCodes
+	pc := paycodedb.PayCodes
 	if _, err := pc.CreateOrSkip(
 		ctx, db, rows, pc.OrganizationID, pc.BusinessUnitID, pc.Direction, pc.Code,
 	); err != nil {
 		return nil, fmt.Errorf("insert system pay codes: %w", err)
 	}
 
-	existing, err := driverpaydb.PayCodes.AllTenants().
-		Pick(driverpaydb.PayCodes.ID, driverpaydb.PayCodes.Direction, driverpaydb.PayCodes.Code).
+	existing, err := paycodedb.PayCodes.AllTenants().
+		Pick(paycodedb.PayCodes.ID, paycodedb.PayCodes.Direction, paycodedb.PayCodes.Code).
 		Where(
-			driverpaydb.PayCodes.OrganizationID.Eq(orgID),
-			driverpaydb.PayCodes.BusinessUnitID.Eq(buID),
+			paycodedb.PayCodes.OrganizationID.Eq(orgID),
+			paycodedb.PayCodes.BusinessUnitID.Eq(buID),
 		).
 		All(ctx, db)
 	if err != nil {
@@ -923,9 +928,9 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 	escrows map[string]*payescrow.EscrowAccount,
 	payCodes map[string]pulid.ID,
 ) (map[string]*recurringpay.RecurringDeduction, error) {
-	count, err := driverpaydb.RecurringDeductions.AllTenants().Where(
-		driverpaydb.RecurringDeductions.OrganizationID.Eq(refs.orgID),
-		driverpaydb.RecurringDeductions.BusinessUnitID.Eq(refs.buID),
+	count, err := recurringpaydb.RecurringDeductions.AllTenants().Where(
+		recurringpaydb.RecurringDeductions.OrganizationID.Eq(refs.orgID),
+		recurringpaydb.RecurringDeductions.BusinessUnitID.Eq(refs.buID),
 	).Count(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("check existing recurring deductions: %w", err)
@@ -1120,7 +1125,7 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		deductions[def.workerKey+"/"+def.code] = deduction
 	}
 
-	if err = driverpaydb.RecurringDeductions.CreateMany(ctx, db, rows); err != nil {
+	if err = recurringpaydb.RecurringDeductions.CreateMany(ctx, db, rows); err != nil {
 		return nil, fmt.Errorf("insert recurring deductions: %w", err)
 	}
 
@@ -1186,7 +1191,7 @@ func (s *DriverPaySeed) ensurePayAdvances(
 		})
 	}
 
-	if err := driverpaydb.PayAdvances.CreateMany(ctx, db, rows); err != nil {
+	if err := payadvancedb.PayAdvances.CreateMany(ctx, db, rows); err != nil {
 		return fmt.Errorf("insert pay advances: %w", err)
 	}
 
@@ -1513,9 +1518,9 @@ func (s *DriverPaySeed) resolvePeriod(
 	db *keel.DB,
 	refs *payRefs,
 ) (driversettlementservice.PeriodBounds, error) {
-	control, err := tenantdb.SettlementControls.AllTenants().Where(
-		tenantdb.SettlementControls.OrganizationID.Eq(refs.orgID),
-		tenantdb.SettlementControls.BusinessUnitID.Eq(refs.buID),
+	control, err := settlementcontroldb.SettlementControls.AllTenants().Where(
+		settlementcontroldb.SettlementControls.OrganizationID.Eq(refs.orgID),
+		settlementcontroldb.SettlementControls.BusinessUnitID.Eq(refs.buID),
 	).First(ctx, db)
 	if err != nil {
 		if !errors.Is(err, keel.ErrNotFound) {
@@ -1549,7 +1554,7 @@ func (s *DriverPaySeed) loadWorkerProfiles(
 	}
 
 	now := timeutils.NowUnix()
-	wpa := driverpaydb.WorkerPayAssignments
+	wpa := payassignmentdb.WorkerPayAssignments
 	assignments, err := wpa.AllTenants().Where(
 		wpa.OrganizationID.Eq(refs.orgID),
 		wpa.BusinessUnitID.Eq(refs.buID),
@@ -2030,7 +2035,7 @@ func (s *DriverPaySeed) applyEscrowSettlementTx(
 	}
 
 	account.BalanceMinor += deduction.AmountMinor
-	if err := driverpaydb.EscrowAccounts.Save(ctx, db, account); err != nil {
+	if err := payescrowdb.EscrowAccounts.Save(ctx, db, account); err != nil {
 		return fmt.Errorf("update escrow balance: %w", err)
 	}
 
@@ -2048,12 +2053,12 @@ func (s *DriverPaySeed) applyEscrowSettlementTx(
 		SettlementID:      &settlementID,
 		CreatedByID:       refs.adminID,
 	}
-	if err := driverpaydb.EscrowTransactions.Create(ctx, db, escTx); err != nil {
+	if err := payescrowdb.EscrowTransactions.Create(ctx, db, escTx); err != nil {
 		return fmt.Errorf("insert settlement escrow transaction: %w", err)
 	}
 
 	deduction.DeductedToDateMinor += deduction.AmountMinor
-	if err := driverpaydb.RecurringDeductions.Save(ctx, db, deduction); err != nil {
+	if err := recurringpaydb.RecurringDeductions.Save(ctx, db, deduction); err != nil {
 		return fmt.Errorf("update escrow deduction total: %w", err)
 	}
 

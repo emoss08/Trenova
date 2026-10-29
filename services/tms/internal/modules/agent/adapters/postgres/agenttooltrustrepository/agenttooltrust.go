@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust/agenttooltrustdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,7 +43,7 @@ func New(p Params) agenttoolports.AgentToolTrustRepository {
 // recordConflict folds an outcome into the stored row: the counters add the
 // inserted deltas and the streak grows on a clean approval or resets.
 func recordConflict() keel.Conflict {
-	t := agentdb.ToolTrusts
+	t := agenttooltrustdb.ToolTrusts
 	sum := func(col keel.Int64Col) keel.Assignment {
 		return col.ToExpr(col.Add(keel.Int64Of(col.Excluded())))
 	}
@@ -106,7 +106,7 @@ func (r *repository) Record(
 			return nil, me
 		}
 
-		t := agentdb.ToolTrusts
+		t := agenttooltrustdb.ToolTrusts
 		inserted, err := t.Upsert(
 			ctx,
 			r.db.Keel(ctx),
@@ -143,7 +143,7 @@ func (r *repository) ListByDefinition(
 	req agenttoolports.ListToolTrustRequest,
 ) ([]*agenttooltrust.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agenttooltrust.ToolTrust, error) {
-		t := agentdb.ToolTrusts
+		t := agenttooltrustdb.ToolTrusts
 		rows, err := t.Where(t.AgentDefinitionID.Eq(req.AgentDefinitionID)).
 			Order(t.ToolName.Asc()).
 			All(ctx, r.db.Keel(ctx))
@@ -173,7 +173,7 @@ func (r *repository) ListByDefinitionIDs(
 				return grouped, nil
 			}
 
-			t := agentdb.ToolTrusts
+			t := agenttooltrustdb.ToolTrusts
 			rows, err := t.Where(t.AgentDefinitionID.In(req.AgentDefinitionIDs...)).
 				Order(t.ToolName.Asc()).
 				All(ctx, r.db.Keel(ctx))
@@ -203,7 +203,7 @@ func (r *repository) MarkTierChange(
 	req agenttoolports.MarkToolTierChangeRequest,
 ) (*agenttooltrust.ToolTrust, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agenttooltrust.ToolTrust, error) {
-		t := agentdb.ToolTrusts
+		t := agenttooltrustdb.ToolTrusts
 		sets := []keel.Assignment{t.Streak.To(0), t.UpdatedAt.To(req.At)}
 		if req.Promoted {
 			sets = append(sets, t.EarnedTier.To(req.EarnedTier), t.PromotedAt.To(req.At))
@@ -229,7 +229,7 @@ func (r *repository) ListReady(
 	req agenttoolports.ListReadyToolTrustRequest,
 ) ([]*agenttooltrust.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agenttooltrust.ToolTrust, error) {
-		t := agentdb.ToolTrusts
+		t := agenttooltrustdb.ToolTrusts
 		rows, err := t.Where(t.Streak.Gte(int64(max(req.MinStreak, 1)))).
 			Order(t.Streak.Desc()).
 			Limit(req.Limit).

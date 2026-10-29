@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -38,7 +38,7 @@ func (r *payAdvanceRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*payadvance.PayAdvance], error) {
-			pa := driverpaydb.PayAdvances
+			pa := payadvancedb.PayAdvances
 			q := pa.Where(
 				searchPred(req.Filter.Query, pa.Reference, pa.Notes),
 				when(!req.WorkerID.IsNil(), pa.WorkerID.Eq(req.WorkerID)),
@@ -63,7 +63,7 @@ func (r *payAdvanceRepository) ListConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*payadvance.PayAdvance], error) {
-			pa := driverpaydb.PayAdvances
+			pa := payadvancedb.PayAdvances
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -93,7 +93,7 @@ func (r *payAdvanceRepository) GetByID(
 	req driverpayports.GetPayAdvanceByIDRequest,
 ) (*payadvance.PayAdvance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*payadvance.PayAdvance, error) {
-		pa := driverpaydb.PayAdvances
+		pa := payadvancedb.PayAdvances
 		entity, err := pa.Where(pa.ID.Eq(req.ID)).Load(pa.Worker()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, payAdvanceErrors.Map(err, req.ID.String())
@@ -112,7 +112,7 @@ func (r *payAdvanceRepository) GetByIDs(
 			return []*payadvance.PayAdvance{}, nil
 		}
 
-		pa := driverpaydb.PayAdvances
+		pa := payadvancedb.PayAdvances
 		items, err := pa.Where(pa.ID.In(req.IDs...)).
 			Limit(len(req.IDs)).
 			List(ctx, r.db.Keel(ctx))
@@ -129,7 +129,7 @@ func (r *payAdvanceRepository) ListOutstandingForWorker(
 	req driverpayports.ListOutstandingAdvancesForWorkerRequest,
 ) ([]*payadvance.PayAdvance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*payadvance.PayAdvance, error) {
-		pa := driverpaydb.PayAdvances
+		pa := payadvancedb.PayAdvances
 		items, err := pa.Where(
 			pa.WorkerID.Eq(req.WorkerID),
 			pa.Status.In(
@@ -150,7 +150,7 @@ func (r *payAdvanceRepository) Create(
 	entity *payadvance.PayAdvance,
 ) (*payadvance.PayAdvance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*payadvance.PayAdvance, error) {
-		if err := driverpaydb.PayAdvances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := payadvancedb.PayAdvances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, payAdvanceErrors.Map(err, entity.ID.String())
 		}
 
@@ -166,7 +166,7 @@ func (r *payAdvanceRepository) Update(
 	entity *payadvance.PayAdvance,
 ) (*payadvance.PayAdvance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*payadvance.PayAdvance, error) {
-		pa := driverpaydb.PayAdvances
+		pa := payadvancedb.PayAdvances
 		if err := pa.Save(
 			ctx,
 			r.db.Keel(ctx),

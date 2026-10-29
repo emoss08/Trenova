@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -134,7 +134,7 @@ func (h *harness) insertMemory(t *testing.T, content string) *agentmemory.Memory
 		Status:         agentmemory.MemoryStatusActive,
 		Content:        content,
 	}
-	require.NoError(t, agentdb.Memories.Create(h.ctx, h.db, memory))
+	require.NoError(t, agentmemorydb.Memories.Create(h.ctx, h.db, memory))
 
 	return memory
 }

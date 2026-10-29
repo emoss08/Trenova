@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger/factoringledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,7 +38,7 @@ func (r *reserveEntryRepository) Create(
 	entity *factoringledger.ReserveEntry,
 ) (*factoringledger.ReserveEntry, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoringledger.ReserveEntry, error) {
-		if err := factoringdb.ReserveEntries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := factoringledgerdb.ReserveEntries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) &&
 				dberror.ExtractConstraintName(err) == reserveReversalIndex {
 				return nil, errortypes.NewConflictError(
@@ -84,7 +84,7 @@ func reserveScope(
 	req *factoringledgerports.ListReserveEntryConnectionRequest,
 	term string,
 ) *keel.Query[*factoringledger.ReserveEntry] {
-	re := factoringdb.ReserveEntries
+	re := factoringledgerdb.ReserveEntries
 	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
 	return re.Where(
 		keel.When(term != "", keel.Or(
@@ -106,7 +106,7 @@ func (r *reserveEntryRepository) ListForItem(
 	req factoringledgerports.ListReserveEntriesForItemRequest,
 ) ([]*factoringledger.ReserveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoringledger.ReserveEntry, error) {
-		re := factoringdb.ReserveEntries
+		re := factoringledgerdb.ReserveEntries
 		rows, err := re.Where(re.SubmissionItemID.Eq(req.SubmissionItemID)).
 			Order(re.CreatedAt.Asc(), re.ID.Asc()).
 			All(ctx, r.db.Keel(ctx))
@@ -167,7 +167,7 @@ func (r *reserveEntryRepository) GetBalance(
 func reserveBalance(
 	req *factoringledgerports.GetReserveBalanceRequest,
 ) *keel.Query[*factoringledger.ReserveEntry] {
-	re := factoringdb.ReserveEntries
+	re := factoringledgerdb.ReserveEntries
 	cash := func(kinds ...factoringledger.ReserveEntryKind) keel.Agg {
 		return re.CashMinor.Sum().Filter(re.Kind.In(kinds...))
 	}

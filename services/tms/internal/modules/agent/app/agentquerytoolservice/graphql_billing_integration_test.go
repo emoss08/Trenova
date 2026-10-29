@@ -26,10 +26,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -212,7 +212,10 @@ func (b *billingSeed) dispute(
 		Notes: "Customer says the rate was 110", OpenedByID: info.UserID,
 		OpenedAt: timeutils.NowUnix(),
 	}
-	require.NoError(b.t, invoicedb.InvoiceDisputes.Create(tenant.Ctx(b.t.Context()), b.admin, row))
+	require.NoError(
+		b.t,
+		invoicedisputedb.InvoiceDisputes.Create(tenant.Ctx(b.t.Context()), b.admin, row),
+	)
 
 	return row.ID
 }

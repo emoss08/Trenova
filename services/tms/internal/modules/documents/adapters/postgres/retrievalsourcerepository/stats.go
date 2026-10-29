@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
@@ -31,17 +31,17 @@ type sourceTable struct {
 var sourceTables = map[airetrieval.SourceType]sourceTable{
 	airetrieval.SourceTypeMemory: {
 		ids: func(after pulid.ID, limit int) keel.Projection {
-			m := agentdb.Memories
+			m := agentmemorydb.Memories
 			return m.Pick(m.ID).
 				Where(keel.When(after.IsNotNil(), m.ID.Gt(after))).
 				Order(m.ID.Asc()).
 				Limit(limit)
 		},
 		count: func(ctx context.Context, db *keel.DB) (int64, error) {
-			return agentdb.Memories.Query().Count(ctx, db)
+			return agentmemorydb.Memories.Query().Count(ctx, db)
 		},
 		sample: func(limit int) *keel.CTETable {
-			m := agentdb.Memories
+			m := agentmemorydb.Memories
 			return charsSample(m.Pick(charCount(m.Content)).
 				Order(m.ID.Desc()).
 				Limit(limit))

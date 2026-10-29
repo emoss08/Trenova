@@ -20,8 +20,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance/factoringremittancedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
@@ -51,18 +54,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense/payexpensedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom/dotrandomdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment/employmentdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety/fleetsafetydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline/workerdisciplinedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot/workerdotdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury/workerinjurydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
@@ -266,7 +275,7 @@ var lookups = map[permission.Resource]lookup{
 		}),
 	}},
 	permission.ResourceInvoiceDispute: by(func(id pulid.ID) keel.Projection {
-		t := invoicedb.InvoiceDisputes
+		t := invoicedisputedb.InvoiceDisputes
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceFactoringNoa: by(func(id pulid.ID) keel.Projection {
@@ -274,11 +283,11 @@ var lookups = map[permission.Resource]lookup{
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceFactoringSubmission: by(func(id pulid.ID) keel.Projection {
-		t := factoringdb.Submissions
+		t := factoringsubmissiondb.Submissions
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceFactoringRemittance: by(func(id pulid.ID) keel.Projection {
-		t := factoringdb.Remittances
+		t := factoringremittancedb.Remittances
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceFactoringCompany: by(func(id pulid.ID) keel.Projection {
@@ -318,15 +327,15 @@ var lookups = map[permission.Resource]lookup{
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceEscrowAccount: by(func(id pulid.ID) keel.Projection {
-		t := driverpaydb.EscrowAccounts
+		t := payescrowdb.EscrowAccounts
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourcePayAdvance: by(func(id pulid.ID) keel.Projection {
-		t := driverpaydb.PayAdvances
+		t := payadvancedb.PayAdvances
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceRecurringDeduction: by(func(id pulid.ID) keel.Projection {
-		t := driverpaydb.RecurringDeductions
+		t := recurringpaydb.RecurringDeductions
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceManualJournal: by(func(id pulid.ID) keel.Projection {
@@ -346,7 +355,7 @@ var lookups = map[permission.Resource]lookup{
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceRecurringEarning: by(func(id pulid.ID) keel.Projection {
-		t := driverpaydb.RecurringEarnings
+		t := recurringpaydb.RecurringEarnings
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerDOTTest: by(func(id pulid.ID) keel.Projection {
@@ -369,12 +378,12 @@ var lookups = map[permission.Resource]lookup{
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 		"wsvi_": by(func(id pulid.ID) keel.Projection {
-			t := workersafetydb.WorkerSafetyViolations
+			t := fleetsafetydb.WorkerSafetyViolations
 			return t.Pick(t.Version).Where(t.ID.Eq(id))
 		}),
 	}},
 	permission.ResourceWorkerRecognition: by(func(id pulid.ID) keel.Projection {
-		t := workersafetydb.WorkerRecognitions
+		t := workerdisciplinedb.WorkerRecognitions
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerLeave: {kinds: map[string]lookup{
@@ -414,7 +423,7 @@ var lookups = map[permission.Resource]lookup{
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceWorkerInjury: by(func(id pulid.ID) keel.Projection {
-		t := workersafetydb.WorkerInjuries
+		t := workerinjurydb.WorkerInjuries
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceTimesheet: {kinds: map[string]lookup{
@@ -432,7 +441,7 @@ var lookups = map[permission.Resource]lookup{
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceDriverExpense: by(func(id pulid.ID) keel.Projection {
-		t := driverpaydb.Expenses
+		t := payexpensedb.Expenses
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
 	permission.ResourceCommodity: by(func(id pulid.ID) keel.Projection {

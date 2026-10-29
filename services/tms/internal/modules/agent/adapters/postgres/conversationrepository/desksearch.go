@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter/conversationchapterdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 )
 
@@ -67,7 +68,7 @@ func deskChats(terms *deskTerms) keel.Projection {
 }
 
 func deskChapters(terms *deskTerms) keel.Projection {
-	c := conversationdb.Chapters
+	c := conversationchapterdb.Chapters
 	t := conversationdb.Threads
 
 	return c.Join(t, t.ID.EqCol(c.ThreadID)).

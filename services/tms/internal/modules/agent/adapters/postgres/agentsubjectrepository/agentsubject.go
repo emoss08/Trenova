@@ -18,7 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance/factoringremittancedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
@@ -144,7 +147,7 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectInvoiceDispute: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := invoicedb.InvoiceDisputes
+		t := invoicedisputedb.InvoiceDisputes
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectFactoringNoa: func(id pulid.ID, found *bool) keel.BatchItem {
@@ -152,11 +155,11 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectFactoringSubmission: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := factoringdb.Submissions
+		t := factoringsubmissiondb.Submissions
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectFactoringRemittance: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := factoringdb.Remittances
+		t := factoringremittancedb.Remittances
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 }

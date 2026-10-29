@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
@@ -48,7 +48,7 @@ func deskRows(memories []*agentmemory.Memory) []*agentmemoryports.DeskMemoryRow 
 // name. Both are joined within the tenant, so a title is only ever read from
 // the memory's own organization.
 func deskSelect() *keel.Query[*agentmemory.Memory] {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	thread := conversationdb.Threads.As("desk_thread")
 	role := permissiondb.Roles.As("desk_role")
 
@@ -64,7 +64,7 @@ func deskSelect() *keel.Query[*agentmemory.Memory] {
 // What is kept for one agent is administered in AI Control, and an agent's
 // suggestion waits in its conversation.
 func deskVisible(filter *agentmemoryports.DeskMemoryFilter) keel.Pred {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	kept := keel.And(
 		m.Status.In(agentmemory.MemoryStatusActive, agentmemory.MemoryStatusPaused),
 		keel.Or(m.Scope.Eq(agentmemory.MemoryScopeOrganization), forPerson(filter.Reader)),
@@ -92,7 +92,7 @@ func deskVisible(filter *agentmemoryports.DeskMemoryFilter) keel.Pred {
 }
 
 func listDeskQuery(req *agentmemoryports.ListDeskMemoriesQuery) *keel.Query[*agentmemory.Memory] {
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultDeskPage
@@ -145,7 +145,7 @@ func (r *repository) CountDesk(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]agentmemoryports.DeskMemoryCountRow, error) {
-			m := agentdb.Memories
+			m := agentmemorydb.Memories
 			rows, err := keel.Into[deskCount](ctx, r.db.Keel(ctx), m.
 				Group(m.Scope, m.RoleID).
 				Pick(m.Scope, m.RoleID, keel.Count()).
@@ -184,7 +184,7 @@ func (r *repository) GetDesk(
 				ids = ids[:maxDeskIDs]
 			}
 
-			m := agentdb.Memories
+			m := agentmemorydb.Memories
 			memories, err := deskSelect().
 				Where(m.ID.In(ids...)).
 				Limit(len(ids)).
@@ -213,7 +213,7 @@ func (r *repository) Revise(
 			role = req.RoleID
 		}
 
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		n, err := m.Where(m.ID.Eq(req.ID), m.Version.Eq(req.Version)).Update(
 			ctx,
 			r.db.Keel(ctx),
@@ -241,7 +241,7 @@ func (r *repository) GetPreference(
 	req agentmemoryports.GetAgentMemoryPreferenceRequest,
 ) (*agentmemory.MemoryPreference, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentmemory.MemoryPreference, error) {
-		p := agentdb.MemoryPreferences
+		p := agentmemorydb.MemoryPreferences
 		entity, err := p.Where(p.UserID.Eq(req.UserID)).One(ctx, r.db.Keel(ctx))
 		if dberror.IsNotFoundError(err) {
 			return nil, nil
@@ -262,7 +262,7 @@ func (r *repository) SavePreference(
 	entity *agentmemory.MemoryPreference,
 ) (*agentmemory.MemoryPreference, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.MemoryPreference, error) {
-		p := agentdb.MemoryPreferences
+		p := agentmemorydb.MemoryPreferences
 		inserted, err := p.Upsert(
 			ctx,
 			r.db.Keel(ctx),

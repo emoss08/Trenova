@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset/passwordresetdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -43,7 +43,7 @@ func tokens(
 	ctx context.Context,
 	preds ...keel.Pred,
 ) *keel.Query[*passwordreset.PasswordResetToken] {
-	prt := tenantdb.PasswordResetTokens
+	prt := passwordresetdb.PasswordResetTokens
 	q := prt.Query()
 	if dbscope.IsSystem(ctx) {
 		q = q.AllTenants()
@@ -53,14 +53,14 @@ func tokens(
 }
 
 func outstanding() keel.Pred {
-	prt := tenantdb.PasswordResetTokens
+	prt := passwordresetdb.PasswordResetTokens
 	return keel.And(prt.UsedAt.IsNull(), prt.InvalidatedAt.IsNull())
 }
 
 func (r *repository) Create(ctx context.Context, token *passwordreset.PasswordResetToken) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		return tokenErrors.Map(
-			tenantdb.PasswordResetTokens.Create(ctx, r.db.Keel(ctx), token),
+			passwordresetdb.PasswordResetTokens.Create(ctx, r.db.Keel(ctx), token),
 			token.ID.String(),
 		)
 	})
@@ -76,7 +76,7 @@ func (r *repository) FindRedeemableByHash(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*passwordreset.PasswordResetToken, error) {
-			prt := tenantdb.PasswordResetTokens
+			prt := passwordresetdb.PasswordResetTokens
 			token, err := tokens(
 				ctx,
 				prt.TokenHash.Eq(tokenHash),
@@ -103,7 +103,7 @@ func (r *repository) MarkUsed(
 	now int64,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		prt := tenantdb.PasswordResetTokens
+		prt := passwordresetdb.PasswordResetTokens
 		affected, err := tokens(ctx, prt.ID.Eq(tokenID), outstanding()).
 			Update(ctx, r.db.Keel(ctx), prt.UsedAt.To(now))
 		if err != nil {
@@ -119,7 +119,7 @@ func (r *repository) InvalidateOutstanding(
 	now int64,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		prt := tenantdb.PasswordResetTokens
+		prt := passwordresetdb.PasswordResetTokens
 		_, err := tokens(ctx, prt.UserID.Eq(userID), outstanding()).
 			Update(ctx, r.db.Keel(ctx), prt.InvalidatedAt.To(now))
 		return err
@@ -132,7 +132,7 @@ func (r *repository) CountSince(
 	since int64,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		prt := tenantdb.PasswordResetTokens
+		prt := passwordresetdb.PasswordResetTokens
 		n, err := tokens(
 			ctx,
 			prt.UserID.Eq(userID),

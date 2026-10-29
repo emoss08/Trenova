@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust/agenttooltrustdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,7 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*agenttooltrust.ToolRuleOverride, error) {
-			o := agentdb.ToolRuleOverrides
+			o := agenttooltrustdb.ToolRuleOverrides
 			overrides, err := o.Query().
 				Order(o.ToolName.Asc()).
 				Cache(resultcache.Settings()...).
@@ -61,7 +61,7 @@ func (r *repository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agenttooltrust.ToolRuleOverride, error) {
-			o := agentdb.ToolRuleOverrides
+			o := agenttooltrustdb.ToolRuleOverrides
 			override, err := o.Where(o.ToolName.Eq(req.ToolName)).One(ctx, r.db.Keel(ctx))
 			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // a tool no organization rule holds has none
@@ -85,7 +85,7 @@ func (r *repository) Create(
 		func(ctx context.Context) (*agenttooltrust.ToolRuleOverride, error) {
 			override.Version = 0
 			err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
-				return agentdb.ToolRuleOverrides.Create(ctx, r.db.Keel(ctx), override)
+				return agenttooltrustdb.ToolRuleOverrides.Create(ctx, r.db.Keel(ctx), override)
 			})
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, dberror.CreateVersionMismatchError(entityName, override.ToolName)
@@ -107,7 +107,7 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agenttooltrust.ToolRuleOverride, error) {
-			o := agentdb.ToolRuleOverrides
+			o := agenttooltrustdb.ToolRuleOverrides
 			err := o.Save(
 				ctx,
 				r.db.Keel(ctx),

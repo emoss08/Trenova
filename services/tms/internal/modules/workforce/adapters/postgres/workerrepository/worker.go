@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -66,7 +67,7 @@ func New(p Params) workerports.WorkerRepository {
 func ownerOperatorFilter(now int64) keel.Pred {
 	w := workerdb.Workers
 
-	wpa := driverpaydb.WorkerPayAssignments.As("wpa")
+	wpa := payassignmentdb.WorkerPayAssignments.As("wpa")
 	dpp := driverpaydb.PayProfiles.As("dpp")
 
 	return keel.Or(

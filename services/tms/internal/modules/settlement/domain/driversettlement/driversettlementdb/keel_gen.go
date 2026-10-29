@@ -3,7 +3,6 @@
 package driversettlementdb
 
 import (
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"context"
 	"unsafe"
 
@@ -16,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode/paycodedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -1710,8 +1711,8 @@ func (t *SettlementLinesTable) Shipment() *shipmentdb.ShipmentsTable {
 }
 
 // PayCode is the belongs relation.
-func (t *SettlementLinesTable) PayCode() *driverpaydb.PayCodesTable {
-	return keel.Path(t.Ref, 2, driverpaydb.BuildPayCodes)
+func (t *SettlementLinesTable) PayCode() *paycodedb.PayCodesTable {
+	return keel.Path(t.Ref, 2, paycodedb.BuildPayCodes)
 }
 
 // Get returns the driver_settlement_lines row with the given key, or keel.ErrNotFound.
@@ -1895,7 +1896,7 @@ func init() {
 	settlementBatchesTable.Relations[0].Target = SettlementsSchema()
 	settlementLinesTable.Relations[0].Target = SettlementsSchema()
 	settlementLinesTable.Relations[1].Target = shipmentdb.ShipmentsSchema()
-	settlementLinesTable.Relations[2].Target = driverpaydb.PayCodesSchema()
+	settlementLinesTable.Relations[2].Target = paycodedb.PayCodesSchema()
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

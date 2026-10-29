@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -332,7 +332,7 @@ func (s *ReceivablesSeed) configureReceivableAccounts(
 	db *keel.DB,
 	refs *receivableSeedRefs,
 ) error {
-	ac := tenantdb.AccountingControls
+	ac := accountingcontroldb.AccountingControls
 	defaults := []struct {
 		column keelkinds.PulidIDCol
 		code   string

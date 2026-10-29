@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -47,7 +48,7 @@ func (r *repository) Create(
 	entity *agentplan.AgentPlan,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
-		if err := agentdb.AgentPlans.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := agentplandb.AgentPlans.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent plan", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent plan: %w", err)
@@ -66,7 +67,7 @@ func (r *repository) ListByIDs(
 			return []*agentplan.AgentPlan{}, nil
 		}
 
-		p := agentdb.AgentPlans
+		p := agentplandb.AgentPlans
 		plans, err := p.Where(p.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent plans by ids: %w", err)
@@ -81,7 +82,7 @@ func (r *repository) GetByID(
 	req agentports.GetAgentPlanByIDRequest,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
-		entity, err := agentdb.AgentPlans.Get(ctx, r.db.Keel(ctx), req.ID)
+		entity, err := agentplandb.AgentPlans.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, planErrors.Map(err, req.ID.String())
 		}
@@ -97,7 +98,7 @@ func (r *repository) ListByThread(
 	req agentports.ListAgentPlansByThreadRequest,
 ) ([]*agentplan.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentplan.AgentPlan, error) {
-		p := agentdb.AgentPlans
+		p := agentplandb.AgentPlans
 		run := p.Run()
 		plans, err := p.Where(
 			run.SubjectType.Eq(agent.SubjectAssistantThread),
@@ -126,7 +127,7 @@ func (r *repository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				agentdb.AgentPlans.Query(),
+				agentplandb.AgentPlans.Query(),
 				&listquery.Request[agentplan.AgentPlan]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
@@ -145,7 +146,7 @@ func (r *repository) ListConnection(
 }
 
 func statusAssignments(req *agentports.UpdateAgentPlanStatusRequest) []keel.Assignment {
-	p := agentdb.AgentPlans
+	p := agentplandb.AgentPlans
 	sets := []keel.Assignment{p.Status.To(req.Status)}
 	approval := []keel.Assignment{
 		p.ApprovalReasonCode.To(req.Approval.ReasonCode),
@@ -196,7 +197,7 @@ func (r *repository) UpdateStatus(
 	req agentports.UpdateAgentPlanStatusRequest,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
-		p := agentdb.AgentPlans
+		p := agentplandb.AgentPlans
 		rows, err := p.Where(
 			p.ID.Eq(req.ID),
 			keel.When(req.FromStatus != "", p.Status.Eq(req.FromStatus)),
@@ -217,7 +218,7 @@ func (r *repository) RecordProgress(
 	req agentports.RecordAgentPlanProgressRequest,
 ) (*agentplan.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentplan.AgentPlan, error) {
-		p := agentdb.AgentPlans
+		p := agentplandb.AgentPlans
 		failedStep := p.FailedStep.ToNull()
 		if req.FailedStep != nil {
 			failedStep = p.FailedStep.To(int64(*req.FailedStep))
@@ -248,7 +249,7 @@ func (r *repository) ExpirePending(
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire stale agent plans across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		p := agentdb.AgentPlans
+		p := agentplandb.AgentPlans
 		n, err := p.AllTenants().
 			Where(
 				p.Status.Eq(agentplan.PlanStatusPending),
@@ -318,7 +319,7 @@ func (r *repository) expireByRuns(
 	ctx context.Context,
 	runs *keel.Query[*agent.AgentRun],
 ) (int, error) {
-	p := agentdb.AgentPlans
+	p := agentplandb.AgentPlans
 	n, err := p.Where(p.Status.Eq(agentplan.PlanStatusPending), p.RunID.InQuery(runs)).
 		Update(ctx, r.db.Keel(ctx), p.Status.To(agentplan.PlanStatusExpired))
 	if err != nil {

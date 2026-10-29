@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -53,7 +53,7 @@ func (r *repository) Claim(
 		)
 
 		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
-			return agentdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step)
+			return agentrunstepdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step)
 		})
 		if err == nil {
 			return step, nil
@@ -85,7 +85,7 @@ func (r *repository) byKey(
 	step *agentrunstep.AgentRunStep,
 ) (*agentrunstep.AgentRunStep, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentrunstep.AgentRunStep, error) {
-		s := agentdb.AgentRunSteps
+		s := agentrunstepdb.AgentRunSteps
 		held, err := s.Where(s.OwnerID.Eq(step.OwnerID), s.StepKey.Eq(step.StepKey)).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -112,7 +112,7 @@ func (r *repository) Settle(
 	req agentruntimeports.SettleAgentRunStepRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		s := agentdb.AgentRunSteps
+		s := agentrunstepdb.AgentRunSteps
 		outcome := req.Outcome
 		if outcome == nil {
 			outcome = map[string]any{}
@@ -142,7 +142,7 @@ func (r *repository) Settle(
 
 func (r *repository) Record(ctx context.Context, step *agentrunstep.AgentRunStep) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if err := agentdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step); err != nil {
+		if err := agentrunstepdb.AgentRunSteps.Create(ctx, r.db.Keel(ctx), step); err != nil {
 			r.l.Error("failed to record an agent run step",
 				zap.String("owner", step.OwnerID.String()),
 				zap.String("kind", step.Kind),
@@ -161,7 +161,7 @@ func (r *repository) List(
 	req agentruntimeports.ListAgentRunStepsRequest,
 ) ([]*agentrunstep.AgentRunStep, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
-		s := agentdb.AgentRunSteps
+		s := agentrunstepdb.AgentRunSteps
 		steps, err := s.Where(s.OwnerKind.Eq(req.OwnerKind), s.OwnerID.Eq(req.OwnerID)).
 			Order(s.CreatedAt.Asc()).
 			All(ctx, r.db.Keel(ctx))
@@ -185,8 +185,8 @@ func (r *repository) Prune(
 	req agentruntimeports.PruneAgentRunStepsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		s := agentdb.AgentRunSteps
-		doomed := agentdb.AgentRunSteps.As("doomed")
+		s := agentrunstepdb.AgentRunSteps
+		doomed := agentrunstepdb.AgentRunSteps.As("doomed")
 		n, err := s.Where(s.ID.InQuery(doomed.
 			Pick(doomed.ID).
 			Where(doomed.CreatedAt.Lt(req.Before)).

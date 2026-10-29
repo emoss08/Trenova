@@ -12,9 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -420,10 +422,10 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 
 	inv := invoicedb.Invoices
 	cp := customerpaymentdb.Payments
-	fsi := factoringdb.SubmissionItems
-	fs := factoringdb.Submissions
+	fsi := factoringsubmissiondb.SubmissionItems
+	fs := factoringsubmissiondb.Submissions
 	agr := factoringdb.Agreements
-	reserved := factoringdb.SubmissionItems.As("reserved")
+	reserved := factoringsubmissiondb.SubmissionItems.As("reserved")
 	reservedInv := invoicedb.Invoices.As("reserved_inv")
 	advanceAt := fs.SentAt.Add(agr.FundingDays.Mul(keel.Int64(secondsPerDay))).
 		Greatest(keel.Int64(req.AsOfDate))
@@ -673,7 +675,7 @@ func worklistQuery(
 	req customerledgerports.ListARCollectionsWorklistRequest,
 ) *keel.Query[*keel.Row] {
 	inv := invoicedb.Invoices
-	od := invoicedb.InvoiceDisputes.As("od")
+	od := invoicedisputedb.InvoiceDisputes.As("od")
 	items := keel.CTE("items", worklistColumns, inv.
 		LeftJoinLateral(od.
 			Pick(od.ID, od.ReasonCode, od.DisputedAmountMinor, od.OpenedAt).

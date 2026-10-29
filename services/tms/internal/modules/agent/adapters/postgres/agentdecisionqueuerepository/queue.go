@@ -9,9 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -88,7 +90,7 @@ func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
 			keel.When(req.ToolName != "", p.ToolName.Eq(req.ToolName)),
 		)
 
-	pl := agentdb.AgentPlans
+	pl := agentplandb.AgentPlans
 	plRun := agentdb.AgentRuns.As("plrun")
 	plDef := agentdefinitiondb.Definitions.As("pldef")
 	step := agentdb.AgentProposals.As("step")
@@ -292,7 +294,7 @@ func (r *repository) ListRecent(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]agentports.RecentDecisionEntry, error) {
-			d := agentdb.AgentDecisions
+			d := agentdecisiondb.AgentDecisions
 			p := agentdb.AgentProposals
 			run := agentdb.AgentRuns
 			def := agentdefinitiondb.Definitions

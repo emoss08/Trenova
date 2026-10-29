@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol/documentcontroldb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,7 +54,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 		assert.Equal(t, results[0], id)
 	}
 
-	dc := tenantdb.DocumentControls
+	dc := documentcontroldb.DocumentControls
 	count, err := dc.Query().Count(data.Ctx(ctx), db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), count)

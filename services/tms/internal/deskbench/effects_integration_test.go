@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -171,15 +173,19 @@ func TestAuditEffects_ReadsTheCasesRowsFromTheDatabase(t *testing.T) {
 
 	require.NoError(
 		t,
-		agentdb.AgentDecisions.CreateMany(f.tenantCtx(), admin, []*agentdecision.AgentDecision{
-			f.decision(undone, nil, true),
-			f.decision(pinnedAtZero, version(1), false),
-			f.decision(directed, nil, false),
-		}),
+		agentdecisiondb.AgentDecisions.CreateMany(
+			f.tenantCtx(),
+			admin,
+			[]*agentdecision.AgentDecision{
+				f.decision(undone, nil, true),
+				f.decision(pinnedAtZero, version(1), false),
+				f.decision(directed, nil, false),
+			},
+		),
 	)
 	require.NoError(
 		t,
-		agentdb.AgentRunSteps.CreateMany(f.tenantCtx(), admin, []*agentrunstep.AgentRunStep{
+		agentrunstepdb.AgentRunSteps.CreateMany(f.tenantCtx(), admin, []*agentrunstep.AgentRunStep{
 			f.step("fan", "delegate_task", "del_1", "", "ran"),
 			f.step("fanned", "shipment_hold", "w2", "del_1", "ran"),
 			f.step("directed", "dispatch_assign_move", "w3", "dir_1", "proposed"),

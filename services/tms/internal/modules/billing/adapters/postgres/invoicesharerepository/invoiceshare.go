@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare/invoicesharedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -43,7 +43,7 @@ func (r *repository) Upsert(ctx context.Context, shares []*invoiceshare.InvoiceS
 			return nil
 		}
 
-		s := invoicedb.InvoiceShares
+		s := invoicesharedb.InvoiceShares
 		_, err := s.Upsert(ctx, r.db.Keel(ctx), shares,
 			keel.OnConflict(s.InvoiceID, s.OrganizationID, s.BusinessUnitID, s.SharedWithID).
 				Update(s.SharedByID, s.Note, s.Tab, s.LastSharedAt).
@@ -63,7 +63,7 @@ func (r *repository) ListByInvoiceID(
 	req *invoiceports.ListInvoiceSharesRequest,
 ) ([]*invoiceshare.InvoiceShare, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoiceshare.InvoiceShare, error) {
-		s := invoicedb.InvoiceShares
+		s := invoicesharedb.InvoiceShares
 		shares, err := s.Where(s.InvoiceID.Eq(req.InvoiceID)).
 			Load(userSummary(s.SharedWith()), userSummary(s.SharedBy())).
 			Order(s.LastSharedAt.Desc(), s.ID.Asc()).

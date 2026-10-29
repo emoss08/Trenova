@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy/detentionpolicydb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -39,7 +39,7 @@ func NewPolicyRepository(p PolicyParams) detentionports.DetentionPolicyRepositor
 }
 
 func orderedTiers() keel.Loader {
-	t := detentiondb.DetentionPolicies.Tiers()
+	t := detentionpolicydb.DetentionPolicies.Tiers()
 	return t.Order(t.FromMinute.Asc(), t.SortOrder.Asc())
 }
 
@@ -51,7 +51,7 @@ func (r *policyRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
-			p := detentiondb.DetentionPolicies
+			p := detentionpolicydb.DetentionPolicies
 			q := p.Where(
 				keel.When(req.Status != "", p.Status.Eq(detentionpolicy.PolicyStatus(req.Status))),
 				optionalIDEq(p.CustomerID, req.CustomerID),
@@ -92,7 +92,7 @@ func (r *policyRepository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				detentiondb.DetentionPolicies.Query(),
+				detentionpolicydb.DetentionPolicies.Query(),
 				&listquery.Request[detentionpolicy.DetentionPolicy]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
@@ -117,7 +117,7 @@ func (r *policyRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*detentionpolicy.DetentionPolicy, error) {
-			p := detentiondb.DetentionPolicies
+			p := detentionpolicydb.DetentionPolicies
 			q := p.Where(p.ID.Eq(req.DetentionPolicyID))
 			if req.IncludeTiers {
 				q = q.Load(orderedTiers())
@@ -150,7 +150,7 @@ func (r *policyRepository) GetResolutionCandidates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*detentionpolicy.DetentionPolicy, error) {
-			p := detentiondb.DetentionPolicies
+			p := detentionpolicydb.DetentionPolicies
 			entities, err := p.Where(
 				p.Status.Eq(detentionpolicy.PolicyStatusActive),
 				keel.Or(p.CustomerID.IsNull(), p.CustomerID.Eq(req.CustomerID)),
@@ -202,9 +202,9 @@ func (r *policyRepository) Create(
 		r.db,
 		func(ctx context.Context) (*detentionpolicy.DetentionPolicy, error) {
 			db := r.db.Keel(ctx)
-			err := detentiondb.DetentionPolicies.Create(ctx, db, entity)
+			err := detentionpolicydb.DetentionPolicies.Create(ctx, db, entity)
 			if err == nil {
-				err = detentiondb.DetentionPolicyTiers.CreateMany(
+				err = detentionpolicydb.DetentionPolicyTiers.CreateMany(
 					ctx,
 					db,
 					stampTiers(entity, false),
@@ -232,8 +232,8 @@ func (r *policyRepository) Update(
 		r.db,
 		func(ctx context.Context) (*detentionpolicy.DetentionPolicy, error) {
 			db := r.db.Keel(ctx)
-			t := detentiondb.DetentionPolicyTiers
-			err := detentiondb.DetentionPolicies.Save(ctx, db, entity)
+			t := detentionpolicydb.DetentionPolicyTiers
+			err := detentionpolicydb.DetentionPolicies.Save(ctx, db, entity)
 			if err == nil {
 				_, err = t.Where(t.DetentionPolicyID.Eq(entity.ID)).Delete(ctx, db)
 			}
@@ -262,7 +262,7 @@ func (r *policyRepository) Delete(
 	req *detentionports.GetDetentionPolicyByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := detentiondb.DetentionPolicies.DeleteRow(
+		err := detentionpolicydb.DetentionPolicies.DeleteRow(
 			ctx,
 			r.db.Keel(ctx),
 			&detentionpolicy.DetentionPolicy{ID: req.DetentionPolicyID},
@@ -285,7 +285,7 @@ func (r *policyRepository) CodeExists(
 	req *detentionports.DetentionPolicyCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		p := detentiondb.DetentionPolicies
+		p := detentionpolicydb.DetentionPolicies
 		exists, err := p.Where(
 			p.Code.Lower().EqExpr(keel.Text(req.Code).Lower()),
 			excludeID(p.ID, req.ExcludeID),
@@ -331,7 +331,7 @@ func (r *policyRepository) FindOverlapping(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*detentionpolicy.DetentionPolicy, error) {
-			p := detentiondb.DetentionPolicies
+			p := detentionpolicydb.DetentionPolicies
 			preds := []keel.Pred{
 				p.Status.Eq(detentionpolicy.PolicyStatusActive),
 				p.IsOrgDefault.Eq(req.IsOrgDefault),
@@ -371,7 +371,7 @@ func (r *policyRepository) SelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
-			p := detentiondb.DetentionPolicies
+			p := detentionpolicydb.DetentionPolicies
 			q := p.Pick(p.ID, p.Name, p.Code, p.Description, p.Status, p.BillingFreeMinutes).
 				Where(p.Status.Eq(detentionpolicy.PolicyStatusActive)).
 				Order(p.Name.Asc())

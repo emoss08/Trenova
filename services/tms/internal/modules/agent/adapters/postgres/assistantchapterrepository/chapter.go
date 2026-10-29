@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter/conversationchapterdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,8 +42,8 @@ func New(p Params) assistantchapterports.ChapterRepository {
 }
 
 func chaptersQuery(threadID pulid.ID) *keel.Query[*conversationchapter.Chapter] {
-	c := conversationdb.Chapters
-	tr := conversationdb.AssistantTurns.As("ctr")
+	c := conversationchapterdb.Chapters
+	tr := conversationturndb.AssistantTurns.As("ctr")
 	m := conversationdb.Messages.As("cfm")
 	first := keel.Scalar(m.
 		Pick(m.Sequence).
@@ -77,7 +79,7 @@ func (r *repository) Get(
 	req assistantchapterports.GetChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 		row, err := chaptersQuery(req.ThreadID).Where(c.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, chapterErrors.Map(err, req.ID.String())
@@ -92,7 +94,7 @@ func (r *repository) ForTurn(
 	req assistantchapterports.ChapterForTurnRequest,
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 		row, err := chaptersQuery(req.ThreadID).
 			Where(c.TurnID.Eq(req.TurnID)).
 			One(ctx, r.db.Keel(ctx))
@@ -112,7 +114,7 @@ func (r *repository) Count(
 	req assistantchapterports.ListChaptersRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 		count, err := c.Where(c.ThreadID.Eq(req.ThreadID)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count chapters: %w", err)
@@ -128,7 +130,7 @@ func (r *repository) Create(
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		db := r.db.Keel(ctx)
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 		if _, err := c.CreateOrSkip(ctx, db, []*conversationchapter.Chapter{chapter}); err != nil {
 			return nil, chapterErrors.Map(err, chapter.ID.String())
 		}
@@ -148,7 +150,7 @@ func (r *repository) Retitle(
 ) (*conversationchapter.Chapter, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		db := r.db.Keel(ctx)
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 
 		var guard keel.Pred
 		switch {
@@ -187,7 +189,7 @@ func (r *repository) Delete(
 	req assistantchapterports.DeleteChapterRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 		n, err := c.Where(
 			c.ID.Eq(req.ID),
 			c.ThreadID.Eq(req.ThreadID),

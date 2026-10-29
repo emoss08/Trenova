@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview/agentpreviewdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -36,7 +37,7 @@ func New(p Params) agentports.AgentProposalBaselineRepository {
 
 func (r *repository) Create(ctx context.Context, baseline *agentpreview.ProposalBaseline) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		b := agentdb.ProposalBaselines
+		b := agentpreviewdb.ProposalBaselines
 		if _, err := b.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),
@@ -57,7 +58,7 @@ func (r *repository) GetByProposal(
 	req agentports.GetProposalBaselineRequest,
 ) (*agentpreview.ProposalBaseline, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentpreview.ProposalBaseline, error) {
-		baseline, err := agentdb.ProposalBaselines.Get(ctx, r.db.Keel(ctx), req.ProposalID)
+		baseline, err := agentpreviewdb.ProposalBaselines.Get(ctx, r.db.Keel(ctx), req.ProposalID)
 		if err != nil {
 			return nil, baselineErrors.Map(err, req.ProposalID.String())
 		}
@@ -78,7 +79,7 @@ func (r *repository) ListByProposals(
 				return []*agentpreview.ProposalBaseline{}, nil
 			}
 
-			b := agentdb.ProposalBaselines
+			b := agentpreviewdb.ProposalBaselines
 			rows, err := b.Where(b.ProposalID.In(req.ProposalIDs...)).
 				Limit(len(req.ProposalIDs)).
 				List(ctx, r.db.Keel(ctx))
@@ -102,7 +103,7 @@ func (r *repository) PurgeOrphans(
 			limit = DefaultPurgeLimit
 		}
 
-		b := agentdb.ProposalBaselines
+		b := agentpreviewdb.ProposalBaselines
 		purged, err := b.AllTenants().
 			Where(b.ProposalID.InQuery(orphans(req.Before, limit))).
 			Delete(ctx, r.db.Keel(ctx))
@@ -119,7 +120,7 @@ func (r *repository) PurgeOrphans(
 // baseline can be known to be an orphan: its filing was retried under
 // another id, or never happened.
 func orphans(before int64, limit int) *keel.Query[*agentpreview.ProposalBaseline] {
-	orphan := agentdb.ProposalBaselines.As("orphan")
+	orphan := agentpreviewdb.ProposalBaselines.As("orphan")
 	p := agentdb.AgentProposals
 
 	return orphan.AllTenants().

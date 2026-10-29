@@ -3,7 +3,7 @@ package agentruneventrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent/agentruneventdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,10 @@ func readEventsEveryWay(t *testing.T, reader agentruntimeports.RunReader) []stri
 		OwnerID:   pulid.MustNew("ar_"),
 		Reader:    reader,
 	}).Limit(10))
-	page, _ := keeltest.Render(t, agentdb.AgentRunEvents.Where(ofReadableRuns(reader)).Limit(10))
+	page, _ := keeltest.Render(
+		t,
+		agentruneventdb.AgentRunEvents.Where(ofReadableRuns(reader)).Limit(10),
+	)
 
 	return []string{byRun, page}
 }
