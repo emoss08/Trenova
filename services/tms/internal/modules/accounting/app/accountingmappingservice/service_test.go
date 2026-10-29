@@ -5,6 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingcreate"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingdecisions"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingscoring"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -33,6 +37,7 @@ import (
 
 type harness struct {
 	svc         *Service
+	params      Params
 	tenant      pagination.TenantInfo
 	conn        *accountingconnection.AccountingConnection
 	connections *fakeConnections
@@ -55,7 +60,7 @@ func account(externalID, name, accountType string) *accountingmapping.Accounting
 		ExternalID:   externalID,
 		Name:         name,
 		AccountType:  accountType,
-		AccountClass: classOf(accountType),
+		AccountClass: accountingmappingtest.AccountClass(accountType),
 		Active:       true,
 	}
 }
@@ -87,8 +92,18 @@ func newHarness(t *testing.T) *harness {
 		account("2", "Freight Income", "Income"),
 		account("3", "Checking", "Bank"),
 		account("4", "Office Supplies", "Expense"),
-		party(accountingprovider.ReferenceKindCustomer, "50", "Acme Logistics, Inc.", ""),
-		party(accountingprovider.ReferenceKindVendor, "70", "Roadrunner Freight LLC", ""),
+		accountingmappingtest.Party(
+			accountingprovider.ReferenceKindCustomer,
+			"50",
+			"Acme Logistics, Inc.",
+			"",
+		),
+		accountingmappingtest.Party(
+			accountingprovider.ReferenceKindVendor,
+			"70",
+			"Roadrunner Freight LLC",
+			"",
+		),
 		&accountingmapping.AccountingReferenceObject{
 			Kind:       accountingprovider.ReferenceKindItem,
 			ExternalID: "90",
@@ -160,7 +175,7 @@ func newHarness(t *testing.T) *harness {
 	carriers.EXPECT().GetByIDs(mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{carr}, nil).Maybe()
 
-	h.svc = New(Params{
+	h.params = Params{
 		Logger:             zap.NewNop(),
 		DB:                 dbtest.NopConnection{},
 		Connections:        h.connections,
@@ -175,8 +190,14 @@ func newHarness(t *testing.T) *harness {
 		AuditService:       h.audit,
 		Completion:         h.completion,
 		Refresher:          h.refresher,
-	})
+	}
+	h.svc = New(h.params)
 	return h
+}
+
+func (h *harness) with(edit func(*Params)) {
+	edit(&h.params)
+	h.svc = New(h.params)
 }
 
 func (h *harness) rescore(t *testing.T) *accountingmappingports.AccountingRescoreResult {
@@ -390,7 +411,10 @@ func TestConfirmLimitsTheBatch(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	items := make([]accountingmappingports.AccountingMappingConfirmation, maxConfirmBatch+1)
+	items := make(
+		[]accountingmappingports.AccountingMappingConfirmation,
+		accountingmappingdecisions.MaxConfirmBatch+1,
+	)
 	for idx := range items {
 		items[idx] = accountingmappingports.AccountingMappingConfirmation{
 			ID: pulid.MustNew("acctm_"),
@@ -659,7 +683,11 @@ func TestMarkRefreshFinishedRecordsTheOutcome(t *testing.T) {
 	assert.NotNil(t, h.connections.refresh[1].RefreshedAt)
 	assert.Empty(t, h.connections.refresh[1].Error)
 	assert.Nil(t, h.connections.refresh[2].RefreshedAt)
-	assert.Len(t, []rune(h.connections.refresh[2].Error), maxRefreshErrorLength)
+	assert.Len(
+		t,
+		[]rune(h.connections.refresh[2].Error),
+		accountingmappingscoring.MaxRefreshErrorLength,
+	)
 }
 
 func TestCreateReferenceRecordNeedsTheRevenueAccount(t *testing.T) {
@@ -713,7 +741,7 @@ func TestCreateReferenceRecordCreatesAndConfirms(t *testing.T) {
 	assert.Equal(t, "Detention", sent.Item.Name)
 	assert.Equal(t, "DET", sent.Item.Sku)
 	assert.Equal(t, "2", sent.Item.IncomeAccountID)
-	assert.Equal(t, creationRequestID(charge), sent.RequestID)
+	assert.Equal(t, accountingmappingcreate.CreationRequestID(charge), sent.RequestID)
 	assert.LessOrEqual(t, len(sent.RequestID), 50)
 
 	refs, err := h.references.GetByExternalIDs(
@@ -744,12 +772,12 @@ func TestCreationRequestIDIsStablePerVersion(t *testing.T) {
 		ConnectionID: pulid.MustNew("acctc_"),
 		Version:      3,
 	}
-	first := creationRequestID(row)
-	assert.Equal(t, first, creationRequestID(row))
-	assert.True(t, strings.HasPrefix(first, requestIDPrefix))
+	first := accountingmappingcreate.CreationRequestID(row)
+	assert.Equal(t, first, accountingmappingcreate.CreationRequestID(row))
+	assert.True(t, strings.HasPrefix(first, accountingmappingcreate.RequestIDPrefix))
 
 	row.Version++
-	assert.NotEqual(t, first, creationRequestID(row))
+	assert.NotEqual(t, first, accountingmappingcreate.CreationRequestID(row))
 }
 
 func TestCreateReferenceRecordSuggestsAnExistingDuplicate(t *testing.T) {

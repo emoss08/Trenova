@@ -1,4 +1,4 @@
-package accountingmappingservice
+package accountingmappingkit
 
 import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"

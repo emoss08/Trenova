@@ -800,7 +800,15 @@ modules:
       - accountingconnectionwebhook
       - accountingconnlookup
       - accountinginboundservice
+      - accountingmappingcreate
+      - accountingmappingdecisions
+      - accountingmappingkit
+      - accountingmappingreads
+      - accountingmappingscore
+      - accountingmappingscoring
       - accountingmappingservice
+      - accountingmappingtargets
+      - accountingmappingtest
       - accountingsyncactions
       - accountingsyncbackfill
       - accountingsyncdrain

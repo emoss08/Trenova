@@ -1,25 +1,15 @@
-package accountingmappingservice
+package accountingmappingscoring
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"go.uber.org/zap"
 )
 
 const (
@@ -52,60 +42,6 @@ type modelAnswer struct {
 
 type modelReply struct {
 	Answers []modelAnswer `json:"answers"`
-}
-
-func (s *Service) ModelPass(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	connectionID pulid.ID,
-	mappingIDs []pulid.ID,
-) (int, error) {
-	if s.completion == nil || len(mappingIDs) == 0 {
-		return 0, nil
-	}
-	if len(mappingIDs) > maxModelTargets {
-		mappingIDs = mappingIDs[:maxModelTargets]
-	}
-
-	rows, err := s.mappings.GetByIDs(ctx, accountingmappingports.GetAccountingMappingsByIDsRequest{
-		TenantInfo: tenantInfo,
-		IDs:        mappingIDs,
-	})
-	if err != nil {
-		return 0, err
-	}
-
-	pending := make([]*accountingmapping.AccountingMapping, 0, len(rows))
-	for _, row := range rows {
-		if row.ConnectionID == connectionID && row.NeedsModelReview() {
-			pending = append(pending, row)
-		}
-	}
-
-	applied := 0
-	for start := 0; start < len(pending); start += modelBatchSize {
-		batch := newModelBatch(pending[start:min(start+modelBatchSize, len(pending))])
-		changed, reviewed, batchErr := s.runModelBatch(ctx, tenantInfo, connectionID, batch)
-		if batchErr != nil {
-			if errors.Is(batchErr, llmports.ErrNoProviderConfigured) {
-				return applied, nil
-			}
-			return applied, batchErr
-		}
-		count, applyErr := s.mappings.ApplyScoring(ctx, changed)
-		if applyErr != nil {
-			return applied, applyErr
-		}
-		applied += int(count)
-		if !reviewed {
-			continue
-		}
-		if _, applyErr = s.mappings.ApplyScoring(ctx, batch.declined(changed)); applyErr != nil {
-			return applied, applyErr
-		}
-	}
-
-	return applied, nil
 }
 
 func newModelBatch(rows []*accountingmapping.AccountingMapping) *modelBatch {
@@ -155,44 +91,6 @@ func modelSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		"answers": jsonschemautils.Array(answer, modelBatchSize),
 	}, "answers")
-}
-
-func (s *Service) runModelBatch(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	connectionID pulid.ID,
-	batch *modelBatch,
-) ([]*accountingmapping.AccountingMapping, bool, error) {
-	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
-		TenantInfo:   tenantInfo,
-		Task:         aitask.TaskAccountingMapping,
-		System:       modelSystemPrompt,
-		Context:      batch.context(),
-		OutputSchema: modelSchema(),
-		SchemaName:   modelSchemaName,
-		MaxTokens:    modelMaxTokens,
-		Attribution: aiusageports.AIUsageAttribution{
-			Feature: aiusage.FeatureAccountingMapping,
-			Subject: aiusage.Subject{
-				Type: aiusage.SubjectTypeAccountingConnection,
-				ID:   connectionID.String(),
-			},
-		},
-	})
-	if err != nil {
-		return nil, false, err
-	}
-
-	var reply modelReply
-	if err = sonic.UnmarshalString(result.Text, &reply); err != nil {
-		s.l.Warn("the mapping model's reply could not be read", zap.Error(err))
-		return nil, false, nil
-	}
-
-	for _, row := range batch.rows {
-		row.MarkModelReviewed()
-	}
-	return batch.apply(reply.Answers), true, nil
 }
 
 func (b *modelBatch) declined(

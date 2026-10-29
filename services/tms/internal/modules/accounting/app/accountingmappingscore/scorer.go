@@ -1,4 +1,4 @@
-package accountingmappingservice
+package accountingmappingscore
 
 import (
 	"cmp"
@@ -44,7 +44,7 @@ const (
 	matcherOnlyEligible = "onlyEligible"
 )
 
-type target struct {
+type Target struct {
 	TargetType  accountingsync.MappingTargetType
 	Kind        accountingprovider.ReferenceKind
 	ObjectID    pulid.ID
@@ -64,7 +64,7 @@ type candidateScore struct {
 	matchers []accountingmapping.MatcherSignal
 }
 
-var roleSynonyms = map[string][]string{
+var RoleSynonyms = map[string][]string{
 	accountingsync.AccountRoleAR: {"Accounts Receivable", "A/R", "Trade Receivables"},
 	accountingsync.AccountRoleRevenue: {
 		"Freight Revenue",
@@ -90,7 +90,7 @@ var roleSynonyms = map[string][]string{
 	},
 }
 
-var lineTypeSynonyms = map[string][]string{
+var LineTypeSynonyms = map[string][]string{
 	string(invoice.InvoiceLineTypeFreight): {
 		"Freight",
 		"Linehaul",
@@ -106,7 +106,7 @@ var lineTypeSynonyms = map[string][]string{
 	},
 }
 
-var itemRoleSynonyms = map[string][]string{
+var ItemRoleSynonyms = map[string][]string{
 	accountingsync.ItemRoleShortPayWriteOff: {
 		"Short Pay",
 		"Write Off",
@@ -116,7 +116,7 @@ var itemRoleSynonyms = map[string][]string{
 	},
 }
 
-var paymentMethodSynonyms = map[string][]string{
+var PaymentMethodSynonyms = map[string][]string{
 	string(customerpayment.MethodACH): {
 		"ACH",
 		"EFT",
@@ -140,7 +140,7 @@ var paymentMethodSynonyms = map[string][]string{
 	string(customerpayment.MethodOther): {"Other"},
 }
 
-var termSynonyms = map[string][]string{
+var TermSynonyms = map[string][]string{
 	string(customer.PaymentTermNet10):        {"Net 10"},
 	string(customer.PaymentTermNet15):        {"Net 15"},
 	string(customer.PaymentTermNet30):        {"Net 30"},
@@ -182,11 +182,11 @@ var dedicatedTypeRoles = map[string]struct{}{
 	accountingsync.AccountRoleDeposit: {},
 }
 
-func eligibleForRole(role string, ref *accountingmapping.AccountingReferenceObject) bool {
+func EligibleForRole(role string, ref *accountingmapping.AccountingReferenceObject) bool {
 	return slices.Contains(roleAccountClasses[role], ref.AccountClass)
 }
 
-func accountClassesFor(t *target) []accountingmapping.AccountClass {
+func accountClassesFor(t *Target) []accountingmapping.AccountClass {
 	switch t.TargetType { //nolint:exhaustive // only targets that pick an account have a class rule
 	case accountingsync.TargetAccountRole:
 		return roleAccountClasses[t.Key]
@@ -199,7 +199,7 @@ func accountClassesFor(t *target) []accountingmapping.AccountClass {
 	}
 }
 
-func eligible(t *target, ref *accountingmapping.AccountingReferenceObject) bool {
+func eligible(t *Target, ref *accountingmapping.AccountingReferenceObject) bool {
 	if ref.Kind != t.Kind || !ref.Usable() {
 		return false
 	}
@@ -210,10 +210,10 @@ func eligible(t *target, ref *accountingmapping.AccountingReferenceObject) bool 
 	return len(classes) == 0 || slices.Contains(classes, ref.AccountClass)
 }
 
-func score(
-	t *target,
+func Score(
+	t *Target,
 	refs []*accountingmapping.AccountingReferenceObject,
-	index *tokenIndex,
+	index *TokenIndex,
 ) *accountingmapping.Proposal {
 	pool := refs
 	if index != nil {
@@ -297,7 +297,7 @@ func score(
 	return proposal
 }
 
-func scoreCandidate(t *target, ref *accountingmapping.AccountingReferenceObject) candidateScore {
+func scoreCandidate(t *Target, ref *accountingmapping.AccountingReferenceObject) candidateScore {
 	result := candidateScore{ref: ref}
 	consider := func(value float64, matcher, reason string) {
 		if value <= 0 {
@@ -360,7 +360,7 @@ func scoreCandidate(t *target, ref *accountingmapping.AccountingReferenceObject)
 				fmt.Sprintf("Due in %d days in both systems", *t.DueDays),
 			)
 		}
-		scoreNames(termSynonyms[t.Key], []string{ref.Name}, textsim.NameSimilarity, consider)
+		scoreNames(TermSynonyms[t.Key], []string{ref.Name}, textsim.NameSimilarity, consider)
 	case accountingsync.TargetPaymentMethod:
 		scoreNames(t.Names, []string{ref.Name}, textsim.NameSimilarity, consider)
 	}
@@ -370,7 +370,7 @@ func scoreCandidate(t *target, ref *accountingmapping.AccountingReferenceObject)
 }
 
 func scoreParty(
-	t *target,
+	t *Target,
 	ref *accountingmapping.AccountingReferenceObject,
 	consider func(float64, string, string),
 	result *candidateScore,
@@ -449,15 +449,15 @@ func round4(value float64) float64 {
 	return rounded
 }
 
-type tokenIndex struct {
+type TokenIndex struct {
 	refs     []*accountingmapping.AccountingReferenceObject
 	byToken  map[string][]int
 	byDigits map[string][]int
 	common   map[string]struct{}
 }
 
-func newTokenIndex(refs []*accountingmapping.AccountingReferenceObject) *tokenIndex {
-	index := &tokenIndex{
+func NewTokenIndex(refs []*accountingmapping.AccountingReferenceObject) *TokenIndex {
+	index := &TokenIndex{
 		refs:     refs,
 		byToken:  make(map[string][]int),
 		byDigits: make(map[string][]int),
@@ -487,7 +487,7 @@ func newTokenIndex(refs []*accountingmapping.AccountingReferenceObject) *tokenIn
 	return index
 }
 
-func (i *tokenIndex) candidates(
+func (i *TokenIndex) candidates(
 	names []string,
 	identifiers ...string,
 ) []*accountingmapping.AccountingReferenceObject {
@@ -538,4 +538,11 @@ func partyTokens(values ...string) []string {
 		tokens = append(tokens, strings.Fields(textsim.NormalizeCompanyName(value))...)
 	}
 	return tokens
+}
+
+func (t *Target) Identity() string {
+	if t.TargetType.KeyedByObject() {
+		return string(t.TargetType) + "|" + t.ObjectID.String()
+	}
+	return string(t.TargetType) + "|" + t.Key
 }

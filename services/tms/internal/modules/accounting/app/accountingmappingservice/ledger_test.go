@@ -77,7 +77,7 @@ func TestRescoreOffersEveryActiveGLAccountInLedgerMode(t *testing.T) {
 			Total:      2,
 			TotalExact: true,
 		}, nil).Once()
-	h.svc.glAccounts = accounts
+	h.with(func(p *Params) { p.GLAccounts = accounts })
 
 	h.rescore(t)
 
@@ -108,12 +108,12 @@ func TestRescoreOffersAnInactiveAccountThatCarriesEntries(t *testing.T) {
 			Total:      1,
 			TotalExact: true,
 		}, nil).Once()
-	h.svc.glAccounts = accounts
+	h.with(func(p *Params) { p.GLAccounts = accounts })
 	ledger := &fakeLedgerAccounts{accounts: []journalentryports.LedgerAccount{
 		{ID: cash.ID, Code: "1000", Name: "Operating cash"},
 		retired,
 	}}
-	h.svc.ledger = ledger
+	h.with(func(p *Params) { p.Ledger = ledger })
 
 	h.rescore(t)
 
@@ -156,11 +156,11 @@ func TestLedgerModeRequiresEveryAccountWithActivity(t *testing.T) {
 	ledger := &fakeLedgerAccounts{accounts: []journalentryports.LedgerAccount{
 		{ID: ar, Code: "1100"}, {ID: revenue, Code: "4000"}, {ID: cash, Code: "1000"},
 	}}
-	h.svc.ledger = ledger
+	h.with(func(p *Params) { p.Ledger = ledger })
 	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, h.tenant.OrgID).
 		Return(&accountingcontrol.AccountingControl{DefaultRevenueAccountID: revenue}, nil)
-	h.svc.accountingControls = controls
+	h.with(func(p *Params) { p.AccountingControls = controls })
 	h.seedMapping(&accountingmapping.AccountingMapping{
 		TargetType:      accountingsync.TargetGLAccount,
 		TrenovaObjectID: ar,
@@ -205,7 +205,7 @@ func TestLedgerRequirementCountsFromTheStartDateUnlessOpeningBalancesWereSent(t 
 	h.connections.rows[h.conn.ID].SyncStartDate = &start
 	h.connections.mu.Unlock()
 	ledger := &fakeLedgerAccounts{}
-	h.svc.ledger = ledger
+	h.with(func(p *Params) { p.Ledger = ledger })
 
 	summary, err := h.svc.Summary(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
 	require.NoError(t, err)

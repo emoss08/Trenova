@@ -20009,3 +20009,6 @@ github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementserv
 github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.VarianceAdjustmentEvent	github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice.VarianceAdjustmentEvent
 github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.VarianceResolution	github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice.VarianceResolution
 github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.WorkspaceSummary	github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice.WorkspaceSummary
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice.MappingChoice	github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit.MappingChoice
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice.CreatedReferenceChoice	github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit.CreatedReferenceChoice
+github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice.CreatedReference	github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit.CreatedReference

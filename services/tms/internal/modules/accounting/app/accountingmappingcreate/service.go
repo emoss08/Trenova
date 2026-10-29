@@ -1,25 +1,22 @@
-package accountingmappingservice
+package accountingmappingcreate
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"strconv"
-	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingreads"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingtargets"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -27,28 +24,14 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textsim"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
 )
-
-const (
-	requestIDPrefix    = "trn-"
-	requestIDHashChars = 40
-)
-
-func creationRequestID(row *accountingmapping.AccountingMapping) string {
-	sum := sha256.Sum256([]byte(
-		row.ConnectionID.String() + "|" + row.ID.String() + "|" + strconv.FormatInt(
-			row.Version,
-			10,
-		),
-	))
-	return requestIDPrefix + hex.EncodeToString(sum[:])[:requestIDHashChars]
-}
 
 func (s *Service) CreateReferenceRecord(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
 ) (*accountingmapping.AccountingMapping, error) {
-	row, err := s.GetMapping(ctx, req.TenantInfo, req.MappingID)
+	row, err := s.reads.GetMapping(ctx, req.TenantInfo, req.MappingID)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +63,7 @@ func (s *Service) CreateReferenceRecord(
 	createReq := &accountingconnectorports.AccountingCreateReferenceRequest{
 		RealmID:     session.Connection.ExternalRealmID,
 		AccessToken: session.AccessToken,
-		RequestID:   creationRequestID(row),
+		RequestID:   CreationRequestID(row),
 		Kind:        row.ProviderKind,
 	}
 	name, err := s.buildDraft(ctx, req, row, creator, createReq)
@@ -111,37 +94,40 @@ func (s *Service) CreateReferenceRecord(
 	}
 
 	before := jsonutils.MustToJSON(row)
-	updated, err := s.confirmCreated(ctx, req.TenantInfo, row, CreatedReferenceChoice(
-		&CreatedReference{
-			ExternalID:      created.ExternalID,
-			ExternalName:    created.Label(),
-			RequestedSource: req.Source,
-			IntegrationType: session.Connection.IntegrationType,
-			ActorID:         req.UserID,
-			At:              timeutils.NowUnix(),
-		},
-	))
+	updated, err := s.confirmCreated(
+		ctx,
+		req.TenantInfo,
+		row,
+		accountingmappingkit.CreatedReferenceChoice(
+			&accountingmappingkit.CreatedReference{
+				ExternalID:      created.ExternalID,
+				ExternalName:    created.Label(),
+				RequestedSource: req.Source,
+				IntegrationType: session.Connection.IntegrationType,
+				ActorID:         req.UserID,
+				At:              timeutils.NowUnix(),
+			},
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	s.logAudit(
+	s.kit.LogAudit(
 		updated,
 		req.UserID,
 		before,
 		"Created "+created.Label()+" and mapped "+updated.TargetLabel+" to it",
 	)
-	s.publishInvalidation(
+	s.kit.PublishInvalidation(
 		ctx,
 		req.TenantInfo,
 		req.UserID,
 		[]*accountingmapping.AccountingMapping{updated},
 	)
-	s.requeueMappingBlocked(ctx, req.TenantInfo, updated.ConnectionID)
+	s.kit.RequeueMappingBlocked(ctx, req.TenantInfo, updated.ConnectionID)
 	return updated, nil
 }
-
-const maxReasonRunes = 300
 
 func (s *Service) confirmCreated(
 	ctx context.Context,
@@ -155,7 +141,7 @@ func (s *Service) confirmCreated(
 		return updated, err
 	}
 
-	current, getErr := s.GetMapping(ctx, tenantInfo, row.ID)
+	current, getErr := s.reads.GetMapping(ctx, tenantInfo, row.ID)
 	if getErr != nil {
 		return nil, getErr
 	}
@@ -192,20 +178,6 @@ func (s *Service) buildDraft(
 	default:
 		return "", errortypes.NewBusinessError("This kind of record is not created from Trenova")
 	}
-}
-
-func chosenName(
-	creator accountingconnectorports.AccountingReferenceCreator,
-	kind accountingprovider.ReferenceKind,
-	override string,
-	fallbacks ...string,
-) (string, error) {
-	for _, candidate := range append([]string{override}, fallbacks...) {
-		if name := creator.SanitizeName(kind, candidate); name != "" {
-			return name, nil
-		}
-	}
-	return "", errortypes.NewValidationError("name", errortypes.ErrRequired, "A name is required")
 }
 
 func (s *Service) itemDraft(
@@ -307,21 +279,6 @@ func (s *Service) customerWithState(
 	return found[0], nil
 }
 
-func customerParty(
-	cus *customer.Customer,
-	name string,
-) *accountingconnectorports.AccountingPartyDraft {
-	return &accountingconnectorports.AccountingPartyDraft{
-		DisplayName:  name,
-		CompanyName:  cus.Name,
-		AddressLine1: cus.AddressLine1,
-		City:         cus.City,
-		State:        stateCode(cus.State),
-		PostalCode:   cus.PostalCode,
-		Country:      stateCountry(cus.State),
-	}
-}
-
 func (s *Service) CustomerParty(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -382,20 +339,6 @@ func (s *Service) carrierWithState(
 	return found[0], nil
 }
 
-func carrierParty(
-	carr *carrier.Carrier,
-	name string,
-) *accountingconnectorports.AccountingPartyDraft {
-	draft := &accountingconnectorports.AccountingPartyDraft{
-		DisplayName: name,
-		CompanyName: carr.Name,
-		Email:       strings.TrimSpace(carr.Email),
-		Is1099:      carr.Is1099Eligible,
-	}
-	applyCarrierAddress(draft, carr)
-	return draft
-}
-
 func (s *Service) driverDraft(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
@@ -403,7 +346,7 @@ func (s *Service) driverDraft(
 	creator accountingconnectorports.AccountingReferenceCreator,
 	createReq *accountingconnectorports.AccountingCreateReferenceRequest,
 ) (string, error) {
-	wrk, err := s.workerWithState(ctx, req.TenantInfo, row.TrenovaObjectID)
+	wrk, err := s.catalog.WorkerWithState(ctx, req.TenantInfo, row.TrenovaObjectID)
 	if err != nil {
 		return "", err
 	}
@@ -411,50 +354,13 @@ func (s *Service) driverDraft(
 		creator,
 		accountingprovider.ReferenceKindVendor,
 		req.Name,
-		workerName(wrk),
+		accountingmappingtargets.WorkerName(wrk),
 	)
 	if err != nil {
 		return "", err
 	}
 	createReq.Party = driverParty(wrk, name)
 	return name, nil
-}
-
-func (s *Service) workerWithState(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	workerID pulid.ID,
-) (*worker.Worker, error) {
-	if s.workers == nil {
-		return nil, errortypes.NewBusinessError("Driver records are not available")
-	}
-	wrk, err := s.workers.GetByID(ctx, workerports.GetWorkerByIDRequest{
-		ID:           workerID,
-		TenantInfo:   tenantInfo,
-		IncludeState: true,
-	})
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewNotFoundError(
-				"The driver for this mapping no longer exists",
-			)
-		}
-		return nil, err
-	}
-	return wrk, nil
-}
-
-func driverParty(wrk *worker.Worker, name string) *accountingconnectorports.AccountingPartyDraft {
-	return &accountingconnectorports.AccountingPartyDraft{
-		DisplayName:  name,
-		Email:        strings.TrimSpace(wrk.Email),
-		AddressLine1: wrk.AddressLine1,
-		City:         wrk.City,
-		State:        stateCode(wrk.State),
-		PostalCode:   wrk.PostalCode,
-		Country:      stateCountry(wrk.State),
-		Is1099:       true,
-	}
 }
 
 func (s *Service) VendorParty(
@@ -471,47 +377,14 @@ func (s *Service) VendorParty(
 		}
 		return carrierParty(carr, carr.Name), nil
 	case accountingsync.TargetDriver:
-		wrk, err := s.workerWithState(ctx, tenantInfo, objectID)
+		wrk, err := s.catalog.WorkerWithState(ctx, tenantInfo, objectID)
 		if err != nil {
 			return nil, err
 		}
-		return driverParty(wrk, workerName(wrk)), nil
+		return driverParty(wrk, accountingmappingtargets.WorkerName(wrk)), nil
 	default:
 		return nil, errortypes.NewBusinessError("{0} is not a vendor", string(targetType))
 	}
-}
-
-func applyCarrierAddress(
-	draft *accountingconnectorports.AccountingPartyDraft,
-	carr *carrier.Carrier,
-) {
-	if strings.TrimSpace(carr.RemitAddressLine1) != "" {
-		draft.AddressLine1 = carr.RemitAddressLine1
-		draft.City = carr.RemitCity
-		draft.PostalCode = carr.RemitPostalCode
-		draft.State = stateCode(carr.RemitState)
-		draft.Country = stateCountry(carr.RemitState)
-		return
-	}
-	draft.AddressLine1 = carr.AddressLine1
-	draft.City = carr.City
-	draft.PostalCode = carr.PostalCode
-	draft.State = stateCode(carr.State)
-	draft.Country = stateCountry(carr.State)
-}
-
-func stateCode(state *usstate.UsState) string {
-	if state == nil {
-		return ""
-	}
-	return state.Abbreviation
-}
-
-func stateCountry(state *usstate.UsState) string {
-	if state == nil {
-		return ""
-	}
-	return state.CountryIso3
 }
 
 func (s *Service) duplicateNameError(
@@ -546,4 +419,46 @@ func (s *Service) duplicateNameError(
 		"A record named {0} already exists in the accounting system. Refresh the reference data and map to it, or choose another name.",
 		name,
 	).WithInternal(cause)
+}
+
+type Deps struct {
+	Logger            *zap.Logger
+	References        accountingmappingports.AccountingReferenceObjectRepository
+	Mappings          accountingmappingports.AccountingMappingRepository
+	ConnectionService accountingconnectionports.AccountingConnectionService
+	Accessorials      accessorialchargeports.AccessorialChargeRepository
+	Customers         customerports.CustomerRepository
+	Carriers          carrierports.CarrierRepository
+	Kit               *accountingmappingkit.Kit
+	Catalog           *accountingmappingtargets.Catalog
+	Reads             *accountingmappingreads.Service
+}
+
+type Service struct {
+	l                 *zap.Logger
+	references        accountingmappingports.AccountingReferenceObjectRepository
+	mappings          accountingmappingports.AccountingMappingRepository
+	connectionService accountingconnectionports.AccountingConnectionService
+	accessorials      accessorialchargeports.AccessorialChargeRepository
+	customers         customerports.CustomerRepository
+	carriers          carrierports.CarrierRepository
+	kit               *accountingmappingkit.Kit
+	catalog           *accountingmappingtargets.Catalog
+	reads             *accountingmappingreads.Service
+}
+
+//nolint:gocritic // dependency injection
+func New(d Deps) *Service {
+	return &Service{
+		l:                 d.Logger,
+		references:        d.References,
+		mappings:          d.Mappings,
+		connectionService: d.ConnectionService,
+		accessorials:      d.Accessorials,
+		customers:         d.Customers,
+		carriers:          d.Carriers,
+		kit:               d.Kit,
+		catalog:           d.Catalog,
+		reads:             d.Reads,
+	}
 }

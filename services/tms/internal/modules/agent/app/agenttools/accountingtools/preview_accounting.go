@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -152,7 +152,7 @@ func (t *SetAccountingMappingTool) Preview(
 		}
 	}
 
-	choice := accountingmappingservice.MappingChoice(req, ref, timeutils.NowUnix())
+	choice := accountingmappingkit.MappingChoice(req, ref, timeutils.NowUnix())
 	change, err := toolpreview.Update(
 		MappingRecord(row),
 		row,
@@ -248,8 +248,8 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 		return nil, err
 	}
 
-	choice := accountingmappingservice.CreatedReferenceChoice(
-		&accountingmappingservice.CreatedReference{
+	choice := accountingmappingkit.CreatedReferenceChoice(
+		&accountingmappingkit.CreatedReference{
 			ExternalName:    name,
 			RequestedSource: accountingmapping.MappingSourceAgent,
 			IntegrationType: system,

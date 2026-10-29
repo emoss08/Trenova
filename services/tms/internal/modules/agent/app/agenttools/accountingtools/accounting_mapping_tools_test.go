@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -90,7 +90,7 @@ func (f *fakeMappingWriter) Set(
 	f.set = req
 	for _, ref := range f.refs {
 		if ref.ExternalID == req.ExternalID {
-			f.row.Confirm(accountingmappingservice.MappingChoice(req, ref, timeutils.NowUnix()))
+			f.row.Confirm(accountingmappingkit.MappingChoice(req, ref, timeutils.NowUnix()))
 		}
 	}
 	return f.row, nil
@@ -122,8 +122,8 @@ func (f *fakeMappingWriter) CreateReferenceRecord(
 	if name == "" {
 		name = f.row.TargetLabel
 	}
-	f.row.Confirm(accountingmappingservice.CreatedReferenceChoice(
-		&accountingmappingservice.CreatedReference{
+	f.row.Confirm(accountingmappingkit.CreatedReferenceChoice(
+		&accountingmappingkit.CreatedReference{
 			ExternalID:      "created-1",
 			ExternalName:    name,
 			RequestedSource: req.Source,
