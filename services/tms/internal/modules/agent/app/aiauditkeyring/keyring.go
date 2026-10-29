@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditkeyring
 
 import (
 	"sync"
@@ -20,7 +20,7 @@ type Keyring struct {
 	warn   sync.Once
 }
 
-func NewKeyring(cfg *aiauditconfig.ChainConfig, logger *zap.Logger) *Keyring {
+func New(cfg *aiauditconfig.ChainConfig, logger *zap.Logger) *Keyring {
 	ring := &Keyring{
 		keys: make(map[string]*aiaudit.ChainKey),
 		l:    logger.Named("aiaudit.keyring"),
@@ -76,9 +76,9 @@ func (k *Keyring) Signer() aiauditports.AIAuditSigner {
 	}
 }
 
-// keyFor is the key a stored row needs to be checked, and whether that key
+// KeyFor is the key a stored row needs to be checked, and whether that key
 // is missing from configuration.
-func (k *Keyring) keyFor(event *aiaudit.AIAuditEvent) (*aiaudit.ChainKey, bool) {
+func (k *Keyring) KeyFor(event *aiaudit.AIAuditEvent) (*aiaudit.ChainKey, bool) {
 	if event.HashVersion != aiaudit.HashVersionSigned {
 		return nil, false
 	}

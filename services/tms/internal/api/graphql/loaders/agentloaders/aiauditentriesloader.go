@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
-	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditcorrelate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -61,7 +61,7 @@ func (f *AuditEntriesByAIAuditEventIDLoaderFactory) batchFunc(
 				return nil, err
 			}
 
-			return aiauditservice.Correlate(ctx, f.ledger, tenantInfo, events)
+			return aiauditcorrelate.Correlate(ctx, f.ledger, tenantInfo, events)
 		},
 	)
 }

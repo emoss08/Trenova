@@ -21,7 +21,6 @@ debt:
   services/tms/internal/infrastructure/agentcompletion/modeladapter: 6687
   services/tms/internal/modules/accounting/app/accountingconnectionservice: 3903
   services/tms/internal/modules/accounting/app/accountingmappingservice: 3333
-  services/tms/internal/modules/agent/app/aiauditservice: 5108
   services/tms/internal/modules/agent/app/assistantservice: 14610
   services/tms/internal/modules/agent/ports/agentports: 10434
   services/tms/internal/modules/documents/app/captureservice: 5885

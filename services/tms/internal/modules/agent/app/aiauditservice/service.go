@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditexport"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditprojector"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditredact"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditverify"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -28,36 +32,39 @@ const (
 
 // Service is the trail as the API reads it, verifies it and exports it.
 type Service struct {
-	ledger    aiauditports.AIAuditRepository
-	projector *Projector
-	verifier  *Verifier
-	exports   *Exports
-	workflows kernelports.WorkflowStarter
-	traceURL  func(string) string
-	l         *zap.Logger
+	ledger     aiauditports.AIAuditRepository
+	projector  *aiauditprojector.Projector
+	verifier   *aiauditverify.Verifier
+	exports    *aiauditexport.Exports
+	exportRepo aiauditports.AIAuditExportRepository
+	workflows  kernelports.WorkflowStarter
+	traceURL   func(string) string
+	l          *zap.Logger
 }
 
 var _ aiauditports.AIAuditService = (*Service)(nil)
 
 type ServiceParams struct {
-	Ledger    aiauditports.AIAuditRepository
-	Projector *Projector
-	Verifier  *Verifier
-	Exports   *Exports
-	Workflows kernelports.WorkflowStarter
-	TraceURL  func(string) string
-	Logger    *zap.Logger
+	Ledger     aiauditports.AIAuditRepository
+	Projector  *aiauditprojector.Projector
+	Verifier   *aiauditverify.Verifier
+	Exports    *aiauditexport.Exports
+	ExportRepo aiauditports.AIAuditExportRepository
+	Workflows  kernelports.WorkflowStarter
+	TraceURL   func(string) string
+	Logger     *zap.Logger
 }
 
 func NewService(p ServiceParams) *Service {
 	return &Service{
-		ledger:    p.Ledger,
-		projector: p.Projector,
-		verifier:  p.Verifier,
-		exports:   p.Exports,
-		workflows: p.Workflows,
-		traceURL:  p.TraceURL,
-		l:         p.Logger.Named("aiaudit.service"),
+		ledger:     p.Ledger,
+		projector:  p.Projector,
+		verifier:   p.Verifier,
+		exports:    p.Exports,
+		exportRepo: p.ExportRepo,
+		workflows:  p.Workflows,
+		traceURL:   p.TraceURL,
+		l:          p.Logger.Named("aiaudit.service"),
 	}
 }
 
@@ -124,7 +131,7 @@ func (s *Service) ReaderArguments(
 	event *aiaudit.AIAuditEvent,
 	ceilings aiauditports.FieldCeilings,
 ) map[string]any {
-	return ReaderArguments(ctx, event, ceilings)
+	return aiauditredact.ReaderArguments(ctx, event, ceilings)
 }
 
 func (s *Service) ChainStatus(
@@ -192,14 +199,14 @@ func (s *Service) GetExport(
 	ctx context.Context,
 	req aiauditports.GetAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
-	return s.exports.exports.GetByID(ctx, req)
+	return s.exportRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListExports(
 	ctx context.Context,
 	req *aiauditports.ListAIAuditExportsRequest,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
-	return s.exports.exports.ListConnection(ctx, req)
+	return s.exportRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) ExportDownload(

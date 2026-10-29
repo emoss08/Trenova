@@ -1,12 +1,14 @@
-package aiauditservice
+package aiauditprojector
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditcorrelate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiaudittest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,13 +31,13 @@ func newUnattendedScenario() *unattendedScenario {
 	}
 	org, bu := s.tenant.OrgID, s.tenant.BuID
 
-	s.source.runs = append(s.source.runs, &agent.AgentRun{
+	s.source.Runs = append(s.source.Runs, &agent.AgentRun{
 		ID: u.background, OrganizationID: org, BusinessUnitID: bu,
 		AgentDefinitionID: s.agentID, Trigger: agent.RunTriggerEvent,
 		SubjectType: agent.SubjectType("shipment"), SubjectID: pulid.MustNew("shp_"),
 		Status:    agent.RunStatusCompleted,
-		StartedAt: testNow - 760, CompletedAt: i64(testNow - 500),
-		CreatedAt: testNow - 760, UpdatedAt: testNow - 500,
+		StartedAt: aiaudittest.FixedNow - 760, CompletedAt: i64(aiaudittest.FixedNow - 500),
+		CreatedAt: aiaudittest.FixedNow - 760, UpdatedAt: aiaudittest.FixedNow - 500,
 	})
 	u.legacy = &agent.AgentProposal{
 		ID: pulid.MustNew("ap_"), OrganizationID: org, BusinessUnitID: bu,
@@ -45,8 +47,8 @@ func newUnattendedScenario() *unattendedScenario {
 		Status:         agent.ProposalStatusExecuted,
 		HeldBy:         []string{},
 		TargetResource: "worker", TargetID: pulid.ID("wrk_01J9BBBBBBBBBBBBBBBBBBBBBB"),
-		TargetVersion: 2, ExecutedAt: i64(testNow - 700), ExecutedTargetVersion: i64(3),
-		CreatedAt: testNow - 700, UpdatedAt: testNow - 700,
+		TargetVersion: 2, ExecutedAt: i64(aiaudittest.FixedNow - 700), ExecutedTargetVersion: i64(3),
+		CreatedAt: aiaudittest.FixedNow - 700, UpdatedAt: aiaudittest.FixedNow - 700,
 	}
 	u.current = &agent.AgentProposal{
 		ID: pulid.MustNew("ap_"), OrganizationID: org, BusinessUnitID: bu,
@@ -56,12 +58,12 @@ func newUnattendedScenario() *unattendedScenario {
 		Status:         agent.ProposalStatusExecuted,
 		HeldBy:         []string{},
 		TargetResource: "worker", TargetID: pulid.ID("wrk_01J9CCCCCCCCCCCCCCCCCCCCCC"),
-		TargetVersion: 7, ExecutedAt: i64(testNow - 600), ExecutedByUserID: u.systemUser,
+		TargetVersion: 7, ExecutedAt: i64(aiaudittest.FixedNow - 600), ExecutedByUserID: u.systemUser,
 		ExecutedTargetVersion: i64(8),
-		CreatedAt:             testNow - 600, UpdatedAt: testNow - 600,
+		CreatedAt:             aiaudittest.FixedNow - 600, UpdatedAt: aiaudittest.FixedNow - 600,
 	}
-	s.source.proposals = append(s.source.proposals, u.legacy)
-	s.source.agents[s.agentID] = "Dispatch Agent"
+	s.source.Proposals = append(s.source.Proposals, u.legacy)
+	s.source.Agents[s.agentID] = "Dispatch Agent"
 
 	return u
 }
@@ -70,22 +72,22 @@ func TestProjector_AnUnattendedExecutionIsTheSystemUsersWriteForItsAgent(t *test
 	t.Parallel()
 
 	u := newUnattendedScenario()
-	ledger := newFakeLedger()
-	keyring := testKeyring(true)
+	ledger := aiaudittest.NewFakeLedger()
+	keyring := aiaudittest.TestKeyring(true)
 	projector := testProjector(ledger, u.source, keyring)
 	for range 10 {
 		_, err := projector.RunOnce(t.Context(), nil)
 		require.NoError(t, err)
 	}
-	legacyHash := bySourceKey(ledger.all(u.tenant))[executedKey(u.legacy)].Hash
+	legacyHash := bySourceKey(ledger.All(u.tenant))[executedKey(u.legacy)].Hash
 	require.NotEmpty(t, legacyHash)
 
-	u.source.proposals = append(u.source.proposals, u.current)
+	u.source.Proposals = append(u.source.Proposals, u.current)
 	for range 10 {
 		_, err := projector.RunOnce(t.Context(), nil)
 		require.NoError(t, err)
 	}
-	events := bySourceKey(ledger.all(u.tenant))
+	events := bySourceKey(ledger.All(u.tenant))
 
 	current := events[executedKey(u.current)]
 	require.NotNil(t, current)
@@ -96,7 +98,7 @@ func TestProjector_AnUnattendedExecutionIsTheSystemUsersWriteForItsAgent(t *test
 	assert.Equal(t, "Dispatch Agent", current.AgentName)
 	assert.True(t, current.OnBehalfOfUserID.IsNil(), "no person is invented")
 	assert.True(t, current.DecidedByUserID.IsNil())
-	assert.Equal(t, testNow-760, current.WindowStart,
+	assert.Equal(t, aiaudittest.FixedNow-760, current.WindowStart,
 		"an automatic write is looked for from the start of the run that made it")
 	assert.False(t, current.Reconstructed)
 
@@ -106,7 +108,7 @@ func TestProjector_AnUnattendedExecutionIsTheSystemUsersWriteForItsAgent(t *test
 		"a write recorded before executors were named still derives as the agent's")
 	assert.Equal(t, u.agentID.String(), legacy.PrincipalID)
 	assert.Equal(t, legacyHash, legacy.Hash, "rows already on the trail are never rewritten")
-	assert.Equal(t, testNow-760, legacy.WindowStart)
+	assert.Equal(t, aiaudittest.FixedNow-760, legacy.WindowStart)
 
 	result, err := testVerifier(ledger, keyring, nil).VerifyTenant(t.Context(), u.tenant, nil)
 	require.NoError(t, err)
@@ -118,22 +120,22 @@ func TestProjector_AnAutomaticWriteInAConversationKeepsItsShortWindow(t *testing
 	t.Parallel()
 
 	s := newScenario()
-	s.source.proposals[0].AutonomyTier = agent.TierAutoExecute
-	s.source.proposals[0].ExecutedByUserID = s.user
-	s.source.decisions = nil
+	s.source.Proposals[0].AutonomyTier = agent.TierAutoExecute
+	s.source.Proposals[0].ExecutedByUserID = s.user
+	s.source.Decisions = nil
 
-	ledger := newFakeLedger()
-	projector := testProjector(ledger, s.source, testKeyring(true))
+	ledger := aiaudittest.NewFakeLedger()
+	projector := testProjector(ledger, s.source, aiaudittest.TestKeyring(true))
 	for range 10 {
 		_, err := projector.RunOnce(t.Context(), nil)
 		require.NoError(t, err)
 	}
 
-	executed := bySourceKey(ledger.all(s.tenant))["proposal:"+s.proposal.String()+":executed"]
+	executed := bySourceKey(ledger.All(s.tenant))["proposal:"+s.proposal.String()+":executed"]
 	require.NotNil(t, executed)
 	assert.Equal(t, aiaudit.PrincipalUser, executed.PrincipalType)
 	assert.Equal(t, s.user.String(), executed.PrincipalID)
-	assert.Equal(t, testNow-800-executionWindowSeconds, executed.WindowStart,
+	assert.Equal(t, aiaudittest.FixedNow-800-executionWindowSeconds, executed.WindowStart,
 		"a person's write in a conversation is unchanged")
 }
 
@@ -141,17 +143,17 @@ func TestCorrelate_AnUnattendedWriteMatchesTheSystemUsersAuditRows(t *testing.T)
 	t.Parallel()
 
 	u := newUnattendedScenario()
-	u.source.proposals = append(u.source.proposals, u.current)
-	ledger := newFakeLedger()
-	projector := testProjector(ledger, u.source, testKeyring(true))
+	u.source.Proposals = append(u.source.Proposals, u.current)
+	ledger := aiaudittest.NewFakeLedger()
+	projector := testProjector(ledger, u.source, aiaudittest.TestKeyring(true))
 	for range 10 {
 		_, err := projector.RunOnce(t.Context(), nil)
 		require.NoError(t, err)
 	}
-	executed := bySourceKey(ledger.all(u.tenant))[executedKey(u.current)]
+	executed := bySourceKey(ledger.All(u.tenant))[executedKey(u.current)]
 	require.NotNil(t, executed)
 
-	ledger.entries = []*audit.Entry{
+	ledger.Entries = []*audit.Entry{
 		{
 			ID: "ae_unattended", ResourceID: executed.EntityID,
 			PrincipalType: string(permissionports.PrincipalTypeAgent), PrincipalID: u.agentID,
@@ -163,7 +165,12 @@ func TestCorrelate_AnUnattendedWriteMatchesTheSystemUsersAuditRows(t *testing.T)
 		},
 	}
 
-	linked, err := Correlate(t.Context(), ledger, u.tenant, []*aiaudit.AIAuditEvent{executed})
+	linked, err := aiauditcorrelate.Correlate(
+		t.Context(),
+		ledger,
+		u.tenant,
+		[]*aiaudit.AIAuditEvent{executed},
+	)
 	require.NoError(t, err)
 	require.Len(t, linked[executed.ID], 1)
 	assert.Equal(t, "ae_unattended", linked[executed.ID][0].ID.String())
@@ -181,28 +188,38 @@ func TestCorrelationMatches_AnAgentsCallMatchesItsDefinitionAndTheGenericAgent(t
 		PrincipalID:       definition.String(),
 		AgentDefinitionID: definition,
 		EntityID:          "shp_1",
-		WindowStart:       testNow - 10,
-		WindowEnd:         testNow,
+		WindowStart:       aiaudittest.FixedNow - 10,
+		WindowEnd:         aiaudittest.FixedNow,
 	}
 
-	matches := CorrelationMatches(event)
+	matches := aiauditcorrelate.CorrelationMatches(event)
 	require.Len(t, matches, 2)
 	assert.Equal(t, definition, matches[0].PrincipalID, "rows an unattended run wrote")
 	assert.Equal(t, permissionports.AgentPrincipalID, matches[1].PrincipalID, "rows written before")
 
-	ledger := newFakeLedger()
-	ledger.entries = []*audit.Entry{
-		{ID: "ae_named", ResourceID: "shp_1", PrincipalID: definition, Timestamp: testNow},
+	ledger := aiaudittest.NewFakeLedger()
+	ledger.Entries = []*audit.Entry{
+		{
+			ID:          "ae_named",
+			ResourceID:  "shp_1",
+			PrincipalID: definition,
+			Timestamp:   aiaudittest.FixedNow,
+		},
 		{
 			ID: "ae_generic", ResourceID: "shp_1", PrincipalID: permissionports.AgentPrincipalID,
-			Timestamp: testNow - 5,
+			Timestamp: aiaudittest.FixedNow - 5,
 		},
 		{
 			ID: "ae_other_agent", ResourceID: "shp_1", PrincipalID: pulid.MustNew("agdef_"),
-			Timestamp: testNow,
+			Timestamp: aiaudittest.FixedNow,
 		},
 	}
-	linked, err := Correlate(t.Context(), ledger, newScenario().tenant, []*aiaudit.AIAuditEvent{event})
+	linked, err := aiauditcorrelate.Correlate(
+		t.Context(),
+		ledger,
+		newScenario().tenant,
+		[]*aiaudit.AIAuditEvent{event},
+	)
 	require.NoError(t, err)
 	ids := make([]string, 0, len(linked[event.ID]))
 	for _, entry := range linked[event.ID] {
@@ -213,7 +230,7 @@ func TestCorrelationMatches_AnAgentsCallMatchesItsDefinitionAndTheGenericAgent(t
 	generic := *event
 	generic.PrincipalID = ""
 	generic.AgentDefinitionID = pulid.Nil
-	matches = CorrelationMatches(&generic)
+	matches = aiauditcorrelate.CorrelationMatches(&generic)
 	require.Len(t, matches, 1)
 	assert.Equal(t, permissionports.AgentPrincipalID, matches[0].PrincipalID)
 }

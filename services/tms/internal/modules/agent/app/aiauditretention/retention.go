@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditretention
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditheartbeat"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -38,24 +39,35 @@ type Retention struct {
 	l         *zap.Logger
 }
 
-func NewRetention(
-	ledger aiauditports.AIAuditRepository,
-	retention tenantports.DataRetentionRepository,
-	registry *aimetrics.AIAudit,
-	logger *zap.Logger,
-) *Retention {
+type Params struct {
+	Ledger    aiauditports.AIAuditRepository
+	Retention tenantports.DataRetentionRepository
+	Metrics   *aimetrics.AIAudit
+	Now       func() time.Time
+	Logger    *zap.Logger
+}
+
+func New(p *Params) *Retention {
+	now := p.Now
+	if now == nil {
+		now = time.Now
+	}
+
 	return &Retention{
-		ledger:    ledger,
-		retention: retention,
-		metrics:   registry,
-		now:       time.Now,
-		l:         logger.Named("aiaudit.retention"),
+		ledger:    p.Ledger,
+		retention: p.Retention,
+		metrics:   p.Metrics,
+		now:       now,
+		l:         p.Logger.Named("aiaudit.retention"),
 	}
 }
 
 // PruneAll sweeps every tenant with a trail. A tenant with no retention
 // settings keeps the default seven years.
-func (r *Retention) PruneAll(ctx context.Context, heartbeat Heartbeat) (*PruneResult, error) {
+func (r *Retention) PruneAll(
+	ctx context.Context,
+	heartbeat aiauditheartbeat.Heartbeat,
+) (*PruneResult, error) {
 	heads, err := r.ledger.ListChainHeads(ctx)
 	if err != nil {
 		return nil, err
@@ -96,7 +108,7 @@ func (r *Retention) PruneAll(ctx context.Context, heartbeat Heartbeat) (*PruneRe
 			result.Tenants++
 			result.Deleted += deleted
 		}
-		beat(heartbeat, tenantInfo.OrgID.String(), deleted)
+		aiauditheartbeat.Beat(heartbeat, tenantInfo.OrgID.String(), deleted)
 	}
 	r.metrics.RecordPruned(result.Deleted)
 

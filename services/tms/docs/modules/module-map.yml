@@ -1121,7 +1121,16 @@ modules:
       - agenttrustservice
       - agentwaitservice
       - aianalyticsservice
+      - aiauditcorrelate
+      - aiauditexport
+      - aiauditheartbeat
+      - aiauditkeyring
+      - aiauditprojector
+      - aiauditredact
+      - aiauditretention
       - aiauditservice
+      - aiaudittest
+      - aiauditverify
       - aicontrolsummaryservice
       - aicorrectionretention
       - aicorrectionservice

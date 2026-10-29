@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditcorrelate
 
 import (
 	"context"
@@ -78,10 +78,15 @@ func correlationPrincipals(event *aiaudit.AIAuditEvent) []pulid.ID {
 }
 
 func (m matchKey) holds(entry *audit.Entry) bool {
-	return entry.ResourceID == m.match.ResourceID &&
-		(entry.PrincipalID == m.match.PrincipalID || entry.UserID == m.match.PrincipalID) &&
-		entry.Timestamp >= m.match.WindowStart-correlationSlack &&
-		entry.Timestamp <= m.match.WindowEnd+correlationSlack
+	return EntryMatches(entry, m.match)
+}
+
+// EntryMatches reports whether an audit log row is the one a match names.
+func EntryMatches(entry *audit.Entry, match aiauditports.AuditEntryMatch) bool {
+	return entry.ResourceID == match.ResourceID &&
+		(entry.PrincipalID == match.PrincipalID || entry.UserID == match.PrincipalID) &&
+		entry.Timestamp >= match.WindowStart-correlationSlack &&
+		entry.Timestamp <= match.WindowEnd+correlationSlack
 }
 
 type matchKey struct {

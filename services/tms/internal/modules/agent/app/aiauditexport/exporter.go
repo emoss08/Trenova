@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditexport
 
 import (
 	"bufio"
@@ -13,6 +13,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditcorrelate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditheartbeat"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditkeyring"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditredact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -45,7 +49,7 @@ type ExportSpec struct {
 	// event by time; only a reader who may read the audit log is given them.
 	LinkAuditEntries bool
 	GeneratedAt      time.Time
-	Heartbeat        Heartbeat
+	Heartbeat        aiauditheartbeat.Heartbeat
 }
 
 // ExportStats describes a written export file.
@@ -62,10 +66,10 @@ type ExportStats struct {
 // export of a million rows never holds more than a page in memory.
 type Exporter struct {
 	ledger  aiauditports.AIAuditRepository
-	keyring *Keyring
+	keyring *aiauditkeyring.Keyring
 }
 
-func NewExporter(ledger aiauditports.AIAuditRepository, keyring *Keyring) *Exporter {
+func NewExporter(ledger aiauditports.AIAuditRepository, keyring *aiauditkeyring.Keyring) *Exporter {
 	return &Exporter{ledger: ledger, keyring: keyring}
 }
 
@@ -172,7 +176,7 @@ func (x *Exporter) stream(ctx context.Context, spec *ExportSpec, sink rowSink) (
 
 		linked := map[pulid.ID][]*audit.Entry{}
 		if spec.LinkAuditEntries {
-			if linked, err = Correlate(ctx, x.ledger, scope.TenantInfo, events); err != nil {
+			if linked, err = aiauditcorrelate.Correlate(ctx, x.ledger, scope.TenantInfo, events); err != nil {
 				return written, err
 			}
 		}
@@ -189,7 +193,7 @@ func (x *Exporter) stream(ctx context.Context, spec *ExportSpec, sink rowSink) (
 		page.AfterOccurred = last.OccurredAt
 		page.AfterID = last.ID
 		page.HasAfterCursor = true
-		beat(spec.Heartbeat, written)
+		aiauditheartbeat.Beat(spec.Heartbeat, written)
 
 		if len(events) < exportPageSize {
 			return written, nil
@@ -281,7 +285,7 @@ type jsonSink struct {
 }
 
 func (s *jsonSink) begin(header *exportHeader) error {
-	encoded, err := canonicalJSON.Marshal(header)
+	encoded, err := aiauditredact.CanonicalJSON.Marshal(header)
 	if err != nil {
 		return err
 	}
@@ -297,7 +301,7 @@ func (s *jsonSink) begin(header *exportHeader) error {
 }
 
 func (s *jsonSink) row(row *exportRow) error {
-	encoded, err := canonicalJSON.Marshal(row)
+	encoded, err := aiauditredact.CanonicalJSON.Marshal(row)
 	if err != nil {
 		return err
 	}
@@ -425,7 +429,7 @@ func toExportRow(
 	linked []*audit.Entry,
 	link bool,
 ) *exportRow {
-	arguments := ReaderArguments(ctx, event, ceilings)
+	arguments := aiauditredact.ReaderArguments(ctx, event, ceilings)
 	var cost *string
 	if event.CostUSD != nil {
 		fixed := event.CostUSD.StringFixed(6)
@@ -521,11 +525,11 @@ func withheldAny(recorded, shown map[string]any) bool {
 	if len(recorded) == 0 {
 		return false
 	}
-	recordedJSON, err := canonicalJSON.Marshal(recorded)
+	recordedJSON, err := aiauditredact.CanonicalJSON.Marshal(recorded)
 	if err != nil {
 		return false
 	}
-	shownJSON, err := canonicalJSON.Marshal(shown)
+	shownJSON, err := aiauditredact.CanonicalJSON.Marshal(shown)
 	if err != nil {
 		return true
 	}
@@ -580,7 +584,7 @@ func compact(value any) string {
 		}
 	}
 
-	encoded, err := canonicalJSON.Marshal(value)
+	encoded, err := aiauditredact.CanonicalJSON.Marshal(value)
 	if err != nil {
 		return ""
 	}

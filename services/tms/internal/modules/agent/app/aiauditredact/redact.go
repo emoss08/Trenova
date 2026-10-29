@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditredact
 
 import (
 	"context"
@@ -46,7 +46,7 @@ type Redactor struct {
 	masker   Masker
 }
 
-func NewRedactor(
+func New(
 	registry *permissioncatalog.Registry,
 	policies ToolPolicies,
 	masker Masker,
@@ -183,7 +183,7 @@ func (w *argumentWalk) value(path, key string, value any) any {
 }
 
 func (w *argumentWalk) text(path, key, value string) string {
-	value = cleanText(value)
+	value = CleanText(value)
 	if value == "" || pulid.LooksLike(value) || w.redactor.masker == nil {
 		return value
 	}
@@ -215,7 +215,7 @@ func (w *argumentWalk) redactedPaths() []string {
 // replaced with a placeholder, and when even the placeholders do not fit the
 // remaining keys are dropped and the map says it was cut.
 func boundArguments(values map[string]any) (map[string]any, bool, error) {
-	encoded, err := canonicalJSON.Marshal(values)
+	encoded, err := CanonicalJSON.Marshal(values)
 	if err != nil {
 		return nil, false, err
 	}
@@ -234,7 +234,7 @@ func boundArguments(values map[string]any) (map[string]any, bool, error) {
 	out := make(map[string]any, len(values))
 	used := 2
 	for _, key := range keys {
-		entry, marshalErr := canonicalJSON.Marshal(map[string]any{key: values[key]})
+		entry, marshalErr := CanonicalJSON.Marshal(map[string]any{key: values[key]})
 		if marshalErr != nil {
 			return nil, false, marshalErr
 		}
@@ -245,7 +245,7 @@ func boundArguments(values map[string]any) (map[string]any, bool, error) {
 			continue
 		}
 
-		placeholder, marshalErr := canonicalJSON.Marshal(
+		placeholder, marshalErr := CanonicalJSON.Marshal(
 			map[string]any{key: aiaudit.TruncatedPlaceholder},
 		)
 		if marshalErr != nil {
@@ -266,7 +266,7 @@ func boundArguments(values map[string]any) (map[string]any, bool, error) {
 // control characters a jsonb or text column refuses stripped, and cut on a
 // character boundary to fit its column.
 func (r *Redactor) Text(value string, limit int) string {
-	value = cleanText(value)
+	value = CleanText(value)
 	if value == "" {
 		return ""
 	}
@@ -277,7 +277,7 @@ func (r *Redactor) Text(value string, limit int) string {
 	return truncateRunes(value, limit)
 }
 
-func cleanText(value string) string {
+func CleanText(value string) string {
 	if !utf8.ValidString(value) {
 		value = strings.ToValidUTF8(value, "�")
 	}
@@ -366,4 +366,4 @@ func withhold(path string, value any, hidden map[string]struct{}) any {
 	}
 }
 
-var canonicalJSON = sonic.Config{SortMapKeys: true, UseNumber: true}.Froze()
+var CanonicalJSON = sonic.Config{SortMapKeys: true, UseNumber: true}.Froze()

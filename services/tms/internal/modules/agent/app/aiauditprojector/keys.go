@@ -1,12 +1,14 @@
-package aiauditservice
+package aiauditprojector
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditredact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // The source keys each row can stand for, worked out from the row alone, so a
@@ -151,31 +153,37 @@ func finish(event *aiaudit.AIAuditEvent, found *lookups) {
 		event.RedactedPaths = []string{}
 	}
 
-	event.SourceKey = truncateRunes(event.SourceKey, aiaudit.MaxSourceKeyLength)
-	event.PrincipalID = truncateRunes(event.PrincipalID, idLength)
-	event.OnBehalfOfUserName = truncateRunes(
-		cleanText(event.OnBehalfOfUserName),
-		aiaudit.MaxNameLength,
+	event.SourceKey = stringutils.TruncateBytes(event.SourceKey, aiaudit.MaxSourceKeyLength)
+	event.PrincipalID = stringutils.TruncateBytes(event.PrincipalID, idLength)
+	event.OnBehalfOfUserName = stringutils.TruncateBytes(
+		aiauditredact.CleanText(event.OnBehalfOfUserName),
+		aiaudit.MaxNameLength)
+
+	event.DecidedByUserName = stringutils.TruncateBytes(
+		aiauditredact.CleanText(event.DecidedByUserName),
+		aiaudit.MaxNameLength)
+
+	event.AgentName = stringutils.TruncateBytes(
+		aiauditredact.CleanText(event.AgentName),
+		aiaudit.MaxAgentNameLength,
 	)
-	event.DecidedByUserName = truncateRunes(
-		cleanText(event.DecidedByUserName),
-		aiaudit.MaxNameLength,
+	event.StepKey = stringutils.TruncateBytes(event.StepKey, aiaudit.MaxStepKeyLength)
+	event.CallID = stringutils.TruncateBytes(event.CallID, aiaudit.MaxCallIDLength)
+	event.DelegateCallID = stringutils.TruncateBytes(event.DelegateCallID, aiaudit.MaxCallIDLength)
+	event.ProviderKind = stringutils.TruncateBytes(event.ProviderKind, providerKindLength)
+	event.Model = stringutils.TruncateBytes(event.Model, aiaudit.MaxModelLength)
+	event.ToolName = stringutils.TruncateBytes(event.ToolName, aiaudit.MaxToolNameLength)
+	event.ToolEffect = stringutils.TruncateBytes(event.ToolEffect, shortCodeLength)
+	event.EgressClass = stringutils.TruncateBytes(event.EgressClass, codeLength)
+	event.Tier = stringutils.TruncateBytes(event.Tier, codeLength)
+	event.TierSource = stringutils.TruncateBytes(event.TierSource, codeLength)
+	event.EntityType = stringutils.TruncateBytes(event.EntityType, aiaudit.MaxEntityTypeLength)
+	event.EntityID = stringutils.TruncateBytes(event.EntityID, aiaudit.MaxEntityIDLength)
+	event.ResultSummary = stringutils.TruncateBytes(
+		event.ResultSummary,
+		aiaudit.MaxResultSummaryLength,
 	)
-	event.AgentName = truncateRunes(cleanText(event.AgentName), aiaudit.MaxAgentNameLength)
-	event.StepKey = truncateRunes(event.StepKey, aiaudit.MaxStepKeyLength)
-	event.CallID = truncateRunes(event.CallID, aiaudit.MaxCallIDLength)
-	event.DelegateCallID = truncateRunes(event.DelegateCallID, aiaudit.MaxCallIDLength)
-	event.ProviderKind = truncateRunes(event.ProviderKind, providerKindLength)
-	event.Model = truncateRunes(event.Model, aiaudit.MaxModelLength)
-	event.ToolName = truncateRunes(event.ToolName, aiaudit.MaxToolNameLength)
-	event.ToolEffect = truncateRunes(event.ToolEffect, shortCodeLength)
-	event.EgressClass = truncateRunes(event.EgressClass, codeLength)
-	event.Tier = truncateRunes(event.Tier, codeLength)
-	event.TierSource = truncateRunes(event.TierSource, codeLength)
-	event.EntityType = truncateRunes(event.EntityType, aiaudit.MaxEntityTypeLength)
-	event.EntityID = truncateRunes(event.EntityID, aiaudit.MaxEntityIDLength)
-	event.ResultSummary = truncateRunes(event.ResultSummary, aiaudit.MaxResultSummaryLength)
-	event.Reason = truncateRunes(event.Reason, aiaudit.MaxReasonLength)
+	event.Reason = stringutils.TruncateBytes(event.Reason, aiaudit.MaxReasonLength)
 	if !domainvalidation.IsTraceID(event.TraceID) {
 		event.TraceID = ""
 	}

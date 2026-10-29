@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditprojector
 
 import (
 	"slices"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditredact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
@@ -43,7 +44,7 @@ const (
 // it needs about owners and names arrives in lookups, so a row derives the
 // same whenever it is read.
 type deriver struct {
-	redactor *Redactor
+	redactor *aiauditredact.Redactor
 }
 
 func sourceKey(parts ...string) string {

@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditverify
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditheartbeat"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditkeyring"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -25,6 +27,8 @@ const (
 	mismatchNoticeLimit  = 50
 	mismatchNoticeWindow = 7 * 24 * time.Hour
 	mismatchNoticeSource = "aiauditservice.Verify"
+	mismatchKeyKind      = "kind"
+	mismatchKeyStatus    = "status"
 )
 
 // PermittedNotifier tells everyone who holds a permission about one thing.
@@ -51,7 +55,7 @@ type VerifyResult struct {
 // on, and the head names the last row.
 type Verifier struct {
 	ledger   aiauditports.AIAuditRepository
-	keyring  *Keyring
+	keyring  *aiauditkeyring.Keyring
 	notifier PermittedNotifier
 	audit    auditports.AuditService
 	realtime realtimeports.RealtimeService
@@ -60,9 +64,9 @@ type Verifier struct {
 	l        *zap.Logger
 }
 
-type VerifierParams struct {
+type Params struct {
 	Ledger   aiauditports.AIAuditRepository
-	Keyring  *Keyring
+	Keyring  *aiauditkeyring.Keyring
 	Notifier PermittedNotifier
 	Audit    auditports.AuditService
 	Realtime realtimeports.RealtimeService
@@ -71,7 +75,7 @@ type VerifierParams struct {
 	Logger   *zap.Logger
 }
 
-func NewVerifier(p *VerifierParams) *Verifier {
+func New(p *Params) *Verifier {
 	now := p.Now
 	if now == nil {
 		now = time.Now
@@ -112,7 +116,7 @@ func (v *Verifier) Tenants(ctx context.Context) ([]pagination.TenantInfo, error)
 func (v *Verifier) VerifyTenant(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	heartbeat Heartbeat,
+	heartbeat aiauditheartbeat.Heartbeat,
 ) (*VerifyResult, error) {
 	result, err := v.walk(ctx, tenantInfo, heartbeat)
 	if err != nil {
@@ -142,7 +146,7 @@ func (v *Verifier) VerifyTenant(
 func (v *Verifier) walk(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	heartbeat Heartbeat,
+	heartbeat aiauditheartbeat.Heartbeat,
 ) (*VerifyResult, error) {
 	result := &VerifyResult{TenantInfo: tenantInfo, Status: aiaudit.VerificationVerified}
 
@@ -236,7 +240,7 @@ func (v *Verifier) walk(
 		}
 
 		after = rows[len(rows)-1].Seq
-		beat(heartbeat, tenantInfo.OrgID.String(), after)
+		aiauditheartbeat.Beat(heartbeat, tenantInfo.OrgID.String(), after)
 	}
 
 	if result.VerifiedSeq != head.LastSeq || expectedPrev != head.LastHash {
@@ -253,7 +257,7 @@ func (v *Verifier) checkRow(row *aiaudit.AIAuditEvent, expectedPrev string) stri
 		return "the row does not name the hash of the row before it"
 	}
 
-	key, missing := v.keyring.keyFor(row)
+	key, missing := v.keyring.KeyFor(row)
 	if missing {
 		return keyMissingDetail
 	}
@@ -388,10 +392,10 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 			BusinessUnitID: tenantInfo.BuID,
 			Critical:       true,
 			CurrentState: map[string]any{
-				"event":         "chain_verification_failed",
-				noticeKeyStatus: string(result.Status),
-				"failedSeq":     failedSeq,
-				"detail":        result.Detail,
+				"event":           "chain_verification_failed",
+				mismatchKeyStatus: string(result.Status),
+				"failedSeq":       failedSeq,
+				"detail":          result.Detail,
 			},
 		}, auditservice.WithComment("The AI audit trail failed verification")); err != nil {
 			v.l.Error("failed to audit an AI audit chain mismatch", zap.Error(err))
@@ -421,9 +425,9 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 			Source:        mismatchNoticeSource,
 			CorrelationID: &correlation,
 			Data: map[string]any{
-				noticeKeyKind:   aiauditports.AIAuditChainMismatchEvent,
-				noticeKeyStatus: string(result.Status),
-				"failedSeq":     failedSeq,
+				mismatchKeyKind:   aiauditports.AIAuditChainMismatchEvent,
+				mismatchKeyStatus: string(result.Status),
+				"failedSeq":       failedSeq,
 			},
 		},
 	}); err != nil {

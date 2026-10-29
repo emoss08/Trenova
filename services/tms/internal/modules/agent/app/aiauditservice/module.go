@@ -7,6 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditexport"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditkeyring"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditprojector"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditredact"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditretention"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditverify"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -48,11 +54,11 @@ type Components struct {
 	fx.Out
 
 	Service   aiauditports.AIAuditService
-	Projector *Projector
-	Verifier  *Verifier
-	Exports   *Exports
-	Retention *Retention
-	Keyring   *Keyring
+	Projector *aiauditprojector.Projector
+	Verifier  *aiauditverify.Verifier
+	Exports   *aiauditexport.Exports
+	Retention *aiauditretention.Retention
+	Keyring   *aiauditkeyring.Keyring
 }
 
 func aiAuditMetrics(registry *metrics.Registry) *aimetrics.AIAudit {
@@ -65,12 +71,12 @@ func aiAuditMetrics(registry *metrics.Registry) *aimetrics.AIAudit {
 
 //nolint:gocritic // fx.In parameter structs are passed by value
 func New(p Params) Components {
-	keyring := NewKeyring(&p.AIAuditConfig.Chain, p.Logger)
+	keyring := aiauditkeyring.New(&p.AIAuditConfig.Chain, p.Logger)
 	registryMetrics := aiAuditMetrics(p.Metrics)
 	masker := auditservice.NewSensitiveDataManager(p.SecurityConfig.Encryption)
-	redactor := NewRedactor(p.Registry, p.Policies, masker)
+	redactor := aiauditredact.New(p.Registry, p.Policies, masker)
 
-	projector := NewProjector(&ProjectorParams{
+	projector := aiauditprojector.New(&aiauditprojector.Params{
 		Ledger:    p.Ledger,
 		Source:    p.Source,
 		Keyring:   keyring,
@@ -79,7 +85,7 @@ func New(p Params) Components {
 		BatchSize: p.AIAuditConfig.Projector.GetBatchSize(),
 		Logger:    p.Logger,
 	})
-	verifier := NewVerifier(&VerifierParams{
+	verifier := aiauditverify.New(&aiauditverify.Params{
 		Ledger:   p.Ledger,
 		Keyring:  keyring,
 		Notifier: p.Notifications,
@@ -88,11 +94,11 @@ func New(p Params) Components {
 		Metrics:  registryMetrics,
 		Logger:   p.Logger,
 	})
-	exports := NewExports(&ExportsParams{
+	exports := aiauditexport.NewExports(&aiauditexport.ExportsParams{
 		Ledger:      p.Ledger,
 		Exports:     p.ExportRepo,
 		Source:      p.Source,
-		Exporter:    NewExporter(p.Ledger, keyring),
+		Exporter:    aiauditexport.NewExporter(p.Ledger, keyring),
 		Storage:     p.Storage,
 		Workflows:   p.Workflows,
 		Notifier:    p.Notifications,
@@ -106,19 +112,25 @@ func New(p Params) Components {
 
 	return Components{
 		Service: NewService(ServiceParams{
-			Ledger:    p.Ledger,
-			Projector: projector,
-			Verifier:  verifier,
-			Exports:   exports,
-			Workflows: p.Workflows,
-			TraceURL:  p.MonitoringConfig.Tracing.TraceURL,
-			Logger:    p.Logger,
+			Ledger:     p.Ledger,
+			Projector:  projector,
+			Verifier:   verifier,
+			Exports:    exports,
+			ExportRepo: p.ExportRepo,
+			Workflows:  p.Workflows,
+			TraceURL:   p.MonitoringConfig.Tracing.TraceURL,
+			Logger:     p.Logger,
 		}),
 		Projector: projector,
 		Verifier:  verifier,
 		Exports:   exports,
-		Retention: NewRetention(p.Ledger, p.Retention, registryMetrics, p.Logger),
-		Keyring:   keyring,
+		Retention: aiauditretention.New(&aiauditretention.Params{
+			Ledger:    p.Ledger,
+			Retention: p.Retention,
+			Metrics:   registryMetrics,
+			Logger:    p.Logger,
+		}),
+		Keyring: keyring,
 	}
 }
 

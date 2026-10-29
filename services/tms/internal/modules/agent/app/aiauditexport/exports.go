@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditexport
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditheartbeat"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -23,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -236,7 +238,7 @@ func (x *Exports) Run(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	exportID pulid.ID,
-	heartbeat Heartbeat,
+	heartbeat aiauditheartbeat.Heartbeat,
 ) (*aiaudit.AIAuditExport, error) {
 	export, err := x.exports.GetByID(ctx, aiauditports.GetAIAuditExportRequest{
 		TenantInfo: tenantInfo,
@@ -301,7 +303,7 @@ func (x *Exports) Run(
 func (x *Exports) write(
 	ctx context.Context,
 	export *aiaudit.AIAuditExport,
-	heartbeat Heartbeat,
+	heartbeat aiauditheartbeat.Heartbeat,
 ) (*ExportStats, string, error) {
 	summary, err := x.ledger.Summarize(ctx, scopeOf(export))
 	if err != nil {
@@ -376,7 +378,7 @@ func (x *Exports) fail(
 ) (*aiaudit.AIAuditExport, error) {
 	now := x.now().Unix()
 	export.Status = aiaudit.ExportStatusFailed
-	export.ErrorMessage = truncateRunes(message, exportErrorLimit)
+	export.ErrorMessage = stringutils.TruncateBytes(message, exportErrorLimit)
 	export.CompletedAt = &now
 
 	updated, err := x.exports.Update(ctx, export)
@@ -568,7 +570,10 @@ type CleanupResult struct {
 
 // Cleanup deletes files past their download window and fails exports whose
 // worker is gone.
-func (x *Exports) Cleanup(ctx context.Context, heartbeat Heartbeat) (*CleanupResult, error) {
+func (x *Exports) Cleanup(
+	ctx context.Context,
+	heartbeat aiauditheartbeat.Heartbeat,
+) (*CleanupResult, error) {
 	result := &CleanupResult{}
 	now := x.now()
 
@@ -583,7 +588,7 @@ func (x *Exports) Cleanup(ctx context.Context, heartbeat Heartbeat) (*CleanupRes
 
 		progressed := false
 		for _, export := range expired {
-			beat(heartbeat, export.ID.String())
+			aiauditheartbeat.Beat(heartbeat, export.ID.String())
 			if err = x.storage.Delete(ctx, export.ArtifactKey); err != nil {
 				x.l.Warn("failed to delete an expired AI audit export",
 					zap.String("exportId", export.ID.String()), zap.Error(err))
@@ -612,7 +617,7 @@ func (x *Exports) Cleanup(ctx context.Context, heartbeat Heartbeat) (*CleanupRes
 		return nil, err
 	}
 	for _, export := range stale {
-		beat(heartbeat, export.ID.String())
+		aiauditheartbeat.Beat(heartbeat, export.ID.String())
 		if _, err = x.fail(ctx, export, "The export was abandoned before it finished"); err != nil {
 			x.l.Warn("failed to fail an abandoned AI audit export",
 				zap.String("exportId", export.ID.String()), zap.Error(err))

@@ -68,7 +68,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [edi-spec-onboarding](edi-spec-onboarding.md) | `ediconnectiondraft`, `edi_draft_connection`, `edi_apply_connection_draft` |
 | [agent-accounting-tools](agent-accounting-tools.md), [agent-rates-tools](agent-rates-tools.md), [agent-workforce-tools](agent-workforce-tools.md), [agent-master-data-tools](agent-master-data-tools.md), [agent-triage-tools](agent-triage-tools.md) | the tools in each area and who holds them |
 | [ai-tracing](ai-tracing.md) | a span, a trace attribute or a link column (spans come from activities, never workflow code) |
-| [ai-audit-trail](ai-audit-trail.md) | `aiauditservice`, `aiauditjobs`, `domain/aiaudit` (a field change is a `hash_version` change), any table the projector reads |
+| [ai-audit-trail](ai-audit-trail.md) | `aiaudit*` app packages, `aiauditjobs`, `domain/aiaudit` (a field change is a `hash_version` change), any table the projector reads |
 | [ai-analytics](ai-analytics.md) | `aianalytics*`, or what the completion router or step ledger records |
 | [ai-training-export](ai-training-export.md) | `domain/aitraining`, the Cloud training packages, what a correction stores |
 | [extraction-fine-tuning](extraction-fine-tuning.md) | the extraction prompt, reply schema, `aicorrection.Score`, `tools/extraction-finetune` |

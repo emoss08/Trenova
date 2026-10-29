@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditprojector
 
 import (
 	"context"

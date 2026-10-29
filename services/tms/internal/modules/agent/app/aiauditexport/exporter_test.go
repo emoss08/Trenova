@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditexport
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiaudittest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -42,15 +43,19 @@ func (w *countingWriter) Write(p []byte) (int, error) {
 	return w.buf.Write(p)
 }
 
-func seededLedger(t *testing.T, tenantInfo pagination.TenantInfo, rows int) *fakeLedger {
+func seededLedger(
+	t *testing.T,
+	tenantInfo pagination.TenantInfo,
+	rows int,
+) *aiaudittest.FakeLedger {
 	t.Helper()
 
-	ledger := newFakeLedger()
+	ledger := aiaudittest.NewFakeLedger()
 	events := make([]*aiaudit.AIAuditEvent, 0, rows)
 	for i := range rows {
 		events = append(events, &aiaudit.AIAuditEvent{
 			SourceKey:     "usage:" + strconv.Itoa(i),
-			OccurredAt:    testNow - int64(rows-i),
+			OccurredAt:    aiaudittest.FixedNow - int64(rows-i),
 			Kind:          aiaudit.KindModelCall,
 			Outcome:       aiaudit.OutcomeSucceeded,
 			PrincipalType: aiaudit.PrincipalUser,
@@ -63,9 +68,9 @@ func seededLedger(t *testing.T, tenantInfo pagination.TenantInfo, rows int) *fak
 	_, err := ledger.Append(t.Context(), &aiauditports.AppendAIAuditEventsRequest{
 		TenantInfo: tenantInfo,
 		Events:     events,
-		Sign:       testKeyring(true).Signer(),
+		Sign:       aiaudittest.TestKeyring(true).Signer(),
 		KeyID:      "k1",
-		Now:        testNow,
+		Now:        aiaudittest.FixedNow,
 	})
 	require.NoError(t, err)
 
@@ -83,14 +88,14 @@ func exportFor(
 		RequestedByUserID: pulid.MustNew("usr_"),
 		Format:            format,
 		Filters:           &aiaudit.ExportFilter{},
-		RangeFrom:         testNow - 1_000_000,
-		RangeTo:           testNow,
+		RangeFrom:         aiaudittest.FixedNow - 1_000_000,
+		RangeTo:           aiaudittest.FixedNow,
 	}
 }
 
 func writeExport(
 	t *testing.T,
-	ledger *fakeLedger,
+	ledger *aiaudittest.FakeLedger,
 	export *aiaudit.AIAuditExport,
 ) (*countingWriter, *ExportStats) {
 	t.Helper()
@@ -98,10 +103,13 @@ func writeExport(
 	summary, err := ledger.Summarize(t.Context(), scopeOf(export))
 	require.NoError(t, err)
 	out := &countingWriter{}
-	stats, err := NewExporter(ledger, testKeyring(true)).Write(t.Context(), out, &ExportSpec{
+	stats, err := NewExporter(
+		ledger,
+		aiaudittest.TestKeyring(true),
+	).Write(t.Context(), out, &ExportSpec{
 		Export:      export,
 		Summary:     summary,
-		GeneratedAt: time.Unix(testNow, 0),
+		GeneratedAt: time.Unix(aiaudittest.FixedNow, 0),
 	})
 	require.NoError(t, err)
 
@@ -306,25 +314,25 @@ func (f *fakeStarter) StartWorkflow(
 }
 
 func testExports(
-	ledger *fakeLedger,
+	ledger *aiaudittest.FakeLedger,
 	syncMax int,
-) (*Exports, *fakeExportRepo, *fakeStarter, *fakeNotifier, *fakeAudit) {
+) (*Exports, *fakeExportRepo, *fakeStarter, *aiaudittest.FakeNotifier, *aiaudittest.FakeAudit) {
 	repo := &fakeExportRepo{exports: map[pulid.ID]*aiaudit.AIAuditExport{}}
 	starter := &fakeStarter{}
-	notifier := &fakeNotifier{}
-	audited := &fakeAudit{}
+	notifier := &aiaudittest.FakeNotifier{}
+	audited := &aiaudittest.FakeAudit{}
 
 	return NewExports(&ExportsParams{
 		Ledger:    ledger,
 		Exports:   repo,
-		Source:    &fakeSource{users: map[pulid.ID]string{}},
-		Exporter:  NewExporter(ledger, testKeyring(true)),
+		Source:    &aiaudittest.FakeSource{Users: map[pulid.ID]string{}},
+		Exporter:  NewExporter(ledger, aiaudittest.TestKeyring(true)),
 		Storage:   &fakeStorage{},
 		Workflows: starter,
 		Notifier:  notifier,
 		Audit:     audited,
 		Config:    &aiauditconfig.ExportConfig{SyncMaxRows: syncMax, MaxRows: 100},
-		Now:       func() time.Time { return time.Unix(testNow, 0) },
+		Now:       func() time.Time { return time.Unix(aiaudittest.FixedNow, 0) },
 		Logger:    zap.NewNop(),
 	}), repo, starter, notifier, audited
 }
@@ -352,8 +360,8 @@ func TestExports_ASmallExportIsWrittenAtOnceAndAudited(t *testing.T) {
 	export, err := exports.Request(t.Context(), &aiauditports.RequestAIAuditExportRequest{
 		Actor:  actor,
 		Format: aiaudit.ExportFormatCSV,
-		From:   testNow - 1000,
-		To:     testNow,
+		From:   aiaudittest.FixedNow - 1000,
+		To:     aiaudittest.FixedNow,
 	})
 	require.NoError(t, err)
 
@@ -362,10 +370,10 @@ func TestExports_ASmallExportIsWrittenAtOnceAndAudited(t *testing.T) {
 	assert.Len(t, export.SHA256, 64)
 	assert.True(t, export.ChainComplete)
 	assert.Empty(t, starter.started)
-	require.Len(t, notifier.personal, 1)
-	assert.Equal(t, aiauditports.AIAuditExportReadyEvent, notifier.personal[0].EventType)
-	require.Len(t, audited.entries, 1)
-	assert.True(t, audited.entries[0].Critical)
+	require.Len(t, notifier.Personal, 1)
+	assert.Equal(t, aiauditports.AIAuditExportReadyEvent, notifier.Personal[0].EventType)
+	require.Len(t, audited.Entries, 1)
+	assert.True(t, audited.Entries[0].Critical)
 
 	download, err := exports.Download(t.Context(), &aiauditports.GetAIAuditExportDownloadRequest{
 		Actor:    actor,
@@ -373,8 +381,8 @@ func TestExports_ASmallExportIsWrittenAtOnceAndAudited(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, export.SHA256, download.SHA256)
-	assert.Equal(t, testNow+60, download.ExpiresAt)
-	assert.Len(t, audited.entries, 2, "the download is audited too")
+	assert.Equal(t, aiaudittest.FixedNow+60, download.ExpiresAt)
+	assert.Len(t, audited.Entries, 2, "the download is audited too")
 
 	_, err = exports.Download(t.Context(), &aiauditports.GetAIAuditExportDownloadRequest{
 		Actor:    actorFor(tenantInfo),
@@ -393,8 +401,8 @@ func TestExports_ALargeExportRunsOnTheReportQueue(t *testing.T) {
 	export, err := exports.Request(t.Context(), &aiauditports.RequestAIAuditExportRequest{
 		Actor:  actorFor(tenantInfo),
 		Format: aiaudit.ExportFormatJSON,
-		From:   testNow - 1000,
-		To:     testNow,
+		From:   aiaudittest.FixedNow - 1000,
+		To:     aiaudittest.FixedNow,
 	})
 	require.NoError(t, err)
 
@@ -418,8 +426,8 @@ func TestExports_AnExportPastTheCapIsRefused(t *testing.T) {
 	_, err := exports.Request(t.Context(), &aiauditports.RequestAIAuditExportRequest{
 		Actor:  actorFor(tenantInfo),
 		Format: aiaudit.ExportFormatJSON,
-		From:   testNow - 1000,
-		To:     testNow,
+		From:   aiaudittest.FixedNow - 1000,
+		To:     aiaudittest.FixedNow,
 	})
 	require.Error(t, err)
 	assert.Empty(t, repo.exports)

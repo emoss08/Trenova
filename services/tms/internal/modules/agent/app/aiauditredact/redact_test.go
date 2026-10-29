@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditredact
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiaudittest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -16,38 +17,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakePolicies map[string]agenttoolports.ToolPolicy
-
-func (f fakePolicies) Get(name string) (agenttoolports.ToolPolicy, bool) {
-	policy, ok := f[name]
-
-	return policy, ok
-}
-
-func testPolicies() fakePolicies {
-	return fakePolicies{
-		"update_worker": {
-			Name:     "update_worker",
-			Kind:     agenttooltrust.ToolKindAction,
-			Resource: permission.ResourceWorker,
-		},
-		"pin_my_home": {
-			Name:  "pin_my_home",
-			Kind:  agenttooltrust.ToolKindAction,
-			Scope: agenttooltrust.ToolScopeSelf,
-		},
-		"shipment_get": {
-			Name:     "shipment_get",
-			Kind:     agenttooltrust.ToolKindQuery,
-			Resource: permission.ResourceShipment,
-		},
-	}
-}
-
 func testRedactor() *Redactor {
-	return NewRedactor(
+	return New(
 		permissioncatalog.NewRegistry(),
-		testPolicies(),
+		aiaudittest.TestPolicies(),
 		auditservice.NewSensitiveDataManager(securityconfig.EncryptionConfig{}),
 	)
 }
@@ -112,7 +85,7 @@ func TestRedactor_BoundsTheArguments(t *testing.T) {
 	assert.True(t, redacted.Truncated)
 	assert.Equal(t, aiaudit.TruncatedPlaceholder, redacted.Values["a"])
 	assert.Equal(t, "small", redacted.Values["b"])
-	encoded, err := canonicalJSON.Marshal(redacted.Values)
+	encoded, err := CanonicalJSON.Marshal(redacted.Values)
 	require.NoError(t, err)
 	assert.LessOrEqual(t, len(encoded), aiaudit.MaxArgumentsBytes)
 }
@@ -176,9 +149,9 @@ func TestReaderArguments_WithholdsWhatTheReaderCannotReach(t *testing.T) {
 func TestReaderArguments_KeepsAnAlertsDetailsRestricted(t *testing.T) {
 	t.Parallel()
 
-	redactor := NewRedactor(
+	redactor := New(
 		permissioncatalog.NewRegistry(),
-		fakePolicies{"report_create_table_change_alert": {
+		aiaudittest.FakePolicies{"report_create_table_change_alert": {
 			Name:     "report_create_table_change_alert",
 			Kind:     agenttooltrust.ToolKindAction,
 			Resource: permission.ResourceTableChangeAlert,

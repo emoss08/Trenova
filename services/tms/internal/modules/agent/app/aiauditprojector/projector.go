@@ -1,4 +1,4 @@
-package aiauditservice
+package aiauditprojector
 
 import (
 	"cmp"
@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditheartbeat"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditkeyring"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditredact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
@@ -41,9 +44,6 @@ const (
 	passResultFailed = "failed"
 )
 
-// Heartbeat reports that a long pass is still making progress.
-type Heartbeat func(details ...any)
-
 // PassResult is what one projector pass did.
 type PassResult struct {
 	Inserted int                     `json:"inserted"`
@@ -58,7 +58,7 @@ type PassResult struct {
 type Projector struct {
 	ledger   aiauditports.AIAuditRepository
 	source   aiauditports.AIAuditSourceRepository
-	keyring  *Keyring
+	keyring  *aiauditkeyring.Keyring
 	deriver  *deriver
 	metrics  *aimetrics.AIAudit
 	batch    int
@@ -69,18 +69,18 @@ type Projector struct {
 	l        *zap.Logger
 }
 
-type ProjectorParams struct {
+type Params struct {
 	Ledger    aiauditports.AIAuditRepository
 	Source    aiauditports.AIAuditSourceRepository
-	Keyring   *Keyring
-	Redactor  *Redactor
+	Keyring   *aiauditkeyring.Keyring
+	Redactor  *aiauditredact.Redactor
 	Metrics   *aimetrics.AIAudit
 	BatchSize int
 	Now       func() time.Time
 	Logger    *zap.Logger
 }
 
-func NewProjector(p *ProjectorParams) *Projector {
+func New(p *Params) *Projector {
 	now := p.Now
 	if now == nil {
 		now = time.Now
@@ -158,7 +158,10 @@ func (p *pass) rows(orgID, buID pulid.ID) *tenantRows {
 }
 
 // RunOnce is one projector pass.
-func (p *Projector) RunOnce(ctx context.Context, heartbeat Heartbeat) (*PassResult, error) {
+func (p *Projector) RunOnce(
+	ctx context.Context,
+	heartbeat aiauditheartbeat.Heartbeat,
+) (*PassResult, error) {
 	result, err := p.runOnce(ctx, heartbeat)
 	if err != nil {
 		p.metrics.RecordPass(passResultFailed)
@@ -171,7 +174,10 @@ func (p *Projector) RunOnce(ctx context.Context, heartbeat Heartbeat) (*PassResu
 	return result, nil
 }
 
-func (p *Projector) runOnce(ctx context.Context, heartbeat Heartbeat) (*PassResult, error) {
+func (p *Projector) runOnce(
+	ctx context.Context,
+	heartbeat aiauditheartbeat.Heartbeat,
+) (*PassResult, error) {
 	now := p.now()
 	until := now.Add(-p.trail).Unix()
 
@@ -200,7 +206,7 @@ func (p *Projector) runOnce(ctx context.Context, heartbeat Heartbeat) (*PassResu
 		next[source] = reached
 		result.Read[source] = read
 		result.CaughtUp[source] = caughtUp
-		beat(heartbeat, source.String(), read)
+		aiauditheartbeat.Beat(heartbeat, source.String(), read)
 	}
 
 	inserted, err := p.project(ctx, current, now.Unix(), heartbeat)
@@ -228,12 +234,6 @@ func (p *Projector) runOnce(ctx context.Context, heartbeat Heartbeat) (*PassResu
 	}
 
 	return result, nil
-}
-
-func beat(heartbeat Heartbeat, details ...any) {
-	if heartbeat != nil {
-		heartbeat(details...)
-	}
 }
 
 // readSource reads one source forward from its watermark, then re-reads the
@@ -383,7 +383,7 @@ func (p *Projector) project(
 	ctx context.Context,
 	current *pass,
 	now int64,
-	heartbeat Heartbeat,
+	heartbeat aiauditheartbeat.Heartbeat,
 ) (int, error) {
 	tenants := make([]*tenantRows, 0, len(current.tenants))
 	for _, rows := range current.tenants {
@@ -425,7 +425,7 @@ func (p *Projector) project(
 			continue
 		}
 		inserted += appended.Inserted
-		beat(heartbeat, rows.tenant.OrgID.String(), appended.Inserted)
+		aiauditheartbeat.Beat(heartbeat, rows.tenant.OrgID.String(), appended.Inserted)
 	}
 
 	if len(failures) > 0 {
