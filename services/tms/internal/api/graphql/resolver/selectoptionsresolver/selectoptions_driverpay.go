@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -33,7 +34,7 @@ func (r *Deps) resolvePayCodeSelectOptions(
 		ctx,
 		&driverpayports.PayCodeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
-			Direction: driverpay.PayCodeDirection(
+			Direction: paycode.PayCodeDirection(
 				selectOptionStringFilter(req.Filters, "direction"),
 			),
 		},
@@ -49,7 +50,7 @@ func (r *Deps) resolvePayCodeSelectOptions(
 	)
 }
 
-func payCodeSelectOptionItem(entity *driverpay.PayCode) selectOptionConnectionItem {
+func payCodeSelectOptionItem(entity *paycode.PayCode) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),

@@ -3,6 +3,11 @@
 package driversettlementexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"context"
 	"errors"
@@ -1488,7 +1493,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1498,7 +1503,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1508,7 +1513,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1518,7 +1523,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1528,7 +1533,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNEscrowAccountStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowAccountStatus),
@@ -1537,7 +1542,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "targetAmountMinor",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.TargetAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2int64),
@@ -1546,7 +1551,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "balanceMinor",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.BalanceMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2int64),
@@ -1558,7 +1563,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return gqlexec.Resolver[resolverEscrowAccount](ec, "EscrowAccount").AnnualInterestRate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -1567,7 +1572,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastInterestAccrualDate",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.LastInterestAccrualDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1577,7 +1582,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.OpenedDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1586,7 +1591,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "closedDate",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.ClosedDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1596,7 +1601,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1606,7 +1611,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1616,7 +1621,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1626,7 +1631,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1636,7 +1641,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -1646,7 +1651,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "EscrowTransaction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowAccount)
+					obj := o.(*payescrow.EscrowAccount)
 					return obj.Transactions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOEscrowTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransactionᚄ),
@@ -1724,7 +1729,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1734,7 +1739,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.EscrowAccountID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1744,7 +1749,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.Type, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNEscrowTransactionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransactionType),
@@ -1754,7 +1759,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1764,7 +1769,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.BalanceAfterMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1774,7 +1779,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.OccurredDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1784,7 +1789,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1793,7 +1798,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "settlementId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.SettlementID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1802,7 +1807,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "createdById",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.CreatedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1812,7 +1817,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.EscrowTransaction)
+					obj := o.(*payescrow.EscrowTransaction)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2267,7 +2272,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2277,7 +2282,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2287,7 +2292,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2297,7 +2302,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2307,7 +2312,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPayAdvanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐAdvanceStatus),
@@ -2317,7 +2322,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.Source, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPayAdvanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐAdvanceSource),
@@ -2327,7 +2332,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.Reference, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2337,7 +2342,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.IssuedDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2346,7 +2351,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "amountMinor",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2int64),
@@ -2356,7 +2361,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.RecoveredMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2366,7 +2371,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.WrittenOffMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2376,7 +2381,7 @@ var Shard = &gqlexec.Shard{
 				IsMethod: true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.OutstandingMinor(), nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2int64),
@@ -2386,7 +2391,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.WriteOffReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2396,7 +2401,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2406,7 +2411,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2416,7 +2421,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2426,7 +2431,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2436,7 +2441,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2446,7 +2451,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayAdvance)
+					obj := o.(*payadvance.PayAdvance)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -2524,7 +2529,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2534,7 +2539,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2544,7 +2549,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2554,7 +2559,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus),
@@ -2564,7 +2569,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.Direction, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNPayCodeDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeDirection),
@@ -2574,7 +2579,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2584,7 +2589,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2594,7 +2599,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2604,7 +2609,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.Taxable, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2614,7 +2619,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.CountsTowardGuarantee, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2623,7 +2628,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "glAccountId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.GLAccountID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2632,7 +2637,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "defaultAmountMinor",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.DefaultAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -2642,7 +2647,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.IsSystem, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2652,7 +2657,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2662,7 +2667,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2672,7 +2677,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2684,7 +2689,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "PayCodeGLAccount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.PayCode)
+					obj := o.(*paycode.PayCode)
 					return gqlexec.Resolver[resolverPayCode](ec, "PayCode").GlAccount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOPayCodeGLAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPayCodeGLAccount),
@@ -3191,7 +3196,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RateOverride)
+					obj := o.(*payassignment.RateOverride)
 					return obj.ComponentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3203,7 +3208,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RateOverride)
+					obj := o.(*payassignment.RateOverride)
 					return gqlexec.Resolver[resolverPayRateOverride](ec, "PayRateOverride").Rate(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -3369,7 +3374,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_payCodeOptions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").PayCodeOptions(ctx, fc.Args["direction"].(*driverpay.PayCodeDirection))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").PayCodeOptions(ctx, fc.Args["direction"].(*paycode.PayCodeDirection))
 				},
 				Marshal: gqlexec.Marshal(marshalNPayCode2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeᚄ),
 			},
@@ -3623,7 +3628,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3633,7 +3638,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3643,7 +3648,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3653,7 +3658,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3663,7 +3668,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.PayCodeID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3672,7 +3677,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "escrowAccountId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.EscrowAccountID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3682,7 +3687,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringDeductionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionStatus),
@@ -3692,7 +3697,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.Frequency, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringDeductionFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionFrequency),
@@ -3702,7 +3707,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3712,7 +3717,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -3721,7 +3726,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "totalCapMinor",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.TotalCapMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -3731,7 +3736,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.DeductedToDateMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -3741,7 +3746,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.StartDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -3750,7 +3755,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "endDate",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.EndDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -3760,7 +3765,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3770,7 +3775,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -3780,7 +3785,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -3790,7 +3795,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -3800,7 +3805,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -3810,7 +3815,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PayCode",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringDeduction)
+					obj := o.(*recurringpay.RecurringDeduction)
 					return obj.PayCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode),
@@ -3888,7 +3893,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3898,7 +3903,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3908,7 +3913,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3918,7 +3923,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3928,7 +3933,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.PayCodeID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -3938,7 +3943,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild21,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringEarningStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningStatus),
@@ -3948,7 +3953,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.Frequency, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNRecurringEarningFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningFrequency),
@@ -3958,7 +3963,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3968,7 +3973,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -3977,7 +3982,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "totalCapMinor",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.TotalCapMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -3987,7 +3992,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.PaidToDateMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -3997,7 +4002,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.StartDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -4006,7 +4011,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "endDate",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.EndDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -4016,7 +4021,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -4026,7 +4031,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -4036,7 +4041,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -4046,7 +4051,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -4056,7 +4061,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -4066,7 +4071,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PayCode",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.RecurringEarning)
+					obj := o.(*recurringpay.RecurringEarning)
 					return obj.PayCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode),
@@ -5038,7 +5043,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -5048,7 +5053,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -5058,7 +5063,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -5068,7 +5073,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -5078,7 +5083,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.PayProfileID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -5088,7 +5093,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.EffectiveFrom, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -5097,7 +5102,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "effectiveTo",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.EffectiveTo, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -5109,7 +5114,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return gqlexec.Resolver[resolverWorkerPayAssignment](ec, "WorkerPayAssignment").SplitPercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -5119,7 +5124,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PayRateOverride",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.RateOverrides, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOPayRateOverride2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRateOverrideᚄ),
@@ -5129,7 +5134,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -5138,7 +5143,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "createdById",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.CreatedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -5148,7 +5153,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -5158,7 +5163,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -5168,7 +5173,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -5178,7 +5183,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -5188,7 +5193,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "PayProfile",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*driverpay.WorkerPayAssignment)
+					obj := o.(*payassignment.WorkerPayAssignment)
 					return obj.PayProfile, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOPayProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayProfile),
@@ -5370,31 +5375,31 @@ type resolverDriverSettlementLine interface {
 type resolverDriverSettlementLineGroup interface {
 	Rate(ctx context.Context, obj *driversettlement.LineGroup) (*string, error)
 	Quantity(ctx context.Context, obj *driversettlement.LineGroup) (string, error)
-	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.PayAdvance, error)
-	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.EscrowAccount, error)
+	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*payadvance.PayAdvance, error)
+	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*payescrow.EscrowAccount, error)
 }
 
 type resolverEscrowAccount interface {
-	AnnualInterestRate(ctx context.Context, obj *driverpay.EscrowAccount) (string, error)
+	AnnualInterestRate(ctx context.Context, obj *payescrow.EscrowAccount) (string, error)
 }
 
 type resolverMutation interface {
 	CreatePayProfile(ctx context.Context, input gqlmodel.CreatePayProfileInput) (*driverpay.PayProfile, error)
 	UpdatePayProfile(ctx context.Context, input gqlmodel.UpdatePayProfileInput) (*driverpay.PayProfile, error)
-	AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*driverpay.WorkerPayAssignment, error)
-	EndWorkerPayAssignment(ctx context.Context, input gqlmodel.EndWorkerPayAssignmentInput) (*driverpay.WorkerPayAssignment, error)
-	CreateRecurringDeduction(ctx context.Context, input gqlmodel.CreateRecurringDeductionInput) (*driverpay.RecurringDeduction, error)
-	UpdateRecurringDeduction(ctx context.Context, input gqlmodel.UpdateRecurringDeductionInput) (*driverpay.RecurringDeduction, error)
-	CreateRecurringEarning(ctx context.Context, input gqlmodel.CreateRecurringEarningInput) (*driverpay.RecurringEarning, error)
-	UpdateRecurringEarning(ctx context.Context, input gqlmodel.UpdateRecurringEarningInput) (*driverpay.RecurringEarning, error)
-	CreatePayCode(ctx context.Context, input gqlmodel.CreatePayCodeInput) (*driverpay.PayCode, error)
-	UpdatePayCode(ctx context.Context, input gqlmodel.UpdatePayCodeInput) (*driverpay.PayCode, error)
-	IssuePayAdvance(ctx context.Context, input gqlmodel.IssuePayAdvanceInput) (*driverpay.PayAdvance, error)
-	WriteOffPayAdvance(ctx context.Context, input gqlmodel.WriteOffPayAdvanceInput) (*driverpay.PayAdvance, error)
-	OpenEscrowAccount(ctx context.Context, input gqlmodel.OpenEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	UpdateEscrowAccount(ctx context.Context, input gqlmodel.UpdateEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	AdjustEscrowAccount(ctx context.Context, input gqlmodel.AdjustEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	CloseEscrowAccount(ctx context.Context, accountID string) (*driverpay.EscrowAccount, error)
+	AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*payassignment.WorkerPayAssignment, error)
+	EndWorkerPayAssignment(ctx context.Context, input gqlmodel.EndWorkerPayAssignmentInput) (*payassignment.WorkerPayAssignment, error)
+	CreateRecurringDeduction(ctx context.Context, input gqlmodel.CreateRecurringDeductionInput) (*recurringpay.RecurringDeduction, error)
+	UpdateRecurringDeduction(ctx context.Context, input gqlmodel.UpdateRecurringDeductionInput) (*recurringpay.RecurringDeduction, error)
+	CreateRecurringEarning(ctx context.Context, input gqlmodel.CreateRecurringEarningInput) (*recurringpay.RecurringEarning, error)
+	UpdateRecurringEarning(ctx context.Context, input gqlmodel.UpdateRecurringEarningInput) (*recurringpay.RecurringEarning, error)
+	CreatePayCode(ctx context.Context, input gqlmodel.CreatePayCodeInput) (*paycode.PayCode, error)
+	UpdatePayCode(ctx context.Context, input gqlmodel.UpdatePayCodeInput) (*paycode.PayCode, error)
+	IssuePayAdvance(ctx context.Context, input gqlmodel.IssuePayAdvanceInput) (*payadvance.PayAdvance, error)
+	WriteOffPayAdvance(ctx context.Context, input gqlmodel.WriteOffPayAdvanceInput) (*payadvance.PayAdvance, error)
+	OpenEscrowAccount(ctx context.Context, input gqlmodel.OpenEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	UpdateEscrowAccount(ctx context.Context, input gqlmodel.UpdateEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	AdjustEscrowAccount(ctx context.Context, input gqlmodel.AdjustEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	CloseEscrowAccount(ctx context.Context, accountID string) (*payescrow.EscrowAccount, error)
 	GenerateSettlementBatch(ctx context.Context, input gqlmodel.GenerateSettlementBatchInput) (*driversettlement.SettlementBatch, error)
 	GenerateDriverSettlement(ctx context.Context, input gqlmodel.GenerateDriverSettlementInput) (*driversettlement.Settlement, error)
 	PayWorkerNow(ctx context.Context, input gqlmodel.PayWorkerNowInput) (*driversettlement.Settlement, error)
@@ -5416,7 +5421,7 @@ type resolverMutation interface {
 }
 
 type resolverPayCode interface {
-	GlAccount(ctx context.Context, obj *driverpay.PayCode) (*gqlmodel.PayCodeGLAccount, error)
+	GlAccount(ctx context.Context, obj *paycode.PayCode) (*gqlmodel.PayCodeGLAccount, error)
 }
 
 type resolverPayMileageBand interface {
@@ -5433,26 +5438,26 @@ type resolverPayProfileComponent interface {
 }
 
 type resolverPayRateOverride interface {
-	Rate(ctx context.Context, obj *driverpay.RateOverride) (string, error)
+	Rate(ctx context.Context, obj *payassignment.RateOverride) (string, error)
 }
 
 type resolverQuery interface {
 	PayProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayProfileConnection, error)
 	PayProfile(ctx context.Context, id string) (*driverpay.PayProfile, error)
-	WorkerPayAssignments(ctx context.Context, workerID string) ([]*driverpay.WorkerPayAssignment, error)
-	EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*driverpay.WorkerPayAssignment, error)
-	PayProfileAssignments(ctx context.Context, payProfileID string) ([]*driverpay.WorkerPayAssignment, error)
+	WorkerPayAssignments(ctx context.Context, workerID string) ([]*payassignment.WorkerPayAssignment, error)
+	EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*payassignment.WorkerPayAssignment, error)
+	PayProfileAssignments(ctx context.Context, payProfileID string) ([]*payassignment.WorkerPayAssignment, error)
 	RecurringDeductions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringDeductionConnection, error)
-	RecurringDeduction(ctx context.Context, id string) (*driverpay.RecurringDeduction, error)
+	RecurringDeduction(ctx context.Context, id string) (*recurringpay.RecurringDeduction, error)
 	RecurringEarnings(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringEarningConnection, error)
-	RecurringEarning(ctx context.Context, id string) (*driverpay.RecurringEarning, error)
+	RecurringEarning(ctx context.Context, id string) (*recurringpay.RecurringEarning, error)
 	PayCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayCodeConnection, error)
-	PayCode(ctx context.Context, id string) (*driverpay.PayCode, error)
-	PayCodeOptions(ctx context.Context, direction *driverpay.PayCodeDirection) ([]*driverpay.PayCode, error)
+	PayCode(ctx context.Context, id string) (*paycode.PayCode, error)
+	PayCodeOptions(ctx context.Context, direction *paycode.PayCodeDirection) ([]*paycode.PayCode, error)
 	PayAdvances(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayAdvanceConnection, error)
-	PayAdvance(ctx context.Context, id string) (*driverpay.PayAdvance, error)
+	PayAdvance(ctx context.Context, id string) (*payadvance.PayAdvance, error)
 	EscrowAccounts(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EscrowAccountConnection, error)
-	EscrowAccount(ctx context.Context, id string) (*driverpay.EscrowAccount, error)
+	EscrowAccount(ctx context.Context, id string) (*payescrow.EscrowAccount, error)
 	DriverSettlements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverSettlementConnection, error)
 	DriverSettlement(ctx context.Context, id string) (*driversettlement.Settlement, error)
 	SettlementBatches(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SettlementBatchConnection, error)
@@ -5480,7 +5485,7 @@ type resolverSettlementException interface {
 }
 
 type resolverWorkerPayAssignment interface {
-	SplitPercent(ctx context.Context, obj *driverpay.WorkerPayAssignment) (string, error)
+	SplitPercent(ctx context.Context, obj *payassignment.WorkerPayAssignment) (string, error)
 }
 
 var (
@@ -6100,7 +6105,7 @@ func field_Query_payCode_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map
 func field_Query_payCodeOptions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "direction",
-		func(ctx context.Context, v any) (*driverpay.PayCodeDirection, error) {
+		func(ctx context.Context, v any) (*paycode.PayCodeDirection, error) {
 			return unmarshalOPayCodeDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeDirection(ctx, ec, v)
 		})
 	if err != nil {
@@ -8450,9 +8455,9 @@ func unmarshalNOpenEscrowAccountInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPayAdvanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐAdvanceSource(ctx context.Context, ec *gqlexec.Exec, v any) (driverpay.AdvanceSource, error) {
+func unmarshalNPayAdvanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐAdvanceSource(ctx context.Context, ec *gqlexec.Exec, v any) (payadvance.AdvanceSource, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.AdvanceSource(tmp)
+	res := payadvance.AdvanceSource(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -8462,9 +8467,9 @@ func unmarshalNPayCalcMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPayCodeDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeDirection(ctx context.Context, ec *gqlexec.Exec, v any) (driverpay.PayCodeDirection, error) {
+func unmarshalNPayCodeDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeDirection(ctx context.Context, ec *gqlexec.Exec, v any) (paycode.PayCodeDirection, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.PayCodeDirection(tmp)
+	res := paycode.PayCodeDirection(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -8510,27 +8515,27 @@ func unmarshalNPayeeClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNRecurringDeductionFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (driverpay.DeductionFrequency, error) {
+func unmarshalNRecurringDeductionFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (recurringpay.DeductionFrequency, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.DeductionFrequency(tmp)
+	res := recurringpay.DeductionFrequency(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNRecurringDeductionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionStatus(ctx context.Context, ec *gqlexec.Exec, v any) (driverpay.DeductionStatus, error) {
+func unmarshalNRecurringDeductionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionStatus(ctx context.Context, ec *gqlexec.Exec, v any) (recurringpay.DeductionStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.DeductionStatus(tmp)
+	res := recurringpay.DeductionStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNRecurringEarningFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (driverpay.EarningFrequency, error) {
+func unmarshalNRecurringEarningFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (recurringpay.EarningFrequency, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.EarningFrequency(tmp)
+	res := recurringpay.EarningFrequency(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNRecurringEarningStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningStatus(ctx context.Context, ec *gqlexec.Exec, v any) (driverpay.EarningStatus, error) {
+func unmarshalNRecurringEarningStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningStatus(ctx context.Context, ec *gqlexec.Exec, v any) (recurringpay.EarningStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.EarningStatus(tmp)
+	res := recurringpay.EarningStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -8638,12 +8643,12 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOPayCodeDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeDirection(ctx context.Context, ec *gqlexec.Exec, v any) (*driverpay.PayCodeDirection, error) {
+func unmarshalOPayCodeDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeDirection(ctx context.Context, ec *gqlexec.Exec, v any) (*paycode.PayCodeDirection, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.PayCodeDirection(tmp)
+	res := paycode.PayCodeDirection(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -8679,21 +8684,21 @@ func unmarshalOPayeeClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalORecurringDeductionFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (*driverpay.DeductionFrequency, error) {
+func unmarshalORecurringDeductionFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (*recurringpay.DeductionFrequency, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.DeductionFrequency(tmp)
+	res := recurringpay.DeductionFrequency(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalORecurringEarningFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (*driverpay.EarningFrequency, error) {
+func unmarshalORecurringEarningFrequency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (*recurringpay.EarningFrequency, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := driverpay.EarningFrequency(tmp)
+	res := recurringpay.EarningFrequency(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -8869,7 +8874,7 @@ func marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypes�
 	return res
 }
 
-func marshalNEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowAccount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.EscrowAccount) graphql.Marshaler {
+func marshalNEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowAccount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *payescrow.EscrowAccount) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8901,7 +8906,7 @@ func marshalNEscrowAccountEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "EscrowAccountEdge", v)
 }
 
-func marshalNEscrowAccountStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowAccountStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.EscrowAccountStatus) graphql.Marshaler {
+func marshalNEscrowAccountStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowAccountStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v payescrow.EscrowAccountStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8909,7 +8914,7 @@ func marshalNEscrowAccountStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNEscrowTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransaction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.EscrowTransaction) graphql.Marshaler {
+func marshalNEscrowTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransaction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *payescrow.EscrowTransaction) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8917,7 +8922,7 @@ func marshalNEscrowTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "EscrowTransaction", v)
 }
 
-func marshalNEscrowTransactionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransactionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.EscrowTransactionType) graphql.Marshaler {
+func marshalNEscrowTransactionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransactionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v payescrow.EscrowTransactionType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8965,7 +8970,7 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayAdvance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.PayAdvance) graphql.Marshaler {
+func marshalNPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayAdvance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *payadvance.PayAdvance) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8997,7 +9002,7 @@ func marshalNPayAdvanceEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "PayAdvanceEdge", v)
 }
 
-func marshalNPayAdvanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐAdvanceSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.AdvanceSource) graphql.Marshaler {
+func marshalNPayAdvanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐAdvanceSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v payadvance.AdvanceSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -9005,7 +9010,7 @@ func marshalNPayAdvanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return res
 }
 
-func marshalNPayAdvanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐAdvanceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.AdvanceStatus) graphql.Marshaler {
+func marshalNPayAdvanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐAdvanceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v payadvance.AdvanceStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -9021,15 +9026,15 @@ func marshalNPayCalcMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return res
 }
 
-func marshalNPayCode2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverpay.PayCode) graphql.Marshaler {
-	return gqlexec.List[*driverpay.PayCode]{
+func marshalNPayCode2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*paycode.PayCode) graphql.Marshaler {
+	return gqlexec.List[*paycode.PayCode]{
 		Elem:        marshalNPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.PayCode) graphql.Marshaler {
+func marshalNPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paycode.PayCode) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -9045,7 +9050,7 @@ func marshalNPayCodeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "PayCodeConnection", v)
 }
 
-func marshalNPayCodeDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.PayCodeDirection) graphql.Marshaler {
+func marshalNPayCodeDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCodeDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v paycode.PayCodeDirection) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -9129,7 +9134,7 @@ func marshalNPayProfileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "PayProfileEdge", v)
 }
 
-func marshalNPayRateOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRateOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.RateOverride) graphql.Marshaler {
+func marshalNPayRateOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRateOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v payassignment.RateOverride) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "PayRateOverride", &v)
 }
 
@@ -9141,7 +9146,7 @@ func marshalNPayeeClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNRecurringDeduction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRecurringDeduction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.RecurringDeduction) graphql.Marshaler {
+func marshalNRecurringDeduction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRecurringDeduction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringpay.RecurringDeduction) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -9173,7 +9178,7 @@ func marshalNRecurringDeductionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "RecurringDeductionEdge", v)
 }
 
-func marshalNRecurringDeductionFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.DeductionFrequency) graphql.Marshaler {
+func marshalNRecurringDeductionFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringpay.DeductionFrequency) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -9181,7 +9186,7 @@ func marshalNRecurringDeductionFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalNRecurringDeductionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.DeductionStatus) graphql.Marshaler {
+func marshalNRecurringDeductionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐDeductionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringpay.DeductionStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -9189,7 +9194,7 @@ func marshalNRecurringDeductionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNRecurringEarning2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRecurringEarning(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.RecurringEarning) graphql.Marshaler {
+func marshalNRecurringEarning2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRecurringEarning(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringpay.RecurringEarning) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -9221,7 +9226,7 @@ func marshalNRecurringEarningEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "RecurringEarningEdge", v)
 }
 
-func marshalNRecurringEarningFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.EarningFrequency) graphql.Marshaler {
+func marshalNRecurringEarningFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringpay.EarningFrequency) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -9229,7 +9234,7 @@ func marshalNRecurringEarningFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNRecurringEarningStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v driverpay.EarningStatus) graphql.Marshaler {
+func marshalNRecurringEarningStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEarningStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringpay.EarningStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -9385,15 +9390,15 @@ func marshalNWorkerEarningsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "WorkerEarningsSummary", v)
 }
 
-func marshalNWorkerPayAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerPayAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverpay.WorkerPayAssignment) graphql.Marshaler {
-	return gqlexec.List[*driverpay.WorkerPayAssignment]{
+func marshalNWorkerPayAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerPayAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*payassignment.WorkerPayAssignment) graphql.Marshaler {
+	return gqlexec.List[*payassignment.WorkerPayAssignment]{
 		Elem:        marshalNWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerPayAssignment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerPayAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.WorkerPayAssignment) graphql.Marshaler {
+func marshalNWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerPayAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *payassignment.WorkerPayAssignment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -9460,15 +9465,15 @@ func marshalODriverSettlementLineGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowAccount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.EscrowAccount) graphql.Marshaler {
+func marshalOEscrowAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowAccount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *payescrow.EscrowAccount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "EscrowAccount", v)
 }
 
-func marshalOEscrowTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransactionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverpay.EscrowTransaction) graphql.Marshaler {
-	return gqlexec.List[*driverpay.EscrowTransaction]{
+func marshalOEscrowTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransactionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*payescrow.EscrowTransaction) graphql.Marshaler {
+	return gqlexec.List[*payescrow.EscrowTransaction]{
 		Elem:        marshalNEscrowTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐEscrowTransaction,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -9508,7 +9513,7 @@ func marshalOInt2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalOPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayAdvance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.PayAdvance) graphql.Marshaler {
+func marshalOPayAdvance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayAdvance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *payadvance.PayAdvance) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -9520,7 +9525,7 @@ func marshalOPayCalcMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return res
 }
 
-func marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.PayCode) graphql.Marshaler {
+func marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paycode.PayCode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -9560,8 +9565,8 @@ func marshalOPayProfileComponent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOPayRateOverride2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRateOverrideᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []driverpay.RateOverride) graphql.Marshaler {
-	return gqlexec.List[driverpay.RateOverride]{
+func marshalOPayRateOverride2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRateOverrideᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []payassignment.RateOverride) graphql.Marshaler {
+	return gqlexec.List[payassignment.RateOverride]{
 		Elem:        marshalNPayRateOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRateOverride,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -9572,14 +9577,14 @@ func marshalOPayRevenueBasis2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalORecurringDeduction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRecurringDeduction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.RecurringDeduction) graphql.Marshaler {
+func marshalORecurringDeduction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRecurringDeduction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringpay.RecurringDeduction) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "RecurringDeduction", v)
 }
 
-func marshalORecurringEarning2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRecurringEarning(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.RecurringEarning) graphql.Marshaler {
+func marshalORecurringEarning2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐRecurringEarning(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringpay.RecurringEarning) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -9634,7 +9639,7 @@ func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋw
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
-func marshalOWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerPayAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpay.WorkerPayAssignment) graphql.Marshaler {
+func marshalOWorkerPayAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerPayAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *payassignment.WorkerPayAssignment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

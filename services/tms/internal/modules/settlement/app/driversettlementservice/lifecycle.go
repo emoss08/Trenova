@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -592,7 +593,7 @@ func (s *Service) applyRecurringEarning(
 	}
 	earning.PaidToDateMinor += line.AmountMinor
 	if remaining := earning.RemainingCapMinor(); remaining != nil && *remaining == 0 {
-		earning.Status = driverpay.EarningStatusCompleted
+		earning.Status = recurringpay.EarningStatusCompleted
 	}
 	_, err = s.earningRepo.Update(ctx, earning)
 	return err
@@ -622,7 +623,7 @@ func (s *Service) applyRecurringDeduction(
 	}
 	deduction.DeductedToDateMinor += amount
 	if remaining := deduction.RemainingCapMinor(); remaining != nil && *remaining == 0 {
-		deduction.Status = driverpay.DeductionStatusCompleted
+		deduction.Status = recurringpay.DeductionStatusCompleted
 	}
 	_, err = s.deductionRepo.Update(ctx, deduction)
 	return err
@@ -642,7 +643,7 @@ func (s *Service) applyEscrowContribution(
 		return err
 	}
 	return s.appendEscrowTransaction(ctx, entity, *line.EscrowAccountID,
-		driverpay.EscrowTransactionTypeContribution, amount,
+		payescrow.EscrowTransactionTypeContribution, amount,
 		"Escrow contribution from settlement "+entity.SettlementNumber, actor)
 }
 
@@ -692,7 +693,7 @@ func (s *Service) reverseDeductionSideEffects(
 			}
 			if line.EscrowAccountID != nil && !line.EscrowAccountID.IsNil() {
 				if err := s.appendEscrowTransaction(ctx, entity, *line.EscrowAccountID,
-					driverpay.EscrowTransactionTypeAdjustment, -amount,
+					payescrow.EscrowTransactionTypeAdjustment, -amount,
 					"Escrow contribution reversed; settlement "+
 						entity.SettlementNumber+" voided", actor); err != nil {
 					return err
@@ -737,9 +738,9 @@ func (s *Service) reverseRecurringEarning(
 		return err
 	}
 	earning.PaidToDateMinor = max(earning.PaidToDateMinor-line.AmountMinor, 0)
-	if earning.Status == driverpay.EarningStatusCompleted {
+	if earning.Status == recurringpay.EarningStatusCompleted {
 		if remaining := earning.RemainingCapMinor(); remaining == nil || *remaining > 0 {
-			earning.Status = driverpay.EarningStatusActive
+			earning.Status = recurringpay.EarningStatusActive
 		}
 	}
 	_, err = s.earningRepo.Update(ctx, earning)
@@ -769,9 +770,9 @@ func (s *Service) reverseRecurringDeduction(
 		return err
 	}
 	deduction.DeductedToDateMinor = max(deduction.DeductedToDateMinor-amount, 0)
-	if deduction.Status == driverpay.DeductionStatusCompleted {
+	if deduction.Status == recurringpay.DeductionStatusCompleted {
 		if remaining := deduction.RemainingCapMinor(); remaining == nil || *remaining > 0 {
-			deduction.Status = driverpay.DeductionStatusActive
+			deduction.Status = recurringpay.DeductionStatusActive
 		}
 	}
 	_, err = s.deductionRepo.Update(ctx, deduction)
@@ -807,7 +808,7 @@ func (s *Service) appendEscrowTransaction(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
 	accountID pulid.ID,
-	txType driverpay.EscrowTransactionType,
+	txType payescrow.EscrowTransactionType,
 	amount int64,
 	description string,
 	actor *permissionports.RequestActor,
@@ -823,7 +824,7 @@ func (s *Service) appendEscrowTransaction(
 		return err
 	}
 	settlementID := entity.ID
-	tx := &driverpay.EscrowTransaction{
+	tx := &payescrow.EscrowTransaction{
 		OrganizationID:    account.OrganizationID,
 		BusinessUnitID:    account.BusinessUnitID,
 		EscrowAccountID:   account.ID,

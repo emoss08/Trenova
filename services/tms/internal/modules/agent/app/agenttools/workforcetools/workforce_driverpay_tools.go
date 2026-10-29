@@ -17,8 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -102,7 +102,7 @@ type DriverPayReviewer interface {
 		ctx context.Context,
 		req *driversettlementservice.ReviewExpenseRequest,
 		actor *permissionports.RequestActor,
-	) (*driverpay.Expense, error)
+	) (*payexpense.Expense, error)
 }
 
 func DriverPayReviewToolProviders() []any {
@@ -143,7 +143,7 @@ func disputeRecord(dispute *driversettlement.Dispute) toolpreview.Record {
 		fmt.Sprintf("%s pay dispute", dispute.Category), dispute.Version)
 }
 
-func expenseRecord(expense *driverpay.Expense) toolpreview.Record {
+func expenseRecord(expense *payexpense.Expense) toolpreview.Record {
 	return wfRecord(permission.ResourceDriverExpense, expense.ID,
 		"Expense: "+expense.Description, expense.Version)
 }

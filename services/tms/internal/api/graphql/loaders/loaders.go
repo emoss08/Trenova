@@ -52,10 +52,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
@@ -317,8 +318,8 @@ type set struct {
 	customerPaymentApplicationsByInvoiceID    *dataloadgen.Loader[string, []*customerpayment.Application]
 	creditMemoApplicationsByInvoiceID         *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication]
 	invoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoicedispute.InvoiceDispute]
-	payAdvanceByID                            *dataloadgen.Loader[string, *driverpay.PayAdvance]
-	escrowAccountByID                         *dataloadgen.Loader[string, *driverpay.EscrowAccount]
+	payAdvanceByID                            *dataloadgen.Loader[string, *payadvance.PayAdvance]
+	escrowAccountByID                         *dataloadgen.Loader[string, *payescrow.EscrowAccount]
 	settlementDisputesBySettlementID          *dataloadgen.Loader[string, []*driversettlement.Dispute]
 	carrierInvoiceMatchesByMoveID             *dataloadgen.Loader[string, []*carriersettlement.InvoiceMatch]
 	factoringCompanyByID                      *dataloadgen.Loader[string, *factoringcompany.FactoringCompany]

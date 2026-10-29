@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,8 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newAssignmentEntity() *driverpay.WorkerPayAssignment {
-	return &driverpay.WorkerPayAssignment{
+func newAssignmentEntity() *payassignment.WorkerPayAssignment {
+	return &payassignment.WorkerPayAssignment{
 		BusinessUnitID: pulid.MustNew("bu_"),
 		OrganizationID: pulid.MustNew("org_"),
 		WorkerID:       pulid.MustNew("wrk_"),
@@ -26,7 +28,7 @@ func newAssignmentEntity() *driverpay.WorkerPayAssignment {
 }
 
 func profileForAssignment(
-	entity *driverpay.WorkerPayAssignment,
+	entity *payassignment.WorkerPayAssignment,
 	componentIDs ...pulid.ID,
 ) *driverpay.PayProfile {
 	components := make([]*driverpay.PayProfileComponent, 0, len(componentIDs))
@@ -52,7 +54,7 @@ func TestAssignProfileToWorker_RejectsOverrideForForeignComponent(t *testing.T) 
 	svc, _ := newTestService()
 
 	entity := newAssignmentEntity()
-	entity.RateOverrides = []driverpay.RateOverride{
+	entity.RateOverrides = []payassignment.RateOverride{
 		{ComponentID: pulid.MustNew("dppc_"), Rate: decimal.NewFromFloat(0.6)},
 	}
 	profile := profileForAssignment(entity, pulid.MustNew("dppc_"))
@@ -81,8 +83,8 @@ func TestAssignProfileToWorker_RejectsLaterExistingAssignment(t *testing.T) {
 		},
 	}
 	svc.assignmentRepo = &fakeAssignmentRepo{
-		listOverlapping: func(context.Context, *driverpay.WorkerPayAssignment) ([]*driverpay.WorkerPayAssignment, error) {
-			return []*driverpay.WorkerPayAssignment{
+		listOverlapping: func(context.Context, *payassignment.WorkerPayAssignment) ([]*payassignment.WorkerPayAssignment, error) {
+			return []*payassignment.WorkerPayAssignment{
 				{EffectiveFrom: entity.EffectiveFrom + 100},
 			}, nil
 		},
@@ -99,28 +101,28 @@ func TestAssignProfileToWorker_EndsEarlierOpenAssignment(t *testing.T) {
 
 	entity := newAssignmentEntity()
 	profile := profileForAssignment(entity)
-	existing := &driverpay.WorkerPayAssignment{
+	existing := &payassignment.WorkerPayAssignment{
 		ID:            pulid.MustNew("wpa_"),
 		WorkerID:      entity.WorkerID,
 		EffectiveFrom: entity.EffectiveFrom - 10_000,
 	}
 
-	var endedAssignment *driverpay.WorkerPayAssignment
-	var created *driverpay.WorkerPayAssignment
+	var endedAssignment *payassignment.WorkerPayAssignment
+	var created *payassignment.WorkerPayAssignment
 	svc.profileRepo = &fakeProfileRepo{
 		getByID: func(context.Context, driverpayports.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
 			return profile, nil
 		},
 	}
 	svc.assignmentRepo = &fakeAssignmentRepo{
-		listOverlapping: func(context.Context, *driverpay.WorkerPayAssignment) ([]*driverpay.WorkerPayAssignment, error) {
-			return []*driverpay.WorkerPayAssignment{existing}, nil
+		listOverlapping: func(context.Context, *payassignment.WorkerPayAssignment) ([]*payassignment.WorkerPayAssignment, error) {
+			return []*payassignment.WorkerPayAssignment{existing}, nil
 		},
-		update: func(_ context.Context, assignment *driverpay.WorkerPayAssignment) (*driverpay.WorkerPayAssignment, error) {
+		update: func(_ context.Context, assignment *payassignment.WorkerPayAssignment) (*payassignment.WorkerPayAssignment, error) {
 			endedAssignment = assignment
 			return assignment, nil
 		},
-		create: func(_ context.Context, assignment *driverpay.WorkerPayAssignment) (*driverpay.WorkerPayAssignment, error) {
+		create: func(_ context.Context, assignment *payassignment.WorkerPayAssignment) (*payassignment.WorkerPayAssignment, error) {
 			assignment.ID = pulid.MustNew("wpa_")
 			created = assignment
 			return assignment, nil
@@ -147,7 +149,7 @@ func TestAssignProfileToWorker_SkipsAssignmentsAlreadyEnded(t *testing.T) {
 	entity := newAssignmentEntity()
 	profile := profileForAssignment(entity)
 	endedAt := entity.EffectiveFrom - 100
-	existing := &driverpay.WorkerPayAssignment{
+	existing := &payassignment.WorkerPayAssignment{
 		EffectiveFrom: entity.EffectiveFrom - 10_000,
 		EffectiveTo:   &endedAt,
 	}
@@ -159,14 +161,14 @@ func TestAssignProfileToWorker_SkipsAssignmentsAlreadyEnded(t *testing.T) {
 		},
 	}
 	svc.assignmentRepo = &fakeAssignmentRepo{
-		listOverlapping: func(context.Context, *driverpay.WorkerPayAssignment) ([]*driverpay.WorkerPayAssignment, error) {
-			return []*driverpay.WorkerPayAssignment{existing}, nil
+		listOverlapping: func(context.Context, *payassignment.WorkerPayAssignment) ([]*payassignment.WorkerPayAssignment, error) {
+			return []*payassignment.WorkerPayAssignment{existing}, nil
 		},
-		update: func(_ context.Context, assignment *driverpay.WorkerPayAssignment) (*driverpay.WorkerPayAssignment, error) {
+		update: func(_ context.Context, assignment *payassignment.WorkerPayAssignment) (*payassignment.WorkerPayAssignment, error) {
 			updateCalls++
 			return assignment, nil
 		},
-		create: func(_ context.Context, assignment *driverpay.WorkerPayAssignment) (*driverpay.WorkerPayAssignment, error) {
+		create: func(_ context.Context, assignment *payassignment.WorkerPayAssignment) (*payassignment.WorkerPayAssignment, error) {
 			return assignment, nil
 		},
 	}
@@ -183,7 +185,7 @@ func TestEndAssignment_RejectsEndDateBeforeStart(t *testing.T) {
 	assignment := newAssignmentEntity()
 	assignment.ID = pulid.MustNew("wpa_")
 	svc.assignmentRepo = &fakeAssignmentRepo{
-		getByID: func(context.Context, pagination.TenantInfo, pulid.ID) (*driverpay.WorkerPayAssignment, error) {
+		getByID: func(context.Context, pagination.TenantInfo, pulid.ID) (*payassignment.WorkerPayAssignment, error) {
 			return assignment, nil
 		},
 	}
@@ -206,10 +208,10 @@ func TestEndAssignment_SetsEffectiveTo(t *testing.T) {
 	assignment := newAssignmentEntity()
 	assignment.ID = pulid.MustNew("wpa_")
 	svc.assignmentRepo = &fakeAssignmentRepo{
-		getByID: func(context.Context, pagination.TenantInfo, pulid.ID) (*driverpay.WorkerPayAssignment, error) {
+		getByID: func(context.Context, pagination.TenantInfo, pulid.ID) (*payassignment.WorkerPayAssignment, error) {
 			return assignment, nil
 		},
-		update: func(_ context.Context, entity *driverpay.WorkerPayAssignment) (*driverpay.WorkerPayAssignment, error) {
+		update: func(_ context.Context, entity *payassignment.WorkerPayAssignment) (*payassignment.WorkerPayAssignment, error) {
 			return entity, nil
 		},
 	}
@@ -228,12 +230,12 @@ func TestEndAssignment_SetsEffectiveTo(t *testing.T) {
 	assert.Len(t, audit.logged, 1)
 }
 
-func newAdvanceEntity() *driverpay.PayAdvance {
-	return &driverpay.PayAdvance{
+func newAdvanceEntity() *payadvance.PayAdvance {
+	return &payadvance.PayAdvance{
 		BusinessUnitID: pulid.MustNew("bu_"),
 		OrganizationID: pulid.MustNew("org_"),
 		WorkerID:       pulid.MustNew("wrk_"),
-		Source:         driverpay.AdvanceSourceCash,
+		Source:         payadvance.AdvanceSourceCash,
 		IssuedDate:     timeutils.NowUnix(),
 		AmountMinor:    50_000,
 		CurrencyCode:   "USD",
@@ -244,9 +246,9 @@ func TestIssueAdvance_ForcesCleanRecoveryState(t *testing.T) {
 	t.Parallel()
 	svc, audit := newTestService()
 
-	var created *driverpay.PayAdvance
+	var created *payadvance.PayAdvance
 	svc.advanceRepo = &fakeAdvanceRepo{
-		create: func(_ context.Context, entity *driverpay.PayAdvance) (*driverpay.PayAdvance, error) {
+		create: func(_ context.Context, entity *payadvance.PayAdvance) (*payadvance.PayAdvance, error) {
 			entity.ID = pulid.MustNew("padv_")
 			created = entity
 			return entity, nil
@@ -254,7 +256,7 @@ func TestIssueAdvance_ForcesCleanRecoveryState(t *testing.T) {
 	}
 
 	entity := newAdvanceEntity()
-	entity.Status = driverpay.AdvanceStatusRecovered
+	entity.Status = payadvance.AdvanceStatusRecovered
 	entity.RecoveredMinor = 10_000
 	entity.WrittenOffMinor = 5_000
 
@@ -263,7 +265,7 @@ func TestIssueAdvance_ForcesCleanRecoveryState(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, created)
 
-	assert.Equal(t, driverpay.AdvanceStatusOutstanding, result.Status)
+	assert.Equal(t, payadvance.AdvanceStatusOutstanding, result.Status)
 	assert.EqualValues(t, 0, result.RecoveredMinor)
 	assert.EqualValues(t, 0, result.WrittenOffMinor)
 	assert.Equal(t, actor.UserID, result.CreatedByID)
@@ -288,11 +290,11 @@ func TestUpdateAdvance_RejectsNonOutstandingAdvance(t *testing.T) {
 
 	previous := newAdvanceEntity()
 	previous.ID = pulid.MustNew("padv_")
-	previous.Status = driverpay.AdvanceStatusPartiallyRecovered
+	previous.Status = payadvance.AdvanceStatusPartiallyRecovered
 	previous.RecoveredMinor = 10_000
 
 	svc.advanceRepo = &fakeAdvanceRepo{
-		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
+		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*payadvance.PayAdvance, error) {
 			return previous, nil
 		},
 	}
@@ -327,7 +329,7 @@ func TestWriteOffAdvance_RejectsFullyRecoveredAdvance(t *testing.T) {
 	advance.ID = pulid.MustNew("padv_")
 	advance.RecoveredMinor = advance.AmountMinor
 	svc.advanceRepo = &fakeAdvanceRepo{
-		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
+		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*payadvance.PayAdvance, error) {
 			return advance, nil
 		},
 	}
@@ -351,10 +353,10 @@ func TestWriteOffAdvance_WritesOffOutstandingBalance(t *testing.T) {
 	advance.ID = pulid.MustNew("padv_")
 	advance.RecoveredMinor = 20_000
 	svc.advanceRepo = &fakeAdvanceRepo{
-		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
+		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*payadvance.PayAdvance, error) {
 			return advance, nil
 		},
-		update: func(_ context.Context, entity *driverpay.PayAdvance) (*driverpay.PayAdvance, error) {
+		update: func(_ context.Context, entity *payadvance.PayAdvance) (*payadvance.PayAdvance, error) {
 			return entity, nil
 		},
 	}
@@ -371,7 +373,7 @@ func TestWriteOffAdvance_WritesOffOutstandingBalance(t *testing.T) {
 
 	assert.EqualValues(t, 30_000, updated.WrittenOffMinor)
 	assert.EqualValues(t, 0, updated.OutstandingMinor())
-	assert.Equal(t, driverpay.AdvanceStatusWrittenOff, updated.Status)
+	assert.Equal(t, payadvance.AdvanceStatusWrittenOff, updated.Status)
 	assert.Equal(t, "driver terminated", updated.WriteOffReason)
 	assert.Equal(t, actor.UserID, updated.WrittenOffByID)
 	require.NotNil(t, updated.WrittenOffAt)

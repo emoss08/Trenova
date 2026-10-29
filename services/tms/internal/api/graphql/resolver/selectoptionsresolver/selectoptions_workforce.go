@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -296,7 +296,7 @@ func (r *Deps) resolveBenefitPlanSelectOptions(
 	)
 }
 
-func benefitPlanSelectOptionItem(entity *driverpay.BenefitPlan) selectOptionConnectionItem {
+func benefitPlanSelectOptionItem(entity *paybenefit.BenefitPlan) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),

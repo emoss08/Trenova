@@ -1,18 +1,19 @@
-package driverpay
+package paybenefit
 
 import (
 	"context"
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/shared/money"
-
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -149,8 +150,8 @@ type BenefitPlan struct {
 	// PayCodeID is what a contribution shows up as on a settlement. Required
 	// rather than optional: a deduction nobody can categorise is a deduction
 	// nobody can explain.
-	PayCodeID pulid.ID `json:"payCodeId" keel:"pay_code_id"`
-	PlanYear  int16    `json:"planYear"  keel:"plan_year"`
+	PayCodeID pulid.ID `json:"payCodeId"    keel:"pay_code_id"`
+	PlanYear  int16    `json:"planYear"     keel:"plan_year"`
 
 	EmployeeCostMinor int64 `json:"employeeCostMinor" keel:"employee_cost_minor"`
 	// EmployerCostMinor is never deducted. It is carried so a
@@ -163,7 +164,7 @@ type BenefitPlan struct {
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	PayCode *PayCode `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
+	PayCode *paycode.PayCode `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
 }
 
 func (p *BenefitPlan) BeforeCreate(_ context.Context) error {
@@ -321,9 +322,9 @@ type WorkerBenefitEnrollment struct {
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Worker      *worker.Worker      `json:"worker,omitempty"      keel:"belongs:worker_id"`
-	BenefitPlan *BenefitPlan        `json:"benefitPlan,omitempty" keel:"belongs:benefit_plan_id"`
-	Deduction   *RecurringDeduction `json:"deduction,omitempty"   keel:"belongs:recurring_deduction_id"`
+	Worker      *worker.Worker                   `json:"worker,omitempty"      keel:"belongs:worker_id"`
+	BenefitPlan *BenefitPlan                     `json:"benefitPlan,omitempty" keel:"belongs:benefit_plan_id"`
+	Deduction   *recurringpay.RecurringDeduction `json:"deduction,omitempty"   keel:"belongs:recurring_deduction_id"`
 }
 
 func (e *WorkerBenefitEnrollment) BeforeCreate(_ context.Context) error {

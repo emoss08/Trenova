@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -19,7 +20,7 @@ type payAdvancesByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
 		req driverpayports.GetPayAdvancesByIDsRequest,
-	) ([]*driverpay.PayAdvance, error)
+	) ([]*payadvance.PayAdvance, error)
 }
 
 type PayAdvanceByIDLoaderFactoryParams struct {
@@ -40,15 +41,15 @@ func NewPayAdvanceByIDLoaderFactory(
 
 func newPayAdvanceByIDLoader(f *PayAdvanceByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *driverpay.PayAdvance] {
+) *dataloadgen.Loader[string, *payadvance.PayAdvance] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *PayAdvanceByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[*driverpay.PayAdvance] {
+) batchFetchFunc[*payadvance.PayAdvance] {
 	return batchByIDFunc(
-		func(ctx context.Context, ids []pulid.ID) ([]*driverpay.PayAdvance, error) {
+		func(ctx context.Context, ids []pulid.ID) ([]*payadvance.PayAdvance, error) {
 			return f.advances.GetByIDs(ctx, driverpayports.GetPayAdvancesByIDsRequest{
 				TenantInfo: tenantInfo,
 				IDs:        ids,
@@ -62,7 +63,7 @@ type escrowAccountsByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
 		req driverpayports.GetEscrowAccountsByIDsRequest,
-	) ([]*driverpay.EscrowAccount, error)
+	) ([]*payescrow.EscrowAccount, error)
 }
 
 type EscrowAccountByIDLoaderFactoryParams struct {
@@ -83,15 +84,15 @@ func NewEscrowAccountByIDLoaderFactory(
 
 func newEscrowAccountByIDLoader(f *EscrowAccountByIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *driverpay.EscrowAccount] {
+) *dataloadgen.Loader[string, *payescrow.EscrowAccount] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *EscrowAccountByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[*driverpay.EscrowAccount] {
+) batchFetchFunc[*payescrow.EscrowAccount] {
 	return batchByIDFunc(
-		func(ctx context.Context, ids []pulid.ID) ([]*driverpay.EscrowAccount, error) {
+		func(ctx context.Context, ids []pulid.ID) ([]*payescrow.EscrowAccount, error) {
 			return f.accounts.GetByIDs(ctx, driverpayports.GetEscrowAccountsByIDsRequest{
 				TenantInfo: tenantInfo,
 				IDs:        ids,

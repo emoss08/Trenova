@@ -3,6 +3,10 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
@@ -7107,7 +7111,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "payAdvances",
 		Node:      "PayAdvance",
 		Resource:  "pay_advance",
-		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.PayAdvance) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(payadvance.PayAdvance) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -7406,7 +7410,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "driverExpenses",
 		Node:      "DriverExpense",
 		Resource:  "driver_expense",
-		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.Expense) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(payexpense.Expense) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -7527,7 +7531,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "escrowAccounts",
 		Node:      "EscrowAccount",
 		Resource:  "escrow_account",
-		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.EscrowAccount) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(payescrow.EscrowAccount) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -7786,7 +7790,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "recurringDeductions",
 		Node:      "RecurringDeduction",
 		Resource:  "recurring_deduction",
-		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.RecurringDeduction) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(recurringpay.RecurringDeduction) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
@@ -7879,7 +7883,7 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: "recurringEarnings",
 		Node:      "RecurringEarning",
 		Resource:  "recurring_earning",
-		Entity:    func() domaintypes.PostgresSearchable { return new(driverpay.RecurringEarning) },
+		Entity:    func() domaintypes.PostgresSearchable { return new(recurringpay.RecurringEarning) },
 		Variables: []graphQLVariable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},

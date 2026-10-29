@@ -3,8 +3,9 @@ package driversettlementservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -285,7 +286,7 @@ func TestComputeMovePayRateOverrides(t *testing.T) {
 		IsActive: true,
 	})
 	input := calcInput(profile, loadedMove(1000, 2))
-	input.RateOverrides = []driverpay.RateOverride{
+	input.RateOverrides = []payassignment.RateOverride{
 		{ComponentID: componentID, Rate: decimal.RequireFromString("0.62")},
 	}
 
@@ -315,7 +316,7 @@ func TestComputeMovePayOverrideIgnoresOtherComponents(t *testing.T) {
 		},
 	)
 	input := calcInput(profile, loadedMove(100, 4))
-	input.RateOverrides = []driverpay.RateOverride{
+	input.RateOverrides = []payassignment.RateOverride{
 		{ComponentID: linehaulID, Rate: decimal.RequireFromString("0.60")},
 	}
 

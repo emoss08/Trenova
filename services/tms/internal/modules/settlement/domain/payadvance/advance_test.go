@@ -1,4 +1,4 @@
-package driverpay
+package payadvance
 
 import (
 	"testing"

@@ -6,22 +6,22 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/jackc/pgx/v5"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driverpayrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driversettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -51,25 +51,25 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 	require.NoError(t, err)
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
-	advance := &driverpay.PayAdvance{
+	advance := &payadvance.PayAdvance{
 		ID:             pulid.MustNew("padv_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 		WorkerID:       worker.ID,
-		Status:         driverpay.AdvanceStatusPartiallyRecovered,
-		Source:         driverpay.AdvanceSourceCash,
+		Status:         payadvance.AdvanceStatusPartiallyRecovered,
+		Source:         payadvance.AdvanceSourceCash,
 		IssuedDate:     1_790_000_000,
 		AmountMinor:    50000,
 		RecoveredMinor: 20000,
 		CurrencyCode:   "USD",
 	}
 	require.NoError(t, driverpaydb.PayAdvances.Create(ctx, db, advance))
-	escrow := &driverpay.EscrowAccount{
+	escrow := &payescrow.EscrowAccount{
 		ID:                pulid.MustNew("escr_"),
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		WorkerID:          worker.ID,
-		Status:            driverpay.EscrowAccountStatusActive,
+		Status:            payescrow.EscrowAccountStatusActive,
 		TargetAmountMinor: 250000,
 		BalanceMinor:      190000,
 		OpenedDate:        1_780_000_000,
@@ -133,10 +133,13 @@ func TestSettlementCardBatchReads_Integration(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, gotAdvances, 1)
 	assert.Equal(t, int64(30000), gotAdvances[0].OutstandingMinor())
-	foreign, err := advances.GetByIDs(dbscope.WithTenant(ctx, stranger.DBTenant()), driverpayports.GetPayAdvancesByIDsRequest{
-		TenantInfo: stranger,
-		IDs:        []pulid.ID{advance.ID},
-	})
+	foreign, err := advances.GetByIDs(
+		dbscope.WithTenant(ctx, stranger.DBTenant()),
+		driverpayports.GetPayAdvancesByIDsRequest{
+			TenantInfo: stranger,
+			IDs:        []pulid.ID{advance.ID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, foreign)
 

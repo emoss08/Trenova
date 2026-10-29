@@ -1,4 +1,4 @@
-package driverpay
+package recurringpay
 
 import (
 	"testing"

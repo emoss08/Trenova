@@ -16,7 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -59,17 +60,17 @@ func TestDriverPayTools_AreAlwaysAPersonsDecision(t *testing.T) {
 }
 
 type fakeAdvances struct {
-	advance     *driverpay.PayAdvance
-	issued      *driverpay.PayAdvance
+	advance     *payadvance.PayAdvance
+	issued      *payadvance.PayAdvance
 	writtenOff  pulid.ID
 	writeReason string
 }
 
 func (f *fakeAdvances) IssueAdvance(
 	_ context.Context,
-	entity *driverpay.PayAdvance,
+	entity *payadvance.PayAdvance,
 	_ *permissionports.RequestActor,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	f.issued = entity
 
 	return entity, nil
@@ -78,7 +79,7 @@ func (f *fakeAdvances) IssueAdvance(
 func (f *fakeAdvances) GetAdvance(
 	context.Context,
 	driverpayports.GetPayAdvanceByIDRequest,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	return f.advance, nil
 }
 
@@ -88,7 +89,7 @@ func (f *fakeAdvances) WriteOffAdvance(
 	advanceID pulid.ID,
 	reason string,
 	_ *permissionports.RequestActor,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	f.writtenOff, f.writeReason = advanceID, reason
 
 	return f.advance, nil
@@ -130,7 +131,7 @@ func TestIssuePayAdvance_RecordsOnlyOnceAPersonApproves(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	require.NotNil(t, advances.issued)
 	assert.Equal(t, int64(30000), advances.issued.AmountMinor)
-	assert.Equal(t, driverpay.AdvanceSourceEFSMoneyCode, advances.issued.Source)
+	assert.Equal(t, payadvance.AdvanceSourceEFSMoneyCode, advances.issued.Source)
 	assert.Equal(t, workerID, advances.issued.WorkerID)
 
 	raw[paytools.ParamAdvanceSource] = "Venmo"
@@ -143,9 +144,9 @@ func TestIssuePayAdvance_RecordsOnlyOnceAPersonApproves(t *testing.T) {
 func TestWriteOffPayAdvance_ShowsWhatIsForgiven(t *testing.T) {
 	t.Parallel()
 
-	advance := &driverpay.PayAdvance{
+	advance := &payadvance.PayAdvance{
 		ID:             pulid.MustNew("padv_"),
-		Status:         driverpay.AdvanceStatusPartiallyRecovered,
+		Status:         payadvance.AdvanceStatusPartiallyRecovered,
 		AmountMinor:    30000,
 		RecoveredMinor: 10000,
 		CurrencyCode:   "USD",
@@ -174,12 +175,12 @@ func TestWriteOffPayAdvance_ShowsWhatIsForgiven(t *testing.T) {
 	assert.Equal(t, "Advance MC-55012", change.Label)
 	assert.Equal(
 		t,
-		string(driverpay.AdvanceStatusWrittenOff),
+		string(payadvance.AdvanceStatusWrittenOff),
 		agenttoolstest.FieldByPath(t, change, changepreview.FieldStatus).After,
 	)
 	require.NotNil(t, change.Money)
 	assert.True(t, change.Money.Delta.Decimal.Equal(decimal.NewFromInt(-200)))
-	assert.Equal(t, driverpay.AdvanceStatusPartiallyRecovered, advance.Status)
+	assert.Equal(t, payadvance.AdvanceStatusPartiallyRecovered, advance.Status)
 
 	require.ErrorIs(
 		t,
@@ -191,17 +192,17 @@ func TestWriteOffPayAdvance_ShowsWhatIsForgiven(t *testing.T) {
 	assert.Equal(t, "Driver left the company", advances.writeReason)
 
 	advance.RecoveredMinor = 30000
-	advance.Status = driverpay.AdvanceStatusRecovered
+	advance.Status = payadvance.AdvanceStatusRecovered
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeEscrow struct {
-	account  *driverpay.EscrowAccount
+	account  *payescrow.EscrowAccount
 	active   bool
-	opened   *driverpay.EscrowAccount
-	updated  *driverpay.EscrowAccount
+	opened   *payescrow.EscrowAccount
+	updated  *payescrow.EscrowAccount
 	adjusted *driverpayservice.EscrowAdjustmentRequest
 	closed   pulid.ID
 }
@@ -209,16 +210,16 @@ type fakeEscrow struct {
 func (f *fakeEscrow) GetEscrowAccount(
 	context.Context,
 	driverpayports.GetEscrowAccountByIDRequest,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	return f.account, nil
 }
 
 func (f *fakeEscrow) PlanOpenEscrowAccount(
 	_ context.Context,
-	entity *driverpay.EscrowAccount,
+	entity *payescrow.EscrowAccount,
 	now int64,
 ) error {
-	entity.Status = driverpay.EscrowAccountStatusActive
+	entity.Status = payescrow.EscrowAccountStatusActive
 	if entity.OpenedDate == 0 {
 		entity.OpenedDate = now
 	}
@@ -235,9 +236,9 @@ func (f *fakeEscrow) PlanOpenEscrowAccount(
 
 func (f *fakeEscrow) OpenEscrowAccount(
 	_ context.Context,
-	entity *driverpay.EscrowAccount,
+	entity *payescrow.EscrowAccount,
 	_ *permissionports.RequestActor,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	f.opened = entity
 
 	return entity, nil
@@ -245,16 +246,16 @@ func (f *fakeEscrow) OpenEscrowAccount(
 
 func (f *fakeEscrow) PlanUpdateEscrowAccount(
 	context.Context,
-	*driverpay.EscrowAccount,
-) (*driverpay.EscrowAccount, error) {
+	*payescrow.EscrowAccount,
+) (*payescrow.EscrowAccount, error) {
 	return f.account, nil
 }
 
 func (f *fakeEscrow) UpdateEscrowAccount(
 	_ context.Context,
-	entity *driverpay.EscrowAccount,
+	entity *payescrow.EscrowAccount,
 	_ *permissionports.RequestActor,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	f.updated = entity
 
 	return entity, nil
@@ -264,7 +265,7 @@ func (f *fakeEscrow) AdjustEscrowAccount(
 	_ context.Context,
 	req *driverpayservice.EscrowAdjustmentRequest,
 	_ *permissionports.RequestActor,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	f.adjusted = req
 
 	return f.account, nil
@@ -275,17 +276,17 @@ func (f *fakeEscrow) CloseEscrowAccount(
 	_ pagination.TenantInfo,
 	accountID pulid.ID,
 	_ *permissionports.RequestActor,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	f.closed = accountID
 
 	return f.account, nil
 }
 
-func activeEscrow() *driverpay.EscrowAccount {
-	return &driverpay.EscrowAccount{
+func activeEscrow() *payescrow.EscrowAccount {
+	return &payescrow.EscrowAccount{
 		ID:                 pulid.MustNew("escr_"),
 		WorkerID:           pulid.MustNew("wrk_"),
-		Status:             driverpay.EscrowAccountStatusActive,
+		Status:             payescrow.EscrowAccountStatusActive,
 		BalanceMinor:       80000,
 		TargetAmountMinor:  250000,
 		AnnualInterestRate: decimal.RequireFromString("2"),
@@ -403,7 +404,7 @@ func TestCloseEscrowAccount_RefundsWhatRemains(t *testing.T) {
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(
 		t,
-		string(driverpay.EscrowAccountStatusClosed),
+		string(payescrow.EscrowAccountStatusClosed),
 		agenttoolstest.FieldByPath(t, change, changepreview.FieldStatus).After,
 	)
 	require.NotNil(t, change.Money)
@@ -417,6 +418,6 @@ func TestCloseEscrowAccount_RefundsWhatRemains(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.Equal(t, escrow.account.ID, escrow.closed)
 
-	escrow.account.Status = driverpay.EscrowAccountStatusClosed
+	escrow.account.Status = payescrow.EscrowAccountStatusClosed
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
 }

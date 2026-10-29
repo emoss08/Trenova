@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -567,7 +568,7 @@ func (s *Service) buildEarningLines(
 
 	lines = make([]*driversettlement.SettlementLine, 0, len(earnings))
 	for _, earning := range earnings {
-		if earning.Frequency == driverpay.EarningFrequencyMonthly &&
+		if earning.Frequency == recurringpay.EarningFrequencyMonthly &&
 			!s.monthlyRecurrenceApplies(ctx, req) {
 			continue
 		}
@@ -621,7 +622,7 @@ func (s *Service) buildDeductionLines(
 	lines := make([]*driversettlement.SettlementLine, 0, len(deductions))
 	var capped bool
 	for _, deduction := range deductions {
-		if deduction.Frequency == driverpay.DeductionFrequencyMonthly &&
+		if deduction.Frequency == recurringpay.DeductionFrequencyMonthly &&
 			!s.monthlyRecurrenceApplies(ctx, req) {
 			continue
 		}

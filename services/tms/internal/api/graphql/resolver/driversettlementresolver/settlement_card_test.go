@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -39,13 +40,13 @@ func (d *disputesBySettlement) ListBySettlementIDs(
 type advancesByID struct {
 	driverpayports.PayAdvanceRepository
 
-	advances []*driverpay.PayAdvance
+	advances []*payadvance.PayAdvance
 }
 
 func (a *advancesByID) GetByIDs(
 	_ context.Context,
 	_ driverpayports.GetPayAdvancesByIDsRequest,
-) ([]*driverpay.PayAdvance, error) {
+) ([]*payadvance.PayAdvance, error) {
 	return a.advances, nil
 }
 
@@ -171,9 +172,9 @@ func TestAnAdvanceIsReadOnlyForSomeoneWhoMayReadPayAdvances(t *testing.T) {
 	t.Parallel()
 
 	advanceID := pulid.MustNew("padv_")
-	advance := &driverpay.PayAdvance{ID: advanceID, AmountMinor: 30000, RecoveredMinor: 20000}
+	advance := &payadvance.PayAdvance{ID: advanceID, AmountMinor: 30000, RecoveredMinor: 20000}
 	factory := loaders.NewPayAdvanceByIDLoaderFactory(loaders.PayAdvanceByIDLoaderFactoryParams{
-		PayAdvanceRepo: &advancesByID{advances: []*driverpay.PayAdvance{advance}},
+		PayAdvanceRepo: &advancesByID{advances: []*payadvance.PayAdvance{advance}},
 	})
 	ctx := factory.Attach(signedIn(t.Context()), cardTenant)
 	group := &driversettlement.LineGroup{AdvanceID: &advanceID}

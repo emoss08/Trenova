@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -16,21 +17,21 @@ import (
 
 type fakeBenefitRepo struct {
 	driverpayports.BenefitRepository
-	plan        *driverpay.BenefitPlan
-	enrollments []*driverpay.WorkerBenefitEnrollment
+	plan        *paybenefit.BenefitPlan
+	enrollments []*paybenefit.WorkerBenefitEnrollment
 }
 
 func (r *fakeBenefitRepo) GetPlanByID(
 	_ context.Context,
 	_ *driverpayports.GetBenefitPlanByIDRequest,
-) (*driverpay.BenefitPlan, error) {
+) (*paybenefit.BenefitPlan, error) {
 	return r.plan, nil
 }
 
 func (r *fakeBenefitRepo) CreateEnrollment(
 	_ context.Context,
-	entity *driverpay.WorkerBenefitEnrollment,
-) (*driverpay.WorkerBenefitEnrollment, error) {
+	entity *paybenefit.WorkerBenefitEnrollment,
+) (*paybenefit.WorkerBenefitEnrollment, error) {
 	entity.ID = pulid.MustNew("wben_")
 	r.enrollments = append(r.enrollments, entity)
 	return entity, nil
@@ -39,7 +40,7 @@ func (r *fakeBenefitRepo) CreateEnrollment(
 func (r *fakeBenefitRepo) GetEnrollmentByID(
 	_ context.Context,
 	req *driverpayports.GetBenefitEnrollmentByIDRequest,
-) (*driverpay.WorkerBenefitEnrollment, error) {
+) (*paybenefit.WorkerBenefitEnrollment, error) {
 	for _, row := range r.enrollments {
 		if row.ID == req.ID {
 			return row, nil
@@ -50,15 +51,15 @@ func (r *fakeBenefitRepo) GetEnrollmentByID(
 
 func (r *fakeBenefitRepo) UpdateEnrollment(
 	_ context.Context,
-	entity *driverpay.WorkerBenefitEnrollment,
-) (*driverpay.WorkerBenefitEnrollment, error) {
+	entity *paybenefit.WorkerBenefitEnrollment,
+) (*paybenefit.WorkerBenefitEnrollment, error) {
 	return entity, nil
 }
 
 func (r *fakeBenefitRepo) ListEnrollments(
 	_ context.Context,
 	_ *driverpayports.ListBenefitEnrollmentsRequest,
-) ([]*driverpay.WorkerBenefitEnrollment, error) {
+) ([]*paybenefit.WorkerBenefitEnrollment, error) {
 	return r.enrollments, nil
 }
 
@@ -68,14 +69,14 @@ func (assertNotFound) Error() string { return "not found" }
 
 type fakeDeductionRepo struct {
 	driverpayports.RecurringDeductionRepository
-	created []*driverpay.RecurringDeduction
-	updated []*driverpay.RecurringDeduction
+	created []*recurringpay.RecurringDeduction
+	updated []*recurringpay.RecurringDeduction
 }
 
 func (r *fakeDeductionRepo) Create(
 	_ context.Context,
-	entity *driverpay.RecurringDeduction,
-) (*driverpay.RecurringDeduction, error) {
+	entity *recurringpay.RecurringDeduction,
+) (*recurringpay.RecurringDeduction, error) {
 	entity.ID = pulid.MustNew("rded_")
 	r.created = append(r.created, entity)
 	return entity, nil
@@ -84,7 +85,7 @@ func (r *fakeDeductionRepo) Create(
 func (r *fakeDeductionRepo) GetByID(
 	_ context.Context,
 	req driverpayports.GetRecurringDeductionByIDRequest,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	for _, row := range r.created {
 		if row.ID == req.ID {
 			return row, nil
@@ -95,8 +96,8 @@ func (r *fakeDeductionRepo) GetByID(
 
 func (r *fakeDeductionRepo) Update(
 	_ context.Context,
-	entity *driverpay.RecurringDeduction,
-) (*driverpay.RecurringDeduction, error) {
+	entity *recurringpay.RecurringDeduction,
+) (*recurringpay.RecurringDeduction, error) {
 	r.updated = append(r.updated, entity)
 	return entity, nil
 }
@@ -106,7 +107,7 @@ func benefitTenant() pagination.TenantInfo {
 }
 
 func newBenefitService(
-	plan *driverpay.BenefitPlan,
+	plan *paybenefit.BenefitPlan,
 ) (*benefitsservice.Service, *fakeBenefitRepo, *fakeDeductionRepo) {
 	repo := &fakeBenefitRepo{plan: plan}
 	deductions := &fakeDeductionRepo{}
@@ -117,13 +118,13 @@ func newBenefitService(
 	return svc, repo, deductions
 }
 
-func testPlan() *driverpay.BenefitPlan {
-	return &driverpay.BenefitPlan{
+func testPlan() *paybenefit.BenefitPlan {
+	return &paybenefit.BenefitPlan{
 		ID:                "bplan_1",
 		Status:            domaintypes.StatusActive,
 		Code:              "MED-PPO",
 		Name:              "Medical PPO",
-		PlanType:          driverpay.BenefitPlanMedical,
+		PlanType:          paybenefit.BenefitPlanMedical,
 		PayCodeID:         "pcod_1",
 		PlanYear:          2026,
 		EmployeeCostMinor: 12_000,
@@ -144,18 +145,18 @@ func TestEnroll_OpensAnOrdinaryDeduction(t *testing.T) {
 		TenantInfo:   benefitTenant(),
 		WorkerID:     "wrk_1",
 		PlanID:       "bplan_1",
-		CoverageTier: driverpay.TierEmployee,
+		CoverageTier: paybenefit.TierEmployee,
 		UserID:       "usr_1",
 	})
 	require.NoError(t, err)
 
 	require.Len(t, deductions.created, 1)
 	deduction := deductions.created[0]
-	assert.Equal(t, driverpay.DeductionKindBenefit, deduction.Kind)
+	assert.Equal(t, recurringpay.DeductionKindBenefit, deduction.Kind)
 	assert.Equal(t, int64(12_000), deduction.AmountMinor)
 	assert.Equal(t, "pcod_1", deduction.PayCodeID.String())
 	// A benefit is taken after a garnishment; the priority is what says so.
-	assert.Equal(t, driverpay.DeductionKindBenefit.DefaultPriority(), deduction.Priority)
+	assert.Equal(t, recurringpay.DeductionKindBenefit.DefaultPriority(), deduction.Priority)
 	assert.Equal(t, deduction.ID, enrollment.RecurringDeductionID)
 	// No cap: a contribution runs for as long as the cover does, and the
 	// enrollment ending is what stops it.
@@ -171,7 +172,7 @@ func TestEnroll_ScalesTheCostToTheTier(t *testing.T) {
 		TenantInfo:   benefitTenant(),
 		WorkerID:     "wrk_1",
 		PlanID:       "bplan_1",
-		CoverageTier: driverpay.TierFamily,
+		CoverageTier: paybenefit.TierFamily,
 		UserID:       "usr_1",
 	})
 	require.NoError(t, err)
@@ -192,7 +193,7 @@ func TestEnroll_HonoursAnExplicitPrice(t *testing.T) {
 		TenantInfo:        benefitTenant(),
 		WorkerID:          "wrk_1",
 		PlanID:            "bplan_1",
-		CoverageTier:      driverpay.TierFamily,
+		CoverageTier:      paybenefit.TierFamily,
 		EmployeeCostMinor: 28_500,
 		UserID:            "usr_1",
 	})
@@ -220,7 +221,7 @@ func TestEnroll_WaiverTakesNothingAndCostsNothing(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, driverpay.EnrollmentWaived, enrollment.Status)
+	assert.Equal(t, paybenefit.EnrollmentWaived, enrollment.Status)
 	assert.Equal(t, int64(0), enrollment.EmployeeCostMinor)
 	assert.Equal(t, int64(0), enrollment.EmployerCostMinor)
 	assert.True(t, enrollment.RecurringDeductionID.IsNil())
@@ -269,12 +270,12 @@ func TestEndEnrollment_StopsTheContribution(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, driverpay.EnrollmentEnded, ended.Status)
+	assert.Equal(t, paybenefit.EnrollmentEnded, ended.Status)
 	require.NotNil(t, ended.EffectiveTo)
 	assert.Equal(t, endsAt, *ended.EffectiveTo)
 
 	require.Len(t, deductions.updated, 1)
-	assert.Equal(t, driverpay.DeductionStatusCompleted, deductions.updated[0].Status)
+	assert.Equal(t, recurringpay.DeductionStatusCompleted, deductions.updated[0].Status)
 	// The end date is set as well as the status, so a settlement generated for
 	// an earlier period still sees it as live for that period.
 	require.NotNil(t, deductions.updated[0].EndDate)

@@ -74,7 +74,6 @@ debt:
   services/tms/internal/modules/rating/domain/ratematrix: 1508
   services/tms/internal/modules/settlement/app/carriersettlementservice: 4631
   services/tms/internal/modules/settlement/app/driversettlementservice: 6407
-  services/tms/internal/modules/settlement/domain/driverpay: 2225
   services/tms/internal/modules/workforce/app/driverportalservice: 3569
   services/tms/internal/modules/workforce/domain/worker: 14287
   services/tms/internal/modules/workspace/app/reporting: 3391

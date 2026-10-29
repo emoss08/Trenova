@@ -2,7 +2,7 @@ package benefitsresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,7 +14,7 @@ type benefitPlanFields struct {
 	code              string
 	name              string
 	description       *string
-	planType          driverpay.BenefitPlanType
+	planType          paybenefit.BenefitPlanType
 	carrier           *string
 	policyNumber      *string
 	payCodeID         string
@@ -28,7 +28,7 @@ type benefitPlanFields struct {
 func benefitPlanFromInput(
 	f *benefitPlanFields,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.BenefitPlan, error) {
+) (*paybenefit.BenefitPlan, error) {
 	payCodeID, err := pulid.MustParse(f.payCodeID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -38,7 +38,7 @@ func benefitPlanFromInput(
 		)
 	}
 
-	entity := &driverpay.BenefitPlan{
+	entity := &paybenefit.BenefitPlan{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		Code:              f.code,

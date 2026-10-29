@@ -3,7 +3,7 @@ package driverpayports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -37,10 +37,10 @@ type ListBenefitEnrollmentsRequest struct {
 	// wants; a benefits administrator reading somebody's history wants them all.
 	OpenOnly bool `json:"openOnly"`
 	// Statuses narrows to the states named; empty means every state.
-	Statuses      []driverpay.BenefitEnrollmentStatus `json:"statuses"`
-	IncludePlan   bool                                `json:"includePlan"`
-	IncludeWorker bool                                `json:"includeWorker"`
-	Limit         int                                 `json:"limit"`
+	Statuses      []paybenefit.BenefitEnrollmentStatus `json:"statuses"`
+	IncludePlan   bool                                 `json:"includePlan"`
+	IncludeWorker bool                                 `json:"includeWorker"`
+	Limit         int                                  `json:"limit"`
 }
 
 type GetBenefitEnrollmentByIDRequest struct {
@@ -62,23 +62,23 @@ type BenefitCostRow struct {
 }
 
 type BenefitRepository interface {
-	ListPlans(ctx context.Context, req *ListBenefitPlansRequest) ([]*driverpay.BenefitPlan, error)
+	ListPlans(ctx context.Context, req *ListBenefitPlansRequest) ([]*paybenefit.BenefitPlan, error)
 	PlanSelectOptions(
 		ctx context.Context,
 		req *BenefitPlanSelectOptionsRequest,
-	) (*pagination.ListResult[*driverpay.BenefitPlan], error)
+	) (*pagination.ListResult[*paybenefit.BenefitPlan], error)
 	GetPlanByID(
 		ctx context.Context,
 		req *GetBenefitPlanByIDRequest,
-	) (*driverpay.BenefitPlan, error)
+	) (*paybenefit.BenefitPlan, error)
 	CreatePlan(
 		ctx context.Context,
-		entity *driverpay.BenefitPlan,
-	) (*driverpay.BenefitPlan, error)
+		entity *paybenefit.BenefitPlan,
+	) (*paybenefit.BenefitPlan, error)
 	UpdatePlan(
 		ctx context.Context,
-		entity *driverpay.BenefitPlan,
-	) (*driverpay.BenefitPlan, error)
+		entity *paybenefit.BenefitPlan,
+	) (*paybenefit.BenefitPlan, error)
 	// CountPlanEnrollments answers how many people are on a plan, which is what
 	// stops one being archived out from under them.
 	CountPlanEnrollments(
@@ -90,19 +90,19 @@ type BenefitRepository interface {
 	ListEnrollments(
 		ctx context.Context,
 		req *ListBenefitEnrollmentsRequest,
-	) ([]*driverpay.WorkerBenefitEnrollment, error)
+	) ([]*paybenefit.WorkerBenefitEnrollment, error)
 	GetEnrollmentByID(
 		ctx context.Context,
 		req *GetBenefitEnrollmentByIDRequest,
-	) (*driverpay.WorkerBenefitEnrollment, error)
+	) (*paybenefit.WorkerBenefitEnrollment, error)
 	CreateEnrollment(
 		ctx context.Context,
-		entity *driverpay.WorkerBenefitEnrollment,
-	) (*driverpay.WorkerBenefitEnrollment, error)
+		entity *paybenefit.WorkerBenefitEnrollment,
+	) (*paybenefit.WorkerBenefitEnrollment, error)
 	UpdateEnrollment(
 		ctx context.Context,
-		entity *driverpay.WorkerBenefitEnrollment,
-	) (*driverpay.WorkerBenefitEnrollment, error)
+		entity *paybenefit.WorkerBenefitEnrollment,
+	) (*paybenefit.WorkerBenefitEnrollment, error)
 
 	BenefitCosts(
 		ctx context.Context,

@@ -29,6 +29,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -749,7 +754,7 @@ func (s *DriverPaySeed) ensurePayAssignments(
 			return fmt.Errorf("pay profile %s not found", profileName)
 		}
 
-		assignment := &driverpay.WorkerPayAssignment{
+		assignment := &payassignment.WorkerPayAssignment{
 			ID:             pulid.MustNew("wpa_"),
 			BusinessUnitID: refs.buID,
 			OrganizationID: refs.orgID,
@@ -779,7 +784,7 @@ func (s *DriverPaySeed) ensureEscrowAccounts(
 	sr *seed.Run,
 	refs *payRefs,
 	workers map[string]*worker.Worker,
-) (map[string]*driverpay.EscrowAccount, error) {
+) (map[string]*payescrow.EscrowAccount, error) {
 	defs := []struct {
 		workerKey    string
 		targetMinor  int64
@@ -792,7 +797,7 @@ func (s *DriverPaySeed) ensureEscrowAccounts(
 
 	now := timeutils.NowUnix()
 	week := int64(7 * 86400)
-	accounts := make(map[string]*driverpay.EscrowAccount, len(defs))
+	accounts := make(map[string]*payescrow.EscrowAccount, len(defs))
 	created := 0
 
 	for _, def := range defs {
@@ -814,12 +819,12 @@ func (s *DriverPaySeed) ensureEscrowAccounts(
 			return nil, fmt.Errorf("check escrow account for %s: %w", def.workerKey, err)
 		}
 
-		account := &driverpay.EscrowAccount{
+		account := &payescrow.EscrowAccount{
 			ID:                 pulid.MustNew("escr_"),
 			BusinessUnitID:     refs.buID,
 			OrganizationID:     refs.orgID,
 			WorkerID:           w.ID,
-			Status:             driverpay.EscrowAccountStatusActive,
+			Status:             payescrow.EscrowAccountStatusActive,
 			TargetAmountMinor:  def.targetMinor,
 			BalanceMinor:       def.contribMinor * int64(def.contribCount),
 			AnnualInterestRate: decimal.NewFromFloat(2.5),
@@ -830,14 +835,14 @@ func (s *DriverPaySeed) ensureEscrowAccounts(
 			return nil, fmt.Errorf("insert escrow account for %s: %w", def.workerKey, err)
 		}
 
-		txs := make([]*driverpay.EscrowTransaction, 0, def.contribCount)
+		txs := make([]*payescrow.EscrowTransaction, 0, def.contribCount)
 		for i := range def.contribCount {
-			txs = append(txs, &driverpay.EscrowTransaction{
+			txs = append(txs, &payescrow.EscrowTransaction{
 				ID:                pulid.MustNew("esctx_"),
 				BusinessUnitID:    refs.buID,
 				OrganizationID:    refs.orgID,
 				EscrowAccountID:   account.ID,
-				Type:              driverpay.EscrowTransactionTypeContribution,
+				Type:              payescrow.EscrowTransactionTypeContribution,
 				AmountMinor:       def.contribMinor,
 				BalanceAfterMinor: def.contribMinor * int64(i+1),
 				OccurredDate:      now - (int64(def.contribCount-i) * week),
@@ -866,10 +871,10 @@ func ensurePayCodes(
 	db *keel.DB,
 	orgID, buID pulid.ID,
 ) (map[string]pulid.ID, error) {
-	defs := driverpay.SystemPayCodes()
-	rows := make([]*driverpay.PayCode, 0, len(defs))
+	defs := paycode.SystemPayCodes()
+	rows := make([]*paycode.PayCode, 0, len(defs))
 	for _, def := range defs {
-		rows = append(rows, &driverpay.PayCode{
+		rows = append(rows, &paycode.PayCode{
 			ID:                    pulid.MustNew("payc_"),
 			BusinessUnitID:        buID,
 			OrganizationID:        orgID,
@@ -915,9 +920,9 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 	sr *seed.Run,
 	refs *payRefs,
 	workers map[string]*worker.Worker,
-	escrows map[string]*driverpay.EscrowAccount,
+	escrows map[string]*payescrow.EscrowAccount,
 	payCodes map[string]pulid.ID,
-) (map[string]*driverpay.RecurringDeduction, error) {
+) (map[string]*recurringpay.RecurringDeduction, error) {
 	count, err := driverpaydb.RecurringDeductions.AllTenants().Where(
 		driverpaydb.RecurringDeductions.OrganizationID.Eq(refs.orgID),
 		driverpaydb.RecurringDeductions.BusinessUnitID.Eq(refs.buID),
@@ -926,7 +931,7 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		return nil, fmt.Errorf("check existing recurring deductions: %w", err)
 	}
 	if count > 0 {
-		return make(map[string]*driverpay.RecurringDeduction), nil
+		return make(map[string]*recurringpay.RecurringDeduction), nil
 	}
 
 	now := timeutils.NowUnix()
@@ -935,8 +940,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 	type deductionDef struct {
 		workerKey     string
 		code          string
-		status        driverpay.DeductionStatus
-		frequency     driverpay.DeductionFrequency
+		status        recurringpay.DeductionStatus
+		frequency     recurringpay.DeductionFrequency
 		description   string
 		amountMinor   int64
 		capMinor      int64
@@ -948,8 +953,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerMike,
 			"TRKLEASE",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Kenworth T680 lease-purchase payment",
 			65000,
 			0,
@@ -959,8 +964,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerMike,
 			"INSUR",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Bobtail and physical damage insurance",
 			8600,
 			0,
@@ -970,8 +975,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerMike,
 			"ESCROW",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Maintenance escrow contribution",
 			10000,
 			0,
@@ -981,8 +986,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerMike,
 			"ELD",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyMonthly,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyMonthly,
 			"ELD subscription",
 			4500,
 			0,
@@ -992,8 +997,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerCarlos,
 			"TRKLEASE",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Peterbilt 579 lease-purchase payment",
 			72500,
 			5800000,
@@ -1003,8 +1008,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerCarlos,
 			"INSUR",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Occupational accident insurance",
 			9200,
 			0,
@@ -1014,8 +1019,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerCarlos,
 			"ESCROW",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Maintenance escrow contribution",
 			15000,
 			0,
@@ -1025,8 +1030,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerCarlos,
 			"FUELCARD",
-			driverpay.DeductionStatusPaused,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusPaused,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Fuel card balance repayment",
 			31000,
 			0,
@@ -1036,8 +1041,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerDavid,
 			"TRLLEASE",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Dry van trailer rental",
 			24000,
 			0,
@@ -1047,8 +1052,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerDavid,
 			"INSUR",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Occupational accident insurance",
 			8800,
 			0,
@@ -1058,8 +1063,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		{
 			payWorkerDavid,
 			"LOAN",
-			driverpay.DeductionStatusActive,
-			driverpay.DeductionFrequencyEverySettlement,
+			recurringpay.DeductionStatusActive,
+			recurringpay.DeductionFrequencyEverySettlement,
 			"Company loan repayment — tire replacement",
 			20000,
 			480000,
@@ -1068,8 +1073,8 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 		},
 	}
 
-	deductions := make(map[string]*driverpay.RecurringDeduction, len(defs))
-	rows := make([]*driverpay.RecurringDeduction, 0, len(defs))
+	deductions := make(map[string]*recurringpay.RecurringDeduction, len(defs))
+	rows := make([]*recurringpay.RecurringDeduction, 0, len(defs))
 
 	for _, def := range defs {
 		w, ok := workers[def.workerKey]
@@ -1082,7 +1087,7 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 			return nil, fmt.Errorf("pay code %s not found", def.code)
 		}
 
-		deduction := &driverpay.RecurringDeduction{
+		deduction := &recurringpay.RecurringDeduction{
 			ID:                  pulid.MustNew("rded_"),
 			BusinessUnitID:      refs.buID,
 			OrganizationID:      refs.orgID,
@@ -1096,7 +1101,7 @@ func (s *DriverPaySeed) ensureRecurringDeductions(
 			StartDate:           now - (270 * day),
 			CurrencyCode:        "USD",
 			CreatedByID:         refs.adminID,
-			Kind:                driverpay.DeductionKindStandard,
+			Kind:                recurringpay.DeductionKindStandard,
 			Priority:            100,
 		}
 		if def.capMinor > 0 {
@@ -1136,8 +1141,8 @@ func (s *DriverPaySeed) ensurePayAdvances(
 
 	defs := []struct {
 		workerKey      string
-		status         driverpay.AdvanceStatus
-		source         driverpay.AdvanceSource
+		status         payadvance.AdvanceStatus
+		source         payadvance.AdvanceSource
 		reference      string
 		issuedDaysAgo  int64
 		amountMinor    int64
@@ -1145,26 +1150,26 @@ func (s *DriverPaySeed) ensurePayAdvances(
 		notes          string
 	}{
 		{
-			payWorkerJohn, driverpay.AdvanceStatusOutstanding, driverpay.AdvanceSourceEFSMoneyCode,
+			payWorkerJohn, payadvance.AdvanceStatusOutstanding, payadvance.AdvanceSourceEFSMoneyCode,
 			"EFS-448211", 4, 20000, 0, "Fuel stop advance issued en route",
 		},
 		{
-			payWorkerCarlos, driverpay.AdvanceStatusPartiallyRecovered, driverpay.AdvanceSourceCash,
+			payWorkerCarlos, payadvance.AdvanceStatusPartiallyRecovered, payadvance.AdvanceSourceCash,
 			"", 45, 100000, 40000, "Cash advance for emergency trailer tire replacement",
 		},
 		{
-			payWorkerJane, driverpay.AdvanceStatusRecovered, driverpay.AdvanceSourceComdataCode,
+			payWorkerJane, payadvance.AdvanceStatusRecovered, payadvance.AdvanceSourceComdataCode,
 			"CMD-90321", 60, 15000, 15000, "",
 		},
 	}
 
-	rows := make([]*driverpay.PayAdvance, 0, len(defs))
+	rows := make([]*payadvance.PayAdvance, 0, len(defs))
 	for _, def := range defs {
 		w, ok := workers[def.workerKey]
 		if !ok {
 			continue
 		}
-		rows = append(rows, &driverpay.PayAdvance{
+		rows = append(rows, &payadvance.PayAdvance{
 			ID:             pulid.MustNew("padv_"),
 			BusinessUnitID: refs.buID,
 			OrganizationID: refs.orgID,
@@ -1667,8 +1672,8 @@ func (s *DriverPaySeed) createSettlementData(
 	sr *seed.Run,
 	refs *payRefs,
 	workers map[string]*worker.Worker,
-	escrows map[string]*driverpay.EscrowAccount,
-	deductions map[string]*driverpay.RecurringDeduction,
+	escrows map[string]*payescrow.EscrowAccount,
+	deductions map[string]*recurringpay.RecurringDeduction,
 	moves []paidMove,
 ) error {
 	bounds, err := s.resolvePeriod(ctx, db, refs)
@@ -2003,8 +2008,8 @@ func (s *DriverPaySeed) applyEscrowSettlementTx(
 	db *keel.DB,
 	sr *seed.Run,
 	refs *payRefs,
-	escrows map[string]*driverpay.EscrowAccount,
-	deductions map[string]*driverpay.RecurringDeduction,
+	escrows map[string]*payescrow.EscrowAccount,
+	deductions map[string]*recurringpay.RecurringDeduction,
 	settlements []*driversettlement.Settlement,
 ) error {
 	account, hasAccount := escrows[payWorkerMike]
@@ -2030,12 +2035,12 @@ func (s *DriverPaySeed) applyEscrowSettlementTx(
 	}
 
 	settlementID := mikeSettlement.ID
-	escTx := &driverpay.EscrowTransaction{
+	escTx := &payescrow.EscrowTransaction{
 		ID:                pulid.MustNew("esctx_"),
 		BusinessUnitID:    refs.buID,
 		OrganizationID:    refs.orgID,
 		EscrowAccountID:   account.ID,
-		Type:              driverpay.EscrowTransactionTypeContribution,
+		Type:              payescrow.EscrowTransactionTypeContribution,
 		AmountMinor:       deduction.AmountMinor,
 		BalanceAfterMinor: account.BalanceMinor,
 		OccurredDate:      timeutils.NowUnix(),

@@ -23,8 +23,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
@@ -429,7 +430,7 @@ func (r *MutationResolver) CancelMyPTO(ctx context.Context, id string) (*worker.
 	return r.DriverPortalService.CancelMyPTO(ctx, resolvercore.TenantInfo(authCtx), ptoID)
 }
 
-func (r *MutationResolver) SubmitMyExpense(ctx context.Context, input gqlmodel.SubmitMyExpenseInput) (*driverpay.Expense, error) {
+func (r *MutationResolver) SubmitMyExpense(ctx context.Context, input gqlmodel.SubmitMyExpenseInput) (*payexpense.Expense, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -458,7 +459,7 @@ func (r *MutationResolver) SubmitMyExpense(ctx context.Context, input gqlmodel.S
 	return r.DriverPortalService.SubmitMyExpense(ctx, resolvercore.TenantInfo(authCtx), req)
 }
 
-func (r *MutationResolver) CancelMyExpense(ctx context.Context, id string) (*driverpay.Expense, error) {
+func (r *MutationResolver) CancelMyExpense(ctx context.Context, id string) (*payexpense.Expense, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -470,7 +471,7 @@ func (r *MutationResolver) CancelMyExpense(ctx context.Context, id string) (*dri
 	return r.DriverPortalService.CancelMyExpense(ctx, resolvercore.TenantInfo(authCtx), expenseID)
 }
 
-func (r *MutationResolver) ReviewDriverExpense(ctx context.Context, input gqlmodel.ReviewDriverExpenseInput) (*driverpay.Expense, error) {
+func (r *MutationResolver) ReviewDriverExpense(ctx context.Context, input gqlmodel.ReviewDriverExpenseInput) (*payexpense.Expense, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverExpense, permission.OpApprove)
 	if err != nil {
 		return nil, err
@@ -766,7 +767,7 @@ func (r *QueryResolver) MyEscrow(ctx context.Context) (*driverportalservice.Port
 	return r.DriverPortalService.MyEscrow(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyAdvances(ctx context.Context) ([]*driverpay.PayAdvance, error) {
+func (r *QueryResolver) MyAdvances(ctx context.Context) ([]*payadvance.PayAdvance, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -885,7 +886,7 @@ func (r *QueryResolver) MyLeave(ctx context.Context) (*driverportalservice.Porta
 	return r.DriverPortalService.MyLeave(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) MyExpenses(ctx context.Context) ([]*driverpay.Expense, error) {
+func (r *QueryResolver) MyExpenses(ctx context.Context) ([]*payexpense.Expense, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -1065,7 +1066,7 @@ func (r *QueryResolver) DriverExpenses(ctx context.Context, input gqlmodel.DataT
 	return driverExpenseConnectionToModel(result)
 }
 
-func (r *QueryResolver) DriverExpense(ctx context.Context, id string) (*driverpay.Expense, error) {
+func (r *QueryResolver) DriverExpense(ctx context.Context, id string) (*payexpense.Expense, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverExpense, permission.OpRead)
 	if err != nil {
 		return nil, err

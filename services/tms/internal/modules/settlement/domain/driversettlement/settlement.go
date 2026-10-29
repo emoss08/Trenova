@@ -3,17 +3,17 @@ package driversettlement
 import (
 	"context"
 
-	"github.com/emoss08/trenova/shared/money"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
@@ -124,7 +124,7 @@ type SettlementLine struct {
 
 	Settlement *Settlement        `json:"settlement,omitempty" keel:"belongs:settlement_id"`
 	Shipment   *shipment.Shipment `json:"shipment,omitempty"   keel:"belongs:shipment_id"`
-	PayCode    *driverpay.PayCode `json:"payCode,omitempty"    keel:"belongs:pay_code_id"`
+	PayCode    *paycode.PayCode   `json:"payCode,omitempty"    keel:"belongs:pay_code_id"`
 }
 
 func (s *Settlement) Validate(multiErr *errortypes.MultiError) {

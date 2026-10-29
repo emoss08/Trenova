@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	_ "github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	_ "github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -225,7 +225,7 @@ func (h *Handler) uploadLoadDocument(c *gin.Context) {
 // @Produce json
 // @Param expenseID path string true "Expense ID"
 // @Param file formData file true "Receipt image"
-// @Success 200 {object} driverpay.Expense
+// @Success 200 {object} payexpense.Expense
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail
 // @Router /portal/expenses/{expenseID}/receipt [post]

@@ -3,6 +3,12 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
@@ -1726,7 +1732,7 @@ type BenefitPlanInput struct {
 	Code              string                    `json:"code"`
 	Name              string                    `json:"name"`
 	Description       *string                   `json:"description,omitempty"`
-	PlanType          driverpay.BenefitPlanType `json:"planType"`
+	PlanType          paybenefit.BenefitPlanType `json:"planType"`
 	Carrier           *string                   `json:"carrier,omitempty"`
 	PolicyNumber      *string                   `json:"policyNumber,omitempty"`
 	PayCodeID         string                    `json:"payCodeId"`
@@ -2761,7 +2767,7 @@ type CreateMyLoadCommentInput struct {
 }
 
 type CreatePayCodeInput struct {
-	Direction             driverpay.PayCodeDirection `json:"direction"`
+	Direction             paycode.PayCodeDirection `json:"direction"`
 	Code                  string                     `json:"code"`
 	Name                  string                     `json:"name"`
 	Description           *string                    `json:"description,omitempty"`
@@ -2798,7 +2804,7 @@ type CreateRecurringDeductionInput struct {
 	// When true and no escrow account is given, the deduction links to the driver's
 	// active escrow account and posts as an escrow contribution.
 	EscrowContribution *bool                         `json:"escrowContribution,omitempty"`
-	Frequency          *driverpay.DeductionFrequency `json:"frequency,omitempty"`
+	Frequency          *recurringpay.DeductionFrequency `json:"frequency,omitempty"`
 	Description        string                        `json:"description"`
 	AmountMinor        int                           `json:"amountMinor"`
 	TotalCapMinor      *int                          `json:"totalCapMinor,omitempty"`
@@ -2810,7 +2816,7 @@ type CreateRecurringDeductionInput struct {
 type CreateRecurringEarningInput struct {
 	WorkerID      string                      `json:"workerId"`
 	PayCodeID     string                      `json:"payCodeId"`
-	Frequency     *driverpay.EarningFrequency `json:"frequency,omitempty"`
+	Frequency     *recurringpay.EarningFrequency `json:"frequency,omitempty"`
 	Description   string                      `json:"description"`
 	AmountMinor   int                         `json:"amountMinor"`
 	TotalCapMinor *int                        `json:"totalCapMinor,omitempty"`
@@ -4441,7 +4447,7 @@ type DriverExpenseConnection struct {
 }
 
 type DriverExpenseEdge struct {
-	Node   *driverpay.Expense `json:"node"`
+	Node   *payexpense.Expense `json:"node"`
 	Cursor string             `json:"cursor"`
 }
 
@@ -5002,7 +5008,7 @@ type EndWorkerPayAssignmentInput struct {
 type EnrollBenefitInput struct {
 	WorkerID      string                  `json:"workerId"`
 	BenefitPlanID string                  `json:"benefitPlanId"`
-	CoverageTier  *driverpay.CoverageTier `json:"coverageTier,omitempty"`
+	CoverageTier  *paybenefit.CoverageTier `json:"coverageTier,omitempty"`
 	// Records a decision not to take the cover. A waiver still produces an
 	// enrollment, because "declined" and "nobody asked" are different facts and only
 	// one of them is a problem at audit.
@@ -5094,7 +5100,7 @@ type EscrowAccountConnection struct {
 }
 
 type EscrowAccountEdge struct {
-	Node   *driverpay.EscrowAccount `json:"node"`
+	Node   *payescrow.EscrowAccount `json:"node"`
 	Cursor string                   `json:"cursor"`
 }
 
@@ -6459,7 +6465,7 @@ type IssueDisciplinaryActionInput struct {
 
 type IssuePayAdvanceInput struct {
 	WorkerID     string                  `json:"workerId"`
-	Source       driverpay.AdvanceSource `json:"source"`
+	Source       payadvance.AdvanceSource `json:"source"`
 	Reference    *string                 `json:"reference,omitempty"`
 	IssuedDate   int                     `json:"issuedDate"`
 	AmountMinor  int                     `json:"amountMinor"`
@@ -7099,7 +7105,7 @@ type PayAdvanceConnection struct {
 }
 
 type PayAdvanceEdge struct {
-	Node   *driverpay.PayAdvance `json:"node"`
+	Node   *payadvance.PayAdvance `json:"node"`
 	Cursor string                `json:"cursor"`
 }
 
@@ -7112,7 +7118,7 @@ type PayCodeConnection struct {
 }
 
 type PayCodeEdge struct {
-	Node   *driverpay.PayCode `json:"node"`
+	Node   *paycode.PayCode `json:"node"`
 	Cursor string             `json:"cursor"`
 }
 
@@ -7857,7 +7863,7 @@ type RecurringDeductionConnection struct {
 }
 
 type RecurringDeductionEdge struct {
-	Node   *driverpay.RecurringDeduction `json:"node"`
+	Node   *recurringpay.RecurringDeduction `json:"node"`
 	Cursor string                        `json:"cursor"`
 }
 
@@ -7870,7 +7876,7 @@ type RecurringEarningConnection struct {
 }
 
 type RecurringEarningEdge struct {
-	Node   *driverpay.RecurringEarning `json:"node"`
+	Node   *recurringpay.RecurringEarning `json:"node"`
 	Cursor string                      `json:"cursor"`
 }
 
@@ -11693,7 +11699,7 @@ type UpdateBenefitPlanInput struct {
 	Code              string                    `json:"code"`
 	Name              string                    `json:"name"`
 	Description       *string                   `json:"description,omitempty"`
-	PlanType          driverpay.BenefitPlanType `json:"planType"`
+	PlanType          paybenefit.BenefitPlanType `json:"planType"`
 	Carrier           *string                   `json:"carrier,omitempty"`
 	PolicyNumber      *string                   `json:"policyNumber,omitempty"`
 	PayCodeID         string                    `json:"payCodeId"`
@@ -11989,8 +11995,8 @@ type UpdateRecurringDeductionInput struct {
 	WorkerID        string                       `json:"workerId"`
 	PayCodeID       string                       `json:"payCodeId"`
 	EscrowAccountID *string                      `json:"escrowAccountId,omitempty"`
-	Status          driverpay.DeductionStatus    `json:"status"`
-	Frequency       driverpay.DeductionFrequency `json:"frequency"`
+	Status          recurringpay.DeductionStatus    `json:"status"`
+	Frequency       recurringpay.DeductionFrequency `json:"frequency"`
 	Description     string                       `json:"description"`
 	AmountMinor     int                          `json:"amountMinor"`
 	TotalCapMinor   *int                         `json:"totalCapMinor,omitempty"`
@@ -12004,8 +12010,8 @@ type UpdateRecurringEarningInput struct {
 	Version       int                        `json:"version"`
 	WorkerID      string                     `json:"workerId"`
 	PayCodeID     string                     `json:"payCodeId"`
-	Status        driverpay.EarningStatus    `json:"status"`
-	Frequency     driverpay.EarningFrequency `json:"frequency"`
+	Status        recurringpay.EarningStatus    `json:"status"`
+	Frequency     recurringpay.EarningFrequency `json:"frequency"`
 	Description   string                     `json:"description"`
 	AmountMinor   int                        `json:"amountMinor"`
 	TotalCapMinor *int                       `json:"totalCapMinor,omitempty"`

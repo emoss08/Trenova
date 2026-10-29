@@ -1,9 +1,10 @@
-package driverpay
+package payassignment
 
 import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -39,8 +40,8 @@ type WorkerPayAssignment struct {
 	CreatedAt      int64           `json:"createdAt"      keel:"created_at,autocreate"`
 	UpdatedAt      int64           `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Worker     *worker.Worker `json:"worker,omitempty"     keel:"belongs:worker_id"`
-	PayProfile *PayProfile    `json:"payProfile,omitempty" keel:"belongs:pay_profile_id"`
+	Worker     *worker.Worker        `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	PayProfile *driverpay.PayProfile `json:"payProfile,omitempty" keel:"belongs:pay_profile_id"`
 }
 
 func (a *WorkerPayAssignment) Validate(multiErr *errortypes.MultiError) {

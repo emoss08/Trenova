@@ -1,4 +1,4 @@
-package driverpay
+package paycode
 
 import (
 	"testing"

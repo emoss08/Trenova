@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ type fakeDriverPayReviews struct {
 
 	guard   *agenttoolstest.WriteGuard
 	dispute *driversettlement.Dispute
-	expense *driverpay.Expense
+	expense *payexpense.Expense
 	draft   *driversettlement.Settlement
 
 	startedReview []pulid.ID
@@ -48,10 +48,10 @@ func newFakeDriverPayReviews() *fakeDriverPayReviews {
 			Description: "Detention at the Joliet DC was not paid",
 			Version:     1,
 		},
-		expense: &driverpay.Expense{
+		expense: &payexpense.Expense{
 			ID:           pulid.MustNew("dexp_"),
 			WorkerID:     workerID,
-			Status:       driverpay.ExpenseStatusPending,
+			Status:       payexpense.ExpenseStatusPending,
 			AmountMinor:  4_250,
 			CurrencyCode: "USD",
 			Description:  "Lumper fee",
@@ -142,12 +142,12 @@ func (f *fakeDriverPayReviews) PlanReviewExpense(
 			"A note is required when rejecting an expense so the driver knows why")
 	}
 	after := *f.expense
-	after.Status = driverpay.ExpenseStatusRejected
+	after.Status = payexpense.ExpenseStatusRejected
 	plan := &driversettlementservice.ReviewExpensePlan{
 		ExpenseChange: driversettlementservice.ExpenseChange{Before: f.expense, After: &after},
 	}
 	if req.Approve {
-		after.Status = driverpay.ExpenseStatusReimbursed
+		after.Status = payexpense.ExpenseStatusReimbursed
 	}
 	return plan, nil
 }
@@ -156,7 +156,7 @@ func (f *fakeDriverPayReviews) ReviewExpense(
 	_ context.Context,
 	req *driversettlementservice.ReviewExpenseRequest,
 	_ *permissionports.RequestActor,
-) (*driverpay.Expense, error) {
+) (*payexpense.Expense, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -241,8 +242,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 	defs := []struct {
 		workerKey   string
 		code        string
-		status      driverpay.EarningStatus
-		frequency   driverpay.EarningFrequency
+		status      recurringpay.EarningStatus
+		frequency   recurringpay.EarningFrequency
 		description string
 		amountMinor int64
 		capMinor    int64
@@ -251,8 +252,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		{
 			payWorkerJohn,
 			"PERDIEM",
-			driverpay.EarningStatusActive,
-			driverpay.EarningFrequencyEverySettlement,
+			recurringpay.EarningStatusActive,
+			recurringpay.EarningFrequencyEverySettlement,
 			"OTR per diem — IRS substantiated M&IE",
 			33250,
 			0,
@@ -261,8 +262,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		{
 			payWorkerRobert,
 			"PERDIEM",
-			driverpay.EarningStatusActive,
-			driverpay.EarningFrequencyEverySettlement,
+			recurringpay.EarningStatusActive,
+			recurringpay.EarningFrequencyEverySettlement,
 			"OTR per diem — IRS substantiated M&IE",
 			33250,
 			0,
@@ -271,8 +272,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		{
 			payWorkerEmily,
 			"PERDIEM",
-			driverpay.EarningStatusActive,
-			driverpay.EarningFrequencyEverySettlement,
+			recurringpay.EarningStatusActive,
+			recurringpay.EarningFrequencyEverySettlement,
 			"Regional per diem — partial-day M&IE",
 			19950,
 			0,
@@ -281,8 +282,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		{
 			payWorkerJane,
 			"SAFETY",
-			driverpay.EarningStatusActive,
-			driverpay.EarningFrequencyMonthly,
+			recurringpay.EarningStatusActive,
+			recurringpay.EarningFrequencyMonthly,
 			"Quarterly safety bonus accrual — clean CSA record",
 			12500,
 			0,
@@ -291,8 +292,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		{
 			payWorkerSarah,
 			"STIPEND",
-			driverpay.EarningStatusActive,
-			driverpay.EarningFrequencyMonthly,
+			recurringpay.EarningStatusActive,
+			recurringpay.EarningFrequencyMonthly,
 			"Cell phone and ELD data stipend",
 			5000,
 			0,
@@ -301,8 +302,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		{
 			payWorkerMike,
 			"PERFORM",
-			driverpay.EarningStatusActive,
-			driverpay.EarningFrequencyEverySettlement,
+			recurringpay.EarningStatusActive,
+			recurringpay.EarningFrequencyEverySettlement,
 			"On-time delivery bonus program",
 			7500,
 			195000,
@@ -311,8 +312,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		{
 			payWorkerCarlos,
 			"EQUIPRENT",
-			driverpay.EarningStatusActive,
-			driverpay.EarningFrequencyEverySettlement,
+			recurringpay.EarningStatusActive,
+			recurringpay.EarningFrequencyEverySettlement,
 			"APU rental — company use of driver-owned unit",
 			6000,
 			0,
@@ -321,8 +322,8 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		{
 			payWorkerDavid,
 			"LONGEVITY",
-			driverpay.EarningStatusPaused,
-			driverpay.EarningFrequencyMonthly,
+			recurringpay.EarningStatusPaused,
+			recurringpay.EarningFrequencyMonthly,
 			"Longevity bonus — 3+ years of service",
 			10000,
 			0,
@@ -330,7 +331,7 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		},
 	}
 
-	rows := make([]*driverpay.RecurringEarning, 0, len(defs))
+	rows := make([]*recurringpay.RecurringEarning, 0, len(defs))
 	for _, def := range defs {
 		workerID, ok := workersByEmail[def.workerKey]
 		if !ok {
@@ -340,7 +341,7 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		if !hasCode {
 			return fmt.Errorf("pay code %s not found", def.code)
 		}
-		earning := &driverpay.RecurringEarning{
+		earning := &recurringpay.RecurringEarning{
 			ID:              pulid.MustNew("rern_"),
 			BusinessUnitID:  buID,
 			OrganizationID:  orgID,
@@ -354,7 +355,7 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 			StartDate:       now - (270 * day),
 			CurrencyCode:    "USD",
 			CreatedByID:     adminID,
-			Kind:            driverpay.EarningKindStandard,
+			Kind:            recurringpay.EarningKindStandard,
 		}
 		if def.capMinor > 0 {
 			capMinor := def.capMinor

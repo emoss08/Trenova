@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
@@ -164,14 +164,14 @@ func (f *fakePTO) Cancel(
 
 type fakePayRepo struct {
 	driverpayports.WorkerPayAssignmentRepository
-	assignment *driverpay.WorkerPayAssignment
+	assignment *payassignment.WorkerPayAssignment
 	err        error
 }
 
 func (f *fakePayRepo) GetEffectiveForWorker(
 	context.Context,
 	driverpayports.GetWorkerPayAssignmentRequest,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -188,9 +188,9 @@ func (f *fakePay) EndAssignment(
 	assignmentID pulid.ID,
 	_ int64,
 	_ *permissionports.RequestActor,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	f.ended = append(f.ended, assignmentID)
-	return &driverpay.WorkerPayAssignment{ID: assignmentID}, nil
+	return &payassignment.WorkerPayAssignment{ID: assignmentID}, nil
 }
 
 type fakeLedger struct {
@@ -433,7 +433,7 @@ func TestRecord_TerminationCascades(t *testing.T) {
 		EffectiveFrom: 1_700_000_000,
 		Version:       3,
 	}
-	payAssignment := &driverpay.WorkerPayAssignment{
+	payAssignment := &payassignment.WorkerPayAssignment{
 		ID:            pulid.MustNew("wpa_"),
 		EffectiveFrom: 1_700_000_000,
 	}

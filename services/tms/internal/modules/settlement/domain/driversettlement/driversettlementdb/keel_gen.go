@@ -3,6 +3,7 @@
 package driversettlementdb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"context"
 	"unsafe"
 
@@ -1875,7 +1876,7 @@ func attachSettlementLine(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Shipment = (*shipment.Shipment)(child)
 	case 2:
-		r.PayCode = (*driverpay.PayCode)(child)
+		r.PayCode = (*paycode.PayCode)(child)
 	}
 }
 

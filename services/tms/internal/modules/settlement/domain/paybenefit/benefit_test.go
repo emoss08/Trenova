@@ -1,21 +1,22 @@
-package driverpay_test
+package paybenefit_test
 
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func validPlan() *driverpay.BenefitPlan {
-	return &driverpay.BenefitPlan{
+func validPlan() *paybenefit.BenefitPlan {
+	return &paybenefit.BenefitPlan{
 		Status:            domaintypes.StatusActive,
 		Code:              "MED-PPO",
 		Name:              "Medical PPO",
-		PlanType:          driverpay.BenefitPlanMedical,
+		PlanType:          paybenefit.BenefitPlanMedical,
 		PayCodeID:         "pcod_1",
 		PlanYear:          2026,
 		EmployeeCostMinor: 12_000,
@@ -77,23 +78,23 @@ func TestBenefitPlan_CostForTier(t *testing.T) {
 	t.Parallel()
 
 	plan := validPlan()
-	assert.Equal(t, int64(12_000), plan.CostForTier(driverpay.TierEmployee))
-	assert.Equal(t, int64(21_600), plan.CostForTier(driverpay.TierEmployeeSpouse))
-	assert.Equal(t, int64(19_200), plan.CostForTier(driverpay.TierEmployeeChildren))
-	assert.Equal(t, int64(31_200), plan.CostForTier(driverpay.TierFamily))
+	assert.Equal(t, int64(12_000), plan.CostForTier(paybenefit.TierEmployee))
+	assert.Equal(t, int64(21_600), plan.CostForTier(paybenefit.TierEmployeeSpouse))
+	assert.Equal(t, int64(19_200), plan.CostForTier(paybenefit.TierEmployeeChildren))
+	assert.Equal(t, int64(31_200), plan.CostForTier(paybenefit.TierFamily))
 
 	// An employer-paid plan scales to nothing rather than to a rounding error.
 	free := validPlan()
 	free.EmployeeCostMinor = 0
-	assert.Equal(t, int64(0), free.CostForTier(driverpay.TierFamily))
+	assert.Equal(t, int64(0), free.CostForTier(paybenefit.TierFamily))
 }
 
-func validEnrollment() *driverpay.WorkerBenefitEnrollment {
-	return &driverpay.WorkerBenefitEnrollment{
+func validEnrollment() *paybenefit.WorkerBenefitEnrollment {
+	return &paybenefit.WorkerBenefitEnrollment{
 		WorkerID:          "wrk_1",
 		BenefitPlanID:     "bplan_1",
-		Status:            driverpay.EnrollmentActive,
-		CoverageTier:      driverpay.TierEmployee,
+		Status:            paybenefit.EnrollmentActive,
+		CoverageTier:      paybenefit.TierEmployee,
 		EffectiveFrom:     1_800_000_000,
 		EmployeeCostMinor: 12_000,
 		EmployerCostMinor: 48_000,
@@ -115,7 +116,7 @@ func TestWorkerBenefitEnrollment_Validate(t *testing.T) {
 	t.Run("a waiver needs a reason", func(t *testing.T) {
 		t.Parallel()
 		entity := validEnrollment()
-		entity.Status = driverpay.EnrollmentWaived
+		entity.Status = paybenefit.EnrollmentWaived
 
 		multiErr := errortypes.NewMultiError()
 		entity.Validate(multiErr)
@@ -141,10 +142,10 @@ func TestWorkerBenefitEnrollment_Validate(t *testing.T) {
 func TestBenefitEnrollmentStatus_Deducts(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, driverpay.EnrollmentActive.Deducts())
-	assert.False(t, driverpay.EnrollmentPending.Deducts())
-	assert.False(t, driverpay.EnrollmentWaived.Deducts())
-	assert.False(t, driverpay.EnrollmentEnded.Deducts())
+	assert.True(t, paybenefit.EnrollmentActive.Deducts())
+	assert.False(t, paybenefit.EnrollmentPending.Deducts())
+	assert.False(t, paybenefit.EnrollmentWaived.Deducts())
+	assert.False(t, paybenefit.EnrollmentEnded.Deducts())
 }
 
 func TestWorkerBenefitEnrollment_IsOpen(t *testing.T) {
@@ -164,7 +165,7 @@ func TestWorkerBenefitEnrollment_IsOpen(t *testing.T) {
 	assert.True(t, open.IsOpen(start+365*86400))
 
 	ended := validEnrollment()
-	ended.Status = driverpay.EnrollmentEnded
+	ended.Status = paybenefit.EnrollmentEnded
 	assert.False(t, ended.IsOpen(start+86400))
 }
 
@@ -175,25 +176,25 @@ func TestDeductionKind_DefaultPriority(t *testing.T) {
 
 	assert.Less(
 		t,
-		driverpay.DeductionKindGarnishment.DefaultPriority(),
-		driverpay.DeductionKindStandard.DefaultPriority(),
+		recurringpay.DeductionKindGarnishment.DefaultPriority(),
+		recurringpay.DeductionKindStandard.DefaultPriority(),
 	)
 	assert.Less(
 		t,
-		driverpay.DeductionKindStandard.DefaultPriority(),
-		driverpay.DeductionKindBenefit.DefaultPriority(),
+		recurringpay.DeductionKindStandard.DefaultPriority(),
+		recurringpay.DeductionKindBenefit.DefaultPriority(),
 	)
 }
 
 func TestRecurringDeduction_GarnishmentNeedsItsOrder(t *testing.T) {
 	t.Parallel()
 
-	entity := &driverpay.RecurringDeduction{
+	entity := &recurringpay.RecurringDeduction{
 		WorkerID:     "wrk_1",
 		PayCodeID:    "pcod_1",
-		Status:       driverpay.DeductionStatusActive,
-		Kind:         driverpay.DeductionKindGarnishment,
-		Frequency:    driverpay.DeductionFrequencyEverySettlement,
+		Status:       recurringpay.DeductionStatusActive,
+		Kind:         recurringpay.DeductionKindGarnishment,
+		Frequency:    recurringpay.DeductionFrequencyEverySettlement,
 		Description:  "Child support",
 		AmountMinor:  25_000,
 		StartDate:    1_800_000_000,

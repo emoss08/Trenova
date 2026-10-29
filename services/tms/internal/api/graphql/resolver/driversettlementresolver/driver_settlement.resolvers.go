@@ -26,6 +26,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
@@ -69,7 +74,7 @@ func (r *DriverSettlementLineResolver) Rate(ctx context.Context, obj *driversett
 	return obj.Rate.String(), nil
 }
 
-func (r *EscrowAccountResolver) AnnualInterestRate(ctx context.Context, obj *driverpay.EscrowAccount) (string, error) {
+func (r *EscrowAccountResolver) AnnualInterestRate(ctx context.Context, obj *payescrow.EscrowAccount) (string, error) {
 	return obj.AnnualInterestRate.String(), nil
 }
 
@@ -97,7 +102,7 @@ func (r *MutationResolver) UpdatePayProfile(ctx context.Context, input gqlmodel.
 	return r.DriverPayService.UpdateProfile(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*driverpay.WorkerPayAssignment, error) {
+func (r *MutationResolver) AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*payassignment.WorkerPayAssignment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPayProfile, permission.OpAssign)
 	if err != nil {
 		return nil, err
@@ -109,7 +114,7 @@ func (r *MutationResolver) AssignPayProfileToWorker(ctx context.Context, input g
 	return r.DriverPayService.AssignProfileToWorker(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) EndWorkerPayAssignment(ctx context.Context, input gqlmodel.EndWorkerPayAssignmentInput) (*driverpay.WorkerPayAssignment, error) {
+func (r *MutationResolver) EndWorkerPayAssignment(ctx context.Context, input gqlmodel.EndWorkerPayAssignmentInput) (*payassignment.WorkerPayAssignment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPayProfile, permission.OpAssign)
 	if err != nil {
 		return nil, err
@@ -127,7 +132,7 @@ func (r *MutationResolver) EndWorkerPayAssignment(ctx context.Context, input gql
 	)
 }
 
-func (r *MutationResolver) CreateRecurringDeduction(ctx context.Context, input gqlmodel.CreateRecurringDeductionInput) (*driverpay.RecurringDeduction, error) {
+func (r *MutationResolver) CreateRecurringDeduction(ctx context.Context, input gqlmodel.CreateRecurringDeductionInput) (*recurringpay.RecurringDeduction, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringDeduction, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -145,7 +150,7 @@ func (r *MutationResolver) CreateRecurringDeduction(ctx context.Context, input g
 	)
 }
 
-func (r *MutationResolver) UpdateRecurringDeduction(ctx context.Context, input gqlmodel.UpdateRecurringDeductionInput) (*driverpay.RecurringDeduction, error) {
+func (r *MutationResolver) UpdateRecurringDeduction(ctx context.Context, input gqlmodel.UpdateRecurringDeductionInput) (*recurringpay.RecurringDeduction, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringDeduction, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -157,7 +162,7 @@ func (r *MutationResolver) UpdateRecurringDeduction(ctx context.Context, input g
 	return r.DriverPayService.UpdateDeduction(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) CreateRecurringEarning(ctx context.Context, input gqlmodel.CreateRecurringEarningInput) (*driverpay.RecurringEarning, error) {
+func (r *MutationResolver) CreateRecurringEarning(ctx context.Context, input gqlmodel.CreateRecurringEarningInput) (*recurringpay.RecurringEarning, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringEarning, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -169,7 +174,7 @@ func (r *MutationResolver) CreateRecurringEarning(ctx context.Context, input gql
 	return r.DriverPayService.CreateEarning(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) UpdateRecurringEarning(ctx context.Context, input gqlmodel.UpdateRecurringEarningInput) (*driverpay.RecurringEarning, error) {
+func (r *MutationResolver) UpdateRecurringEarning(ctx context.Context, input gqlmodel.UpdateRecurringEarningInput) (*recurringpay.RecurringEarning, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringEarning, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -181,7 +186,7 @@ func (r *MutationResolver) UpdateRecurringEarning(ctx context.Context, input gql
 	return r.DriverPayService.UpdateEarning(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) CreatePayCode(ctx context.Context, input gqlmodel.CreatePayCodeInput) (*driverpay.PayCode, error) {
+func (r *MutationResolver) CreatePayCode(ctx context.Context, input gqlmodel.CreatePayCodeInput) (*paycode.PayCode, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePayCode, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -193,7 +198,7 @@ func (r *MutationResolver) CreatePayCode(ctx context.Context, input gqlmodel.Cre
 	return r.DriverPayService.CreatePayCode(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) UpdatePayCode(ctx context.Context, input gqlmodel.UpdatePayCodeInput) (*driverpay.PayCode, error) {
+func (r *MutationResolver) UpdatePayCode(ctx context.Context, input gqlmodel.UpdatePayCodeInput) (*paycode.PayCode, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePayCode, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -205,7 +210,7 @@ func (r *MutationResolver) UpdatePayCode(ctx context.Context, input gqlmodel.Upd
 	return r.DriverPayService.UpdatePayCode(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) IssuePayAdvance(ctx context.Context, input gqlmodel.IssuePayAdvanceInput) (*driverpay.PayAdvance, error) {
+func (r *MutationResolver) IssuePayAdvance(ctx context.Context, input gqlmodel.IssuePayAdvanceInput) (*payadvance.PayAdvance, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePayAdvance, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -217,7 +222,7 @@ func (r *MutationResolver) IssuePayAdvance(ctx context.Context, input gqlmodel.I
 	return r.DriverPayService.IssueAdvance(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) WriteOffPayAdvance(ctx context.Context, input gqlmodel.WriteOffPayAdvanceInput) (*driverpay.PayAdvance, error) {
+func (r *MutationResolver) WriteOffPayAdvance(ctx context.Context, input gqlmodel.WriteOffPayAdvanceInput) (*payadvance.PayAdvance, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePayAdvance, permission.OpCancel)
 	if err != nil {
 		return nil, err
@@ -235,7 +240,7 @@ func (r *MutationResolver) WriteOffPayAdvance(ctx context.Context, input gqlmode
 	)
 }
 
-func (r *MutationResolver) OpenEscrowAccount(ctx context.Context, input gqlmodel.OpenEscrowAccountInput) (*driverpay.EscrowAccount, error) {
+func (r *MutationResolver) OpenEscrowAccount(ctx context.Context, input gqlmodel.OpenEscrowAccountInput) (*payescrow.EscrowAccount, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEscrowAccount, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -247,7 +252,7 @@ func (r *MutationResolver) OpenEscrowAccount(ctx context.Context, input gqlmodel
 	return r.DriverPayService.OpenEscrowAccount(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) UpdateEscrowAccount(ctx context.Context, input gqlmodel.UpdateEscrowAccountInput) (*driverpay.EscrowAccount, error) {
+func (r *MutationResolver) UpdateEscrowAccount(ctx context.Context, input gqlmodel.UpdateEscrowAccountInput) (*payescrow.EscrowAccount, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEscrowAccount, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -259,7 +264,7 @@ func (r *MutationResolver) UpdateEscrowAccount(ctx context.Context, input gqlmod
 	return r.DriverPayService.UpdateEscrowAccount(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) AdjustEscrowAccount(ctx context.Context, input gqlmodel.AdjustEscrowAccountInput) (*driverpay.EscrowAccount, error) {
+func (r *MutationResolver) AdjustEscrowAccount(ctx context.Context, input gqlmodel.AdjustEscrowAccountInput) (*payescrow.EscrowAccount, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEscrowAccount, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -277,7 +282,7 @@ func (r *MutationResolver) AdjustEscrowAccount(ctx context.Context, input gqlmod
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) CloseEscrowAccount(ctx context.Context, accountID string) (*driverpay.EscrowAccount, error) {
+func (r *MutationResolver) CloseEscrowAccount(ctx context.Context, accountID string) (*payescrow.EscrowAccount, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEscrowAccount, permission.OpClose)
 	if err != nil {
 		return nil, err
@@ -633,7 +638,7 @@ func (r *MutationResolver) BulkDriverSettlementAction(ctx context.Context, input
 	)
 }
 
-func (r *PayCodeResolver) GlAccount(ctx context.Context, obj *driverpay.PayCode) (*gqlmodel.PayCodeGLAccount, error) {
+func (r *PayCodeResolver) GlAccount(ctx context.Context, obj *paycode.PayCode) (*gqlmodel.PayCodeGLAccount, error) {
 	if obj.GLAccount == nil {
 		return nil, nil //nolint:nilnil // nil means no GL account is mapped to this code
 	}
@@ -667,7 +672,7 @@ func (r *PayProfileComponentResolver) Rate(ctx context.Context, obj *driverpay.P
 	return obj.Rate.String(), nil
 }
 
-func (r *PayRateOverrideResolver) Rate(ctx context.Context, obj *driverpay.RateOverride) (string, error) {
+func (r *PayRateOverrideResolver) Rate(ctx context.Context, obj *payassignment.RateOverride) (string, error) {
 	return obj.Rate.String(), nil
 }
 
@@ -706,7 +711,7 @@ func (r *QueryResolver) PayProfile(ctx context.Context, id string) (*driverpay.P
 	})
 }
 
-func (r *QueryResolver) WorkerPayAssignments(ctx context.Context, workerID string) ([]*driverpay.WorkerPayAssignment, error) {
+func (r *QueryResolver) WorkerPayAssignments(ctx context.Context, workerID string) ([]*payassignment.WorkerPayAssignment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPayProfile, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -721,7 +726,7 @@ func (r *QueryResolver) WorkerPayAssignments(ctx context.Context, workerID strin
 	})
 }
 
-func (r *QueryResolver) EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*driverpay.WorkerPayAssignment, error) {
+func (r *QueryResolver) EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*payassignment.WorkerPayAssignment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPayProfile, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -740,7 +745,7 @@ func (r *QueryResolver) EffectiveWorkerPayAssignment(ctx context.Context, worker
 	return assignment, nil
 }
 
-func (r *QueryResolver) PayProfileAssignments(ctx context.Context, payProfileID string) ([]*driverpay.WorkerPayAssignment, error) {
+func (r *QueryResolver) PayProfileAssignments(ctx context.Context, payProfileID string) ([]*payassignment.WorkerPayAssignment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPayProfile, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -771,7 +776,7 @@ func (r *QueryResolver) RecurringDeductions(ctx context.Context, input gqlmodel.
 	return recurringDeductionConnectionToModel(result)
 }
 
-func (r *QueryResolver) RecurringDeduction(ctx context.Context, id string) (*driverpay.RecurringDeduction, error) {
+func (r *QueryResolver) RecurringDeduction(ctx context.Context, id string) (*recurringpay.RecurringDeduction, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringDeduction, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -805,7 +810,7 @@ func (r *QueryResolver) RecurringEarnings(ctx context.Context, input gqlmodel.Da
 	return recurringEarningConnectionToModel(result)
 }
 
-func (r *QueryResolver) RecurringEarning(ctx context.Context, id string) (*driverpay.RecurringEarning, error) {
+func (r *QueryResolver) RecurringEarning(ctx context.Context, id string) (*recurringpay.RecurringEarning, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringEarning, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -839,7 +844,7 @@ func (r *QueryResolver) PayCodes(ctx context.Context, input gqlmodel.DataTableCo
 	return payCodeConnectionToModel(result)
 }
 
-func (r *QueryResolver) PayCode(ctx context.Context, id string) (*driverpay.PayCode, error) {
+func (r *QueryResolver) PayCode(ctx context.Context, id string) (*paycode.PayCode, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePayCode, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -854,7 +859,7 @@ func (r *QueryResolver) PayCode(ctx context.Context, id string) (*driverpay.PayC
 	})
 }
 
-func (r *QueryResolver) PayCodeOptions(ctx context.Context, direction *driverpay.PayCodeDirection) ([]*driverpay.PayCode, error) {
+func (r *QueryResolver) PayCodeOptions(ctx context.Context, direction *paycode.PayCodeDirection) ([]*paycode.PayCode, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePayCode, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -885,7 +890,7 @@ func (r *QueryResolver) PayAdvances(ctx context.Context, input gqlmodel.DataTabl
 	return payAdvanceConnectionToModel(result)
 }
 
-func (r *QueryResolver) PayAdvance(ctx context.Context, id string) (*driverpay.PayAdvance, error) {
+func (r *QueryResolver) PayAdvance(ctx context.Context, id string) (*payadvance.PayAdvance, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourcePayAdvance, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -919,7 +924,7 @@ func (r *QueryResolver) EscrowAccounts(ctx context.Context, input gqlmodel.DataT
 	return escrowAccountConnectionToModel(result)
 }
 
-func (r *QueryResolver) EscrowAccount(ctx context.Context, id string) (*driverpay.EscrowAccount, error) {
+func (r *QueryResolver) EscrowAccount(ctx context.Context, id string) (*payescrow.EscrowAccount, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEscrowAccount, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1157,7 +1162,7 @@ func (r *SettlementExceptionResolver) Severity(ctx context.Context, obj *drivers
 	return string(obj.Severity), nil
 }
 
-func (r *WorkerPayAssignmentResolver) SplitPercent(ctx context.Context, obj *driverpay.WorkerPayAssignment) (string, error) {
+func (r *WorkerPayAssignmentResolver) SplitPercent(ctx context.Context, obj *payassignment.WorkerPayAssignment) (string, error) {
 	return obj.SplitPercent.String(), nil
 }
 
@@ -1169,7 +1174,7 @@ func (r *DriverSettlementLineGroupResolver) Quantity(ctx context.Context, obj *d
 	return obj.Quantity.String(), nil
 }
 
-func (r *DriverSettlementLineGroupResolver) Advance(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.PayAdvance, error) {
+func (r *DriverSettlementLineGroupResolver) Advance(ctx context.Context, obj *driversettlement.LineGroup) (*payadvance.PayAdvance, error) {
 	id := typeutils.DerefID(obj.AdvanceID)
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if id.IsNil() || !ok || !loaders.Available(ctx) ||
@@ -1179,7 +1184,7 @@ func (r *DriverSettlementLineGroupResolver) Advance(ctx context.Context, obj *dr
 	return loaders.PayAdvanceByID(ctx, id.String())
 }
 
-func (r *DriverSettlementLineGroupResolver) EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.EscrowAccount, error) {
+func (r *DriverSettlementLineGroupResolver) EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*payescrow.EscrowAccount, error) {
 	id := typeutils.DerefID(obj.EscrowAccountID)
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if id.IsNil() || !ok || !loaders.Available(ctx) ||

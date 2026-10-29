@@ -1,4 +1,4 @@
-package driverpay
+package paycode
 
 import (
 	"context"
@@ -109,7 +109,7 @@ func (p *PayCode) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 			{
-				Name:   searchFieldDescription,
+				Name:   "description",
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightB,
 			},

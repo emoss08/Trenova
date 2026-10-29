@@ -28,6 +28,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
@@ -86,12 +88,12 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[timesheet.TimeClockEntry]():                    permission.ResourceTimesheet,
 	reflect.TypeFor[timesheet.PayrollExport]():                     permission.ResourceTimesheet,
 	reflect.TypeFor[profilechange.WorkerProfileChangeRequest]():    permission.ResourceProfileChangeRequest,
-	reflect.TypeFor[driverpay.WorkerBenefitEnrollment]():           permission.ResourceBenefitPlan,
+	reflect.TypeFor[paybenefit.WorkerBenefitEnrollment]():          permission.ResourceBenefitPlan,
 	reflect.TypeFor[employment.WorkerEmploymentVerification]():     permission.ResourceQualification,
 	reflect.TypeFor[fleetsafety.WorkerSafetyViolation]():           permission.ResourceWorkerSafetyEvent,
 	reflect.TypeFor[carrierintelevent.CarrierIntelEvent]():         permission.ResourceCarrierIntelligence,
 	reflect.TypeFor[driverpay.PayProfile]():                        permission.ResourceDriverPayProfile,
-	reflect.TypeFor[driverpay.WorkerPayAssignment]():               permission.ResourceDriverPayProfile,
+	reflect.TypeFor[payassignment.WorkerPayAssignment]():           permission.ResourceDriverPayProfile,
 	reflect.TypeFor[driversettlement.PayEvent]():                   permission.ResourceDriverSettlement,
 	reflect.TypeFor[fuelsurcharge.FuelIndexPrice]():                permission.ResourceFuelSurchargeProgram,
 	reflect.TypeFor[dotrandom.DOTRandomDraw]():                     permission.ResourceDOTRandomPool,

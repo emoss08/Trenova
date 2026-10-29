@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -27,9 +27,9 @@ const (
 var (
 	planErrors             = dberror.Mapping{Entity: "BenefitPlan"}
 	enrollmentErrors       = dberror.Mapping{Entity: "WorkerBenefitEnrollment"}
-	openEnrollmentStatuses = []driverpay.BenefitEnrollmentStatus{
-		driverpay.EnrollmentPending,
-		driverpay.EnrollmentActive,
+	openEnrollmentStatuses = []paybenefit.BenefitEnrollmentStatus{
+		paybenefit.EnrollmentPending,
+		paybenefit.EnrollmentActive,
 	}
 )
 
@@ -70,8 +70,8 @@ func when(include bool, p keel.Pred) keel.Pred {
 func (r *repository) ListPlans(
 	ctx context.Context,
 	req *driverpayports.ListBenefitPlansRequest,
-) ([]*driverpay.BenefitPlan, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.BenefitPlan, error) {
+) ([]*paybenefit.BenefitPlan, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*paybenefit.BenefitPlan, error) {
 		bp := driverpaydb.BenefitPlans
 		q := bp.Where(
 			when(req.ActiveOnly, bp.Status.Eq(domaintypes.StatusActive)),
@@ -96,11 +96,11 @@ func (r *repository) ListPlans(
 func (r *repository) PlanSelectOptions(
 	ctx context.Context,
 	req *driverpayports.BenefitPlanSelectOptionsRequest,
-) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
+) (*pagination.ListResult[*paybenefit.BenefitPlan], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
+		func(ctx context.Context) (*pagination.ListResult[*paybenefit.BenefitPlan], error) {
 			bp := driverpaydb.BenefitPlans
 			q := bp.Pick(
 				bp.ID,
@@ -141,8 +141,8 @@ func (r *repository) PlanSelectOptions(
 func (r *repository) GetPlanByID(
 	ctx context.Context,
 	req *driverpayports.GetBenefitPlanByIDRequest,
-) (*driverpay.BenefitPlan, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.BenefitPlan, error) {
+) (*paybenefit.BenefitPlan, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*paybenefit.BenefitPlan, error) {
 		bp := driverpaydb.BenefitPlans
 		q := bp.Where(bp.ID.Eq(req.ID))
 		if req.IncludePayCode {
@@ -160,9 +160,9 @@ func (r *repository) GetPlanByID(
 
 func (r *repository) CreatePlan(
 	ctx context.Context,
-	entity *driverpay.BenefitPlan,
-) (*driverpay.BenefitPlan, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.BenefitPlan, error) {
+	entity *paybenefit.BenefitPlan,
+) (*paybenefit.BenefitPlan, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*paybenefit.BenefitPlan, error) {
 		if err := driverpaydb.BenefitPlans.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create benefit plan", zap.Error(err))
 			return nil, planErrors.Map(err, entity.ID.String())
@@ -174,9 +174,9 @@ func (r *repository) CreatePlan(
 
 func (r *repository) UpdatePlan(
 	ctx context.Context,
-	entity *driverpay.BenefitPlan,
-) (*driverpay.BenefitPlan, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.BenefitPlan, error) {
+	entity *paybenefit.BenefitPlan,
+) (*paybenefit.BenefitPlan, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*paybenefit.BenefitPlan, error) {
 		if err := driverpaydb.BenefitPlans.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update benefit plan", zap.Error(err))
 			return nil, planErrors.Map(err, entity.ID.String())
@@ -209,11 +209,11 @@ func (r *repository) CountPlanEnrollments(
 func (r *repository) ListEnrollments(
 	ctx context.Context,
 	req *driverpayports.ListBenefitEnrollmentsRequest,
-) ([]*driverpay.WorkerBenefitEnrollment, error) {
+) ([]*paybenefit.WorkerBenefitEnrollment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*driverpay.WorkerBenefitEnrollment, error) {
+		func(ctx context.Context) ([]*paybenefit.WorkerBenefitEnrollment, error) {
 			e := driverpaydb.WorkerBenefitEnrollments
 			q := e.Where(
 				when(!req.WorkerID.IsNil(), e.WorkerID.Eq(req.WorkerID)),
@@ -244,11 +244,11 @@ func (r *repository) ListEnrollments(
 func (r *repository) GetEnrollmentByID(
 	ctx context.Context,
 	req *driverpayports.GetBenefitEnrollmentByIDRequest,
-) (*driverpay.WorkerBenefitEnrollment, error) {
+) (*paybenefit.WorkerBenefitEnrollment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
+		func(ctx context.Context) (*paybenefit.WorkerBenefitEnrollment, error) {
 			e := driverpaydb.WorkerBenefitEnrollments
 			q := e.Where(e.ID.Eq(req.ID))
 			if req.IncludePlan {
@@ -267,12 +267,12 @@ func (r *repository) GetEnrollmentByID(
 
 func (r *repository) CreateEnrollment(
 	ctx context.Context,
-	entity *driverpay.WorkerBenefitEnrollment,
-) (*driverpay.WorkerBenefitEnrollment, error) {
+	entity *paybenefit.WorkerBenefitEnrollment,
+) (*paybenefit.WorkerBenefitEnrollment, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
+		func(ctx context.Context) (*paybenefit.WorkerBenefitEnrollment, error) {
 			err := driverpaydb.WorkerBenefitEnrollments.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create benefit enrollment", zap.Error(err))
@@ -286,12 +286,12 @@ func (r *repository) CreateEnrollment(
 
 func (r *repository) UpdateEnrollment(
 	ctx context.Context,
-	entity *driverpay.WorkerBenefitEnrollment,
-) (*driverpay.WorkerBenefitEnrollment, error) {
+	entity *paybenefit.WorkerBenefitEnrollment,
+) (*paybenefit.WorkerBenefitEnrollment, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
+		func(ctx context.Context) (*paybenefit.WorkerBenefitEnrollment, error) {
 			err := driverpaydb.WorkerBenefitEnrollments.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update benefit enrollment", zap.Error(err))
@@ -311,7 +311,7 @@ func (r *repository) BenefitCosts(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]driverpayports.BenefitCostRow, error) {
 		e := driverpaydb.WorkerBenefitEnrollments
 		bp := driverpaydb.BenefitPlans
-		active := e.Status.Eq(driverpay.EnrollmentActive)
+		active := e.Status.Eq(paybenefit.EnrollmentActive)
 		enrolled := keel.Count().Filter(active)
 
 		rows, err := keel.Into[driverpayports.BenefitCostRow](
@@ -325,7 +325,7 @@ func (r *repository) BenefitCosts(
 					bp.Name,
 					keel.CastText(bp.PlanType),
 					enrolled,
-					keel.Count().Filter(e.Status.Eq(driverpay.EnrollmentWaived)),
+					keel.Count().Filter(e.Status.Eq(paybenefit.EnrollmentWaived)),
 					keel.Int64Of(e.EmployeeCostMinor.Sum().Filter(active)).Coalesce(0),
 					keel.Int64Of(e.EmployerCostMinor.Sum().Filter(active)).Coalesce(0),
 				).

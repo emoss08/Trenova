@@ -856,6 +856,13 @@ modules:
       - driversettlement
       - fuelpurchase
       - ifta
+      - payadvance
+      - payassignment
+      - paybenefit
+      - paycode
+      - payescrow
+      - payexpense
+      - recurringpay
     service:
       - carriersettlementservice
       - driverpayservice

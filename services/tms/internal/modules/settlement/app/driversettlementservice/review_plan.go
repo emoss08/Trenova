@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,7 +18,7 @@ import (
 
 type (
 	DisputeChange = kernelports.RecordChange[driversettlement.Dispute]
-	ExpenseChange = kernelports.RecordChange[driverpay.Expense]
+	ExpenseChange = kernelports.RecordChange[payexpense.Expense]
 )
 
 type ResolveDisputePlan struct {
@@ -173,7 +173,7 @@ func (s *Service) PlanReviewExpense(
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != driverpay.ExpenseStatusPending {
+	if original.Status != payexpense.ExpenseStatusPending {
 		return nil, errortypes.NewValidationError(
 			"id",
 			errortypes.ErrInvalidOperation,
@@ -202,7 +202,7 @@ func (s *Service) PlanReviewExpense(
 	expense.ReviewedAt = &now
 	plan := &ReviewExpensePlan{ExpenseChange: ExpenseChange{Before: original, After: &expense}}
 	if req.Approve {
-		expense.Status = driverpay.ExpenseStatusReimbursed
+		expense.Status = payexpense.ExpenseStatusReimbursed
 		if plan.ReimbursementTarget, err = s.openDraftFor(
 			ctx,
 			req.TenantInfo,
@@ -211,7 +211,7 @@ func (s *Service) PlanReviewExpense(
 			return nil, err
 		}
 	} else {
-		expense.Status = driverpay.ExpenseStatusRejected
+		expense.Status = payexpense.ExpenseStatusRejected
 	}
 	return plan, nil
 }

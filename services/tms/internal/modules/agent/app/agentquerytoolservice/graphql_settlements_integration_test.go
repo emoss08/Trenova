@@ -42,6 +42,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -156,9 +161,9 @@ func (s *settlementRows) payCode(
 	ctx context.Context,
 	tenant *agentreadtest.Tenant,
 	label string,
-	direction driverpay.PayCodeDirection,
+	direction paycode.PayCodeDirection,
 ) (pulid.ID, error) {
-	row := &driverpay.PayCode{
+	row := &paycode.PayCode{
 		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 		Status: "Active", Direction: direction, Code: "PC" + label, Name: "Pay code " + label,
 	}
@@ -278,11 +283,11 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := driverpay.ExpenseStatusPending
+				status := payexpense.ExpenseStatusPending
 				if marked {
-					status = driverpay.ExpenseStatusRejected
+					status = payexpense.ExpenseStatusRejected
 				}
-				row := &driverpay.Expense{
+				row := &payexpense.Expense{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 					WorkerID: workerID, Status: status, AmountMinor: 4_250,
 					CurrencyCode: settlementCurrency, Description: "Lumper fee " + label,
@@ -304,11 +309,11 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status, closedDate := driverpay.EscrowAccountStatusActive, (*int64)(nil)
+				status, closedDate := payescrow.EscrowAccountStatusActive, (*int64)(nil)
 				if marked {
-					status, closedDate = driverpay.EscrowAccountStatusClosed, new(now)
+					status, closedDate = payescrow.EscrowAccountStatusClosed, new(now)
 				}
-				row := &driverpay.EscrowAccount{
+				row := &payescrow.EscrowAccount{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 					WorkerID: workerID, Status: status, TargetAmountMinor: 250_000,
 					BalanceMinor: 50_000, AnnualInterestRate: decimal.NewFromFloat(0.02),
@@ -324,13 +329,13 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := driverpay.AdvanceStatusOutstanding
+				status := payadvance.AdvanceStatusOutstanding
 				if marked {
-					status = driverpay.AdvanceStatusWrittenOff
+					status = payadvance.AdvanceStatusWrittenOff
 				}
-				row := &driverpay.PayAdvance{
+				row := &payadvance.PayAdvance{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
-					WorkerID: workerID, Status: status, Source: driverpay.AdvanceSourceCash,
+					WorkerID: workerID, Status: status, Source: payadvance.AdvanceSourceCash,
 					Reference: "ADV" + label, IssuedDate: now - day, AmountMinor: 20_000,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
@@ -348,19 +353,19 @@ func settlementListCases(
 					ctx,
 					tenant,
 					"D"+label,
-					driverpay.PayCodeDirectionDeduction,
+					paycode.PayCodeDirectionDeduction,
 				)
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := driverpay.DeductionStatusActive
+				status := recurringpay.DeductionStatusActive
 				if marked {
-					status = driverpay.DeductionStatusPaused
+					status = recurringpay.DeductionStatusPaused
 				}
-				row := &driverpay.RecurringDeduction{
+				row := &recurringpay.RecurringDeduction{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 					WorkerID: workerID, PayCodeID: code, Status: status,
-					Kind: driverpay.DeductionKindStandard, Frequency: driverpay.DeductionFrequencyEverySettlement,
+					Kind: recurringpay.DeductionKindStandard, Frequency: recurringpay.DeductionFrequencyEverySettlement,
 					Description: "Insurance " + label, AmountMinor: 7_500, StartDate: now - 30*day,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
@@ -374,18 +379,18 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				code, err := rows.payCode(ctx, tenant, "R"+label, driverpay.PayCodeDirectionEarning)
+				code, err := rows.payCode(ctx, tenant, "R"+label, paycode.PayCodeDirectionEarning)
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := driverpay.EarningStatusActive
+				status := recurringpay.EarningStatusActive
 				if marked {
-					status = driverpay.EarningStatusPaused
+					status = recurringpay.EarningStatusPaused
 				}
-				row := &driverpay.RecurringEarning{
+				row := &recurringpay.RecurringEarning{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 					WorkerID: workerID, PayCodeID: code, Status: status,
-					Kind: driverpay.EarningKindStandard, Frequency: driverpay.EarningFrequencyEverySettlement,
+					Kind: recurringpay.EarningKindStandard, Frequency: recurringpay.EarningFrequencyEverySettlement,
 					Description: "Per diem " + label, AmountMinor: 6_000, StartDate: now - 30*day,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}

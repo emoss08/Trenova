@@ -3,6 +3,13 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
@@ -1364,8 +1371,8 @@ type DriverSettlementLineResolver interface {
 type DriverSettlementLineGroupResolver interface {
 	Rate(ctx context.Context, obj *driversettlement.LineGroup) (*string, error)
 	Quantity(ctx context.Context, obj *driversettlement.LineGroup) (string, error)
-	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.PayAdvance, error)
-	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.EscrowAccount, error)
+	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*payadvance.PayAdvance, error)
+	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*payescrow.EscrowAccount, error)
 }
 
 type DrugAlcoholStandingResolver interface {
@@ -1423,7 +1430,7 @@ type EquipmentContinuityResolver interface {
 }
 
 type EscrowAccountResolver interface {
-	AnnualInterestRate(ctx context.Context, obj *driverpay.EscrowAccount) (string, error)
+	AnnualInterestRate(ctx context.Context, obj *payescrow.EscrowAccount) (string, error)
 }
 
 type ExternalIdentityResolver interface {
@@ -2104,10 +2111,10 @@ type MutationResolver interface {
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*retrievalports.AIRetrievalStatus, error)
 	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalStatus, error)
-	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*driverpay.BenefitPlan, error)
-	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*driverpay.BenefitPlan, error)
-	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*driverpay.WorkerBenefitEnrollment, error)
-	EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*driverpay.WorkerBenefitEnrollment, error)
+	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*paybenefit.BenefitPlan, error)
+	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*paybenefit.BenefitPlan, error)
+	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*paybenefit.WorkerBenefitEnrollment, error)
+	EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*paybenefit.WorkerBenefitEnrollment, error)
 	UpdateBillingQueueStatus(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateStatusInput) (*gqlmodel.BillingQueueItem, error)
 	AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error)
 	PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error)
@@ -2236,27 +2243,27 @@ type MutationResolver interface {
 	ProposeMyShiftSwap(ctx context.Context, input gqlmodel.ProposeMyShiftSwapInput) (*workerschedule.ShiftSwapRequest, error)
 	RespondToMyShiftSwap(ctx context.Context, input gqlmodel.RespondToMyShiftSwapInput) (*workerschedule.ShiftSwapRequest, error)
 	CancelMyPTO(ctx context.Context, id string) (*worker.WorkerPTO, error)
-	SubmitMyExpense(ctx context.Context, input gqlmodel.SubmitMyExpenseInput) (*driverpay.Expense, error)
-	CancelMyExpense(ctx context.Context, id string) (*driverpay.Expense, error)
-	ReviewDriverExpense(ctx context.Context, input gqlmodel.ReviewDriverExpenseInput) (*driverpay.Expense, error)
+	SubmitMyExpense(ctx context.Context, input gqlmodel.SubmitMyExpenseInput) (*payexpense.Expense, error)
+	CancelMyExpense(ctx context.Context, id string) (*payexpense.Expense, error)
+	ReviewDriverExpense(ctx context.Context, input gqlmodel.ReviewDriverExpenseInput) (*payexpense.Expense, error)
 	RespondToMyAssignment(ctx context.Context, input gqlmodel.RespondToMyAssignmentInput) (bool, error)
 	UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*dashcontrol.DashControl, error)
 	CreatePayProfile(ctx context.Context, input gqlmodel.CreatePayProfileInput) (*driverpay.PayProfile, error)
 	UpdatePayProfile(ctx context.Context, input gqlmodel.UpdatePayProfileInput) (*driverpay.PayProfile, error)
-	AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*driverpay.WorkerPayAssignment, error)
-	EndWorkerPayAssignment(ctx context.Context, input gqlmodel.EndWorkerPayAssignmentInput) (*driverpay.WorkerPayAssignment, error)
-	CreateRecurringDeduction(ctx context.Context, input gqlmodel.CreateRecurringDeductionInput) (*driverpay.RecurringDeduction, error)
-	UpdateRecurringDeduction(ctx context.Context, input gqlmodel.UpdateRecurringDeductionInput) (*driverpay.RecurringDeduction, error)
-	CreateRecurringEarning(ctx context.Context, input gqlmodel.CreateRecurringEarningInput) (*driverpay.RecurringEarning, error)
-	UpdateRecurringEarning(ctx context.Context, input gqlmodel.UpdateRecurringEarningInput) (*driverpay.RecurringEarning, error)
-	CreatePayCode(ctx context.Context, input gqlmodel.CreatePayCodeInput) (*driverpay.PayCode, error)
-	UpdatePayCode(ctx context.Context, input gqlmodel.UpdatePayCodeInput) (*driverpay.PayCode, error)
-	IssuePayAdvance(ctx context.Context, input gqlmodel.IssuePayAdvanceInput) (*driverpay.PayAdvance, error)
-	WriteOffPayAdvance(ctx context.Context, input gqlmodel.WriteOffPayAdvanceInput) (*driverpay.PayAdvance, error)
-	OpenEscrowAccount(ctx context.Context, input gqlmodel.OpenEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	UpdateEscrowAccount(ctx context.Context, input gqlmodel.UpdateEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	AdjustEscrowAccount(ctx context.Context, input gqlmodel.AdjustEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	CloseEscrowAccount(ctx context.Context, accountID string) (*driverpay.EscrowAccount, error)
+	AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*payassignment.WorkerPayAssignment, error)
+	EndWorkerPayAssignment(ctx context.Context, input gqlmodel.EndWorkerPayAssignmentInput) (*payassignment.WorkerPayAssignment, error)
+	CreateRecurringDeduction(ctx context.Context, input gqlmodel.CreateRecurringDeductionInput) (*recurringpay.RecurringDeduction, error)
+	UpdateRecurringDeduction(ctx context.Context, input gqlmodel.UpdateRecurringDeductionInput) (*recurringpay.RecurringDeduction, error)
+	CreateRecurringEarning(ctx context.Context, input gqlmodel.CreateRecurringEarningInput) (*recurringpay.RecurringEarning, error)
+	UpdateRecurringEarning(ctx context.Context, input gqlmodel.UpdateRecurringEarningInput) (*recurringpay.RecurringEarning, error)
+	CreatePayCode(ctx context.Context, input gqlmodel.CreatePayCodeInput) (*paycode.PayCode, error)
+	UpdatePayCode(ctx context.Context, input gqlmodel.UpdatePayCodeInput) (*paycode.PayCode, error)
+	IssuePayAdvance(ctx context.Context, input gqlmodel.IssuePayAdvanceInput) (*payadvance.PayAdvance, error)
+	WriteOffPayAdvance(ctx context.Context, input gqlmodel.WriteOffPayAdvanceInput) (*payadvance.PayAdvance, error)
+	OpenEscrowAccount(ctx context.Context, input gqlmodel.OpenEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	UpdateEscrowAccount(ctx context.Context, input gqlmodel.UpdateEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	AdjustEscrowAccount(ctx context.Context, input gqlmodel.AdjustEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	CloseEscrowAccount(ctx context.Context, accountID string) (*payescrow.EscrowAccount, error)
 	GenerateSettlementBatch(ctx context.Context, input gqlmodel.GenerateSettlementBatchInput) (*driversettlement.SettlementBatch, error)
 	GenerateDriverSettlement(ctx context.Context, input gqlmodel.GenerateDriverSettlementInput) (*driversettlement.Settlement, error)
 	PayWorkerNow(ctx context.Context, input gqlmodel.PayWorkerNowInput) (*driversettlement.Settlement, error)
@@ -2733,7 +2740,7 @@ type PTOPolicyRuleResolver interface {
 }
 
 type PayCodeResolver interface {
-	GlAccount(ctx context.Context, obj *driverpay.PayCode) (*gqlmodel.PayCodeGLAccount, error)
+	GlAccount(ctx context.Context, obj *paycode.PayCode) (*gqlmodel.PayCodeGLAccount, error)
 }
 
 type PayMileageBandResolver interface {
@@ -2750,7 +2757,7 @@ type PayProfileComponentResolver interface {
 }
 
 type PayRateOverrideResolver interface {
-	Rate(ctx context.Context, obj *driverpay.RateOverride) (string, error)
+	Rate(ctx context.Context, obj *payassignment.RateOverride) (string, error)
 }
 
 type PendingDecisionEdgeResolver interface {
@@ -2908,10 +2915,10 @@ type QueryResolver interface {
 	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntry(ctx context.Context, id string) (*audit.Entry, error)
-	BenefitPlans(ctx context.Context, activeOnly *bool, planYear *int) ([]*driverpay.BenefitPlan, error)
-	BenefitPlan(ctx context.Context, id string) (*driverpay.BenefitPlan, error)
-	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*driverpay.WorkerBenefitEnrollment, error)
-	BenefitEnrollments(ctx context.Context, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*driverpay.WorkerBenefitEnrollment, error)
+	BenefitPlans(ctx context.Context, activeOnly *bool, planYear *int) ([]*paybenefit.BenefitPlan, error)
+	BenefitPlan(ctx context.Context, id string) (*paybenefit.BenefitPlan, error)
+	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*paybenefit.WorkerBenefitEnrollment, error)
+	BenefitEnrollments(ctx context.Context, planID *string, statuses []paybenefit.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*paybenefit.WorkerBenefitEnrollment, error)
 	BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error)
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
@@ -3045,7 +3052,7 @@ type QueryResolver interface {
 	MySettlements(ctx context.Context, limit *int, offset *int) (*gqlmodel.MySettlementList, error)
 	MySettlement(ctx context.Context, id string) (*driversettlement.Settlement, error)
 	MyEscrow(ctx context.Context) (*driverportalservice.PortalEscrowSummary, error)
-	MyAdvances(ctx context.Context) ([]*driverpay.PayAdvance, error)
+	MyAdvances(ctx context.Context) ([]*payadvance.PayAdvance, error)
 	MyDisputes(ctx context.Context) ([]*driversettlement.Dispute, error)
 	MyPortalFeatures(ctx context.Context) (*driverportalservice.PortalFeatures, error)
 	MyPolicies(ctx context.Context) ([]*driverportalservice.PortalPolicy, error)
@@ -3057,7 +3064,7 @@ type QueryResolver interface {
 	MyPTO(ctx context.Context) ([]*worker.WorkerPTO, error)
 	MyPTOBalances(ctx context.Context) ([]*ptoledgerservice.BalanceView, error)
 	MyLeave(ctx context.Context) (*driverportalservice.PortalLeave, error)
-	MyExpenses(ctx context.Context) ([]*driverpay.Expense, error)
+	MyExpenses(ctx context.Context) ([]*payexpense.Expense, error)
 	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementservice.MovePayEstimate, error)
 	MyYtdPay(ctx context.Context, year int) (*driversettlementservice.WorkerYTDPaySummary, error)
 	MyHosState(ctx context.Context) (*gqlmodel.WorkerHosState, error)
@@ -3066,25 +3073,25 @@ type QueryResolver interface {
 	MyNotifications(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) (*gqlmodel.NotificationConnection, error)
 	MyNotificationUnreadCount(ctx context.Context) (int, error)
 	DriverExpenses(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverExpenseConnection, error)
-	DriverExpense(ctx context.Context, id string) (*driverpay.Expense, error)
+	DriverExpense(ctx context.Context, id string) (*payexpense.Expense, error)
 	PendingDriverExpenseCount(ctx context.Context) (int, error)
 	DashControl(ctx context.Context) (*dashcontrol.DashControl, error)
 	PayProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayProfileConnection, error)
 	PayProfile(ctx context.Context, id string) (*driverpay.PayProfile, error)
-	WorkerPayAssignments(ctx context.Context, workerID string) ([]*driverpay.WorkerPayAssignment, error)
-	EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*driverpay.WorkerPayAssignment, error)
-	PayProfileAssignments(ctx context.Context, payProfileID string) ([]*driverpay.WorkerPayAssignment, error)
+	WorkerPayAssignments(ctx context.Context, workerID string) ([]*payassignment.WorkerPayAssignment, error)
+	EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*payassignment.WorkerPayAssignment, error)
+	PayProfileAssignments(ctx context.Context, payProfileID string) ([]*payassignment.WorkerPayAssignment, error)
 	RecurringDeductions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringDeductionConnection, error)
-	RecurringDeduction(ctx context.Context, id string) (*driverpay.RecurringDeduction, error)
+	RecurringDeduction(ctx context.Context, id string) (*recurringpay.RecurringDeduction, error)
 	RecurringEarnings(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringEarningConnection, error)
-	RecurringEarning(ctx context.Context, id string) (*driverpay.RecurringEarning, error)
+	RecurringEarning(ctx context.Context, id string) (*recurringpay.RecurringEarning, error)
 	PayCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayCodeConnection, error)
-	PayCode(ctx context.Context, id string) (*driverpay.PayCode, error)
-	PayCodeOptions(ctx context.Context, direction *driverpay.PayCodeDirection) ([]*driverpay.PayCode, error)
+	PayCode(ctx context.Context, id string) (*paycode.PayCode, error)
+	PayCodeOptions(ctx context.Context, direction *paycode.PayCodeDirection) ([]*paycode.PayCode, error)
 	PayAdvances(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayAdvanceConnection, error)
-	PayAdvance(ctx context.Context, id string) (*driverpay.PayAdvance, error)
+	PayAdvance(ctx context.Context, id string) (*payadvance.PayAdvance, error)
 	EscrowAccounts(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EscrowAccountConnection, error)
-	EscrowAccount(ctx context.Context, id string) (*driverpay.EscrowAccount, error)
+	EscrowAccount(ctx context.Context, id string) (*payescrow.EscrowAccount, error)
 	DriverSettlements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverSettlementConnection, error)
 	DriverSettlement(ctx context.Context, id string) (*driversettlement.Settlement, error)
 	SettlementBatches(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SettlementBatchConnection, error)
@@ -3754,8 +3761,8 @@ type WorkerResolver interface {
 }
 
 type WorkerBenefitEnrollmentResolver interface {
-	EffectiveTo(ctx context.Context, obj *driverpay.WorkerBenefitEnrollment) (*int, error)
-	RecurringDeductionID(ctx context.Context, obj *driverpay.WorkerBenefitEnrollment) (*string, error)
+	EffectiveTo(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*int, error)
+	RecurringDeductionID(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*string, error)
 }
 
 type WorkerChecklistResolver interface {
@@ -3935,7 +3942,7 @@ type WorkerPTOPolicyAssignmentResolver interface {
 }
 
 type WorkerPayAssignmentResolver interface {
-	SplitPercent(ctx context.Context, obj *driverpay.WorkerPayAssignment) (string, error)
+	SplitPercent(ctx context.Context, obj *payassignment.WorkerPayAssignment) (string, error)
 }
 
 type WorkerProfileResolver interface {

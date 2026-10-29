@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -18,30 +18,30 @@ import (
 func (s *Service) ListDeductions(
 	ctx context.Context,
 	req *driverpayports.ListRecurringDeductionsRequest,
-) (*pagination.ListResult[*driverpay.RecurringDeduction], error) {
+) (*pagination.ListResult[*recurringpay.RecurringDeduction], error) {
 	return s.deductionRepo.List(ctx, req)
 }
 
 func (s *Service) ListDeductionsConnection(
 	ctx context.Context,
 	req *driverpayports.ListRecurringDeductionConnectionRequest,
-) (*pagination.CursorListResult[*driverpay.RecurringDeduction], error) {
+) (*pagination.CursorListResult[*recurringpay.RecurringDeduction], error) {
 	return s.deductionRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetDeduction(
 	ctx context.Context,
 	req driverpayports.GetRecurringDeductionByIDRequest,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	return s.deductionRepo.GetByID(ctx, req)
 }
 
 func (s *Service) CreateDeduction(
 	ctx context.Context,
-	entity *driverpay.RecurringDeduction,
+	entity *recurringpay.RecurringDeduction,
 	autoLinkEscrow bool,
 	actor *permissionports.RequestActor,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	if err := requireActor(actor, "Recurring deduction creation"); err != nil {
 		return nil, err
 	}
@@ -61,9 +61,9 @@ func (s *Service) CreateDeduction(
 
 func (s *Service) UpdateDeduction(
 	ctx context.Context,
-	entity *driverpay.RecurringDeduction,
+	entity *recurringpay.RecurringDeduction,
 	actor *permissionports.RequestActor,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	if err := requireActor(actor, "Recurring deduction update"); err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (s *Service) UpdateDeduction(
 }
 
 func (s *Service) logDeductionAudit(
-	current, previous *driverpay.RecurringDeduction,
+	current, previous *recurringpay.RecurringDeduction,
 	userID pulid.ID,
 	operation permission.Operation,
 	comment string,

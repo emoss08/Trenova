@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -52,36 +52,36 @@ type escrowBook interface {
 	GetEscrowAccount(
 		ctx context.Context,
 		req driverpayports.GetEscrowAccountByIDRequest,
-	) (*driverpay.EscrowAccount, error)
-	PlanOpenEscrowAccount(ctx context.Context, entity *driverpay.EscrowAccount, now int64) error
+	) (*payescrow.EscrowAccount, error)
+	PlanOpenEscrowAccount(ctx context.Context, entity *payescrow.EscrowAccount, now int64) error
 	OpenEscrowAccount(
 		ctx context.Context,
-		entity *driverpay.EscrowAccount,
+		entity *payescrow.EscrowAccount,
 		actor *permissionports.RequestActor,
-	) (*driverpay.EscrowAccount, error)
+	) (*payescrow.EscrowAccount, error)
 	PlanUpdateEscrowAccount(
 		ctx context.Context,
-		entity *driverpay.EscrowAccount,
-	) (*driverpay.EscrowAccount, error)
+		entity *payescrow.EscrowAccount,
+	) (*payescrow.EscrowAccount, error)
 	UpdateEscrowAccount(
 		ctx context.Context,
-		entity *driverpay.EscrowAccount,
+		entity *payescrow.EscrowAccount,
 		actor *permissionports.RequestActor,
-	) (*driverpay.EscrowAccount, error)
+	) (*payescrow.EscrowAccount, error)
 	AdjustEscrowAccount(
 		ctx context.Context,
 		req *driverpayservice.EscrowAdjustmentRequest,
 		actor *permissionports.RequestActor,
-	) (*driverpay.EscrowAccount, error)
+	) (*payescrow.EscrowAccount, error)
 	CloseEscrowAccount(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		accountID pulid.ID,
 		actor *permissionports.RequestActor,
-	) (*driverpay.EscrowAccount, error)
+	) (*payescrow.EscrowAccount, error)
 }
 
-func escrowRecord(account *driverpay.EscrowAccount) toolpreview.Record {
+func escrowRecord(account *payescrow.EscrowAccount) toolpreview.Record {
 	label := "Escrow account"
 	if account.Worker != nil {
 		label = "Escrow account for " + account.Worker.FullName()
@@ -123,7 +123,7 @@ func loadEscrow(
 	ctx context.Context,
 	book escrowBook,
 	params *agenttoolports.ToolExecuteParams,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	accountID, err := toolparams.RequirePulid(params.Params, paramEscrowAccountID)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func loadEscrow(
 	})
 }
 
-func escrowBalanceMoney(before, after *driverpay.EscrowAccount) *agentpreview.MoneyPreview {
+func escrowBalanceMoney(before, after *payescrow.EscrowAccount) *agentpreview.MoneyPreview {
 	return toolpreview.MoneyBlock(after.CurrencyCode, agentpreview.MoneyLine{
 		Label:  "Balance",
 		Before: changepreview.MinorAmount(before.BalanceMinor),
@@ -184,7 +184,7 @@ func (t *OpenEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *OpenEscrowAccountTool) entity(
 	params *agenttoolports.ToolExecuteParams,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (t *OpenEscrowAccountTool) entity(
 		return nil, err
 	}
 
-	return &driverpay.EscrowAccount{
+	return &payescrow.EscrowAccount{
 		OrganizationID:     params.OrganizationID,
 		BusinessUnitID:     params.BusinessUnitID,
 		WorkerID:           workerID,
@@ -217,7 +217,7 @@ func (t *OpenEscrowAccountTool) entity(
 }
 
 type escrowOpening struct {
-	entity  *driverpay.EscrowAccount
+	entity  *payescrow.EscrowAccount
 	refusal error
 }
 
@@ -358,8 +358,8 @@ func (t *UpdateEscrowAccountTool) Target(params map[string]any) (agenttoolports.
 }
 
 type escrowUpdate struct {
-	before  *driverpay.EscrowAccount
-	after   *driverpay.EscrowAccount
+	before  *payescrow.EscrowAccount
+	after   *payescrow.EscrowAccount
 	refusal error
 }
 
@@ -562,9 +562,9 @@ func (t *AdjustEscrowAccountTool) request(
 }
 
 type escrowMovement struct {
-	before  *driverpay.EscrowAccount
-	after   *driverpay.EscrowAccount
-	moved   *driverpay.EscrowTransaction
+	before  *payescrow.EscrowAccount
+	after   *payescrow.EscrowAccount
+	moved   *payescrow.EscrowTransaction
 	refusal error
 }
 

@@ -1,16 +1,16 @@
-package driverpay
+package recurringpay
 
 import (
 	"context"
 
-	"github.com/emoss08/trenova/shared/money"
-
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -44,8 +44,8 @@ type RecurringEarning struct {
 	CreatedAt       int64            `json:"createdAt"       keel:"created_at,autocreate"`
 	UpdatedAt       int64            `json:"updatedAt"       keel:"updated_at,autoupdate"`
 
-	Worker  *worker.Worker `json:"worker,omitempty"  keel:"belongs:worker_id,label=Driver"`
-	PayCode *PayCode       `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
+	Worker  *worker.Worker   `json:"worker,omitempty"  keel:"belongs:worker_id,label=Driver"`
+	PayCode *paycode.PayCode `json:"payCode,omitempty" keel:"belongs:pay_code_id"`
 }
 
 func (r *RecurringEarning) Validate(multiErr *errortypes.MultiError) {
@@ -116,7 +116,7 @@ func (r *RecurringEarning) GetPostgresSearchConfig() domaintypes.PostgresSearchC
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{
-				Name:   searchFieldDescription,
+				Name:   "description",
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightA,
 			},

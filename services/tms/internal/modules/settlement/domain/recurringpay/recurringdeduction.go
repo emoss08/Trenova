@@ -1,17 +1,18 @@
-package driverpay
+package recurringpay
 
 import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/shared/money"
-
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -50,9 +51,9 @@ type RecurringDeduction struct {
 	CreatedAt           int64              `json:"createdAt"           keel:"created_at,autocreate"`
 	UpdatedAt           int64              `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
-	Worker        *worker.Worker `json:"worker,omitempty"        keel:"belongs:worker_id,label=Driver"`
-	PayCode       *PayCode       `json:"payCode,omitempty"       keel:"belongs:pay_code_id"`
-	EscrowAccount *EscrowAccount `json:"escrowAccount,omitempty" keel:"belongs:escrow_account_id"`
+	Worker        *worker.Worker           `json:"worker,omitempty"        keel:"belongs:worker_id,label=Driver"`
+	PayCode       *paycode.PayCode         `json:"payCode,omitempty"       keel:"belongs:pay_code_id"`
+	EscrowAccount *payescrow.EscrowAccount `json:"escrowAccount,omitempty" keel:"belongs:escrow_account_id"`
 }
 
 func (r *RecurringDeduction) IsEscrowContribution() bool {
@@ -145,7 +146,7 @@ func (r *RecurringDeduction) GetPostgresSearchConfig() domaintypes.PostgresSearc
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{
-				Name:   searchFieldDescription,
+				Name:   "description",
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightA,
 			},

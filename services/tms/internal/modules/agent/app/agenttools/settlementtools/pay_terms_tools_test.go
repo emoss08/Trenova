@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,14 +28,14 @@ import (
 var errPayStoreDown = errors.New("driver pay store is unavailable")
 
 type fakeAssigner struct {
-	existing []*driverpay.WorkerPayAssignment
+	existing []*payassignment.WorkerPayAssignment
 	failure  error
-	assigned *driverpay.WorkerPayAssignment
+	assigned *payassignment.WorkerPayAssignment
 }
 
 func (f *fakeAssigner) PlanAssignment(
 	_ context.Context,
-	entity *driverpay.WorkerPayAssignment,
+	entity *payassignment.WorkerPayAssignment,
 ) (*driverpayservice.AssignmentPlan, error) {
 	if f.failure != nil {
 		return nil, f.failure
@@ -54,9 +56,9 @@ func (f *fakeAssigner) PlanAssignment(
 
 func (f *fakeAssigner) AssignProfileToWorker(
 	_ context.Context,
-	entity *driverpay.WorkerPayAssignment,
+	entity *payassignment.WorkerPayAssignment,
 	_ *permissionports.RequestActor,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	f.assigned = entity
 
 	return entity, nil
@@ -65,13 +67,13 @@ func (f *fakeAssigner) AssignProfileToWorker(
 func TestAssignPayProfile_EndsTheAssignmentInForce(t *testing.T) {
 	t.Parallel()
 
-	current := &driverpay.WorkerPayAssignment{
+	current := &payassignment.WorkerPayAssignment{
 		ID:            pulid.MustNew("wpa_"),
 		EffectiveFrom: 1_700_000_000,
 		SplitPercent:  decimal.NewFromInt(100),
 		Version:       2,
 	}
-	assigner := &fakeAssigner{existing: []*driverpay.WorkerPayAssignment{current}}
+	assigner := &fakeAssigner{existing: []*payassignment.WorkerPayAssignment{current}}
 	tool := &paytools.AssignPayProfileTool{Assignments: assigner}
 	raw := map[string]any{
 		toolparams.ParamWorkerID:      pulid.MustNew("wrk_").String(),
@@ -112,7 +114,7 @@ func TestAssignPayProfile_EndsTheAssignmentInForce(t *testing.T) {
 }
 
 type fakeAssignmentEnder struct {
-	assignment *driverpay.WorkerPayAssignment
+	assignment *payassignment.WorkerPayAssignment
 	ended      pulid.ID
 	endDate    int64
 }
@@ -121,7 +123,7 @@ func (f *fakeAssignmentEnder) GetAssignment(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	return f.assignment, nil
 }
 
@@ -131,7 +133,7 @@ func (f *fakeAssignmentEnder) EndAssignment(
 	assignmentID pulid.ID,
 	endDate int64,
 	_ *permissionports.RequestActor,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	f.ended, f.endDate = assignmentID, endDate
 
 	return f.assignment, nil
@@ -140,7 +142,7 @@ func (f *fakeAssignmentEnder) EndAssignment(
 func TestEndWorkerPayAssignment_EndsAfterItStarts(t *testing.T) {
 	t.Parallel()
 
-	ender := &fakeAssignmentEnder{assignment: &driverpay.WorkerPayAssignment{
+	ender := &fakeAssignmentEnder{assignment: &payassignment.WorkerPayAssignment{
 		ID:            pulid.MustNew("wpa_"),
 		EffectiveFrom: periodStartUnix,
 		PayProfile:    &driverpay.PayProfile{Name: "Company solo"},
@@ -171,24 +173,24 @@ func TestEndWorkerPayAssignment_EndsAfterItStarts(t *testing.T) {
 }
 
 type fakeRecurringBook struct {
-	existing *driverpay.RecurringDeduction
+	existing *recurringpay.RecurringDeduction
 	refusal  error
 	escrow   bool
-	created  *driverpay.RecurringDeduction
-	updated  *driverpay.RecurringDeduction
+	created  *recurringpay.RecurringDeduction
+	updated  *recurringpay.RecurringDeduction
 }
 
 func (f *fakeRecurringBook) get(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	return f.existing, nil
 }
 
 func (f *fakeRecurringBook) check(
 	_ context.Context,
-	_ *driverpay.RecurringDeduction,
+	_ *recurringpay.RecurringDeduction,
 	escrow bool,
 ) error {
 	f.escrow = escrow
@@ -198,10 +200,10 @@ func (f *fakeRecurringBook) check(
 
 func (f *fakeRecurringBook) create(
 	_ context.Context,
-	entity *driverpay.RecurringDeduction,
+	entity *recurringpay.RecurringDeduction,
 	_ bool,
 	_ *permissionports.RequestActor,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	f.created = entity
 
 	return entity, nil
@@ -209,9 +211,9 @@ func (f *fakeRecurringBook) create(
 
 func (f *fakeRecurringBook) update(
 	_ context.Context,
-	entity *driverpay.RecurringDeduction,
+	entity *recurringpay.RecurringDeduction,
 	_ *permissionports.RequestActor,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	f.updated = entity
 
 	return entity, nil
@@ -221,7 +223,7 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 	t.Parallel()
 
 	book := &fakeRecurringBook{}
-	tool := &RecurringPayTool[driverpay.RecurringDeduction]{kind: deductionKind(), book: book}
+	tool := &RecurringPayTool[recurringpay.RecurringDeduction]{kind: deductionKind(), book: book}
 	_, targeted := tool.Target(map[string]any{"deductionId": pulid.MustNew("rded_").String()})
 	assert.False(t, targeted)
 
@@ -252,7 +254,7 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 	assert.Equal(t, int64(10000), book.created.AmountMinor)
 	require.NotNil(t, book.created.TotalCapMinor)
 	assert.Equal(t, int64(250000), *book.created.TotalCapMinor)
-	assert.Equal(t, driverpay.DeductionFrequencyEverySettlement, book.created.Frequency)
+	assert.Equal(t, recurringpay.DeductionFrequencyEverySettlement, book.created.Frequency)
 
 	delete(raw, settlementpreview.ParamDriverPayAmount)
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
@@ -274,17 +276,17 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 func TestUpdateRecurringDeduction_ChangesOnlyWhatIsGiven(t *testing.T) {
 	t.Parallel()
 
-	existing := &driverpay.RecurringDeduction{
+	existing := &recurringpay.RecurringDeduction{
 		ID:           pulid.MustNew("rded_"),
-		Status:       driverpay.DeductionStatusActive,
-		Frequency:    driverpay.DeductionFrequencyEverySettlement,
+		Status:       recurringpay.DeductionStatusActive,
+		Frequency:    recurringpay.DeductionFrequencyEverySettlement,
 		Description:  "Occupational accident insurance",
 		AmountMinor:  4500,
 		CurrencyCode: "USD",
 		Version:      7,
 	}
 	book := &fakeRecurringBook{existing: existing}
-	tool := &RecurringPayTool[driverpay.RecurringDeduction]{
+	tool := &RecurringPayTool[recurringpay.RecurringDeduction]{
 		kind:   deductionKind(),
 		book:   book,
 		update: true,
@@ -319,7 +321,7 @@ func TestUpdateRecurringDeduction_ChangesOnlyWhatIsGiven(t *testing.T) {
 	)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
-	assert.Equal(t, driverpay.DeductionStatusPaused, book.updated.Status)
+	assert.Equal(t, recurringpay.DeductionStatusPaused, book.updated.Status)
 	assert.Equal(t, int64(4500), book.updated.AmountMinor)
-	assert.Equal(t, driverpay.DeductionStatusActive, existing.Status)
+	assert.Equal(t, recurringpay.DeductionStatusActive, existing.Status)
 }

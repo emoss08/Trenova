@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -93,8 +94,8 @@ type PortalPeriodSummary struct {
 }
 
 type PortalEscrowSummary struct {
-	Account      *driverpay.EscrowAccount       `json:"account"`
-	Transactions []*driverpay.EscrowTransaction `json:"transactions"`
+	Account      *payescrow.EscrowAccount       `json:"account"`
+	Transactions []*payescrow.EscrowTransaction `json:"transactions"`
 }
 
 func (s *Service) ResolveWorker(
@@ -622,7 +623,7 @@ func (s *Service) MyEscrow(
 func (s *Service) MyAdvances(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*driverpay.PayAdvance, error) {
+) ([]*payadvance.PayAdvance, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

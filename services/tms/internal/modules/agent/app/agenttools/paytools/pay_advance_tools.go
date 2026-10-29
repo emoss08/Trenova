@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -46,9 +46,9 @@ const advanceSensitiveMark = "amountMinor"
 type payAdvanceIssuer interface {
 	IssueAdvance(
 		ctx context.Context,
-		entity *driverpay.PayAdvance,
+		entity *payadvance.PayAdvance,
 		actor *permissionports.RequestActor,
-	) (*driverpay.PayAdvance, error)
+	) (*payadvance.PayAdvance, error)
 }
 
 type IssuePayAdvanceTool struct {
@@ -98,7 +98,7 @@ func (t *IssuePayAdvanceTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *IssuePayAdvanceTool) entity(
 	params *agenttoolports.ToolExecuteParams,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (t *IssuePayAdvanceTool) entity(
 		issued = timeutils.NowUnix()
 	}
 
-	return &driverpay.PayAdvance{
+	return &payadvance.PayAdvance{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		WorkerID:       workerID,
@@ -245,14 +245,14 @@ type payAdvanceWriter interface {
 	GetAdvance(
 		ctx context.Context,
 		req driverpayports.GetPayAdvanceByIDRequest,
-	) (*driverpay.PayAdvance, error)
+	) (*payadvance.PayAdvance, error)
 	WriteOffAdvance(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		advanceID pulid.ID,
 		reason string,
 		actor *permissionports.RequestActor,
-	) (*driverpay.PayAdvance, error)
+	) (*payadvance.PayAdvance, error)
 }
 
 type WriteOffPayAdvanceTool struct {
@@ -300,8 +300,8 @@ func (t *WriteOffPayAdvanceTool) Target(params map[string]any) (agenttoolports.T
 }
 
 type writeOffPlan struct {
-	before  *driverpay.PayAdvance
-	after   *driverpay.PayAdvance
+	before  *payadvance.PayAdvance
+	after   *payadvance.PayAdvance
 	reason  string
 	refusal error
 }
@@ -425,7 +425,7 @@ func (t *WriteOffPayAdvanceTool) Preview(
 	return toolpreview.Build(summary, change), nil
 }
 
-func advanceLabel(advance *driverpay.PayAdvance) string {
+func advanceLabel(advance *payadvance.PayAdvance) string {
 	if advance.Reference != "" {
 		return "Advance " + advance.Reference
 	}

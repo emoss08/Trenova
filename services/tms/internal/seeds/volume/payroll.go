@@ -18,6 +18,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -69,20 +75,20 @@ type paySetup struct {
 	requireReceipt bool
 	accounts       payAccounts
 	codeAccounts   map[pulid.ID]pulid.ID
-	codes          map[string]*driverpay.PayCode
+	codes          map[string]*paycode.PayCode
 	profiles       map[string]*driverpay.PayProfile
 	bil            *bilSetup
 	journals       bool
 }
 
 type payAdvancePlan struct {
-	advance    *driverpay.PayAdvance
+	advance    *payadvance.PayAdvance
 	writeOffAt int64
 }
 
 type payExpensePlan struct {
-	expense  *driverpay.Expense
-	outcome  driverpay.ExpenseStatus
+	expense  *payexpense.Expense
+	outcome  payexpense.ExpenseStatus
 	attached bool
 }
 
@@ -96,18 +102,18 @@ type paySettlement struct {
 	worker      *payWorker
 	generatedAt int64
 	updatedAt   int64
-	escrowTxs   []*driverpay.EscrowTransaction
+	escrowTxs   []*payescrow.EscrowTransaction
 	lineTimes   map[*driversettlement.SettlementLine]int64
 }
 
 type payWorker struct {
 	driver        *driverRecord
 	team          bool
-	assignments   []*driverpay.WorkerPayAssignment
-	deductions    []*driverpay.RecurringDeduction
-	earnings      []*driverpay.RecurringEarning
+	assignments   []*payassignment.WorkerPayAssignment
+	deductions    []*recurringpay.RecurringDeduction
+	earnings      []*recurringpay.RecurringEarning
 	advances      []*payAdvancePlan
-	escrow        *driverpay.EscrowAccount
+	escrow        *payescrow.EscrowAccount
 	events        []*driversettlement.PayEvent
 	expenses      []*payExpensePlan
 	disputes      []*payDisputePlan
@@ -118,17 +124,17 @@ type payWorker struct {
 }
 
 type payRows struct {
-	assignments []*driverpay.WorkerPayAssignment
-	deductions  []*driverpay.RecurringDeduction
-	earnings    []*driverpay.RecurringEarning
-	advances    []*driverpay.PayAdvance
-	escrows     []*driverpay.EscrowAccount
-	escrowTxs   []*driverpay.EscrowTransaction
+	assignments []*payassignment.WorkerPayAssignment
+	deductions  []*recurringpay.RecurringDeduction
+	earnings    []*recurringpay.RecurringEarning
+	advances    []*payadvance.PayAdvance
+	escrows     []*payescrow.EscrowAccount
+	escrowTxs   []*payescrow.EscrowTransaction
 	events      []*driversettlement.PayEvent
 	settlements []*driversettlement.Settlement
 	lines       []*driversettlement.SettlementLine
 	batches     []*driversettlement.SettlementBatch
-	expenses    []*driverpay.Expense
+	expenses    []*payexpense.Expense
 	disputes    []*driversettlement.Dispute
 	stamps      map[string][]stamp
 }
@@ -197,7 +203,7 @@ func (g *generator) seedPayroll(ctx context.Context) error {
 func (g *generator) payLoadSetup(ctx context.Context) (*paySetup, error) {
 	setup := &paySetup{
 		codeAccounts:  make(map[pulid.ID]pulid.ID),
-		codes:         make(map[string]*driverpay.PayCode),
+		codes:         make(map[string]*paycode.PayCode),
 		profiles:      make(map[string]*driverpay.PayProfile),
 		allowDisputes: true,
 	}
@@ -279,9 +285,9 @@ var payCustomCodes = []struct {
 
 func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *paySetup) error {
 	at := unix(g.start) - 400*payDay
-	rows := make([]*driverpay.PayCode, 0, len(driverpay.SystemPayCodes())+len(payCustomCodes))
-	for _, def := range driverpay.SystemPayCodes() {
-		rows = append(rows, &driverpay.PayCode{
+	rows := make([]*paycode.PayCode, 0, len(paycode.SystemPayCodes())+len(payCustomCodes))
+	for _, def := range paycode.SystemPayCodes() {
+		rows = append(rows, &paycode.PayCode{
 			ID:                    idAt("payc_", at),
 			BusinessUnitID:        g.refs.buID,
 			OrganizationID:        g.refs.orgID,
@@ -295,12 +301,12 @@ func (g *generator) payEnsureCodes(ctx context.Context, tx *keel.DB, setup *payS
 		})
 	}
 	for _, def := range payCustomCodes {
-		rows = append(rows, &driverpay.PayCode{
+		rows = append(rows, &paycode.PayCode{
 			ID:             idAt("payc_", at),
 			BusinessUnitID: g.refs.buID,
 			OrganizationID: g.refs.orgID,
 			Status:         domaintypes.StatusActive,
-			Direction:      driverpay.PayCodeDirectionEarning,
+			Direction:      paycode.PayCodeDirectionEarning,
 			Code:           def.code,
 			Name:           def.name,
 			Description:    "Non-taxable reimbursement of a driver-paid trip expense",
@@ -557,7 +563,7 @@ func (g *generator) payEnsureProfiles(ctx context.Context, tx *keel.DB, setup *p
 	return nil
 }
 
-func (s *paySetup) code(direction driverpay.PayCodeDirection, code string) *driverpay.PayCode {
+func (s *paySetup) code(direction paycode.PayCodeDirection, code string) *paycode.PayCode {
 	return s.codes[string(direction)+"/"+code]
 }
 
@@ -616,7 +622,7 @@ func (g *generator) payAssign(setup *paySetup, w *payWorker) {
 			switchAt := unix(g.start) + g.fake.between64(30, 200)*payDay
 			if switchAt > from+payDay && switchAt < unix(g.now)-14*payDay {
 				end := switchAt
-				w.assignments = append(w.assignments, &driverpay.WorkerPayAssignment{
+				w.assignments = append(w.assignments, &payassignment.WorkerPayAssignment{
 					ID:             idAt("wpa_", from),
 					BusinessUnitID: g.refs.buID,
 					OrganizationID: g.refs.orgID,
@@ -635,7 +641,7 @@ func (g *generator) payAssign(setup *paySetup, w *payWorker) {
 		}
 	}
 
-	assignment := &driverpay.WorkerPayAssignment{
+	assignment := &payassignment.WorkerPayAssignment{
 		ID:             idAt("wpa_", from),
 		BusinessUnitID: g.refs.buID,
 		OrganizationID: g.refs.orgID,
@@ -653,7 +659,7 @@ func (g *generator) payAssign(setup *paySetup, w *payWorker) {
 	w.assignments = append(w.assignments, assignment)
 }
 
-func (w *payWorker) assignmentAt(at int64) *driverpay.WorkerPayAssignment {
+func (w *payWorker) assignmentAt(at int64) *payassignment.WorkerPayAssignment {
 	for i := len(w.assignments) - 1; i >= 0; i-- {
 		a := w.assignments[i]
 		if a.EffectiveFrom <= at && (a.EffectiveTo == nil || *a.EffectiveTo > at) {
@@ -672,21 +678,21 @@ func (g *generator) payDeduction(
 	w *payWorker,
 	code, description string,
 	amountMinor int64,
-	frequency driverpay.DeductionFrequency,
+	frequency recurringpay.DeductionFrequency,
 	start int64,
-) *driverpay.RecurringDeduction {
-	pc := setup.code(driverpay.PayCodeDirectionDeduction, code)
+) *recurringpay.RecurringDeduction {
+	pc := setup.code(paycode.PayCodeDirectionDeduction, code)
 	if pc == nil {
 		return nil
 	}
-	d := &driverpay.RecurringDeduction{
+	d := &recurringpay.RecurringDeduction{
 		ID:             idAt("rded_", start),
 		BusinessUnitID: g.refs.buID,
 		OrganizationID: g.refs.orgID,
 		WorkerID:       w.driver.WorkerID,
 		PayCodeID:      pc.ID,
-		Status:         driverpay.DeductionStatusActive,
-		Kind:           driverpay.DeductionKindStandard,
+		Status:         recurringpay.DeductionStatusActive,
+		Kind:           recurringpay.DeductionKindStandard,
 		Priority:       100,
 		Frequency:      frequency,
 		Description:    description,
@@ -706,21 +712,21 @@ func (g *generator) payEarning(
 	w *payWorker,
 	code, description string,
 	amountMinor int64,
-	frequency driverpay.EarningFrequency,
-	kind driverpay.EarningKind,
+	frequency recurringpay.EarningFrequency,
+	kind recurringpay.EarningKind,
 	start int64,
 ) {
-	pc := setup.code(driverpay.PayCodeDirectionEarning, code)
+	pc := setup.code(paycode.PayCodeDirectionEarning, code)
 	if pc == nil {
 		return
 	}
-	w.earnings = append(w.earnings, &driverpay.RecurringEarning{
+	w.earnings = append(w.earnings, &recurringpay.RecurringEarning{
 		ID:             idAt("rern_", start),
 		BusinessUnitID: g.refs.buID,
 		OrganizationID: g.refs.orgID,
 		WorkerID:       w.driver.WorkerID,
 		PayCodeID:      pc.ID,
-		Status:         driverpay.EarningStatusActive,
+		Status:         recurringpay.EarningStatusActive,
 		Kind:           kind,
 		Frequency:      frequency,
 		Description:    description,
@@ -748,28 +754,28 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 	if w.owner() {
 		if w.driver.TractorID.IsNotNil() {
 			lease := g.payDeduction(setup, w, "TRKLEASE", "Tractor lease-purchase payment",
-				g.payMinor(550, 780), driverpay.DeductionFrequencyEverySettlement, start)
+				g.payMinor(550, 780), recurringpay.DeductionFrequencyEverySettlement, start)
 			if lease != nil && f.chance(0.4) {
 				lease.TotalCapMinor = ptr(g.payMinor(38_000, 62_000))
 				lease.DeductedToDateMinor = g.payMinor(4_000, 20_000)
 			}
 		}
 		g.payDeduction(setup, w, "INSUR", "Occupational accident and bobtail insurance",
-			g.payMinor(75, 115), driverpay.DeductionFrequencyEverySettlement, start)
+			g.payMinor(75, 115), recurringpay.DeductionFrequencyEverySettlement, start)
 		g.payDeduction(setup, w, "ELD", "ELD subscription",
-			g.payMinor(35, 49), driverpay.DeductionFrequencyMonthly, start)
+			g.payMinor(35, 49), recurringpay.DeductionFrequencyMonthly, start)
 		if f.chance(0.3) {
 			g.payDeduction(setup, w, "TRLLEASE", "Dry van trailer rental",
-				g.payMinor(210, 260), driverpay.DeductionFrequencyEverySettlement, start)
+				g.payMinor(210, 260), recurringpay.DeductionFrequencyEverySettlement, start)
 		}
 		if f.chance(0.85) {
 			target := g.payMinor(2_500, 5_000)
-			w.escrow = &driverpay.EscrowAccount{
+			w.escrow = &payescrow.EscrowAccount{
 				ID:                 idAt("escr_", start),
 				BusinessUnitID:     g.refs.buID,
 				OrganizationID:     g.refs.orgID,
 				WorkerID:           w.driver.WorkerID,
-				Status:             driverpay.EscrowAccountStatusActive,
+				Status:             payescrow.EscrowAccountStatusActive,
 				TargetAmountMinor:  target,
 				AnnualInterestRate: setup.control.DefaultEscrowInterestRate,
 				OpenedDate:         start,
@@ -778,15 +784,15 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 				UpdatedAt:          start,
 			}
 			escrow := g.payDeduction(setup, w, "ESCROW", "Maintenance escrow contribution",
-				g.payMinor(75, 150), driverpay.DeductionFrequencyEverySettlement, start)
+				g.payMinor(75, 150), recurringpay.DeductionFrequencyEverySettlement, start)
 			if escrow != nil {
 				escrow.EscrowAccountID = ptr(w.escrow.ID)
 			}
 		}
 		if f.chance(0.2) {
 			g.payEarning(setup, w, "EQUIPRENT", "APU rental for company use of driver-owned unit",
-				g.payMinor(50, 75), driverpay.EarningFrequencyEverySettlement,
-				driverpay.EarningKindStandard, start)
+				g.payMinor(50, 75), recurringpay.EarningFrequencyEverySettlement,
+				recurringpay.EarningKindStandard, start)
 		}
 		return
 	}
@@ -795,16 +801,16 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 	case roll < 4:
 		loanStart := unix(g.start) + f.between64(10, 240)*payDay
 		loan := g.payDeduction(setup, w, "LOAN", "Company loan repayment",
-			g.payMinor(25, 75), driverpay.DeductionFrequencyEverySettlement, loanStart)
+			g.payMinor(25, 75), recurringpay.DeductionFrequencyEverySettlement, loanStart)
 		if loan != nil {
 			loan.TotalCapMinor = ptr(g.payMinor(300, 1_200))
 		}
 	case roll < 6:
 		garnish := g.payDeduction(setup, w, "OTHER", "Child support withholding order",
-			g.payMinor(80, 220), driverpay.DeductionFrequencyEverySettlement, start)
+			g.payMinor(80, 220), recurringpay.DeductionFrequencyEverySettlement, start)
 		if garnish != nil {
 			state := w.driver.Home.State
-			garnish.Kind = driverpay.DeductionKindGarnishment
+			garnish.Kind = recurringpay.DeductionKindGarnishment
 			garnish.Priority = 10
 			garnish.CourtOrderNumber = "CO-" + f.digits(8)
 			garnish.CaseNumber = state + "-" + f.digits(6)
@@ -812,13 +818,13 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 		}
 	case roll < 30:
 		g.payDeduction(setup, w, "INSUR", "Voluntary supplemental insurance",
-			g.payMinor(18, 45), driverpay.DeductionFrequencyEverySettlement, start)
+			g.payMinor(18, 45), recurringpay.DeductionFrequencyEverySettlement, start)
 	}
 
 	if w.driver.DriverType == worker.DriverTypeOTR && f.chance(0.3) {
 		g.payEarning(setup, w, "PERDIEM", "OTR per diem: IRS substantiated M&IE",
-			g.payMinor(250, 340), driverpay.EarningFrequencyEverySettlement,
-			driverpay.EarningKindStandard, start)
+			g.payMinor(250, 340), recurringpay.EarningFrequencyEverySettlement,
+			recurringpay.EarningKindStandard, start)
 	}
 	if f.chance(0.15) {
 		g.payEarning(
@@ -830,8 +836,8 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 				100,
 				150,
 			),
-			driverpay.EarningFrequencyMonthly,
-			driverpay.EarningKindBonus,
+			recurringpay.EarningFrequencyMonthly,
+			recurringpay.EarningKindBonus,
 			start,
 		)
 	}
@@ -845,8 +851,8 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 				75,
 				125,
 			),
-			driverpay.EarningFrequencyMonthly,
-			driverpay.EarningKindBonus,
+			recurringpay.EarningFrequencyMonthly,
+			recurringpay.EarningKindBonus,
 			start,
 		)
 	}
@@ -860,27 +866,27 @@ func (g *generator) payRecurring(setup *paySetup, w *payWorker) {
 				40,
 				60,
 			),
-			driverpay.EarningFrequencyMonthly,
-			driverpay.EarningKindStandard,
+			recurringpay.EarningFrequencyMonthly,
+			recurringpay.EarningKindStandard,
 			start,
 		)
 	}
 
 	for _, d := range w.deductions {
 		if f.chance(0.05) {
-			d.Status = driverpay.DeductionStatusPaused
+			d.Status = recurringpay.DeductionStatusPaused
 		}
 	}
 }
 
 var payAdvanceSources = []struct {
-	source driverpay.AdvanceSource
+	source payadvance.AdvanceSource
 	prefix string
 }{
-	{driverpay.AdvanceSourceEFSMoneyCode, "EFS-"},
-	{driverpay.AdvanceSourceComdataCode, "CMD-"},
-	{driverpay.AdvanceSourceFuelCard, "FC-"},
-	{driverpay.AdvanceSourceCash, ""},
+	{payadvance.AdvanceSourceEFSMoneyCode, "EFS-"},
+	{payadvance.AdvanceSourceComdataCode, "CMD-"},
+	{payadvance.AdvanceSourceFuelCard, "FC-"},
+	{payadvance.AdvanceSourceCash, ""},
 }
 
 var payAdvanceNotes = []string{
@@ -909,12 +915,12 @@ func (g *generator) payAdvances(w *payWorker) {
 			continue
 		}
 		src := pick(f, payAdvanceSources)
-		advance := &driverpay.PayAdvance{
+		advance := &payadvance.PayAdvance{
 			ID:             idAt("padv_", issued),
 			BusinessUnitID: g.refs.buID,
 			OrganizationID: g.refs.orgID,
 			WorkerID:       w.driver.WorkerID,
-			Status:         driverpay.AdvanceStatusOutstanding,
+			Status:         payadvance.AdvanceStatusOutstanding,
 			Source:         src.source,
 			IssuedDate:     issued,
 			AmountMinor:    g.payMinor(100, 600),
@@ -1233,7 +1239,7 @@ func (g *generator) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*payWo
 				continue
 			}
 			kind := payExpenseKinds[g.fake.weighted(weights)]
-			pc := setup.code(driverpay.PayCodeDirectionEarning, kind.code)
+			pc := setup.code(paycode.PayCodeDirectionEarning, kind.code)
 			if pc == nil {
 				continue
 			}
@@ -1256,14 +1262,14 @@ func (g *generator) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*payWo
 					)
 				}
 			}
-			expense := &driverpay.Expense{
+			expense := &payexpense.Expense{
 				ID:                idAt("dexp_", submitted),
 				BusinessUnitID:    g.refs.buID,
 				OrganizationID:    g.refs.orgID,
 				WorkerID:          w.driver.WorkerID,
 				ShipmentID:        ptr(event.ShipmentID),
 				PayCodeID:         ptr(pc.ID),
-				Status:            driverpay.ExpenseStatusPending,
+				Status:            payexpense.ExpenseStatusPending,
 				AmountMinor:       g.payMinor(kind.low, kind.high),
 				CurrencyCode:      payCurrency,
 				Description:       description,
@@ -1273,12 +1279,12 @@ func (g *generator) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*payWo
 				CreatedAt:         submitted,
 				UpdatedAt:         submitted,
 			}
-			plan := &payExpensePlan{expense: expense, outcome: driverpay.ExpenseStatusReimbursed}
+			plan := &payExpensePlan{expense: expense, outcome: payexpense.ExpenseStatusReimbursed}
 			switch roll := g.fake.intn(100); {
 			case setup.requireReceipt || roll < 10:
-				plan.outcome = driverpay.ExpenseStatusRejected
+				plan.outcome = payexpense.ExpenseStatusRejected
 			case roll < 14:
-				plan.outcome = driverpay.ExpenseStatusCancelled
+				plan.outcome = payexpense.ExpenseStatusCancelled
 			}
 			w.expenses = append(w.expenses, plan)
 		}
@@ -1479,11 +1485,11 @@ func (g *generator) payBuildSettlement(
 
 	var guaranteeExcluded int64
 	for _, earning := range w.earnings {
-		if earning.Status != driverpay.EarningStatusActive || earning.StartDate > period.end ||
+		if earning.Status != recurringpay.EarningStatusActive || earning.StartDate > period.end ||
 			(earning.EndDate != nil && *earning.EndDate <= period.end) {
 			continue
 		}
-		if earning.Frequency == driverpay.EarningFrequencyMonthly && !monthly {
+		if earning.Frequency == recurringpay.EarningFrequencyMonthly && !monthly {
 			continue
 		}
 		amount := earning.NextAmountMinor()
@@ -1541,12 +1547,12 @@ func (g *generator) payBuildSettlement(
 	}
 
 	for _, deduction := range w.deductions {
-		if deduction.Status != driverpay.DeductionStatusActive ||
+		if deduction.Status != recurringpay.DeductionStatusActive ||
 			deduction.StartDate > period.end ||
 			(deduction.EndDate != nil && *deduction.EndDate <= period.end) {
 			continue
 		}
-		if deduction.Frequency == driverpay.DeductionFrequencyMonthly && !monthly {
+		if deduction.Frequency == recurringpay.DeductionFrequencyMonthly && !monthly {
 			continue
 		}
 		amount := deduction.NextAmountMinor()
@@ -1601,7 +1607,7 @@ func (g *generator) payBuildSettlement(
 	return s
 }
 
-func payCodeByID(setup *paySetup, id pulid.ID) *driverpay.PayCode {
+func payCodeByID(setup *paySetup, id pulid.ID) *paycode.PayCode {
 	for _, code := range setup.codes {
 		if code.ID == id {
 			return code
@@ -1811,7 +1817,7 @@ func (g *generator) payAttachExpenses(w *payWorker, s *paySettlement) {
 		return
 	}
 	for _, plan := range w.expenses {
-		if plan.attached || plan.outcome != driverpay.ExpenseStatusReimbursed ||
+		if plan.attached || plan.outcome != payexpense.ExpenseStatusReimbursed ||
 			plan.expense.CreatedAt >= from {
 			continue
 		}
@@ -1824,7 +1830,7 @@ func (g *generator) payAttachExpenses(w *payWorker, s *paySettlement) {
 			e.PayCodeID,
 			reviewed,
 		)
-		e.Status = driverpay.ExpenseStatusReimbursed
+		e.Status = payexpense.ExpenseStatusReimbursed
 		e.ReviewedByID = ptr(pick(g.fake, g.refs.userIDs))
 		e.ReviewedAt = ptr(reviewed)
 		e.SettlementLineID = ptr(line.ID)
@@ -1841,16 +1847,16 @@ func (g *generator) payCloseExpenses(w *payWorker) {
 			continue
 		}
 		switch {
-		case plan.outcome == driverpay.ExpenseStatusCancelled:
-			e.Status = driverpay.ExpenseStatusCancelled
+		case plan.outcome == payexpense.ExpenseStatusCancelled:
+			e.Status = payexpense.ExpenseStatusCancelled
 			e.UpdatedAt = min(e.CreatedAt+g.fake.between64(payHour, 2*payDay), now)
-		case plan.outcome == driverpay.ExpenseStatusRejected ||
+		case plan.outcome == payexpense.ExpenseStatusRejected ||
 			now-e.CreatedAt > 21*payDay:
 			reviewed := e.CreatedAt + g.fake.between64(2*payHour, 4*payDay)
 			if reviewed >= now {
 				continue
 			}
-			e.Status = driverpay.ExpenseStatusRejected
+			e.Status = payexpense.ExpenseStatusRejected
 			e.ReviewNote = pick(g.fake, payExpenseRejections)
 			e.ReviewedByID = ptr(pick(g.fake, g.refs.userIDs))
 			e.ReviewedAt = ptr(reviewed)
@@ -2041,7 +2047,7 @@ func (g *generator) payApplySideEffects(s *paySettlement) {
 			}
 			d.DeductedToDateMinor += amount
 			if remaining := d.RemainingCapMinor(); remaining != nil && *remaining == 0 {
-				d.Status = driverpay.DeductionStatusCompleted
+				d.Status = recurringpay.DeductionStatusCompleted
 			}
 			d.UpdatedAt = at
 			if line.Category == driversettlement.LineCategoryEscrowContribution &&
@@ -2049,12 +2055,12 @@ func (g *generator) payApplySideEffects(s *paySettlement) {
 				line.EscrowAccountID != nil {
 				w.escrow.BalanceMinor += amount
 				w.escrow.UpdatedAt = at
-				s.escrowTxs = append(s.escrowTxs, &driverpay.EscrowTransaction{
+				s.escrowTxs = append(s.escrowTxs, &payescrow.EscrowTransaction{
 					ID:                idAt("esctx_", at),
 					BusinessUnitID:    g.refs.buID,
 					OrganizationID:    g.refs.orgID,
 					EscrowAccountID:   w.escrow.ID,
-					Type:              driverpay.EscrowTransactionTypeContribution,
+					Type:              payescrow.EscrowTransactionTypeContribution,
 					AmountMinor:       amount,
 					BalanceAfterMinor: w.escrow.BalanceMinor,
 					OccurredDate:      at,
@@ -2080,7 +2086,7 @@ func (g *generator) payApplySideEffects(s *paySettlement) {
 					earning.PaidToDateMinor += line.AmountMinor
 					if remaining := earning.RemainingCapMinor(); remaining != nil &&
 						*remaining == 0 {
-						earning.Status = driverpay.EarningStatusCompleted
+						earning.Status = recurringpay.EarningStatusCompleted
 					}
 					earning.UpdatedAt = at
 				}
@@ -2089,7 +2095,7 @@ func (g *generator) payApplySideEffects(s *paySettlement) {
 	}
 }
 
-func payDeductionByID(w *payWorker, id *pulid.ID) *driverpay.RecurringDeduction {
+func payDeductionByID(w *payWorker, id *pulid.ID) *recurringpay.RecurringDeduction {
 	if id == nil {
 		return nil
 	}

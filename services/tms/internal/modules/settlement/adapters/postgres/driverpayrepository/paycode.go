@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -35,11 +35,11 @@ func NewPayCode(p Params) driverpayports.PayCodeRepository {
 func (r *payCodeRepository) List(
 	ctx context.Context,
 	req *driverpayports.ListPayCodesRequest,
-) (*pagination.ListResult[*driverpay.PayCode], error) {
+) (*pagination.ListResult[*paycode.PayCode], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
+		func(ctx context.Context) (*pagination.ListResult[*paycode.PayCode], error) {
 			pc := driverpaydb.PayCodes
 			q := pc.Where(
 				searchPred(req.Filter.Query, pc.Code, pc.Name),
@@ -59,20 +59,20 @@ func (r *payCodeRepository) List(
 func (r *payCodeRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListPayCodeConnectionRequest,
-) (*pagination.CursorListResult[*driverpay.PayCode], error) {
+) (*pagination.CursorListResult[*paycode.PayCode], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayCode], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*paycode.PayCode], error) {
 			pc := driverpaydb.PayCodes
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				pc.Query(),
-				&listquery.Request[driverpay.PayCode]{
+				&listquery.Request[paycode.PayCode]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*driverpay.PayCode]) *keel.Query[*driverpay.PayCode] {
+					Shape: func(q *keel.Query[*paycode.PayCode]) *keel.Query[*paycode.PayCode] {
 						return q.Load(pc.GLAccount())
 					},
 				},
@@ -90,8 +90,8 @@ func (r *payCodeRepository) ListConnection(
 func (r *payCodeRepository) ListActive(
 	ctx context.Context,
 	req driverpayports.ListActivePayCodesRequest,
-) ([]*driverpay.PayCode, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayCode, error) {
+) ([]*paycode.PayCode, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*paycode.PayCode, error) {
 		pc := driverpaydb.PayCodes
 		items, err := pc.Where(
 			pc.Status.Eq(domaintypes.StatusActive),
@@ -108,11 +108,11 @@ func (r *payCodeRepository) ListActive(
 func (r *payCodeRepository) SelectOptions(
 	ctx context.Context,
 	req *driverpayports.PayCodeSelectOptionsRequest,
-) (*pagination.ListResult[*driverpay.PayCode], error) {
+) (*pagination.ListResult[*paycode.PayCode], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
+		func(ctx context.Context) (*pagination.ListResult[*paycode.PayCode], error) {
 			pc := driverpaydb.PayCodes
 			q := pc.Pick(
 				pc.ID,
@@ -149,8 +149,8 @@ func (r *payCodeRepository) SelectOptions(
 func (r *payCodeRepository) GetByID(
 	ctx context.Context,
 	req driverpayports.GetPayCodeByIDRequest,
-) (*driverpay.PayCode, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.PayCode, error) {
+) (*paycode.PayCode, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*paycode.PayCode, error) {
 		pc := driverpaydb.PayCodes
 		entity, err := pc.Where(pc.ID.Eq(req.ID)).
 			Load(pc.GLAccount()).
@@ -167,10 +167,10 @@ func (r *payCodeRepository) GetByIDs(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*driverpay.PayCode, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayCode, error) {
+) ([]*paycode.PayCode, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*paycode.PayCode, error) {
 		if len(ids) == 0 {
-			return []*driverpay.PayCode{}, nil
+			return []*paycode.PayCode{}, nil
 		}
 
 		pc := driverpaydb.PayCodes
@@ -185,9 +185,9 @@ func (r *payCodeRepository) GetByIDs(
 
 func (r *payCodeRepository) Create(
 	ctx context.Context,
-	entity *driverpay.PayCode,
-) (*driverpay.PayCode, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.PayCode, error) {
+	entity *paycode.PayCode,
+) (*paycode.PayCode, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*paycode.PayCode, error) {
 		if err := driverpaydb.PayCodes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, payCodeErrors.Map(err, entity.ID.String())
 		}
@@ -201,9 +201,9 @@ func (r *payCodeRepository) Create(
 
 func (r *payCodeRepository) Update(
 	ctx context.Context,
-	entity *driverpay.PayCode,
-) (*driverpay.PayCode, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.PayCode, error) {
+	entity *paycode.PayCode,
+) (*paycode.PayCode, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*paycode.PayCode, error) {
 		pc := driverpaydb.PayCodes
 		if err := pc.Save(
 			ctx,
@@ -233,10 +233,10 @@ func (r *payCodeRepository) EnsureSystemDefaults(
 	tenantInfo pagination.TenantInfo,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		defs := driverpay.SystemPayCodes()
-		rows := make([]*driverpay.PayCode, 0, len(defs))
+		defs := paycode.SystemPayCodes()
+		rows := make([]*paycode.PayCode, 0, len(defs))
 		for _, def := range defs {
-			rows = append(rows, &driverpay.PayCode{
+			rows = append(rows, &paycode.PayCode{
 				BusinessUnitID:        tenantInfo.BuID,
 				OrganizationID:        tenantInfo.OrgID,
 				Status:                domaintypes.StatusActive,

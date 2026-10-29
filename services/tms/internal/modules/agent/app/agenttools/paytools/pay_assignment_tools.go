@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -46,13 +46,13 @@ const fullSplitPercent int64 = 100
 type payAssigner interface {
 	PlanAssignment(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
+		entity *payassignment.WorkerPayAssignment,
 	) (*driverpayservice.AssignmentPlan, error)
 	AssignProfileToWorker(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
+		entity *payassignment.WorkerPayAssignment,
 		actor *permissionports.RequestActor,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 }
 
 type AssignPayProfileTool struct {
@@ -107,7 +107,7 @@ func (t *AssignPayProfileTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *AssignPayProfileTool) entity(
 	params *agenttoolports.ToolExecuteParams,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (t *AssignPayProfileTool) entity(
 		return nil, err
 	}
 
-	entity := &driverpay.WorkerPayAssignment{
+	entity := &payassignment.WorkerPayAssignment{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		WorkerID:       workerID,
@@ -161,7 +161,7 @@ func (t *AssignPayProfileTool) entity(
 }
 
 type assignmentPlan struct {
-	entity  *driverpay.WorkerPayAssignment
+	entity  *payassignment.WorkerPayAssignment
 	plan    *driverpayservice.AssignmentPlan
 	refusal error
 }
@@ -218,7 +218,10 @@ func (t *AssignPayProfileTool) Execute(
 	return err
 }
 
-func assignmentRecord(assignment *driverpay.WorkerPayAssignment, label string) toolpreview.Record {
+func assignmentRecord(
+	assignment *payassignment.WorkerPayAssignment,
+	label string,
+) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: payAssignmentResource,
 		ID:       assignment.ID,
@@ -293,7 +296,7 @@ func (t *AssignPayProfileTool) Preview(
 	return toolpreview.Build(summary, changes...), nil
 }
 
-func endedBefore(ended *driverpay.WorkerPayAssignment) *driverpay.WorkerPayAssignment {
+func endedBefore(ended *payassignment.WorkerPayAssignment) *payassignment.WorkerPayAssignment {
 	before := *ended
 	before.EffectiveTo = nil
 
@@ -305,14 +308,14 @@ type assignmentEnder interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		assignmentID pulid.ID,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 	EndAssignment(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		assignmentID pulid.ID,
 		endDate int64,
 		actor *permissionports.RequestActor,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 }
 
 type EndPayAssignmentTool struct {
@@ -353,8 +356,8 @@ func (t *EndPayAssignmentTool) Policy() agenttoolports.ToolPolicy {
 }
 
 type assignmentEnding struct {
-	before  *driverpay.WorkerPayAssignment
-	after   *driverpay.WorkerPayAssignment
+	before  *payassignment.WorkerPayAssignment
+	after   *payassignment.WorkerPayAssignment
 	endDate int64
 	refusal error
 }

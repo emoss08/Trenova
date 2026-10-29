@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -33,13 +33,13 @@ func (r *disputeReader) GetByID(
 
 type expenseReader struct {
 	driverpayports.DriverExpenseRepository
-	expense *driverpay.Expense
+	expense *payexpense.Expense
 }
 
 func (r *expenseReader) GetByID(
 	context.Context,
 	driverpayports.GetDriverExpenseByIDRequest,
-) (*driverpay.Expense, error) {
+) (*payexpense.Expense, error) {
 	copied := *r.expense
 	return &copied, nil
 }
@@ -123,10 +123,10 @@ func TestPlanDisputeDecisions(t *testing.T) {
 func TestPlanReviewExpense(t *testing.T) {
 	t.Parallel()
 
-	expense := &driverpay.Expense{
+	expense := &payexpense.Expense{
 		ID:       pulid.MustNew("dexp_"),
 		WorkerID: pulid.MustNew("wrk_"),
-		Status:   driverpay.ExpenseStatusPending,
+		Status:   payexpense.ExpenseStatusPending,
 	}
 	svc := &Service{
 		expenseRepo:     &expenseReader{expense: expense},
@@ -148,14 +148,14 @@ func TestPlanReviewExpense(t *testing.T) {
 		ExpenseID: expense.ID, Note: "Personal meal",
 	}, reviewer())
 	require.NoError(t, err)
-	assert.Equal(t, driverpay.ExpenseStatusRejected, rejected.After.Status)
-	assert.Equal(t, driverpay.ExpenseStatusPending, expense.Status)
+	assert.Equal(t, payexpense.ExpenseStatusRejected, rejected.After.Status)
+	assert.Equal(t, payexpense.ExpenseStatusPending, expense.Status)
 
 	svc.dashControlRepo = &receiptControl{}
 	approved, err := svc.PlanReviewExpense(t.Context(), &ReviewExpenseRequest{
 		ExpenseID: expense.ID, Approve: true,
 	}, reviewer())
 	require.NoError(t, err)
-	assert.Equal(t, driverpay.ExpenseStatusReimbursed, approved.After.Status)
+	assert.Equal(t, payexpense.ExpenseStatusReimbursed, approved.After.Status)
 	assert.Nil(t, approved.ReimbursementTarget, "no open draft: an off-cycle one is made")
 }

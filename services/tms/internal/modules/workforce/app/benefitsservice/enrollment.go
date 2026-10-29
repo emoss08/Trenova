@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +19,7 @@ type EnrollRequest struct {
 	TenantInfo   pagination.TenantInfo
 	WorkerID     pulid.ID
 	PlanID       pulid.ID
-	CoverageTier driverpay.CoverageTier
+	CoverageTier paybenefit.CoverageTier
 	// Waive records a decision not to take the cover. A waiver still produces
 	// an enrollment row, because "declined" and "nobody asked" are different
 	// facts and only one of them is a problem at audit.
@@ -41,7 +42,7 @@ type EnrollRequest struct {
 func (s *Service) Enroll(
 	ctx context.Context,
 	req *EnrollRequest,
-) (*driverpay.WorkerBenefitEnrollment, error) {
+) (*paybenefit.WorkerBenefitEnrollment, error) {
 	log := s.l.With(
 		zap.String("operation", "Enroll"),
 		zap.String("workerId", req.WorkerID.String()),
@@ -70,7 +71,7 @@ func (s *Service) Enroll(
 
 	tier := req.CoverageTier
 	if tier == "" {
-		tier = driverpay.TierEmployee
+		tier = paybenefit.TierEmployee
 	}
 
 	employeeCost := req.EmployeeCostMinor
@@ -78,12 +79,12 @@ func (s *Service) Enroll(
 		employeeCost = plan.CostForTier(tier)
 	}
 
-	entity := &driverpay.WorkerBenefitEnrollment{
+	entity := &paybenefit.WorkerBenefitEnrollment{
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
 		WorkerID:          req.WorkerID,
 		BenefitPlanID:     plan.ID,
-		Status:            driverpay.EnrollmentActive,
+		Status:            paybenefit.EnrollmentActive,
 		CoverageTier:      tier,
 		EffectiveFrom:     effectiveFrom,
 		EmployeeCostMinor: employeeCost,
@@ -94,7 +95,7 @@ func (s *Service) Enroll(
 	if req.Waive {
 		// A waiver costs nothing and takes nothing: carrying the plan's price
 		// on it would show up in the employer's total as cover nobody has.
-		entity.Status = driverpay.EnrollmentWaived
+		entity.Status = paybenefit.EnrollmentWaived
 		entity.WaivedReason = req.WaivedReason
 		entity.EmployeeCostMinor = 0
 		entity.EmployerCostMinor = 0
@@ -122,7 +123,7 @@ func (s *Service) Enroll(
 	}
 
 	comment := "Enrolled in " + plan.Name
-	if created.Status == driverpay.EnrollmentWaived {
+	if created.Status == paybenefit.EnrollmentWaived {
 		comment = "Declined " + plan.Name
 	}
 	s.audit(
@@ -136,18 +137,18 @@ func (s *Service) Enroll(
 func (s *Service) openContribution(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	enrollment *driverpay.WorkerBenefitEnrollment,
-	plan *driverpay.BenefitPlan,
-) (*driverpay.RecurringDeduction, error) {
-	deduction := &driverpay.RecurringDeduction{
+	enrollment *paybenefit.WorkerBenefitEnrollment,
+	plan *paybenefit.BenefitPlan,
+) (*recurringpay.RecurringDeduction, error) {
+	deduction := &recurringpay.RecurringDeduction{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		WorkerID:       enrollment.WorkerID,
 		PayCodeID:      plan.PayCodeID,
-		Status:         driverpay.DeductionStatusActive,
-		Kind:           driverpay.DeductionKindBenefit,
-		Priority:       driverpay.DeductionKindBenefit.DefaultPriority(),
-		Frequency:      driverpay.DeductionFrequencyEverySettlement,
+		Status:         recurringpay.DeductionStatusActive,
+		Kind:           recurringpay.DeductionKindBenefit,
+		Priority:       recurringpay.DeductionKindBenefit.DefaultPriority(),
+		Frequency:      recurringpay.DeductionFrequencyEverySettlement,
 		Description:    deductionDescription(plan, enrollment.CoverageTier),
 		AmountMinor:    enrollment.EmployeeCostMinor,
 		StartDate:      enrollment.EffectiveFrom,
@@ -181,7 +182,7 @@ type EndEnrollmentRequest struct {
 func (s *Service) EndEnrollment(
 	ctx context.Context,
 	req *EndEnrollmentRequest,
-) (*driverpay.WorkerBenefitEnrollment, error) {
+) (*paybenefit.WorkerBenefitEnrollment, error) {
 	original, err := s.repo.GetEnrollmentByID(ctx, &driverpayports.GetBenefitEnrollmentByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
@@ -189,7 +190,7 @@ func (s *Service) EndEnrollment(
 	if err != nil {
 		return nil, err
 	}
-	if original.Status == driverpay.EnrollmentEnded {
+	if original.Status == paybenefit.EnrollmentEnded {
 		return nil, errortypes.NewValidationError(
 			"id",
 			errortypes.ErrInvalidOperation,
@@ -217,7 +218,7 @@ func (s *Service) EndEnrollment(
 		)
 	}
 
-	original.Status = driverpay.EnrollmentEnded
+	original.Status = paybenefit.EnrollmentEnded
 	original.EffectiveTo = &endsAt
 	if req.Notes != "" {
 		original.Notes = req.Notes
@@ -244,7 +245,7 @@ func (s *Service) EndEnrollment(
 func (s *Service) closeContribution(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	enrollment *driverpay.WorkerBenefitEnrollment,
+	enrollment *paybenefit.WorkerBenefitEnrollment,
 	endsAt int64,
 ) error {
 	if enrollment.RecurringDeductionID.IsNil() {
@@ -267,7 +268,7 @@ func (s *Service) closeContribution(
 		return nil
 	}
 
-	deduction.Status = driverpay.DeductionStatusCompleted
+	deduction.Status = recurringpay.DeductionStatusCompleted
 	// The end date is set as well as the status so a settlement generated for
 	// an earlier period still sees it as live for that period.
 	deduction.EndDate = &endsAt
@@ -288,7 +289,7 @@ type TotalCompensation struct {
 	EmployeeBenefitMinor   int64
 	AccruedTimeOffDays     string
 	TotalCompensationMinor int64
-	Enrollments            []*driverpay.WorkerBenefitEnrollment
+	Enrollments            []*paybenefit.WorkerBenefitEnrollment
 }
 
 // TotalCompensationRequest asks what a worker's package is worth.

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/shopspring/decimal"
 )
 
@@ -18,7 +19,7 @@ func toMinor(amount decimal.Decimal) int64 {
 type moveCalcInput struct {
 	Profile           *driverpay.PayProfile
 	SplitPercent      decimal.Decimal
-	RateOverrides     []driverpay.RateOverride
+	RateOverrides     []payassignment.RateOverride
 	Shipment          *shipment.Shipment
 	Move              *shipment.ShipmentMove
 	TotalTripDistance decimal.Decimal

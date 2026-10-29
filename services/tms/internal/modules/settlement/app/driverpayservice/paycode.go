@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -19,7 +19,7 @@ import (
 func (s *Service) ListPayCodes(
 	ctx context.Context,
 	req *driverpayports.ListPayCodesRequest,
-) (*pagination.ListResult[*driverpay.PayCode], error) {
+) (*pagination.ListResult[*paycode.PayCode], error) {
 	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.Filter.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (s *Service) ListPayCodes(
 func (s *Service) ListPayCodesConnection(
 	ctx context.Context,
 	req *driverpayports.ListPayCodeConnectionRequest,
-) (*pagination.CursorListResult[*driverpay.PayCode], error) {
+) (*pagination.CursorListResult[*paycode.PayCode], error) {
 	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.Filter.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (s *Service) ListPayCodesConnection(
 func (s *Service) ListActivePayCodes(
 	ctx context.Context,
 	req driverpayports.ListActivePayCodesRequest,
-) ([]*driverpay.PayCode, error) {
+) ([]*paycode.PayCode, error) {
 	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *Service) ListActivePayCodes(
 func (s *Service) PayCodeSelectOptions(
 	ctx context.Context,
 	req *driverpayports.PayCodeSelectOptionsRequest,
-) (*pagination.ListResult[*driverpay.PayCode], error) {
+) (*pagination.ListResult[*paycode.PayCode], error) {
 	if err := s.payCodeRepo.EnsureSystemDefaults(
 		ctx,
 		req.SelectQueryRequest.TenantInfo,
@@ -62,15 +62,15 @@ func (s *Service) PayCodeSelectOptions(
 func (s *Service) GetPayCode(
 	ctx context.Context,
 	req driverpayports.GetPayCodeByIDRequest,
-) (*driverpay.PayCode, error) {
+) (*paycode.PayCode, error) {
 	return s.payCodeRepo.GetByID(ctx, req)
 }
 
 func (s *Service) CreatePayCode(
 	ctx context.Context,
-	entity *driverpay.PayCode,
+	entity *paycode.PayCode,
 	actor *permissionports.RequestActor,
-) (*driverpay.PayCode, error) {
+) (*paycode.PayCode, error) {
 	if err := requireActor(actor, "Pay code creation"); err != nil {
 		return nil, err
 	}
@@ -90,9 +90,9 @@ func (s *Service) CreatePayCode(
 
 func (s *Service) UpdatePayCode(
 	ctx context.Context,
-	entity *driverpay.PayCode,
+	entity *paycode.PayCode,
 	actor *permissionports.RequestActor,
-) (*driverpay.PayCode, error) {
+) (*paycode.PayCode, error) {
 	if err := requireActor(actor, "Pay code update"); err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (s *Service) resolvePayCode(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	payCodeID pulid.ID,
-	direction driverpay.PayCodeDirection,
+	direction paycode.PayCodeDirection,
 ) error {
 	code, err := s.payCodeRepo.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
 		ID:         payCodeID,
@@ -156,7 +156,7 @@ func (s *Service) resolvePayCode(
 }
 
 func (s *Service) logPayCodeAudit(
-	current, previous *driverpay.PayCode,
+	current, previous *paycode.PayCode,
 	userID pulid.ID,
 	operation permission.Operation,
 	comment string,

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -36,11 +36,11 @@ func NewEscrowAccount(p Params) driverpayports.EscrowAccountRepository {
 func (r *escrowAccountRepository) List(
 	ctx context.Context,
 	req *driverpayports.ListEscrowAccountsRequest,
-) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
+) (*pagination.ListResult[*payescrow.EscrowAccount], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
+		func(ctx context.Context) (*pagination.ListResult[*payescrow.EscrowAccount], error) {
 			ea := driverpaydb.EscrowAccounts
 			q := ea.Where(
 				when(!req.WorkerID.IsNil(), ea.WorkerID.Eq(req.WorkerID)),
@@ -60,22 +60,22 @@ func (r *escrowAccountRepository) List(
 func (r *escrowAccountRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListEscrowAccountConnectionRequest,
-) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
+) (*pagination.CursorListResult[*payescrow.EscrowAccount], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*payescrow.EscrowAccount], error) {
 			ea := driverpaydb.EscrowAccounts
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				ea.Query(),
-				&listquery.Request[driverpay.EscrowAccount]{
+				&listquery.Request[payescrow.EscrowAccount]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[*driverpay.EscrowAccount],
-					) *keel.Query[*driverpay.EscrowAccount] {
+						q *keel.Query[*payescrow.EscrowAccount],
+					) *keel.Query[*payescrow.EscrowAccount] {
 						return q.Load(ea.Worker())
 					},
 				},
@@ -93,8 +93,8 @@ func (r *escrowAccountRepository) ListConnection(
 func (r *escrowAccountRepository) GetByID(
 	ctx context.Context,
 	req driverpayports.GetEscrowAccountByIDRequest,
-) (*driverpay.EscrowAccount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*payescrow.EscrowAccount, error) {
 		ea := driverpaydb.EscrowAccounts
 		q := ea.Where(ea.ID.Eq(req.ID)).Load(ea.Worker())
 		if req.IncludeTransactions {
@@ -114,10 +114,10 @@ func (r *escrowAccountRepository) GetByID(
 func (r *escrowAccountRepository) GetByIDs(
 	ctx context.Context,
 	req driverpayports.GetEscrowAccountsByIDsRequest,
-) ([]*driverpay.EscrowAccount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowAccount, error) {
+) ([]*payescrow.EscrowAccount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*payescrow.EscrowAccount, error) {
 		if len(req.IDs) == 0 {
-			return []*driverpay.EscrowAccount{}, nil
+			return []*payescrow.EscrowAccount{}, nil
 		}
 
 		ea := driverpaydb.EscrowAccounts
@@ -135,12 +135,12 @@ func (r *escrowAccountRepository) GetByIDs(
 func (r *escrowAccountRepository) GetActiveForWorker(
 	ctx context.Context,
 	req driverpayports.GetActiveEscrowAccountForWorkerRequest,
-) (*driverpay.EscrowAccount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*payescrow.EscrowAccount, error) {
 		ea := driverpaydb.EscrowAccounts
 		entity, err := ea.Where(
 			ea.WorkerID.Eq(req.WorkerID),
-			ea.Status.Eq(driverpay.EscrowAccountStatusActive),
+			ea.Status.Eq(payescrow.EscrowAccountStatusActive),
 		).First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, escrowAccountErrors.Map(err, req.WorkerID.String())
@@ -153,11 +153,11 @@ func (r *escrowAccountRepository) GetActiveForWorker(
 func (r *escrowAccountRepository) ListDueForInterest(
 	ctx context.Context,
 	req driverpayports.ListEscrowAccountsForInterestRequest,
-) ([]*driverpay.EscrowAccount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowAccount, error) {
+) ([]*payescrow.EscrowAccount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*payescrow.EscrowAccount, error) {
 		ea := driverpaydb.EscrowAccounts
 		items, err := ea.Where(
-			ea.Status.Eq(driverpay.EscrowAccountStatusActive),
+			ea.Status.Eq(payescrow.EscrowAccountStatusActive),
 			ea.BalanceMinor.Gt(0),
 			keel.NumericOf(ea.AnnualInterestRate).Gt(0),
 			ea.LastInterestAccrualDate.Coalesce(ea.OpenedDate).Lte(req.AccrueOnOrBefore),
@@ -172,9 +172,9 @@ func (r *escrowAccountRepository) ListDueForInterest(
 
 func (r *escrowAccountRepository) Create(
 	ctx context.Context,
-	entity *driverpay.EscrowAccount,
-) (*driverpay.EscrowAccount, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
+	entity *payescrow.EscrowAccount,
+) (*payescrow.EscrowAccount, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*payescrow.EscrowAccount, error) {
 		if err := driverpaydb.EscrowAccounts.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, escrowAccountErrors.Map(err, entity.ID.String())
 		}
@@ -188,9 +188,9 @@ func (r *escrowAccountRepository) Create(
 
 func (r *escrowAccountRepository) Update(
 	ctx context.Context,
-	entity *driverpay.EscrowAccount,
-) (*driverpay.EscrowAccount, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
+	entity *payescrow.EscrowAccount,
+) (*payescrow.EscrowAccount, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*payescrow.EscrowAccount, error) {
 		ea := driverpaydb.EscrowAccounts
 		if err := ea.Save(
 			ctx,
@@ -215,9 +215,9 @@ func (r *escrowAccountRepository) Update(
 
 func (r *escrowAccountRepository) AppendTransaction(
 	ctx context.Context,
-	entity *driverpay.EscrowTransaction,
-) (*driverpay.EscrowTransaction, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowTransaction, error) {
+	entity *payescrow.EscrowTransaction,
+) (*payescrow.EscrowTransaction, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*payescrow.EscrowTransaction, error) {
 		if err := driverpaydb.EscrowTransactions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, escrowTransactionErrors.Map(err, entity.ID.String())
 		}
@@ -229,8 +229,8 @@ func (r *escrowAccountRepository) AppendTransaction(
 func (r *escrowAccountRepository) ListTransactions(
 	ctx context.Context,
 	req driverpayports.GetEscrowAccountByIDRequest,
-) ([]*driverpay.EscrowTransaction, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowTransaction, error) {
+) ([]*payescrow.EscrowTransaction, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*payescrow.EscrowTransaction, error) {
 		tx := driverpaydb.EscrowTransactions
 		items, err := tx.Where(tx.EscrowAccountID.Eq(req.ID)).
 			Order(tx.OccurredDate.Desc(), tx.CreatedAt.Desc()).

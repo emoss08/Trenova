@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 )
 
 const ParamDriverPayAmount = "amount"
@@ -66,41 +67,44 @@ var DriverPayDateTypes = map[string]assistantartifact.DisplayType{
 	"endDate":       assistantartifact.DisplayDate,
 }
 
-var AdvanceSources = agenttoolschema.Source("driverPay.advanceSource", []driverpay.AdvanceSource{
-	driverpay.AdvanceSourceCash,
-	driverpay.AdvanceSourceEFSMoneyCode,
-	driverpay.AdvanceSourceComdataCode,
-	driverpay.AdvanceSourceFuelCard,
-	driverpay.AdvanceSourceOther,
+var AdvanceSources = agenttoolschema.Source("driverPay.advanceSource", []payadvance.AdvanceSource{
+	payadvance.AdvanceSourceCash,
+	payadvance.AdvanceSourceEFSMoneyCode,
+	payadvance.AdvanceSourceComdataCode,
+	payadvance.AdvanceSourceFuelCard,
+	payadvance.AdvanceSourceOther,
 })
 
 var DeductionFrequencies = agenttoolschema.Source(
 	"driverPay.deductionFrequency",
-	[]driverpay.DeductionFrequency{
-		driverpay.DeductionFrequencyEverySettlement,
-		driverpay.DeductionFrequencyMonthly,
+	[]recurringpay.DeductionFrequency{
+		recurringpay.DeductionFrequencyEverySettlement,
+		recurringpay.DeductionFrequencyMonthly,
 	},
 )
 
 var DeductionStatuses = agenttoolschema.Source(
 	"driverPay.deductionStatus",
-	[]driverpay.DeductionStatus{
-		driverpay.DeductionStatusActive,
-		driverpay.DeductionStatusPaused,
-		driverpay.DeductionStatusCompleted,
+	[]recurringpay.DeductionStatus{
+		recurringpay.DeductionStatusActive,
+		recurringpay.DeductionStatusPaused,
+		recurringpay.DeductionStatusCompleted,
 	},
 )
 
 var EarningFrequencies = agenttoolschema.Source(
 	"driverPay.earningFrequency",
-	[]driverpay.EarningFrequency{
-		driverpay.EarningFrequencyEverySettlement,
-		driverpay.EarningFrequencyMonthly,
+	[]recurringpay.EarningFrequency{
+		recurringpay.EarningFrequencyEverySettlement,
+		recurringpay.EarningFrequencyMonthly,
 	},
 )
 
-var EarningStatuses = agenttoolschema.Source("driverPay.earningStatus", []driverpay.EarningStatus{
-	driverpay.EarningStatusActive,
-	driverpay.EarningStatusPaused,
-	driverpay.EarningStatusCompleted,
-})
+var EarningStatuses = agenttoolschema.Source(
+	"driverPay.earningStatus",
+	[]recurringpay.EarningStatus{
+		recurringpay.EarningStatusActive,
+		recurringpay.EarningStatusPaused,
+		recurringpay.EarningStatusCompleted,
+	},
+)

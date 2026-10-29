@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
@@ -52,11 +54,11 @@ func TestSelectOptionRegistry_CoversEverySchemaResource(t *testing.T) {
 func TestPayCodeSelectOptionItem(t *testing.T) {
 	t.Parallel()
 
-	entity := &driverpay.PayCode{
+	entity := &paycode.PayCode{
 		ID:                    pulid.MustNew("payc_"),
 		Code:                  "LH",
 		Name:                  "Linehaul",
-		Direction:             driverpay.PayCodeDirectionEarning,
+		Direction:             paycode.PayCodeDirectionEarning,
 		Taxable:               true,
 		CountsTowardGuarantee: true,
 		CreatedAt:             1780415883,
@@ -68,7 +70,7 @@ func TestPayCodeSelectOptionItem(t *testing.T) {
 	require.NotNil(t, item.option.Description)
 	assert.Equal(t, "Linehaul", *item.option.Description)
 	assert.Equal(t, "Linehaul", item.option.Meta["name"])
-	assert.Equal(t, string(driverpay.PayCodeDirectionEarning), item.option.Meta["direction"])
+	assert.Equal(t, string(paycode.PayCodeDirectionEarning), item.option.Meta["direction"])
 	assert.Equal(t, true, item.option.Meta["taxable"])
 	assert.Equal(t, int64(1780415883), item.cursor.At)
 }
@@ -213,11 +215,11 @@ func TestPTOPolicySelectOptionItem(t *testing.T) {
 func TestBenefitPlanSelectOptionItem(t *testing.T) {
 	t.Parallel()
 
-	item := benefitPlanSelectOptionItem(&driverpay.BenefitPlan{
+	item := benefitPlanSelectOptionItem(&paybenefit.BenefitPlan{
 		ID:                pulid.MustNew("bplan_"),
 		Code:              "MED-HD",
 		Name:              "Medical High Deductible",
-		PlanType:          driverpay.BenefitPlanMedical,
+		PlanType:          paybenefit.BenefitPlanMedical,
 		Carrier:           "Blue Cross",
 		PlanYear:          2026,
 		EmployeeCostMinor: 12500,
@@ -228,7 +230,7 @@ func TestBenefitPlanSelectOptionItem(t *testing.T) {
 	})
 
 	assert.Equal(t, "Medical High Deductible", item.option.Label)
-	assert.Equal(t, string(driverpay.BenefitPlanMedical), item.option.Meta["planType"])
+	assert.Equal(t, string(paybenefit.BenefitPlanMedical), item.option.Meta["planType"])
 	assert.Equal(t, int16(2026), item.option.Meta["planYear"])
 	assert.Equal(t, int64(12500), item.option.Meta["employeeCostMinor"])
 }

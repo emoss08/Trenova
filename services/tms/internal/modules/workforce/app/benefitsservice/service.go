@@ -14,7 +14,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -106,14 +106,14 @@ func (s *Service) audit(
 func (s *Service) ListPlans(
 	ctx context.Context,
 	req *driverpayports.ListBenefitPlansRequest,
-) ([]*driverpay.BenefitPlan, error) {
+) ([]*paybenefit.BenefitPlan, error) {
 	return s.repo.ListPlans(ctx, req)
 }
 
 func (s *Service) PlanSelectOptions(
 	ctx context.Context,
 	req *driverpayports.BenefitPlanSelectOptionsRequest,
-) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
+) (*pagination.ListResult[*paybenefit.BenefitPlan], error) {
 	return s.repo.PlanSelectOptions(ctx, req)
 }
 
@@ -121,7 +121,7 @@ func (s *Service) GetPlan(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*driverpay.BenefitPlan, error) {
+) (*paybenefit.BenefitPlan, error) {
 	return s.repo.GetPlanByID(ctx, &driverpayports.GetBenefitPlanByIDRequest{
 		ID:             id,
 		TenantInfo:     tenantInfo,
@@ -131,9 +131,9 @@ func (s *Service) GetPlan(
 
 func (s *Service) CreatePlan(
 	ctx context.Context,
-	entity *driverpay.BenefitPlan,
+	entity *paybenefit.BenefitPlan,
 	userID pulid.ID,
-) (*driverpay.BenefitPlan, error) {
+) (*paybenefit.BenefitPlan, error) {
 	entity.Normalise()
 
 	multiErr := errortypes.NewMultiError()
@@ -158,9 +158,9 @@ func (s *Service) CreatePlan(
 
 func (s *Service) UpdatePlan(
 	ctx context.Context,
-	entity *driverpay.BenefitPlan,
+	entity *paybenefit.BenefitPlan,
 	userID pulid.ID,
-) (*driverpay.BenefitPlan, error) {
+) (*paybenefit.BenefitPlan, error) {
 	tenantInfo := planTenant(entity)
 
 	original, err := s.repo.GetPlanByID(ctx, &driverpayports.GetBenefitPlanByIDRequest{
@@ -219,7 +219,7 @@ func (s *Service) UpdatePlan(
 func (s *Service) ListEnrollments(
 	ctx context.Context,
 	req *driverpayports.ListBenefitEnrollmentsRequest,
-) ([]*driverpay.WorkerBenefitEnrollment, error) {
+) ([]*paybenefit.WorkerBenefitEnrollment, error) {
 	return s.repo.ListEnrollments(ctx, req)
 }
 
@@ -231,10 +231,10 @@ func (s *Service) BenefitCosts(
 	return s.repo.BenefitCosts(ctx, tenantInfo, planYear)
 }
 
-func planTenant(entity *driverpay.BenefitPlan) pagination.TenantInfo {
+func planTenant(entity *paybenefit.BenefitPlan) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func deductionDescription(plan *driverpay.BenefitPlan, tier driverpay.CoverageTier) string {
+func deductionDescription(plan *paybenefit.BenefitPlan, tier paybenefit.CoverageTier) string {
 	return fmt.Sprintf("%s — %s", plan.Name, tier)
 }

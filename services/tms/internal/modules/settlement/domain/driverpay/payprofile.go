@@ -3,14 +3,13 @@ package driverpay
 import (
 	"context"
 
-	"github.com/emoss08/trenova/shared/money"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
@@ -72,8 +71,6 @@ type PayProfileComponent struct {
 	CreatedAt       int64           `json:"createdAt"       keel:"created_at,autocreate"`
 	UpdatedAt       int64           `json:"updatedAt"       keel:"updated_at,autoupdate"`
 }
-
-const searchFieldDescription = "description"
 
 func (p *PayProfile) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
@@ -293,7 +290,7 @@ func (p *PayProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 				Weight: domaintypes.SearchWeightA,
 			},
 			{
-				Name:   searchFieldDescription,
+				Name:   "description",
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightB,
 			},

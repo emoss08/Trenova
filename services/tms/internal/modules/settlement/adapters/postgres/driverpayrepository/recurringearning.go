@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -33,11 +33,11 @@ func NewRecurringEarning(p Params) driverpayports.RecurringEarningRepository {
 func (r *recurringEarningRepository) List(
 	ctx context.Context,
 	req *driverpayports.ListRecurringEarningsRequest,
-) (*pagination.ListResult[*driverpay.RecurringEarning], error) {
+) (*pagination.ListResult[*recurringpay.RecurringEarning], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*driverpay.RecurringEarning], error) {
+		func(ctx context.Context) (*pagination.ListResult[*recurringpay.RecurringEarning], error) {
 			re := driverpaydb.RecurringEarnings
 			q := re.Where(
 				searchPred(req.Filter.Query, re.Description),
@@ -58,22 +58,22 @@ func (r *recurringEarningRepository) List(
 func (r *recurringEarningRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListRecurringEarningConnectionRequest,
-) (*pagination.CursorListResult[*driverpay.RecurringEarning], error) {
+) (*pagination.CursorListResult[*recurringpay.RecurringEarning], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.RecurringEarning], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*recurringpay.RecurringEarning], error) {
 			re := driverpaydb.RecurringEarnings
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				re.Query(),
-				&listquery.Request[driverpay.RecurringEarning]{
+				&listquery.Request[recurringpay.RecurringEarning]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[*driverpay.RecurringEarning],
-					) *keel.Query[*driverpay.RecurringEarning] {
+						q *keel.Query[*recurringpay.RecurringEarning],
+					) *keel.Query[*recurringpay.RecurringEarning] {
 						return q.Load(re.Worker(), re.PayCode())
 					},
 				},
@@ -91,8 +91,8 @@ func (r *recurringEarningRepository) ListConnection(
 func (r *recurringEarningRepository) GetByID(
 	ctx context.Context,
 	req driverpayports.GetRecurringEarningByIDRequest,
-) (*driverpay.RecurringEarning, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.RecurringEarning, error) {
+) (*recurringpay.RecurringEarning, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*recurringpay.RecurringEarning, error) {
 		re := driverpaydb.RecurringEarnings
 		entity, err := re.Where(re.ID.Eq(req.ID)).
 			Load(re.Worker(), re.PayCode()).
@@ -108,28 +108,32 @@ func (r *recurringEarningRepository) GetByID(
 func (r *recurringEarningRepository) ListActiveForWorker(
 	ctx context.Context,
 	req driverpayports.ListActiveEarningsForWorkerRequest,
-) ([]*driverpay.RecurringEarning, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.RecurringEarning, error) {
-		re := driverpaydb.RecurringEarnings
-		items, err := re.Where(
-			re.WorkerID.Eq(req.WorkerID),
-			re.Status.Eq(driverpay.EarningStatusActive),
-			re.StartDate.Lte(req.AsOf),
-			openAfter(re.EndDate, req.AsOf),
-		).Load(re.PayCode()).Order(re.CreatedAt.Asc()).All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("list active earnings for worker: %w", err)
-		}
+) ([]*recurringpay.RecurringEarning, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*recurringpay.RecurringEarning, error) {
+			re := driverpaydb.RecurringEarnings
+			items, err := re.Where(
+				re.WorkerID.Eq(req.WorkerID),
+				re.Status.Eq(recurringpay.EarningStatusActive),
+				re.StartDate.Lte(req.AsOf),
+				openAfter(re.EndDate, req.AsOf),
+			).Load(re.PayCode()).Order(re.CreatedAt.Asc()).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("list active earnings for worker: %w", err)
+			}
 
-		return items, nil
-	})
+			return items, nil
+		},
+	)
 }
 
 func (r *recurringEarningRepository) Create(
 	ctx context.Context,
-	entity *driverpay.RecurringEarning,
-) (*driverpay.RecurringEarning, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.RecurringEarning, error) {
+	entity *recurringpay.RecurringEarning,
+) (*recurringpay.RecurringEarning, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*recurringpay.RecurringEarning, error) {
 		if err := driverpaydb.RecurringEarnings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, recurringEarningErrors.Map(err, entity.ID.String())
 		}
@@ -143,9 +147,9 @@ func (r *recurringEarningRepository) Create(
 
 func (r *recurringEarningRepository) Update(
 	ctx context.Context,
-	entity *driverpay.RecurringEarning,
-) (*driverpay.RecurringEarning, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.RecurringEarning, error) {
+	entity *recurringpay.RecurringEarning,
+) (*recurringpay.RecurringEarning, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*recurringpay.RecurringEarning, error) {
 		re := driverpaydb.RecurringEarnings
 		if err := re.Save(
 			ctx,

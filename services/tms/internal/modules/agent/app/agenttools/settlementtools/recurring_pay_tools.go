@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -483,8 +483,8 @@ func recurringMoney(before, after *recurringFacts) *agentpreview.MoneyPreview {
 	return toolpreview.MoneyBlock(after.currency, amount)
 }
 
-func deductionKind() recurringKind[driverpay.RecurringDeduction] {
-	return recurringKind[driverpay.RecurringDeduction]{
+func deductionKind() recurringKind[recurringpay.RecurringDeduction] {
+	return recurringKind[recurringpay.RecurringDeduction]{
 		noun:        "recurring deduction",
 		createName:  "settlement_create_recurring_deduction",
 		updateName:  "settlement_update_recurring_deduction",
@@ -501,14 +501,14 @@ func deductionKind() recurringKind[driverpay.RecurringDeduction] {
 		create: func(
 			tenant pagination.TenantInfo,
 			fields *recurringFields,
-		) *driverpay.RecurringDeduction {
-			entity := &driverpay.RecurringDeduction{
+		) *recurringpay.RecurringDeduction {
+			entity := &recurringpay.RecurringDeduction{
 				OrganizationID: tenant.OrgID,
 				BusinessUnitID: tenant.BuID,
 				WorkerID:       fields.workerID,
 				PayCodeID:      fields.payCodeID,
-				Status:         driverpay.DeductionStatusActive,
-				Frequency:      driverpay.DeductionFrequencyEverySettlement,
+				Status:         recurringpay.DeductionStatusActive,
+				Frequency:      recurringpay.DeductionFrequencyEverySettlement,
 				Description:    fields.description,
 				AmountMinor:    fields.amount,
 				TotalCapMinor:  fields.capMinor,
@@ -517,13 +517,13 @@ func deductionKind() recurringKind[driverpay.RecurringDeduction] {
 				CurrencyCode:   money.DefaultCurrencyCode,
 			}
 			if fields.frequency != "" {
-				entity.Frequency = driverpay.DeductionFrequency(fields.frequency)
+				entity.Frequency = recurringpay.DeductionFrequency(fields.frequency)
 			}
 
 			return entity
 		},
 		apply: func(
-			entity *driverpay.RecurringDeduction,
+			entity *recurringpay.RecurringDeduction,
 			fields *recurringFields,
 			given map[string]bool,
 		) {
@@ -539,13 +539,13 @@ func deductionKind() recurringKind[driverpay.RecurringDeduction] {
 				end:         &entity.EndDate,
 			}, fields, given)
 			if given[paramRecurringFrequency] {
-				entity.Frequency = driverpay.DeductionFrequency(fields.frequency)
+				entity.Frequency = recurringpay.DeductionFrequency(fields.frequency)
 			}
 			if given[paramRecurringStatus] {
-				entity.Status = driverpay.DeductionStatus(fields.status)
+				entity.Status = recurringpay.DeductionStatus(fields.status)
 			}
 		},
-		facts: func(entity *driverpay.RecurringDeduction) recurringFacts {
+		facts: func(entity *recurringpay.RecurringDeduction) recurringFacts {
 			return recurringFacts{
 				id:          entity.ID,
 				version:     entity.Version,
@@ -558,8 +558,8 @@ func deductionKind() recurringKind[driverpay.RecurringDeduction] {
 	}
 }
 
-func earningKind() recurringKind[driverpay.RecurringEarning] {
-	return recurringKind[driverpay.RecurringEarning]{
+func earningKind() recurringKind[recurringpay.RecurringEarning] {
+	return recurringKind[recurringpay.RecurringEarning]{
 		noun:        "recurring earning",
 		createName:  "settlement_create_recurring_earning",
 		updateName:  "settlement_update_recurring_earning",
@@ -576,14 +576,14 @@ func earningKind() recurringKind[driverpay.RecurringEarning] {
 		create: func(
 			tenant pagination.TenantInfo,
 			fields *recurringFields,
-		) *driverpay.RecurringEarning {
-			entity := &driverpay.RecurringEarning{
+		) *recurringpay.RecurringEarning {
+			entity := &recurringpay.RecurringEarning{
 				OrganizationID: tenant.OrgID,
 				BusinessUnitID: tenant.BuID,
 				WorkerID:       fields.workerID,
 				PayCodeID:      fields.payCodeID,
-				Status:         driverpay.EarningStatusActive,
-				Frequency:      driverpay.EarningFrequencyEverySettlement,
+				Status:         recurringpay.EarningStatusActive,
+				Frequency:      recurringpay.EarningFrequencyEverySettlement,
 				Description:    fields.description,
 				AmountMinor:    fields.amount,
 				TotalCapMinor:  fields.capMinor,
@@ -592,13 +592,13 @@ func earningKind() recurringKind[driverpay.RecurringEarning] {
 				CurrencyCode:   money.DefaultCurrencyCode,
 			}
 			if fields.frequency != "" {
-				entity.Frequency = driverpay.EarningFrequency(fields.frequency)
+				entity.Frequency = recurringpay.EarningFrequency(fields.frequency)
 			}
 
 			return entity
 		},
 		apply: func(
-			entity *driverpay.RecurringEarning,
+			entity *recurringpay.RecurringEarning,
 			fields *recurringFields,
 			given map[string]bool,
 		) {
@@ -613,13 +613,13 @@ func earningKind() recurringKind[driverpay.RecurringEarning] {
 				end:         &entity.EndDate,
 			}, fields, given)
 			if given[paramRecurringFrequency] {
-				entity.Frequency = driverpay.EarningFrequency(fields.frequency)
+				entity.Frequency = recurringpay.EarningFrequency(fields.frequency)
 			}
 			if given[paramRecurringStatus] {
-				entity.Status = driverpay.EarningStatus(fields.status)
+				entity.Status = recurringpay.EarningStatus(fields.status)
 			}
 		},
-		facts: func(entity *driverpay.RecurringEarning) recurringFacts {
+		facts: func(entity *recurringpay.RecurringEarning) recurringFacts {
 			return recurringFacts{
 				id:          entity.ID,
 				version:     entity.Version,
@@ -674,7 +674,7 @@ func (b DeductionBook) get(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	return b.pay.GetDeduction(ctx, driverpayports.GetRecurringDeductionByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
@@ -683,7 +683,7 @@ func (b DeductionBook) get(
 
 func (b DeductionBook) check(
 	ctx context.Context,
-	entity *driverpay.RecurringDeduction,
+	entity *recurringpay.RecurringDeduction,
 	escrow bool,
 ) error {
 	return b.pay.CheckDeduction(ctx, entity, escrow)
@@ -691,18 +691,18 @@ func (b DeductionBook) check(
 
 func (b DeductionBook) create(
 	ctx context.Context,
-	entity *driverpay.RecurringDeduction,
+	entity *recurringpay.RecurringDeduction,
 	escrow bool,
 	actor *permissionports.RequestActor,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	return b.pay.CreateDeduction(ctx, entity, escrow, actor)
 }
 
 func (b DeductionBook) update(
 	ctx context.Context,
-	entity *driverpay.RecurringDeduction,
+	entity *recurringpay.RecurringDeduction,
 	actor *permissionports.RequestActor,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	return b.pay.UpdateDeduction(ctx, entity, actor)
 }
 
@@ -714,7 +714,7 @@ func (b EarningBook) get(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-) (*driverpay.RecurringEarning, error) {
+) (*recurringpay.RecurringEarning, error) {
 	return b.pay.GetEarning(ctx, driverpayports.GetRecurringEarningByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
@@ -723,7 +723,7 @@ func (b EarningBook) get(
 
 func (b EarningBook) check(
 	ctx context.Context,
-	entity *driverpay.RecurringEarning,
+	entity *recurringpay.RecurringEarning,
 	_ bool,
 ) error {
 	return b.pay.CheckEarning(ctx, entity)
@@ -731,30 +731,30 @@ func (b EarningBook) check(
 
 func (b EarningBook) create(
 	ctx context.Context,
-	entity *driverpay.RecurringEarning,
+	entity *recurringpay.RecurringEarning,
 	_ bool,
 	actor *permissionports.RequestActor,
-) (*driverpay.RecurringEarning, error) {
+) (*recurringpay.RecurringEarning, error) {
 	return b.pay.CreateEarning(ctx, entity, actor)
 }
 
 func (b EarningBook) update(
 	ctx context.Context,
-	entity *driverpay.RecurringEarning,
+	entity *recurringpay.RecurringEarning,
 	actor *permissionports.RequestActor,
-) (*driverpay.RecurringEarning, error) {
+) (*recurringpay.RecurringEarning, error) {
 	return b.pay.UpdateEarning(ctx, entity, actor)
 }
 
 func ProvideCreateRecurringDeductionTool(s *driverpayservice.Service) agenttoolports.AgentTool {
-	return &RecurringPayTool[driverpay.RecurringDeduction]{
+	return &RecurringPayTool[recurringpay.RecurringDeduction]{
 		kind: deductionKind(),
 		book: DeductionBook{pay: s},
 	}
 }
 
 func ProvideUpdateRecurringDeductionTool(s *driverpayservice.Service) agenttoolports.AgentTool {
-	return &RecurringPayTool[driverpay.RecurringDeduction]{
+	return &RecurringPayTool[recurringpay.RecurringDeduction]{
 		kind:   deductionKind(),
 		book:   DeductionBook{pay: s},
 		update: true,
@@ -762,14 +762,14 @@ func ProvideUpdateRecurringDeductionTool(s *driverpayservice.Service) agenttoolp
 }
 
 func ProvideCreateRecurringEarningTool(s *driverpayservice.Service) agenttoolports.AgentTool {
-	return &RecurringPayTool[driverpay.RecurringEarning]{
+	return &RecurringPayTool[recurringpay.RecurringEarning]{
 		kind: earningKind(),
 		book: EarningBook{pay: s},
 	}
 }
 
 func ProvideUpdateRecurringEarningTool(s *driverpayservice.Service) agenttoolports.AgentTool {
-	return &RecurringPayTool[driverpay.RecurringEarning]{
+	return &RecurringPayTool[recurringpay.RecurringEarning]{
 		kind:   earningKind(),
 		book:   EarningBook{pay: s},
 		update: true,

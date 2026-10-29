@@ -7,6 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -33,57 +36,57 @@ type fakeEscrowRepo struct {
 	getByID func(
 		ctx context.Context,
 		req driverpayports.GetEscrowAccountByIDRequest,
-	) (*driverpay.EscrowAccount, error)
+	) (*payescrow.EscrowAccount, error)
 	getActiveForWorker func(
 		ctx context.Context,
 		req driverpayports.GetActiveEscrowAccountForWorkerRequest,
-	) (*driverpay.EscrowAccount, error)
+	) (*payescrow.EscrowAccount, error)
 	create func(
 		ctx context.Context,
-		entity *driverpay.EscrowAccount,
-	) (*driverpay.EscrowAccount, error)
+		entity *payescrow.EscrowAccount,
+	) (*payescrow.EscrowAccount, error)
 	update func(
 		ctx context.Context,
-		entity *driverpay.EscrowAccount,
-	) (*driverpay.EscrowAccount, error)
+		entity *payescrow.EscrowAccount,
+	) (*payescrow.EscrowAccount, error)
 	appendTransaction func(
 		ctx context.Context,
-		entity *driverpay.EscrowTransaction,
-	) (*driverpay.EscrowTransaction, error)
+		entity *payescrow.EscrowTransaction,
+	) (*payescrow.EscrowTransaction, error)
 }
 
 func (f *fakeEscrowRepo) GetByID(
 	ctx context.Context,
 	req driverpayports.GetEscrowAccountByIDRequest,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	return f.getByID(ctx, req)
 }
 
 func (f *fakeEscrowRepo) GetActiveForWorker(
 	ctx context.Context,
 	req driverpayports.GetActiveEscrowAccountForWorkerRequest,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	return f.getActiveForWorker(ctx, req)
 }
 
 func (f *fakeEscrowRepo) Create(
 	ctx context.Context,
-	entity *driverpay.EscrowAccount,
-) (*driverpay.EscrowAccount, error) {
+	entity *payescrow.EscrowAccount,
+) (*payescrow.EscrowAccount, error) {
 	return f.create(ctx, entity)
 }
 
 func (f *fakeEscrowRepo) Update(
 	ctx context.Context,
-	entity *driverpay.EscrowAccount,
-) (*driverpay.EscrowAccount, error) {
+	entity *payescrow.EscrowAccount,
+) (*payescrow.EscrowAccount, error) {
 	return f.update(ctx, entity)
 }
 
 func (f *fakeEscrowRepo) AppendTransaction(
 	ctx context.Context,
-	entity *driverpay.EscrowTransaction,
-) (*driverpay.EscrowTransaction, error) {
+	entity *payescrow.EscrowTransaction,
+) (*payescrow.EscrowTransaction, error) {
 	return f.appendTransaction(ctx, entity)
 }
 
@@ -108,47 +111,47 @@ type fakeAssignmentRepo struct {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 	listOverlapping func(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
-	) ([]*driverpay.WorkerPayAssignment, error)
+		entity *payassignment.WorkerPayAssignment,
+	) ([]*payassignment.WorkerPayAssignment, error)
 	create func(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
-	) (*driverpay.WorkerPayAssignment, error)
+		entity *payassignment.WorkerPayAssignment,
+	) (*payassignment.WorkerPayAssignment, error)
 	update func(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
-	) (*driverpay.WorkerPayAssignment, error)
+		entity *payassignment.WorkerPayAssignment,
+	) (*payassignment.WorkerPayAssignment, error)
 }
 
 func (f *fakeAssignmentRepo) GetByID(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	return f.getByID(ctx, tenantInfo, id)
 }
 
 func (f *fakeAssignmentRepo) ListOverlapping(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
-) ([]*driverpay.WorkerPayAssignment, error) {
+	entity *payassignment.WorkerPayAssignment,
+) ([]*payassignment.WorkerPayAssignment, error) {
 	return f.listOverlapping(ctx, entity)
 }
 
 func (f *fakeAssignmentRepo) Create(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
-) (*driverpay.WorkerPayAssignment, error) {
+	entity *payassignment.WorkerPayAssignment,
+) (*payassignment.WorkerPayAssignment, error) {
 	return f.create(ctx, entity)
 }
 
 func (f *fakeAssignmentRepo) Update(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
-) (*driverpay.WorkerPayAssignment, error) {
+	entity *payassignment.WorkerPayAssignment,
+) (*payassignment.WorkerPayAssignment, error) {
 	return f.update(ctx, entity)
 }
 
@@ -172,35 +175,35 @@ type fakeAdvanceRepo struct {
 	getByID func(
 		ctx context.Context,
 		req driverpayports.GetPayAdvanceByIDRequest,
-	) (*driverpay.PayAdvance, error)
+	) (*payadvance.PayAdvance, error)
 	create func(
 		ctx context.Context,
-		entity *driverpay.PayAdvance,
-	) (*driverpay.PayAdvance, error)
+		entity *payadvance.PayAdvance,
+	) (*payadvance.PayAdvance, error)
 	update func(
 		ctx context.Context,
-		entity *driverpay.PayAdvance,
-	) (*driverpay.PayAdvance, error)
+		entity *payadvance.PayAdvance,
+	) (*payadvance.PayAdvance, error)
 }
 
 func (f *fakeAdvanceRepo) GetByID(
 	ctx context.Context,
 	req driverpayports.GetPayAdvanceByIDRequest,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	return f.getByID(ctx, req)
 }
 
 func (f *fakeAdvanceRepo) Create(
 	ctx context.Context,
-	entity *driverpay.PayAdvance,
-) (*driverpay.PayAdvance, error) {
+	entity *payadvance.PayAdvance,
+) (*payadvance.PayAdvance, error) {
 	return f.create(ctx, entity)
 }
 
 func (f *fakeAdvanceRepo) Update(
 	ctx context.Context,
-	entity *driverpay.PayAdvance,
-) (*driverpay.PayAdvance, error) {
+	entity *payadvance.PayAdvance,
+) (*payadvance.PayAdvance, error) {
 	return f.update(ctx, entity)
 }
 

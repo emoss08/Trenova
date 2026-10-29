@@ -3,6 +3,13 @@
 package driverpaydb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"context"
 	"unsafe"
 
@@ -19,16 +26,16 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// benefitPlansTable is the schema of driverpay.BenefitPlan.
+// benefitPlansTable is the schema of paybenefit.BenefitPlan.
 var benefitPlansTable = schema.Table{
 	Name:        "benefit_plans",
 	Quoted:      `"benefit_plans"`,
 	Alias:       "bp",
-	Model:       "driverpay.BenefitPlan",
+	Model:       "paybenefit.BenefitPlan",
 	Label:       `Benefit Plan`,
 	Plural:      `Benefit Plans`,
 	Doc:         `BenefitPlan is what a carrier offers, for one plan year.`,
-	Constraints: (&driverpay.BenefitPlan{}).Constraints(),
+	Constraints: (&paybenefit.BenefitPlan{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -66,7 +73,7 @@ var benefitPlansTable = schema.Table{
 	IDPrefix:     "bplan_",
 	New:          newBenefitPlan,
 	NewN:         newNBenefitPlan,
-	Size:         unsafe.Sizeof(driverpay.BenefitPlan{}),
+	Size:         unsafe.Sizeof(paybenefit.BenefitPlan{}),
 	Ptr:          ptrBenefitPlan,
 	Value:        valueBenefitPlan,
 	Attach:       attachBenefitPlan,
@@ -75,9 +82,9 @@ var benefitPlansTable = schema.Table{
 
 var benefitPlansRef = keel.Ref{Table: &benefitPlansTable}
 
-// BenefitPlansTable is the table of driverpay.BenefitPlan.
+// BenefitPlansTable is the table of paybenefit.BenefitPlan.
 type BenefitPlansTable struct {
-	keel.Handle[*driverpay.BenefitPlan]
+	keel.Handle[*paybenefit.BenefitPlan]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -101,7 +108,7 @@ type BenefitPlansTable struct {
 
 // BenefitPlans references the benefit_plans table.
 var BenefitPlans = &BenefitPlansTable{
-	Handle:            keel.Handle[*driverpay.BenefitPlan]{Ref: &benefitPlansRef},
+	Handle:            keel.Handle[*paybenefit.BenefitPlan]{Ref: &benefitPlansRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 2}}},
@@ -126,7 +133,7 @@ var BenefitPlans = &BenefitPlansTable{
 // BuildBenefitPlans builds the handle of benefit_plans for ref. Generated relation and alias methods call it.
 func BuildBenefitPlans(r *keel.Ref) *BenefitPlansTable {
 	return &BenefitPlansTable{
-		Handle:            keel.Handle[*driverpay.BenefitPlan]{Ref: r},
+		Handle:            keel.Handle[*paybenefit.BenefitPlan]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -161,18 +168,18 @@ func (t *BenefitPlansTable) As(alias string) *BenefitPlansTable {
 func (t *BenefitPlansTable) PayCode() *PayCodesTable { return keel.Path(t.Ref, 0, BuildPayCodes) }
 
 // Get returns the benefit_plans row with the given key, or keel.ErrNotFound.
-func (t *BenefitPlansTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.BenefitPlan, error) {
+func (t *BenefitPlansTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*paybenefit.BenefitPlan, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newBenefitPlan() unsafe.Pointer { return unsafe.Pointer(new(driverpay.BenefitPlan)) }
+func newBenefitPlan() unsafe.Pointer { return unsafe.Pointer(new(paybenefit.BenefitPlan)) }
 
 func newNBenefitPlan(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.BenefitPlan, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]paybenefit.BenefitPlan, n)))
 }
 
 func ptrBenefitPlan(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.BenefitPlan)(p)
+	r := (*paybenefit.BenefitPlan)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -217,7 +224,7 @@ func ptrBenefitPlan(p unsafe.Pointer, c int32) any {
 }
 
 func valueBenefitPlan(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.BenefitPlan)(p)
+	r := (*paybenefit.BenefitPlan)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -271,28 +278,28 @@ func valueBenefitPlan(p unsafe.Pointer, c int32) any {
 }
 
 func attachBenefitPlan(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.BenefitPlan)(p)
+	r := (*paybenefit.BenefitPlan)(p)
 	switch rel {
 	case 0:
-		r.PayCode = (*driverpay.PayCode)(child)
+		r.PayCode = (*paycode.PayCode)(child)
 	}
 }
 
 func beforeCreateBenefitPlan(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.BenefitPlan)(p).BeforeCreate(ctx)
+	return (*paybenefit.BenefitPlan)(p).BeforeCreate(ctx)
 }
 
-// escrowAccountsTable is the schema of driverpay.EscrowAccount.
+// escrowAccountsTable is the schema of payescrow.EscrowAccount.
 var escrowAccountsTable = schema.Table{
 	Name:        "escrow_accounts",
 	Quoted:      `"escrow_accounts"`,
 	Alias:       "ea",
-	Model:       "driverpay.EscrowAccount",
+	Model:       "payescrow.EscrowAccount",
 	Label:       `Escrow Account`,
 	Plural:      `Escrow Accounts`,
 	Doc:         `Owner-operator escrow balances against their target`,
 	Report:      &schema.TableReport{Category: `Payroll`},
-	Constraints: (&driverpay.EscrowAccount{}).Constraints(),
+	Constraints: (&payescrow.EscrowAccount{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -328,7 +335,7 @@ var escrowAccountsTable = schema.Table{
 	IDPrefix:     "escr_",
 	New:          newEscrowAccount,
 	NewN:         newNEscrowAccount,
-	Size:         unsafe.Sizeof(driverpay.EscrowAccount{}),
+	Size:         unsafe.Sizeof(payescrow.EscrowAccount{}),
 	Ptr:          ptrEscrowAccount,
 	Value:        valueEscrowAccount,
 	Attach:       attachEscrowAccount,
@@ -337,9 +344,9 @@ var escrowAccountsTable = schema.Table{
 
 var escrowAccountsRef = keel.Ref{Table: &escrowAccountsTable}
 
-// EscrowAccountsTable is the table of driverpay.EscrowAccount.
+// EscrowAccountsTable is the table of payescrow.EscrowAccount.
 type EscrowAccountsTable struct {
-	keel.Handle[*driverpay.EscrowAccount]
+	keel.Handle[*payescrow.EscrowAccount]
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -359,7 +366,7 @@ type EscrowAccountsTable struct {
 
 // EscrowAccounts references the escrow_accounts table.
 var EscrowAccounts = &EscrowAccountsTable{
-	Handle:                  keel.Handle[*driverpay.EscrowAccount]{Ref: &escrowAccountsRef},
+	Handle:                  keel.Handle[*payescrow.EscrowAccount]{Ref: &escrowAccountsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 2}}},
@@ -380,7 +387,7 @@ var EscrowAccounts = &EscrowAccountsTable{
 // BuildEscrowAccounts builds the handle of escrow_accounts for ref. Generated relation and alias methods call it.
 func BuildEscrowAccounts(r *keel.Ref) *EscrowAccountsTable {
 	return &EscrowAccountsTable{
-		Handle:                  keel.Handle[*driverpay.EscrowAccount]{Ref: r},
+		Handle:                  keel.Handle[*payescrow.EscrowAccount]{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -423,18 +430,18 @@ func (t *EscrowAccountsTable) LatestTransaction() *EscrowTransactionsTable {
 }
 
 // Get returns the escrow_accounts row with the given key, or keel.ErrNotFound.
-func (t *EscrowAccountsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.EscrowAccount, error) {
+func (t *EscrowAccountsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payescrow.EscrowAccount, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newEscrowAccount() unsafe.Pointer { return unsafe.Pointer(new(driverpay.EscrowAccount)) }
+func newEscrowAccount() unsafe.Pointer { return unsafe.Pointer(new(payescrow.EscrowAccount)) }
 
 func newNEscrowAccount(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.EscrowAccount, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]payescrow.EscrowAccount, n)))
 }
 
 func ptrEscrowAccount(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.EscrowAccount)(p)
+	r := (*payescrow.EscrowAccount)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -471,7 +478,7 @@ func ptrEscrowAccount(p unsafe.Pointer, c int32) any {
 }
 
 func valueEscrowAccount(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.EscrowAccount)(p)
+	r := (*payescrow.EscrowAccount)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -514,27 +521,27 @@ func valueEscrowAccount(p unsafe.Pointer, c int32) any {
 }
 
 func attachEscrowAccount(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.EscrowAccount)(p)
+	r := (*payescrow.EscrowAccount)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.Transactions = append(r.Transactions, (*driverpay.EscrowTransaction)(child))
+		r.Transactions = append(r.Transactions, (*payescrow.EscrowTransaction)(child))
 	case 2:
-		r.LatestTransaction = (*driverpay.EscrowTransaction)(child)
+		r.LatestTransaction = (*payescrow.EscrowTransaction)(child)
 	}
 }
 
 func beforeCreateEscrowAccount(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.EscrowAccount)(p).BeforeCreate(ctx)
+	return (*payescrow.EscrowAccount)(p).BeforeCreate(ctx)
 }
 
-// escrowTransactionsTable is the schema of driverpay.EscrowTransaction.
+// escrowTransactionsTable is the schema of payescrow.EscrowTransaction.
 var escrowTransactionsTable = schema.Table{
 	Name:   "escrow_transactions",
 	Quoted: `"escrow_transactions"`,
 	Alias:  "et",
-	Model:  "driverpay.EscrowTransaction",
+	Model:  "payescrow.EscrowTransaction",
 	Label:  `Escrow Transaction`,
 	Plural: `Escrow Transactions`,
 	Doc:    `Contributions, interest, refunds and deductions against escrow`,
@@ -569,7 +576,7 @@ var escrowTransactionsTable = schema.Table{
 	IDPrefix:   "esctx_",
 	New:        newEscrowTransaction,
 	NewN:       newNEscrowTransaction,
-	Size:       unsafe.Sizeof(driverpay.EscrowTransaction{}),
+	Size:       unsafe.Sizeof(payescrow.EscrowTransaction{}),
 	Ptr:        ptrEscrowTransaction,
 	Value:      valueEscrowTransaction,
 	Attach:     attachEscrowTransaction,
@@ -577,9 +584,9 @@ var escrowTransactionsTable = schema.Table{
 
 var escrowTransactionsRef = keel.Ref{Table: &escrowTransactionsTable}
 
-// EscrowTransactionsTable is the table of driverpay.EscrowTransaction.
+// EscrowTransactionsTable is the table of payescrow.EscrowTransaction.
 type EscrowTransactionsTable struct {
-	keel.Handle[*driverpay.EscrowTransaction]
+	keel.Handle[*payescrow.EscrowTransaction]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -596,7 +603,7 @@ type EscrowTransactionsTable struct {
 
 // EscrowTransactions references the escrow_transactions table.
 var EscrowTransactions = &EscrowTransactionsTable{
-	Handle:            keel.Handle[*driverpay.EscrowTransaction]{Ref: &escrowTransactionsRef},
+	Handle:            keel.Handle[*payescrow.EscrowTransaction]{Ref: &escrowTransactionsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 2}}},
@@ -614,7 +621,7 @@ var EscrowTransactions = &EscrowTransactionsTable{
 // BuildEscrowTransactions builds the handle of escrow_transactions for ref. Generated relation and alias methods call it.
 func BuildEscrowTransactions(r *keel.Ref) *EscrowTransactionsTable {
 	return &EscrowTransactionsTable{
-		Handle:            keel.Handle[*driverpay.EscrowTransaction]{Ref: r},
+		Handle:            keel.Handle[*payescrow.EscrowTransaction]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -644,18 +651,18 @@ func (t *EscrowTransactionsTable) EscrowAccount() *EscrowAccountsTable {
 }
 
 // Get returns the escrow_transactions row with the given key, or keel.ErrNotFound.
-func (t *EscrowTransactionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.EscrowTransaction, error) {
+func (t *EscrowTransactionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payescrow.EscrowTransaction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newEscrowTransaction() unsafe.Pointer { return unsafe.Pointer(new(driverpay.EscrowTransaction)) }
+func newEscrowTransaction() unsafe.Pointer { return unsafe.Pointer(new(payescrow.EscrowTransaction)) }
 
 func newNEscrowTransaction(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.EscrowTransaction, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]payescrow.EscrowTransaction, n)))
 }
 
 func ptrEscrowTransaction(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.EscrowTransaction)(p)
+	r := (*payescrow.EscrowTransaction)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -686,7 +693,7 @@ func ptrEscrowTransaction(p unsafe.Pointer, c int32) any {
 }
 
 func valueEscrowTransaction(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.EscrowTransaction)(p)
+	r := (*payescrow.EscrowTransaction)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -726,19 +733,19 @@ func valueEscrowTransaction(p unsafe.Pointer, c int32) any {
 }
 
 func attachEscrowTransaction(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.EscrowTransaction)(p)
+	r := (*payescrow.EscrowTransaction)(p)
 	switch rel {
 	case 0:
-		r.EscrowAccount = (*driverpay.EscrowAccount)(child)
+		r.EscrowAccount = (*payescrow.EscrowAccount)(child)
 	}
 }
 
-// expensesTable is the schema of driverpay.Expense.
+// expensesTable is the schema of payexpense.Expense.
 var expensesTable = schema.Table{
 	Name:   "driver_expenses",
 	Quoted: `"driver_expenses"`,
 	Alias:  "de",
-	Model:  "driverpay.Expense",
+	Model:  "payexpense.Expense",
 	Label:  `Expense`,
 	Plural: `Expenses`,
 	Columns: []schema.Column{
@@ -781,7 +788,7 @@ var expensesTable = schema.Table{
 	IDPrefix:     "dexp_",
 	New:          newExpense,
 	NewN:         newNExpense,
-	Size:         unsafe.Sizeof(driverpay.Expense{}),
+	Size:         unsafe.Sizeof(payexpense.Expense{}),
 	Ptr:          ptrExpense,
 	Value:        valueExpense,
 	Attach:       attachExpense,
@@ -790,9 +797,9 @@ var expensesTable = schema.Table{
 
 var expensesRef = keel.Ref{Table: &expensesTable}
 
-// ExpensesTable is the table of driverpay.Expense.
+// ExpensesTable is the table of payexpense.Expense.
 type ExpensesTable struct {
-	keel.Handle[*driverpay.Expense]
+	keel.Handle[*payexpense.Expense]
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -817,7 +824,7 @@ type ExpensesTable struct {
 
 // Expenses references the driver_expenses table.
 var Expenses = &ExpensesTable{
-	Handle:            keel.Handle[*driverpay.Expense]{Ref: &expensesRef},
+	Handle:            keel.Handle[*payexpense.Expense]{Ref: &expensesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 2}}},
@@ -843,7 +850,7 @@ var Expenses = &ExpensesTable{
 // BuildExpenses builds the handle of driver_expenses for ref. Generated relation and alias methods call it.
 func BuildExpenses(r *keel.Ref) *ExpensesTable {
 	return &ExpensesTable{
-		Handle:            keel.Handle[*driverpay.Expense]{Ref: r},
+		Handle:            keel.Handle[*payexpense.Expense]{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -889,18 +896,18 @@ func (t *ExpensesTable) ReviewedBy() *tenantdb.UsersTable {
 }
 
 // Get returns the driver_expenses row with the given key, or keel.ErrNotFound.
-func (t *ExpensesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.Expense, error) {
+func (t *ExpensesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payexpense.Expense, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newExpense() unsafe.Pointer { return unsafe.Pointer(new(driverpay.Expense)) }
+func newExpense() unsafe.Pointer { return unsafe.Pointer(new(payexpense.Expense)) }
 
 func newNExpense(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.Expense, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]payexpense.Expense, n)))
 }
 
 func ptrExpense(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.Expense)(p)
+	r := (*payexpense.Expense)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -947,7 +954,7 @@ func ptrExpense(p unsafe.Pointer, c int32) any {
 }
 
 func valueExpense(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.Expense)(p)
+	r := (*payexpense.Expense)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1015,27 +1022,27 @@ func valueExpense(p unsafe.Pointer, c int32) any {
 }
 
 func attachExpense(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.Expense)(p)
+	r := (*payexpense.Expense)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.PayCode = (*driverpay.PayCode)(child)
+		r.PayCode = (*paycode.PayCode)(child)
 	case 2:
 		r.ReviewedBy = (*tenant.User)(child)
 	}
 }
 
 func beforeCreateExpense(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.Expense)(p).BeforeCreate(ctx)
+	return (*payexpense.Expense)(p).BeforeCreate(ctx)
 }
 
-// payAdvancesTable is the schema of driverpay.PayAdvance.
+// payAdvancesTable is the schema of payadvance.PayAdvance.
 var payAdvancesTable = schema.Table{
 	Name:   "pay_advances",
 	Quoted: `"pay_advances"`,
 	Alias:  "pa",
-	Model:  "driverpay.PayAdvance",
+	Model:  "payadvance.PayAdvance",
 	Label:  `Pay Advance`,
 	Plural: `Pay Advances`,
 	Doc:    `Cash and money-code advances, what has been recovered, and what was written off`,
@@ -1078,7 +1085,7 @@ var payAdvancesTable = schema.Table{
 	IDPrefix:     "padv_",
 	New:          newPayAdvance,
 	NewN:         newNPayAdvance,
-	Size:         unsafe.Sizeof(driverpay.PayAdvance{}),
+	Size:         unsafe.Sizeof(payadvance.PayAdvance{}),
 	Ptr:          ptrPayAdvance,
 	Value:        valuePayAdvance,
 	Attach:       attachPayAdvance,
@@ -1087,9 +1094,9 @@ var payAdvancesTable = schema.Table{
 
 var payAdvancesRef = keel.Ref{Table: &payAdvancesTable}
 
-// PayAdvancesTable is the table of driverpay.PayAdvance.
+// PayAdvancesTable is the table of payadvance.PayAdvance.
 type PayAdvancesTable struct {
-	keel.Handle[*driverpay.PayAdvance]
+	keel.Handle[*payadvance.PayAdvance]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -1114,7 +1121,7 @@ type PayAdvancesTable struct {
 
 // PayAdvances references the pay_advances table.
 var PayAdvances = &PayAdvancesTable{
-	Handle:          keel.Handle[*driverpay.PayAdvance]{Ref: &payAdvancesRef},
+	Handle:          keel.Handle[*payadvance.PayAdvance]{Ref: &payAdvancesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 2}}},
@@ -1140,7 +1147,7 @@ var PayAdvances = &PayAdvancesTable{
 // BuildPayAdvances builds the handle of pay_advances for ref. Generated relation and alias methods call it.
 func BuildPayAdvances(r *keel.Ref) *PayAdvancesTable {
 	return &PayAdvancesTable{
-		Handle:          keel.Handle[*driverpay.PayAdvance]{Ref: r},
+		Handle:          keel.Handle[*payadvance.PayAdvance]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1178,18 +1185,18 @@ func (t *PayAdvancesTable) Worker() *workerdb.WorkersTable {
 }
 
 // Get returns the pay_advances row with the given key, or keel.ErrNotFound.
-func (t *PayAdvancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.PayAdvance, error) {
+func (t *PayAdvancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payadvance.PayAdvance, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPayAdvance() unsafe.Pointer { return unsafe.Pointer(new(driverpay.PayAdvance)) }
+func newPayAdvance() unsafe.Pointer { return unsafe.Pointer(new(payadvance.PayAdvance)) }
 
 func newNPayAdvance(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.PayAdvance, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]payadvance.PayAdvance, n)))
 }
 
 func ptrPayAdvance(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.PayAdvance)(p)
+	r := (*payadvance.PayAdvance)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1236,7 +1243,7 @@ func ptrPayAdvance(p unsafe.Pointer, c int32) any {
 }
 
 func valuePayAdvance(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.PayAdvance)(p)
+	r := (*payadvance.PayAdvance)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1301,7 +1308,7 @@ func valuePayAdvance(p unsafe.Pointer, c int32) any {
 }
 
 func attachPayAdvance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.PayAdvance)(p)
+	r := (*payadvance.PayAdvance)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -1309,20 +1316,20 @@ func attachPayAdvance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreatePayAdvance(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.PayAdvance)(p).BeforeCreate(ctx)
+	return (*payadvance.PayAdvance)(p).BeforeCreate(ctx)
 }
 
-// payCodesTable is the schema of driverpay.PayCode.
+// payCodesTable is the schema of paycode.PayCode.
 var payCodesTable = schema.Table{
 	Name:        "pay_codes",
 	Quoted:      `"pay_codes"`,
 	Alias:       "pc",
-	Model:       "driverpay.PayCode",
+	Model:       "paycode.PayCode",
 	Label:       `Pay Code`,
 	Plural:      `Pay Codes`,
 	Doc:         `Earning and deduction codes and the GL accounts they post to`,
 	Report:      &schema.TableReport{Category: `Payroll`},
-	Constraints: (&driverpay.PayCode{}).Constraints(),
+	Constraints: (&paycode.PayCode{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -1357,7 +1364,7 @@ var payCodesTable = schema.Table{
 	IDPrefix:     "payc_",
 	New:          newPayCode,
 	NewN:         newNPayCode,
-	Size:         unsafe.Sizeof(driverpay.PayCode{}),
+	Size:         unsafe.Sizeof(paycode.PayCode{}),
 	Ptr:          ptrPayCode,
 	Value:        valuePayCode,
 	Attach:       attachPayCode,
@@ -1366,9 +1373,9 @@ var payCodesTable = schema.Table{
 
 var payCodesRef = keel.Ref{Table: &payCodesTable}
 
-// PayCodesTable is the table of driverpay.PayCode.
+// PayCodesTable is the table of paycode.PayCode.
 type PayCodesTable struct {
-	keel.Handle[*driverpay.PayCode]
+	keel.Handle[*paycode.PayCode]
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -1389,7 +1396,7 @@ type PayCodesTable struct {
 
 // PayCodes references the pay_codes table.
 var PayCodes = &PayCodesTable{
-	Handle:                keel.Handle[*driverpay.PayCode]{Ref: &payCodesRef},
+	Handle:                keel.Handle[*paycode.PayCode]{Ref: &payCodesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 2}}},
@@ -1411,7 +1418,7 @@ var PayCodes = &PayCodesTable{
 // BuildPayCodes builds the handle of pay_codes for ref. Generated relation and alias methods call it.
 func BuildPayCodes(r *keel.Ref) *PayCodesTable {
 	return &PayCodesTable{
-		Handle:                keel.Handle[*driverpay.PayCode]{Ref: r},
+		Handle:                keel.Handle[*paycode.PayCode]{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1445,18 +1452,18 @@ func (t *PayCodesTable) GLAccount() *glaccountdb.GLAccountsTable {
 }
 
 // Get returns the pay_codes row with the given key, or keel.ErrNotFound.
-func (t *PayCodesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.PayCode, error) {
+func (t *PayCodesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*paycode.PayCode, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newPayCode() unsafe.Pointer { return unsafe.Pointer(new(driverpay.PayCode)) }
+func newPayCode() unsafe.Pointer { return unsafe.Pointer(new(paycode.PayCode)) }
 
 func newNPayCode(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.PayCode, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]paycode.PayCode, n)))
 }
 
 func ptrPayCode(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.PayCode)(p)
+	r := (*paycode.PayCode)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1495,7 +1502,7 @@ func ptrPayCode(p unsafe.Pointer, c int32) any {
 }
 
 func valuePayCode(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.PayCode)(p)
+	r := (*paycode.PayCode)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1543,7 +1550,7 @@ func valuePayCode(p unsafe.Pointer, c int32) any {
 }
 
 func attachPayCode(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.PayCode)(p)
+	r := (*paycode.PayCode)(p)
 	switch rel {
 	case 0:
 		r.GLAccount = (*glaccount.GLAccount)(child)
@@ -1551,7 +1558,7 @@ func attachPayCode(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 }
 
 func beforeCreatePayCode(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.PayCode)(p).BeforeCreate(ctx)
+	return (*paycode.PayCode)(p).BeforeCreate(ctx)
 }
 
 // payProfilesTable is the schema of driverpay.PayProfile.
@@ -2005,17 +2012,17 @@ func valuePayProfileComponent(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-// recurringDeductionsTable is the schema of driverpay.RecurringDeduction.
+// recurringDeductionsTable is the schema of recurringpay.RecurringDeduction.
 var recurringDeductionsTable = schema.Table{
 	Name:        "recurring_deductions",
 	Quoted:      `"recurring_deductions"`,
 	Alias:       "rd",
-	Model:       "driverpay.RecurringDeduction",
+	Model:       "recurringpay.RecurringDeduction",
 	Label:       `Recurring Deduction`,
 	Plural:      `Recurring Deductions`,
 	Doc:         `Standing deductions, including garnishments and escrow contributions`,
 	Report:      &schema.TableReport{Category: `Payroll`},
-	Constraints: (&driverpay.RecurringDeduction{}).Constraints(),
+	Constraints: (&recurringpay.RecurringDeduction{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -2060,7 +2067,7 @@ var recurringDeductionsTable = schema.Table{
 	IDPrefix:     "rded_",
 	New:          newRecurringDeduction,
 	NewN:         newNRecurringDeduction,
-	Size:         unsafe.Sizeof(driverpay.RecurringDeduction{}),
+	Size:         unsafe.Sizeof(recurringpay.RecurringDeduction{}),
 	Ptr:          ptrRecurringDeduction,
 	Value:        valueRecurringDeduction,
 	Attach:       attachRecurringDeduction,
@@ -2069,9 +2076,9 @@ var recurringDeductionsTable = schema.Table{
 
 var recurringDeductionsRef = keel.Ref{Table: &recurringDeductionsTable}
 
-// RecurringDeductionsTable is the table of driverpay.RecurringDeduction.
+// RecurringDeductionsTable is the table of recurringpay.RecurringDeduction.
 type RecurringDeductionsTable struct {
-	keel.Handle[*driverpay.RecurringDeduction]
+	keel.Handle[*recurringpay.RecurringDeduction]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -2100,7 +2107,7 @@ type RecurringDeductionsTable struct {
 
 // RecurringDeductions references the recurring_deductions table.
 var RecurringDeductions = &RecurringDeductionsTable{
-	Handle:              keel.Handle[*driverpay.RecurringDeduction]{Ref: &recurringDeductionsRef},
+	Handle:              keel.Handle[*recurringpay.RecurringDeduction]{Ref: &recurringDeductionsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 2}}},
@@ -2130,7 +2137,7 @@ var RecurringDeductions = &RecurringDeductionsTable{
 // BuildRecurringDeductions builds the handle of recurring_deductions for ref. Generated relation and alias methods call it.
 func BuildRecurringDeductions(r *keel.Ref) *RecurringDeductionsTable {
 	return &RecurringDeductionsTable{
-		Handle:              keel.Handle[*driverpay.RecurringDeduction]{Ref: r},
+		Handle:              keel.Handle[*recurringpay.RecurringDeduction]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2182,18 +2189,18 @@ func (t *RecurringDeductionsTable) EscrowAccount() *EscrowAccountsTable {
 }
 
 // Get returns the recurring_deductions row with the given key, or keel.ErrNotFound.
-func (t *RecurringDeductionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.RecurringDeduction, error) {
+func (t *RecurringDeductionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*recurringpay.RecurringDeduction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRecurringDeduction() unsafe.Pointer { return unsafe.Pointer(new(driverpay.RecurringDeduction)) }
+func newRecurringDeduction() unsafe.Pointer { return unsafe.Pointer(new(recurringpay.RecurringDeduction)) }
 
 func newNRecurringDeduction(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.RecurringDeduction, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]recurringpay.RecurringDeduction, n)))
 }
 
 func ptrRecurringDeduction(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.RecurringDeduction)(p)
+	r := (*recurringpay.RecurringDeduction)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2248,7 +2255,7 @@ func ptrRecurringDeduction(p unsafe.Pointer, c int32) any {
 }
 
 func valueRecurringDeduction(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.RecurringDeduction)(p)
+	r := (*recurringpay.RecurringDeduction)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2324,32 +2331,32 @@ func valueRecurringDeduction(p unsafe.Pointer, c int32) any {
 }
 
 func attachRecurringDeduction(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.RecurringDeduction)(p)
+	r := (*recurringpay.RecurringDeduction)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.PayCode = (*driverpay.PayCode)(child)
+		r.PayCode = (*paycode.PayCode)(child)
 	case 2:
-		r.EscrowAccount = (*driverpay.EscrowAccount)(child)
+		r.EscrowAccount = (*payescrow.EscrowAccount)(child)
 	}
 }
 
 func beforeCreateRecurringDeduction(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.RecurringDeduction)(p).BeforeCreate(ctx)
+	return (*recurringpay.RecurringDeduction)(p).BeforeCreate(ctx)
 }
 
-// recurringEarningsTable is the schema of driverpay.RecurringEarning.
+// recurringEarningsTable is the schema of recurringpay.RecurringEarning.
 var recurringEarningsTable = schema.Table{
 	Name:        "recurring_earnings",
 	Quoted:      `"recurring_earnings"`,
 	Alias:       "re",
-	Model:       "driverpay.RecurringEarning",
+	Model:       "recurringpay.RecurringEarning",
 	Label:       `Recurring Earning`,
 	Plural:      `Recurring Earnings`,
 	Doc:         `Standing earnings such as per diem and retention bonuses`,
 	Report:      &schema.TableReport{Category: `Payroll`},
-	Constraints: (&driverpay.RecurringEarning{}).Constraints(),
+	Constraints: (&recurringpay.RecurringEarning{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`, Report: &reportDimString},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`, Report: &reportDimStringHidden},
@@ -2388,7 +2395,7 @@ var recurringEarningsTable = schema.Table{
 	IDPrefix:     "rern_",
 	New:          newRecurringEarning,
 	NewN:         newNRecurringEarning,
-	Size:         unsafe.Sizeof(driverpay.RecurringEarning{}),
+	Size:         unsafe.Sizeof(recurringpay.RecurringEarning{}),
 	Ptr:          ptrRecurringEarning,
 	Value:        valueRecurringEarning,
 	Attach:       attachRecurringEarning,
@@ -2397,9 +2404,9 @@ var recurringEarningsTable = schema.Table{
 
 var recurringEarningsRef = keel.Ref{Table: &recurringEarningsTable}
 
-// RecurringEarningsTable is the table of driverpay.RecurringEarning.
+// RecurringEarningsTable is the table of recurringpay.RecurringEarning.
 type RecurringEarningsTable struct {
-	keel.Handle[*driverpay.RecurringEarning]
+	keel.Handle[*recurringpay.RecurringEarning]
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -2423,7 +2430,7 @@ type RecurringEarningsTable struct {
 
 // RecurringEarnings references the recurring_earnings table.
 var RecurringEarnings = &RecurringEarningsTable{
-	Handle:          keel.Handle[*driverpay.RecurringEarning]{Ref: &recurringEarningsRef},
+	Handle:          keel.Handle[*recurringpay.RecurringEarning]{Ref: &recurringEarningsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 2}}},
@@ -2448,7 +2455,7 @@ var RecurringEarnings = &RecurringEarningsTable{
 // BuildRecurringEarnings builds the handle of recurring_earnings for ref. Generated relation and alias methods call it.
 func BuildRecurringEarnings(r *keel.Ref) *RecurringEarningsTable {
 	return &RecurringEarningsTable{
-		Handle:          keel.Handle[*driverpay.RecurringEarning]{Ref: r},
+		Handle:          keel.Handle[*recurringpay.RecurringEarning]{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2488,18 +2495,18 @@ func (t *RecurringEarningsTable) Worker() *workerdb.WorkersTable {
 func (t *RecurringEarningsTable) PayCode() *PayCodesTable { return keel.Path(t.Ref, 1, BuildPayCodes) }
 
 // Get returns the recurring_earnings row with the given key, or keel.ErrNotFound.
-func (t *RecurringEarningsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.RecurringEarning, error) {
+func (t *RecurringEarningsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*recurringpay.RecurringEarning, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newRecurringEarning() unsafe.Pointer { return unsafe.Pointer(new(driverpay.RecurringEarning)) }
+func newRecurringEarning() unsafe.Pointer { return unsafe.Pointer(new(recurringpay.RecurringEarning)) }
 
 func newNRecurringEarning(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.RecurringEarning, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]recurringpay.RecurringEarning, n)))
 }
 
 func ptrRecurringEarning(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.RecurringEarning)(p)
+	r := (*recurringpay.RecurringEarning)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2544,7 +2551,7 @@ func ptrRecurringEarning(p unsafe.Pointer, c int32) any {
 }
 
 func valueRecurringEarning(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.RecurringEarning)(p)
+	r := (*recurringpay.RecurringEarning)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2598,29 +2605,29 @@ func valueRecurringEarning(p unsafe.Pointer, c int32) any {
 }
 
 func attachRecurringEarning(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.RecurringEarning)(p)
+	r := (*recurringpay.RecurringEarning)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.PayCode = (*driverpay.PayCode)(child)
+		r.PayCode = (*paycode.PayCode)(child)
 	}
 }
 
 func beforeCreateRecurringEarning(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.RecurringEarning)(p).BeforeCreate(ctx)
+	return (*recurringpay.RecurringEarning)(p).BeforeCreate(ctx)
 }
 
-// workerBenefitEnrollmentsTable is the schema of driverpay.WorkerBenefitEnrollment.
+// workerBenefitEnrollmentsTable is the schema of paybenefit.WorkerBenefitEnrollment.
 var workerBenefitEnrollmentsTable = schema.Table{
 	Name:        "worker_benefit_enrollments",
 	Quoted:      `"worker_benefit_enrollments"`,
 	Alias:       "wbe",
-	Model:       "driverpay.WorkerBenefitEnrollment",
+	Model:       "paybenefit.WorkerBenefitEnrollment",
 	Label:       `Worker Benefit Enrollment`,
 	Plural:      `Worker Benefit Enrollments`,
 	Doc:         `WorkerBenefitEnrollment is who is on which plan. The employee contribution is taken through a recurring deduction rather than a second mechanism, so it inherits the cap, the pause and the reversal on a voided settlement.`,
-	Constraints: (&driverpay.WorkerBenefitEnrollment{}).Constraints(),
+	Constraints: (&paybenefit.WorkerBenefitEnrollment{}).Constraints(),
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -2659,7 +2666,7 @@ var workerBenefitEnrollmentsTable = schema.Table{
 	IDPrefix:     "wben_",
 	New:          newWorkerBenefitEnrollment,
 	NewN:         newNWorkerBenefitEnrollment,
-	Size:         unsafe.Sizeof(driverpay.WorkerBenefitEnrollment{}),
+	Size:         unsafe.Sizeof(paybenefit.WorkerBenefitEnrollment{}),
 	Ptr:          ptrWorkerBenefitEnrollment,
 	Value:        valueWorkerBenefitEnrollment,
 	Attach:       attachWorkerBenefitEnrollment,
@@ -2668,9 +2675,9 @@ var workerBenefitEnrollmentsTable = schema.Table{
 
 var workerBenefitEnrollmentsRef = keel.Ref{Table: &workerBenefitEnrollmentsTable}
 
-// WorkerBenefitEnrollmentsTable is the table of driverpay.WorkerBenefitEnrollment.
+// WorkerBenefitEnrollmentsTable is the table of paybenefit.WorkerBenefitEnrollment.
 type WorkerBenefitEnrollmentsTable struct {
-	keel.Handle[*driverpay.WorkerBenefitEnrollment]
+	keel.Handle[*paybenefit.WorkerBenefitEnrollment]
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -2693,7 +2700,7 @@ type WorkerBenefitEnrollmentsTable struct {
 
 // WorkerBenefitEnrollments references the worker_benefit_enrollments table.
 var WorkerBenefitEnrollments = &WorkerBenefitEnrollmentsTable{
-	Handle:               keel.Handle[*driverpay.WorkerBenefitEnrollment]{Ref: &workerBenefitEnrollmentsRef},
+	Handle:               keel.Handle[*paybenefit.WorkerBenefitEnrollment]{Ref: &workerBenefitEnrollmentsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 2}}},
@@ -2717,7 +2724,7 @@ var WorkerBenefitEnrollments = &WorkerBenefitEnrollmentsTable{
 // BuildWorkerBenefitEnrollments builds the handle of worker_benefit_enrollments for ref. Generated relation and alias methods call it.
 func BuildWorkerBenefitEnrollments(r *keel.Ref) *WorkerBenefitEnrollmentsTable {
 	return &WorkerBenefitEnrollmentsTable{
-		Handle:               keel.Handle[*driverpay.WorkerBenefitEnrollment]{Ref: r},
+		Handle:               keel.Handle[*paybenefit.WorkerBenefitEnrollment]{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2763,20 +2770,20 @@ func (t *WorkerBenefitEnrollmentsTable) Deduction() *RecurringDeductionsTable {
 }
 
 // Get returns the worker_benefit_enrollments row with the given key, or keel.ErrNotFound.
-func (t *WorkerBenefitEnrollmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.WorkerBenefitEnrollment, error) {
+func (t *WorkerBenefitEnrollmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*paybenefit.WorkerBenefitEnrollment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerBenefitEnrollment() unsafe.Pointer {
-	return unsafe.Pointer(new(driverpay.WorkerBenefitEnrollment))
+	return unsafe.Pointer(new(paybenefit.WorkerBenefitEnrollment))
 }
 
 func newNWorkerBenefitEnrollment(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.WorkerBenefitEnrollment, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]paybenefit.WorkerBenefitEnrollment, n)))
 }
 
 func ptrWorkerBenefitEnrollment(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.WorkerBenefitEnrollment)(p)
+	r := (*paybenefit.WorkerBenefitEnrollment)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -2819,7 +2826,7 @@ func ptrWorkerBenefitEnrollment(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerBenefitEnrollment(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.WorkerBenefitEnrollment)(p)
+	r := (*paybenefit.WorkerBenefitEnrollment)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -2877,27 +2884,27 @@ func valueWorkerBenefitEnrollment(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerBenefitEnrollment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.WorkerBenefitEnrollment)(p)
+	r := (*paybenefit.WorkerBenefitEnrollment)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
 	case 1:
-		r.BenefitPlan = (*driverpay.BenefitPlan)(child)
+		r.BenefitPlan = (*paybenefit.BenefitPlan)(child)
 	case 2:
-		r.Deduction = (*driverpay.RecurringDeduction)(child)
+		r.Deduction = (*recurringpay.RecurringDeduction)(child)
 	}
 }
 
 func beforeCreateWorkerBenefitEnrollment(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.WorkerBenefitEnrollment)(p).BeforeCreate(ctx)
+	return (*paybenefit.WorkerBenefitEnrollment)(p).BeforeCreate(ctx)
 }
 
-// workerPayAssignmentsTable is the schema of driverpay.WorkerPayAssignment.
+// workerPayAssignmentsTable is the schema of payassignment.WorkerPayAssignment.
 var workerPayAssignmentsTable = schema.Table{
 	Name:   "worker_pay_assignments",
 	Quoted: `"worker_pay_assignments"`,
 	Alias:  "wpa",
-	Model:  "driverpay.WorkerPayAssignment",
+	Model:  "payassignment.WorkerPayAssignment",
 	Label:  `Worker Pay Assignment`,
 	Plural: `Worker Pay Assignments`,
 	Columns: []schema.Column{
@@ -2933,7 +2940,7 @@ var workerPayAssignmentsTable = schema.Table{
 	IDPrefix:     "wpa_",
 	New:          newWorkerPayAssignment,
 	NewN:         newNWorkerPayAssignment,
-	Size:         unsafe.Sizeof(driverpay.WorkerPayAssignment{}),
+	Size:         unsafe.Sizeof(payassignment.WorkerPayAssignment{}),
 	Ptr:          ptrWorkerPayAssignment,
 	Value:        valueWorkerPayAssignment,
 	Attach:       attachWorkerPayAssignment,
@@ -2942,9 +2949,9 @@ var workerPayAssignmentsTable = schema.Table{
 
 var workerPayAssignmentsRef = keel.Ref{Table: &workerPayAssignmentsTable}
 
-// WorkerPayAssignmentsTable is the table of driverpay.WorkerPayAssignment.
+// WorkerPayAssignmentsTable is the table of payassignment.WorkerPayAssignment.
 type WorkerPayAssignmentsTable struct {
-	keel.Handle[*driverpay.WorkerPayAssignment]
+	keel.Handle[*payassignment.WorkerPayAssignment]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -2963,7 +2970,7 @@ type WorkerPayAssignmentsTable struct {
 
 // WorkerPayAssignments references the worker_pay_assignments table.
 var WorkerPayAssignments = &WorkerPayAssignmentsTable{
-	Handle:         keel.Handle[*driverpay.WorkerPayAssignment]{Ref: &workerPayAssignmentsRef},
+	Handle:         keel.Handle[*payassignment.WorkerPayAssignment]{Ref: &workerPayAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 2}}},
@@ -2983,7 +2990,7 @@ var WorkerPayAssignments = &WorkerPayAssignmentsTable{
 // BuildWorkerPayAssignments builds the handle of worker_pay_assignments for ref. Generated relation and alias methods call it.
 func BuildWorkerPayAssignments(r *keel.Ref) *WorkerPayAssignmentsTable {
 	return &WorkerPayAssignmentsTable{
-		Handle:         keel.Handle[*driverpay.WorkerPayAssignment]{Ref: r},
+		Handle:         keel.Handle[*payassignment.WorkerPayAssignment]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -3020,20 +3027,20 @@ func (t *WorkerPayAssignmentsTable) PayProfile() *PayProfilesTable {
 }
 
 // Get returns the worker_pay_assignments row with the given key, or keel.ErrNotFound.
-func (t *WorkerPayAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driverpay.WorkerPayAssignment, error) {
+func (t *WorkerPayAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payassignment.WorkerPayAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
 func newWorkerPayAssignment() unsafe.Pointer {
-	return unsafe.Pointer(new(driverpay.WorkerPayAssignment))
+	return unsafe.Pointer(new(payassignment.WorkerPayAssignment))
 }
 
 func newNWorkerPayAssignment(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]driverpay.WorkerPayAssignment, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]payassignment.WorkerPayAssignment, n)))
 }
 
 func ptrWorkerPayAssignment(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.WorkerPayAssignment)(p)
+	r := (*payassignment.WorkerPayAssignment)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -3068,7 +3075,7 @@ func ptrWorkerPayAssignment(p unsafe.Pointer, c int32) any {
 }
 
 func valueWorkerPayAssignment(p unsafe.Pointer, c int32) any {
-	r := (*driverpay.WorkerPayAssignment)(p)
+	r := (*payassignment.WorkerPayAssignment)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -3115,7 +3122,7 @@ func valueWorkerPayAssignment(p unsafe.Pointer, c int32) any {
 }
 
 func attachWorkerPayAssignment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*driverpay.WorkerPayAssignment)(p)
+	r := (*payassignment.WorkerPayAssignment)(p)
 	switch rel {
 	case 0:
 		r.Worker = (*worker.Worker)(child)
@@ -3125,7 +3132,7 @@ func attachWorkerPayAssignment(p unsafe.Pointer, rel int32, child unsafe.Pointer
 }
 
 func beforeCreateWorkerPayAssignment(ctx context.Context, p unsafe.Pointer) error {
-	return (*driverpay.WorkerPayAssignment)(p).BeforeCreate(ctx)
+	return (*payassignment.WorkerPayAssignment)(p).BeforeCreate(ctx)
 }
 
 func init() {
@@ -3312,127 +3319,127 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
-// AdvanceSourceCol is a column of driverpay.AdvanceSource values.
+// AdvanceSourceCol is a column of payadvance.AdvanceSource values.
 type AdvanceSourceCol struct{ keel.StringCol }
 
-func (c AdvanceSourceCol) Eq(v driverpay.AdvanceSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c AdvanceSourceCol) Ne(v driverpay.AdvanceSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c AdvanceSourceCol) Gt(v driverpay.AdvanceSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c AdvanceSourceCol) Gte(v driverpay.AdvanceSource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c AdvanceSourceCol) Lt(v driverpay.AdvanceSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c AdvanceSourceCol) Lte(v driverpay.AdvanceSource) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c AdvanceSourceCol) IsDistinctFrom(v driverpay.AdvanceSource) keel.Pred {
+func (c AdvanceSourceCol) Eq(v payadvance.AdvanceSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c AdvanceSourceCol) Ne(v payadvance.AdvanceSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c AdvanceSourceCol) Gt(v payadvance.AdvanceSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c AdvanceSourceCol) Gte(v payadvance.AdvanceSource) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c AdvanceSourceCol) Lt(v payadvance.AdvanceSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c AdvanceSourceCol) Lte(v payadvance.AdvanceSource) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c AdvanceSourceCol) IsDistinctFrom(v payadvance.AdvanceSource) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c AdvanceSourceCol) Between(lo, hi driverpay.AdvanceSource) keel.Pred {
+func (c AdvanceSourceCol) Between(lo, hi payadvance.AdvanceSource) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c AdvanceSourceCol) To(v driverpay.AdvanceSource) keel.Assignment {
+func (c AdvanceSourceCol) To(v payadvance.AdvanceSource) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c AdvanceSourceCol) In(vs ...driverpay.AdvanceSource) keel.Pred {
+func (c AdvanceSourceCol) In(vs ...payadvance.AdvanceSource) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c AdvanceSourceCol) NotIn(vs ...driverpay.AdvanceSource) keel.Pred {
+func (c AdvanceSourceCol) NotIn(vs ...payadvance.AdvanceSource) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// AdvanceStatusCol is a column of driverpay.AdvanceStatus values.
+// AdvanceStatusCol is a column of payadvance.AdvanceStatus values.
 type AdvanceStatusCol struct{ keel.StringCol }
 
-func (c AdvanceStatusCol) Eq(v driverpay.AdvanceStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c AdvanceStatusCol) Ne(v driverpay.AdvanceStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c AdvanceStatusCol) Gt(v driverpay.AdvanceStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c AdvanceStatusCol) Gte(v driverpay.AdvanceStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c AdvanceStatusCol) Lt(v driverpay.AdvanceStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c AdvanceStatusCol) Lte(v driverpay.AdvanceStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c AdvanceStatusCol) IsDistinctFrom(v driverpay.AdvanceStatus) keel.Pred {
+func (c AdvanceStatusCol) Eq(v payadvance.AdvanceStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c AdvanceStatusCol) Ne(v payadvance.AdvanceStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c AdvanceStatusCol) Gt(v payadvance.AdvanceStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c AdvanceStatusCol) Gte(v payadvance.AdvanceStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c AdvanceStatusCol) Lt(v payadvance.AdvanceStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c AdvanceStatusCol) Lte(v payadvance.AdvanceStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c AdvanceStatusCol) IsDistinctFrom(v payadvance.AdvanceStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c AdvanceStatusCol) Between(lo, hi driverpay.AdvanceStatus) keel.Pred {
+func (c AdvanceStatusCol) Between(lo, hi payadvance.AdvanceStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c AdvanceStatusCol) To(v driverpay.AdvanceStatus) keel.Assignment {
+func (c AdvanceStatusCol) To(v payadvance.AdvanceStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c AdvanceStatusCol) In(vs ...driverpay.AdvanceStatus) keel.Pred {
+func (c AdvanceStatusCol) In(vs ...payadvance.AdvanceStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c AdvanceStatusCol) NotIn(vs ...driverpay.AdvanceStatus) keel.Pred {
+func (c AdvanceStatusCol) NotIn(vs ...payadvance.AdvanceStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// BenefitEnrollmentStatusCol is a column of driverpay.BenefitEnrollmentStatus values.
+// BenefitEnrollmentStatusCol is a column of paybenefit.BenefitEnrollmentStatus values.
 type BenefitEnrollmentStatusCol struct{ keel.StringCol }
 
-func (c BenefitEnrollmentStatusCol) Eq(v driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) Eq(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c BenefitEnrollmentStatusCol) Ne(v driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) Ne(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c BenefitEnrollmentStatusCol) Gt(v driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) Gt(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c BenefitEnrollmentStatusCol) Gte(v driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) Gte(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c BenefitEnrollmentStatusCol) Lt(v driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) Lt(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c BenefitEnrollmentStatusCol) Lte(v driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) Lte(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c BenefitEnrollmentStatusCol) IsDistinctFrom(v driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) IsDistinctFrom(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c BenefitEnrollmentStatusCol) Between(lo, hi driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) Between(lo, hi paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c BenefitEnrollmentStatusCol) To(v driverpay.BenefitEnrollmentStatus) keel.Assignment {
+func (c BenefitEnrollmentStatusCol) To(v paybenefit.BenefitEnrollmentStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c BenefitEnrollmentStatusCol) In(vs ...driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) In(vs ...paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c BenefitEnrollmentStatusCol) NotIn(vs ...driverpay.BenefitEnrollmentStatus) keel.Pred {
+func (c BenefitEnrollmentStatusCol) NotIn(vs ...paybenefit.BenefitEnrollmentStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// BenefitPlanTypeCol is a column of driverpay.BenefitPlanType values.
+// BenefitPlanTypeCol is a column of paybenefit.BenefitPlanType values.
 type BenefitPlanTypeCol struct{ keel.StringCol }
 
-func (c BenefitPlanTypeCol) Eq(v driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) Eq(v paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c BenefitPlanTypeCol) Ne(v driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) Ne(v paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c BenefitPlanTypeCol) Gt(v driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) Gt(v paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c BenefitPlanTypeCol) Gte(v driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) Gte(v paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c BenefitPlanTypeCol) Lt(v driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) Lt(v paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c BenefitPlanTypeCol) Lte(v driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) Lte(v paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c BenefitPlanTypeCol) IsDistinctFrom(v driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) IsDistinctFrom(v paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c BenefitPlanTypeCol) Between(lo, hi driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) Between(lo, hi paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c BenefitPlanTypeCol) To(v driverpay.BenefitPlanType) keel.Assignment {
+func (c BenefitPlanTypeCol) To(v paybenefit.BenefitPlanType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c BenefitPlanTypeCol) In(vs ...driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) In(vs ...paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c BenefitPlanTypeCol) NotIn(vs ...driverpay.BenefitPlanType) keel.Pred {
+func (c BenefitPlanTypeCol) NotIn(vs ...paybenefit.BenefitPlanType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -3484,348 +3491,348 @@ func (c ComponentKindCol) NotIn(vs ...driverpay.ComponentKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// CoverageTierCol is a column of driverpay.CoverageTier values.
+// CoverageTierCol is a column of paybenefit.CoverageTier values.
 type CoverageTierCol struct{ keel.StringCol }
 
-func (c CoverageTierCol) Eq(v driverpay.CoverageTier) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CoverageTierCol) Ne(v driverpay.CoverageTier) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CoverageTierCol) Gt(v driverpay.CoverageTier) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CoverageTierCol) Gte(v driverpay.CoverageTier) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CoverageTierCol) Lt(v driverpay.CoverageTier) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CoverageTierCol) Lte(v driverpay.CoverageTier) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c CoverageTierCol) IsDistinctFrom(v driverpay.CoverageTier) keel.Pred {
+func (c CoverageTierCol) Eq(v paybenefit.CoverageTier) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c CoverageTierCol) Ne(v paybenefit.CoverageTier) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c CoverageTierCol) Gt(v paybenefit.CoverageTier) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c CoverageTierCol) Gte(v paybenefit.CoverageTier) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c CoverageTierCol) Lt(v paybenefit.CoverageTier) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c CoverageTierCol) Lte(v paybenefit.CoverageTier) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CoverageTierCol) IsDistinctFrom(v paybenefit.CoverageTier) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c CoverageTierCol) Between(lo, hi driverpay.CoverageTier) keel.Pred {
+func (c CoverageTierCol) Between(lo, hi paybenefit.CoverageTier) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c CoverageTierCol) To(v driverpay.CoverageTier) keel.Assignment {
+func (c CoverageTierCol) To(v paybenefit.CoverageTier) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c CoverageTierCol) In(vs ...driverpay.CoverageTier) keel.Pred {
+func (c CoverageTierCol) In(vs ...paybenefit.CoverageTier) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c CoverageTierCol) NotIn(vs ...driverpay.CoverageTier) keel.Pred {
+func (c CoverageTierCol) NotIn(vs ...paybenefit.CoverageTier) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// DeductionFrequencyCol is a column of driverpay.DeductionFrequency values.
+// DeductionFrequencyCol is a column of recurringpay.DeductionFrequency values.
 type DeductionFrequencyCol struct{ keel.StringCol }
 
-func (c DeductionFrequencyCol) Eq(v driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) Eq(v recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DeductionFrequencyCol) Ne(v driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) Ne(v recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DeductionFrequencyCol) Gt(v driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) Gt(v recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DeductionFrequencyCol) Gte(v driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) Gte(v recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DeductionFrequencyCol) Lt(v driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) Lt(v recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DeductionFrequencyCol) Lte(v driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) Lte(v recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DeductionFrequencyCol) IsDistinctFrom(v driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) IsDistinctFrom(v recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DeductionFrequencyCol) Between(lo, hi driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) Between(lo, hi recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DeductionFrequencyCol) To(v driverpay.DeductionFrequency) keel.Assignment {
+func (c DeductionFrequencyCol) To(v recurringpay.DeductionFrequency) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DeductionFrequencyCol) In(vs ...driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) In(vs ...recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DeductionFrequencyCol) NotIn(vs ...driverpay.DeductionFrequency) keel.Pred {
+func (c DeductionFrequencyCol) NotIn(vs ...recurringpay.DeductionFrequency) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// DeductionKindCol is a column of driverpay.DeductionKind values.
+// DeductionKindCol is a column of recurringpay.DeductionKind values.
 type DeductionKindCol struct{ keel.StringCol }
 
-func (c DeductionKindCol) Eq(v driverpay.DeductionKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DeductionKindCol) Ne(v driverpay.DeductionKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DeductionKindCol) Gt(v driverpay.DeductionKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DeductionKindCol) Gte(v driverpay.DeductionKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DeductionKindCol) Lt(v driverpay.DeductionKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DeductionKindCol) Lte(v driverpay.DeductionKind) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c DeductionKindCol) IsDistinctFrom(v driverpay.DeductionKind) keel.Pred {
+func (c DeductionKindCol) Eq(v recurringpay.DeductionKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c DeductionKindCol) Ne(v recurringpay.DeductionKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c DeductionKindCol) Gt(v recurringpay.DeductionKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c DeductionKindCol) Gte(v recurringpay.DeductionKind) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c DeductionKindCol) Lt(v recurringpay.DeductionKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c DeductionKindCol) Lte(v recurringpay.DeductionKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DeductionKindCol) IsDistinctFrom(v recurringpay.DeductionKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DeductionKindCol) Between(lo, hi driverpay.DeductionKind) keel.Pred {
+func (c DeductionKindCol) Between(lo, hi recurringpay.DeductionKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DeductionKindCol) To(v driverpay.DeductionKind) keel.Assignment {
+func (c DeductionKindCol) To(v recurringpay.DeductionKind) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DeductionKindCol) In(vs ...driverpay.DeductionKind) keel.Pred {
+func (c DeductionKindCol) In(vs ...recurringpay.DeductionKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DeductionKindCol) NotIn(vs ...driverpay.DeductionKind) keel.Pred {
+func (c DeductionKindCol) NotIn(vs ...recurringpay.DeductionKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// DeductionStatusCol is a column of driverpay.DeductionStatus values.
+// DeductionStatusCol is a column of recurringpay.DeductionStatus values.
 type DeductionStatusCol struct{ keel.StringCol }
 
-func (c DeductionStatusCol) Eq(v driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) Eq(v recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c DeductionStatusCol) Ne(v driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) Ne(v recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c DeductionStatusCol) Gt(v driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) Gt(v recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c DeductionStatusCol) Gte(v driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) Gte(v recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c DeductionStatusCol) Lt(v driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) Lt(v recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c DeductionStatusCol) Lte(v driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) Lte(v recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c DeductionStatusCol) IsDistinctFrom(v driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) IsDistinctFrom(v recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c DeductionStatusCol) Between(lo, hi driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) Between(lo, hi recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c DeductionStatusCol) To(v driverpay.DeductionStatus) keel.Assignment {
+func (c DeductionStatusCol) To(v recurringpay.DeductionStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c DeductionStatusCol) In(vs ...driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) In(vs ...recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c DeductionStatusCol) NotIn(vs ...driverpay.DeductionStatus) keel.Pred {
+func (c DeductionStatusCol) NotIn(vs ...recurringpay.DeductionStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// EarningFrequencyCol is a column of driverpay.EarningFrequency values.
+// EarningFrequencyCol is a column of recurringpay.EarningFrequency values.
 type EarningFrequencyCol struct{ keel.StringCol }
 
-func (c EarningFrequencyCol) Eq(v driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) Eq(v recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c EarningFrequencyCol) Ne(v driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) Ne(v recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c EarningFrequencyCol) Gt(v driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) Gt(v recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c EarningFrequencyCol) Gte(v driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) Gte(v recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c EarningFrequencyCol) Lt(v driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) Lt(v recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c EarningFrequencyCol) Lte(v driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) Lte(v recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c EarningFrequencyCol) IsDistinctFrom(v driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) IsDistinctFrom(v recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EarningFrequencyCol) Between(lo, hi driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) Between(lo, hi recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EarningFrequencyCol) To(v driverpay.EarningFrequency) keel.Assignment {
+func (c EarningFrequencyCol) To(v recurringpay.EarningFrequency) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c EarningFrequencyCol) In(vs ...driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) In(vs ...recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EarningFrequencyCol) NotIn(vs ...driverpay.EarningFrequency) keel.Pred {
+func (c EarningFrequencyCol) NotIn(vs ...recurringpay.EarningFrequency) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// EarningKindCol is a column of driverpay.EarningKind values.
+// EarningKindCol is a column of recurringpay.EarningKind values.
 type EarningKindCol struct{ keel.StringCol }
 
-func (c EarningKindCol) Eq(v driverpay.EarningKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EarningKindCol) Ne(v driverpay.EarningKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EarningKindCol) Gt(v driverpay.EarningKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EarningKindCol) Gte(v driverpay.EarningKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EarningKindCol) Lt(v driverpay.EarningKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EarningKindCol) Lte(v driverpay.EarningKind) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c EarningKindCol) IsDistinctFrom(v driverpay.EarningKind) keel.Pred {
+func (c EarningKindCol) Eq(v recurringpay.EarningKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c EarningKindCol) Ne(v recurringpay.EarningKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c EarningKindCol) Gt(v recurringpay.EarningKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c EarningKindCol) Gte(v recurringpay.EarningKind) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c EarningKindCol) Lt(v recurringpay.EarningKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c EarningKindCol) Lte(v recurringpay.EarningKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EarningKindCol) IsDistinctFrom(v recurringpay.EarningKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EarningKindCol) Between(lo, hi driverpay.EarningKind) keel.Pred {
+func (c EarningKindCol) Between(lo, hi recurringpay.EarningKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EarningKindCol) To(v driverpay.EarningKind) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c EarningKindCol) In(vs ...driverpay.EarningKind) keel.Pred {
+func (c EarningKindCol) To(v recurringpay.EarningKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c EarningKindCol) In(vs ...recurringpay.EarningKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EarningKindCol) NotIn(vs ...driverpay.EarningKind) keel.Pred {
+func (c EarningKindCol) NotIn(vs ...recurringpay.EarningKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// EarningStatusCol is a column of driverpay.EarningStatus values.
+// EarningStatusCol is a column of recurringpay.EarningStatus values.
 type EarningStatusCol struct{ keel.StringCol }
 
-func (c EarningStatusCol) Eq(v driverpay.EarningStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EarningStatusCol) Ne(v driverpay.EarningStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EarningStatusCol) Gt(v driverpay.EarningStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EarningStatusCol) Gte(v driverpay.EarningStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EarningStatusCol) Lt(v driverpay.EarningStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EarningStatusCol) Lte(v driverpay.EarningStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c EarningStatusCol) IsDistinctFrom(v driverpay.EarningStatus) keel.Pred {
+func (c EarningStatusCol) Eq(v recurringpay.EarningStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c EarningStatusCol) Ne(v recurringpay.EarningStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c EarningStatusCol) Gt(v recurringpay.EarningStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c EarningStatusCol) Gte(v recurringpay.EarningStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c EarningStatusCol) Lt(v recurringpay.EarningStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c EarningStatusCol) Lte(v recurringpay.EarningStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EarningStatusCol) IsDistinctFrom(v recurringpay.EarningStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EarningStatusCol) Between(lo, hi driverpay.EarningStatus) keel.Pred {
+func (c EarningStatusCol) Between(lo, hi recurringpay.EarningStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EarningStatusCol) To(v driverpay.EarningStatus) keel.Assignment {
+func (c EarningStatusCol) To(v recurringpay.EarningStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c EarningStatusCol) In(vs ...driverpay.EarningStatus) keel.Pred {
+func (c EarningStatusCol) In(vs ...recurringpay.EarningStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EarningStatusCol) NotIn(vs ...driverpay.EarningStatus) keel.Pred {
+func (c EarningStatusCol) NotIn(vs ...recurringpay.EarningStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// EscrowAccountStatusCol is a column of driverpay.EscrowAccountStatus values.
+// EscrowAccountStatusCol is a column of payescrow.EscrowAccountStatus values.
 type EscrowAccountStatusCol struct{ keel.StringCol }
 
-func (c EscrowAccountStatusCol) Eq(v driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) Eq(v payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c EscrowAccountStatusCol) Ne(v driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) Ne(v payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c EscrowAccountStatusCol) Gt(v driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) Gt(v payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c EscrowAccountStatusCol) Gte(v driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) Gte(v payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c EscrowAccountStatusCol) Lt(v driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) Lt(v payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c EscrowAccountStatusCol) Lte(v driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) Lte(v payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c EscrowAccountStatusCol) IsDistinctFrom(v driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) IsDistinctFrom(v payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EscrowAccountStatusCol) Between(lo, hi driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) Between(lo, hi payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EscrowAccountStatusCol) To(v driverpay.EscrowAccountStatus) keel.Assignment {
+func (c EscrowAccountStatusCol) To(v payescrow.EscrowAccountStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c EscrowAccountStatusCol) In(vs ...driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) In(vs ...payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EscrowAccountStatusCol) NotIn(vs ...driverpay.EscrowAccountStatus) keel.Pred {
+func (c EscrowAccountStatusCol) NotIn(vs ...payescrow.EscrowAccountStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// EscrowTransactionTypeCol is a column of driverpay.EscrowTransactionType values.
+// EscrowTransactionTypeCol is a column of payescrow.EscrowTransactionType values.
 type EscrowTransactionTypeCol struct{ keel.StringCol }
 
-func (c EscrowTransactionTypeCol) Eq(v driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) Eq(v payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c EscrowTransactionTypeCol) Ne(v driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) Ne(v payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c EscrowTransactionTypeCol) Gt(v driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) Gt(v payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c EscrowTransactionTypeCol) Gte(v driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) Gte(v payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c EscrowTransactionTypeCol) Lt(v driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) Lt(v payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c EscrowTransactionTypeCol) Lte(v driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) Lte(v payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c EscrowTransactionTypeCol) IsDistinctFrom(v driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) IsDistinctFrom(v payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EscrowTransactionTypeCol) Between(lo, hi driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) Between(lo, hi payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EscrowTransactionTypeCol) To(v driverpay.EscrowTransactionType) keel.Assignment {
+func (c EscrowTransactionTypeCol) To(v payescrow.EscrowTransactionType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c EscrowTransactionTypeCol) In(vs ...driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) In(vs ...payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EscrowTransactionTypeCol) NotIn(vs ...driverpay.EscrowTransactionType) keel.Pred {
+func (c EscrowTransactionTypeCol) NotIn(vs ...payescrow.EscrowTransactionType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ExpenseStatusCol is a column of driverpay.ExpenseStatus values.
+// ExpenseStatusCol is a column of payexpense.ExpenseStatus values.
 type ExpenseStatusCol struct{ keel.StringCol }
 
-func (c ExpenseStatusCol) Eq(v driverpay.ExpenseStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ExpenseStatusCol) Ne(v driverpay.ExpenseStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ExpenseStatusCol) Gt(v driverpay.ExpenseStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ExpenseStatusCol) Gte(v driverpay.ExpenseStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ExpenseStatusCol) Lt(v driverpay.ExpenseStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ExpenseStatusCol) Lte(v driverpay.ExpenseStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ExpenseStatusCol) IsDistinctFrom(v driverpay.ExpenseStatus) keel.Pred {
+func (c ExpenseStatusCol) Eq(v payexpense.ExpenseStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c ExpenseStatusCol) Ne(v payexpense.ExpenseStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c ExpenseStatusCol) Gt(v payexpense.ExpenseStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c ExpenseStatusCol) Gte(v payexpense.ExpenseStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c ExpenseStatusCol) Lt(v payexpense.ExpenseStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c ExpenseStatusCol) Lte(v payexpense.ExpenseStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ExpenseStatusCol) IsDistinctFrom(v payexpense.ExpenseStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ExpenseStatusCol) Between(lo, hi driverpay.ExpenseStatus) keel.Pred {
+func (c ExpenseStatusCol) Between(lo, hi payexpense.ExpenseStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ExpenseStatusCol) To(v driverpay.ExpenseStatus) keel.Assignment {
+func (c ExpenseStatusCol) To(v payexpense.ExpenseStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ExpenseStatusCol) In(vs ...driverpay.ExpenseStatus) keel.Pred {
+func (c ExpenseStatusCol) In(vs ...payexpense.ExpenseStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ExpenseStatusCol) NotIn(vs ...driverpay.ExpenseStatus) keel.Pred {
+func (c ExpenseStatusCol) NotIn(vs ...payexpense.ExpenseStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// PayCodeDirectionCol is a column of driverpay.PayCodeDirection values.
+// PayCodeDirectionCol is a column of paycode.PayCodeDirection values.
 type PayCodeDirectionCol struct{ keel.StringCol }
 
-func (c PayCodeDirectionCol) Eq(v driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) Eq(v paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c PayCodeDirectionCol) Ne(v driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) Ne(v paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c PayCodeDirectionCol) Gt(v driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) Gt(v paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c PayCodeDirectionCol) Gte(v driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) Gte(v paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c PayCodeDirectionCol) Lt(v driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) Lt(v paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c PayCodeDirectionCol) Lte(v driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) Lte(v paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c PayCodeDirectionCol) IsDistinctFrom(v driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) IsDistinctFrom(v paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c PayCodeDirectionCol) Between(lo, hi driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) Between(lo, hi paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c PayCodeDirectionCol) To(v driverpay.PayCodeDirection) keel.Assignment {
+func (c PayCodeDirectionCol) To(v paycode.PayCodeDirection) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c PayCodeDirectionCol) In(vs ...driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) In(vs ...paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c PayCodeDirectionCol) NotIn(vs ...driverpay.PayCodeDirection) keel.Pred {
+func (c PayCodeDirectionCol) NotIn(vs ...paycode.PayCodeDirection) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

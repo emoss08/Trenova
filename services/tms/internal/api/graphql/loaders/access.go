@@ -53,10 +53,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
@@ -1729,8 +1730,8 @@ func (f *FactoringLiveItemByInvoiceIDLoaderFactory) Attach(
 	})
 }
 
-func PayAdvanceByID(ctx context.Context, key string) (*driverpay.PayAdvance, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *driverpay.PayAdvance] {
+func PayAdvanceByID(ctx context.Context, key string) (*payadvance.PayAdvance, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *payadvance.PayAdvance] {
 		return s.payAdvanceByID
 	})
 }
@@ -1744,8 +1745,8 @@ func (f *PayAdvanceByIDLoaderFactory) Attach(
 	})
 }
 
-func EscrowAccountByID(ctx context.Context, key string) (*driverpay.EscrowAccount, error) {
-	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *driverpay.EscrowAccount] {
+func EscrowAccountByID(ctx context.Context, key string) (*payescrow.EscrowAccount, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *payescrow.EscrowAccount] {
 		return s.escrowAccountByID
 	})
 }

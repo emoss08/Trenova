@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
@@ -164,7 +164,7 @@ type SubmitMyExpenseRequest struct {
 func (s *Service) MyExpenses(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*driverpay.Expense, error) {
+) ([]*payexpense.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -182,7 +182,7 @@ func (s *Service) SubmitMyExpense(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	req *SubmitMyExpenseRequest,
-) (*driverpay.Expense, error) {
+) (*payexpense.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -224,7 +224,7 @@ func (s *Service) CancelMyExpense(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	expenseID pulid.ID,
-) (*driverpay.Expense, error) {
+) (*payexpense.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -240,7 +240,7 @@ func (s *Service) UploadMyExpenseReceipt(
 	expenseID pulid.ID,
 	file *multipart.FileHeader,
 	actor *permissionports.RequestActor,
-) (*driverpay.Expense, error) {
+) (*payexpense.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

@@ -1238,16 +1238,16 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.JobDepartment
   BenefitPlanType:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.BenefitPlanType
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.BenefitPlanType
   BenefitEnrollmentStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.BenefitEnrollmentStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.BenefitEnrollmentStatus
   CoverageTier:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.CoverageTier
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.CoverageTier
   DeductionKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.DeductionKind
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.DeductionKind
   AvailabilityPreference:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.AvailabilityPreference
@@ -1325,10 +1325,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftSwap
   BenefitPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.BenefitPlan
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.BenefitPlan
   WorkerBenefitEnrollment:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.WorkerBenefitEnrollment
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.WorkerBenefitEnrollment
     fields:
       effectiveTo:
         resolver: true
@@ -5097,37 +5097,37 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.RevenueBasis
   PayCodeDirection:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.PayCodeDirection
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paycode.PayCodeDirection
   PayCode:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.PayCode
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paycode.PayCode
     fields:
       glAccount:
         resolver: true
   RecurringDeductionFrequency:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.DeductionFrequency
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.DeductionFrequency
   RecurringDeductionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.DeductionStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.DeductionStatus
   RecurringEarningFrequency:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EarningFrequency
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.EarningFrequency
   RecurringEarningStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EarningStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.EarningStatus
   PayAdvanceStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.AdvanceStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance.AdvanceStatus
   PayAdvanceSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.AdvanceSource
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance.AdvanceSource
   EscrowAccountStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EscrowAccountStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow.EscrowAccountStatus
   EscrowTransactionType:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EscrowTransactionType
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow.EscrowTransactionType
   DriverSettlementStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Status
@@ -5184,10 +5184,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPTO
   DriverExpenseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.ExpenseStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense.ExpenseStatus
   DriverExpense:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.Expense
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense.Expense
   PortalPayEstimate:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.MovePayEstimate
@@ -5238,25 +5238,25 @@ models:
         resolver: true
   PayRateOverride:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.RateOverride
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment.RateOverride
   WorkerPayAssignment:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.WorkerPayAssignment
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment.WorkerPayAssignment
   RecurringDeduction:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.RecurringDeduction
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.RecurringDeduction
   RecurringEarning:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.RecurringEarning
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.RecurringEarning
   PayAdvance:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.PayAdvance
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance.PayAdvance
   EscrowTransaction:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EscrowTransaction
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow.EscrowTransaction
   EscrowAccount:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EscrowAccount
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow.EscrowAccount
   SettlementException:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Exception

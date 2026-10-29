@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -20,29 +20,29 @@ import (
 func (s *Service) ListAdvances(
 	ctx context.Context,
 	req *driverpayports.ListPayAdvancesRequest,
-) (*pagination.ListResult[*driverpay.PayAdvance], error) {
+) (*pagination.ListResult[*payadvance.PayAdvance], error) {
 	return s.advanceRepo.List(ctx, req)
 }
 
 func (s *Service) ListAdvancesConnection(
 	ctx context.Context,
 	req *driverpayports.ListPayAdvanceConnectionRequest,
-) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
+) (*pagination.CursorListResult[*payadvance.PayAdvance], error) {
 	return s.advanceRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetAdvance(
 	ctx context.Context,
 	req driverpayports.GetPayAdvanceByIDRequest,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	return s.advanceRepo.GetByID(ctx, req)
 }
 
 func (s *Service) IssueAdvance(
 	ctx context.Context,
-	entity *driverpay.PayAdvance,
+	entity *payadvance.PayAdvance,
 	actor *permissionports.RequestActor,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	if err := requireActor(actor, "Pay advance issuance"); err != nil {
 		return nil, err
 	}
@@ -60,9 +60,9 @@ func (s *Service) IssueAdvance(
 
 func (s *Service) UpdateAdvance(
 	ctx context.Context,
-	entity *driverpay.PayAdvance,
+	entity *payadvance.PayAdvance,
 	actor *permissionports.RequestActor,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	if err := requireActor(actor, "Pay advance update"); err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (s *Service) UpdateAdvance(
 	if err != nil {
 		return nil, err
 	}
-	if previous.Status != driverpay.AdvanceStatusOutstanding {
+	if previous.Status != payadvance.AdvanceStatusOutstanding {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -108,7 +108,7 @@ func (s *Service) WriteOffAdvance(
 	advanceID pulid.ID,
 	reason string,
 	actor *permissionports.RequestActor,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	if err := requireActor(actor, "Pay advance write-off"); err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (s *Service) WriteOffAdvance(
 }
 
 func (s *Service) logAdvanceAudit(
-	current, previous *driverpay.PayAdvance,
+	current, previous *payadvance.PayAdvance,
 	userID pulid.ID,
 	operation permission.Operation,
 	comment string,

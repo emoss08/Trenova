@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
@@ -101,7 +101,7 @@ type PayAssignmentManager interface {
 		assignmentID pulid.ID,
 		endDate int64,
 		actor *permissionports.RequestActor,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 }
 
 type Params struct {

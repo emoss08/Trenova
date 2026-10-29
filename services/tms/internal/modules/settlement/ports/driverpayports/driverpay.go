@@ -4,6 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -77,32 +83,32 @@ type WorkerPayAssignmentRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 	GetEffectiveForWorker(
 		ctx context.Context,
 		req GetWorkerPayAssignmentRequest,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 	ListForWorker(
 		ctx context.Context,
 		req ListWorkerPayAssignmentsRequest,
-	) ([]*driverpay.WorkerPayAssignment, error)
+	) ([]*payassignment.WorkerPayAssignment, error)
 	ListForProfile(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		profileID pulid.ID,
-	) ([]*driverpay.WorkerPayAssignment, error)
+	) ([]*payassignment.WorkerPayAssignment, error)
 	ListOverlapping(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
-	) ([]*driverpay.WorkerPayAssignment, error)
+		entity *payassignment.WorkerPayAssignment,
+	) ([]*payassignment.WorkerPayAssignment, error)
 	Create(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
-	) (*driverpay.WorkerPayAssignment, error)
+		entity *payassignment.WorkerPayAssignment,
+	) (*payassignment.WorkerPayAssignment, error)
 	Update(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
-	) (*driverpay.WorkerPayAssignment, error)
+		entity *payassignment.WorkerPayAssignment,
+	) (*payassignment.WorkerPayAssignment, error)
 	Delete(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) error
 }
 
@@ -112,9 +118,9 @@ type GetRecurringDeductionByIDRequest struct {
 }
 
 type ListRecurringDeductionsRequest struct {
-	Filter   *pagination.QueryOptions  `json:"filter"`
-	WorkerID pulid.ID                  `json:"workerId"`
-	Status   driverpay.DeductionStatus `json:"status"`
+	Filter   *pagination.QueryOptions     `json:"filter"`
+	WorkerID pulid.ID                     `json:"workerId"`
+	Status   recurringpay.DeductionStatus `json:"status"`
 }
 
 type ListRecurringDeductionConnectionRequest struct {
@@ -132,27 +138,27 @@ type RecurringDeductionRepository interface {
 	List(
 		ctx context.Context,
 		req *ListRecurringDeductionsRequest,
-	) (*pagination.ListResult[*driverpay.RecurringDeduction], error)
+	) (*pagination.ListResult[*recurringpay.RecurringDeduction], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListRecurringDeductionConnectionRequest,
-	) (*pagination.CursorListResult[*driverpay.RecurringDeduction], error)
+	) (*pagination.CursorListResult[*recurringpay.RecurringDeduction], error)
 	GetByID(
 		ctx context.Context,
 		req GetRecurringDeductionByIDRequest,
-	) (*driverpay.RecurringDeduction, error)
+	) (*recurringpay.RecurringDeduction, error)
 	ListActiveForWorker(
 		ctx context.Context,
 		req ListActiveDeductionsForWorkerRequest,
-	) ([]*driverpay.RecurringDeduction, error)
+	) ([]*recurringpay.RecurringDeduction, error)
 	Create(
 		ctx context.Context,
-		entity *driverpay.RecurringDeduction,
-	) (*driverpay.RecurringDeduction, error)
+		entity *recurringpay.RecurringDeduction,
+	) (*recurringpay.RecurringDeduction, error)
 	Update(
 		ctx context.Context,
-		entity *driverpay.RecurringDeduction,
-	) (*driverpay.RecurringDeduction, error)
+		entity *recurringpay.RecurringDeduction,
+	) (*recurringpay.RecurringDeduction, error)
 }
 
 type GetPayCodeByIDRequest struct {
@@ -161,8 +167,8 @@ type GetPayCodeByIDRequest struct {
 }
 
 type ListPayCodesRequest struct {
-	Filter    *pagination.QueryOptions   `json:"filter"`
-	Direction driverpay.PayCodeDirection `json:"direction"`
+	Filter    *pagination.QueryOptions `json:"filter"`
+	Direction paycode.PayCodeDirection `json:"direction"`
 }
 
 type ListPayCodeConnectionRequest struct {
@@ -171,40 +177,40 @@ type ListPayCodeConnectionRequest struct {
 }
 
 type ListActivePayCodesRequest struct {
-	TenantInfo pagination.TenantInfo      `json:"tenantInfo"`
-	Direction  driverpay.PayCodeDirection `json:"direction"`
+	TenantInfo pagination.TenantInfo    `json:"tenantInfo"`
+	Direction  paycode.PayCodeDirection `json:"direction"`
 }
 
 type PayCodeSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest
-	Direction          driverpay.PayCodeDirection
+	Direction          paycode.PayCodeDirection
 }
 
 type PayCodeRepository interface {
 	List(
 		ctx context.Context,
 		req *ListPayCodesRequest,
-	) (*pagination.ListResult[*driverpay.PayCode], error)
+	) (*pagination.ListResult[*paycode.PayCode], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListPayCodeConnectionRequest,
-	) (*pagination.CursorListResult[*driverpay.PayCode], error)
+	) (*pagination.CursorListResult[*paycode.PayCode], error)
 	ListActive(
 		ctx context.Context,
 		req ListActivePayCodesRequest,
-	) ([]*driverpay.PayCode, error)
+	) ([]*paycode.PayCode, error)
 	SelectOptions(
 		ctx context.Context,
 		req *PayCodeSelectOptionsRequest,
-	) (*pagination.ListResult[*driverpay.PayCode], error)
-	GetByID(ctx context.Context, req GetPayCodeByIDRequest) (*driverpay.PayCode, error)
+	) (*pagination.ListResult[*paycode.PayCode], error)
+	GetByID(ctx context.Context, req GetPayCodeByIDRequest) (*paycode.PayCode, error)
 	GetByIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		ids []pulid.ID,
-	) ([]*driverpay.PayCode, error)
-	Create(ctx context.Context, entity *driverpay.PayCode) (*driverpay.PayCode, error)
-	Update(ctx context.Context, entity *driverpay.PayCode) (*driverpay.PayCode, error)
+	) ([]*paycode.PayCode, error)
+	Create(ctx context.Context, entity *paycode.PayCode) (*paycode.PayCode, error)
+	Update(ctx context.Context, entity *paycode.PayCode) (*paycode.PayCode, error)
 	EnsureSystemDefaults(ctx context.Context, tenantInfo pagination.TenantInfo) error
 }
 
@@ -214,9 +220,9 @@ type GetRecurringEarningByIDRequest struct {
 }
 
 type ListRecurringEarningsRequest struct {
-	Filter   *pagination.QueryOptions `json:"filter"`
-	WorkerID pulid.ID                 `json:"workerId"`
-	Status   driverpay.EarningStatus  `json:"status"`
+	Filter   *pagination.QueryOptions   `json:"filter"`
+	WorkerID pulid.ID                   `json:"workerId"`
+	Status   recurringpay.EarningStatus `json:"status"`
 }
 
 type ListRecurringEarningConnectionRequest struct {
@@ -234,27 +240,27 @@ type RecurringEarningRepository interface {
 	List(
 		ctx context.Context,
 		req *ListRecurringEarningsRequest,
-	) (*pagination.ListResult[*driverpay.RecurringEarning], error)
+	) (*pagination.ListResult[*recurringpay.RecurringEarning], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListRecurringEarningConnectionRequest,
-	) (*pagination.CursorListResult[*driverpay.RecurringEarning], error)
+	) (*pagination.CursorListResult[*recurringpay.RecurringEarning], error)
 	GetByID(
 		ctx context.Context,
 		req GetRecurringEarningByIDRequest,
-	) (*driverpay.RecurringEarning, error)
+	) (*recurringpay.RecurringEarning, error)
 	ListActiveForWorker(
 		ctx context.Context,
 		req ListActiveEarningsForWorkerRequest,
-	) ([]*driverpay.RecurringEarning, error)
+	) ([]*recurringpay.RecurringEarning, error)
 	Create(
 		ctx context.Context,
-		entity *driverpay.RecurringEarning,
-	) (*driverpay.RecurringEarning, error)
+		entity *recurringpay.RecurringEarning,
+	) (*recurringpay.RecurringEarning, error)
 	Update(
 		ctx context.Context,
-		entity *driverpay.RecurringEarning,
-	) (*driverpay.RecurringEarning, error)
+		entity *recurringpay.RecurringEarning,
+	) (*recurringpay.RecurringEarning, error)
 }
 
 type GetPayAdvanceByIDRequest struct {
@@ -275,7 +281,7 @@ type GetEscrowAccountsByIDsRequest struct {
 type ListPayAdvancesRequest struct {
 	Filter   *pagination.QueryOptions `json:"filter"`
 	WorkerID pulid.ID                 `json:"workerId"`
-	Status   driverpay.AdvanceStatus  `json:"status"`
+	Status   payadvance.AdvanceStatus `json:"status"`
 }
 
 type ListPayAdvanceConnectionRequest struct {
@@ -292,22 +298,22 @@ type PayAdvanceRepository interface {
 	List(
 		ctx context.Context,
 		req *ListPayAdvancesRequest,
-	) (*pagination.ListResult[*driverpay.PayAdvance], error)
+	) (*pagination.ListResult[*payadvance.PayAdvance], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListPayAdvanceConnectionRequest,
-	) (*pagination.CursorListResult[*driverpay.PayAdvance], error)
-	GetByID(ctx context.Context, req GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error)
+	) (*pagination.CursorListResult[*payadvance.PayAdvance], error)
+	GetByID(ctx context.Context, req GetPayAdvanceByIDRequest) (*payadvance.PayAdvance, error)
 	GetByIDs(
 		ctx context.Context,
 		req GetPayAdvancesByIDsRequest,
-	) ([]*driverpay.PayAdvance, error)
+	) ([]*payadvance.PayAdvance, error)
 	ListOutstandingForWorker(
 		ctx context.Context,
 		req ListOutstandingAdvancesForWorkerRequest,
-	) ([]*driverpay.PayAdvance, error)
-	Create(ctx context.Context, entity *driverpay.PayAdvance) (*driverpay.PayAdvance, error)
-	Update(ctx context.Context, entity *driverpay.PayAdvance) (*driverpay.PayAdvance, error)
+	) ([]*payadvance.PayAdvance, error)
+	Create(ctx context.Context, entity *payadvance.PayAdvance) (*payadvance.PayAdvance, error)
+	Update(ctx context.Context, entity *payadvance.PayAdvance) (*payadvance.PayAdvance, error)
 }
 
 type GetEscrowAccountByIDRequest struct {
@@ -319,7 +325,7 @@ type GetEscrowAccountByIDRequest struct {
 type ListEscrowAccountsRequest struct {
 	Filter   *pagination.QueryOptions      `json:"filter"`
 	WorkerID pulid.ID                      `json:"workerId"`
-	Status   driverpay.EscrowAccountStatus `json:"status"`
+	Status   payescrow.EscrowAccountStatus `json:"status"`
 }
 
 type ListEscrowAccountConnectionRequest struct {
@@ -341,34 +347,34 @@ type EscrowAccountRepository interface {
 	List(
 		ctx context.Context,
 		req *ListEscrowAccountsRequest,
-	) (*pagination.ListResult[*driverpay.EscrowAccount], error)
+	) (*pagination.ListResult[*payescrow.EscrowAccount], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListEscrowAccountConnectionRequest,
-	) (*pagination.CursorListResult[*driverpay.EscrowAccount], error)
-	GetByID(ctx context.Context, req GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error)
+	) (*pagination.CursorListResult[*payescrow.EscrowAccount], error)
+	GetByID(ctx context.Context, req GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error)
 	GetByIDs(
 		ctx context.Context,
 		req GetEscrowAccountsByIDsRequest,
-	) ([]*driverpay.EscrowAccount, error)
+	) ([]*payescrow.EscrowAccount, error)
 	GetActiveForWorker(
 		ctx context.Context,
 		req GetActiveEscrowAccountForWorkerRequest,
-	) (*driverpay.EscrowAccount, error)
+	) (*payescrow.EscrowAccount, error)
 	ListDueForInterest(
 		ctx context.Context,
 		req ListEscrowAccountsForInterestRequest,
-	) ([]*driverpay.EscrowAccount, error)
-	Create(ctx context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error)
-	Update(ctx context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error)
+	) ([]*payescrow.EscrowAccount, error)
+	Create(ctx context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error)
+	Update(ctx context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error)
 	AppendTransaction(
 		ctx context.Context,
-		entity *driverpay.EscrowTransaction,
-	) (*driverpay.EscrowTransaction, error)
+		entity *payescrow.EscrowTransaction,
+	) (*payescrow.EscrowTransaction, error)
 	ListTransactions(
 		ctx context.Context,
 		req GetEscrowAccountByIDRequest,
-	) ([]*driverpay.EscrowTransaction, error)
+	) ([]*payescrow.EscrowTransaction, error)
 }
 
 type GetDriverExpenseByIDRequest struct {
@@ -382,28 +388,28 @@ type ListDriverExpenseConnectionRequest struct {
 }
 
 type ListDriverExpensesForWorkerRequest struct {
-	TenantInfo pagination.TenantInfo     `json:"tenantInfo"`
-	WorkerID   pulid.ID                  `json:"workerId"`
-	Statuses   []driverpay.ExpenseStatus `json:"statuses"`
-	Limit      int                       `json:"limit"`
+	TenantInfo pagination.TenantInfo      `json:"tenantInfo"`
+	WorkerID   pulid.ID                   `json:"workerId"`
+	Statuses   []payexpense.ExpenseStatus `json:"statuses"`
+	Limit      int                        `json:"limit"`
 }
 
 type DriverExpenseRepository interface {
-	Create(ctx context.Context, entity *driverpay.Expense) (*driverpay.Expense, error)
-	Update(ctx context.Context, entity *driverpay.Expense) (*driverpay.Expense, error)
-	GetByID(ctx context.Context, req GetDriverExpenseByIDRequest) (*driverpay.Expense, error)
+	Create(ctx context.Context, entity *payexpense.Expense) (*payexpense.Expense, error)
+	Update(ctx context.Context, entity *payexpense.Expense) (*payexpense.Expense, error)
+	GetByID(ctx context.Context, req GetDriverExpenseByIDRequest) (*payexpense.Expense, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListDriverExpenseConnectionRequest,
-	) (*pagination.CursorListResult[*driverpay.Expense], error)
+	) (*pagination.CursorListResult[*payexpense.Expense], error)
 	ListForWorker(
 		ctx context.Context,
 		req *ListDriverExpensesForWorkerRequest,
-	) ([]*driverpay.Expense, error)
+	) ([]*payexpense.Expense, error)
 	ListApprovedForWorker(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) ([]*driverpay.Expense, error)
+	) ([]*payexpense.Expense, error)
 	CountPending(ctx context.Context, tenantInfo pagination.TenantInfo) (int, error)
 }
