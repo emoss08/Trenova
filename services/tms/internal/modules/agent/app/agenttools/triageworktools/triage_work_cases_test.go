@@ -95,7 +95,7 @@ var triageWorkToolCases = []agenttoolstest.TriageToolCase{
 	},
 	{
 		Build: func(f *agenttoolstest.FakeTriage) agenttoolports.AgentTool {
-			return newResolveInboundConflictTool(agenttoolstest.FakeConflictDesk{f})
+			return newResolveInboundConflictTool(agenttoolstest.FakeConflictDesk{FakeTriage: f})
 		},
 		Name:     "inbox_resolve_conflict",
 		Required: []string{"messageId", "conflictId", "resolution"},
@@ -104,7 +104,7 @@ var triageWorkToolCases = []agenttoolstest.TriageToolCase{
 	},
 	{
 		Build: func(f *agenttoolstest.FakeTriage) agenttoolports.AgentTool {
-			return newReopenInboundConflictTool(f, agenttoolstest.FakeConflictDesk{f})
+			return newReopenInboundConflictTool(f, agenttoolstest.FakeConflictDesk{FakeTriage: f})
 		},
 		Name:     "inbox_reopen_conflict",
 		Required: []string{"messageId", "conflictId"}, Resource: permission.ResourceInboundMessage,

@@ -493,7 +493,7 @@ func TestResolveInboundConflict_SettlesTheConflictNamed(t *testing.T) {
 		Before:  before,
 		After:   settled,
 	}
-	tool := newResolveInboundConflictTool(agenttoolstest.FakeConflictDesk{f})
+	tool := newResolveInboundConflictTool(agenttoolstest.FakeConflictDesk{FakeTriage: f})
 	params := agenttoolstest.DeskParams(map[string]any{
 		"messageId":  f.Message.ID.String(),
 		"conflictId": "dup:imsga_1",
@@ -528,7 +528,7 @@ func TestReopenInboundConflict_ReopensTheConflictNamed(t *testing.T) {
 		Before:  before,
 		After:   reopened,
 	}
-	tool := newReopenInboundConflictTool(f, agenttoolstest.FakeConflictDesk{f})
+	tool := newReopenInboundConflictTool(f, agenttoolstest.FakeConflictDesk{FakeTriage: f})
 	params := agenttoolstest.DeskParams(map[string]any{
 		"messageId":  f.Message.ID.String(),
 		"conflictId": "load:0",
