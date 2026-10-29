@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -62,7 +62,7 @@ type Params struct {
 	TrailerRepo         trailerports.TrailerRepository
 	TractorRepo         tractorports.TractorRepository `optional:"true"`
 	LocationRepo        locationports.LocationRepository
-	ShipmentValidator   *shipmentservice.Validator
+	ShipmentValidator   *shipmentvalidator.Validator
 	Coordinator         *shipmentstate.Coordinator
 	Commercial          *shipmentcommercial.Calculator
 	EventService        shipmenteventports.ShipmentEventService
@@ -89,7 +89,7 @@ type service struct {
 	trailerRepo         trailerports.TrailerRepository
 	tractorRepo         tractorports.TractorRepository
 	locationRepo        locationports.LocationRepository
-	shipmentValidator   *shipmentservice.Validator
+	shipmentValidator   *shipmentvalidator.Validator
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
 	eventService        shipmenteventports.ShipmentEventService

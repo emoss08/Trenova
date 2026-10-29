@@ -32,12 +32,12 @@ func TestServiceGetUIPolicy_MapsShipmentControl(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:           zap.NewNop(),
 		controlRepo: controlRepo,
-	}
+	})
 
-	policy, err := svc.GetUIPolicy(t.Context(), tenantInfo)
+	policy, err := svc.reader.GetUIPolicy(t.Context(), tenantInfo)
 
 	require.NoError(t, err)
 	require.NotNil(t, policy)

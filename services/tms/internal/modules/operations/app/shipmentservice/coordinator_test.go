@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -38,7 +39,7 @@ func TestStateCoordinator_PrepareForCreate_DerivesStatusesAndTimestamps(t *testi
 	actualDeliveryArrival := int64(190)
 	actualDeliveryDeparture := int64(200)
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.Moves[0].Stops[0].ActualArrival = &actualPickupArrival
 	entity.Moves[0].Stops[0].ActualDeparture = &actualPickupDeparture
 	entity.Moves[0].Stops[1].ActualArrival = &actualDeliveryArrival
@@ -64,7 +65,7 @@ func TestStateCoordinator_PrepareForCreate_PreservesAssignedStatusesWithoutOpera
 ) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.Moves[0].Assignment = &shipment.Assignment{ID: pulid.MustNew("asn_")}
 
 	coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 })
@@ -79,10 +80,10 @@ func TestStateCoordinator_PrepareForCreate_PreservesAssignedStatusesWithoutOpera
 func TestStateCoordinator_PrepareForCreate_DerivesPartiallyAssignedShipment(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.Moves = []*shipment.ShipmentMove{
-		validMove(),
-		validMove(),
+		shipmentservicetest.ValidMove(),
+		shipmentservicetest.ValidMove(),
 	}
 	entity.Moves[0].Assignment = &shipment.Assignment{ID: pulid.MustNew("asn_")}
 
@@ -99,7 +100,7 @@ func TestStateCoordinator_PrepareForCreate_DerivesPartiallyAssignedShipment(t *t
 func TestStateCoordinator_PrepareForCreate_DerivesDelayedShipment(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.Moves[0].Stops[0].ActualArrival = new(int64(150))
 	entity.Moves[0].Stops[0].ScheduledWindowEnd = new(int64(100))
 
@@ -117,7 +118,7 @@ func TestStateCoordinator_PrepareForUpdate_AllowsCompletedStopTimestampCorrectio
 	t.Parallel()
 
 	original := completedShipmentForCoordinator()
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	correctedArrival := int64(130)
 	correctedDeparture := int64(140)
 	entity.Moves[0].Stops[0].ActualArrival = &correctedArrival
@@ -163,7 +164,7 @@ func TestStateCoordinator_PrepareForUpdate_RejectsCompletedStopTimestampRemoval(
 			t.Parallel()
 
 			original := completedShipmentForCoordinator()
-			entity := cloneShipment(original)
+			entity := shipmentservicetest.CloneShipment(original)
 			tt.mutate(entity.Moves[0].Stops[0])
 
 			coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 1000 })
@@ -171,7 +172,7 @@ func TestStateCoordinator_PrepareForUpdate_RejectsCompletedStopTimestampRemoval(
 			multiErr := coordinator.PrepareForUpdateWithDelayThreshold(original, entity, 30)
 
 			require.NotNil(t, multiErr)
-			assertErrorField(t, multiErr, tt.expectedField)
+			shipmentservicetest.AssertErrorField(t, multiErr, tt.expectedField)
 			assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
 			assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
 		})
@@ -182,7 +183,7 @@ func TestStateCoordinator_PrepareForUpdate_RejectsCompletedMoveReopenByOmittedSt
 	t.Parallel()
 
 	original := completedShipmentForCoordinator()
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	entity.Moves[0].Stops = []*shipment.Stop{}
 
 	coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 1000 })
@@ -190,7 +191,7 @@ func TestStateCoordinator_PrepareForUpdate_RejectsCompletedMoveReopenByOmittedSt
 	multiErr := coordinator.PrepareForUpdateWithDelayThreshold(original, entity, 30)
 
 	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "moves[0].status")
+	shipmentservicetest.AssertErrorField(t, multiErr, "moves[0].status")
 	assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
 	assert.Equal(t, shipment.StatusCompleted, entity.Status)
 }
@@ -254,7 +255,7 @@ func TestStateCoordinator_RefreshShipmentState_UsesSequenceOrderForTimestamps(t 
 
 	actualShipDate := int64(120)
 	actualDeliveryDate := int64(400)
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.Moves = []*shipment.ShipmentMove{
 		{
 			Status:   shipment.MoveStatusCompleted,
@@ -292,11 +293,11 @@ func TestStateCoordinator_RefreshShipmentState_UsesSequenceOrderForTimestamps(t 
 func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 	t.Parallel()
 
-	original := validShipmentForValidation()
+	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 1
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.ID = original.ID
 	entity.Version = original.Version
 	entity.Status = shipment.StatusReadyToInvoice
@@ -309,7 +310,7 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 			req *shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
 			assert.True(t, req.ExpandShipmentDetails)
-			return cloneShipment(original), nil
+			return shipmentservicetest.CloneShipment(original), nil
 		}).
 		Once()
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
@@ -323,17 +324,17 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 	userID := pulid.MustNew("usr_")
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
-	}
+	})
 
-	updated, err := svc.Update(
+	updated, err := svc.writer.Update(
 		t.Context(),
 		entity,
 		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
@@ -343,7 +344,7 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "status")
+	shipmentservicetest.AssertErrorField(t, multiErr, "status")
 }
 
 func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
@@ -354,7 +355,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 	actualDeliveryArrival := int64(190)
 	actualDeliveryDeparture := int64(200)
 
-	original := validShipmentForValidation()
+	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 2
 	original.Moves[0].ID = pulid.MustNew("sm_")
@@ -367,7 +368,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 	original.Moves[0].Stops[1].ShipmentMoveID = original.Moves[0].ID
 	original.Moves[0].Stops[1].Version = 1
 
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	entity.Status = shipment.StatusNew
 	entity.Moves[0].Status = shipment.MoveStatusNew
 	entity.Moves[0].Stops[0].Status = shipment.StopStatusNew
@@ -384,7 +385,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return cloneShipment(original), nil
+			return shipmentservicetest.CloneShipment(original), nil
 		}).
 		Once()
 	repo.EXPECT().
@@ -427,11 +428,11 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditService,
 		commercial: newTestCommercialCalculator(
 			t,
@@ -441,10 +442,10 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
-	}
+	})
 
 	userID := pulid.MustNew("usr_")
-	updated, err := svc.Update(
+	updated, err := svc.writer.Update(
 		t.Context(),
 		entity,
 		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
@@ -466,7 +467,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 	tractorID := pulid.MustNew("trc_")
 	assignmentID := pulid.MustNew("asn_")
 
-	original := validShipmentForValidation()
+	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 2
 	original.Moves[0].ID = pulid.MustNew("sm_")
@@ -490,7 +491,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 	}
 	original.Moves[0].Status = shipment.MoveStatusAssigned
 
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	entity.Moves[0].Assignment = nil
 	entity.Moves[0].Stops[0].ActualArrival = &actualPickupArrival
 	entity.Moves[0].Stops[0].ActualDeparture = &actualPickupDeparture
@@ -500,7 +501,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
-		Return(cloneShipment(original), nil).
+		Return(shipmentservicetest.CloneShipment(original), nil).
 		Once()
 	repo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
@@ -559,12 +560,12 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:              zap.NewNop(),
 		repo:           repo,
 		controlRepo:    controlRepo,
 		continuityRepo: continuityRepo,
-		validator:      newTestValidator(t),
+		validator:      newServiceValidator(t),
 		auditService:   auditService,
 		commercial: newTestCommercialCalculator(
 			t,
@@ -574,10 +575,10 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
-	}
+	})
 
 	userID := pulid.MustNew("usr_")
-	updated, err := svc.Update(
+	updated, err := svc.writer.Update(
 		t.Context(),
 		entity,
 		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
@@ -596,7 +597,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 	trailerID := pulid.MustNew("tr_")
 	tractorID := pulid.MustNew("trc_")
 
-	original := validShipmentForValidation()
+	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 2
 	original.Moves[0].ID = pulid.MustNew("sm_")
@@ -618,14 +619,14 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 	}
 	original.Moves[0].Status = shipment.MoveStatusAssigned
 
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	entity.Moves[0].Stops[0].ActualArrival = &actualPickupArrival
 	entity.Moves[0].Stops[0].ActualDeparture = &actualPickupDeparture
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
-		Return(cloneShipment(original), nil).
+		Return(shipmentservicetest.CloneShipment(original), nil).
 		Once()
 
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
@@ -659,12 +660,12 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:              zap.NewNop(),
 		repo:           repo,
 		assignmentRepo: assignmentRepo,
 		controlRepo:    controlRepo,
-		validator:      newTestValidator(t),
+		validator:      newServiceValidator(t),
 		auditService:   auditportsmock.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
@@ -674,10 +675,10 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
-	}
+	})
 
 	userID := pulid.MustNew("usr_")
-	updated, err := svc.Update(
+	updated, err := svc.writer.Update(
 		t.Context(),
 		entity,
 		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
@@ -699,7 +700,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	tractorID := pulid.MustNew("trc_")
 	workerID := pulid.MustNew("wrk_")
 
-	original := validShipmentForValidation()
+	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 2
 	original.Moves[0].ID = pulid.MustNew("sm_")
@@ -721,14 +722,14 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	}
 	original.Moves[0].Status = shipment.MoveStatusAssigned
 
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	entity.Moves[0].Assignment = nil
 	entity.Moves[0].Stops[0].ActualArrival = &actualPickupArrival
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
-		Return(cloneShipment(original), nil).
+		Return(shipmentservicetest.CloneShipment(original), nil).
 		Once()
 
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
@@ -791,11 +792,11 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidatorWithAssignmentRepo(t, assignmentRepo),
+		validator:    newServiceValidatorWithAssignmentRepo(t, assignmentRepo),
 		auditService: auditportsmock.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
@@ -805,10 +806,10 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
-	}
+	})
 
 	userID := pulid.MustNew("usr_")
-	updated, err := svc.Update(
+	updated, err := svc.writer.Update(
 		t.Context(),
 		entity,
 		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
@@ -818,7 +819,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "moves[0].stops[0].actualArrival")
+	shipmentservicetest.AssertErrorField(t, multiErr, "moves[0].stops[0].actualArrival")
 	require.Len(t, multiErr.Errors, 1)
 	assert.Contains(t, multiErr.Errors[0].Error(), "tractor and primary worker")
 }
@@ -830,10 +831,13 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 	actualPickupDeparture := int64(120)
 	trailerID := pulid.MustNew("tr_")
 
-	original := validShipmentForValidation()
+	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 2
-	original.Moves = []*shipment.ShipmentMove{validMove(), validMove()}
+	original.Moves = []*shipment.ShipmentMove{
+		shipmentservicetest.ValidMove(),
+		shipmentservicetest.ValidMove(),
+	}
 	for idx, move := range original.Moves {
 		move.ID = pulid.MustNew("sm_")
 		move.ShipmentID = original.ID
@@ -857,7 +861,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		move.Status = shipment.MoveStatusAssigned
 	}
 
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	for _, move := range entity.Moves {
 		move.Assignment = nil
 		move.Stops[0].ActualArrival = &actualPickupArrival
@@ -867,7 +871,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
-		Return(cloneShipment(original), nil).
+		Return(shipmentservicetest.CloneShipment(original), nil).
 		Once()
 
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
@@ -908,12 +912,12 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		Return(nil, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:              zap.NewNop(),
 		repo:           repo,
 		assignmentRepo: assignmentRepo,
 		controlRepo:    controlRepo,
-		validator:      newTestValidator(t),
+		validator:      newServiceValidator(t),
 		auditService:   auditportsmock.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
@@ -923,10 +927,10 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
-	}
+	})
 
 	userID := pulid.MustNew("usr_")
-	updated, err := svc.Update(
+	updated, err := svc.writer.Update(
 		t.Context(),
 		entity,
 		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
@@ -941,7 +945,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 	t.Parallel()
 
-	original := validShipmentForValidation()
+	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 1
 	original.Moves[0].ID = pulid.MustNew("sm_")
@@ -954,7 +958,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 	original.Moves[0].Status = shipment.MoveStatusAssigned
 	original.Status = shipment.StatusAssigned
 
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	entity.Status = shipment.StatusNew
 	entity.Moves[0].Status = shipment.MoveStatusNew
 	entity.Moves[0].Assignment = nil
@@ -967,7 +971,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return cloneShipment(original), nil
+			return shipmentservicetest.CloneShipment(original), nil
 		}).
 		Once()
 	repo.EXPECT().
@@ -1006,11 +1010,11 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditService,
 		commercial: newTestCommercialCalculator(
 			t,
@@ -1020,10 +1024,10 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
-	}
+	})
 
 	userID := pulid.MustNew("usr_")
-	updated, err := svc.Update(
+	updated, err := svc.writer.Update(
 		t.Context(),
 		entity,
 		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
@@ -1037,7 +1041,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 	t.Parallel()
 
-	original := validShipmentForValidation()
+	original := shipmentservicetest.ValidShipment()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 1
 	original.Status = shipment.StatusCompleted
@@ -1045,7 +1049,7 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 	original.Moves[0].Stops[0].Status = shipment.StopStatusCompleted
 	original.Moves[0].Stops[1].Status = shipment.StopStatusCompleted
 
-	entity := cloneShipment(original)
+	entity := shipmentservicetest.CloneShipment(original)
 	entity.Status = shipment.StatusInvoiced
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
@@ -1055,7 +1059,7 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return cloneShipment(original), nil
+			return shipmentservicetest.CloneShipment(original), nil
 		}).
 		Once()
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
@@ -1068,17 +1072,17 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 		}).
 		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 	userID := pulid.MustNew("usr_")
-	updated, err := svc.Update(
+	updated, err := svc.writer.Update(
 		t.Context(),
 		entity,
 		internaltestutil.NewSessionActor(userID, entity.OrganizationID, entity.BusinessUnitID),
@@ -1088,15 +1092,11 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "status")
-}
-
-func cloneShipment(source *shipment.Shipment) *shipment.Shipment {
-	return source.CloneMoveGraph()
+	shipmentservicetest.AssertErrorField(t, multiErr, "status")
 }
 
 func completedShipmentForCoordinator() *shipment.Shipment {
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
 	entity.Status = shipment.StatusCompleted
@@ -1124,7 +1124,7 @@ func completedShipmentForCoordinator() *shipment.Shipment {
 }
 
 func shipmentWithOverdueStopForRefresh(status shipment.Status) *shipment.Shipment {
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.Status = status
 	entity.Moves[0].Status = shipment.MoveStatusInTransit
 	entity.Moves[0].Stops[0].Status = shipment.StopStatusInTransit
@@ -1134,7 +1134,7 @@ func shipmentWithOverdueStopForRefresh(status shipment.Status) *shipment.Shipmen
 		return entity
 	}
 
-	completedMove := validMove()
+	completedMove := shipmentservicetest.ValidMove()
 	completedMove.Status = shipment.MoveStatusCompleted
 	completedMove.Sequence = 0
 	for _, stop := range completedMove.Stops {
@@ -1155,7 +1155,7 @@ func completedStopForCoordinator(
 	actualArrival int64,
 	actualDeparture int64,
 ) *shipment.Stop {
-	stop := makeStopForValidation(stopType, sequence, 1, 2)
+	stop := shipmentservicetest.MakeStop(stopType, sequence, 1, 2)
 	stop.Status = shipment.StopStatusCompleted
 	stop.ActualArrival = &actualArrival
 	stop.ActualDeparture = &actualDeparture

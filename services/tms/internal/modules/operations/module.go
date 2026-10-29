@@ -70,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentratingreviewservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentsuggestionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
@@ -173,7 +174,7 @@ func SharedOptions() fx.Option {
 			detentionrepository.NewNoticeRepository,
 			detentionrepository.NewAnalyticsRepository,
 			orderservice.NewValidator,
-			shipmentservice.NewValidator,
+			shipmentvalidator.New,
 			recurringshipmentservice.NewValidator,
 			dispatchcontrolservice.NewValidator,
 			shipmentstate.NewCoordinator,

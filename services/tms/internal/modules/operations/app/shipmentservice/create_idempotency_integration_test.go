@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
@@ -87,8 +88,8 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 		Status:            shipment.StatusNew,
 	})
 	require.Error(t, err, "the unique index holds when the lookup is raced")
-	assert.True(t, isIdempotencyKeyConflict(err))
-	assert.False(t, isIdempotencyKeyConflict(errors.New("unrelated")))
+	assert.True(t, shipmentwrite.IsIdempotencyKeyConflict(err))
+	assert.False(t, shipmentwrite.IsIdempotencyKeyConflict(errors.New("unrelated")))
 
 	err = shipmentdb.Shipments.Create(ctx, db, &shipment.Shipment{
 		ID:                pulid.MustNew("shp_"),

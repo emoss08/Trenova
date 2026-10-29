@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -118,22 +119,22 @@ func totalsService(
 ) *service {
 	t.Helper()
 
-	return &service{
+	return assembled(&service{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo:  expectShipmentControl(t, entity),
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
 		commercial:   calculator,
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 }
 
 func TestServiceCalculateTotals_RatesThroughTheTariffAndAddsCharges(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.TariffInputs = perMileRate(t, "$2.50/mi")
 	entity.Moves[0].Distance = new(float64(100))
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{
@@ -147,7 +148,7 @@ func TestServiceCalculateTotals_RatesThroughTheTariffAndAddsCharges(t *testing.T
 
 	svc := totalsService(t, entity, tariffCalculator(t, totalsTemplate(perMileSource)))
 
-	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
+	resp, err := svc.reader.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -164,7 +165,7 @@ func TestServiceCalculateTotals_RatesThroughTheTariffAndAddsCharges(t *testing.T
 func TestServiceCalculateTotals_AShipmentWithNoTariffIsRatedByHand(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.FormulaTemplateID = pulid.Nil
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(500))
 
@@ -174,7 +175,7 @@ func TestServiceCalculateTotals_AShipmentWithNoTariffIsRatedByHand(t *testing.T)
 		accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	))
 
-	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
+	resp, err := svc.reader.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.NoError(t, err)
 	assert.True(t, decimal.NewFromInt(500).Equal(resp.FreightChargeAmount))
@@ -184,29 +185,29 @@ func TestServiceCalculateTotals_AShipmentWithNoTariffIsRatedByHand(t *testing.T)
 func TestServiceCalculateTotals_RejectsNilShipment(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
 		commercial:   tariffCalculator(t, totalsTemplate(perMileSource)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	resp, err := svc.CalculateTotals(t.Context(), nil, pulid.MustNew("usr_"))
+	resp, err := svc.reader.CalculateTotals(t.Context(), nil, pulid.MustNew("usr_"))
 
 	require.Nil(t, resp)
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "shipment")
+	shipmentservicetest.AssertErrorField(t, multiErr, "shipment")
 }
 
 func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.TariffInputs = perMileRate(t, "$3/mi")
 	entity.Moves[0].Distance = new(float64(10))
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{
@@ -226,7 +227,7 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 
 	svc := totalsService(t, entity, tariffCalculator(t, totalsTemplate(perMileSource)))
 
-	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
+	resp, err := svc.reader.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -238,11 +239,11 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 func TestServiceCalculateTotals_ReportsTheTariffsRefusal(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 
 	svc := totalsService(t, entity, tariffCalculator(t, totalsTemplate(refusingSource)))
 
-	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
+	resp, err := svc.reader.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.Nil(t, resp)
 	require.ErrorContains(t, err, "Only hazmat loads are rated here")
@@ -251,7 +252,7 @@ func TestServiceCalculateTotals_ReportsTheTariffsRefusal(t *testing.T) {
 func TestServiceCalculateTotals_RatesCommodityRollupsThroughTheTariff(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.Weight = nil
 	entity.Pieces = nil
 	entity.Commodities = []*shipment.ShipmentCommodity{
@@ -280,7 +281,7 @@ func TestServiceCalculateTotals_RatesCommodityRollupsThroughTheTariff(t *testing
 
 	svc := totalsService(t, entity, calculator)
 
-	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
+	resp, err := svc.reader.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -292,7 +293,7 @@ func TestServiceCalculateTotals_RatesCommodityRollupsThroughTheTariff(t *testing
 func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeRating(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.Weight = nil
 	entity.Pieces = nil
 	firstCommodityID := pulid.MustNew("com_")
@@ -338,8 +339,9 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeRating(t *testing.
 
 	svc := totalsService(t, entity, calculator)
 	svc.commodityRepo = commodityRepo
+	svc.assemble()
 
-	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
+	resp, err := svc.reader.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)

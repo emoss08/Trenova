@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -53,7 +53,7 @@ type Params struct {
 	AuditService              auditports.AuditService
 	Realtime                  realtimeports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
-	ShipmentValidator         *shipmentservice.Validator
+	ShipmentValidator         *shipmentvalidator.Validator
 	Coordinator               *shipmentstate.Coordinator
 	Commercial                *shipmentcommercial.Calculator
 }
@@ -73,7 +73,7 @@ type Service struct {
 	auditService              auditports.AuditService
 	realtime                  realtimeports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
-	shipmentValidator         *shipmentservice.Validator
+	shipmentValidator         *shipmentvalidator.Validator
 	coordinator               *shipmentstate.Coordinator
 	commercial                *shipmentcommercial.Calculator
 }

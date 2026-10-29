@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -45,15 +46,18 @@ func TestServiceGetDelayedShipments_UsesThreshold(t *testing.T) {
 		Return([]*shipment.Shipment{{ID: pulid.MustNew("shp_")}}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
-	}
-
-	entities, err := svc.GetDelayedShipments(t.Context(), &shipmentports.GetDelayedShipmentsRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	})
+
+	entities, err := svc.lifecycle.GetDelayedShipments(
+		t.Context(),
+		&shipmentports.GetDelayedShipmentsRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entities, 1)
@@ -73,14 +77,14 @@ func TestServiceDelayShipments_SkipsWhenAutoDelayDisabled(t *testing.T) {
 		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipments: false}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:           zap.NewNop(),
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
 		invalidator: newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
-	}
+	})
 
-	entities, err := svc.DelayShipments(t.Context(), &shipmentports.DelayShipmentsRequest{
+	entities, err := svc.lifecycle.DelayShipments(t.Context(), &shipmentports.DelayShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	}, &permissionports.RequestActor{})
 
@@ -131,14 +135,14 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
 		invalidator: newTestInvalidator(realtime),
-	}
+	})
 
-	entities, err := svc.DelayShipments(t.Context(), &shipmentports.DelayShipmentsRequest{
+	entities, err := svc.lifecycle.DelayShipments(t.Context(), &shipmentports.DelayShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	}, &permissionports.RequestActor{
 		PrincipalType: permissionports.PrincipalTypeUser,
@@ -153,19 +157,27 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 func TestDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, delayThresholdMinutes(nil))
 	assert.Equal(
 		t,
 		shipmentstate.DisabledDelayThresholdMinutes,
-		delayThresholdMinutes(&shipmentcontrol.ShipmentControl{
+		shipmenteffects.DelayThresholdMinutes(nil),
+	)
+	assert.Equal(
+		t,
+		shipmentstate.DisabledDelayThresholdMinutes,
+		shipmenteffects.DelayThresholdMinutes(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          false,
 			AutoDelayShipmentsThreshold: new(int16(15)),
 		}),
 	)
-	assert.Equal(t, int16(15), delayThresholdMinutes(&shipmentcontrol.ShipmentControl{
-		AutoDelayShipments:          true,
-		AutoDelayShipmentsThreshold: new(int16(15)),
-	}))
+	assert.Equal(
+		t,
+		int16(15),
+		shipmenteffects.DelayThresholdMinutes(&shipmentcontrol.ShipmentControl{
+			AutoDelayShipments:          true,
+			AutoDelayShipmentsThreshold: new(int16(15)),
+		}),
+	)
 }
 
 //go:fix inline

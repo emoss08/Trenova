@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -34,16 +35,16 @@ func TestServiceCheckForDuplicateBOLs_SkipsLookupWhenDisabled(t *testing.T) {
 		CheckForDuplicateBOLs: false,
 	}, nil).Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	err := svc.CheckForDuplicateBOLs(t.Context(), &shipmentports.DuplicateBOLCheckRequest{
+	err := svc.reader.CheckForDuplicateBOLs(t.Context(), &shipmentports.DuplicateBOLCheckRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -84,16 +85,16 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	err := svc.CheckForDuplicateBOLs(t.Context(), &shipmentports.DuplicateBOLCheckRequest{
+	err := svc.reader.CheckForDuplicateBOLs(t.Context(), &shipmentports.DuplicateBOLCheckRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -105,7 +106,7 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "bol")
+	shipmentservicetest.AssertErrorField(t, multiErr, "bol")
 	assert.Contains(t, multiErr.Error(), "PRO-101")
 }
 
@@ -118,16 +119,16 @@ func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	err := svc.checkDuplicateBOLsWithControl(
+	err := svc.effects.CheckDuplicateBOLsWithControl(
 		t.Context(),
 		&shipmentcontrol.ShipmentControl{CheckForDuplicateBOLs: true},
 		&shipmentports.DuplicateBOLCheckRequest{
@@ -147,15 +148,15 @@ func TestServiceCheckDuplicateBOLsWithControl_SkipsABlankBOL(t *testing.T) {
 
 	for _, bol := range []string{"", "   "} {
 		repo := shipmentportsmock.NewMockShipmentRepository(t)
-		svc := &service{
+		svc := assembled(&service{
 			l:            zap.NewNop(),
 			repo:         repo,
-			validator:    newTestValidator(t),
+			validator:    newServiceValidator(t),
 			eventService: noopShipmentEventService{},
 			coordinator:  newStateCoordinator(),
-		}
+		})
 
-		err := svc.checkDuplicateBOLsWithControl(
+		err := svc.effects.CheckDuplicateBOLsWithControl(
 			t.Context(),
 			&shipmentcontrol.ShipmentControl{CheckForDuplicateBOLs: true},
 			&shipmentports.DuplicateBOLCheckRequest{

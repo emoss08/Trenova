@@ -19751,3 +19751,6 @@ github.com/emoss08/trenova/internal/modules/agent/app/aiauditservice.VerifierPar
 github.com/emoss08/trenova/internal/modules/agent/app/aiauditservice.NewRetention	github.com/emoss08/trenova/internal/modules/agent/app/aiauditretention.New
 github.com/emoss08/trenova/internal/modules/agent/app/aiauditservice.NewProjector	github.com/emoss08/trenova/internal/modules/agent/app/aiauditprojector.New
 github.com/emoss08/trenova/internal/modules/agent/app/aiauditservice.ProjectorParams	github.com/emoss08/trenova/internal/modules/agent/app/aiauditprojector.Params
+github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice.Validator	github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator.Validator
+github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice.NewValidator	github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator.New
+github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice.ValidatorParams	github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator.Params

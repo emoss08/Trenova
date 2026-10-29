@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -88,10 +89,10 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 		Copies: []*shipment.Shipment{{FormulaTemplateID: pulid.MustNew("fmt_")}},
 	}, nil)
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: audit,
 		workflowStarter: &fakeShipmentTemporalClient{
 			startWorkflowFunc: func(
@@ -119,9 +120,9 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 		},
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	resp, err := svc.Duplicate(t.Context(), req)
+	resp, err := svc.lifecycle.Duplicate(t.Context(), req)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -167,11 +168,11 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 			repo := shipmentportsmock.NewMockShipmentRepository(t)
 			repo.EXPECT().PlanDuplicate(mock.Anything, req).Return(plan, nil)
 			started := false
-			svc := &service{
+			svc := assembled(&service{
 				l:            zap.NewNop(),
 				repo:         repo,
-				billingRepo:  billingControlWith(t, tt.disposition),
-				validator:    newTestValidator(t),
+				billingRepo:  shipmentservicetest.BillingControlWith(t, tt.disposition),
+				validator:    newServiceValidator(t),
 				auditService: auditportsmock.NewMockAuditService(t),
 				workflowStarter: &fakeShipmentTemporalClient{
 					startWorkflowFunc: func(
@@ -186,10 +187,10 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 				},
 				eventService: noopShipmentEventService{},
 				coordinator:  newStateCoordinator(),
-			}
+			})
 
-			_, err := svc.Duplicate(t.Context(), req)
-			preview, previewErr := svc.PreviewDuplicate(t.Context(), req)
+			_, err := svc.lifecycle.Duplicate(t.Context(), req)
+			preview, previewErr := svc.lifecycle.PreviewDuplicate(t.Context(), req)
 
 			if !tt.refused {
 				require.NoError(t, err)
@@ -212,38 +213,38 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 func TestServiceDuplicate_RejectsInvalidRequest(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	resp, err := svc.Duplicate(t.Context(), &shipmentports.BulkDuplicateShipmentRequest{})
+	resp, err := svc.lifecycle.Duplicate(t.Context(), &shipmentports.BulkDuplicateShipmentRequest{})
 	require.Nil(t, resp)
 	require.Error(t, err)
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "shipmentId")
+	shipmentservicetest.AssertErrorField(t, multiErr, "shipmentId")
 }
 
 func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:               zap.NewNop(),
 		repo:            shipmentportsmock.NewMockShipmentRepository(t),
-		validator:       newTestValidator(t),
+		validator:       newServiceValidator(t),
 		auditService:    auditportsmock.NewMockAuditService(t),
 		eventService:    noopShipmentEventService{},
 		coordinator:     newStateCoordinator(),
 		workflowStarter: disabledWorkflowStarter{},
-	}
+	})
 
-	resp, err := svc.Duplicate(t.Context(), &shipmentports.BulkDuplicateShipmentRequest{
+	resp, err := svc.lifecycle.Duplicate(t.Context(), &shipmentports.BulkDuplicateShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),

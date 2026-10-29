@@ -626,7 +626,18 @@ modules:
       - shipmentmoveservice
       - shipmentquickfilterservice
       - shipmentratingreviewservice
+      - shipmentautorate
+      - shipmentbillingreadiness
+      - shipmentbillingtransfer
+      - shipmenteffects
+      - shipmentlifecycle
+      - shipmentloading
+      - shipmentread
       - shipmentservice
+      - shipmentservicetest
+      - shipmenttimeline
+      - shipmentvalidator
+      - shipmentwrite
       - shipmentsuggestionservice
       - shipmenttracking
       - shipmentwatchlistservice

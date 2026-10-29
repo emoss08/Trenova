@@ -5420,7 +5420,7 @@ findings:
       The query log shows the duplicate check as `s.bol IS NULL AND s.status <> 'Canceled'`
       (13 times in the run). The colliding shipment's bol is NULL.
     cause: >
-      checkDuplicateBOLsWithControl (shipmentservice/shipment_duplicate_bol.go) runs whenever
+      CheckDuplicateBOLsWithControl (shipmenteffects/effects.go) runs whenever
       ShipmentControl.CheckForDuplicateBOLs is on, whatever the BOL. CheckForDuplicateBOLs in
       shipmentrepository filters with sp.BOL.Eq(req.BOL); keel writes an empty string to the
       nullable column as NULL and compiles Eq("") to IS NULL, so "no BOL" matches "no BOL".
@@ -5429,7 +5429,7 @@ findings:
       a repository test that two BOL-less shipments do not collide. Create, update and the
       CheckForDuplicateBOLs entry point all reach the same helper.
     files:
-      - services/tms/internal/modules/operations/app/shipmentservice/shipment_duplicate_bol.go
+      - services/tms/internal/modules/operations/app/shipmenteffects/effects.go
       - services/tms/internal/modules/operations/adapters/postgres/shipmentrepository/shipment.go
 
   - id: DB-233

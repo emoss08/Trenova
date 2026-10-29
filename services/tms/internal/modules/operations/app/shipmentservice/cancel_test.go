@@ -92,19 +92,19 @@ func TestServiceCancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:              zap.NewNop(),
 		db:             dbtest.NopConnection{},
 		repo:           repo,
 		continuityRepo: continuityRepo,
-		validator:      newTestValidator(t),
+		validator:      newServiceValidator(t),
 		auditService:   audit,
 		invalidator:    newTestInvalidator(realtime),
 		eventService:   noopShipmentEventService{},
 		coordinator:    newStateCoordinator(),
-	}
+	})
 
-	entity, err := svc.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
+	entity, err := svc.lifecycle.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -132,17 +132,17 @@ func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 		Return(&shipment.Shipment{Status: shipment.StatusCanceled}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
 		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	entity, err := svc.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
+	entity, err := svc.lifecycle.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -210,18 +210,18 @@ func TestServiceUncancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: audit,
 		invalidator:  newTestInvalidator(realtime),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	entity, err := svc.Uncancel(t.Context(), &shipmentports.UncancelShipmentRequest{
+	entity, err := svc.lifecycle.Uncancel(t.Context(), &shipmentports.UncancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -248,17 +248,17 @@ func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
 		Return(&shipment.Shipment{Status: shipment.StatusAssigned}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
 		invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
-	entity, err := svc.Uncancel(t.Context(), &shipmentports.UncancelShipmentRequest{
+	entity, err := svc.lifecycle.Uncancel(t.Context(), &shipmentports.UncancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -301,18 +301,18 @@ func TestServiceCancel_RefusesLockedShipments(t *testing.T) {
 			repo := shipmentportsmock.NewMockShipmentRepository(t)
 			repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(tt.original, nil).Once()
 
-			svc := &service{
+			svc := assembled(&service{
 				l:            zap.NewNop(),
 				db:           dbtest.NopConnection{},
 				repo:         repo,
-				validator:    newTestValidator(t),
+				validator:    newServiceValidator(t),
 				auditService: auditportsmock.NewMockAuditService(t),
 				invalidator:  newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
 				eventService: noopShipmentEventService{},
 				coordinator:  newStateCoordinator(),
-			}
+			})
 
-			entity, err := svc.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
+			entity, err := svc.lifecycle.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: pulid.MustNew("org_"),
 					BuID:  pulid.MustNew("bu_"),
@@ -381,20 +381,20 @@ func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 
 	req := &shipmentports.UncancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		ShipmentID: original.ID,
 	}
-	before, after, err := svc.planUncancel(t.Context(), req)
+	before, after, err := svc.lifecycle.PlanUncancel(t.Context(), req)
 	require.NoError(t, err)
 
 	assert.Same(t, original, before)

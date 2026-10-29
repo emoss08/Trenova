@@ -3,9 +3,8 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,12 +40,12 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:    zap.NewNop(),
 		repo: repo,
-	}
+	})
 
-	result, err := svc.GetPreviousRates(t.Context(), &shipmentports.GetPreviousRatesRequest{
+	result, err := svc.reader.GetPreviousRates(t.Context(), &shipmentports.GetPreviousRatesRequest{
 		TenantInfo:            pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		OriginLocationID:      originID,
 		DestinationLocationID: destinationID,
@@ -62,12 +61,15 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 func TestServiceGetPreviousRates_ValidatesRequest(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:    zap.NewNop(),
 		repo: shipmentportsmock.NewMockShipmentRepository(t),
-	}
+	})
 
-	result, err := svc.GetPreviousRates(t.Context(), &shipmentports.GetPreviousRatesRequest{})
+	result, err := svc.reader.GetPreviousRates(
+		t.Context(),
+		&shipmentports.GetPreviousRatesRequest{},
+	)
 
 	require.Nil(t, result)
 	require.Error(t, err)

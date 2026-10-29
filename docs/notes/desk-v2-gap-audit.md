@@ -463,7 +463,7 @@ Prototype: `design/billitem.jsx` and `billitem.css`. Ours: `desk-billing-item.ts
 
 2. **Duplicate detection.** None exists. Migration `20260407160506_remove_billing_queue_item_unique_index` dropped `idx_billing_queue_items_shipment_bill_type`. The only remaining guard is `uk_invoices_billing_queue_item`. **Add:** a repository method `FindPotentialDuplicates(shipmentID, billTo, billType, amount)` over non-canceled items and non-voided invoices, matching on shipment, `ExternalReference` or `order.PONumber`. The outcome enum `ExceptionDuplicateCharge` already exists.
 
-3. **Signed POD.** `document.Document` has `Status` and a review approve/reject flow. There is no signature field on `document` or `documenttype` (`documenttype` has only `Code` and `DocumentClassification`). `GetBillingReadiness` (shipmentservice/billing_readiness.go) checks only that each required type is present. **Add:**
+3. **Signed POD.** `document.Document` has `Status` and a review approve/reject flow. There is no signature field on `document` or `documenttype` (`documenttype` has only `Code` and `DocumentClassification`). `GetBillingReadiness` (shipmentbillingreadiness/billing_readiness.go) checks only that each required type is present. **Add:**
    - `documents.signature_status` enum (`Unknown|Signed|Unsigned`), plus `signed_at`.
    - `documenttype.requires_signature`.
    - Populate them from `documentintelligenceservice` extraction.

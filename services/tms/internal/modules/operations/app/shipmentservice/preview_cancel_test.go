@@ -38,14 +38,14 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 			copied := *original
 			return &copied, nil
 		})
-	svc := &service{
+	svc := assembled(&service{
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,
-		validator:    newTestValidator(t),
+		validator:    newServiceValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
-	}
+	})
 	request := func() *shipmentports.CancelShipmentRequest {
 		return &shipmentports.CancelShipmentRequest{
 			TenantInfo:   pagination.TenantInfo{OrgID: orgID, BuID: buID},
@@ -62,7 +62,7 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 	}
 
 	req := request()
-	preview, err := svc.PreviewCancel(t.Context(), req, actor)
+	preview, err := svc.lifecycle.PreviewCancel(t.Context(), req, actor)
 	require.NoError(t, err)
 	assert.True(t, req.CanceledByID.IsNil(), "a preview must not stamp the caller's request")
 
@@ -86,8 +86,9 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 		Return(nil).Maybe()
 	svc.auditService = audit
 	svc.invalidator = newTestInvalidator(realtime)
+	svc.assemble()
 
-	saved, err := svc.Cancel(t.Context(), request(), actor)
+	saved, err := svc.lifecycle.Cancel(t.Context(), request(), actor)
 	require.NoError(t, err)
 	require.NotNil(t, cancelled)
 

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -48,7 +48,7 @@ type Params struct {
 	HoldRepo          shipmentholdports.ShipmentHoldRepository
 	ControlRepo       tenantports.ShipmentControlRepository
 	RateConRepo       rateconfirmationports.RateConfirmationRepository
-	ShipmentValidator *shipmentservice.Validator
+	ShipmentValidator *shipmentvalidator.Validator
 	Coordinator       *shipmentstate.Coordinator
 	EventService      shipmenteventports.ShipmentEventService
 	AuditService      auditports.AuditService
@@ -72,7 +72,7 @@ type Service struct {
 	holdRepo          shipmentholdports.ShipmentHoldRepository
 	controlRepo       tenantports.ShipmentControlRepository
 	rateConRepo       rateconfirmationports.RateConfirmationRepository
-	shipmentValidator *shipmentservice.Validator
+	shipmentValidator *shipmentvalidator.Validator
 	coordinator       *shipmentstate.Coordinator
 	eventService      shipmenteventports.ShipmentEventService
 	auditService      auditports.AuditService

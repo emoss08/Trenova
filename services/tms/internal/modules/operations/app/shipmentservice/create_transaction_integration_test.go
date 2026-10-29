@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -134,8 +135,8 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 		Status:            shipment.StatusNew,
 	})
 	require.Error(t, err, "the unique index holds even when the check is raced")
-	assert.Nil(t, externalReferenceConflict(errors.New("unrelated"), repeat))
-	require.Error(t, externalReferenceConflict(err, repeat))
+	assert.Nil(t, shipmentwrite.ExternalReferenceConflict(errors.New("unrelated"), repeat))
+	require.Error(t, shipmentwrite.ExternalReferenceConflict(err, repeat))
 
 	_, err = keel.Exec(ctx, db,
 		"UPDATE shipments SET status = $1 WHERE id = $2",

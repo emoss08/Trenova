@@ -32,6 +32,13 @@ func newTestCommercialCalculator(
 	})
 }
 
+// assembled wires the use-case services from the fields a test set, as New
+// does from its params.
+func assembled(s *service) *service {
+	s.assemble()
+	return s
+}
+
 func newTestInvalidator(
 	realtime realtimeports.RealtimeService,
 ) shipmentinvalidationports.ShipmentInvalidator {

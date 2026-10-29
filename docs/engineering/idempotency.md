@@ -27,7 +27,7 @@ IdempotencyMiddleware ── Claim(scoped key, fingerprint) ──▶ Redis  ide
 | Store port | `internal/modules/kernel/ports/kernelports/idempotency.go` |
 | Redis store (Lua claim / complete / release) | `internal/infrastructure/redis/idempotencystore/idempotency.go` |
 | Middleware | `internal/api/middleware/idempotency.go`, registered in `Router.protectedGroup` |
-| Shipment create backstop | `shipments.idempotency_key`, `shipmentservice/shipment_idempotency.go` |
+| Shipment create backstop | `shipments.idempotency_key`, `shipmentwrite/shipment_idempotency.go` |
 | Configuration and defaults | `security.idempotency` in `config/config.example.yaml`, `securityconfig.IdempotencyConfig` |
 | Browser | `@trenova/shared/lib/idempotency`, `apps/web/src/hooks/use-idempotency-key.ts` |
 

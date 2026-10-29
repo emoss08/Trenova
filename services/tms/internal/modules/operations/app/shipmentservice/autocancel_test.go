@@ -45,13 +45,13 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 		Return([]*shipment.Shipment{{ID: pulid.MustNew("shp_")}}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
-	}
+	})
 
-	entities, err := svc.GetAutoCancelableShipments(
+	entities, err := svc.lifecycle.GetAutoCancelableShipments(
 		t.Context(),
 		&shipmentports.GetAutoCancelableShipmentsRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
@@ -76,16 +76,20 @@ func TestServiceAutoCancelShipments_SkipsWhenDisabled(t *testing.T) {
 		Return(&shipmentcontrol.ShipmentControl{AutoCancelShipments: false}, nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:           zap.NewNop(),
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
 		invalidator: newTestInvalidator(realtimeportsmock.NewMockRealtimeService(t)),
-	}
+	})
 
-	entities, err := svc.AutoCancelShipments(t.Context(), &shipmentports.AutoCancelShipmentsRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-	}, &permissionports.RequestActor{})
+	entities, err := svc.lifecycle.AutoCancelShipments(
+		t.Context(),
+		&shipmentports.AutoCancelShipmentsRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		},
+		&permissionports.RequestActor{},
+	)
 
 	require.NoError(t, err)
 	assert.Empty(t, entities)
@@ -135,20 +139,24 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := &service{
+	svc := assembled(&service{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
 		invalidator: newTestInvalidator(realtime),
-	}
-
-	entities, err := svc.AutoCancelShipments(t.Context(), &shipmentports.AutoCancelShipmentsRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-	}, &permissionports.RequestActor{
-		PrincipalType: permissionports.PrincipalTypeUser,
-		PrincipalID:   userID,
-		UserID:        userID,
 	})
+
+	entities, err := svc.lifecycle.AutoCancelShipments(
+		t.Context(),
+		&shipmentports.AutoCancelShipmentsRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		},
+		&permissionports.RequestActor{
+			PrincipalType: permissionports.PrincipalTypeUser,
+			PrincipalID:   userID,
+			UserID:        userID,
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entities, 1)

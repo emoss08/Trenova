@@ -114,7 +114,7 @@ func TestPlanBillingTransfers_DecidesEachShipmentInRequestOrder(t *testing.T) {
 		[]*document.Document{f.podFor(clean), f.podFor(completed)},
 	)
 
-	plan, err := f.svc.PlanBillingTransfers(
+	plan, err := f.svc.transfer.PlanBillingTransfers(
 		t.Context(),
 		&shipmentbillingports.PlanBillingTransfersRequest{
 			TenantInfo: f.tenant(),
@@ -179,7 +179,7 @@ func TestPlanBillingTransfers_ReturnsAShipmentToOperationsWhenThePolicySaysSo(t 
 
 	f.expectSources([]*shipment.Shipment{missingPOD}, control, nil)
 
-	plan, err := f.svc.PlanBillingTransfers(
+	plan, err := f.svc.transfer.PlanBillingTransfers(
 		t.Context(),
 		&shipmentbillingports.PlanBillingTransfersRequest{
 			TenantInfo:  f.tenant(),
@@ -211,7 +211,7 @@ func TestPlanBillingTransfers_AgreesWithTheTransfer(t *testing.T) {
 	missingPOD := f.newShipment("PRO-5", shipment.StatusReadyToInvoice)
 	f.expectSources([]*shipment.Shipment{missingPOD}, manualBillingControl(), nil)
 
-	plan, err := f.svc.PlanBillingTransfers(
+	plan, err := f.svc.transfer.PlanBillingTransfers(
 		t.Context(),
 		&shipmentbillingports.PlanBillingTransfersRequest{
 			TenantInfo:  f.tenant(),
@@ -225,7 +225,7 @@ func TestPlanBillingTransfers_AgreesWithTheTransfer(t *testing.T) {
 	transfer.expectShipment(missingPOD)
 	transfer.expectReadiness(missingPOD, f.profile, manualBillingControl(), nil)
 
-	response, err := transfer.svc.BulkTransferToBilling(
+	response, err := transfer.svc.transfer.BulkTransferToBilling(
 		t.Context(),
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs: []pulid.ID{missingPOD.ID},
@@ -243,7 +243,7 @@ func TestPlanBillingTransfers_RefusesAnEmptyOrOversizedRequest(t *testing.T) {
 
 	f := newPlanFixture(t)
 
-	_, err := f.svc.PlanBillingTransfers(
+	_, err := f.svc.transfer.PlanBillingTransfers(
 		t.Context(),
 		&shipmentbillingports.PlanBillingTransfersRequest{
 			TenantInfo: f.tenant(),
@@ -255,7 +255,7 @@ func TestPlanBillingTransfers_RefusesAnEmptyOrOversizedRequest(t *testing.T) {
 	for i := range ids {
 		ids[i] = pulid.MustNew("shp_")
 	}
-	_, err = f.svc.PlanBillingTransfers(
+	_, err = f.svc.transfer.PlanBillingTransfers(
 		t.Context(),
 		&shipmentbillingports.PlanBillingTransfersRequest{
 			TenantInfo:  f.tenant(),
@@ -292,7 +292,7 @@ func TestListBillingTransferCandidates_PlansOnlyThePage(t *testing.T) {
 		[]*document.Document{f.podFor(second), f.podFor(third)},
 	)
 
-	page, err := f.svc.ListBillingTransferCandidates(
+	page, err := f.svc.transfer.ListBillingTransferCandidates(
 		t.Context(),
 		&shipmentbillingports.ListBillingTransferCandidatesRequest{
 			Filter: &pagination.QueryOptions{
@@ -327,7 +327,7 @@ func TestListBillingTransferCandidates_HasNoMoreAtTheCandidateCap(t *testing.T) 
 		}, nil).
 		Once()
 
-	page, err := f.svc.ListBillingTransferCandidates(
+	page, err := f.svc.transfer.ListBillingTransferCandidates(
 		t.Context(),
 		&shipmentbillingports.ListBillingTransferCandidatesRequest{
 			Filter: &pagination.QueryOptions{
@@ -351,7 +351,7 @@ func TestListBillingTransferCandidates_RefusesAStatusTheDialogDoesNotOffer(t *te
 	f := newPlanFixture(t)
 	f.repo = shipmentportsmock.NewMockShipmentRepository(t)
 
-	_, err := f.svc.ListBillingTransferCandidates(
+	_, err := f.svc.transfer.ListBillingTransferCandidates(
 		t.Context(),
 		&shipmentbillingports.ListBillingTransferCandidatesRequest{
 			Filter: &pagination.QueryOptions{TenantInfo: f.tenant()},
@@ -404,7 +404,7 @@ func TestPlanBillingTransfers_NamesTheCurrencyEachShipmentIsBilledIn(t *testing.
 		Return([]*document.Document{f.podFor(clean)}, nil).
 		Once()
 
-	plan, err := f.svc.PlanBillingTransfers(
+	plan, err := f.svc.transfer.PlanBillingTransfers(
 		t.Context(),
 		&shipmentbillingports.PlanBillingTransfersRequest{
 			TenantInfo:  f.tenant(),

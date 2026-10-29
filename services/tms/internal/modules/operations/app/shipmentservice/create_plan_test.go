@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -41,17 +42,17 @@ func previewCreateService(
 	}).Return(control, nil).Once()
 	freight := decimal.NewFromInt(1_250)
 
-	return &service{
+	return assembled(&service{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
-		validator:   newTestValidator(t),
+		validator:   newServiceValidator(t),
 		commercial: newTestCommercialCalculator(t,
 			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		coordinator: newStateCoordinator(),
-	}, repo
+	}), repo
 }
 
 func previewActor(entity *shipment.Shipment) *permissionports.RequestActor {
@@ -69,11 +70,11 @@ func previewActor(entity *shipment.Shipment) *permissionports.RequestActor {
 func TestPreviewCreate_PricesAndValidatesWithoutSaving(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.FormulaTemplateID = pulid.MustNew("fmt_")
 	svc, _ := previewCreateService(t, entity, &shipmentcontrol.ShipmentControl{})
 
-	plan, err := svc.PreviewCreate(t.Context(), entity, previewActor(entity))
+	plan, err := svc.writer.PreviewCreate(t.Context(), entity, previewActor(entity))
 	require.NoError(t, err)
 
 	assert.Same(t, entity, plan.Shipment)
@@ -90,7 +91,7 @@ func TestPreviewCreate_PricesAndValidatesWithoutSaving(t *testing.T) {
 func TestPreviewCreate_RefusesADuplicateBOLTheWayCreateDoes(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.BOL = "BOL-DUP"
 	entity.FormulaTemplateID = pulid.MustNew("fmt_")
 	svc, repo := previewCreateService(t, entity, &shipmentcontrol.ShipmentControl{
@@ -103,20 +104,20 @@ func TestPreviewCreate_RefusesADuplicateBOLTheWayCreateDoes(t *testing.T) {
 		}, nil).
 		Once()
 
-	plan, err := svc.PreviewCreate(t.Context(), entity, previewActor(entity))
+	plan, err := svc.writer.PreviewCreate(t.Context(), entity, previewActor(entity))
 
 	require.Nil(t, plan)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "bol")
+	shipmentservicetest.AssertErrorField(t, multiErr, "bol")
 }
 
 func TestPreviewCreate_RequiresAShipment(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{l: zap.NewNop()}
+	svc := assembled(&service{l: zap.NewNop()})
 
-	_, err := svc.PreviewCreate(t.Context(), nil, nil)
+	_, err := svc.writer.PreviewCreate(t.Context(), nil, nil)
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
@@ -134,46 +135,46 @@ func unpricedCreateService(
 		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 
-	return &service{
+	return assembled(&service{
 		l:           zap.NewNop(),
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
-		validator:   rateCoverageValidator(t, billingControlWith(t, disposition)),
+		validator:   coverageValidator(t, shipmentservicetest.BillingControlWith(t, disposition)),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
 			RateEngine:      ratingtest.NewEngine(t),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		coordinator: newStateCoordinator(),
-	}
+	})
 }
 
 func TestPreviewCreate_RefusesAShipmentNothingPrices(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.FormulaTemplateID = pulid.Nil
 	svc := unpricedCreateService(t, entity, "")
 
-	plan, err := svc.PreviewCreate(t.Context(), entity, previewActor(entity))
+	plan, err := svc.writer.PreviewCreate(t.Context(), entity, previewActor(entity))
 
 	require.Nil(t, plan)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "formulaTemplateId")
+	shipmentservicetest.AssertErrorField(t, multiErr, "formulaTemplateId")
 }
 
 func TestPreviewCreate_ZeroAndFlagNamesTheUnratedShipment(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipmentForValidation()
+	entity := shipmentservicetest.ValidShipment()
 	entity.FormulaTemplateID = pulid.Nil
 	svc := unpricedCreateService(t, entity, billingcontrol.UnratedShipmentDispositionZeroAndFlag)
 
-	plan, err := svc.PreviewCreate(t.Context(), entity, previewActor(entity))
+	plan, err := svc.writer.PreviewCreate(t.Context(), entity, previewActor(entity))
 
 	require.NoError(t, err)
 	require.Len(t, plan.Advisories, 1)
-	assert.Equal(t, rateCoverageRuleKey, plan.Advisories[0].RuleKey)
+	assert.Equal(t, shipment.RateCoverageRuleKey, plan.Advisories[0].RuleKey)
 	assert.Contains(t, plan.Advisories[0].Error(), "priced at zero")
 }

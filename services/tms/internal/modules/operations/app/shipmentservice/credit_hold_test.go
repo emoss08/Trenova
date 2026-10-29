@@ -40,12 +40,15 @@ func TestRefuseCreditHold_RefusesANewShipmentForAHeldPayer(t *testing.T) {
 
 	payerID := pulid.MustNew("cus_")
 	repo := customerportsmock.NewMockCustomerRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
-		return req.ID == payerID && req.IncludeBillingProfile
-	})).Return(heldPayer(payerID, true), nil).Once()
-	svc := &service{customerRepo: repo}
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
+			return req.ID == payerID && req.IncludeBillingProfile
+		})).
+		Return(heldPayer(payerID, true), nil).
+		Once()
+	svc := assembled(&service{customerRepo: repo})
 
-	err := svc.refuseCreditHold(t.Context(), newShipmentFor(payerID), nil)
+	err := svc.effects.RefuseCreditHold(t.Context(), newShipmentFor(payerID), nil)
 
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
@@ -65,11 +68,18 @@ func TestRefuseCreditHold_NamesTheBillToWhenAThirdPartyPays(t *testing.T) {
 	entity := newShipmentFor(pulid.MustNew("cus_"))
 	entity.BillToCustomerID = &billTo
 	repo := customerportsmock.NewMockCustomerRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
-		return req.ID == billTo
-	})).Return(heldPayer(billTo, false), nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
+			return req.ID == billTo
+		})).
+		Return(heldPayer(billTo, false), nil).
+		Once()
 
-	err := (&service{customerRepo: repo}).refuseCreditHold(t.Context(), entity, nil)
+	err := (assembled(&service{customerRepo: repo})).effects.RefuseCreditHold(
+		t.Context(),
+		entity,
+		nil,
+	)
 
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
@@ -82,7 +92,7 @@ func TestRefuseCreditHold_LetsAnExistingShipmentForTheSamePayerBeWorked(t *testi
 	payerID := pulid.MustNew("cus_")
 	repo := customerportsmock.NewMockCustomerRepository(t)
 
-	err := (&service{customerRepo: repo}).refuseCreditHold(
+	err := (assembled(&service{customerRepo: repo})).effects.RefuseCreditHold(
 		t.Context(), newShipmentFor(payerID), newShipmentFor(payerID),
 	)
 
@@ -99,7 +109,7 @@ func TestRefuseCreditHold_AllowsAPayerInGoodStanding(t *testing.T) {
 	repo := customerportsmock.NewMockCustomerRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payer, nil).Once()
 
-	require.NoError(t, (&service{customerRepo: repo}).refuseCreditHold(
+	require.NoError(t, (assembled(&service{customerRepo: repo})).effects.RefuseCreditHold(
 		t.Context(), newShipmentFor(payerID), nil,
 	))
 }
