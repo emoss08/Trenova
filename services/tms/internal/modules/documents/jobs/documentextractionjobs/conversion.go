@@ -1019,34 +1019,40 @@ func (a *Activities) AnalyzeConvertedDocumentActivity(
 	if content.LastExtractedAt != nil {
 		now = *content.LastExtractedAt
 	}
-	if err = a.persistIndexedContentAndAssociate(ctx, &documentanalysis.PersistIndexedContentPayload{
-		Document:       doc,
-		TenantInfo:     tenantInfo,
-		Control:        control,
-		Content:        content,
-		Extracted:      outcome.Extracted,
-		Classification: outcome.Classification,
-		Intelligence:   outcome.Intelligence,
-		AIDiagnostics:  outcome.AIDiagnostics,
-		Timestamp:      now,
-	}); err != nil {
+	if err = a.persistIndexedContentAndAssociate(
+		ctx,
+		&documentanalysis.PersistIndexedContentPayload{
+			Document:       doc,
+			TenantInfo:     tenantInfo,
+			Control:        control,
+			Content:        content,
+			Extracted:      outcome.Extracted,
+			Classification: outcome.Classification,
+			Intelligence:   outcome.Intelligence,
+			AIDiagnostics:  outcome.AIDiagnostics,
+			Timestamp:      now,
+		},
+	); err != nil {
 		return nil, err
 	}
 
-	if err = a.finalizeProcessDocumentIntelligence(ctx, &documentanalysis.FinalizeIntelligenceParams{
-		Document:       doc,
-		Payload:        payload,
-		Content:        content,
-		Extracted:      outcome.Extracted,
-		Classification: outcome.Classification,
-		Intelligence:   outcome.Intelligence,
-		AIDiagnostics:  outcome.AIDiagnostics,
-		Signature:      outcome.Signature,
-		Control:        control,
-		TenantInfo:     tenantInfo,
-		EnqueueAsyncAI: outcome.EnqueueAsyncAI,
-		Timestamp:      now,
-	}); err != nil {
+	if err = a.finalizeProcessDocumentIntelligence(
+		ctx,
+		&documentanalysis.FinalizeIntelligenceParams{
+			Document:       doc,
+			Payload:        payload,
+			Content:        content,
+			Extracted:      outcome.Extracted,
+			Classification: outcome.Classification,
+			Intelligence:   outcome.Intelligence,
+			AIDiagnostics:  outcome.AIDiagnostics,
+			Signature:      outcome.Signature,
+			Control:        control,
+			TenantInfo:     tenantInfo,
+			EnqueueAsyncAI: outcome.EnqueueAsyncAI,
+			Timestamp:      now,
+		},
+	); err != nil {
 		return nil, err
 	}
 

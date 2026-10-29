@@ -387,7 +387,13 @@ func (s *Service) storePage(
 ) (*capture.CapturePage, error) {
 	tenantInfo := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	key := capturesupport.PageKey(batch.OrganizationID, batch.ID, in.sequence, in.checksum)
-	if err := s.support.PutObject(ctx, tenantInfo, key, capture.PageContentType, in.data); err != nil {
+	if err := s.support.PutObject(
+		ctx,
+		tenantInfo,
+		key,
+		capture.PageContentType,
+		in.data,
+	); err != nil {
 		return nil, err
 	}
 

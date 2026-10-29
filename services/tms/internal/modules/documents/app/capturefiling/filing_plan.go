@@ -67,7 +67,13 @@ func (s *Service) PlanFileItem(ctx context.Context, in *FileItemInput) (*FilePla
 		ResourceID:     &in.TargetID,
 		DocumentTypeID: in.DocumentTypeID,
 	}
-	if err = s.requests.CheckTarget(ctx, in.TenantInfo, target, "targetType", "targetId"); err != nil {
+	if err = s.requests.CheckTarget(
+		ctx,
+		in.TenantInfo,
+		target,
+		"targetType",
+		"targetId",
+	); err != nil {
 		return nil, err
 	}
 

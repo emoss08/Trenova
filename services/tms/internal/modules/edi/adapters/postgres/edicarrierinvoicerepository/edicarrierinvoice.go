@@ -121,7 +121,11 @@ func (r *repository) CreateCarrierInvoice(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*edicarrierinvoice.CarrierInvoice, error) {
-			if err := edicarrierinvoicedb.CarrierInvoices.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := edicarrierinvoicedb.CarrierInvoices.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, carrierInvoiceErrors.Map(err, entity.ID.String())
 			}
 
@@ -138,7 +142,11 @@ func (r *repository) UpdateCarrierInvoice(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*edicarrierinvoice.CarrierInvoice, error) {
-			if err := edicarrierinvoicedb.CarrierInvoices.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := edicarrierinvoicedb.CarrierInvoices.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, carrierInvoiceErrors.Map(err, entity.ID.String())
 			}
 

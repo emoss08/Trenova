@@ -55,12 +55,12 @@ type CaptureBatch struct {
 	RetainUntil       int64       `json:"retainUntil"       keel:"retain_until"`
 	// RetentionRemindedAt is when the owner was told the unfiled pages are
 	// about to go. It is set once, by whichever sweep claims the reminder.
-	RetentionRemindedAt *int64         `json:"-"                 keel:"retention_reminded_at"`
-	Version             int64          `json:"version"           keel:"version,version"`
-	CreatedAt           int64          `json:"createdAt"         keel:"created_at,autocreate"`
-	UpdatedAt           int64          `json:"updatedAt"         keel:"updated_at,autoupdate"`
-	Pages               []*CapturePage `json:"pages,omitempty"   keel:"many:batch_id"`
-	Items               []*CaptureItem `json:"items,omitempty"   keel:"many:batch_id"`
+	RetentionRemindedAt *int64         `json:"-"               keel:"retention_reminded_at"`
+	Version             int64          `json:"version"         keel:"version,version"`
+	CreatedAt           int64          `json:"createdAt"       keel:"created_at,autocreate"`
+	UpdatedAt           int64          `json:"updatedAt"       keel:"updated_at,autoupdate"`
+	Pages               []*CapturePage `json:"pages,omitempty" keel:"many:batch_id"`
+	Items               []*CaptureItem `json:"items,omitempty" keel:"many:batch_id"`
 
 	CaptureDevice *CaptureDevice       `json:"device,omitempty"       keel:"belongs:device_id"`
 	Organization  *tenant.Organization `json:"organization,omitempty"`

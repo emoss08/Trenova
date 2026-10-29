@@ -140,10 +140,13 @@ func (s *Service) PollAndProcessMailbox(
 		return nil, err
 	}
 	for _, fileID := range result.StagedFileIDs {
-		if _, procErr := s.inbound.ProcessInboundFile(ctx, &ediinboundservice.ProcessInboundFileRequest{
-			FileID:     fileID,
-			TenantInfo: req.TenantInfo,
-		}); procErr != nil {
+		if _, procErr := s.inbound.ProcessInboundFile(
+			ctx,
+			&ediinboundservice.ProcessInboundFileRequest{
+				FileID:     fileID,
+				TenantInfo: req.TenantInfo,
+			},
+		); procErr != nil {
 			s.l.Error(
 				"failed to process staged inbound EDI file during manual poll",
 				zap.String("fileId", fileID.String()),

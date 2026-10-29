@@ -176,7 +176,11 @@ func (r *repository) UpdateTenderRecipient(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*editenderchange.TenderRecipient, error) {
-			if err := editenderchangedb.TenderRecipients.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := editenderchangedb.TenderRecipients.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, recipientErrors.Map(err, entity.ID.String())
 			}
 
