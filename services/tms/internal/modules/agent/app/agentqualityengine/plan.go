@@ -26,6 +26,8 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+var errSweepKeyUnclaimed = errors.New("no suite run holds the sweep key")
+
 const staleRunningAfter = int64(24 * 60 * 60)
 
 type SweepRequest struct {
@@ -98,7 +100,7 @@ func (s *Engine) PlanSweep(ctx context.Context, req *SweepRequest) (*SweepPlan, 
 	}
 
 	for _, definition := range definitions {
-		planned, planErr := s.planAgent(ctx, planAgentParams{
+		planned, planErr := s.planAgent(ctx, &planAgentParams{
 			tenant:     req.TenantInfo,
 			definition: definition,
 			provider:   provider,
@@ -177,7 +179,7 @@ type resolvedProvider struct {
 	candidates []*aiprovider.Provider
 }
 
-func (r resolvedProvider) forAgent(preferred pulid.ID) (pulid.ID, string) {
+func (r resolvedProvider) forAgent(preferred pulid.ID) (providerID pulid.ID, model string) {
 	if len(r.candidates) == 0 {
 		return preferred, ""
 	}
@@ -237,7 +239,7 @@ func (s *Engine) fingerprint(
 	return s.runtime.Fingerprint(definition, providerID, model)
 }
 
-func (s *Engine) planAgent(ctx context.Context, p planAgentParams) (*PlannedAgent, error) {
+func (s *Engine) planAgent(ctx context.Context, p *planAgentParams) (*PlannedAgent, error) {
 	fingerprint := s.fingerprint(p.definition, p.provider)
 	cases, err := s.cases.ListSamplingCases(ctx, agentqualityports.ListEvalCaseSamplingRequest{
 		TenantInfo:        p.tenant,
@@ -325,11 +327,11 @@ func openedFrom(run *agentqualitysuite.SuiteRun) *OpenedSuite {
 
 func (s *Engine) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*OpenedSuite, error) {
 	existing, err := s.bySweepKey(ctx, req.TenantInfo, req.SweepKey)
-	if err != nil {
-		return nil, err
-	}
-	if existing != nil {
+	if err == nil {
 		return openedFrom(existing), nil
+	}
+	if !errors.Is(err, errSweepKeyUnclaimed) {
+		return nil, err
 	}
 
 	cases, err := s.cases.ListSamplingCases(ctx, agentqualityports.ListEvalCaseSamplingRequest{
@@ -382,12 +384,7 @@ func (s *Engine) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*OpenedS
 		}
 	}
 	if errors.Is(err, agentqualityports.ErrSuiteRunSweepKeyTaken) {
-		existing, getErr := s.bySweepKey(ctx, req.TenantInfo, req.SweepKey)
-		if getErr != nil || existing == nil {
-			return nil, errors.Join(err, getErr)
-		}
-
-		return openedFrom(existing), nil
+		return s.openedAfterSweepKeyTaken(ctx, req.TenantInfo, req.SweepKey, err)
 	}
 	if errors.Is(err, agentqualityports.ErrSuiteRunAlreadyRunning) {
 		return nil, errortypes.NewBusinessError(
@@ -407,7 +404,7 @@ func (s *Engine) bySweepKey(
 	sweepKey string,
 ) (*agentqualitysuite.SuiteRun, error) {
 	if sweepKey == "" {
-		return nil, nil
+		return nil, errSweepKeyUnclaimed
 	}
 
 	existing, err := s.suiteRuns.GetBySweepKey(
@@ -421,10 +418,27 @@ func (s *Engine) bySweepKey(
 		return existing, nil
 	}
 	if errortypes.IsNotFoundError(err) {
-		return nil, nil
+		return nil, errSweepKeyUnclaimed
 	}
 
 	return nil, err
+}
+
+func (s *Engine) openedAfterSweepKeyTaken(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	sweepKey string,
+	createErr error,
+) (*OpenedSuite, error) {
+	taken, err := s.bySweepKey(ctx, tenant, sweepKey)
+	if errors.Is(err, errSweepKeyUnclaimed) {
+		return nil, createErr
+	}
+	if err != nil {
+		return nil, errors.Join(createErr, err)
+	}
+
+	return openedFrom(taken), nil
 }
 
 type newSuiteRunParams struct {
@@ -571,11 +585,11 @@ func (s *Engine) RecordSkipped(
 	req *RecordSkippedRequest,
 ) (*OpenedSuite, error) {
 	existing, err := s.bySweepKey(ctx, req.TenantInfo, req.SweepKey)
-	if err != nil {
-		return nil, err
-	}
-	if existing != nil {
+	if err == nil {
 		return openedFrom(existing), nil
+	}
+	if !errors.Is(err, errSweepKeyUnclaimed) {
+		return nil, err
 	}
 
 	now := s.now()
@@ -608,12 +622,7 @@ func (s *Engine) RecordSkipped(
 
 	created, err := s.suiteRuns.Create(ctx, run)
 	if errors.Is(err, agentqualityports.ErrSuiteRunSweepKeyTaken) {
-		existing, getErr := s.bySweepKey(ctx, req.TenantInfo, req.SweepKey)
-		if getErr != nil || existing == nil {
-			return nil, errors.Join(err, getErr)
-		}
-
-		return openedFrom(existing), nil
+		return s.openedAfterSweepKeyTaken(ctx, req.TenantInfo, req.SweepKey, err)
 	}
 	if err != nil {
 		return nil, err

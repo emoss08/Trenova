@@ -569,7 +569,7 @@ func (s *Engine) FinalizeSuite(
 
 	status, comments := finalStatus(outcome, req.StopReason)
 	if status.Scored() {
-		regression, regressionErr := s.detectRegression(ctx, run, outcome, req.Settings)
+		regression, regressionErr := s.detectRegression(ctx, run, outcome, &req.Settings)
 		if regressionErr != nil {
 			return nil, regressionErr
 		}
@@ -595,7 +595,7 @@ func (s *Engine) FinalizeSuite(
 func finalStatus(
 	outcome *suiteOutcome,
 	stopReason string,
-) (agentqualitysuite.SuiteRunStatus, string) {
+) (status agentqualitysuite.SuiteRunStatus, comment string) {
 	switch {
 	case stopReason != "":
 		return agentqualitysuite.SuiteRunStatusBudgetStopped, stopReason
@@ -647,7 +647,7 @@ func (s *Engine) detectRegression(
 	ctx context.Context,
 	run *agentqualitysuite.SuiteRun,
 	outcome *suiteOutcome,
-	settings agentqualitycontrol.SuiteSettings,
+	settings *agentqualitycontrol.SuiteSettings,
 ) (agentscoring.Regression, error) {
 	previous, err := s.suiteRuns.History(ctx, agentqualityports.AgentSuiteRunHistoryRequest{
 		TenantInfo: pagination.TenantInfo{
