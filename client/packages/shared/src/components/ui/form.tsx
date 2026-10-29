@@ -182,38 +182,44 @@ export const FormSection = React.memo(
     titleAside,
     children,
     ...props
-  }: FormSectionProps) => (
-    <div
-      className={cn("flex flex-col gap-2", className)}
-      role="group"
-      aria-labelledby={title ? `section-${title}` : undefined}
-      {...props}
-    >
-      {(title || description || action) && (
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            {title && (
-              <span className="flex items-center gap-1">
-                {indicator}
-                <h3 id={`section-${title}`} className="text-base leading-none font-semibold">
-                  {title}
-                </h3>
-                {titleAside}
-                {titleCount && titleCount > 0 ? (
-                  <span className="text-xs text-muted-foreground">({titleCount})</span>
-                ) : null}
-              </span>
-            )}
-            {description && (
-              <p className="text-foreground-muted text-sm text-pretty">{description}</p>
-            )}
+  }: FormSectionProps) => {
+    // aria-labelledby is a list of ids split on spaces, so a title can't be the id: one with a
+    // space, like "Billing & rating", would leave the group unnamed.
+    const titleId = React.useId();
+
+    return (
+      <div
+        className={cn("flex flex-col gap-2", className)}
+        role="group"
+        aria-labelledby={title ? titleId : undefined}
+        {...props}
+      >
+        {(title || description || action) && (
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              {title && (
+                <span className="flex items-center gap-1">
+                  {indicator}
+                  <h3 id={titleId} className="text-base leading-none font-semibold">
+                    {title}
+                  </h3>
+                  {titleAside}
+                  {titleCount && titleCount > 0 ? (
+                    <span className="text-xs text-muted-foreground">({titleCount})</span>
+                  ) : null}
+                </span>
+              )}
+              {description && (
+                <p className="text-foreground-muted text-sm text-pretty">{description}</p>
+              )}
+            </div>
+            {action && <div className="shrink-0">{action}</div>}
           </div>
-          {action && <div className="shrink-0">{action}</div>}
-        </div>
-      )}
-      {children}
-    </div>
-  ),
+        )}
+        {children}
+      </div>
+    );
+  },
 );
 
 FormSection.displayName = "FormSection";
