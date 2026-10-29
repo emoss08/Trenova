@@ -387,14 +387,19 @@ hot path. Tests may set hard limits ([testing.md](testing.md#shapes-and-budgets)
 application sends. Integration test databases record each distinct statement text when
 `KEEL_SHAPES` names a file (`internal/testutil/shapetest`, wired into `seedtest` and every
 `Connection` the tests build), and `scripts/dbplans/dbplans.sh` builds `trenova_plans` on the test
-server (migrations, seeds, fixtures and `volume -shipments 20000`), runs `ANALYZE`, and runs
-`trenova-db plans -shapes FILE -sort-limit`: `EXPLAIN (GENERIC_PLAN)` of every shape, the plan a
+server (migrations, seeds, fixtures and `volume -shipments 20000`), runs `VACUUM (ANALYZE)` (a
+vacuumed table, as autovacuum keeps production's, prices an index-only scan by its index pages
+rather than a heap fetch per row), and runs `trenova-db plans -shapes FILE -sort-limit`: `EXPLAIN (GENERIC_PLAN)` of every shape, the plan a
 prepared statement settles on. It fails (exit 3) on a sequential scan of a relation over 10,000
 rows and on a `Sort` under a `Limit` over such a relation (a page sorted in full because no index
 gives its order); small reference tables pass. A shape that cannot be planned (a temporary table) is
 listed and does not fail. CI runs it after the integration tests; `task db-plans` runs both
-locally. A finding is fixed with the index the query needs, a constant that reaches a partial index,
-or a query whose order an index gives.
+locally. A finding is fixed with the index the query needs, a constant that reaches a partial index
+(a bound value never does under a generic plan: write it with `keel.ConstInt64`, `keel.ConstText`
+or an enum column's value), or a query whose order an index gives. A count or report over a
+tenant's rows gets an index bounded by its `WHERE` (tenant, status, time range) and a sargable
+range: a bucketed or computed timestamp (`created_at / 86400 * 86400 >= $1`, `$now - arrival > $2`)
+is rewritten as a range on the column itself.
 
 ## Migrations
 
