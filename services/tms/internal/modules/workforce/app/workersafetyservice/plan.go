@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -14,7 +16,7 @@ import (
 
 type (
 	EventChange     = kernelports.RecordChange[workersafety.WorkerSafetyEvent]
-	ViolationChange = kernelports.RecordChange[workersafety.WorkerSafetyViolation]
+	ViolationChange = kernelports.RecordChange[fleetsafety.WorkerSafetyViolation]
 )
 
 func (s *Service) PlanCreateEvent(
@@ -82,9 +84,9 @@ func (s *Service) PlanDeleteEvent(
 
 func (s *Service) PlanGiveRecognition(
 	ctx context.Context,
-	entity *workersafety.WorkerRecognition,
+	entity *workerdiscipline.WorkerRecognition,
 	userID pulid.ID,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	planned := *entity
 	if _, err := s.prepareRecognition(ctx, &planned, userID); err != nil {
 		return nil, err
@@ -96,7 +98,7 @@ func (s *Service) PlanDeleteRecognition(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	return s.repo.GetRecognitionByID(ctx, &workersafetyports.GetWorkerRecognitionByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -106,7 +108,7 @@ func (s *Service) PlanDeleteRecognition(
 func (s *Service) PlanRecordViolation(
 	ctx context.Context,
 	req *RecordViolationRequest,
-) (*workersafety.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	event, err := s.repo.GetEventByID(ctx, &workersafetyports.GetWorkerSafetyEventByIDRequest{
 		ID:         req.SafetyEventID,
 		TenantInfo: req.TenantInfo,
@@ -115,7 +117,7 @@ func (s *Service) PlanRecordViolation(
 		return nil, err
 	}
 
-	entity := &workersafety.WorkerSafetyViolation{
+	entity := &fleetsafety.WorkerSafetyViolation{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		SafetyEventID:  event.ID,
@@ -130,7 +132,7 @@ func (s *Service) PlanRecordViolation(
 		entity.SeverityWeight = 1
 	}
 	if entity.Basic == "" {
-		entity.Basic = workersafety.SuggestedBasic(event.Kind, event.InspectionResult)
+		entity.Basic = fleetsafety.SuggestedBasic(event.Kind, event.InspectionResult)
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -186,7 +188,7 @@ func (s *Service) GetViolation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*workersafety.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	return s.repo.GetViolationByID(ctx, &workersafetyports.GetWorkerSafetyViolationByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
@@ -197,6 +199,6 @@ func (s *Service) PlanDeleteViolation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*workersafety.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	return s.GetViolation(ctx, tenantInfo, id)
 }

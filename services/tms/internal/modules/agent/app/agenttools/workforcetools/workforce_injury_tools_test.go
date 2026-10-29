@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,9 +23,9 @@ type fakeInjuries struct {
 	InjuryKeeper
 
 	guard  *agenttoolstest.WriteGuard
-	injury *workersafety.WorkerInjury
+	injury *workerinjury.WorkerInjury
 
-	recorded *workersafety.WorkerInjury
+	recorded *workerinjury.WorkerInjury
 	updated  *workerinjuryservice.UpdateInjuryRequest
 	deleted  []pulid.ID
 }
@@ -33,13 +33,13 @@ type fakeInjuries struct {
 func newFakeInjuries() *fakeInjuries {
 	return &fakeInjuries{
 		guard: &agenttoolstest.WriteGuard{},
-		injury: &workersafety.WorkerInjury{
+		injury: &workerinjury.WorkerInjury{
 			ID:             pulid.MustNew("winj_"),
 			WorkerID:       pulid.MustNew("wrk_"),
 			CaseYear:       2026,
 			CaseNumber:     7,
-			Classification: workersafety.CaseOtherRecordable,
-			Status:         workersafety.InjuryCaseOpen,
+			Classification: workerinjury.CaseOtherRecordable,
+			Status:         workerinjury.InjuryCaseOpen,
 			Description:    "Strained back unloading",
 			BodyPart:       "Lower back",
 			Version:        2,
@@ -49,10 +49,10 @@ func newFakeInjuries() *fakeInjuries {
 
 func (f *fakeInjuries) PlanRecordInjury(
 	_ context.Context,
-	entity *workersafety.WorkerInjury,
+	entity *workerinjury.WorkerInjury,
 	_ pulid.ID,
-) (*workersafety.WorkerInjury, error) {
-	if entity.Classification == workersafety.CaseDaysAway && entity.DaysAway == 0 {
+) (*workerinjury.WorkerInjury, error) {
+	if entity.Classification == workerinjury.CaseDaysAway && entity.DaysAway == 0 {
 		return nil, errortypes.NewValidationError("daysAway", errortypes.ErrRequired,
 			"A days-away case counts the days away")
 	}
@@ -60,16 +60,16 @@ func (f *fakeInjuries) PlanRecordInjury(
 	planned.CaseYear = 2026
 	planned.CaseNumber = 8
 	if planned.Classification == "" {
-		planned.Classification = workersafety.CaseFirstAidOnly
+		planned.Classification = workerinjury.CaseFirstAidOnly
 	}
 	return &planned, nil
 }
 
 func (f *fakeInjuries) RecordInjury(
 	ctx context.Context,
-	entity *workersafety.WorkerInjury,
+	entity *workerinjury.WorkerInjury,
 	userID pulid.ID,
-) (*workersafety.WorkerInjury, error) {
+) (*workerinjury.WorkerInjury, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (f *fakeInjuries) PlanUpdateInjury(
 func (f *fakeInjuries) UpdateInjury(
 	_ context.Context,
 	req *workerinjuryservice.UpdateInjuryRequest,
-) (*workersafety.WorkerInjury, error) {
+) (*workerinjury.WorkerInjury, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (f *fakeInjuries) PlanDeleteInjury(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*workersafety.WorkerInjury, error) {
+) (*workerinjury.WorkerInjury, error) {
 	return f.injury, nil
 }
 

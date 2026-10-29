@@ -3,7 +3,7 @@
 package carrierintelligenceexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"context"
 	"errors"
 
@@ -7311,7 +7311,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workersafety.CSABasic) graphql.Marshaler {
+func marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.CSABasic) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

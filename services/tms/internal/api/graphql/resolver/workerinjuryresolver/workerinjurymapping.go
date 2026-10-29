@@ -5,7 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -15,7 +15,7 @@ import (
 func injuryFromInput(
 	input *gqlmodel.RecordWorkerInjuryInput,
 	tenantInfo pagination.TenantInfo,
-) (*workersafety.WorkerInjury, error) {
+) (*workerinjury.WorkerInjury, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -41,7 +41,7 @@ func injuryFromInput(
 		)
 	}
 
-	entity := &workersafety.WorkerInjury{
+	entity := &workerinjury.WorkerInjury{
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
 		WorkerID:         workerID,

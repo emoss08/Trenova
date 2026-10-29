@@ -50,8 +50,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -274,7 +274,7 @@ type set struct {
 	routingGuideWithEntriesByID               *dataloadgen.Loader[string, *tender.RoutingGuide]
 	workerDQFVerificationsByWorkerID          *dataloadgen.Loader[string, []*employment.WorkerEmploymentVerification]
 	workerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*workerleave.WorkerLeaveEntry]
-	workerSafetyViolationsByEventID           *dataloadgen.Loader[string, []*workersafety.WorkerSafetyViolation]
+	workerSafetyViolationsByEventID           *dataloadgen.Loader[string, []*fleetsafety.WorkerSafetyViolation]
 	fiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
 	agentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	agentPlanStepsByPlanID                    *dataloadgen.Loader[string, []*agent.AgentProposal]

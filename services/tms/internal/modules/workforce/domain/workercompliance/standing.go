@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
@@ -90,7 +91,7 @@ type StandingInput struct {
 	Worker      *worker.Worker
 	Credentials *workercredential.WorkerCredentialSummary
 	Training    *workertraining.WorkerTrainingSummary
-	Safety      *workersafety.SafetyScorecard
+	Safety      *safetyscorecard.SafetyScorecard
 	Checklist   *workerchecklist.WorkerChecklist
 	ReviewDueAt *int64
 	Now         int64
@@ -269,7 +270,7 @@ func appendTrainingConcerns(
 	return concerns
 }
 
-func appendSafetyConcerns(concerns []Concern, card *workersafety.SafetyScorecard) []Concern {
+func appendSafetyConcerns(concerns []Concern, card *safetyscorecard.SafetyScorecard) []Concern {
 	if card == nil {
 		return concerns
 	}
@@ -400,7 +401,7 @@ func plural(count int, one string, many string) string {
 	return fmt.Sprintf("%d %s", count, many)
 }
 
-func disciplineWords(level workersafety.DisciplinaryLevel) string {
+func disciplineWords(level workerdiscipline.DisciplinaryLevel) string {
 	if level == "" {
 		return "disciplinary action"
 	}

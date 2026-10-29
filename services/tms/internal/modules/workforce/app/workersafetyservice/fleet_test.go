@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
@@ -177,7 +178,7 @@ func TestFleet_FoldsRecordedAndInferredBasics(t *testing.T) {
 	repo := &fleetRepo{
 		basics: []workersafetyports.FleetSafetyBasicRow{
 			{
-				Basic:       workersafety.BasicHOSCompliance,
+				Basic:       fleetsafety.BasicHOSCompliance,
 				Bucket:      0,
 				Violations:  2,
 				SeveritySum: 10,
@@ -197,12 +198,12 @@ func TestFleet_FoldsRecordedAndInferredBasics(t *testing.T) {
 	require.Len(t, summary.Basics, 7)
 	assert.True(t, summary.BasicsInferred)
 
-	var hos, crash workersafety.FleetSafetyBasic
+	var hos, crash fleetsafety.FleetSafetyBasic
 	for _, basic := range summary.Basics {
 		switch basic.Basic {
-		case workersafety.BasicHOSCompliance:
+		case fleetsafety.BasicHOSCompliance:
 			hos = basic
-		case workersafety.BasicCrashIndicator:
+		case fleetsafety.BasicCrashIndicator:
 			crash = basic
 		default:
 		}

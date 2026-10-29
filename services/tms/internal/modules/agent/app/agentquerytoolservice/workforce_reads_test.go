@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
@@ -23,7 +23,7 @@ import (
 
 type fakeWorkforceReads struct {
 	tests        []*workerdot.WorkerDOTTest
-	injuries     []*workersafety.WorkerInjury
+	injuries     []*workerinjury.WorkerInjury
 	cases        []*workerleave.WorkerLeaveCase
 	permits      []*permit.Permit
 	requirements []*permit.Requirement

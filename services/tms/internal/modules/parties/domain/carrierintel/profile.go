@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/shopspring/decimal"
 )
 
@@ -178,16 +178,16 @@ type Safety struct {
 }
 
 type BasicMeasure struct {
-	Basic         workersafety.CSABasic `json:"basic"`
-	Measure       *float64              `json:"measure,omitempty"`
-	Percentile    *float64              `json:"percentile,omitempty"`
-	Threshold     *float64              `json:"threshold,omitempty"`
-	Alert         bool                  `json:"alert"`
-	RoadsideAlert bool                  `json:"roadsideAlert"`
-	ACIndicator   bool                  `json:"acIndicator"`
-	Violations    *int                  `json:"violations,omitempty"`
-	OOSViolations *int                  `json:"oosViolations,omitempty"`
-	MeasuredAt    *int64                `json:"measuredAt,omitempty"`
+	Basic         fleetsafety.CSABasic `json:"basic"`
+	Measure       *float64             `json:"measure,omitempty"`
+	Percentile    *float64             `json:"percentile,omitempty"`
+	Threshold     *float64             `json:"threshold,omitempty"`
+	Alert         bool                 `json:"alert"`
+	RoadsideAlert bool                 `json:"roadsideAlert"`
+	ACIndicator   bool                 `json:"acIndicator"`
+	Violations    *int                 `json:"violations,omitempty"`
+	OOSViolations *int                 `json:"oosViolations,omitempty"`
+	MeasuredAt    *int64               `json:"measuredAt,omitempty"`
 }
 
 type Inspections struct {
@@ -389,7 +389,7 @@ func (p *Profile) DOTNumber() string {
 	return p.Identity.DOTNumber
 }
 
-func (p *Profile) Basic(basic workersafety.CSABasic) *BasicMeasure {
+func (p *Profile) Basic(basic fleetsafety.CSABasic) *BasicMeasure {
 	if p == nil {
 		return nil
 	}

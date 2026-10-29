@@ -1,4 +1,4 @@
-package workersafety
+package workerinjury
 
 import (
 	"context"

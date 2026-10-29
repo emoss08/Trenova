@@ -1,11 +1,11 @@
-package workersafety_test
+package workerinjury_test
 
 import (
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,18 +13,18 @@ import (
 )
 
 func recordableCase(
-	classification workersafety.OSHACaseClassification,
-	illness workersafety.OSHAIllnessType,
-) *workersafety.WorkerInjury {
-	return &workersafety.WorkerInjury{
+	classification workerinjury.OSHACaseClassification,
+	illness workerinjury.OSHAIllnessType,
+) *workerinjury.WorkerInjury {
+	return &workerinjury.WorkerInjury{
 		WorkerID:       pulid.MustNew("wrk_"),
 		CaseNumber:     1,
 		CaseYear:       2026,
 		Classification: classification,
 		IllnessType:    illness,
-		Treatment:      workersafety.TreatmentMedical,
-		Status:         workersafety.InjuryCaseClosed,
-		ClaimStatus:    workersafety.ClaimNotFiled,
+		Treatment:      workerinjury.TreatmentMedical,
+		Status:         workerinjury.InjuryCaseClosed,
+		ClaimStatus:    workerinjury.ClaimNotFiled,
 		OccurredAt:     1_760_000_000,
 		Description:    "Slipped on the dock",
 	}
@@ -35,18 +35,18 @@ func recordableCase(
 func TestOSHACaseClassification_IsRecordable(t *testing.T) {
 	t.Parallel()
 
-	recordable := []workersafety.OSHACaseClassification{
-		workersafety.CaseOtherRecordable,
-		workersafety.CaseJobTransferOrRestriction,
-		workersafety.CaseDaysAway,
-		workersafety.CaseDeath,
+	recordable := []workerinjury.OSHACaseClassification{
+		workerinjury.CaseOtherRecordable,
+		workerinjury.CaseJobTransferOrRestriction,
+		workerinjury.CaseDaysAway,
+		workerinjury.CaseDeath,
 	}
 	for _, value := range recordable {
 		assert.True(t, value.IsRecordable(), "%s should be recordable", value)
 	}
 
-	assert.False(t, workersafety.CaseFirstAidOnly.IsRecordable())
-	assert.False(t, workersafety.CaseNotRecordable.IsRecordable())
+	assert.False(t, workerinjury.CaseFirstAidOnly.IsRecordable())
+	assert.False(t, workerinjury.CaseNotRecordable.IsRecordable())
 }
 
 func TestSuggestClassification(t *testing.T) {
@@ -54,16 +54,16 @@ func TestSuggestClassification(t *testing.T) {
 
 	// The log records the most serious outcome, so days away outrank a
 	// restriction even when both happened.
-	assert.Equal(t, workersafety.CaseDaysAway,
-		workersafety.SuggestClassification(workersafety.TreatmentMedical, 3, 5))
-	assert.Equal(t, workersafety.CaseJobTransferOrRestriction,
-		workersafety.SuggestClassification(workersafety.TreatmentFirstAid, 0, 5))
-	assert.Equal(t, workersafety.CaseOtherRecordable,
-		workersafety.SuggestClassification(workersafety.TreatmentMedical, 0, 0))
-	assert.Equal(t, workersafety.CaseFirstAidOnly,
-		workersafety.SuggestClassification(workersafety.TreatmentFirstAid, 0, 0))
-	assert.Equal(t, workersafety.CaseNotRecordable,
-		workersafety.SuggestClassification(workersafety.TreatmentNone, 0, 0))
+	assert.Equal(t, workerinjury.CaseDaysAway,
+		workerinjury.SuggestClassification(workerinjury.TreatmentMedical, 3, 5))
+	assert.Equal(t, workerinjury.CaseJobTransferOrRestriction,
+		workerinjury.SuggestClassification(workerinjury.TreatmentFirstAid, 0, 5))
+	assert.Equal(t, workerinjury.CaseOtherRecordable,
+		workerinjury.SuggestClassification(workerinjury.TreatmentMedical, 0, 0))
+	assert.Equal(t, workerinjury.CaseFirstAidOnly,
+		workerinjury.SuggestClassification(workerinjury.TreatmentFirstAid, 0, 0))
+	assert.Equal(t, workerinjury.CaseNotRecordable,
+		workerinjury.SuggestClassification(workerinjury.TreatmentNone, 0, 0))
 }
 
 func TestWorkerInjury_Validate(t *testing.T) {
@@ -73,8 +73,8 @@ func TestWorkerInjury_Validate(t *testing.T) {
 		t.Parallel()
 		multiErr := errortypes.NewMultiError()
 		recordableCase(
-			workersafety.CaseOtherRecordable,
-			workersafety.IllnessInjury,
+			workerinjury.CaseOtherRecordable,
+			workerinjury.IllnessInjury,
 		).Validate(multiErr)
 
 		assert.False(t, multiErr.HasErrors(), multiErr.Error())
@@ -84,7 +84,7 @@ func TestWorkerInjury_Validate(t *testing.T) {
 	// count that matters most on the summary.
 	t.Run("days away forces the days-away column", func(t *testing.T) {
 		t.Parallel()
-		injury := recordableCase(workersafety.CaseOtherRecordable, workersafety.IllnessInjury)
+		injury := recordableCase(workerinjury.CaseOtherRecordable, workerinjury.IllnessInjury)
 		injury.DaysAway = 4
 
 		multiErr := errortypes.NewMultiError()
@@ -96,7 +96,7 @@ func TestWorkerInjury_Validate(t *testing.T) {
 
 	t.Run("restricted days make a case recordable", func(t *testing.T) {
 		t.Parallel()
-		injury := recordableCase(workersafety.CaseFirstAidOnly, workersafety.IllnessInjury)
+		injury := recordableCase(workerinjury.CaseFirstAidOnly, workerinjury.IllnessInjury)
 		injury.DaysRestricted = 2
 
 		multiErr := errortypes.NewMultiError()
@@ -108,7 +108,7 @@ func TestWorkerInjury_Validate(t *testing.T) {
 
 	t.Run("the day counts stop at 180", func(t *testing.T) {
 		t.Parallel()
-		injury := recordableCase(workersafety.CaseDaysAway, workersafety.IllnessInjury)
+		injury := recordableCase(workerinjury.CaseDaysAway, workerinjury.IllnessInjury)
 		injury.DaysAway = 181
 
 		multiErr := errortypes.NewMultiError()
@@ -120,8 +120,8 @@ func TestWorkerInjury_Validate(t *testing.T) {
 
 	t.Run("a filed claim records when it was filed", func(t *testing.T) {
 		t.Parallel()
-		injury := recordableCase(workersafety.CaseOtherRecordable, workersafety.IllnessInjury)
-		injury.ClaimStatus = workersafety.ClaimFiled
+		injury := recordableCase(workerinjury.CaseOtherRecordable, workerinjury.IllnessInjury)
+		injury.ClaimStatus = workerinjury.ClaimFiled
 
 		multiErr := errortypes.NewMultiError()
 		injury.Validate(multiErr)
@@ -132,7 +132,7 @@ func TestWorkerInjury_Validate(t *testing.T) {
 
 	t.Run("the return to work cannot pre-date the injury", func(t *testing.T) {
 		t.Parallel()
-		injury := recordableCase(workersafety.CaseDaysAway, workersafety.IllnessInjury)
+		injury := recordableCase(workerinjury.CaseDaysAway, workerinjury.IllnessInjury)
 		injury.DaysAway = 3
 		injury.ReturnedToWorkAt = ptrInt64(injury.OccurredAt - 1)
 
@@ -149,7 +149,7 @@ func TestWorkerInjury_Validate(t *testing.T) {
 func TestWorkerInjury_LogName(t *testing.T) {
 	t.Parallel()
 
-	injury := recordableCase(workersafety.CaseOtherRecordable, workersafety.IllnessInjury)
+	injury := recordableCase(workerinjury.CaseOtherRecordable, workerinjury.IllnessInjury)
 	injury.Worker = &worker.Worker{FirstName: "Dana", LastName: "Reyes"}
 	assert.Equal(t, "Dana Reyes", injury.LogName())
 
@@ -160,20 +160,20 @@ func TestWorkerInjury_LogName(t *testing.T) {
 func TestBuildOSHASummaryTotals(t *testing.T) {
 	t.Parallel()
 
-	death := recordableCase(workersafety.CaseDeath, workersafety.IllnessInjury)
-	away := recordableCase(workersafety.CaseDaysAway, workersafety.IllnessInjury)
+	death := recordableCase(workerinjury.CaseDeath, workerinjury.IllnessInjury)
+	away := recordableCase(workerinjury.CaseDaysAway, workerinjury.IllnessInjury)
 	away.DaysAway = 12
 	restricted := recordableCase(
-		workersafety.CaseJobTransferOrRestriction,
-		workersafety.IllnessSkinDisorder,
+		workerinjury.CaseJobTransferOrRestriction,
+		workerinjury.IllnessSkinDisorder,
 	)
 	restricted.DaysRestricted = 6
-	restricted.Status = workersafety.InjuryCaseOpen
-	other := recordableCase(workersafety.CaseOtherRecordable, workersafety.IllnessHearingLoss)
-	firstAid := recordableCase(workersafety.CaseFirstAidOnly, workersafety.IllnessInjury)
-	firstAid.Treatment = workersafety.TreatmentFirstAid
+	restricted.Status = workerinjury.InjuryCaseOpen
+	other := recordableCase(workerinjury.CaseOtherRecordable, workerinjury.IllnessHearingLoss)
+	firstAid := recordableCase(workerinjury.CaseFirstAidOnly, workerinjury.IllnessInjury)
+	firstAid.Treatment = workerinjury.TreatmentFirstAid
 
-	totals := workersafety.BuildOSHASummaryTotals([]*workersafety.WorkerInjury{
+	totals := workerinjury.BuildOSHASummaryTotals([]*workerinjury.WorkerInjury{
 		death, away, restricted, other, firstAid, nil,
 	})
 
@@ -194,7 +194,7 @@ func TestBuildOSHASummaryTotals(t *testing.T) {
 func TestOSHASummaryTotals_Rates(t *testing.T) {
 	t.Parallel()
 
-	totals := workersafety.OSHASummaryTotals{
+	totals := workerinjury.OSHASummaryTotals{
 		TotalRecordableCases: 5,
 		DaysAwayCases:        2,
 		JobTransferCases:     1,
@@ -217,10 +217,10 @@ func TestOSHASummaryTotals_Rates(t *testing.T) {
 func TestOSHAAnnualSummary_Validate(t *testing.T) {
 	t.Parallel()
 
-	certified := func() *workersafety.OSHAAnnualSummary {
-		return &workersafety.OSHAAnnualSummary{
+	certified := func() *workerinjury.OSHAAnnualSummary {
+		return &workerinjury.OSHAAnnualSummary{
 			Year:             2026,
-			Status:           workersafety.SummaryCertified,
+			Status:           workerinjury.SummaryCertified,
 			ExecutiveName:    "Alex Chen",
 			AverageEmployees: 40,
 			TotalHoursWorked: 83_200,
@@ -249,7 +249,7 @@ func TestOSHAAnnualSummary_Validate(t *testing.T) {
 
 	// A draft is allowed to be incomplete; that is what a draft is for.
 	draft := certified()
-	draft.Status = workersafety.SummaryDraft
+	draft.Status = workerinjury.SummaryDraft
 	draft.ExecutiveName = ""
 	draft.TotalHoursWorked = 0
 	multiErr = errortypes.NewMultiError()
@@ -260,7 +260,7 @@ func TestOSHAAnnualSummary_Validate(t *testing.T) {
 func TestPostingWindowAndYearBounds(t *testing.T) {
 	t.Parallel()
 
-	from, through := workersafety.PostingWindow(2026)
+	from, through := workerinjury.PostingWindow(2026)
 	assert.Equal(t, time.Date(2027, time.February, 1, 0, 0, 0, 0, time.UTC).Unix(), from)
 	assert.Equal(
 		t,
@@ -268,7 +268,7 @@ func TestPostingWindowAndYearBounds(t *testing.T) {
 		through,
 	)
 
-	start, end := workersafety.YearBounds(2026)
+	start, end := workerinjury.YearBounds(2026)
 	assert.Equal(t, time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), start)
 	assert.Equal(t, time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), end)
 }

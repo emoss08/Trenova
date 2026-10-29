@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -28,9 +30,9 @@ const day = int64(86400)
 type fakeRepo struct {
 	workersafetyports.WorkerSafetyRepository
 	events       []*workersafety.WorkerSafetyEvent
-	actions      []*workersafety.WorkerDisciplinaryAction
-	recognitions []*workersafety.WorkerRecognition
-	violations   []*workersafety.WorkerSafetyViolation
+	actions      []*workerdiscipline.WorkerDisciplinaryAction
+	recognitions []*workerdiscipline.WorkerRecognition
+	violations   []*fleetsafety.WorkerSafetyViolation
 }
 
 func (f *fakeRepo) ListEvents(
@@ -98,8 +100,8 @@ func (f *fakeRepo) DeleteEvent(
 func (f *fakeRepo) ListActions(
 	_ context.Context,
 	req *workersafetyports.ListWorkerDisciplinaryActionsRequest,
-) ([]*workersafety.WorkerDisciplinaryAction, error) {
-	out := make([]*workersafety.WorkerDisciplinaryAction, 0, len(f.actions))
+) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
+	out := make([]*workerdiscipline.WorkerDisciplinaryAction, 0, len(f.actions))
 	for _, a := range f.actions {
 		if a.WorkerID == req.WorkerID {
 			out = append(out, a)
@@ -111,7 +113,7 @@ func (f *fakeRepo) ListActions(
 func (f *fakeRepo) GetActionByID(
 	_ context.Context,
 	req *workersafetyports.GetWorkerDisciplinaryActionByIDRequest,
-) (*workersafety.WorkerDisciplinaryAction, error) {
+) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 	for _, a := range f.actions {
 		if a.ID == req.ID {
 			copied := *a
@@ -123,8 +125,8 @@ func (f *fakeRepo) GetActionByID(
 
 func (f *fakeRepo) CreateAction(
 	_ context.Context,
-	a *workersafety.WorkerDisciplinaryAction,
-) (*workersafety.WorkerDisciplinaryAction, error) {
+	a *workerdiscipline.WorkerDisciplinaryAction,
+) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 	a.ID = pulid.MustNew("wdac_")
 	f.actions = append(f.actions, a)
 	return a, nil
@@ -132,8 +134,8 @@ func (f *fakeRepo) CreateAction(
 
 func (f *fakeRepo) UpdateAction(
 	_ context.Context,
-	a *workersafety.WorkerDisciplinaryAction,
-) (*workersafety.WorkerDisciplinaryAction, error) {
+	a *workerdiscipline.WorkerDisciplinaryAction,
+) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 	for i, existing := range f.actions {
 		if existing.ID == a.ID {
 			a.Version = existing.Version + 1
@@ -147,8 +149,8 @@ func (f *fakeRepo) UpdateAction(
 func (f *fakeRepo) ListRecognitions(
 	_ context.Context,
 	req *workersafetyports.ListWorkerRecognitionsRequest,
-) ([]*workersafety.WorkerRecognition, error) {
-	out := make([]*workersafety.WorkerRecognition, 0, len(f.recognitions))
+) ([]*workerdiscipline.WorkerRecognition, error) {
+	out := make([]*workerdiscipline.WorkerRecognition, 0, len(f.recognitions))
 	for _, r := range f.recognitions {
 		if r.WorkerID == req.WorkerID && (!req.VisibleOnly || r.VisibleToWorker) {
 			out = append(out, r)
@@ -159,8 +161,8 @@ func (f *fakeRepo) ListRecognitions(
 
 func (f *fakeRepo) CreateRecognition(
 	_ context.Context,
-	r *workersafety.WorkerRecognition,
-) (*workersafety.WorkerRecognition, error) {
+	r *workerdiscipline.WorkerRecognition,
+) (*workerdiscipline.WorkerRecognition, error) {
 	r.ID = pulid.MustNew("wrec_")
 	f.recognitions = append(f.recognitions, r)
 	return r, nil
@@ -343,14 +345,14 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 
 	ladder, err := h.svc.Ladder(context.Background(), h.tenant, h.wrk.ID)
 	require.NoError(t, err)
-	assert.Equal(t, workersafety.DisciplinaryLevelCoaching, ladder.SuggestedLevel)
+	assert.Equal(t, workerdiscipline.DisciplinaryLevelCoaching, ladder.SuggestedLevel)
 
 	first, err := h.svc.IssueAction(context.Background(), &workersafetyservice.IssueActionRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workersafety.DisciplinaryLevelWrittenWarning,
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workerdiscipline.DisciplinaryLevelWrittenWarning,
 		Reason: "Two missed pre-trip inspections", UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, workersafety.DisciplinaryStatusActive, first.Action.Status)
+	assert.Equal(t, workerdiscipline.DisciplinaryStatusActive, first.Action.Status)
 	require.NotNil(t, first.Action.ExpiresAt)
 	assert.Equal(t, timeutils.AddMonthsUTC(first.Action.IssuedAt, 12), *first.Action.ExpiresAt)
 	assert.Nil(t, first.EmploymentEvent)
@@ -358,10 +360,10 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 
 	ladder, err = h.svc.Ladder(context.Background(), h.tenant, h.wrk.ID)
 	require.NoError(t, err)
-	assert.Equal(t, workersafety.DisciplinaryLevelFinalWarning, ladder.SuggestedLevel)
+	assert.Equal(t, workerdiscipline.DisciplinaryLevelFinalWarning, ladder.SuggestedLevel)
 
 	_, err = h.svc.IssueAction(context.Background(), &workersafetyservice.IssueActionRequest{
-		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workersafety.DisciplinaryLevelSuspension,
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workerdiscipline.DisciplinaryLevelSuspension,
 		Reason: "Third missed inspection", UserID: h.userID,
 	})
 	var multiErr *errortypes.MultiError
@@ -372,7 +374,7 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 	suspension, err := h.svc.IssueAction(
 		context.Background(),
 		&workersafetyservice.IssueActionRequest{
-			TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workersafety.DisciplinaryLevelSuspension,
+			TenantInfo: h.tenant, WorkerID: h.wrk.ID, Level: workerdiscipline.DisciplinaryLevelSuspension,
 			Reason: "Third missed inspection", SuspensionDays: &days, RecordEmploymentEvent: true, UserID: h.userID,
 		},
 	)
@@ -389,7 +391,7 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, workersafety.DisciplinaryStatusRescinded, rescinded.Status)
+	assert.Equal(t, workerdiscipline.DisciplinaryStatusRescinded, rescinded.Status)
 
 	acknowledged, err := h.svc.AcknowledgeAction(
 		context.Background(),
@@ -414,18 +416,18 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 
 func TestGiveRecognition(t *testing.T) {
 	h := newHarness(t)
-	given, err := h.svc.GiveRecognition(context.Background(), &workersafety.WorkerRecognition{
+	given, err := h.svc.GiveRecognition(context.Background(), &workerdiscipline.WorkerRecognition{
 		OrganizationID: h.tenant.OrgID, BusinessUnitID: h.tenant.BuID, WorkerID: h.wrk.ID,
-		Kind: workersafety.RecognitionKindSafetyMilestone, Title: "  One year accident-free  ", VisibleToWorker: true,
+		Kind: workerdiscipline.RecognitionKindSafetyMilestone, Title: "  One year accident-free  ", VisibleToWorker: true,
 	}, h.userID)
 	require.NoError(t, err)
 	assert.Equal(t, "One year accident-free", given.Title)
 	assert.Equal(t, h.userID, given.AwardedByID)
 	assert.NotZero(t, given.OccurredAt)
 
-	hidden, err := h.svc.GiveRecognition(context.Background(), &workersafety.WorkerRecognition{
+	hidden, err := h.svc.GiveRecognition(context.Background(), &workerdiscipline.WorkerRecognition{
 		OrganizationID: h.tenant.OrgID, BusinessUnitID: h.tenant.BuID, WorkerID: h.wrk.ID,
-		Kind: workersafety.RecognitionKindOther, Title: "Internal note",
+		Kind: workerdiscipline.RecognitionKindOther, Title: "Internal note",
 	}, h.userID)
 	require.NoError(t, err)
 	assert.False(t, hidden.VisibleToWorker)

@@ -3,11 +3,12 @@ package workercompliance_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,8 +56,11 @@ func TestBuildStanding_CleanRecordIsGood(t *testing.T) {
 			ComplianceStatus: worker.ComplianceStatusCompliant,
 		},
 		Training: &workertraining.WorkerTrainingSummary{Compliant: true},
-		Safety:   &workersafety.SafetyScorecard{Score: 100, Rating: worker.SafetyRatingExcellent},
-		Now:      standingNow,
+		Safety: &safetyscorecard.SafetyScorecard{
+			Score:  100,
+			Rating: worker.SafetyRatingExcellent,
+		},
+		Now: standingNow,
 	})
 
 	assert.Equal(t, workercompliance.StandingGood, standing)
@@ -173,7 +177,7 @@ func TestBuildStanding_SafetyRatings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
 				Worker: activeWorker(),
-				Safety: &workersafety.SafetyScorecard{
+				Safety: &safetyscorecard.SafetyScorecard{
 					Score:                 42,
 					Rating:                tt.rating,
 					ActivePoints:          11,
@@ -196,7 +200,7 @@ func TestBuildStanding_SafetyRatings(t *testing.T) {
 func TestBuildStanding_OutOfServiceOrderSurfacesUnderAGoodRating(t *testing.T) {
 	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
 		Worker: activeWorker(),
-		Safety: &workersafety.SafetyScorecard{
+		Safety: &safetyscorecard.SafetyScorecard{
 			Score:              91,
 			Rating:             worker.SafetyRatingGood,
 			OutOfServiceOrders: 1,
@@ -214,10 +218,10 @@ func TestBuildStanding_OutOfServiceOrderSurfacesUnderAGoodRating(t *testing.T) {
 func TestBuildStanding_ActiveDisciplineNamesTheHighestRung(t *testing.T) {
 	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
 		Worker: activeWorker(),
-		Safety: &workersafety.SafetyScorecard{
+		Safety: &safetyscorecard.SafetyScorecard{
 			Rating:            worker.SafetyRatingGood,
 			ActiveDiscipline:  2,
-			HighestDiscipline: workersafety.DisciplinaryLevelFinalWarning,
+			HighestDiscipline: workerdiscipline.DisciplinaryLevelFinalWarning,
 		},
 		Now: standingNow,
 	})
@@ -232,7 +236,7 @@ func TestBuildStanding_ActiveDisciplineNamesTheHighestRung(t *testing.T) {
 func TestBuildStanding_OpenSafetyEventsAreInformationOnly(t *testing.T) {
 	standing, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
 		Worker: activeWorker(),
-		Safety: &workersafety.SafetyScorecard{Rating: worker.SafetyRatingGood, OpenEvents: 3},
+		Safety: &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingGood, OpenEvents: 3},
 		Now:    standingNow,
 	})
 
@@ -350,7 +354,7 @@ func TestBuildStanding_TerminatedWorkerShortCircuits(t *testing.T) {
 			ComplianceStatus: worker.ComplianceStatusNonCompliant,
 			ExpiredCount:     4,
 		},
-		Safety: &workersafety.SafetyScorecard{Rating: worker.SafetyRatingAtRisk},
+		Safety: &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingAtRisk},
 		Now:    standingNow,
 	})
 
@@ -364,7 +368,7 @@ func TestBuildStanding_TerminatedWorkerShortCircuits(t *testing.T) {
 func TestBuildStanding_ConcernsAreRankedBySeverity(t *testing.T) {
 	_, concerns := workercompliance.BuildStanding(workercompliance.StandingInput{
 		Worker: activeWorker(),
-		Safety: &workersafety.SafetyScorecard{
+		Safety: &safetyscorecard.SafetyScorecard{
 			Rating:     worker.SafetyRatingGood,
 			OpenEvents: 1,
 		},

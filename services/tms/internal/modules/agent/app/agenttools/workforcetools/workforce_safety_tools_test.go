@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,14 +26,14 @@ type fakeSafety struct {
 
 	guard       *agenttoolstest.WriteGuard
 	event       *workersafety.WorkerSafetyEvent
-	violation   *workersafety.WorkerSafetyViolation
-	recognition *workersafety.WorkerRecognition
+	violation   *fleetsafety.WorkerSafetyViolation
+	recognition *workerdiscipline.WorkerRecognition
 
 	created   *workersafety.WorkerSafetyEvent
 	updated   *workersafety.WorkerSafetyEvent
 	moved     []*workersafetyservice.EventStatusRequest
 	deleted   []pulid.ID
-	given     *workersafety.WorkerRecognition
+	given     *workerdiscipline.WorkerRecognition
 	cited     *workersafetyservice.RecordViolationRequest
 	corrected *workersafetyservice.UpdateViolationRequest
 }
@@ -52,20 +54,20 @@ func newFakeSafety() *fakeSafety {
 			Points:      3,
 			Version:     4,
 		},
-		violation: &workersafety.WorkerSafetyViolation{
+		violation: &fleetsafety.WorkerSafetyViolation{
 			ID:             pulid.MustNew("wsvi_"),
 			SafetyEventID:  eventID,
 			WorkerID:       workerID,
-			Basic:          workersafety.BasicVehicleMaintenance,
+			Basic:          fleetsafety.BasicVehicleMaintenance,
 			Code:           "393.47(e)",
 			Description:    "Brake out of adjustment",
 			SeverityWeight: 4,
 			Version:        2,
 		},
-		recognition: &workersafety.WorkerRecognition{
+		recognition: &workerdiscipline.WorkerRecognition{
 			ID:       pulid.MustNew("wrec_"),
 			WorkerID: workerID,
-			Kind:     workersafety.RecognitionKindTenure,
+			Kind:     workerdiscipline.RecognitionKindTenure,
 			Title:    "Five years",
 			Version:  1,
 		},
@@ -199,17 +201,17 @@ func (f *fakeSafety) DeleteEvent(
 
 func (f *fakeSafety) PlanGiveRecognition(
 	_ context.Context,
-	entity *workersafety.WorkerRecognition,
+	entity *workerdiscipline.WorkerRecognition,
 	_ pulid.ID,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	return entity, nil
 }
 
 func (f *fakeSafety) GiveRecognition(
 	_ context.Context,
-	entity *workersafety.WorkerRecognition,
+	entity *workerdiscipline.WorkerRecognition,
 	_ pulid.ID,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -222,11 +224,11 @@ func (f *fakeSafety) GiveRecognition(
 func (f *fakeSafety) PlanRecordViolation(
 	_ context.Context,
 	req *workersafetyservice.RecordViolationRequest,
-) (*workersafety.WorkerSafetyViolation, error) {
-	return &workersafety.WorkerSafetyViolation{
+) (*fleetsafety.WorkerSafetyViolation, error) {
+	return &fleetsafety.WorkerSafetyViolation{
 		SafetyEventID:  req.SafetyEventID,
 		WorkerID:       f.event.WorkerID,
-		Basic:          workersafety.BasicVehicleMaintenance,
+		Basic:          fleetsafety.BasicVehicleMaintenance,
 		Description:    req.Description,
 		SeverityWeight: max(req.SeverityWeight, 1),
 	}, nil
@@ -235,7 +237,7 @@ func (f *fakeSafety) PlanRecordViolation(
 func (f *fakeSafety) RecordViolation(
 	_ context.Context,
 	req *workersafetyservice.RecordViolationRequest,
-) (*workersafety.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -247,7 +249,7 @@ func (f *fakeSafety) GetViolation(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*workersafety.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	copied := *f.violation
 	return &copied, nil
 }
@@ -265,7 +267,7 @@ func (f *fakeSafety) PlanUpdateViolation(
 func (f *fakeSafety) UpdateViolation(
 	_ context.Context,
 	req *workersafetyservice.UpdateViolationRequest,
-) (*workersafety.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}

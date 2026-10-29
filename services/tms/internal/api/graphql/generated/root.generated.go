@@ -3,6 +3,10 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
@@ -1282,7 +1286,7 @@ type DetentionPreviewResultResolver interface {
 }
 
 type DisciplinaryLadderResolver interface {
-	HighestLevel(ctx context.Context, obj *workersafety.DisciplinaryLadder) (*workersafety.DisciplinaryLevel, error)
+	HighestLevel(ctx context.Context, obj *workerdiscipline.DisciplinaryLadder) (*workerdiscipline.DisciplinaryLevel, error)
 }
 
 type DistanceProfileResolver interface {
@@ -1543,11 +1547,11 @@ type FiscalYearResolver interface {
 }
 
 type FleetSafetyRankResolver interface {
-	FleetCodeID(ctx context.Context, obj *workersafety.FleetSafetyRank) (*string, error)
+	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyRank) (*string, error)
 }
 
 type FleetSafetyTerminalResolver interface {
-	FleetCodeID(ctx context.Context, obj *workersafety.FleetSafetyTerminal) (*string, error)
+	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyTerminal) (*string, error)
 }
 
 type FormulaLibraryImportResolver interface {
@@ -2286,8 +2290,8 @@ type MutationResolver interface {
 	DiscardFactoringRemittance(ctx context.Context, input gqlmodel.DiscardFactoringRemittanceInput) (*factoring.Remittance, error)
 	CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
-	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*workersafety.WorkerSafetyViolation, error)
-	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*workersafety.WorkerSafetyViolation, error)
+	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
+	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
 	DeleteSafetyViolation(ctx context.Context, id string) (bool, error)
 	CreateFuelCard(ctx context.Context, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
 	UpdateFuelCard(ctx context.Context, id string, version int, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
@@ -2577,12 +2581,12 @@ type MutationResolver interface {
 	UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*dotrandom.DOTRandomDrawEntry, error)
 	RecordWorkerEmploymentEvent(ctx context.Context, input gqlmodel.RecordWorkerEmploymentEventInput) (*workeremploymentservice.RecordResult, error)
 	AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*employment.WorkerEmploymentEvent, error)
-	RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*workersafety.WorkerInjury, error)
-	UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*workersafety.WorkerInjury, error)
+	RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*workerinjury.WorkerInjury, error)
+	UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*workerinjury.WorkerInjury, error)
 	DeleteWorkerInjury(ctx context.Context, id string) (bool, error)
-	SaveOshaSummary(ctx context.Context, input gqlmodel.SaveOSHASummaryInput) (*workersafety.OSHAAnnualSummary, error)
-	CertifyOshaSummary(ctx context.Context, year int) (*workersafety.OSHAAnnualSummary, error)
-	UncertifyOshaSummary(ctx context.Context, year int) (*workersafety.OSHAAnnualSummary, error)
+	SaveOshaSummary(ctx context.Context, input gqlmodel.SaveOSHASummaryInput) (*workerinjury.OSHAAnnualSummary, error)
+	CertifyOshaSummary(ctx context.Context, year int) (*workerinjury.OSHAAnnualSummary, error)
+	UncertifyOshaSummary(ctx context.Context, year int) (*workerinjury.OSHAAnnualSummary, error)
 	OpenLeaveCase(ctx context.Context, input gqlmodel.OpenLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
 	UpdateLeaveCase(ctx context.Context, input gqlmodel.UpdateLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
 	DecideLeaveCase(ctx context.Context, input gqlmodel.DecideLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
@@ -2600,10 +2604,10 @@ type MutationResolver interface {
 	ReopenWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*workersafety.WorkerSafetyEvent, error)
 	DeleteWorkerSafetyEvent(ctx context.Context, id string) (bool, error)
 	IssueDisciplinaryAction(ctx context.Context, input gqlmodel.IssueDisciplinaryActionInput) (*workersafetyservice.IssueActionResult, error)
-	RescindDisciplinaryAction(ctx context.Context, input gqlmodel.RescindDisciplinaryActionInput) (*workersafety.WorkerDisciplinaryAction, error)
-	GiveWorkerRecognition(ctx context.Context, input gqlmodel.WorkerRecognitionInput) (*workersafety.WorkerRecognition, error)
+	RescindDisciplinaryAction(ctx context.Context, input gqlmodel.RescindDisciplinaryActionInput) (*workerdiscipline.WorkerDisciplinaryAction, error)
+	GiveWorkerRecognition(ctx context.Context, input gqlmodel.WorkerRecognitionInput) (*workerdiscipline.WorkerRecognition, error)
 	DeleteWorkerRecognition(ctx context.Context, id string) (bool, error)
-	AcknowledgeMyDisciplinaryAction(ctx context.Context, id string, comment *string) (*workersafety.WorkerDisciplinaryAction, error)
+	AcknowledgeMyDisciplinaryAction(ctx context.Context, id string, comment *string) (*workerdiscipline.WorkerDisciplinaryAction, error)
 	CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error)
 	UpdateTrainingCourse(ctx context.Context, id string, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error)
 	ArchiveTrainingCourse(ctx context.Context, id string, version *int) (*workertraining.TrainingCourse, error)
@@ -2634,12 +2638,12 @@ type MyPTOBalanceResolver interface {
 }
 
 type OSHAAnnualSummaryResolver interface {
-	TotalHoursWorked(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (int, error)
-	CertifiedAt(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*int, error)
-	CertifiedByID(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*string, error)
-	PostedFrom(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*int, error)
-	PostedThrough(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*int, error)
-	SubmittedAt(ctx context.Context, obj *workersafety.OSHAAnnualSummary) (*int, error)
+	TotalHoursWorked(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (int, error)
+	CertifiedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	CertifiedByID(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*string, error)
+	PostedFrom(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	PostedThrough(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	SubmittedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
 }
 
 type OrderResolver interface {
@@ -3134,8 +3138,8 @@ type QueryResolver interface {
 	FiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
 	FleetCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FleetCodeConnection, error)
 	FleetCode(ctx context.Context, id string) (*fleetcode.FleetCode, error)
-	FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*workersafety.FleetSafety, error)
-	WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*workersafety.WorkerSafetyViolation, error)
+	FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*fleetsafety.FleetSafety, error)
+	WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*fleetsafety.WorkerSafetyViolation, error)
 	FormulaLibraries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaLibraryConnection, error)
 	FormulaLibrary(ctx context.Context, id string) (*formulalibrary.FormulaLibrary, error)
 	FormulaLibraryVersions(ctx context.Context, libraryID string, first *int) ([]*formulalibrary.FormulaLibraryVersion, error)
@@ -3422,10 +3426,10 @@ type QueryResolver interface {
 	WorkerRandomSelections(ctx context.Context, workerID string) ([]*dotrandom.DOTRandomDrawEntry, error)
 	WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind) ([]*employment.WorkerEmploymentEvent, error)
 	WorkerEmploymentEvent(ctx context.Context, id string) (*employment.WorkerEmploymentEvent, error)
-	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*workersafety.WorkerInjury, error)
-	WorkerInjury(ctx context.Context, id string) (*workersafety.WorkerInjury, error)
+	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*workerinjury.WorkerInjury, error)
+	WorkerInjury(ctx context.Context, id string) (*workerinjury.WorkerInjury, error)
 	OshaLog(ctx context.Context, year *int) (*workerinjuryservice.OSHALog, error)
-	OshaSummaries(ctx context.Context) ([]*workersafety.OSHAAnnualSummary, error)
+	OshaSummaries(ctx context.Context) ([]*workerinjury.OSHAAnnualSummary, error)
 	LeaveControl(ctx context.Context) (*workerleave.LeaveControl, error)
 	WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*workerleave.WorkerLeaveCase, error)
 	WorkerLeaveCase(ctx context.Context, id string) (*workerleave.WorkerLeaveCase, error)
@@ -3435,14 +3439,14 @@ type QueryResolver interface {
 	WorkerRosterAttention(ctx context.Context) (*workeroverviewservice.RosterAttention, error)
 	WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workersafety.WorkerSafetyEvent, error)
 	WorkerSafetyEvent(ctx context.Context, id string) (*workersafety.WorkerSafetyEvent, error)
-	WorkerSafetyScorecard(ctx context.Context, workerID string) (*workersafety.SafetyScorecard, error)
-	WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*workersafety.WorkerDisciplinaryAction, error)
-	WorkerDisciplinaryLadder(ctx context.Context, workerID string) (*workersafety.DisciplinaryLadder, error)
-	WorkerRecognitions(ctx context.Context, workerID string) ([]*workersafety.WorkerRecognition, error)
+	WorkerSafetyScorecard(ctx context.Context, workerID string) (*safetyscorecard.SafetyScorecard, error)
+	WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*workerdiscipline.WorkerDisciplinaryAction, error)
+	WorkerDisciplinaryLadder(ctx context.Context, workerID string) (*workerdiscipline.DisciplinaryLadder, error)
+	WorkerRecognitions(ctx context.Context, workerID string) ([]*workerdiscipline.WorkerRecognition, error)
 	DefaultSafetyPoints(ctx context.Context, kind workersafety.SafetyEventKind, severity workersafety.SafetySeverity, preventable *bool, inspectionResult *workersafety.InspectionResult) (int, error)
-	MySafetyScorecard(ctx context.Context) (*workersafety.SafetyScorecard, error)
-	MyRecognitions(ctx context.Context) ([]*workersafety.WorkerRecognition, error)
-	MyDisciplinaryActions(ctx context.Context) ([]*workersafety.WorkerDisciplinaryAction, error)
+	MySafetyScorecard(ctx context.Context) (*safetyscorecard.SafetyScorecard, error)
+	MyRecognitions(ctx context.Context) ([]*workerdiscipline.WorkerRecognition, error)
+	MyDisciplinaryActions(ctx context.Context) ([]*workerdiscipline.WorkerDisciplinaryAction, error)
 	TrainingCourses(ctx context.Context, input gqlmodel.TrainingCoursesInput) (*gqlmodel.TrainingCourseConnection, error)
 	TrainingCourse(ctx context.Context, id string) (*workertraining.TrainingCourse, error)
 	ActiveTrainingCourses(ctx context.Context) ([]*workertraining.TrainingCourse, error)
@@ -3492,8 +3496,8 @@ type RoutingGuideEntryResolver interface {
 }
 
 type SafetyScorecardResolver interface {
-	HighestDiscipline(ctx context.Context, obj *workersafety.SafetyScorecard) (*workersafety.DisciplinaryLevel, error)
-	DaysSinceLastEvent(ctx context.Context, obj *workersafety.SafetyScorecard) (*int, error)
+	HighestDiscipline(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*workerdiscipline.DisciplinaryLevel, error)
+	DaysSinceLastEvent(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*int, error)
 }
 
 type ServiceFailureResolver interface {
@@ -3804,12 +3808,12 @@ type WorkerDOTViolationResolver interface {
 }
 
 type WorkerDisciplinaryActionResolver interface {
-	SuspensionDays(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*int, error)
-	SafetyEventID(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*string, error)
-	DocumentID(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*string, error)
-	IssuedByID(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*string, error)
-	RescindedByID(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (*string, error)
-	Active(ctx context.Context, obj *workersafety.WorkerDisciplinaryAction) (bool, error)
+	SuspensionDays(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*int, error)
+	SafetyEventID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
+	DocumentID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
+	IssuedByID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
+	RescindedByID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
+	Active(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (bool, error)
 }
 
 type WorkerEmploymentCascadeResolver interface {
@@ -3836,14 +3840,14 @@ type WorkerEmploymentVerificationResolver interface {
 }
 
 type WorkerInjuryResolver interface {
-	Recordable(ctx context.Context, obj *workersafety.WorkerInjury) (bool, error)
-	ReportedAt(ctx context.Context, obj *workersafety.WorkerInjury) (*int, error)
-	ReturnedToWorkAt(ctx context.Context, obj *workersafety.WorkerInjury) (*int, error)
-	LogName(ctx context.Context, obj *workersafety.WorkerInjury) (string, error)
-	ClaimFiledAt(ctx context.Context, obj *workersafety.WorkerInjury) (*int, error)
-	ClaimClosedAt(ctx context.Context, obj *workersafety.WorkerInjury) (*int, error)
-	SafetyEventID(ctx context.Context, obj *workersafety.WorkerInjury) (*string, error)
-	DocumentID(ctx context.Context, obj *workersafety.WorkerInjury) (*string, error)
+	Recordable(ctx context.Context, obj *workerinjury.WorkerInjury) (bool, error)
+	ReportedAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	ReturnedToWorkAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	LogName(ctx context.Context, obj *workerinjury.WorkerInjury) (string, error)
+	ClaimFiledAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	ClaimClosedAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	SafetyEventID(ctx context.Context, obj *workerinjury.WorkerInjury) (*string, error)
+	DocumentID(ctx context.Context, obj *workerinjury.WorkerInjury) (*string, error)
 }
 
 type WorkerLeaveCaseResolver interface {
@@ -3915,7 +3919,7 @@ type WorkerProfileChangeRequestResolver interface {
 }
 
 type WorkerRecognitionResolver interface {
-	AwardedByID(ctx context.Context, obj *workersafety.WorkerRecognition) (*string, error)
+	AwardedByID(ctx context.Context, obj *workerdiscipline.WorkerRecognition) (*string, error)
 }
 
 type WorkerRosterAttentionResolver interface {
@@ -3932,7 +3936,7 @@ type WorkerSafetyEventResolver interface {
 	DocumentID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
 	RecordedByID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
 	ClosedByID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
-	Violations(ctx context.Context, obj *workersafety.WorkerSafetyEvent) ([]*workersafety.WorkerSafetyViolation, error)
+	Violations(ctx context.Context, obj *workersafety.WorkerSafetyEvent) ([]*fleetsafety.WorkerSafetyViolation, error)
 }
 
 type WorkerTrainingRecordResolver interface {

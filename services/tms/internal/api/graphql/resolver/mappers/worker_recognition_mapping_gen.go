@@ -3,7 +3,7 @@
 package mappers
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,12 +13,12 @@ func WorkerRecognitionFromInput(
 	input gqlmodel.WorkerRecognitionInput,
 	id pulid.ID,
 	authCtx *authctx.AuthContext,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, err
 	}
-	entity := &workersafety.WorkerRecognition{
+	entity := &workerdiscipline.WorkerRecognition{
 		ID:              id,
 		OrganizationID:  authCtx.OrganizationID,
 		BusinessUnitID:  authCtx.BusinessUnitID,

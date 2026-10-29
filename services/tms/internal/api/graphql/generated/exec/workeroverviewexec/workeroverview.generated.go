@@ -3,11 +3,11 @@
 package workeroverviewexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"context"
 	"errors"
@@ -463,7 +463,7 @@ func marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "PerformanceReview", v)
 }
 
-func marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyScorecard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workersafety.SafetyScorecard) graphql.Marshaler {
+func marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyScorecard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *safetyscorecard.SafetyScorecard) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

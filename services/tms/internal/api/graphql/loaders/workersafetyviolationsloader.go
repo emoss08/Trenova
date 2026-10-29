@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ type safetyViolationsLister interface {
 	ListViolations(
 		ctx context.Context,
 		req *workersafetyports.ListWorkerSafetyViolationsRequest,
-	) ([]*workersafety.WorkerSafetyViolation, error)
+	) ([]*fleetsafety.WorkerSafetyViolation, error)
 }
 
 type WorkerSafetyViolationsByEventIDLoaderFactoryParams struct {
@@ -37,18 +37,18 @@ func NewWorkerSafetyViolationsByEventIDLoaderFactory(
 
 func newWorkerSafetyViolationsByEventIDLoader(f *WorkerSafetyViolationsByEventIDLoaderFactory,
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, []*workersafety.WorkerSafetyViolation] {
+) *dataloadgen.Loader[string, []*fleetsafety.WorkerSafetyViolation] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *WorkerSafetyViolationsByEventIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[[]*workersafety.WorkerSafetyViolation] {
+) batchFetchFunc[[]*fleetsafety.WorkerSafetyViolation] {
 	return batchGroupFunc(
 		func(
 			ctx context.Context,
 			ids []pulid.ID,
-		) (map[pulid.ID][]*workersafety.WorkerSafetyViolation, error) {
+		) (map[pulid.ID][]*fleetsafety.WorkerSafetyViolation, error) {
 			violations, err := f.violations.ListViolations(
 				ctx,
 				&workersafetyports.ListWorkerSafetyViolationsRequest{
@@ -60,7 +60,7 @@ func (f *WorkerSafetyViolationsByEventIDLoaderFactory) batchFunc(
 				return nil, err
 			}
 
-			groups := make(map[pulid.ID][]*workersafety.WorkerSafetyViolation, len(ids))
+			groups := make(map[pulid.ID][]*fleetsafety.WorkerSafetyViolation, len(ids))
 			for _, violation := range violations {
 				groups[violation.SafetyEventID] = append(
 					groups[violation.SafetyEventID],

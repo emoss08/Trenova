@@ -14,21 +14,21 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *FleetSafetyRankResolver) FleetCodeID(ctx context.Context, obj *workersafety.FleetSafetyRank) (*string, error) {
+func (r *FleetSafetyRankResolver) FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyRank) (*string, error) {
 	return gqlid.IDPtr(obj.FleetCodeID), nil
 }
 
-func (r *FleetSafetyTerminalResolver) FleetCodeID(ctx context.Context, obj *workersafety.FleetSafetyTerminal) (*string, error) {
+func (r *FleetSafetyTerminalResolver) FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyTerminal) (*string, error) {
 	return gqlid.IDPtr(obj.FleetCodeID), nil
 }
 
-func (r *MutationResolver) RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*workersafety.WorkerSafetyViolation, error) {
+func (r *MutationResolver) RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *MutationResolver) RecordSafetyViolation(ctx context.Context, input gqlm
 	})
 }
 
-func (r *MutationResolver) UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*workersafety.WorkerSafetyViolation, error) {
+func (r *MutationResolver) UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (r *MutationResolver) DeleteSafetyViolation(ctx context.Context, id string)
 	return true, nil
 }
 
-func (r *QueryResolver) FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*workersafety.FleetSafety, error) {
+func (r *QueryResolver) FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*fleetsafety.FleetSafety, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func (r *QueryResolver) FleetSafety(ctx context.Context, input *gqlmodel.FleetSa
 	return r.WorkerSafetyService.Fleet(ctx, req)
 }
 
-func (r *QueryResolver) WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*workersafety.WorkerSafetyViolation, error) {
+func (r *QueryResolver) WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*fleetsafety.WorkerSafetyViolation, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead)
 	if err != nil {
 		return nil, err

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,9 +20,9 @@ import (
 // stale the first time somebody did.
 type OSHALog struct {
 	Year    int16
-	Cases   []*workersafety.WorkerInjury
-	Totals  workersafety.OSHASummaryTotals
-	Summary *workersafety.OSHAAnnualSummary
+	Cases   []*workerinjury.WorkerInjury
+	Totals  workerinjury.OSHASummaryTotals
+	Summary *workerinjury.OSHAAnnualSummary
 	// PostFrom and PostThrough are the February 1 – April 30 window the
 	// summary has to be posted in.
 	PostFrom    int64
@@ -63,11 +63,11 @@ func (s *Service) Log(
 		return nil, err
 	}
 
-	from, through := workersafety.PostingWindow(year)
+	from, through := workerinjury.PostingWindow(year)
 	log := &OSHALog{
 		Year:        year,
 		Cases:       cases,
-		Totals:      workersafety.BuildOSHASummaryTotals(cases),
+		Totals:      workerinjury.BuildOSHASummaryTotals(cases),
 		Summary:     summary,
 		PostFrom:    from,
 		PostThrough: through,
@@ -85,7 +85,7 @@ func (s *Service) Log(
 func (s *Service) ListSummaries(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*workersafety.OSHAAnnualSummary, error) {
+) ([]*workerinjury.OSHAAnnualSummary, error) {
 	return s.repo.ListSummaries(ctx, &workersafetyports.ListOSHASummariesRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -116,7 +116,7 @@ type SaveSummaryRequest struct {
 func (s *Service) SaveSummary(
 	ctx context.Context,
 	req *SaveSummaryRequest,
-) (*workersafety.OSHAAnnualSummary, error) {
+) (*workerinjury.OSHAAnnualSummary, error) {
 	existing, err := s.repo.GetSummary(ctx, &workersafetyports.GetOSHASummaryRequest{
 		TenantInfo: req.TenantInfo,
 		Year:       req.Year,
@@ -136,12 +136,12 @@ func (s *Service) SaveSummary(
 	entity := existing
 	creating := entity == nil
 	if creating {
-		from, through := workersafety.PostingWindow(req.Year)
-		entity = &workersafety.OSHAAnnualSummary{
+		from, through := workerinjury.PostingWindow(req.Year)
+		entity = &workerinjury.OSHAAnnualSummary{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			Year:           req.Year,
-			Status:         workersafety.SummaryDraft,
+			Status:         workerinjury.SummaryDraft,
 			PostedFrom:     &from,
 			PostedThrough:  &through,
 		}
@@ -154,7 +154,7 @@ func (s *Service) SaveSummary(
 		return nil, err
 	}
 
-	var saved *workersafety.OSHAAnnualSummary
+	var saved *workerinjury.OSHAAnnualSummary
 	if creating {
 		saved, err = s.repo.CreateSummary(ctx, entity)
 	} else {
@@ -193,7 +193,7 @@ func (s *Service) CertifySummary(
 	tenantInfo pagination.TenantInfo,
 	year int16,
 	userID pulid.ID,
-) (*workersafety.OSHAAnnualSummary, error) {
+) (*workerinjury.OSHAAnnualSummary, error) {
 	entity, err := s.repo.GetSummary(ctx, &workersafetyports.GetOSHASummaryRequest{
 		TenantInfo: tenantInfo,
 		Year:       year,
@@ -219,7 +219,7 @@ func (s *Service) CertifySummary(
 	if err != nil {
 		return nil, err
 	}
-	if open := workersafety.BuildOSHASummaryTotals(cases).OpenCases; open > 0 {
+	if open := workerinjury.BuildOSHASummaryTotals(cases).OpenCases; open > 0 {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -230,7 +230,7 @@ func (s *Service) CertifySummary(
 
 	previous := *entity
 	now := timeutils.NowUnix()
-	entity.Status = workersafety.SummaryCertified
+	entity.Status = workerinjury.SummaryCertified
 	entity.CertifiedAt = &now
 	entity.CertifiedByID = userID
 
@@ -266,7 +266,7 @@ func (s *Service) UncertifySummary(
 	tenantInfo pagination.TenantInfo,
 	year int16,
 	userID pulid.ID,
-) (*workersafety.OSHAAnnualSummary, error) {
+) (*workerinjury.OSHAAnnualSummary, error) {
 	entity, err := s.repo.GetSummary(ctx, &workersafetyports.GetOSHASummaryRequest{
 		TenantInfo: tenantInfo,
 		Year:       year,
@@ -282,7 +282,7 @@ func (s *Service) UncertifySummary(
 	}
 
 	previous := *entity
-	entity.Status = workersafety.SummaryDraft
+	entity.Status = workerinjury.SummaryDraft
 	entity.CertifiedAt = nil
 	entity.CertifiedByID = pulid.Nil
 
@@ -306,7 +306,7 @@ func (s *Service) UncertifySummary(
 	return updated, nil
 }
 
-func (s *Service) prepareSummary(entity *workersafety.OSHAAnnualSummary) error {
+func (s *Service) prepareSummary(entity *workerinjury.OSHAAnnualSummary) error {
 	entity.NAICSCode = strings.TrimSpace(entity.NAICSCode)
 	entity.ExecutiveName = strings.TrimSpace(entity.ExecutiveName)
 	entity.ExecutiveTitle = strings.TrimSpace(entity.ExecutiveTitle)
@@ -314,7 +314,7 @@ func (s *Service) prepareSummary(entity *workersafety.OSHAAnnualSummary) error {
 	entity.SubmissionReference = strings.TrimSpace(entity.SubmissionReference)
 	entity.Notes = strings.TrimSpace(entity.Notes)
 	if entity.Status == "" {
-		entity.Status = workersafety.SummaryDraft
+		entity.Status = workerinjury.SummaryDraft
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -326,7 +326,7 @@ func (s *Service) prepareSummary(entity *workersafety.OSHAAnnualSummary) error {
 	return nil
 }
 
-func applySummaryUpdate(entity *workersafety.OSHAAnnualSummary, req *SaveSummaryRequest) {
+func applySummaryUpdate(entity *workerinjury.OSHAAnnualSummary, req *SaveSummaryRequest) {
 	if req.NAICSCode != nil {
 		entity.NAICSCode = *req.NAICSCode
 	}

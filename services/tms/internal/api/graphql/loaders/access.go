@@ -51,8 +51,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -605,11 +605,11 @@ func (f *WorkerLeaveEntriesByCaseIDLoaderFactory) Attach(
 func WorkerSafetyViolationsByEventID(
 	ctx context.Context,
 	key string,
-) ([]*workersafety.WorkerSafetyViolation, error) {
+) ([]*fleetsafety.WorkerSafetyViolation, error) {
 	return load(
 		ctx,
 		key,
-		func(s *set) *dataloadgen.Loader[string, []*workersafety.WorkerSafetyViolation] {
+		func(s *set) *dataloadgen.Loader[string, []*fleetsafety.WorkerSafetyViolation] {
 			return s.workerSafetyViolationsByEventID
 		},
 	)

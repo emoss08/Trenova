@@ -1,9 +1,10 @@
-package workersafety_test
+package fleetsafety_test
 
 import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +20,17 @@ func TestSuggestedBasic(t *testing.T) {
 
 	// A crash is the one event whose BASIC is never in doubt.
 	assert.Equal(t,
-		workersafety.BasicCrashIndicator,
-		workersafety.SuggestedBasic(workersafety.SafetyEventAccident, ""),
+		fleetsafety.BasicCrashIndicator,
+		fleetsafety.SuggestedBasic(workersafety.SafetyEventAccident, ""),
 	)
 	assert.Equal(t,
-		workersafety.BasicUnsafeDriving,
-		workersafety.SuggestedBasic(workersafety.SafetyEventCitation, ""),
+		fleetsafety.BasicUnsafeDriving,
+		fleetsafety.SuggestedBasic(workersafety.SafetyEventCitation, ""),
 	)
 	assert.Equal(
 		t,
-		workersafety.BasicVehicleMaintenance,
-		workersafety.SuggestedBasic(
+		fleetsafety.BasicVehicleMaintenance,
+		fleetsafety.SuggestedBasic(
 			workersafety.SafetyEventInspection,
 			workersafety.InspectionResultOutOfService,
 		),
@@ -40,21 +41,21 @@ func TestSuggestedBasic(t *testing.T) {
 	// like one that fails them.
 	assert.Equal(
 		t,
-		workersafety.CSABasic(""),
-		workersafety.SuggestedBasic(
+		fleetsafety.CSABasic(""),
+		fleetsafety.SuggestedBasic(
 			workersafety.SafetyEventInspection,
 			workersafety.InspectionResultPass,
 		),
 	)
 	assert.Equal(
 		t,
-		workersafety.CSABasic(""),
-		workersafety.SuggestedBasic(workersafety.SafetyEventNearMiss, ""),
+		fleetsafety.CSABasic(""),
+		fleetsafety.SuggestedBasic(workersafety.SafetyEventNearMiss, ""),
 	)
 	assert.Equal(
 		t,
-		workersafety.CSABasic(""),
-		workersafety.SuggestedBasic(workersafety.SafetyEventIncident, ""),
+		fleetsafety.CSABasic(""),
+		fleetsafety.SuggestedBasic(workersafety.SafetyEventIncident, ""),
 	)
 }
 
@@ -63,13 +64,13 @@ func TestCSATimeWeight(t *testing.T) {
 
 	now := csaAt(2026, time.September, 4)
 
-	assert.Equal(t, int32(3), workersafety.CSATimeWeight(csaAt(2026, time.August, 1), now))
-	assert.Equal(t, int32(2), workersafety.CSATimeWeight(csaAt(2026, time.January, 1), now))
-	assert.Equal(t, int32(1), workersafety.CSATimeWeight(csaAt(2025, time.June, 1), now))
+	assert.Equal(t, int32(3), fleetsafety.CSATimeWeight(csaAt(2026, time.August, 1), now))
+	assert.Equal(t, int32(2), fleetsafety.CSATimeWeight(csaAt(2026, time.January, 1), now))
+	assert.Equal(t, int32(1), fleetsafety.CSATimeWeight(csaAt(2025, time.June, 1), now))
 
 	// Past the two-year look-back a violation stops counting entirely — a fleet
 	// that cleaned up its act is not the fleet it was.
-	assert.Equal(t, int32(0), workersafety.CSATimeWeight(csaAt(2024, time.June, 1), now))
+	assert.Equal(t, int32(0), fleetsafety.CSATimeWeight(csaAt(2024, time.June, 1), now))
 }
 
 func TestWorkerSafetyViolation_WeightedScore(t *testing.T) {
@@ -78,12 +79,12 @@ func TestWorkerSafetyViolation_WeightedScore(t *testing.T) {
 	now := csaAt(2026, time.September, 4)
 	occurred := csaAt(2026, time.August, 1)
 
-	plain := &workersafety.WorkerSafetyViolation{SeverityWeight: 5}
+	plain := &fleetsafety.WorkerSafetyViolation{SeverityWeight: 5}
 	assert.Equal(t, int32(15), plain.WeightedScore(occurred, now))
 
 	// Out of service adds two before the recency multiplier, which is the
 	// order the FMCSA applies them in.
-	oos := &workersafety.WorkerSafetyViolation{SeverityWeight: 5, OutOfService: true}
+	oos := &fleetsafety.WorkerSafetyViolation{SeverityWeight: 5, OutOfService: true}
 	assert.Equal(t, int32(21), oos.WeightedScore(occurred, now))
 }
 
@@ -92,10 +93,10 @@ func TestWorkerSafetyViolation_Validate(t *testing.T) {
 
 	t.Run("a weight outside one to ten is refused", func(t *testing.T) {
 		t.Parallel()
-		entity := &workersafety.WorkerSafetyViolation{
+		entity := &fleetsafety.WorkerSafetyViolation{
 			SafetyEventID:  "wsev_1",
 			WorkerID:       "wrk_1",
-			Basic:          workersafety.BasicUnsafeDriving,
+			Basic:          fleetsafety.BasicUnsafeDriving,
 			Description:    "Speeding 15 mph over",
 			SeverityWeight: 11,
 		}
@@ -107,10 +108,10 @@ func TestWorkerSafetyViolation_Validate(t *testing.T) {
 
 	t.Run("a BASIC outside the seven is refused", func(t *testing.T) {
 		t.Parallel()
-		entity := &workersafety.WorkerSafetyViolation{
+		entity := &fleetsafety.WorkerSafetyViolation{
 			SafetyEventID:  "wsev_1",
 			WorkerID:       "wrk_1",
-			Basic:          workersafety.CSABasic("Paperwork"),
+			Basic:          fleetsafety.CSABasic("Paperwork"),
 			Description:    "Something",
 			SeverityWeight: 1,
 		}
@@ -122,10 +123,10 @@ func TestWorkerSafetyViolation_Validate(t *testing.T) {
 
 	t.Run("a valid violation passes", func(t *testing.T) {
 		t.Parallel()
-		entity := &workersafety.WorkerSafetyViolation{
+		entity := &fleetsafety.WorkerSafetyViolation{
 			SafetyEventID:  "wsev_1",
 			WorkerID:       "wrk_1",
-			Basic:          workersafety.BasicHOSCompliance,
+			Basic:          fleetsafety.BasicHOSCompliance,
 			Code:           "395.8",
 			Description:    "No record of duty status",
 			SeverityWeight: 5,
@@ -139,12 +140,12 @@ func TestWorkerSafetyViolation_Validate(t *testing.T) {
 func TestBuildFleetBasics_WeightsByRecency(t *testing.T) {
 	t.Parallel()
 
-	basics := workersafety.BuildFleetBasics([]workersafety.FleetSafetyBasicInput{
-		{Basic: workersafety.BasicHOSCompliance, Bucket: 0, Violations: 2, SeveritySum: 10},
-		{Basic: workersafety.BasicHOSCompliance, Bucket: 2, Violations: 1, SeveritySum: 4},
+	basics := fleetsafety.BuildFleetBasics([]fleetsafety.FleetSafetyBasicInput{
+		{Basic: fleetsafety.BasicHOSCompliance, Bucket: 0, Violations: 2, SeveritySum: 10},
+		{Basic: fleetsafety.BasicHOSCompliance, Bucket: 2, Violations: 1, SeveritySum: 4},
 	}, nil)
 
-	hos := findBasic(t, basics, workersafety.BasicHOSCompliance)
+	hos := findBasic(t, basics, fleetsafety.BasicHOSCompliance)
 	assert.Equal(t, int32(3), hos.Violations)
 	// 10 × 3 inside six months, plus 4 × 1 out at the look-back.
 	assert.Equal(t, int32(34), hos.WeightedScore)
@@ -154,9 +155,9 @@ func TestBuildFleetBasics_WeightsByRecency(t *testing.T) {
 func TestBuildFleetBasics_OutOfServiceAddsTwoPerViolation(t *testing.T) {
 	t.Parallel()
 
-	basics := workersafety.BuildFleetBasics([]workersafety.FleetSafetyBasicInput{
+	basics := fleetsafety.BuildFleetBasics([]fleetsafety.FleetSafetyBasicInput{
 		{
-			Basic:        workersafety.BasicVehicleMaintenance,
+			Basic:        fleetsafety.BasicVehicleMaintenance,
 			Bucket:       1,
 			Violations:   2,
 			SeveritySum:  6,
@@ -164,7 +165,7 @@ func TestBuildFleetBasics_OutOfServiceAddsTwoPerViolation(t *testing.T) {
 		},
 	}, nil)
 
-	maintenance := findBasic(t, basics, workersafety.BasicVehicleMaintenance)
+	maintenance := findBasic(t, basics, fleetsafety.BasicVehicleMaintenance)
 	// (6 + 2×2) × 2 — the flag is counted per violation, not per group.
 	assert.Equal(t, int32(20), maintenance.WeightedScore)
 	assert.Equal(t, int32(2), maintenance.OutOfService)
@@ -175,7 +176,7 @@ func TestBuildFleetBasics_OutOfServiceAddsTwoPerViolation(t *testing.T) {
 func TestBuildFleetBasics_MarksInferredFigures(t *testing.T) {
 	t.Parallel()
 
-	basics := workersafety.BuildFleetBasics(nil, []workersafety.FleetSafetyEventBasicInput{
+	basics := fleetsafety.BuildFleetBasics(nil, []fleetsafety.FleetSafetyEventBasicInput{
 		{Kind: workersafety.SafetyEventAccident, Bucket: 0, Events: 2, Points: 8},
 		{
 			Kind:             workersafety.SafetyEventInspection,
@@ -185,13 +186,13 @@ func TestBuildFleetBasics_MarksInferredFigures(t *testing.T) {
 		},
 	})
 
-	crash := findBasic(t, basics, workersafety.BasicCrashIndicator)
+	crash := findBasic(t, basics, fleetsafety.BasicCrashIndicator)
 	assert.Equal(t, int32(2), crash.Events)
 	assert.Equal(t, int32(24), crash.WeightedScore)
 	assert.True(t, crash.Inferred)
 
 	// The nine clean inspections belong to no BASIC and must not inflate one.
-	maintenance := findBasic(t, basics, workersafety.BasicVehicleMaintenance)
+	maintenance := findBasic(t, basics, fleetsafety.BasicVehicleMaintenance)
 	assert.Equal(t, int32(0), maintenance.Events)
 	assert.False(t, maintenance.Inferred)
 }
@@ -201,10 +202,10 @@ func TestBuildFleetBasics_MarksInferredFigures(t *testing.T) {
 func TestBuildFleetBasics_AlwaysReturnsAllSevenInOrder(t *testing.T) {
 	t.Parallel()
 
-	basics := workersafety.BuildFleetBasics(nil, nil)
+	basics := fleetsafety.BuildFleetBasics(nil, nil)
 
 	require.Len(t, basics, 7)
-	for i, expected := range workersafety.AllCSABasics() {
+	for i, expected := range fleetsafety.AllCSABasics() {
 		assert.Equal(t, expected, basics[i].Basic)
 	}
 }
@@ -212,19 +213,19 @@ func TestBuildFleetBasics_AlwaysReturnsAllSevenInOrder(t *testing.T) {
 func TestAverageScore(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, int32(88), workersafety.AverageScore(880, 10))
+	assert.Equal(t, int32(88), fleetsafety.AverageScore(880, 10))
 	// Rounds to nearest rather than truncating: 87.5 over eight drivers is 88.
-	assert.Equal(t, int32(88), workersafety.AverageScore(700, 8))
+	assert.Equal(t, int32(88), fleetsafety.AverageScore(700, 8))
 
 	// A fleet with nobody in it does not have a perfect record; it has none.
-	assert.Equal(t, int32(0), workersafety.AverageScore(0, 0))
+	assert.Equal(t, int32(0), fleetsafety.AverageScore(0, 0))
 }
 
 func findBasic(
 	t *testing.T,
-	basics []workersafety.FleetSafetyBasic,
-	want workersafety.CSABasic,
-) workersafety.FleetSafetyBasic {
+	basics []fleetsafety.FleetSafetyBasic,
+	want fleetsafety.CSABasic,
+) fleetsafety.FleetSafetyBasic {
 	t.Helper()
 	for _, basic := range basics {
 		if basic.Basic == want {
@@ -232,5 +233,5 @@ func findBasic(
 		}
 	}
 	t.Fatalf("BASIC %s not present", want)
-	return workersafety.FleetSafetyBasic{}
+	return fleetsafety.FleetSafetyBasic{}
 }

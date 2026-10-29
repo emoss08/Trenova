@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,7 +23,7 @@ func (s *Service) ListRecognitions(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	visibleOnly bool,
-) ([]*workersafety.WorkerRecognition, error) {
+) ([]*workerdiscipline.WorkerRecognition, error) {
 	return s.repo.ListRecognitions(ctx, &workersafetyports.ListWorkerRecognitionsRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
@@ -35,9 +35,9 @@ func (s *Service) ListRecognitions(
 // GiveRecognition records praise and, when it is visible, tells the driver.
 func (s *Service) GiveRecognition(
 	ctx context.Context,
-	entity *workersafety.WorkerRecognition,
+	entity *workerdiscipline.WorkerRecognition,
 	userID pulid.ID,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	log := s.l.With(
 		zap.String("operation", "GiveRecognition"),
 		zap.String("workerId", entity.WorkerID.String()),
@@ -88,7 +88,7 @@ func (s *Service) GiveRecognition(
 
 func (s *Service) prepareRecognition(
 	ctx context.Context,
-	entity *workersafety.WorkerRecognition,
+	entity *workerdiscipline.WorkerRecognition,
 	userID pulid.ID,
 ) (*worker.Worker, error) {
 	wrk, err := s.loadWorker(ctx, recognitionTenant(entity), entity.WorkerID)

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,7 +18,7 @@ import (
 func (f *fakeRepo) GetRecognitionByID(
 	_ context.Context,
 	req *workersafetyports.GetWorkerRecognitionByIDRequest,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	for _, r := range f.recognitions {
 		if r.ID == req.ID {
 			copied := *r
@@ -29,7 +31,7 @@ func (f *fakeRepo) GetRecognitionByID(
 func (f *fakeRepo) GetViolationByID(
 	_ context.Context,
 	req *workersafetyports.GetWorkerSafetyViolationByIDRequest,
-) (*workersafety.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	for _, v := range f.violations {
 		if v.ID == req.ID {
 			copied := *v
@@ -120,11 +122,11 @@ func TestPlanUpdateEvent_KeepsWhatTheUpdateKeeps(t *testing.T) {
 func TestPlanRecognitionAndViolations(t *testing.T) {
 	h := newHarness(t)
 
-	recognition, err := h.svc.PlanGiveRecognition(t.Context(), &workersafety.WorkerRecognition{
+	recognition, err := h.svc.PlanGiveRecognition(t.Context(), &workerdiscipline.WorkerRecognition{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.wrk.ID,
-		Kind:           workersafety.RecognitionKindSafetyMilestone,
+		Kind:           workerdiscipline.RecognitionKindSafetyMilestone,
 		Title:          "  A million safe miles  ",
 	}, h.userID)
 	require.NoError(t, err)

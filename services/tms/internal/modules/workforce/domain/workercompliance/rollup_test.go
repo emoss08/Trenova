@@ -3,11 +3,11 @@ package workercompliance_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -31,7 +31,7 @@ func TestRollupFrom_UsesEverySummary(t *testing.T) {
 				{Required: true, Health: worker.TrainingHealthExpired},
 			},
 		},
-		&workersafety.SafetyScorecard{Rating: worker.SafetyRatingWatch, Score: 71},
+		&safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingWatch, Score: 71},
 	)
 
 	assert.Equal(t, worker.ComplianceStatusNonCompliant, rollup.ComplianceStatus)

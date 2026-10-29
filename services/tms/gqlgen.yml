@@ -630,31 +630,31 @@ models:
         resolver: true
   OSHACaseClassification:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHACaseClassification
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHACaseClassification
   OSHAIllnessType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHAIllnessType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHAIllnessType
   InjuryTreatment:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.InjuryTreatment
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.InjuryTreatment
   InjuryCaseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.InjuryCaseStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.InjuryCaseStatus
   WorkersCompClaimStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkersCompClaimStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.WorkersCompClaimStatus
   OSHASummaryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHASummaryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHASummaryStatus
   OSHASummaryTotals:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHASummaryTotals
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHASummaryTotals
   OSHALog:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice.OSHALog
   OSHAAnnualSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.OSHAAnnualSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHAAnnualSummary
     fields:
       certifiedAt:
         resolver: true
@@ -670,7 +670,7 @@ models:
         resolver: true
   WorkerInjury:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerInjury
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.WorkerInjury
     fields:
       recordable:
         resolver: true
@@ -891,7 +891,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyRating
   CSABasic:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.CSABasic
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.CSABasic
   CarrierIntelSection:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Section
@@ -1372,34 +1372,34 @@ models:
       - github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol.DriverDigestCadence
   WorkerSafetyViolation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerSafetyViolation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.WorkerSafetyViolation
   FleetSafety:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafety
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafety
   FleetSafetyBasic:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyBasic
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyBasic
   FleetSafetyKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyKind
   FleetSafetyTerminal:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyTerminal
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyTerminal
     fields:
       fleetCodeId:
         resolver: true
   FleetSafetyTrendPoint:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyTrendPoint
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyTrendPoint
   FleetSafetyRank:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyRank
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyRank
     fields:
       fleetCodeId:
         resolver: true
   FleetSafetyRatingCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.FleetSafetyRatingCount
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyRatingCount
   WorkerStanding:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.Standing
@@ -1420,13 +1420,13 @@ models:
         resolver: true
   DisciplinaryLevel:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.DisciplinaryLevel
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.DisciplinaryLevel
   DisciplinaryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.DisciplinaryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.DisciplinaryStatus
   RecognitionKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.RecognitionKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.RecognitionKind
   WorkerSafetyEvent:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerSafetyEvent
@@ -1453,7 +1453,7 @@ models:
         resolver: true
   SafetyScorecard:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.SafetyScorecard
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard.SafetyScorecard
     fields:
       highestDiscipline:
         resolver: true
@@ -1461,7 +1461,7 @@ models:
         resolver: true
   WorkerDisciplinaryAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerDisciplinaryAction
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.WorkerDisciplinaryAction
     fields:
       suspensionDays:
         resolver: true
@@ -1477,13 +1477,13 @@ models:
         resolver: true
   DisciplinaryLadder:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.DisciplinaryLadder
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.DisciplinaryLadder
     fields:
       highestLevel:
         resolver: true
   WorkerRecognition:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerRecognition
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.WorkerRecognition
     fields:
       awardedById:
         resolver: true

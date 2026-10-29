@@ -1,4 +1,4 @@
-package workersafety
+package workerdiscipline
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -151,10 +152,10 @@ type WorkerDisciplinaryAction struct {
 	CreatedAt      int64              `json:"createdAt"      keel:"created_at,autocreate"`
 	UpdatedAt      int64              `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Worker      *worker.Worker     `json:"worker,omitempty"      keel:"belongs:worker_id"`
-	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" keel:"belongs:safety_event_id"`
-	Document    *document.Document `json:"document,omitempty"    keel:"belongs:document_id"`
-	IssuedBy    *tenant.User       `json:"issuedBy,omitempty"    keel:"belongs:issued_by_id"`
+	Worker      *worker.Worker                  `json:"worker,omitempty"      keel:"belongs:worker_id"`
+	SafetyEvent *workersafety.WorkerSafetyEvent `json:"safetyEvent,omitempty" keel:"belongs:safety_event_id"`
+	Document    *document.Document              `json:"document,omitempty"    keel:"belongs:document_id"`
+	IssuedBy    *tenant.User                    `json:"issuedBy,omitempty"    keel:"belongs:issued_by_id"`
 }
 
 func (a *WorkerDisciplinaryAction) Validate(multiErr *errortypes.MultiError) {

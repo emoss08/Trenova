@@ -3,6 +3,7 @@
 package fleetsafetyexec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"context"
 	"errors"
@@ -34,7 +35,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.AsOf, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -44,7 +45,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.WindowMonths, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -54,7 +55,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Workers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -64,7 +65,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.AverageScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -74,7 +75,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.AtRisk, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -84,7 +85,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Watch, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -94,7 +95,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.TotalEvents, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -104,7 +105,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.TotalPoints, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -114,7 +115,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.OpenEvents, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -124,7 +125,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.OutOfServiceOrders, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -135,7 +136,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "FleetSafetyRatingCount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Ratings, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetSafetyRatingCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRatingCountᚄ),
@@ -146,7 +147,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "FleetSafetyBasic",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Basics, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetSafetyBasic2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyBasicᚄ),
@@ -157,7 +158,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "FleetSafetyKind",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Kinds, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetSafetyKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyKindᚄ),
@@ -168,7 +169,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "FleetSafetyTerminal",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Terminals, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetSafetyTerminal2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTerminalᚄ),
@@ -179,7 +180,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "FleetSafetyTrendPoint",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Trend, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetSafetyTrendPoint2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTrendPointᚄ),
@@ -190,7 +191,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "FleetSafetyRank",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Worst, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetSafetyRank2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRankᚄ),
@@ -201,7 +202,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "FleetSafetyRank",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.Best, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFleetSafetyRank2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRankᚄ),
@@ -211,7 +212,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafety)
+					obj := o.(*fleetsafety.FleetSafety)
 					return obj.BasicsInferred, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -223,7 +224,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyBasic)
+					obj := o.(*fleetsafety.FleetSafetyBasic)
 					return obj.Basic, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic),
@@ -233,7 +234,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyBasic)
+					obj := o.(*fleetsafety.FleetSafetyBasic)
 					return obj.Violations, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -243,7 +244,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyBasic)
+					obj := o.(*fleetsafety.FleetSafetyBasic)
 					return obj.Events, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -253,7 +254,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyBasic)
+					obj := o.(*fleetsafety.FleetSafetyBasic)
 					return obj.WeightedScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -263,7 +264,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyBasic)
+					obj := o.(*fleetsafety.FleetSafetyBasic)
 					return obj.OutOfService, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -273,7 +274,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyBasic)
+					obj := o.(*fleetsafety.FleetSafetyBasic)
 					return obj.Inferred, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -285,7 +286,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyKind)
+					obj := o.(*fleetsafety.FleetSafetyKind)
 					return obj.Kind, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNSafetyEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyEventKind),
@@ -295,7 +296,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyKind)
+					obj := o.(*fleetsafety.FleetSafetyKind)
 					return obj.Events, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -305,7 +306,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyKind)
+					obj := o.(*fleetsafety.FleetSafetyKind)
 					return obj.Points, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -315,7 +316,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyKind)
+					obj := o.(*fleetsafety.FleetSafetyKind)
 					return obj.Preventable, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -325,7 +326,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyKind)
+					obj := o.(*fleetsafety.FleetSafetyKind)
 					return obj.OutOfService, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -335,7 +336,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyKind)
+					obj := o.(*fleetsafety.FleetSafetyKind)
 					return obj.Open, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -347,7 +348,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -357,7 +358,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -368,7 +369,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return gqlexec.Resolver[resolverFleetSafetyRank](ec, "FleetSafetyRank").FleetCodeID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -378,7 +379,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.FleetCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -388,7 +389,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.FleetColor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -398,7 +399,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.Rating, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyRating),
@@ -408,7 +409,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.Score, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -418,7 +419,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.ActivePoints, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -428,7 +429,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.Events, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -437,7 +438,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastEventAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRank)
+					obj := o.(*fleetsafety.FleetSafetyRank)
 					return obj.LastEventAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -449,7 +450,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRatingCount)
+					obj := o.(*fleetsafety.FleetSafetyRatingCount)
 					return obj.Rating, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyRating),
@@ -459,7 +460,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyRatingCount)
+					obj := o.(*fleetsafety.FleetSafetyRatingCount)
 					return obj.Workers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -472,7 +473,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTerminal)
+					obj := o.(*fleetsafety.FleetSafetyTerminal)
 					return gqlexec.Resolver[resolverFleetSafetyTerminal](ec, "FleetSafetyTerminal").FleetCodeID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -482,7 +483,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTerminal)
+					obj := o.(*fleetsafety.FleetSafetyTerminal)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -492,7 +493,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTerminal)
+					obj := o.(*fleetsafety.FleetSafetyTerminal)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -502,7 +503,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTerminal)
+					obj := o.(*fleetsafety.FleetSafetyTerminal)
 					return obj.Color, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -512,7 +513,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTerminal)
+					obj := o.(*fleetsafety.FleetSafetyTerminal)
 					return obj.Workers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -522,7 +523,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTerminal)
+					obj := o.(*fleetsafety.FleetSafetyTerminal)
 					return obj.AtRisk, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -532,7 +533,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTerminal)
+					obj := o.(*fleetsafety.FleetSafetyTerminal)
 					return obj.Watch, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -542,7 +543,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTerminal)
+					obj := o.(*fleetsafety.FleetSafetyTerminal)
 					return obj.AverageScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -554,7 +555,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTrendPoint)
+					obj := o.(*fleetsafety.FleetSafetyTrendPoint)
 					return obj.PeriodStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -564,7 +565,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTrendPoint)
+					obj := o.(*fleetsafety.FleetSafetyTrendPoint)
 					return obj.Events, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -574,7 +575,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTrendPoint)
+					obj := o.(*fleetsafety.FleetSafetyTrendPoint)
 					return obj.Accidents, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -584,7 +585,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTrendPoint)
+					obj := o.(*fleetsafety.FleetSafetyTrendPoint)
 					return obj.Preventable, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -594,7 +595,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTrendPoint)
+					obj := o.(*fleetsafety.FleetSafetyTrendPoint)
 					return obj.Citations, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -604,7 +605,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTrendPoint)
+					obj := o.(*fleetsafety.FleetSafetyTrendPoint)
 					return obj.Inspections, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -614,7 +615,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTrendPoint)
+					obj := o.(*fleetsafety.FleetSafetyTrendPoint)
 					return obj.OutOfService, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -624,7 +625,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.FleetSafetyTrendPoint)
+					obj := o.(*fleetsafety.FleetSafetyTrendPoint)
 					return obj.Points, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -706,7 +707,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -716,7 +717,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -726,7 +727,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -736,7 +737,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.SafetyEventID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -746,7 +747,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -756,7 +757,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.Basic, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic),
@@ -765,7 +766,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "code",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -775,7 +776,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -785,7 +786,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.SeverityWeight, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int16),
@@ -795,7 +796,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.OutOfService, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -805,7 +806,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -815,7 +816,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -825,7 +826,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workersafety.WorkerSafetyViolation)
+					obj := o.(*fleetsafety.WorkerSafetyViolation)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -846,22 +847,22 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverFleetSafetyRank interface {
-	FleetCodeID(ctx context.Context, obj *workersafety.FleetSafetyRank) (*string, error)
+	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyRank) (*string, error)
 }
 
 type resolverFleetSafetyTerminal interface {
-	FleetCodeID(ctx context.Context, obj *workersafety.FleetSafetyTerminal) (*string, error)
+	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyTerminal) (*string, error)
 }
 
 type resolverMutation interface {
-	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*workersafety.WorkerSafetyViolation, error)
-	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*workersafety.WorkerSafetyViolation, error)
+	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
+	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
 	DeleteSafetyViolation(ctx context.Context, id string) (bool, error)
 }
 
 type resolverQuery interface {
-	FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*workersafety.FleetSafety, error)
-	WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*workersafety.WorkerSafetyViolation, error)
+	FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*fleetsafety.FleetSafety, error)
+	WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*fleetsafety.WorkerSafetyViolation, error)
 }
 
 var (
@@ -1157,12 +1158,12 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCSABasic2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic(ctx context.Context, ec *gqlexec.Exec, v any) (*workersafety.CSABasic, error) {
+func unmarshalOCSABasic2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic(ctx context.Context, ec *gqlexec.Exec, v any) (*fleetsafety.CSABasic, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := workersafety.CSABasic(tmp)
+	res := fleetsafety.CSABasic(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1206,7 +1207,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workersafety.CSABasic) graphql.Marshaler {
+func marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.CSABasic) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1214,7 +1215,7 @@ func marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋwo
 	return res
 }
 
-func marshalNFleetSafety2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafety(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workersafety.FleetSafety) graphql.Marshaler {
+func marshalNFleetSafety2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafety(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fleetsafety.FleetSafety) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1222,72 +1223,72 @@ func marshalNFleetSafety2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return ec.MarshalType(ctx, sel, "FleetSafety", v)
 }
 
-func marshalNFleetSafetyBasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyBasic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workersafety.FleetSafetyBasic) graphql.Marshaler {
+func marshalNFleetSafetyBasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyBasic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.FleetSafetyBasic) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FleetSafetyBasic", &v)
 }
 
-func marshalNFleetSafetyBasic2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyBasicᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workersafety.FleetSafetyBasic) graphql.Marshaler {
-	return gqlexec.List[workersafety.FleetSafetyBasic]{
+func marshalNFleetSafetyBasic2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyBasicᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []fleetsafety.FleetSafetyBasic) graphql.Marshaler {
+	return gqlexec.List[fleetsafety.FleetSafetyBasic]{
 		Elem:        marshalNFleetSafetyBasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyBasic,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFleetSafetyKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workersafety.FleetSafetyKind) graphql.Marshaler {
+func marshalNFleetSafetyKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.FleetSafetyKind) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FleetSafetyKind", &v)
 }
 
-func marshalNFleetSafetyKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyKindᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workersafety.FleetSafetyKind) graphql.Marshaler {
-	return gqlexec.List[workersafety.FleetSafetyKind]{
+func marshalNFleetSafetyKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyKindᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []fleetsafety.FleetSafetyKind) graphql.Marshaler {
+	return gqlexec.List[fleetsafety.FleetSafetyKind]{
 		Elem:        marshalNFleetSafetyKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyKind,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFleetSafetyRank2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRank(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workersafety.FleetSafetyRank) graphql.Marshaler {
+func marshalNFleetSafetyRank2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRank(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.FleetSafetyRank) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FleetSafetyRank", &v)
 }
 
-func marshalNFleetSafetyRank2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRankᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workersafety.FleetSafetyRank) graphql.Marshaler {
-	return gqlexec.List[workersafety.FleetSafetyRank]{
+func marshalNFleetSafetyRank2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRankᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []fleetsafety.FleetSafetyRank) graphql.Marshaler {
+	return gqlexec.List[fleetsafety.FleetSafetyRank]{
 		Elem:        marshalNFleetSafetyRank2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRank,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFleetSafetyRatingCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRatingCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workersafety.FleetSafetyRatingCount) graphql.Marshaler {
+func marshalNFleetSafetyRatingCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRatingCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.FleetSafetyRatingCount) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FleetSafetyRatingCount", &v)
 }
 
-func marshalNFleetSafetyRatingCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRatingCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workersafety.FleetSafetyRatingCount) graphql.Marshaler {
-	return gqlexec.List[workersafety.FleetSafetyRatingCount]{
+func marshalNFleetSafetyRatingCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRatingCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []fleetsafety.FleetSafetyRatingCount) graphql.Marshaler {
+	return gqlexec.List[fleetsafety.FleetSafetyRatingCount]{
 		Elem:        marshalNFleetSafetyRatingCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyRatingCount,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFleetSafetyTerminal2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTerminal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workersafety.FleetSafetyTerminal) graphql.Marshaler {
+func marshalNFleetSafetyTerminal2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTerminal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.FleetSafetyTerminal) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FleetSafetyTerminal", &v)
 }
 
-func marshalNFleetSafetyTerminal2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTerminalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workersafety.FleetSafetyTerminal) graphql.Marshaler {
-	return gqlexec.List[workersafety.FleetSafetyTerminal]{
+func marshalNFleetSafetyTerminal2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTerminalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []fleetsafety.FleetSafetyTerminal) graphql.Marshaler {
+	return gqlexec.List[fleetsafety.FleetSafetyTerminal]{
 		Elem:        marshalNFleetSafetyTerminal2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTerminal,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFleetSafetyTrendPoint2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workersafety.FleetSafetyTrendPoint) graphql.Marshaler {
+func marshalNFleetSafetyTrendPoint2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.FleetSafetyTrendPoint) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FleetSafetyTrendPoint", &v)
 }
 
-func marshalNFleetSafetyTrendPoint2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workersafety.FleetSafetyTrendPoint) graphql.Marshaler {
-	return gqlexec.List[workersafety.FleetSafetyTrendPoint]{
+func marshalNFleetSafetyTrendPoint2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []fleetsafety.FleetSafetyTrendPoint) graphql.Marshaler {
+	return gqlexec.List[fleetsafety.FleetSafetyTrendPoint]{
 		Elem:        marshalNFleetSafetyTrendPoint2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐFleetSafetyTrendPoint,
 		NonNull:     true,
 		NonNullElem: true,
@@ -1358,15 +1359,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerSafetyViolation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerSafetyViolationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workersafety.WorkerSafetyViolation) graphql.Marshaler {
-	return gqlexec.List[*workersafety.WorkerSafetyViolation]{
+func marshalNWorkerSafetyViolation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerSafetyViolationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*fleetsafety.WorkerSafetyViolation) graphql.Marshaler {
+	return gqlexec.List[*fleetsafety.WorkerSafetyViolation]{
 		Elem:        marshalNWorkerSafetyViolation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerSafetyViolation,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerSafetyViolation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerSafetyViolation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workersafety.WorkerSafetyViolation) graphql.Marshaler {
+func marshalNWorkerSafetyViolation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerSafetyViolation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fleetsafety.WorkerSafetyViolation) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

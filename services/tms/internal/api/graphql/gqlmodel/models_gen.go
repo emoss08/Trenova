@@ -3,6 +3,9 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"bytes"
@@ -6419,7 +6422,7 @@ type IssueCustomerTrackingLinkPayload struct {
 
 type IssueDisciplinaryActionInput struct {
 	WorkerID       string                         `json:"workerId"`
-	Level          workersafety.DisciplinaryLevel `json:"level"`
+	Level          workerdiscipline.DisciplinaryLevel `json:"level"`
 	Reason         string                         `json:"reason"`
 	Details        *string                        `json:"details,omitempty"`
 	OccurredAt     *int                           `json:"occurredAt,omitempty"`
@@ -7758,7 +7761,7 @@ type RecordSafetyViolationInput struct {
 	SafetyEventID string `json:"safetyEventId"`
 	// Left empty, the BASIC falls back to what the event itself implies, so a clerk
 	// keying an inspection does not have to classify every line to record one.
-	Basic          *workersafety.CSABasic `json:"basic,omitempty"`
+	Basic          *fleetsafety.CSABasic `json:"basic,omitempty"`
 	Code           *string                `json:"code,omitempty"`
 	Description    string                 `json:"description"`
 	SeverityWeight *int                   `json:"severityWeight,omitempty"`
@@ -7802,9 +7805,9 @@ type RecordWorkerInjuryInput struct {
 	WorkerID         string                               `json:"workerId"`
 	OccurredAt       int                                  `json:"occurredAt"`
 	Description      string                               `json:"description"`
-	Classification   *workersafety.OSHACaseClassification `json:"classification,omitempty"`
-	IllnessType      *workersafety.OSHAIllnessType        `json:"illnessType,omitempty"`
-	Treatment        *workersafety.InjuryTreatment        `json:"treatment,omitempty"`
+	Classification   *workerinjury.OSHACaseClassification `json:"classification,omitempty"`
+	IllnessType      *workerinjury.OSHAIllnessType        `json:"illnessType,omitempty"`
+	Treatment        *workerinjury.InjuryTreatment        `json:"treatment,omitempty"`
 	ReportedAt       *int                                 `json:"reportedAt,omitempty"`
 	ReturnedToWorkAt *int                                 `json:"returnedToWorkAt,omitempty"`
 	Location         *string                              `json:"location,omitempty"`
@@ -7813,7 +7816,7 @@ type RecordWorkerInjuryInput struct {
 	DaysAway         *int                                 `json:"daysAway,omitempty"`
 	DaysRestricted   *int                                 `json:"daysRestricted,omitempty"`
 	PrivacyCase      *bool                                `json:"privacyCase,omitempty"`
-	ClaimStatus      *workersafety.WorkersCompClaimStatus `json:"claimStatus,omitempty"`
+	ClaimStatus      *workerinjury.WorkersCompClaimStatus `json:"claimStatus,omitempty"`
 	ClaimNumber      *string                              `json:"claimNumber,omitempty"`
 	ClaimCarrier     *string                              `json:"claimCarrier,omitempty"`
 	ClaimFiledAt     *int                                 `json:"claimFiledAt,omitempty"`
@@ -12041,7 +12044,7 @@ type UpdateReportViewInput struct {
 
 type UpdateSafetyViolationInput struct {
 	ID             string                 `json:"id"`
-	Basic          *workersafety.CSABasic `json:"basic,omitempty"`
+	Basic          *fleetsafety.CSABasic `json:"basic,omitempty"`
 	Code           *string                `json:"code,omitempty"`
 	Description    string                 `json:"description"`
 	SeverityWeight *int                   `json:"severityWeight,omitempty"`
@@ -12079,10 +12082,10 @@ type UpdateWorkerCredentialInput struct {
 
 type UpdateWorkerInjuryInput struct {
 	InjuryID         string                               `json:"injuryId"`
-	Classification   *workersafety.OSHACaseClassification `json:"classification,omitempty"`
-	IllnessType      *workersafety.OSHAIllnessType        `json:"illnessType,omitempty"`
-	Treatment        *workersafety.InjuryTreatment        `json:"treatment,omitempty"`
-	Status           *workersafety.InjuryCaseStatus       `json:"status,omitempty"`
+	Classification   *workerinjury.OSHACaseClassification `json:"classification,omitempty"`
+	IllnessType      *workerinjury.OSHAIllnessType        `json:"illnessType,omitempty"`
+	Treatment        *workerinjury.InjuryTreatment        `json:"treatment,omitempty"`
+	Status           *workerinjury.InjuryCaseStatus       `json:"status,omitempty"`
 	OccurredAt       *int                                 `json:"occurredAt,omitempty"`
 	ReportedAt       *int                                 `json:"reportedAt,omitempty"`
 	ReturnedToWorkAt *int                                 `json:"returnedToWorkAt,omitempty"`
@@ -12093,7 +12096,7 @@ type UpdateWorkerInjuryInput struct {
 	DaysAway         *int                                 `json:"daysAway,omitempty"`
 	DaysRestricted   *int                                 `json:"daysRestricted,omitempty"`
 	PrivacyCase      *bool                                `json:"privacyCase,omitempty"`
-	ClaimStatus      *workersafety.WorkersCompClaimStatus `json:"claimStatus,omitempty"`
+	ClaimStatus      *workerinjury.WorkersCompClaimStatus `json:"claimStatus,omitempty"`
 	ClaimNumber      *string                              `json:"claimNumber,omitempty"`
 	ClaimCarrier     *string                              `json:"claimCarrier,omitempty"`
 	ClaimFiledAt     *int                                 `json:"claimFiledAt,omitempty"`
@@ -12626,7 +12629,7 @@ type WorkerPolicyInput struct {
 
 type WorkerRecognitionInput struct {
 	WorkerID        string                       `json:"workerId"`
-	Kind            workersafety.RecognitionKind `json:"kind"`
+	Kind            workerdiscipline.RecognitionKind `json:"kind"`
 	Title           string                       `json:"title"`
 	Message         *string                      `json:"message,omitempty"`
 	OccurredAt      *int                         `json:"occurredAt,omitempty"`

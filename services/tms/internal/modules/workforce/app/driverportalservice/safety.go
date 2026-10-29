@@ -3,7 +3,8 @@ package driverportalservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -13,7 +14,7 @@ import (
 func (s *Service) MySafetyScorecard(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*workersafety.SafetyScorecard, error) {
+) (*safetyscorecard.SafetyScorecard, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -25,7 +26,7 @@ func (s *Service) MySafetyScorecard(
 func (s *Service) MyRecognitions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*workersafety.WorkerRecognition, error) {
+) ([]*workerdiscipline.WorkerRecognition, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func (s *Service) MyRecognitions(
 func (s *Service) MyDisciplinaryActions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*workersafety.WorkerDisciplinaryAction, error) {
+) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func (s *Service) AcknowledgeMyDisciplinaryAction(
 	tenantInfo pagination.TenantInfo,
 	actionID pulid.ID,
 	comment string,
-) (*workersafety.WorkerDisciplinaryAction, error) {
+) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

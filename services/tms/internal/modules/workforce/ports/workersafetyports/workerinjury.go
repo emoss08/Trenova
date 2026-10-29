@@ -3,7 +3,7 @@ package workersafetyports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -55,19 +55,19 @@ type WorkerInjuryRepository interface {
 	ListInjuries(
 		ctx context.Context,
 		req *ListWorkerInjuriesRequest,
-	) ([]*workersafety.WorkerInjury, error)
+	) ([]*workerinjury.WorkerInjury, error)
 	GetInjuryByID(
 		ctx context.Context,
 		req *GetWorkerInjuryByIDRequest,
-	) (*workersafety.WorkerInjury, error)
+	) (*workerinjury.WorkerInjury, error)
 	CreateInjury(
 		ctx context.Context,
-		entity *workersafety.WorkerInjury,
-	) (*workersafety.WorkerInjury, error)
+		entity *workerinjury.WorkerInjury,
+	) (*workerinjury.WorkerInjury, error)
 	UpdateInjury(
 		ctx context.Context,
-		entity *workersafety.WorkerInjury,
-	) (*workersafety.WorkerInjury, error)
+		entity *workerinjury.WorkerInjury,
+	) (*workerinjury.WorkerInjury, error)
 	DeleteInjury(ctx context.Context, req *GetWorkerInjuryByIDRequest) error
 	NextCaseNumber(ctx context.Context, req *NextCaseNumberRequest) (int32, error)
 
@@ -77,17 +77,17 @@ type WorkerInjuryRepository interface {
 	GetSummary(
 		ctx context.Context,
 		req *GetOSHASummaryRequest,
-	) (*workersafety.OSHAAnnualSummary, error)
+	) (*workerinjury.OSHAAnnualSummary, error)
 	ListSummaries(
 		ctx context.Context,
 		req *ListOSHASummariesRequest,
-	) ([]*workersafety.OSHAAnnualSummary, error)
+	) ([]*workerinjury.OSHAAnnualSummary, error)
 	CreateSummary(
 		ctx context.Context,
-		entity *workersafety.OSHAAnnualSummary,
-	) (*workersafety.OSHAAnnualSummary, error)
+		entity *workerinjury.OSHAAnnualSummary,
+	) (*workerinjury.OSHAAnnualSummary, error)
 	UpdateSummary(
 		ctx context.Context,
-		entity *workersafety.OSHAAnnualSummary,
-	) (*workersafety.OSHAAnnualSummary, error)
+		entity *workerinjury.OSHAAnnualSummary,
+	) (*workerinjury.OSHAAnnualSummary, error)
 }

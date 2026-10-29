@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview/workerreviewdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
@@ -333,14 +334,14 @@ func (s *WorkerSafetySeed) actionsFor(
 	wrk *worker.Worker,
 	index int,
 	events []*workersafety.WorkerSafetyEvent,
-) []*workersafety.WorkerDisciplinaryAction {
-	action := func(level workersafety.DisciplinaryLevel, daysAgo int64, reason string, mutate func(*workersafety.WorkerDisciplinaryAction)) *workersafety.WorkerDisciplinaryAction {
-		a := &workersafety.WorkerDisciplinaryAction{
+) []*workerdiscipline.WorkerDisciplinaryAction {
+	action := func(level workerdiscipline.DisciplinaryLevel, daysAgo int64, reason string, mutate func(*workerdiscipline.WorkerDisciplinaryAction)) *workerdiscipline.WorkerDisciplinaryAction {
+		a := &workerdiscipline.WorkerDisciplinaryAction{
 			OrganizationID: refs.orgID,
 			BusinessUnitID: refs.buID,
 			WorkerID:       wrk.ID,
 			Level:          level,
-			Status:         workersafety.DisciplinaryStatusActive,
+			Status:         workerdiscipline.DisciplinaryStatusActive,
 			Reason:         reason,
 			IssuedAt:       refs.now - daysAgo*safetySeedDay,
 			IssuedByID:     refs.adminID,
@@ -350,49 +351,49 @@ func (s *WorkerSafetySeed) actionsFor(
 		}
 		a.DefaultExpiry()
 		if a.ExpiresAt != nil && *a.ExpiresAt < refs.now &&
-			a.Status == workersafety.DisciplinaryStatusActive {
-			a.Status = workersafety.DisciplinaryStatusExpired
+			a.Status == workerdiscipline.DisciplinaryStatusActive {
+			a.Status = workerdiscipline.DisciplinaryStatusExpired
 		}
 		return a
 	}
 	switch index % 6 {
 	case 1:
 		acked := refs.now - 110*safetySeedDay
-		return []*workersafety.WorkerDisciplinaryAction{
+		return []*workerdiscipline.WorkerDisciplinaryAction{
 			action(
-				workersafety.DisciplinaryLevelCoaching,
+				workerdiscipline.DisciplinaryLevelCoaching,
 				115,
 				"Preventable dock strike; backing procedure reviewed.",
-				func(a *workersafety.WorkerDisciplinaryAction) {
+				func(a *workerdiscipline.WorkerDisciplinaryAction) {
 					a.SafetyEventID = events[len(events)-1].ID
 					a.AcknowledgedAt = &acked
 				},
 			),
 		}
 	case 3:
-		return []*workersafety.WorkerDisciplinaryAction{
+		return []*workerdiscipline.WorkerDisciplinaryAction{
 			action(
-				workersafety.DisciplinaryLevelVerbalWarning,
+				workerdiscipline.DisciplinaryLevelVerbalWarning,
 				400,
 				"Missed pre-trip inspection.",
 				nil,
 			),
 			action(
-				workersafety.DisciplinaryLevelWrittenWarning,
+				workerdiscipline.DisciplinaryLevelWrittenWarning,
 				10,
 				"Out-of-service brake adjustment found at roadside.",
-				func(a *workersafety.WorkerDisciplinaryAction) { a.SafetyEventID = events[len(events)-1].ID },
+				func(a *workerdiscipline.WorkerDisciplinaryAction) { a.SafetyEventID = events[len(events)-1].ID },
 			),
 		}
 	case 5:
 		rescinded := refs.now - 150*safetySeedDay
-		return []*workersafety.WorkerDisciplinaryAction{
+		return []*workerdiscipline.WorkerDisciplinaryAction{
 			action(
-				workersafety.DisciplinaryLevelVerbalWarning,
+				workerdiscipline.DisciplinaryLevelVerbalWarning,
 				160,
 				"Late departure reported by dispatch.",
-				func(a *workersafety.WorkerDisciplinaryAction) {
-					a.Status = workersafety.DisciplinaryStatusRescinded
+				func(a *workerdiscipline.WorkerDisciplinaryAction) {
+					a.Status = workerdiscipline.DisciplinaryStatusRescinded
 					a.RescindedAt = &rescinded
 					a.RescindedByID = refs.adminID
 					a.RescindReason = "Departure was delayed by the shipper; not the driver's fault"
@@ -407,9 +408,9 @@ func (s *WorkerSafetySeed) recognitionsFor(
 	refs *safetySeedRefs,
 	wrk *worker.Worker,
 	index int,
-) []*workersafety.WorkerRecognition {
-	give := func(kind workersafety.RecognitionKind, daysAgo int64, title, message string) *workersafety.WorkerRecognition {
-		return &workersafety.WorkerRecognition{
+) []*workerdiscipline.WorkerRecognition {
+	give := func(kind workerdiscipline.RecognitionKind, daysAgo int64, title, message string) *workerdiscipline.WorkerRecognition {
+		return &workerdiscipline.WorkerRecognition{
 			OrganizationID:  refs.orgID,
 			BusinessUnitID:  refs.buID,
 			WorkerID:        wrk.ID,
@@ -423,23 +424,28 @@ func (s *WorkerSafetySeed) recognitionsFor(
 	}
 	switch index % 4 {
 	case 0:
-		return []*workersafety.WorkerRecognition{
+		return []*workerdiscipline.WorkerRecognition{
 			give(
-				workersafety.RecognitionKindSafetyMilestone,
+				workerdiscipline.RecognitionKindSafetyMilestone,
 				20,
 				"One year accident-free",
 				"Twelve months without a preventable. Thank you for the care you take out there.",
 			),
 		}
 	case 2:
-		return []*workersafety.WorkerRecognition{
+		return []*workerdiscipline.WorkerRecognition{
 			give(
-				workersafety.RecognitionKindCustomerPraise,
+				workerdiscipline.RecognitionKindCustomerPraise,
 				6,
 				"Praised by the receiver in Columbus",
 				"The dock lead called to say the load was the smoothest delivery they had all week.",
 			),
-			give(workersafety.RecognitionKindTeamPlayer, 90, "Covered a sick call on a Sunday", ""),
+			give(
+				workerdiscipline.RecognitionKindTeamPlayer,
+				90,
+				"Covered a sick call on a Sunday",
+				"",
+			),
 		}
 	}
 	return nil

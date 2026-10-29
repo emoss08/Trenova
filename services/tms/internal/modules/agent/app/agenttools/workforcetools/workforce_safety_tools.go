@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -112,10 +114,10 @@ var inspectionResults = agenttoolschema.Source(
 
 var recognitionKinds = agenttoolschema.Source(
 	"worker.recognitionKind",
-	workersafety.RecognitionKindValues(),
+	workerdiscipline.RecognitionKindValues(),
 )
 
-var csaBasics = agenttoolschema.Source("worker.csaBasic", workersafety.AllCSABasics())
+var csaBasics = agenttoolschema.Source("worker.csaBasic", fleetsafety.AllCSABasics())
 
 var safetyEventMoves = agenttoolschema.Source(
 	"workerSafetyEvent.agentMove",
@@ -191,19 +193,19 @@ type SafetyKeeper interface {
 	) error
 	PlanGiveRecognition(
 		ctx context.Context,
-		entity *workersafety.WorkerRecognition,
+		entity *workerdiscipline.WorkerRecognition,
 		userID pulid.ID,
-	) (*workersafety.WorkerRecognition, error)
+	) (*workerdiscipline.WorkerRecognition, error)
 	GiveRecognition(
 		ctx context.Context,
-		entity *workersafety.WorkerRecognition,
+		entity *workerdiscipline.WorkerRecognition,
 		userID pulid.ID,
-	) (*workersafety.WorkerRecognition, error)
+	) (*workerdiscipline.WorkerRecognition, error)
 	PlanDeleteRecognition(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*workersafety.WorkerRecognition, error)
+	) (*workerdiscipline.WorkerRecognition, error)
 	DeleteRecognition(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -213,11 +215,11 @@ type SafetyKeeper interface {
 	PlanRecordViolation(
 		ctx context.Context,
 		req *workersafetyservice.RecordViolationRequest,
-	) (*workersafety.WorkerSafetyViolation, error)
+	) (*fleetsafety.WorkerSafetyViolation, error)
 	RecordViolation(
 		ctx context.Context,
 		req *workersafetyservice.RecordViolationRequest,
-	) (*workersafety.WorkerSafetyViolation, error)
+	) (*fleetsafety.WorkerSafetyViolation, error)
 	PlanUpdateViolation(
 		ctx context.Context,
 		req *workersafetyservice.UpdateViolationRequest,
@@ -225,17 +227,17 @@ type SafetyKeeper interface {
 	UpdateViolation(
 		ctx context.Context,
 		req *workersafetyservice.UpdateViolationRequest,
-	) (*workersafety.WorkerSafetyViolation, error)
+	) (*fleetsafety.WorkerSafetyViolation, error)
 	GetViolation(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*workersafety.WorkerSafetyViolation, error)
+	) (*fleetsafety.WorkerSafetyViolation, error)
 	PlanDeleteViolation(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*workersafety.WorkerSafetyViolation, error)
+	) (*fleetsafety.WorkerSafetyViolation, error)
 	DeleteViolation(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -871,7 +873,7 @@ func newDeleteWorkerSafetyEventTool(events SafetyKeeper) agenttoolports.AgentToo
 
 func recognitionFrom(
 	params *agenttoolports.ToolExecuteParams,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
@@ -896,7 +898,7 @@ func recognitionFrom(
 	if err != nil {
 		return nil, err
 	}
-	entity := &workersafety.WorkerRecognition{
+	entity := &workerdiscipline.WorkerRecognition{
 		OrganizationID:  params.OrganizationID,
 		BusinessUnitID:  params.BusinessUnitID,
 		WorkerID:        workerID,
@@ -949,22 +951,23 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool 
 
 	spec.SearchTerms = []string{"safe miles award", "recognize driver", "safety award", "praise"}
 
-	return toolspec.NewReportingReceivableTool(spec,
-		toolspec.ReceivablePlan[*workersafety.WorkerRecognition, *workersafety.WorkerRecognition]{
+	return toolspec.NewReportingReceivableTool(
+		spec,
+		toolspec.ReceivablePlan[*workerdiscipline.WorkerRecognition, *workerdiscipline.WorkerRecognition]{
 			Request: recognitionFrom,
 			Plan: func(
 				ctx context.Context,
-				entity *workersafety.WorkerRecognition,
+				entity *workerdiscipline.WorkerRecognition,
 				params *agenttoolports.ToolExecuteParams,
-			) (*workersafety.WorkerRecognition, error) {
+			) (*workerdiscipline.WorkerRecognition, error) {
 				return events.PlanGiveRecognition(ctx, entity, params.Actor.UserID)
 			},
-			Refused: func(*workersafety.WorkerRecognition) string {
+			Refused: func(*workerdiscipline.WorkerRecognition) string {
 				return "Would recognise the driver."
 			},
 			Render: func(
-				_ *workersafety.WorkerRecognition,
-				planned *workersafety.WorkerRecognition,
+				_ *workerdiscipline.WorkerRecognition,
+				planned *workerdiscipline.WorkerRecognition,
 			) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerRecognition, pulid.Nil, planned.Title, 0),
@@ -980,7 +983,7 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool 
 			},
 			Run: func(
 				ctx context.Context,
-				entity *workersafety.WorkerRecognition,
+				entity *workerdiscipline.WorkerRecognition,
 				params *agenttoolports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := events.GiveRecognition(ctx, entity, params.Actor.UserID)
@@ -990,7 +993,8 @@ func newGiveWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool 
 				return wfResult("given", kindRecognition, paramRecognitionID, created.ID,
 					created.WorkerID), nil
 			},
-		})
+		},
+	)
 }
 
 func newDeleteWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentTool {
@@ -1014,17 +1018,17 @@ func newDeleteWorkerRecognitionTool(events SafetyKeeper) agenttoolports.AgentToo
 
 	return toolspec.NewReceivableTool(
 		spec,
-		toolspec.ReceivablePlan[*recordDelete, *workersafety.WorkerRecognition]{
+		toolspec.ReceivablePlan[*recordDelete, *workerdiscipline.WorkerRecognition]{
 			Request: recordDeleteFrom(paramRecognitionID),
 			Plan: func(
 				ctx context.Context,
 				del *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*workersafety.WorkerRecognition, error) {
+			) (*workerdiscipline.WorkerRecognition, error) {
 				return events.PlanDeleteRecognition(ctx, del.tenant, del.id)
 			},
 			Refused: func(*recordDelete) string { return "Would remove a recognition." },
-			Render: func(_ *recordDelete, rec *workersafety.WorkerRecognition) (*agent.ToolPreview, error) {
+			Render: func(_ *recordDelete, rec *workerdiscipline.WorkerRecognition) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(
 					wfRecord(permission.ResourceWorkerRecognition, rec.ID, rec.Title, rec.Version),
 					rec, wfOptions(recognitionFields...)...)
@@ -1050,7 +1054,7 @@ var violationFields = []string{
 	paramSeverityWeight, paramOutOfService,
 }
 
-func violationRecord(violation *workersafety.WorkerSafetyViolation) toolpreview.Record {
+func violationRecord(violation *fleetsafety.WorkerSafetyViolation) toolpreview.Record {
 	label := violation.Description
 	if violation.Code != "" {
 		label = violation.Code + " " + label
@@ -1102,7 +1106,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 	spec.SearchTerms = []string{"roadside violation", "inspection violation", "add violation"}
 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
-		*workersafetyservice.RecordViolationRequest, *workersafety.WorkerSafetyViolation,
+		*workersafetyservice.RecordViolationRequest, *fleetsafety.WorkerSafetyViolation,
 	]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
@@ -1150,7 +1154,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 			ctx context.Context,
 			req *workersafetyservice.RecordViolationRequest,
 			_ *agenttoolports.ToolExecuteParams,
-		) (*workersafety.WorkerSafetyViolation, error) {
+		) (*fleetsafety.WorkerSafetyViolation, error) {
 			return events.PlanRecordViolation(ctx, req)
 		},
 		Refused: func(*workersafetyservice.RecordViolationRequest) string {
@@ -1158,7 +1162,7 @@ func newRecordSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 		},
 		Render: func(
 			_ *workersafetyservice.RecordViolationRequest,
-			planned *workersafety.WorkerSafetyViolation,
+			planned *fleetsafety.WorkerSafetyViolation,
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerSafetyEvent, pulid.Nil, "New violation", 0),
@@ -1325,19 +1329,19 @@ func newDeleteSafetyViolationTool(events SafetyKeeper) agenttoolports.AgentTool 
 
 	return toolspec.NewReceivableTool(
 		spec,
-		toolspec.ReceivablePlan[*recordDelete, *workersafety.WorkerSafetyViolation]{
+		toolspec.ReceivablePlan[*recordDelete, *fleetsafety.WorkerSafetyViolation]{
 			Request: recordDeleteFrom(paramViolationID),
 			Plan: func(
 				ctx context.Context,
 				del *recordDelete,
 				_ *agenttoolports.ToolExecuteParams,
-			) (*workersafety.WorkerSafetyViolation, error) {
+			) (*fleetsafety.WorkerSafetyViolation, error) {
 				return events.PlanDeleteViolation(ctx, del.tenant, del.id)
 			},
 			Refused: func(*recordDelete) string { return "Would remove a cited violation." },
 			Render: func(
 				_ *recordDelete,
-				violation *workersafety.WorkerSafetyViolation,
+				violation *fleetsafety.WorkerSafetyViolation,
 			) (*agent.ToolPreview, error) {
 				change, err := toolpreview.Delete(violationRecord(violation), violation,
 					wfOptions(violationFields...)...)

@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/restx"
@@ -526,7 +526,7 @@ func TestNormalizeComposite(t *testing.T) {
 	assert.Equal(t, "C", safety.LatestReviewType)
 
 	require.Len(t, profile.Basics, 2)
-	hos := profile.Basic(workersafety.BasicHOSCompliance)
+	hos := profile.Basic(fleetsafety.BasicHOSCompliance)
 	require.NotNil(t, hos)
 	require.NotNil(t, hos.Percentile)
 	assert.InDelta(t, 72.4, *hos.Percentile, 0.0001)
@@ -536,7 +536,7 @@ func TestNormalizeComposite(t *testing.T) {
 	assert.True(t, hos.RoadsideAlert)
 	assert.False(t, hos.ACIndicator)
 
-	unsafe := profile.Basic(workersafety.BasicUnsafeDriving)
+	unsafe := profile.Basic(fleetsafety.BasicUnsafeDriving)
 	require.NotNil(t, unsafe)
 	assert.Nil(t, unsafe.Percentile)
 	assert.False(t, unsafe.Alert)
@@ -598,17 +598,17 @@ func TestOutOfServiceOrder(t *testing.T) {
 func TestCSABasicFromLabel(t *testing.T) {
 	t.Parallel()
 
-	cases := map[string]workersafety.CSABasic{
-		"Unsafe Driving":                 workersafety.BasicUnsafeDriving,
-		"HOS Compliance":                 workersafety.BasicHOSCompliance,
-		"Hours-of-Service Compliance":    workersafety.BasicHOSCompliance,
-		"Driver Fitness":                 workersafety.BasicDriverFitness,
-		"Drugs/Alcohol":                  workersafety.BasicControlledSubstances,
-		"Controlled Substances/Alcohol":  workersafety.BasicControlledSubstances,
-		"Vehicle Maint.":                 workersafety.BasicVehicleMaintenance,
-		"HM Compliance":                  workersafety.BasicHazmatCompliance,
-		"Hazardous Materials Compliance": workersafety.BasicHazmatCompliance,
-		"Crash Indicator":                workersafety.BasicCrashIndicator,
+	cases := map[string]fleetsafety.CSABasic{
+		"Unsafe Driving":                 fleetsafety.BasicUnsafeDriving,
+		"HOS Compliance":                 fleetsafety.BasicHOSCompliance,
+		"Hours-of-Service Compliance":    fleetsafety.BasicHOSCompliance,
+		"Driver Fitness":                 fleetsafety.BasicDriverFitness,
+		"Drugs/Alcohol":                  fleetsafety.BasicControlledSubstances,
+		"Controlled Substances/Alcohol":  fleetsafety.BasicControlledSubstances,
+		"Vehicle Maint.":                 fleetsafety.BasicVehicleMaintenance,
+		"HM Compliance":                  fleetsafety.BasicHazmatCompliance,
+		"Hazardous Materials Compliance": fleetsafety.BasicHazmatCompliance,
+		"Crash Indicator":                fleetsafety.BasicCrashIndicator,
 	}
 	for label, want := range cases {
 		got, ok := csaBasicFromLabel(label)

@@ -28,11 +28,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -78,13 +79,13 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[workerleave.WorkerLeaveEntry]():                permission.ResourceWorkerLeave,
 	reflect.TypeFor[workerdot.WorkerDOTViolation]():                permission.ResourceWorkerDOTTest,
 	reflect.TypeFor[dotclearinghouse.WorkerClearinghouseQuery]():   permission.ResourceWorkerDOTTest,
-	reflect.TypeFor[workersafety.OSHAAnnualSummary]():              permission.ResourceWorkerInjury,
+	reflect.TypeFor[workerinjury.OSHAAnnualSummary]():              permission.ResourceWorkerInjury,
 	reflect.TypeFor[timesheet.TimeClockEntry]():                    permission.ResourceTimesheet,
 	reflect.TypeFor[timesheet.PayrollExport]():                     permission.ResourceTimesheet,
 	reflect.TypeFor[profilechange.WorkerProfileChangeRequest]():    permission.ResourceProfileChangeRequest,
 	reflect.TypeFor[driverpay.WorkerBenefitEnrollment]():           permission.ResourceBenefitPlan,
 	reflect.TypeFor[employment.WorkerEmploymentVerification]():     permission.ResourceQualification,
-	reflect.TypeFor[workersafety.WorkerSafetyViolation]():          permission.ResourceWorkerSafetyEvent,
+	reflect.TypeFor[fleetsafety.WorkerSafetyViolation]():           permission.ResourceWorkerSafetyEvent,
 	reflect.TypeFor[carrierintel.CarrierIntelEvent]():              permission.ResourceCarrierIntelligence,
 	reflect.TypeFor[driverpay.PayProfile]():                        permission.ResourceDriverPayProfile,
 	reflect.TypeFor[driverpay.WorkerPayAssignment]():               permission.ResourceDriverPayProfile,

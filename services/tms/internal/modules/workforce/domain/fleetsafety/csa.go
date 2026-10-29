@@ -1,10 +1,11 @@
-package workersafety
+package fleetsafety
 
 import (
 	"context"
 	"errors"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -63,18 +64,22 @@ func AllCSABasics() []CSABasic {
 // several BASICs at once and only the violations themselves can say which.
 // Without it a carrier who records events but not violation codes would read a
 // blank scorecard, which is worse than an approximate one.
-func SuggestedBasic(kind SafetyEventKind, result InspectionResult) CSABasic {
+func SuggestedBasic(
+	kind workersafety.SafetyEventKind,
+	result workersafety.InspectionResult,
+) CSABasic {
 	switch kind {
-	case SafetyEventAccident:
+	case workersafety.SafetyEventAccident:
 		return BasicCrashIndicator
-	case SafetyEventCitation:
+	case workersafety.SafetyEventCitation:
 		return BasicUnsafeDriving
-	case SafetyEventInspection:
-		if result == InspectionResultOutOfService || result == InspectionResultFail {
+	case workersafety.SafetyEventInspection:
+		if result == workersafety.InspectionResultOutOfService ||
+			result == workersafety.InspectionResultFail {
 			return BasicVehicleMaintenance
 		}
 		return ""
-	case SafetyEventIncident, SafetyEventNearMiss:
+	case workersafety.SafetyEventIncident, workersafety.SafetyEventNearMiss:
 		return ""
 	default:
 		return ""
@@ -104,7 +109,7 @@ func CSATimeWeight(occurredAt, now int64) int32 {
 		return csaWeightRecent
 	case occurredAt >= timeutils.AddMonthsUTC(now, -csaMidMonths):
 		return csaWeightMid
-	case occurredAt >= timeutils.AddMonthsUTC(now, -SafetyPointsRetentionMonths):
+	case occurredAt >= timeutils.AddMonthsUTC(now, -workersafety.SafetyPointsRetentionMonths):
 		return csaWeightOld
 	default:
 		return 0
@@ -143,7 +148,7 @@ type WorkerSafetyViolation struct {
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	SafetyEvent *WorkerSafetyEvent `json:"safetyEvent,omitempty" keel:"belongs:safety_event_id"`
+	SafetyEvent *workersafety.WorkerSafetyEvent `json:"safetyEvent,omitempty" keel:"belongs:safety_event_id"`
 }
 
 func (v *WorkerSafetyViolation) Validate(multiErr *errortypes.MultiError) {

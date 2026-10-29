@@ -1,7 +1,8 @@
-package workersafety
+package fleetsafety
 
 import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -23,7 +24,7 @@ type FleetSafetyBasic struct {
 
 // FleetSafetyKind counts one kind of event across the window.
 type FleetSafetyKind struct {
-	Kind         SafetyEventKind
+	Kind         workersafety.SafetyEventKind
 	Events       int32
 	Points       int32
 	Preventable  int32
@@ -131,8 +132,8 @@ type FleetSafetyBasicInput struct {
 // FleetSafetyEventBasicInput is one bucket of events nobody keyed violations
 // into, grouped by the kind and result the BASIC is inferred from.
 type FleetSafetyEventBasicInput struct {
-	Kind             SafetyEventKind
-	InspectionResult InspectionResult
+	Kind             workersafety.SafetyEventKind
+	InspectionResult workersafety.InspectionResult
 	Bucket           int
 	Events           int32
 	Points           int32

@@ -7,12 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
@@ -54,13 +54,13 @@ func (f *fakeTraining) Summary(
 
 type fakeSafety struct {
 	calls int
-	card  *workersafety.SafetyScorecard
+	card  *safetyscorecard.SafetyScorecard
 	err   error
 }
 
 func (f *fakeSafety) Scorecard(
 	_ context.Context, _ pagination.TenantInfo, _ pulid.ID,
-) (*workersafety.SafetyScorecard, error) {
+) (*safetyscorecard.SafetyScorecard, error) {
 	f.calls++
 	return f.card, f.err
 }
@@ -161,7 +161,7 @@ func newOverviewHarness(t *testing.T) *overviewHarness {
 		},
 		training: &fakeTraining{summary: &workertraining.WorkerTrainingSummary{Compliant: true}},
 		safety: &fakeSafety{
-			card: &workersafety.SafetyScorecard{Rating: worker.SafetyRatingGood},
+			card: &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingGood},
 		},
 		checklists: &fakeChecklists{},
 		pto:        &fakeBalances{},
@@ -229,7 +229,7 @@ func TestGet_SkipsSectionsTheCallerCannotRead(t *testing.T) {
 // not be reported as at risk on evidence the viewer is not allowed to read.
 func TestGet_StandingIgnoresSectionsTheCallerCannotRead(t *testing.T) {
 	h := newOverviewHarness(t)
-	h.safety.card = &workersafety.SafetyScorecard{Rating: worker.SafetyRatingAtRisk, Score: 20}
+	h.safety.card = &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingAtRisk, Score: 20}
 
 	withSafety := h.get(t, workeroverviewservice.All())
 	assert.Equal(t, workercompliance.StandingAtRisk, withSafety.Standing)

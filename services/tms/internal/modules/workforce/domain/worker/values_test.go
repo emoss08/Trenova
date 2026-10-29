@@ -5,7 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
@@ -37,18 +39,18 @@ func TestValues_AreEveryValidValueOnce(t *testing.T) {
 	assertEveryValueIsValid(t, workersafety.SafetyEventKindValues(), "Fire")
 	assertEveryValueIsValid(t, workersafety.SafetySeverityValues(), "Trivial")
 	assertEveryValueIsValid(t, workersafety.InspectionResultValues(), "Maybe")
-	assertEveryValueIsValid(t, workersafety.RecognitionKindValues(), "Medal")
+	assertEveryValueIsValid(t, workerdiscipline.RecognitionKindValues(), "Medal")
 	assertEveryValueIsValid(t, workerdot.DOTTestTypeValues(), "Annual")
 	assertEveryValueIsValid(t, workerdot.DOTTestSubstanceValues(), "Caffeine")
 	assertEveryValueIsValid(t, worker.LeaveTypeValues(), "Sabbatical")
 	assertEveryValueIsValid(t, workerleave.LeaveFrequencyValues(), "Weekly")
 	assertEveryValueIsValid(t, employment.EmploymentVerificationStatusValues(), "Lost")
 	assertEveryValueIsValid(t, employment.EmploymentVerificationMethodValues(), "Pigeon")
-	assertEveryValueIsValid(t, workersafety.OSHACaseClassificationValues(), "Minor")
-	assertEveryValueIsValid(t, workersafety.OSHAIllnessTypeValues(), "Cold")
-	assertEveryValueIsValid(t, workersafety.InjuryTreatmentValues(), "Surgery")
-	assertEveryValueIsValid(t, workersafety.InjuryCaseStatusValues(), "Pending")
-	assertEveryValueIsValid(t, workersafety.WorkersCompClaimStatusValues(), "Appealed")
+	assertEveryValueIsValid(t, workerinjury.OSHACaseClassificationValues(), "Minor")
+	assertEveryValueIsValid(t, workerinjury.OSHAIllnessTypeValues(), "Cold")
+	assertEveryValueIsValid(t, workerinjury.InjuryTreatmentValues(), "Surgery")
+	assertEveryValueIsValid(t, workerinjury.InjuryCaseStatusValues(), "Pending")
+	assertEveryValueIsValid(t, workerinjury.WorkersCompClaimStatusValues(), "Appealed")
 	assertEveryValueIsValid(t, worker.PTOTypeValues(), "Sabbatical")
 	assertEveryValueIsValid(t, workerreview.ReviewGoalStatusValues(), "Blocked")
 	assert.Len(t, workersafety.InspectionResultValues(), 3, "no result is not a value to choose")

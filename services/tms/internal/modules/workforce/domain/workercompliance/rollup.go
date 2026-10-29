@@ -1,9 +1,9 @@
 package workercompliance
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -43,7 +43,7 @@ func (r ProfileRollup) Equal(other ProfileRollup) bool {
 func RollupFrom(
 	credentials *workercredential.WorkerCredentialSummary,
 	training *workertraining.WorkerTrainingSummary,
-	safety *workersafety.SafetyScorecard,
+	safety *safetyscorecard.SafetyScorecard,
 ) ProfileRollup {
 	rollup := ProfileRollup{
 		ComplianceStatus: worker.ComplianceStatusPending,

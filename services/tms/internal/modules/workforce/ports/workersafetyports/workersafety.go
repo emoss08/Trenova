@@ -3,7 +3,9 @@ package workersafetyports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -127,7 +129,7 @@ type FleetSafetyKindRow struct {
 // bucket rather than the weighted total comes back from SQL so the weights
 // stay in the domain, where they can be tested without a database.
 type FleetSafetyBasicRow struct {
-	Basic        workersafety.CSABasic
+	Basic        fleetsafety.CSABasic
 	Bucket       int
 	Violations   int
 	SeveritySum  int
@@ -194,32 +196,32 @@ type WorkerSafetyRepository interface {
 	ListActions(
 		ctx context.Context,
 		req *ListWorkerDisciplinaryActionsRequest,
-	) ([]*workersafety.WorkerDisciplinaryAction, error)
+	) ([]*workerdiscipline.WorkerDisciplinaryAction, error)
 	GetActionByID(
 		ctx context.Context,
 		req *GetWorkerDisciplinaryActionByIDRequest,
-	) (*workersafety.WorkerDisciplinaryAction, error)
+	) (*workerdiscipline.WorkerDisciplinaryAction, error)
 	CreateAction(
 		ctx context.Context,
-		entity *workersafety.WorkerDisciplinaryAction,
-	) (*workersafety.WorkerDisciplinaryAction, error)
+		entity *workerdiscipline.WorkerDisciplinaryAction,
+	) (*workerdiscipline.WorkerDisciplinaryAction, error)
 	UpdateAction(
 		ctx context.Context,
-		entity *workersafety.WorkerDisciplinaryAction,
-	) (*workersafety.WorkerDisciplinaryAction, error)
+		entity *workerdiscipline.WorkerDisciplinaryAction,
+	) (*workerdiscipline.WorkerDisciplinaryAction, error)
 
 	ListRecognitions(
 		ctx context.Context,
 		req *ListWorkerRecognitionsRequest,
-	) ([]*workersafety.WorkerRecognition, error)
+	) ([]*workerdiscipline.WorkerRecognition, error)
 	GetRecognitionByID(
 		ctx context.Context,
 		req *GetWorkerRecognitionByIDRequest,
-	) (*workersafety.WorkerRecognition, error)
+	) (*workerdiscipline.WorkerRecognition, error)
 	CreateRecognition(
 		ctx context.Context,
-		entity *workersafety.WorkerRecognition,
-	) (*workersafety.WorkerRecognition, error)
+		entity *workerdiscipline.WorkerRecognition,
+	) (*workerdiscipline.WorkerRecognition, error)
 	DeleteRecognition(ctx context.Context, req *GetWorkerRecognitionByIDRequest) error
 	ListWorkersWithLapsedPoints(
 		ctx context.Context,
@@ -229,19 +231,19 @@ type WorkerSafetyRepository interface {
 	ListViolations(
 		ctx context.Context,
 		req *ListWorkerSafetyViolationsRequest,
-	) ([]*workersafety.WorkerSafetyViolation, error)
+	) ([]*fleetsafety.WorkerSafetyViolation, error)
 	GetViolationByID(
 		ctx context.Context,
 		req *GetWorkerSafetyViolationByIDRequest,
-	) (*workersafety.WorkerSafetyViolation, error)
+	) (*fleetsafety.WorkerSafetyViolation, error)
 	CreateViolation(
 		ctx context.Context,
-		entity *workersafety.WorkerSafetyViolation,
-	) (*workersafety.WorkerSafetyViolation, error)
+		entity *fleetsafety.WorkerSafetyViolation,
+	) (*fleetsafety.WorkerSafetyViolation, error)
 	UpdateViolation(
 		ctx context.Context,
-		entity *workersafety.WorkerSafetyViolation,
-	) (*workersafety.WorkerSafetyViolation, error)
+		entity *fleetsafety.WorkerSafetyViolation,
+	) (*fleetsafety.WorkerSafetyViolation, error)
 	DeleteViolation(ctx context.Context, req *GetWorkerSafetyViolationByIDRequest) error
 
 	// The fleet roll-up is six grouped queries rather than one walk of every

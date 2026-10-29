@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,11 +20,11 @@ func TestWorkerSafetyViolationsBatchFunc_ReadsEveryEventOnceAndGroupsByEvent(t *
 	secondID := pulid.MustNew("wsev_")
 	calls := 0
 	lister := &stubSafetyViolationsLister{
-		list: func(_ context.Context, req *workersafetyports.ListWorkerSafetyViolationsRequest) ([]*workersafety.WorkerSafetyViolation, error) {
+		list: func(_ context.Context, req *workersafetyports.ListWorkerSafetyViolationsRequest) ([]*fleetsafety.WorkerSafetyViolation, error) {
 			calls++
 			assert.Equal(t, []pulid.ID{firstID, secondID}, req.SafetyEventIDs)
 			assert.True(t, req.WorkerID.IsNil(), "a violation is found by its event alone")
-			return []*workersafety.WorkerSafetyViolation{
+			return []*fleetsafety.WorkerSafetyViolation{
 				{SafetyEventID: firstID, Code: "393.9"},
 				{SafetyEventID: firstID, Code: "392.2"},
 			}, nil
@@ -54,7 +54,7 @@ func TestWorkerSafetyViolationsBatchFunc_RepositoryErrorReachesEveryKey(t *testi
 
 	repoErr := errors.New("repository failed")
 	lister := &stubSafetyViolationsLister{
-		list: func(context.Context, *workersafetyports.ListWorkerSafetyViolationsRequest) ([]*workersafety.WorkerSafetyViolation, error) {
+		list: func(context.Context, *workersafetyports.ListWorkerSafetyViolationsRequest) ([]*fleetsafety.WorkerSafetyViolation, error) {
 			return nil, repoErr
 		},
 	}
@@ -68,12 +68,12 @@ func TestWorkerSafetyViolationsBatchFunc_RepositoryErrorReachesEveryKey(t *testi
 }
 
 type stubSafetyViolationsLister struct {
-	list func(context.Context, *workersafetyports.ListWorkerSafetyViolationsRequest) ([]*workersafety.WorkerSafetyViolation, error)
+	list func(context.Context, *workersafetyports.ListWorkerSafetyViolationsRequest) ([]*fleetsafety.WorkerSafetyViolation, error)
 }
 
 func (s *stubSafetyViolationsLister) ListViolations(
 	ctx context.Context,
 	req *workersafetyports.ListWorkerSafetyViolationsRequest,
-) ([]*workersafety.WorkerSafetyViolation, error) {
+) ([]*fleetsafety.WorkerSafetyViolation, error) {
 	return s.list(ctx, req)
 }

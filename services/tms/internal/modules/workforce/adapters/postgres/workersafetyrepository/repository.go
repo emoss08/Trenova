@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -164,11 +165,11 @@ func (r *repository) DeleteEvent(
 func (r *repository) ListActions(
 	ctx context.Context,
 	req *workersafetyports.ListWorkerDisciplinaryActionsRequest,
-) ([]*workersafety.WorkerDisciplinaryAction, error) {
+) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*workersafety.WorkerDisciplinaryAction, error) {
+		func(ctx context.Context) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
 			a := workersafetydb.WorkerDisciplinaryActions
 			loads := listquery.When(req.IncludeEvent, a.SafetyEvent())
 			loads = append(loads, listquery.When(req.IncludeActors, a.IssuedBy())...)
@@ -190,11 +191,11 @@ func (r *repository) ListActions(
 func (r *repository) GetActionByID(
 	ctx context.Context,
 	req *workersafetyports.GetWorkerDisciplinaryActionByIDRequest,
-) (*workersafety.WorkerDisciplinaryAction, error) {
+) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*workersafety.WorkerDisciplinaryAction, error) {
+		func(ctx context.Context) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 			a := workersafetydb.WorkerDisciplinaryActions
 			entity, err := a.Where(a.ID.Eq(req.ID)).
 				Load(listquery.When(req.IncludeEvent, a.SafetyEvent())...).
@@ -210,12 +211,12 @@ func (r *repository) GetActionByID(
 
 func (r *repository) CreateAction(
 	ctx context.Context,
-	entity *workersafety.WorkerDisciplinaryAction,
-) (*workersafety.WorkerDisciplinaryAction, error) {
+	entity *workerdiscipline.WorkerDisciplinaryAction,
+) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*workersafety.WorkerDisciplinaryAction, error) {
+		func(ctx context.Context) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 			err := workersafetydb.WorkerDisciplinaryActions.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create disciplinary action", zap.Error(err))
@@ -229,12 +230,12 @@ func (r *repository) CreateAction(
 
 func (r *repository) UpdateAction(
 	ctx context.Context,
-	entity *workersafety.WorkerDisciplinaryAction,
-) (*workersafety.WorkerDisciplinaryAction, error) {
+	entity *workerdiscipline.WorkerDisciplinaryAction,
+) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*workersafety.WorkerDisciplinaryAction, error) {
+		func(ctx context.Context) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 			err := workersafetydb.WorkerDisciplinaryActions.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update disciplinary action", zap.Error(err))
@@ -249,11 +250,11 @@ func (r *repository) UpdateAction(
 func (r *repository) ListRecognitions(
 	ctx context.Context,
 	req *workersafetyports.ListWorkerRecognitionsRequest,
-) ([]*workersafety.WorkerRecognition, error) {
+) ([]*workerdiscipline.WorkerRecognition, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*workersafety.WorkerRecognition, error) {
+		func(ctx context.Context) ([]*workerdiscipline.WorkerRecognition, error) {
 			rc := workersafetydb.WorkerRecognitions
 			entities, err := rc.Where(
 				rc.WorkerID.Eq(req.WorkerID),
@@ -275,25 +276,29 @@ func (r *repository) ListRecognitions(
 func (r *repository) GetRecognitionByID(
 	ctx context.Context,
 	req *workersafetyports.GetWorkerRecognitionByIDRequest,
-) (*workersafety.WorkerRecognition, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workersafety.WorkerRecognition, error) {
-		entity, err := workersafetydb.WorkerRecognitions.Get(ctx, r.db.Keel(ctx), req.ID)
-		if err != nil {
-			return nil, recognitionErrors.Map(err, req.ID.String())
-		}
+) (*workerdiscipline.WorkerRecognition, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerdiscipline.WorkerRecognition, error) {
+			entity, err := workersafetydb.WorkerRecognitions.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, recognitionErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateRecognition(
 	ctx context.Context,
-	entity *workersafety.WorkerRecognition,
-) (*workersafety.WorkerRecognition, error) {
+	entity *workerdiscipline.WorkerRecognition,
+) (*workerdiscipline.WorkerRecognition, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*workersafety.WorkerRecognition, error) {
+		func(ctx context.Context) (*workerdiscipline.WorkerRecognition, error) {
 			if err := workersafetydb.WorkerRecognitions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				r.l.Error("failed to create recognition", zap.Error(err))
 				return nil, recognitionErrors.Map(err, entity.ID.String())

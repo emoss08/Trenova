@@ -327,17 +327,21 @@ modules:
       - dotclearinghouse
       - dotrandom
       - employment
+      - fleetsafety
       - permit
       - portalinvitation
       - profilechange
       - pto
+      - safetyscorecard
       - telematics
       - timesheet
       - worker
       - workerchecklist
       - workercompliance
       - workercredential
+      - workerdiscipline
       - workerdot
+      - workerinjury
       - workerleave
       - workerpolicy
       - workerreview

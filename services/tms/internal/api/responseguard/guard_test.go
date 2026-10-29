@@ -23,8 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -592,7 +592,7 @@ func TestADrugTestAWorkerCarriesNeedsDOTTestRead(t *testing.T) {
 	for typ, want := range map[reflect.Type]permission.Resource{
 		reflect.TypeFor[workerdot.WorkerDOTTest]():                  permission.ResourceWorkerDOTTest,
 		reflect.TypeFor[workerdot.WorkerDOTViolation]():             permission.ResourceWorkerDOTTest,
-		reflect.TypeFor[workersafety.WorkerInjury]():                permission.ResourceWorkerInjury,
+		reflect.TypeFor[workerinjury.WorkerInjury]():                permission.ResourceWorkerInjury,
 		reflect.TypeFor[timesheet.TimeClockEntry]():                 permission.ResourceTimesheet,
 		reflect.TypeFor[profilechange.WorkerProfileChangeRequest](): permission.ResourceProfileChangeRequest,
 	} {

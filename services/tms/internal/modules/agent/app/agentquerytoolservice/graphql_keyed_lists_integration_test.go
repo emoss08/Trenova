@@ -32,10 +32,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
@@ -239,15 +242,15 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				status := workersafety.InjuryCaseOpen
+				status := workerinjury.InjuryCaseOpen
 				if closed {
-					status = workersafety.InjuryCaseClosed
+					status = workerinjury.InjuryCaseClosed
 				}
 				caseNumber++
-				row, err := services.injuries.CreateInjury(ctx, &workersafety.WorkerInjury{
+				row, err := services.injuries.CreateInjury(ctx, &workerinjury.WorkerInjury{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
 					CaseNumber: caseNumber, CaseYear: 2026, Status: status,
-					Classification: workersafety.CaseOtherRecordable, OccurredAt: now,
+					Classification: workerinjury.CaseOtherRecordable, OccurredAt: now,
 					Description: "Strained back lifting a tarp " + label, BodyPart: "Lower back",
 				})
 				return created(row, err)
@@ -366,9 +369,9 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				if err != nil {
 					return pulid.Nil, err
 				}
-				_, err = services.safety.CreateViolation(ctx, &workersafety.WorkerSafetyViolation{
+				_, err = services.safety.CreateViolation(ctx, &fleetsafety.WorkerSafetyViolation{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					SafetyEventID: event.ID, Basic: workersafety.BasicVehicleMaintenance,
+					SafetyEventID: event.ID, Basic: fleetsafety.BasicVehicleMaintenance,
 					Code: "393.9", Description: "Inoperable lamp " + label, SeverityWeight: 2,
 				})
 				return created(event, err)
@@ -384,11 +387,14 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				row, err := services.safety.CreateRecognition(ctx, &workersafety.WorkerRecognition{
-					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					Kind: workersafety.RecognitionKindTenure, Title: "Ten years " + label,
-					OccurredAt: now, VisibleToWorker: true,
-				})
+				row, err := services.safety.CreateRecognition(
+					ctx,
+					&workerdiscipline.WorkerRecognition{
+						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+						Kind: workerdiscipline.RecognitionKindTenure, Title: "Ten years " + label,
+						OccurredAt: now, VisibleToWorker: true,
+					},
+				)
 				return created(row, err)
 			},
 		},
@@ -541,8 +547,8 @@ type (
 	injuryRepo = interface {
 		CreateInjury(
 			context.Context,
-			*workersafety.WorkerInjury,
-		) (*workersafety.WorkerInjury, error)
+			*workerinjury.WorkerInjury,
+		) (*workerinjury.WorkerInjury, error)
 	}
 	dotTestRepo = interface {
 		CreateTest(context.Context, *workerdot.WorkerDOTTest) (*workerdot.WorkerDOTTest, error)

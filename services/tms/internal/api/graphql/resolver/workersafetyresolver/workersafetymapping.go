@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -254,7 +255,7 @@ func issueActionRequestFromInput(
 func recognitionFromInput(
 	input *gqlmodel.WorkerRecognitionInput,
 	tenantInfo pagination.TenantInfo,
-) (*workersafety.WorkerRecognition, error) {
+) (*workerdiscipline.WorkerRecognition, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -267,7 +268,7 @@ func recognitionFromInput(
 	if input.VisibleToWorker != nil {
 		visible = *input.VisibleToWorker
 	}
-	return &workersafety.WorkerRecognition{
+	return &workerdiscipline.WorkerRecognition{
 		OrganizationID:  tenantInfo.OrgID,
 		BusinessUnitID:  tenantInfo.BuID,
 		WorkerID:        workerID,
@@ -279,8 +280,10 @@ func recognitionFromInput(
 	}, nil
 }
 
-func disciplinaryLevelPtr(level workersafety.DisciplinaryLevel) *workersafety.DisciplinaryLevel {
-	if level == workersafety.DisciplinaryLevelNone {
+func disciplinaryLevelPtr(
+	level workerdiscipline.DisciplinaryLevel,
+) *workerdiscipline.DisciplinaryLevel {
+	if level == workerdiscipline.DisciplinaryLevelNone {
 		return nil
 	}
 	return &level

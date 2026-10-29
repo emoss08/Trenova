@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -147,7 +147,7 @@ func (s *Service) publish(
 func (s *Service) ListInjuries(
 	ctx context.Context,
 	req *workersafetyports.ListWorkerInjuriesRequest,
-) ([]*workersafety.WorkerInjury, error) {
+) ([]*workerinjury.WorkerInjury, error) {
 	return s.repo.ListInjuries(ctx, req)
 }
 
@@ -155,7 +155,7 @@ func (s *Service) GetInjury(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*workersafety.WorkerInjury, error) {
+) (*workerinjury.WorkerInjury, error) {
 	return s.repo.GetInjuryByID(ctx, &workersafetyports.GetWorkerInjuryByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
@@ -165,7 +165,7 @@ func (s *Service) GetInjury(
 	})
 }
 
-func (s *Service) prepare(entity *workersafety.WorkerInjury) error {
+func (s *Service) prepare(entity *workerinjury.WorkerInjury) error {
 	entity.Description = strings.TrimSpace(entity.Description)
 	entity.Location = strings.TrimSpace(entity.Location)
 	entity.BodyPart = strings.TrimSpace(entity.BodyPart)
@@ -175,22 +175,22 @@ func (s *Service) prepare(entity *workersafety.WorkerInjury) error {
 	entity.Notes = strings.TrimSpace(entity.Notes)
 
 	if entity.Status == "" {
-		entity.Status = workersafety.InjuryCaseOpen
+		entity.Status = workerinjury.InjuryCaseOpen
 	}
 	if entity.IllnessType == "" {
-		entity.IllnessType = workersafety.IllnessInjury
+		entity.IllnessType = workerinjury.IllnessInjury
 	}
 	if entity.Treatment == "" {
-		entity.Treatment = workersafety.TreatmentNone
+		entity.Treatment = workerinjury.TreatmentNone
 	}
 	if entity.ClaimStatus == "" {
-		entity.ClaimStatus = workersafety.ClaimNotFiled
+		entity.ClaimStatus = workerinjury.ClaimNotFiled
 	}
 	// Recordability is the employer's judgement, but it should not have to be
 	// made from a blank field: the suggestion stands unless somebody chooses
 	// otherwise.
 	if entity.Classification == "" {
-		entity.Classification = workersafety.SuggestClassification(
+		entity.Classification = workerinjury.SuggestClassification(
 			entity.Treatment,
 			entity.DaysAway,
 			entity.DaysRestricted,
@@ -198,7 +198,7 @@ func (s *Service) prepare(entity *workersafety.WorkerInjury) error {
 	}
 	// A claim that was never filed has no dates, however the form was filled
 	// in before somebody changed their mind.
-	if entity.ClaimStatus == workersafety.ClaimNotFiled {
+	if entity.ClaimStatus == workerinjury.ClaimNotFiled {
 		entity.ClaimFiledAt = nil
 		entity.ClaimClosedAt = nil
 	}
@@ -215,9 +215,9 @@ func (s *Service) prepare(entity *workersafety.WorkerInjury) error {
 // RecordInjury files a case and gives it the next line on the year's log.
 func (s *Service) RecordInjury(
 	ctx context.Context,
-	entity *workersafety.WorkerInjury,
+	entity *workerinjury.WorkerInjury,
 	userID pulid.ID,
-) (*workersafety.WorkerInjury, error) {
+) (*workerinjury.WorkerInjury, error) {
 	tenantInfo := injuryTenant(entity)
 
 	if err := s.prepareRecord(ctx, entity, userID); err != nil {
@@ -248,10 +248,10 @@ func (s *Service) RecordInjury(
 type UpdateInjuryRequest struct {
 	TenantInfo       pagination.TenantInfo
 	InjuryID         pulid.ID
-	Classification   *workersafety.OSHACaseClassification
-	IllnessType      *workersafety.OSHAIllnessType
-	Treatment        *workersafety.InjuryTreatment
-	Status           *workersafety.InjuryCaseStatus
+	Classification   *workerinjury.OSHACaseClassification
+	IllnessType      *workerinjury.OSHAIllnessType
+	Treatment        *workerinjury.InjuryTreatment
+	Status           *workerinjury.InjuryCaseStatus
 	OccurredAt       *int64
 	ReportedAt       *int64
 	ReturnedToWorkAt *int64
@@ -262,7 +262,7 @@ type UpdateInjuryRequest struct {
 	DaysAway         *int32
 	DaysRestricted   *int32
 	PrivacyCase      *bool
-	ClaimStatus      *workersafety.WorkersCompClaimStatus
+	ClaimStatus      *workerinjury.WorkersCompClaimStatus
 	ClaimNumber      *string
 	ClaimCarrier     *string
 	ClaimFiledAt     *int64
@@ -276,7 +276,7 @@ type UpdateInjuryRequest struct {
 func (s *Service) UpdateInjury(
 	ctx context.Context,
 	req *UpdateInjuryRequest,
-) (*workersafety.WorkerInjury, error) {
+) (*workerinjury.WorkerInjury, error) {
 	change, err := s.PlanUpdateInjury(ctx, req)
 	if err != nil {
 		return nil, err
@@ -335,7 +335,7 @@ func (s *Service) DeleteInjury(
 	return nil
 }
 
-func ApplyInjuryUpdate(entity *workersafety.WorkerInjury, req *UpdateInjuryRequest) {
+func ApplyInjuryUpdate(entity *workerinjury.WorkerInjury, req *UpdateInjuryRequest) {
 	if req.Classification != nil {
 		entity.Classification = *req.Classification
 	}
@@ -381,7 +381,7 @@ func ApplyInjuryUpdate(entity *workersafety.WorkerInjury, req *UpdateInjuryReque
 	applyInjuryClaim(entity, req)
 }
 
-func applyInjuryClaim(entity *workersafety.WorkerInjury, req *UpdateInjuryRequest) {
+func applyInjuryClaim(entity *workerinjury.WorkerInjury, req *UpdateInjuryRequest) {
 	if req.ClaimStatus != nil {
 		entity.ClaimStatus = *req.ClaimStatus
 	}
@@ -408,15 +408,15 @@ func applyInjuryClaim(entity *workersafety.WorkerInjury, req *UpdateInjuryReques
 	}
 }
 
-func injuryTenant(entity *workersafety.WorkerInjury) pagination.TenantInfo {
+func injuryTenant(entity *workerinjury.WorkerInjury) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func summaryTenant(entity *workersafety.OSHAAnnualSummary) pagination.TenantInfo {
+func summaryTenant(entity *workerinjury.OSHAAnnualSummary) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func caseLabel(entity *workersafety.WorkerInjury) string {
+func caseLabel(entity *workerinjury.WorkerInjury) string {
 	return strconv.Itoa(int(entity.CaseYear)) + "-" + strconv.Itoa(int(entity.CaseNumber))
 }
 

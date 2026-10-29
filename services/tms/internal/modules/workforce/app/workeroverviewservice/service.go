@@ -10,12 +10,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
@@ -54,7 +54,7 @@ type SafetyScorer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (*workersafety.SafetyScorecard, error)
+	) (*safetyscorecard.SafetyScorecard, error)
 }
 
 // ChecklistLister is the slice of the checklist service this needs.
@@ -144,7 +144,7 @@ type Overview struct {
 	Concerns     []workercompliance.Concern
 	Credentials  *workercredential.WorkerCredentialSummary
 	Training     *workertraining.WorkerTrainingSummary
-	Safety       *workersafety.SafetyScorecard
+	Safety       *safetyscorecard.SafetyScorecard
 	Checklist    *workerchecklist.WorkerChecklist
 	PTO          []*ptoledgerservice.BalanceView
 	OpenReview   *workerreview.PerformanceReview
@@ -253,7 +253,7 @@ func (s *Service) Get(
 	var (
 		credentials  *workercredential.WorkerCredentialSummary
 		training     *workertraining.WorkerTrainingSummary
-		safety       *workersafety.SafetyScorecard
+		safety       *safetyscorecard.SafetyScorecard
 		checklist    *workerchecklist.WorkerChecklist
 		balances     []*ptoledgerservice.BalanceView
 		openReview   *workerreview.PerformanceReview
