@@ -17,6 +17,36 @@ import (
 	"go.uber.org/zap"
 )
 
+type Params struct {
+	fx.In
+
+	Logger        *zap.Logger
+	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository `optional:"true"`
+	Encryption    *encryptionservice.Service
+	Kit           *accountingconnectionkit.Kit
+	Health        *accountingconnectionhealth.Service
+}
+
+type Service struct {
+	l             *zap.Logger
+	subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
+	encryption    *encryptionservice.Service
+	kit           *accountingconnectionkit.Kit
+	health        *accountingconnectionhealth.Service
+}
+
+func New(p Params) *Service {
+	return &Service{
+		l:             p.Logger.Named("service.accounting-connection"),
+		subscriptions: p.Subscriptions,
+		encryption:    p.Encryption,
+		kit:           p.Kit,
+		health:        p.Health,
+	}
+}
+
+var _ accountingconnectionports.AccountingWebhookSubscriptionSyncer = (*Service)(nil)
+
 func (s *Service) SyncWebhookSubscriptions(
 	ctx context.Context,
 	req *accountingconnectionports.SyncAccountingWebhookSubscriptionsRequest,
@@ -46,7 +76,11 @@ func (s *Service) SyncWebhookSubscriptions(
 			return sweep, ctx.Err()
 		}
 		sweep.NextAfterID = conn.ID
-		if keepErr := s.keepSubscriptions(accountingconnectionkit.ConnectionScope(ctx, conn), conn, sweep); keepErr != nil {
+		if keepErr := s.keepSubscriptions(
+			accountingconnectionkit.ConnectionScope(ctx, conn),
+			conn,
+			sweep,
+		); keepErr != nil {
 			sweep.Failed++
 			s.l.Warn("could not keep accounting webhook subscriptions",
 				zap.String("connectionId", conn.ID.String()), zap.Error(keepErr))
@@ -243,33 +277,3 @@ func (s *Service) Summary(
 	}
 	return summary, nil
 }
-
-type Params struct {
-	fx.In
-
-	Logger        *zap.Logger
-	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository `optional:"true"`
-	Encryption    *encryptionservice.Service
-	Kit           *accountingconnectionkit.Kit
-	Health        *accountingconnectionhealth.Service
-}
-
-type Service struct {
-	l             *zap.Logger
-	subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
-	encryption    *encryptionservice.Service
-	kit           *accountingconnectionkit.Kit
-	health        *accountingconnectionhealth.Service
-}
-
-func New(p Params) *Service {
-	return &Service{
-		l:             p.Logger.Named("service.accounting-connection"),
-		subscriptions: p.Subscriptions,
-		encryption:    p.Encryption,
-		kit:           p.Kit,
-		health:        p.Health,
-	}
-}
-
-var _ accountingconnectionports.AccountingWebhookSubscriptionSyncer = (*Service)(nil)

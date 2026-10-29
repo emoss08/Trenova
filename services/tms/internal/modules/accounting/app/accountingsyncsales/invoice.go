@@ -220,7 +220,6 @@ func (p *Pusher) salesDocument(
 			sess.Loc,
 		),
 		CustomerMemo: customerMemo(inv),
-		Lines:        make([]accountingconnectorports.AccountingDocumentLine, 0, len(inv.Lines)),
 		Refs:         record.ExternalRefs,
 	}
 	if limit := sess.Limits.MaxDocNumberLength; limit > 0 && len([]rune(inv.Number)) > limit {
@@ -229,26 +228,60 @@ func (p *Pusher) salesDocument(
 	if inv.DueDate != nil && record.ObjectType != accountingsync.SyncObjectCreditMemo {
 		doc.DueDate = timeutils.FormatCalendarDate(*inv.DueDate, sess.Loc)
 	}
-	if inv.PaymentTerm != "" && record.ObjectType != accountingsync.SyncObjectCreditMemo &&
-		sess.Profile.Offers(accountingsync.TargetPaymentTerm) {
-		term, err := res.Optional(ctx, accountingsyncpush.MappingTarget{
-			TargetType: accountingsync.TargetPaymentTerm,
-			Key:        string(inv.PaymentTerm),
-		})
-		if err != nil {
-			return nil, err
+	if doc.TermExternalID, err = salesTerm(ctx, sess, res, record, inv); err != nil {
+		return nil, err
+	}
+	if doc.Lines, err = salesLines(ctx, sess, res, inv, sign); err != nil {
+		return nil, err
+	}
+	if len(doc.Lines) == 0 {
+		return nil, &accountingsyncpush.NoopError{
+			Reason: accountingsynceffects.DocumentLabel(record.ObjectType, inv.Number) +
+				" has no amounts to send",
 		}
-		doc.TermExternalID = term
 	}
 
+	if record.ObjectType == accountingsync.SyncObjectCreditMemo {
+		if err = p.applyReversal(ctx, sess, inv, doc); err != nil {
+			return nil, err
+		}
+	}
+	return doc, nil
+}
+
+func salesTerm(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	res *accountingsyncpush.Resolver,
+	record *accountingsync.AccountingSyncRecord,
+	inv *invoice.Invoice,
+) (string, error) {
+	if inv.PaymentTerm == "" || record.ObjectType == accountingsync.SyncObjectCreditMemo ||
+		!sess.Profile.Offers(accountingsync.TargetPaymentTerm) {
+		return "", nil
+	}
+	return res.Optional(ctx, accountingsyncpush.MappingTarget{
+		TargetType: accountingsync.TargetPaymentTerm,
+		Key:        string(inv.PaymentTerm),
+	})
+}
+
+func salesLines(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	res *accountingsyncpush.Resolver,
+	inv *invoice.Invoice,
+	sign decimal.Decimal,
+) ([]accountingconnectorports.AccountingDocumentLine, error) {
+	lines := make([]accountingconnectorports.AccountingDocumentLine, 0, len(inv.Lines))
 	for _, line := range inv.Lines {
 		if line == nil || line.Amount.IsZero() {
 			continue
 		}
 		target := lineTarget(line)
-		externalID, refErr := res.Require(ctx, target)
-		if refErr != nil {
-			return nil, refErr
+		externalID, err := res.Require(ctx, target)
+		if err != nil {
+			return nil, err
 		}
 		entry := accountingconnectorports.AccountingDocumentLine{
 			Description: line.Description,
@@ -260,21 +293,9 @@ func (p *Pusher) salesDocument(
 		if inv.ServiceDate != nil {
 			entry.ServiceDate = timeutils.FormatCalendarDate(*inv.ServiceDate, sess.Loc)
 		}
-		doc.Lines = append(doc.Lines, entry)
+		lines = append(lines, entry)
 	}
-	if len(doc.Lines) == 0 {
-		return nil, &accountingsyncpush.NoopError{
-			Reason: accountingsynceffects.DocumentLabel(record.ObjectType, inv.Number) +
-				" has no amounts to send",
-		}
-	}
-
-	if record.ObjectType == accountingsync.SyncObjectCreditMemo {
-		if err := p.applyReversal(ctx, sess, inv, doc); err != nil {
-			return nil, err
-		}
-	}
-	return doc, nil
+	return lines, nil
 }
 
 func setLineRef(

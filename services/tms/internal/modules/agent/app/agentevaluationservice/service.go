@@ -53,6 +53,7 @@ type Service struct {
 	audit       auditports.AuditService
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentevaluationports.AgentEvaluationService {
 	return &Service{
 		l:           p.Logger.Named("service.agentevaluation"),

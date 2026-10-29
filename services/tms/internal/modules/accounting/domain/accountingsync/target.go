@@ -60,6 +60,8 @@ func (t MappingTargetType) KeyedByObject() bool {
 	switch t {
 	case TargetAccessorialCharge, TargetCustomer, TargetCarrier, TargetDriver, TargetGLAccount:
 		return true
+	case TargetAccountRole, TargetLineType, TargetItemRole, TargetPaymentTerm, TargetPaymentMethod:
+		return false
 	default:
 		return false
 	}

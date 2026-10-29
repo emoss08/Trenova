@@ -100,6 +100,7 @@ type timezoneReader interface {
 	Timezone(ctx context.Context, tenant pagination.TenantInfo) (string, error)
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentbudgetports.AgentBudgetService {
 	return &Service{
 		l:         p.Logger.Named("service.agentbudget"),

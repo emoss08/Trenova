@@ -22,6 +22,35 @@ const (
 	HealthCheckInterval = int64(15 * 60)
 )
 
+type Params struct {
+	fx.In
+
+	Logger      *zap.Logger
+	DB          kernelports.Transactor
+	Connections accountingconnectionports.AccountingConnectionRepository
+	Kit         *accountingconnectionkit.Kit
+}
+
+type Service struct {
+	l           *zap.Logger
+	db          kernelports.Transactor
+	connections accountingconnectionports.AccountingConnectionRepository
+	kit         *accountingconnectionkit.Kit
+}
+
+func New(p Params) *Service {
+	return &Service{
+		l:           p.Logger.Named("service.accounting-connection"),
+		db:          p.DB,
+		connections: p.Connections,
+		kit:         p.Kit,
+	}
+}
+
+var _ accountingconnectionports.AccountingHealthChecker = (*Service)(nil)
+
+var _ accountingconnectionports.AccountingSessionProvider = (*Service)(nil)
+
 func (s *Service) CheckHealth(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -242,32 +271,3 @@ func (s *Service) CheckDue(
 
 	return sweep, nil
 }
-
-type Params struct {
-	fx.In
-
-	Logger      *zap.Logger
-	DB          kernelports.Transactor
-	Connections accountingconnectionports.AccountingConnectionRepository
-	Kit         *accountingconnectionkit.Kit
-}
-
-type Service struct {
-	l           *zap.Logger
-	db          kernelports.Transactor
-	connections accountingconnectionports.AccountingConnectionRepository
-	kit         *accountingconnectionkit.Kit
-}
-
-func New(p Params) *Service {
-	return &Service{
-		l:           p.Logger.Named("service.accounting-connection"),
-		db:          p.DB,
-		connections: p.Connections,
-		kit:         p.Kit,
-	}
-}
-
-var _ accountingconnectionports.AccountingHealthChecker = (*Service)(nil)
-
-var _ accountingconnectionports.AccountingSessionProvider = (*Service)(nil)

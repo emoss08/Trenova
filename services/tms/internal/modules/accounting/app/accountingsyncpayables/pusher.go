@@ -19,6 +19,22 @@ import (
 	"go.uber.org/fx"
 )
 
+type Params struct {
+	fx.In
+
+	Kit      *accountingsyncpush.Kit
+	Payables accountingpayablesports.AccountingPayablesSource
+}
+
+type Pusher struct {
+	kit      *accountingsyncpush.Kit
+	payables accountingpayablesports.AccountingPayablesSource
+}
+
+func New(p Params) *Pusher {
+	return &Pusher{kit: p.Kit, payables: p.Payables}
+}
+
 func purchaseTotal(lines []accountingconnectorports.AccountingPurchaseLine) decimal.Decimal {
 	total := decimal.Zero
 	for idx := range lines {
@@ -109,7 +125,10 @@ func accountLabel(accountID pulid.ID, lines []accountingpayablesports.PayableJou
 		if lines[idx].AccountID != accountID {
 			continue
 		}
-		if label := accountingsyncpush.GLAccountLabel(lines[idx].AccountCode, lines[idx].AccountName); label != "" {
+		if label := accountingsyncpush.GLAccountLabel(
+			lines[idx].AccountCode,
+			lines[idx].AccountName,
+		); label != "" {
 			return label
 		}
 	}
@@ -126,23 +145,7 @@ func (p *Pusher) PushBill(
 		return nil, err
 	}
 	label := accountingsynceffects.DocumentLabel(record.ObjectType, settlement.Number)
-	if len(settlement.Lines) == 0 {
-		if settlement.NetMinor == 0 {
-			return nil, &accountingsyncpush.NoopError{
-				Reason: label + " has no amounts, so there is nothing to send",
-			}
-		}
-		return nil, accountingsyncpush.Blocked(
-			accountingsync.SyncErrorValidation,
-			label+" has no journal entry to send",
-			"Check the settlement's posting in the general ledger, then retry; or skip this record",
-		)
-	}
-	if err = sess.CheckBooks(
-		settlement.CurrencyCode,
-		record.SentDate(*settlement.PostedAt),
-		label,
-	); err != nil {
+	if err = checkBillReady(sess, record, settlement, label); err != nil {
 		return nil, err
 	}
 	var target *accountingsync.AccountingSyncRecord
@@ -181,16 +184,7 @@ func (p *Pusher) PushBill(
 			Reason: label + " has no amounts, so there is nothing to send",
 		}
 	}
-	total := decimal.Zero
-	for idx := range lines {
-		total = total.Add(lines[idx].Amount)
-	}
-	credit := total.IsNegative()
-	if credit {
-		for idx := range lines {
-			lines[idx].Amount = lines[idx].Amount.Neg()
-		}
-	}
+	credit := creditLines(lines)
 
 	rate, err := p.kit.ExchangeRate(ctx, sess, &accountingsyncpush.DocumentRate{
 		Label:          label,
@@ -230,31 +224,79 @@ func (p *Pusher) PushBill(
 		doc.DocNumber = ""
 	}
 
-	var written *accountingconnectorports.AccountingDocumentResult
-	if target == nil {
-		written, err = p.kit.CreateAdopting(
-			ctx,
-			sess,
-			record,
-			&accountingconnectorports.AccountingFindDocumentRequest{
-				DocNumber:              doc.DocNumber,
-				CounterpartyExternalID: doc.VendorExternalID,
-				TxnDate:                doc.TxnDate,
-				Total:                  purchaseTotal(doc.Lines),
-				Credit:                 doc.VendorCredit,
-			},
-			func() (*accountingconnectorports.AccountingDocumentResult, error) {
-				return sess.Writer.CreatePurchaseDocument(ctx, doc)
-			},
-		)
-	} else {
-		written, err = writeBill(ctx, sess, target, doc, label)
-	}
+	written, err := p.sendBill(ctx, sess, record, target, doc, label)
 	if err != nil {
 		return accountingsyncpush.Partial(written), err
 	}
 	return accountingsyncpush.WithProviderURL(
 		accountingsyncpush.Finished(sess, record, written, doc, res.MappingIDs()),
+	)
+}
+
+func checkBillReady(
+	sess *accountingsyncpush.Session,
+	record *accountingsync.AccountingSyncRecord,
+	settlement *accountingpayablesports.PayableSettlement,
+	label string,
+) error {
+	if len(settlement.Lines) == 0 {
+		if settlement.NetMinor == 0 {
+			return &accountingsyncpush.NoopError{
+				Reason: label + " has no amounts, so there is nothing to send",
+			}
+		}
+		return accountingsyncpush.Blocked(
+			accountingsync.SyncErrorValidation,
+			label+" has no journal entry to send",
+			"Check the settlement's posting in the general ledger, then retry; or skip this record",
+		)
+	}
+	return sess.CheckBooks(
+		settlement.CurrencyCode,
+		record.SentDate(*settlement.PostedAt),
+		label,
+	)
+}
+
+func creditLines(lines []accountingconnectorports.AccountingPurchaseLine) bool {
+	total := decimal.Zero
+	for idx := range lines {
+		total = total.Add(lines[idx].Amount)
+	}
+	credit := total.IsNegative()
+	if credit {
+		for idx := range lines {
+			lines[idx].Amount = lines[idx].Amount.Neg()
+		}
+	}
+	return credit
+}
+
+func (p *Pusher) sendBill(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	record *accountingsync.AccountingSyncRecord,
+	target *accountingsync.AccountingSyncRecord,
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+	label string,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
+	if target != nil {
+		return writeBill(ctx, sess, target, doc, label)
+	}
+	return p.kit.CreateAdopting(
+		ctx,
+		sess,
+		record,
+		&accountingconnectorports.AccountingFindDocumentRequest{
+			DocNumber:              doc.DocNumber,
+			CounterpartyExternalID: doc.VendorExternalID,
+			TxnDate:                doc.TxnDate,
+			Total:                  purchaseTotal(doc.Lines),
+			Credit:                 doc.VendorCredit,
+		},
+		func() (*accountingconnectorports.AccountingDocumentResult, error) {
+			return sess.Writer.CreatePurchaseDocument(ctx, doc)
+		},
 	)
 }
 
@@ -364,22 +406,6 @@ func writeBill(
 	}
 	doc.ExternalID = target.ExternalID
 	return sess.Writer.UpdatePurchaseDocument(ctx, doc)
-}
-
-type Params struct {
-	fx.In
-
-	Kit      *accountingsyncpush.Kit
-	Payables accountingpayablesports.AccountingPayablesSource
-}
-
-type Pusher struct {
-	kit      *accountingsyncpush.Kit
-	payables accountingpayablesports.AccountingPayablesSource
-}
-
-func New(p Params) *Pusher {
-	return &Pusher{kit: p.Kit, payables: p.Payables}
 }
 
 func (p *Pusher) stampPayable(

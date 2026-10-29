@@ -33,29 +33,7 @@ func (p *Pusher) PushBillPayment(
 	}
 	billType := record.ObjectType.BillOf()
 	label := accountingsynceffects.DocumentLabel(record.ObjectType, settlement.Number)
-	switch {
-	case settlement.PaidAt == nil:
-		return nil, accountingsyncpush.Blocked(
-			accountingsync.SyncErrorValidation,
-			accountingsynceffects.DocumentLabel(billType, settlement.Number)+" is not marked paid",
-			"Skip this record",
-		)
-	case settlement.NetMinor < 0:
-		return nil, &accountingsyncpush.NoopError{
-			Reason: accountingsynceffects.DocumentLabel(billType, settlement.Number) +
-				" is owed to you, so it was sent as a vendor credit; record the refund in " +
-				sess.ProviderName + " against that credit",
-		}
-	case settlement.NetMinor == 0:
-		return nil, &accountingsyncpush.NoopError{
-			Reason: label + " is for nothing, so there is nothing to send",
-		}
-	}
-	if err = sess.CheckBooks(
-		settlement.CurrencyCode,
-		record.SentDate(*settlement.PaidAt),
-		label,
-	); err != nil {
+	if err = checkBillPayable(sess, record, settlement, label); err != nil {
 		return nil, err
 	}
 
@@ -122,31 +100,71 @@ func (p *Pusher) PushBillPayment(
 			accountingsyncpush.SentDateNote(record, *settlement.PaidAt, sess.Loc),
 		Amount: money.DecimalFromMinor(settlement.NetMinor),
 	}
-	var written *accountingconnectorports.AccountingDocumentResult
-	if target != nil {
-		doc.ExternalID = target.ExternalID
-		written, err = sess.Writer.UpdateBillPayment(ctx, doc)
-	} else {
-		written, err = p.kit.CreateAdopting(
-			ctx,
-			sess,
-			record,
-			&accountingconnectorports.AccountingFindDocumentRequest{
-				DocNumber:              doc.DocNumber,
-				CounterpartyExternalID: vendorID,
-				TxnDate:                doc.TxnDate,
-				Total:                  doc.Amount,
-				AppliesToExternalIDs:   []string{billID},
-			},
-			func() (*accountingconnectorports.AccountingDocumentResult, error) {
-				return sess.Writer.CreateBillPayment(ctx, doc)
-			},
-		)
-	}
+	written, err := p.writeBillPayment(ctx, sess, record, target, doc)
 	if err != nil {
 		return accountingsyncpush.Partial(written), err
 	}
 	return accountingsyncpush.Finished(sess, record, written, doc, res.MappingIDs())
+}
+
+func checkBillPayable(
+	sess *accountingsyncpush.Session,
+	record *accountingsync.AccountingSyncRecord,
+	settlement *accountingpayablesports.PayableSettlement,
+	label string,
+) error {
+	billType := record.ObjectType.BillOf()
+	switch {
+	case settlement.PaidAt == nil:
+		return accountingsyncpush.Blocked(
+			accountingsync.SyncErrorValidation,
+			accountingsynceffects.DocumentLabel(billType, settlement.Number)+" is not marked paid",
+			"Skip this record",
+		)
+	case settlement.NetMinor < 0:
+		return &accountingsyncpush.NoopError{
+			Reason: accountingsynceffects.DocumentLabel(billType, settlement.Number) +
+				" is owed to you, so it was sent as a vendor credit; record the refund in " +
+				sess.ProviderName + " against that credit",
+		}
+	case settlement.NetMinor == 0:
+		return &accountingsyncpush.NoopError{
+			Reason: label + " is for nothing, so there is nothing to send",
+		}
+	}
+	return sess.CheckBooks(
+		settlement.CurrencyCode,
+		record.SentDate(*settlement.PaidAt),
+		label,
+	)
+}
+
+func (p *Pusher) writeBillPayment(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	record *accountingsync.AccountingSyncRecord,
+	target *accountingsync.AccountingSyncRecord,
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
+	if target != nil {
+		doc.ExternalID = target.ExternalID
+		return sess.Writer.UpdateBillPayment(ctx, doc)
+	}
+	return p.kit.CreateAdopting(
+		ctx,
+		sess,
+		record,
+		&accountingconnectorports.AccountingFindDocumentRequest{
+			DocNumber:              doc.DocNumber,
+			CounterpartyExternalID: doc.VendorExternalID,
+			TxnDate:                doc.TxnDate,
+			Total:                  doc.Amount,
+			AppliesToExternalIDs:   []string{doc.BillExternalID},
+		},
+		func() (*accountingconnectorports.AccountingDocumentResult, error) {
+			return sess.Writer.CreateBillPayment(ctx, doc)
+		},
+	)
 }
 
 func (p *Pusher) billRef(

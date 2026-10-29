@@ -231,7 +231,12 @@ func (r *sessionRepository) ListForUser(
 	)
 
 	userSessionsKey := r.getUserSessionsKey(userID)
-	members, err := r.client.ZRevRange(ctx, userSessionsKey, 0, -1).Result()
+	members, err := r.client.ZRangeArgs(ctx, redis.ZRangeArgs{
+		Key:   userSessionsKey,
+		Start: 0,
+		Stop:  -1,
+		Rev:   true,
+	}).Result()
 	if err != nil {
 		log.Error("failed to list user sessions", zap.Error(err))
 		return nil, err

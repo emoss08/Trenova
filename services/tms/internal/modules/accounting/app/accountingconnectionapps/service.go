@@ -27,6 +27,49 @@ import (
 	"go.uber.org/zap"
 )
 
+type Params struct {
+	fx.In
+
+	Logger      *zap.Logger
+	DB          kernelports.Transactor
+	Apps        accountingconnectionports.AccountingAppCredentialRepository
+	Connections accountingconnectionports.AccountingConnectionRepository
+	Encryption  *encryptionservice.Service
+	Audit       auditports.AuditService
+	Realtime    realtimeports.RealtimeService `optional:"true"`
+	Kit         *accountingconnectionkit.Kit
+	Status      *accountingconnectionstatus.Service
+}
+
+type Service struct {
+	l           *zap.Logger
+	db          kernelports.Transactor
+	apps        accountingconnectionports.AccountingAppCredentialRepository
+	connections accountingconnectionports.AccountingConnectionRepository
+	encryption  *encryptionservice.Service
+	audit       auditports.AuditService
+	realtime    realtimeports.RealtimeService
+	kit         *accountingconnectionkit.Kit
+	status      *accountingconnectionstatus.Service
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Service {
+	return &Service{
+		l:           p.Logger.Named("service.accounting-connection"),
+		db:          p.DB,
+		apps:        p.Apps,
+		connections: p.Connections,
+		encryption:  p.Encryption,
+		audit:       p.Audit,
+		realtime:    p.Realtime,
+		kit:         p.Kit,
+		status:      p.Status,
+	}
+}
+
+var _ accountingconnectionports.AccountingAppService = (*Service)(nil)
+
 func (s *Service) activeConnection(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -320,46 +363,3 @@ func (s *Service) publishAppInvalidation(
 		s.l.Warn("failed to publish accounting app invalidation", zap.Error(err))
 	}
 }
-
-type Params struct {
-	fx.In
-
-	Logger      *zap.Logger
-	DB          kernelports.Transactor
-	Apps        accountingconnectionports.AccountingAppCredentialRepository
-	Connections accountingconnectionports.AccountingConnectionRepository
-	Encryption  *encryptionservice.Service
-	Audit       auditports.AuditService
-	Realtime    realtimeports.RealtimeService `optional:"true"`
-	Kit         *accountingconnectionkit.Kit
-	Status      *accountingconnectionstatus.Service
-}
-
-type Service struct {
-	l           *zap.Logger
-	db          kernelports.Transactor
-	apps        accountingconnectionports.AccountingAppCredentialRepository
-	connections accountingconnectionports.AccountingConnectionRepository
-	encryption  *encryptionservice.Service
-	audit       auditports.AuditService
-	realtime    realtimeports.RealtimeService
-	kit         *accountingconnectionkit.Kit
-	status      *accountingconnectionstatus.Service
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Service {
-	return &Service{
-		l:           p.Logger.Named("service.accounting-connection"),
-		db:          p.DB,
-		apps:        p.Apps,
-		connections: p.Connections,
-		encryption:  p.Encryption,
-		audit:       p.Audit,
-		realtime:    p.Realtime,
-		kit:         p.Kit,
-		status:      p.Status,
-	}
-}
-
-var _ accountingconnectionports.AccountingAppService = (*Service)(nil)

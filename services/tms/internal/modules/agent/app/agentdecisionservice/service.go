@@ -89,6 +89,7 @@ type Service struct {
 	metrics      *aimetrics.ProposalPreview
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentdecisionports.AgentDecisionService {
 	return &Service{
 		l:            p.Logger.Named("service.agentdecision"),

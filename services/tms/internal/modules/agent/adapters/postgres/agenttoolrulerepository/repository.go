@@ -64,7 +64,7 @@ func (r *repository) Get(
 			o := agenttooltrustdb.ToolRuleOverrides
 			override, err := o.Where(o.ToolName.Eq(req.ToolName)).One(ctx, r.db.Keel(ctx))
 			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // a tool no organization rule holds has none
+				return nil, nil
 			}
 			if err != nil {
 				return nil, fmt.Errorf("get tool rule override: %w", err)

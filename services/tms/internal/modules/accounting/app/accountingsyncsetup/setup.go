@@ -26,6 +26,43 @@ import (
 
 const systemNoteMaxLength = 500
 
+type Params struct {
+	fx.In
+
+	Logger      *zap.Logger
+	DB          kernelports.Transactor
+	Connections accountingconnectionports.AccountingConnectionRepository
+	Scorer      accountingmappingports.AccountingMappingScorer
+	Enqueuer    *accountingsyncenqueue.Enqueuer
+	Effects     *accountingsynceffects.Effects
+	Backfills   *accountingsyncbackfill.Service
+}
+
+type Service struct {
+	l           *zap.Logger
+	db          kernelports.Transactor
+	connections accountingconnectionports.AccountingConnectionRepository
+	scorer      accountingmappingports.AccountingMappingScorer
+	enqueuer    *accountingsyncenqueue.Enqueuer
+	effects     *accountingsynceffects.Effects
+	backfills   *accountingsyncbackfill.Service
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Service {
+	return &Service{
+		l:           p.Logger.Named("service.accounting-sync"),
+		db:          p.DB,
+		connections: p.Connections,
+		scorer:      p.Scorer,
+		enqueuer:    p.Enqueuer,
+		effects:     p.Effects,
+		backfills:   p.Backfills,
+	}
+}
+
+var _ accountingsyncports.AccountingSyncSetupService = (*Service)(nil)
+
 func (s *Service) UpdateSettings(
 	ctx context.Context,
 	req *accountingsyncports.UpdateAccountingSyncSettingsRequest,
@@ -133,49 +170,9 @@ func (s *Service) EnableSync(
 		return nil, err
 	}
 	provider := accountingprovider.ProviderName(conn.IntegrationType)
-	if !conn.IsActive() {
-		return nil, errortypes.NewBusinessError(
-			"{0} is not connected. A person must connect it from the integrations page.",
-			provider,
-		)
-	}
-	switch conn.SetupStep {
-	case accountingconnection.SetupStepMode:
-		return nil, errortypes.NewBusinessError(
-			"Choose whether to send documents or journal entries first",
-		)
-	case accountingconnection.SetupStepMappings:
-		return nil, errortypes.NewBusinessError("Confirm the required mappings first")
-	case accountingconnection.SetupStepStartDate, accountingconnection.SetupStepComplete:
-	}
-	if req.OpeningBalances && !conn.SendsLedger() {
-		return nil, errortypes.NewValidationError(
-			"openingBalances",
-			errortypes.ErrInvalid,
-			accountingconnection.ErrOpeningBalancesNeedLedger.Error(),
-		)
-	}
 	now := timeutils.NowUnix()
-	if req.StartDate <= 0 {
-		return nil, errortypes.NewValidationError(
-			"startDate",
-			errortypes.ErrRequired,
-			"Choose the first day documents are sent from",
-		)
-	}
-	if req.StartDate > now {
-		return nil, errortypes.NewValidationError(
-			"startDate",
-			errortypes.ErrInvalid,
-			"The start date cannot be in the future",
-		)
-	}
-	if err = conn.CanMoveStartDate(req.StartDate); err != nil {
-		return nil, errortypes.NewValidationError(
-			"startDate",
-			errortypes.ErrInvalid,
-			"The start date cannot move once opening balances are sent, because they hold every balance up to it",
-		)
+	if err = checkEnableSync(conn, req, provider, now); err != nil {
+		return nil, err
 	}
 
 	before := jsonutils.MustToJSON(conn)
@@ -219,16 +216,71 @@ func (s *Service) EnableSync(
 	s.effects.PublishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
 
 	if req.Backfill {
-		if _, err = s.backfills.RequestBackfill(ctx, &accountingsyncports.RequestAccountingBackfillRequest{
-			TenantInfo:      req.TenantInfo,
-			UserID:          req.UserID,
-			IntegrationType: req.IntegrationType,
-		}); err != nil &&
+		if _, err = s.backfills.RequestBackfill(
+			ctx,
+			&accountingsyncports.RequestAccountingBackfillRequest{
+				TenantInfo:      req.TenantInfo,
+				UserID:          req.UserID,
+				IntegrationType: req.IntegrationType,
+			},
+		); err != nil &&
 			!errors.Is(err, accountingsyncports.ErrAccountingBackfillActive) {
 			return updated, err
 		}
 	}
 	return updated, nil
+}
+
+func checkEnableSync(
+	conn *accountingconnection.AccountingConnection,
+	req *accountingsyncports.EnableAccountingSyncRequest,
+	provider string,
+	now int64,
+) error {
+	if !conn.IsActive() {
+		return errortypes.NewBusinessError(
+			"{0} is not connected. A person must connect it from the integrations page.",
+			provider,
+		)
+	}
+	switch conn.SetupStep {
+	case accountingconnection.SetupStepMode:
+		return errortypes.NewBusinessError(
+			"Choose whether to send documents or journal entries first",
+		)
+	case accountingconnection.SetupStepMappings:
+		return errortypes.NewBusinessError("Confirm the required mappings first")
+	case accountingconnection.SetupStepStartDate, accountingconnection.SetupStepComplete:
+	}
+	if req.OpeningBalances && !conn.SendsLedger() {
+		return errortypes.NewValidationError(
+			"openingBalances",
+			errortypes.ErrInvalid,
+			accountingconnection.ErrOpeningBalancesNeedLedger.Error(),
+		)
+	}
+	if req.StartDate <= 0 {
+		return errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrRequired,
+			"Choose the first day documents are sent from",
+		)
+	}
+	if req.StartDate > now {
+		return errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrInvalid,
+			"The start date cannot be in the future",
+		)
+	}
+	if err := conn.CanMoveStartDate(req.StartDate); err != nil {
+		return errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrInvalid,
+			"The start date cannot move once opening balances are sent, because they hold every balance up to it",
+		)
+	}
+	return nil
 }
 
 func (s *Service) Pause(
@@ -415,40 +467,3 @@ func (s *Service) enqueueOpeningBalances(
 	)
 	return err
 }
-
-type Params struct {
-	fx.In
-
-	Logger      *zap.Logger
-	DB          kernelports.Transactor
-	Connections accountingconnectionports.AccountingConnectionRepository
-	Scorer      accountingmappingports.AccountingMappingScorer
-	Enqueuer    *accountingsyncenqueue.Enqueuer
-	Effects     *accountingsynceffects.Effects
-	Backfills   *accountingsyncbackfill.Service
-}
-
-type Service struct {
-	l           *zap.Logger
-	db          kernelports.Transactor
-	connections accountingconnectionports.AccountingConnectionRepository
-	scorer      accountingmappingports.AccountingMappingScorer
-	enqueuer    *accountingsyncenqueue.Enqueuer
-	effects     *accountingsynceffects.Effects
-	backfills   *accountingsyncbackfill.Service
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Service {
-	return &Service{
-		l:           p.Logger.Named("service.accounting-sync"),
-		db:          p.DB,
-		connections: p.Connections,
-		scorer:      p.Scorer,
-		enqueuer:    p.Enqueuer,
-		effects:     p.Effects,
-		backfills:   p.Backfills,
-	}
-}
-
-var _ accountingsyncports.AccountingSyncSetupService = (*Service)(nil)

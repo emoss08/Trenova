@@ -35,25 +35,9 @@ func (p *Pusher) PushCreditApplication(
 		}
 		return nil, err
 	}
-	invoices, err := p.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
-		TenantInfo: sess.Tenant,
-		InvoiceIDs: []pulid.ID{app.InvoiceID, app.CreditMemoInvoiceID},
-	})
+	target, memo, err := p.applicationInvoices(ctx, sess, app.InvoiceID, app.CreditMemoInvoiceID)
 	if err != nil {
 		return nil, err
-	}
-	var target, memo *invoice.Invoice
-	for _, inv := range invoices {
-		switch inv.ID {
-		case app.InvoiceID:
-			target = inv
-		case app.CreditMemoInvoiceID:
-			memo = inv
-		}
-	}
-	if target == nil || memo == nil {
-		return nil, accountingsyncpush.Blocked(accountingsync.SyncErrorNotFound,
-			"A document this credit application links no longer exists", "Skip this record")
 	}
 	label := accountingsynceffects.DocumentLabel(
 		accountingsync.SyncObjectCreditApplication,
@@ -128,6 +112,33 @@ func (p *Pusher) PushCreditApplication(
 		return accountingsyncpush.Partial(written), err
 	}
 	return accountingsyncpush.Finished(sess, record, written, doc, res.MappingIDs())
+}
+
+func (p *Pusher) applicationInvoices(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	invoiceID, memoID pulid.ID,
+) (target, memo *invoice.Invoice, err error) {
+	invoices, err := p.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
+		TenantInfo: sess.Tenant,
+		InvoiceIDs: []pulid.ID{invoiceID, memoID},
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, inv := range invoices {
+		switch inv.ID {
+		case invoiceID:
+			target = inv
+		case memoID:
+			memo = inv
+		}
+	}
+	if target == nil || memo == nil {
+		return nil, nil, accountingsyncpush.Blocked(accountingsync.SyncErrorNotFound,
+			"A document this credit application links no longer exists", "Skip this record")
+	}
+	return target, memo, nil
 }
 
 func (p *Pusher) PushCreditApplicationVoid(

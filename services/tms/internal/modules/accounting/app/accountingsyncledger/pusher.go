@@ -20,6 +20,24 @@ const (
 	summaryDocPrefix = "JE "
 )
 
+type Params struct {
+	fx.In
+
+	Kit        *accountingsyncpush.Kit
+	Ledger     journalentryports.AccountingLedgerSource
+	References accountingmappingports.AccountingReferenceObjectRepository
+}
+
+type Pusher struct {
+	kit        *accountingsyncpush.Kit
+	ledger     journalentryports.AccountingLedgerSource
+	references accountingmappingports.AccountingReferenceObjectRepository
+}
+
+func New(p Params) *Pusher {
+	return &Pusher{kit: p.Kit, ledger: p.Ledger, references: p.References}
+}
+
 func (p *Pusher) Push(
 	ctx context.Context,
 	sess *accountingsyncpush.Session,
@@ -198,17 +216,9 @@ func (p *Pusher) pushJournalDay(
 		}
 	}
 
-	journals, err := p.ledger.ListJournals(ctx, &journalentryports.ListLedgerJournalsRequest{
-		TenantInfo: sess.Tenant,
-		From:       from,
-		Before:     before,
-	})
+	lines, err := p.dayLedgerLines(ctx, sess, from, before)
 	if err != nil {
 		return nil, err
-	}
-	lines := make([]ledgerLine, 0, len(journals)*2)
-	for _, journal := range journals {
-		lines = append(lines, journalLines(journal)...)
 	}
 
 	currency := functionalCurrency(sess)
@@ -268,6 +278,26 @@ func (p *Pusher) pushJournalDay(
 	)
 }
 
+func (p *Pusher) dayLedgerLines(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	from, before int64,
+) ([]ledgerLine, error) {
+	journals, err := p.ledger.ListJournals(ctx, &journalentryports.ListLedgerJournalsRequest{
+		TenantInfo: sess.Tenant,
+		From:       from,
+		Before:     before,
+	})
+	if err != nil {
+		return nil, err
+	}
+	lines := make([]ledgerLine, 0, len(journals)*2)
+	for _, journal := range journals {
+		lines = append(lines, journalLines(journal)...)
+	}
+	return lines, nil
+}
+
 func (p *Pusher) retireDay(
 	ctx context.Context,
 	sess *accountingsyncpush.Session,
@@ -279,12 +309,15 @@ func (p *Pusher) retireDay(
 			Reason: label + " nets to zero, so there is nothing to send",
 		}
 	}
-	if _, err := sess.Journals.DeleteJournalEntry(ctx, &accountingconnectorports.AccountingDocumentRef{
-		Auth:       sess.Auth,
-		RequestID:  record.RequestID,
-		Kind:       record.ObjectType,
-		ExternalID: externalID,
-	}); err != nil {
+	if _, err := sess.Journals.DeleteJournalEntry(
+		ctx,
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth:       sess.Auth,
+			RequestID:  record.RequestID,
+			Kind:       record.ObjectType,
+			ExternalID: externalID,
+		},
+	); err != nil {
 		return err
 	}
 	return &accountingsyncpush.NoopError{
@@ -339,22 +372,4 @@ func sentLater(a, b *accountingsync.AccountingSyncRecord) bool {
 		return at > bt
 	}
 	return a.Revision > b.Revision
-}
-
-type Params struct {
-	fx.In
-
-	Kit        *accountingsyncpush.Kit
-	Ledger     journalentryports.AccountingLedgerSource
-	References accountingmappingports.AccountingReferenceObjectRepository
-}
-
-type Pusher struct {
-	kit        *accountingsyncpush.Kit
-	ledger     journalentryports.AccountingLedgerSource
-	references accountingmappingports.AccountingReferenceObjectRepository
-}
-
-func New(p Params) *Pusher {
-	return &Pusher{kit: p.Kit, ledger: p.Ledger, references: p.References}
 }

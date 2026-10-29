@@ -28,6 +28,52 @@ import (
 	"go.uber.org/zap"
 )
 
+type Params struct {
+	fx.In
+
+	Logger       *zap.Logger
+	References   accountingmappingports.AccountingReferenceObjectRepository
+	Mappings     accountingmappingports.AccountingMappingRepository
+	Sessions     accountingconnectionports.AccountingSessionProvider
+	Accessorials accessorialchargeports.AccessorialChargeRepository
+	Customers    customerports.CustomerRepository
+	Carriers     carrierports.CarrierRepository
+	Kit          *accountingmappingkit.Kit
+	Catalog      *accountingmappingtargets.Catalog
+	Reads        *accountingmappingreads.Service
+}
+
+type Service struct {
+	l            *zap.Logger
+	references   accountingmappingports.AccountingReferenceObjectRepository
+	mappings     accountingmappingports.AccountingMappingRepository
+	sessions     accountingconnectionports.AccountingSessionProvider
+	accessorials accessorialchargeports.AccessorialChargeRepository
+	customers    customerports.CustomerRepository
+	carriers     carrierports.CarrierRepository
+	kit          *accountingmappingkit.Kit
+	catalog      *accountingmappingtargets.Catalog
+	reads        *accountingmappingreads.Service
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Service {
+	return &Service{
+		l:            p.Logger.Named("service.accounting-mapping"),
+		references:   p.References,
+		mappings:     p.Mappings,
+		sessions:     p.Sessions,
+		accessorials: p.Accessorials,
+		customers:    p.Customers,
+		carriers:     p.Carriers,
+		kit:          p.Kit,
+		catalog:      p.Catalog,
+		reads:        p.Reads,
+	}
+}
+
+var _ accountingmappingports.AccountingReferenceCreator = (*Service)(nil)
+
 func (s *Service) CreateReferenceRecord(
 	ctx context.Context,
 	req *accountingmappingports.CreateAccountingReferenceRecordRequest,
@@ -85,12 +131,15 @@ func (s *Service) CreateReferenceRecord(
 		).WithInternal(err)
 	}
 
-	if err = s.references.Upsert(ctx, &accountingmappingports.UpsertAccountingReferenceObjectsRequest{
-		TenantInfo:   req.TenantInfo,
-		ConnectionID: row.ConnectionID,
-		Objects:      []*accountingmapping.AccountingReferenceObject{created},
-		SeenAt:       timeutils.NowUnix(),
-	}); err != nil {
+	if err = s.references.Upsert(
+		ctx,
+		&accountingmappingports.UpsertAccountingReferenceObjectsRequest{
+			TenantInfo:   req.TenantInfo,
+			ConnectionID: row.ConnectionID,
+			Objects:      []*accountingmapping.AccountingReferenceObject{created},
+			SeenAt:       timeutils.NowUnix(),
+		},
+	); err != nil {
 		return nil, err
 	}
 
@@ -383,8 +432,17 @@ func (s *Service) VendorParty(
 			return nil, err
 		}
 		return driverParty(wrk, accountingmappingtargets.WorkerName(wrk)), nil
+	case accountingsync.TargetAccountRole,
+		accountingsync.TargetLineType,
+		accountingsync.TargetAccessorialCharge,
+		accountingsync.TargetItemRole,
+		accountingsync.TargetCustomer,
+		accountingsync.TargetGLAccount,
+		accountingsync.TargetPaymentTerm,
+		accountingsync.TargetPaymentMethod:
+		return nil, notVendorError(targetType)
 	default:
-		return nil, errortypes.NewBusinessError("{0} is not a vendor", string(targetType))
+		return nil, notVendorError(targetType)
 	}
 }
 
@@ -422,48 +480,6 @@ func (s *Service) duplicateNameError(
 	).WithInternal(cause)
 }
 
-type Params struct {
-	fx.In
-
-	Logger       *zap.Logger
-	References   accountingmappingports.AccountingReferenceObjectRepository
-	Mappings     accountingmappingports.AccountingMappingRepository
-	Sessions     accountingconnectionports.AccountingSessionProvider
-	Accessorials accessorialchargeports.AccessorialChargeRepository
-	Customers    customerports.CustomerRepository
-	Carriers     carrierports.CarrierRepository
-	Kit          *accountingmappingkit.Kit
-	Catalog      *accountingmappingtargets.Catalog
-	Reads        *accountingmappingreads.Service
+func notVendorError(targetType accountingsync.MappingTargetType) error {
+	return errortypes.NewBusinessError("{0} is not a vendor", string(targetType))
 }
-
-type Service struct {
-	l            *zap.Logger
-	references   accountingmappingports.AccountingReferenceObjectRepository
-	mappings     accountingmappingports.AccountingMappingRepository
-	sessions     accountingconnectionports.AccountingSessionProvider
-	accessorials accessorialchargeports.AccessorialChargeRepository
-	customers    customerports.CustomerRepository
-	carriers     carrierports.CarrierRepository
-	kit          *accountingmappingkit.Kit
-	catalog      *accountingmappingtargets.Catalog
-	reads        *accountingmappingreads.Service
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Service {
-	return &Service{
-		l:            p.Logger.Named("service.accounting-mapping"),
-		references:   p.References,
-		mappings:     p.Mappings,
-		sessions:     p.Sessions,
-		accessorials: p.Accessorials,
-		customers:    p.Customers,
-		carriers:     p.Carriers,
-		kit:          p.Kit,
-		catalog:      p.Catalog,
-		reads:        p.Reads,
-	}
-}
-
-var _ accountingmappingports.AccountingReferenceCreator = (*Service)(nil)

@@ -13,6 +13,22 @@ import (
 	"go.uber.org/fx"
 )
 
+type Params struct {
+	fx.In
+
+	Kit     *accountingsyncpush.Kit
+	Creator accountingmappingports.AccountingReferenceCreator
+}
+
+type Pusher struct {
+	kit     *accountingsyncpush.Kit
+	creator accountingmappingports.AccountingReferenceCreator
+}
+
+func New(p Params) *Pusher {
+	return &Pusher{kit: p.Kit, creator: p.Creator}
+}
+
 func (p *Pusher) Push(
 	ctx context.Context,
 	sess *accountingsyncpush.Session,
@@ -154,20 +170,4 @@ func partyCreateError(
 		)
 	}
 	return err
-}
-
-type Params struct {
-	fx.In
-
-	Kit     *accountingsyncpush.Kit
-	Creator accountingmappingports.AccountingReferenceCreator
-}
-
-type Pusher struct {
-	kit     *accountingsyncpush.Kit
-	creator accountingmappingports.AccountingReferenceCreator
-}
-
-func New(p Params) *Pusher {
-	return &Pusher{kit: p.Kit, creator: p.Creator}
 }

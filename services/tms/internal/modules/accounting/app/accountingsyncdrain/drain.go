@@ -28,6 +28,49 @@ import (
 
 const defaultDrainLimit = 25
 
+type Params struct {
+	fx.In
+
+	Logger   *zap.Logger
+	Records  accountingsyncports.AccountingSyncRecordRepository
+	Sessions accountingconnectionports.AccountingSessionProvider
+	Controls tenantports.AccountingControlRepository
+	Effects  *accountingsynceffects.Effects
+	Parties  *accountingsyncparty.Pusher
+	Sales    *accountingsyncsales.Pusher
+	Payables *accountingsyncpayables.Pusher
+	Ledger   *accountingsyncledger.Pusher
+}
+
+type Service struct {
+	l        *zap.Logger
+	records  accountingsyncports.AccountingSyncRecordRepository
+	sessions accountingconnectionports.AccountingSessionProvider
+	controls tenantports.AccountingControlRepository
+	effects  *accountingsynceffects.Effects
+	parties  *accountingsyncparty.Pusher
+	sales    *accountingsyncsales.Pusher
+	payables *accountingsyncpayables.Pusher
+	ledger   *accountingsyncledger.Pusher
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Service {
+	return &Service{
+		l:        p.Logger.Named("service.accounting-sync"),
+		records:  p.Records,
+		sessions: p.Sessions,
+		controls: p.Controls,
+		effects:  p.Effects,
+		parties:  p.Parties,
+		sales:    p.Sales,
+		payables: p.Payables,
+		ledger:   p.Ledger,
+	}
+}
+
+var _ accountingsyncports.AccountingSyncDrainer = (*Service)(nil)
+
 func (s *Service) openSession(
 	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
@@ -277,46 +320,3 @@ func (s *Service) pushOne(
 		)
 	}
 }
-
-type Params struct {
-	fx.In
-
-	Logger   *zap.Logger
-	Records  accountingsyncports.AccountingSyncRecordRepository
-	Sessions accountingconnectionports.AccountingSessionProvider
-	Controls tenantports.AccountingControlRepository
-	Effects  *accountingsynceffects.Effects
-	Parties  *accountingsyncparty.Pusher
-	Sales    *accountingsyncsales.Pusher
-	Payables *accountingsyncpayables.Pusher
-	Ledger   *accountingsyncledger.Pusher
-}
-
-type Service struct {
-	l        *zap.Logger
-	records  accountingsyncports.AccountingSyncRecordRepository
-	sessions accountingconnectionports.AccountingSessionProvider
-	controls tenantports.AccountingControlRepository
-	effects  *accountingsynceffects.Effects
-	parties  *accountingsyncparty.Pusher
-	sales    *accountingsyncsales.Pusher
-	payables *accountingsyncpayables.Pusher
-	ledger   *accountingsyncledger.Pusher
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Service {
-	return &Service{
-		l:        p.Logger.Named("service.accounting-sync"),
-		records:  p.Records,
-		sessions: p.Sessions,
-		controls: p.Controls,
-		effects:  p.Effects,
-		parties:  p.Parties,
-		sales:    p.Sales,
-		payables: p.Payables,
-		ledger:   p.Ledger,
-	}
-}
-
-var _ accountingsyncports.AccountingSyncDrainer = (*Service)(nil)

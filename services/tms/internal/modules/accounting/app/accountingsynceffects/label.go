@@ -35,6 +35,8 @@ func DocumentLabel(objectType accountingsync.SyncObjectType, number string) stri
 		kind = "Journal entry"
 	case accountingsync.SyncObjectJournalSummary:
 		kind = "Journal entries for"
+	case accountingsync.DriftObjectGLAccount:
+		kind = "Document"
 	default:
 		kind = "Document"
 	}

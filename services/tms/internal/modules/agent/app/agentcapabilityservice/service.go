@@ -63,6 +63,7 @@ type Service struct {
 	users       tenantports.UserRepository
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentcapabilityports.AgentCapabilityService {
 	return &Service{
 		l:           p.Logger.Named("service.agent-capability"),

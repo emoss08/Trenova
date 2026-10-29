@@ -22,6 +22,34 @@ import (
 	"go.uber.org/fx"
 )
 
+type Params struct {
+	fx.In
+
+	Records    accountingsyncports.AccountingSyncRecordRepository
+	Backfills  accountingsyncports.AccountingBackfillRepository
+	Enqueuer   *accountingsyncenqueue.Enqueuer
+	Dispatcher accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Effects    *accountingsynceffects.Effects
+}
+
+type Service struct {
+	records    accountingsyncports.AccountingSyncRecordRepository
+	backfills  accountingsyncports.AccountingBackfillRepository
+	enqueuer   *accountingsyncenqueue.Enqueuer
+	dispatcher accountingsyncports.AccountingSyncDispatcher
+	effects    *accountingsynceffects.Effects
+}
+
+func New(p Params) *Service {
+	return &Service{
+		records:    p.Records,
+		backfills:  p.Backfills,
+		enqueuer:   p.Enqueuer,
+		dispatcher: p.Dispatcher,
+		effects:    p.Effects,
+	}
+}
+
 func (s *Service) RequestBackfill(
 	ctx context.Context,
 	req *accountingsyncports.RequestAccountingBackfillRequest,
@@ -210,34 +238,6 @@ func (s *Service) ChangeBackfill(
 		}
 	}
 	return updated, nil
-}
-
-type Params struct {
-	fx.In
-
-	Records    accountingsyncports.AccountingSyncRecordRepository
-	Backfills  accountingsyncports.AccountingBackfillRepository
-	Enqueuer   *accountingsyncenqueue.Enqueuer
-	Dispatcher accountingsyncports.AccountingSyncDispatcher `optional:"true"`
-	Effects    *accountingsynceffects.Effects
-}
-
-type Service struct {
-	records    accountingsyncports.AccountingSyncRecordRepository
-	backfills  accountingsyncports.AccountingBackfillRepository
-	enqueuer   *accountingsyncenqueue.Enqueuer
-	dispatcher accountingsyncports.AccountingSyncDispatcher
-	effects    *accountingsynceffects.Effects
-}
-
-func New(p Params) *Service {
-	return &Service{
-		records:    p.Records,
-		backfills:  p.Backfills,
-		enqueuer:   p.Enqueuer,
-		dispatcher: p.Dispatcher,
-		effects:    p.Effects,
-	}
 }
 
 const Page = 200

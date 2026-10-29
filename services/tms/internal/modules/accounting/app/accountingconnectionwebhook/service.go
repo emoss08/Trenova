@@ -260,7 +260,11 @@ func (s *Service) pollChanged(
 			continue
 		}
 		tenant := pagination.TenantInfo{OrgID: holder.OrganizationID, BuID: holder.BusinessUnitID}
-		if err := s.poller.PollNow(accountingconnectionkit.ConnectionScope(ctx, holder), tenant, holder.ID); err != nil {
+		if err := s.poller.PollNow(
+			accountingconnectionkit.ConnectionScope(ctx, holder),
+			tenant,
+			holder.ID,
+		); err != nil {
 			s.l.Warn("failed to wake the change reader after a webhook",
 				zap.String("connectionId", holder.ID.String()), zap.Error(err))
 		}

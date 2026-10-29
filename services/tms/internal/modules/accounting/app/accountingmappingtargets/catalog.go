@@ -24,6 +24,50 @@ import (
 	"go.uber.org/fx"
 )
 
+type Params struct {
+	fx.In
+
+	Mappings           accountingmappingports.AccountingMappingRepository
+	AccountingControls tenantports.AccountingControlRepository
+	GLAccounts         glaccountports.GLAccountRepository
+	Ledger             journalentryports.AccountingLedgerSource `optional:"true"`
+	Customers          customerports.CustomerRepository
+	Carriers           carrierports.CarrierRepository
+	Accessorials       accessorialchargeports.AccessorialChargeRepository
+	Workers            workerports.WorkerRepository                   `optional:"true"`
+	SettlementControls tenantports.CarrierSettlementControlRepository `optional:"true"`
+	PayCodes           driverpayports.PayCodeRepository               `optional:"true"`
+}
+
+type Catalog struct {
+	mappings           accountingmappingports.AccountingMappingRepository
+	accountingControls tenantports.AccountingControlRepository
+	glAccounts         glaccountports.GLAccountRepository
+	ledger             journalentryports.AccountingLedgerSource
+	customers          customerports.CustomerRepository
+	carriers           carrierports.CarrierRepository
+	accessorials       accessorialchargeports.AccessorialChargeRepository
+	workers            workerports.WorkerRepository
+	settlementControls tenantports.CarrierSettlementControlRepository
+	payCodes           driverpayports.PayCodeRepository
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Catalog {
+	return &Catalog{
+		mappings:           p.Mappings,
+		accountingControls: p.AccountingControls,
+		glAccounts:         p.GLAccounts,
+		ledger:             p.Ledger,
+		customers:          p.Customers,
+		carriers:           p.Carriers,
+		accessorials:       p.Accessorials,
+		workers:            p.Workers,
+		settlementControls: p.SettlementControls,
+		payCodes:           p.PayCodes,
+	}
+}
+
 func (c *Catalog) WorkerWithState(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -459,48 +503,4 @@ func (c *Catalog) payablesAccountIDs(
 		ids = append(ids, id)
 	}
 	return ids, nil
-}
-
-type Params struct {
-	fx.In
-
-	Mappings           accountingmappingports.AccountingMappingRepository
-	AccountingControls tenantports.AccountingControlRepository
-	GLAccounts         glaccountports.GLAccountRepository
-	Ledger             journalentryports.AccountingLedgerSource `optional:"true"`
-	Customers          customerports.CustomerRepository
-	Carriers           carrierports.CarrierRepository
-	Accessorials       accessorialchargeports.AccessorialChargeRepository
-	Workers            workerports.WorkerRepository                   `optional:"true"`
-	SettlementControls tenantports.CarrierSettlementControlRepository `optional:"true"`
-	PayCodes           driverpayports.PayCodeRepository               `optional:"true"`
-}
-
-type Catalog struct {
-	mappings           accountingmappingports.AccountingMappingRepository
-	accountingControls tenantports.AccountingControlRepository
-	glAccounts         glaccountports.GLAccountRepository
-	ledger             journalentryports.AccountingLedgerSource
-	customers          customerports.CustomerRepository
-	carriers           carrierports.CarrierRepository
-	accessorials       accessorialchargeports.AccessorialChargeRepository
-	workers            workerports.WorkerRepository
-	settlementControls tenantports.CarrierSettlementControlRepository
-	payCodes           driverpayports.PayCodeRepository
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Catalog {
-	return &Catalog{
-		mappings:           p.Mappings,
-		accountingControls: p.AccountingControls,
-		glAccounts:         p.GLAccounts,
-		ledger:             p.Ledger,
-		customers:          p.Customers,
-		carriers:           p.Carriers,
-		accessorials:       p.Accessorials,
-		workers:            p.Workers,
-		settlementControls: p.SettlementControls,
-		payCodes:           p.PayCodes,
-	}
 }

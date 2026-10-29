@@ -25,6 +25,46 @@ import (
 	"go.uber.org/zap"
 )
 
+type Params struct {
+	fx.In
+
+	Logger       *zap.Logger
+	DB           kernelports.Transactor
+	Connections  accountingconnectionports.AccountingConnectionRepository
+	States       accountingconnectionports.AccountingOAuthStateRepository
+	Certificates accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
+	Encryption   *encryptionservice.Service
+	Kit          *accountingconnectionkit.Kit
+	Subs         *accountingconnectionsubscriptions.Service
+}
+
+type Service struct {
+	l            *zap.Logger
+	db           kernelports.Transactor
+	connections  accountingconnectionports.AccountingConnectionRepository
+	states       accountingconnectionports.AccountingOAuthStateRepository
+	certificates accountingconnectionports.AccountingPendingCertificateRepository
+	encryption   *encryptionservice.Service
+	kit          *accountingconnectionkit.Kit
+	subs         *accountingconnectionsubscriptions.Service
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Service {
+	return &Service{
+		l:            p.Logger.Named("service.accounting-connection"),
+		db:           p.DB,
+		connections:  p.Connections,
+		states:       p.States,
+		certificates: p.Certificates,
+		encryption:   p.Encryption,
+		kit:          p.Kit,
+		subs:         p.Subs,
+	}
+}
+
+var _ accountingconnectionports.AccountingAuthorizationService = (*Service)(nil)
+
 func (s *Service) CompleteAuthorization(
 	ctx context.Context,
 	req *accountingconnectionports.CompleteAccountingAuthorizationRequest,
@@ -478,7 +518,10 @@ func (s *Service) saveConnection(
 		if _, updateErr := s.connections.Update(txCtx, existing); updateErr != nil {
 			return updateErr
 		}
-		if storeErr := s.connections.StoreTokens(txCtx, accountingconnectionkit.TokensOf(existing, now)); storeErr != nil {
+		if storeErr := s.connections.StoreTokens(
+			txCtx,
+			accountingconnectionkit.TokensOf(existing, now),
+		); storeErr != nil {
 			return storeErr
 		}
 		conn = existing
@@ -730,43 +773,3 @@ func (s *Service) Disconnect(
 
 	return conn, nil
 }
-
-type Params struct {
-	fx.In
-
-	Logger       *zap.Logger
-	DB           kernelports.Transactor
-	Connections  accountingconnectionports.AccountingConnectionRepository
-	States       accountingconnectionports.AccountingOAuthStateRepository
-	Certificates accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
-	Encryption   *encryptionservice.Service
-	Kit          *accountingconnectionkit.Kit
-	Subs         *accountingconnectionsubscriptions.Service
-}
-
-type Service struct {
-	l            *zap.Logger
-	db           kernelports.Transactor
-	connections  accountingconnectionports.AccountingConnectionRepository
-	states       accountingconnectionports.AccountingOAuthStateRepository
-	certificates accountingconnectionports.AccountingPendingCertificateRepository
-	encryption   *encryptionservice.Service
-	kit          *accountingconnectionkit.Kit
-	subs         *accountingconnectionsubscriptions.Service
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Service {
-	return &Service{
-		l:            p.Logger.Named("service.accounting-connection"),
-		db:           p.DB,
-		connections:  p.Connections,
-		states:       p.States,
-		certificates: p.Certificates,
-		encryption:   p.Encryption,
-		kit:          p.Kit,
-		subs:         p.Subs,
-	}
-}
-
-var _ accountingconnectionports.AccountingAuthorizationService = (*Service)(nil)

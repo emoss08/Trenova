@@ -67,41 +67,14 @@ func (p *Pusher) PushPayment(
 	}
 	externalID := ""
 	if record.Operation == accountingsync.SyncOperationUpdate {
-		created := accountingsyncpush.DocumentRecord(existing)
-		if created == nil {
-			dependency, enqueueErr := p.kit.EnqueueDependency(
-				ctx,
-				sess,
-				&accountingsyncports.AccountingSyncEnqueueRequest{
-					ObjectType:   record.ObjectType,
-					ObjectID:     record.ObjectID,
-					ObjectNumber: record.ObjectNumber,
-					Operation:    accountingsync.SyncOperationCreate,
-					Revision:     1,
-					DocumentDate: payment.AccountingDate,
-				},
-			)
-			if enqueueErr != nil {
-				return nil, enqueueErr
-			}
-			created = dependency
-		}
-		switch {
-		case created == nil:
-			return nil, &accountingsyncpush.NoopError{
-				Reason: "The payment was never sent, so there is nothing to update",
-			}
-		case accountingsyncpush.IsSynced(created) && created.SharesProviderDocument():
-			return nil, accountingsyncpush.SharedDocumentError(sess, label)
-		case accountingsyncpush.IsSynced(created):
-			externalID = created.ExternalID
-		case created.Status.IsFinal():
-			return nil, &accountingsyncpush.NoopError{
-				Reason: "The payment was skipped, so its changes are not sent",
-			}
-		default:
-			p.kit.Kick(ctx, sess)
-			return nil, accountingsyncpush.WaitingOn(created, label)
+		externalID, err = p.paymentUpdateTarget(ctx, sess, &paymentUpdate{
+			record:   record,
+			payment:  payment,
+			existing: existing,
+			label:    label,
+		})
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -151,31 +124,89 @@ func (p *Pusher) PushPayment(
 		return nil, err
 	}
 
-	save := func() (*accountingconnectorports.AccountingDocumentResult, error) {
-		return sess.Writer.SavePayment(ctx, doc)
-	}
-	var written *accountingconnectorports.AccountingDocumentResult
-	if doc.ExternalID == "" {
-		written, err = p.kit.CreateAdopting(
-			ctx,
-			sess,
-			record,
-			&accountingconnectorports.AccountingFindDocumentRequest{
-				DocNumber:              doc.ReferenceNumber,
-				CounterpartyExternalID: doc.CustomerExternalID,
-				TxnDate:                doc.TxnDate,
-				Total:                  doc.TotalAmount,
-				AppliesToExternalIDs:   appliedInvoices(doc.Applications),
-			},
-			save,
-		)
-	} else {
-		written, err = save()
-	}
+	written, err := p.savePayment(ctx, sess, record, doc)
 	if err != nil {
 		return accountingsyncpush.Partial(written), err
 	}
 	return accountingsyncpush.Finished(sess, record, written, doc, res.MappingIDs())
+}
+
+type paymentUpdate struct {
+	record   *accountingsync.AccountingSyncRecord
+	payment  *customerpayment.Payment
+	existing []*accountingsync.AccountingSyncRecord
+	label    string
+}
+
+func (p *Pusher) paymentUpdateTarget(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	update *paymentUpdate,
+) (string, error) {
+	record := update.record
+	created := accountingsyncpush.DocumentRecord(update.existing)
+	if created == nil {
+		dependency, err := p.kit.EnqueueDependency(
+			ctx,
+			sess,
+			&accountingsyncports.AccountingSyncEnqueueRequest{
+				ObjectType:   record.ObjectType,
+				ObjectID:     record.ObjectID,
+				ObjectNumber: record.ObjectNumber,
+				Operation:    accountingsync.SyncOperationCreate,
+				Revision:     1,
+				DocumentDate: update.payment.AccountingDate,
+			},
+		)
+		if err != nil {
+			return "", err
+		}
+		created = dependency
+	}
+	switch {
+	case created == nil:
+		return "", &accountingsyncpush.NoopError{
+			Reason: "The payment was never sent, so there is nothing to update",
+		}
+	case accountingsyncpush.IsSynced(created) && created.SharesProviderDocument():
+		return "", accountingsyncpush.SharedDocumentError(sess, update.label)
+	case accountingsyncpush.IsSynced(created):
+		return created.ExternalID, nil
+	case created.Status.IsFinal():
+		return "", &accountingsyncpush.NoopError{
+			Reason: "The payment was skipped, so its changes are not sent",
+		}
+	default:
+		p.kit.Kick(ctx, sess)
+		return "", accountingsyncpush.WaitingOn(created, update.label)
+	}
+}
+
+func (p *Pusher) savePayment(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	record *accountingsync.AccountingSyncRecord,
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
+	save := func() (*accountingconnectorports.AccountingDocumentResult, error) {
+		return sess.Writer.SavePayment(ctx, doc)
+	}
+	if doc.ExternalID != "" {
+		return save()
+	}
+	return p.kit.CreateAdopting(
+		ctx,
+		sess,
+		record,
+		&accountingconnectorports.AccountingFindDocumentRequest{
+			DocNumber:              doc.ReferenceNumber,
+			CounterpartyExternalID: doc.CustomerExternalID,
+			TxnDate:                doc.TxnDate,
+			Total:                  doc.TotalAmount,
+			AppliesToExternalIDs:   appliedInvoices(doc.Applications),
+		},
+		save,
+	)
 }
 
 type paymentExternalRefs struct {

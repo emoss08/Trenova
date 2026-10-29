@@ -217,7 +217,7 @@ func (r *payablesRepository) accountingControl(
 				First(ctx, r.db.Keel(ctx))
 			if err != nil {
 				if dberror.IsNotFoundError(err) {
-					return nil, nil //nolint:nilnil // a tenant without an accounting control has no default accounts
+					return nil, nil
 				}
 				return nil, fmt.Errorf("load accounting control: %w", err)
 			}

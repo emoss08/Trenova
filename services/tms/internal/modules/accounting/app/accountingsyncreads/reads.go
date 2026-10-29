@@ -23,6 +23,26 @@ const maxAttemptsListed = 50
 
 const maxBackfillsListed = 20
 
+type Params struct {
+	fx.In
+
+	Connections accountingconnectionports.AccountingConnectionRepository
+	Records     accountingsyncports.AccountingSyncRecordRepository
+	Backfills   accountingsyncports.AccountingBackfillRepository
+}
+
+type Service struct {
+	connections accountingconnectionports.AccountingConnectionRepository
+	records     accountingsyncports.AccountingSyncRecordRepository
+	backfills   accountingsyncports.AccountingBackfillRepository
+}
+
+func New(p Params) *Service {
+	return &Service{connections: p.Connections, records: p.Records, backfills: p.Backfills}
+}
+
+var _ accountingsyncports.AccountingSyncReader = (*Service)(nil)
+
 func (s *Service) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -227,23 +247,3 @@ func (s *Service) ListBackfills(
 		Limit:        maxBackfillsListed,
 	})
 }
-
-type Params struct {
-	fx.In
-
-	Connections accountingconnectionports.AccountingConnectionRepository
-	Records     accountingsyncports.AccountingSyncRecordRepository
-	Backfills   accountingsyncports.AccountingBackfillRepository
-}
-
-type Service struct {
-	connections accountingconnectionports.AccountingConnectionRepository
-	records     accountingsyncports.AccountingSyncRecordRepository
-	backfills   accountingsyncports.AccountingBackfillRepository
-}
-
-func New(p Params) *Service {
-	return &Service{connections: p.Connections, records: p.Records, backfills: p.Backfills}
-}
-
-var _ accountingsyncports.AccountingSyncReader = (*Service)(nil)

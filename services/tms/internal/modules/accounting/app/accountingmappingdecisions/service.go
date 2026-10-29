@@ -28,6 +28,52 @@ import (
 
 const MaxConfirmBatch = 200
 
+type Params struct {
+	fx.In
+
+	Logger      *zap.Logger
+	DB          kernelports.Transactor
+	Connections accountingconnectionports.AccountingConnectionRepository
+	References  accountingmappingports.AccountingReferenceObjectRepository
+	Mappings    accountingmappingports.AccountingMappingRepository
+	Refresher   accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
+	Audit       auditports.AuditService
+	Kit         *accountingmappingkit.Kit
+	Catalog     *accountingmappingtargets.Catalog
+	Reads       *accountingmappingreads.Service
+}
+
+type Service struct {
+	l           *zap.Logger
+	db          kernelports.Transactor
+	connections accountingconnectionports.AccountingConnectionRepository
+	references  accountingmappingports.AccountingReferenceObjectRepository
+	mappings    accountingmappingports.AccountingMappingRepository
+	refresher   accountingconnectionports.AccountingReferenceRefresher
+	audit       auditports.AuditService
+	kit         *accountingmappingkit.Kit
+	catalog     *accountingmappingtargets.Catalog
+	reads       *accountingmappingreads.Service
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Service {
+	return &Service{
+		l:           p.Logger.Named("service.accounting-mapping"),
+		db:          p.DB,
+		connections: p.Connections,
+		references:  p.References,
+		mappings:    p.Mappings,
+		refresher:   p.Refresher,
+		audit:       p.Audit,
+		kit:         p.Kit,
+		catalog:     p.Catalog,
+		reads:       p.Reads,
+	}
+}
+
+var _ accountingmappingports.AccountingMappingDecisionService = (*Service)(nil)
+
 func (s *Service) usableReference(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -452,49 +498,3 @@ func (s *Service) EnsureMapping(
 	}
 	return s.mappings.GetByTarget(ctx, lookup)
 }
-
-type Params struct {
-	fx.In
-
-	Logger      *zap.Logger
-	DB          kernelports.Transactor
-	Connections accountingconnectionports.AccountingConnectionRepository
-	References  accountingmappingports.AccountingReferenceObjectRepository
-	Mappings    accountingmappingports.AccountingMappingRepository
-	Refresher   accountingconnectionports.AccountingReferenceRefresher `optional:"true"`
-	Audit       auditports.AuditService
-	Kit         *accountingmappingkit.Kit
-	Catalog     *accountingmappingtargets.Catalog
-	Reads       *accountingmappingreads.Service
-}
-
-type Service struct {
-	l           *zap.Logger
-	db          kernelports.Transactor
-	connections accountingconnectionports.AccountingConnectionRepository
-	references  accountingmappingports.AccountingReferenceObjectRepository
-	mappings    accountingmappingports.AccountingMappingRepository
-	refresher   accountingconnectionports.AccountingReferenceRefresher
-	audit       auditports.AuditService
-	kit         *accountingmappingkit.Kit
-	catalog     *accountingmappingtargets.Catalog
-	reads       *accountingmappingreads.Service
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Service {
-	return &Service{
-		l:           p.Logger.Named("service.accounting-mapping"),
-		db:          p.DB,
-		connections: p.Connections,
-		references:  p.References,
-		mappings:    p.Mappings,
-		refresher:   p.Refresher,
-		audit:       p.Audit,
-		kit:         p.Kit,
-		catalog:     p.Catalog,
-		reads:       p.Reads,
-	}
-}
-
-var _ accountingmappingports.AccountingMappingDecisionService = (*Service)(nil)

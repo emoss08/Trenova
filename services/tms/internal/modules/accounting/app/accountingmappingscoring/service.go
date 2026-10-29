@@ -26,6 +26,46 @@ import (
 	"go.uber.org/zap"
 )
 
+type Params struct {
+	fx.In
+
+	Logger      *zap.Logger
+	Connections accountingconnectionports.AccountingConnectionRepository
+	References  accountingmappingports.AccountingReferenceObjectRepository
+	Mappings    accountingmappingports.AccountingMappingRepository
+	Sessions    accountingconnectionports.AccountingSessionProvider
+	Completion  llmports.CompletionService `optional:"true"`
+	Kit         *accountingmappingkit.Kit
+	Catalog     *accountingmappingtargets.Catalog
+}
+
+type Service struct {
+	l           *zap.Logger
+	connections accountingconnectionports.AccountingConnectionRepository
+	references  accountingmappingports.AccountingReferenceObjectRepository
+	mappings    accountingmappingports.AccountingMappingRepository
+	sessions    accountingconnectionports.AccountingSessionProvider
+	completion  llmports.CompletionService
+	kit         *accountingmappingkit.Kit
+	catalog     *accountingmappingtargets.Catalog
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Service {
+	return &Service{
+		l:           p.Logger.Named("service.accounting-mapping"),
+		connections: p.Connections,
+		references:  p.References,
+		mappings:    p.Mappings,
+		sessions:    p.Sessions,
+		completion:  p.Completion,
+		kit:         p.Kit,
+		catalog:     p.Catalog,
+	}
+}
+
+var _ accountingmappingports.AccountingMappingScorer = (*Service)(nil)
+
 func (s *Service) ModelPass(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -361,43 +401,3 @@ func (s *Service) MarkRefreshFinished(
 	s.kit.PublishConnectionInvalidation(ctx, conn, pulid.Nil)
 	return nil
 }
-
-type Params struct {
-	fx.In
-
-	Logger      *zap.Logger
-	Connections accountingconnectionports.AccountingConnectionRepository
-	References  accountingmappingports.AccountingReferenceObjectRepository
-	Mappings    accountingmappingports.AccountingMappingRepository
-	Sessions    accountingconnectionports.AccountingSessionProvider
-	Completion  llmports.CompletionService `optional:"true"`
-	Kit         *accountingmappingkit.Kit
-	Catalog     *accountingmappingtargets.Catalog
-}
-
-type Service struct {
-	l           *zap.Logger
-	connections accountingconnectionports.AccountingConnectionRepository
-	references  accountingmappingports.AccountingReferenceObjectRepository
-	mappings    accountingmappingports.AccountingMappingRepository
-	sessions    accountingconnectionports.AccountingSessionProvider
-	completion  llmports.CompletionService
-	kit         *accountingmappingkit.Kit
-	catalog     *accountingmappingtargets.Catalog
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Service {
-	return &Service{
-		l:           p.Logger.Named("service.accounting-mapping"),
-		connections: p.Connections,
-		references:  p.References,
-		mappings:    p.Mappings,
-		sessions:    p.Sessions,
-		completion:  p.Completion,
-		kit:         p.Kit,
-		catalog:     p.Catalog,
-	}
-}
-
-var _ accountingmappingports.AccountingMappingScorer = (*Service)(nil)

@@ -36,35 +36,9 @@ func (p *Pusher) pushOpeningBalances(
 	dated := timeutils.PreviousDayStart(start, sess.Loc)
 
 	res := p.kit.NewResolver(sess)
-	partyAccounts, err := p.openingPartyAccounts(ctx, sess, res, start)
+	lines, err := p.openingBalanceLines(ctx, sess, res, start)
 	if err != nil {
 		return nil, err
-	}
-	balances, err := p.ledger.SumLines(ctx, &journalentryports.SumLedgerRequest{
-		TenantInfo:      sess.Tenant,
-		Before:          start,
-		PartyAccountIDs: partyAccounts,
-		IncludeClosing:  true,
-	})
-	if err != nil {
-		return nil, err
-	}
-	lines := make([]ledgerLine, 0, len(balances))
-	for idx := range balances {
-		balance := &balances[idx]
-		lines = append(lines, ledgerLine{
-			accountID: balance.AccountID,
-			accountLabel: accountingsyncpush.GLAccountLabel(
-				balance.AccountCode,
-				balance.AccountName,
-			),
-			accountName: accountingsyncpush.GLAccountName(
-				balance.AccountCode,
-				balance.AccountName,
-			),
-			netMinor: balance.NetMinor(),
-			party:    balance.Party,
-		})
 	}
 
 	currency := functionalCurrency(sess)
@@ -119,6 +93,45 @@ func (p *Pusher) pushOpeningBalances(
 	return accountingsyncpush.WithProviderURL(
 		accountingsyncpush.Finished(sess, record, written, doc, res.MappingIDs()),
 	)
+}
+
+func (p *Pusher) openingBalanceLines(
+	ctx context.Context,
+	sess *accountingsyncpush.Session,
+	res *accountingsyncpush.Resolver,
+	start int64,
+) ([]ledgerLine, error) {
+	partyAccounts, err := p.openingPartyAccounts(ctx, sess, res, start)
+	if err != nil {
+		return nil, err
+	}
+	balances, err := p.ledger.SumLines(ctx, &journalentryports.SumLedgerRequest{
+		TenantInfo:      sess.Tenant,
+		Before:          start,
+		PartyAccountIDs: partyAccounts,
+		IncludeClosing:  true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	lines := make([]ledgerLine, 0, len(balances))
+	for idx := range balances {
+		balance := &balances[idx]
+		lines = append(lines, ledgerLine{
+			accountID: balance.AccountID,
+			accountLabel: accountingsyncpush.GLAccountLabel(
+				balance.AccountCode,
+				balance.AccountName,
+			),
+			accountName: accountingsyncpush.GLAccountName(
+				balance.AccountCode,
+				balance.AccountName,
+			),
+			netMinor: balance.NetMinor(),
+			party:    balance.Party,
+		})
+	}
+	return lines, nil
 }
 
 func (p *Pusher) openingPartyAccounts(

@@ -19,6 +19,37 @@ import (
 	"go.uber.org/fx"
 )
 
+type Params struct {
+	fx.In
+
+	Connections        accountingconnectionports.AccountingConnectionRepository
+	References         accountingmappingports.AccountingReferenceObjectRepository
+	Mappings           accountingmappingports.AccountingMappingRepository
+	Ledger             journalentryports.AccountingLedgerSource `optional:"true"`
+	AccountingControls tenantports.AccountingControlRepository
+}
+
+type Service struct {
+	connections        accountingconnectionports.AccountingConnectionRepository
+	references         accountingmappingports.AccountingReferenceObjectRepository
+	mappings           accountingmappingports.AccountingMappingRepository
+	ledger             journalentryports.AccountingLedgerSource
+	accountingControls tenantports.AccountingControlRepository
+}
+
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) *Service {
+	return &Service{
+		connections:        p.Connections,
+		references:         p.References,
+		mappings:           p.Mappings,
+		ledger:             p.Ledger,
+		accountingControls: p.AccountingControls,
+	}
+}
+
+var _ accountingmappingports.AccountingMappingReader = (*Service)(nil)
+
 func (s *Service) ledgerRequirement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -290,33 +321,3 @@ func (s *Service) GetReferenceObjects(
 		},
 	)
 }
-
-type Params struct {
-	fx.In
-
-	Connections        accountingconnectionports.AccountingConnectionRepository
-	References         accountingmappingports.AccountingReferenceObjectRepository
-	Mappings           accountingmappingports.AccountingMappingRepository
-	Ledger             journalentryports.AccountingLedgerSource `optional:"true"`
-	AccountingControls tenantports.AccountingControlRepository
-}
-
-type Service struct {
-	connections        accountingconnectionports.AccountingConnectionRepository
-	references         accountingmappingports.AccountingReferenceObjectRepository
-	mappings           accountingmappingports.AccountingMappingRepository
-	ledger             journalentryports.AccountingLedgerSource
-	accountingControls tenantports.AccountingControlRepository
-}
-
-func New(p Params) *Service {
-	return &Service{
-		connections:        p.Connections,
-		references:         p.References,
-		mappings:           p.Mappings,
-		ledger:             p.Ledger,
-		accountingControls: p.AccountingControls,
-	}
-}
-
-var _ accountingmappingports.AccountingMappingReader = (*Service)(nil)

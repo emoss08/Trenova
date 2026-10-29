@@ -287,12 +287,15 @@ func (s *Service) applyReferences(
 		}
 		upserts = append(upserts, ref.Object)
 	}
-	if err := s.references.Upsert(ctx, &accountingmappingports.UpsertAccountingReferenceObjectsRequest{
-		TenantInfo:   sess.tenant,
-		ConnectionID: sess.conn.ID,
-		Objects:      upserts,
-		SeenAt:       seenAt,
-	}); err != nil {
+	if err := s.references.Upsert(
+		ctx,
+		&accountingmappingports.UpsertAccountingReferenceObjectsRequest{
+			TenantInfo:   sess.tenant,
+			ConnectionID: sess.conn.ID,
+			Objects:      upserts,
+			SeenAt:       seenAt,
+		},
+	); err != nil {
 		return 0, err
 	}
 	for kind, ids := range removed {

@@ -20,6 +20,22 @@ import (
 
 const MaxRetryIDs = 500
 
+type Params struct {
+	fx.In
+
+	Records accountingsyncports.AccountingSyncRecordRepository
+	Effects *accountingsynceffects.Effects
+}
+
+type Service struct {
+	records accountingsyncports.AccountingSyncRecordRepository
+	effects *accountingsynceffects.Effects
+}
+
+func New(p Params) *Service {
+	return &Service{records: p.Records, effects: p.Effects}
+}
+
 func validateIDs(ids []pulid.ID) error {
 	if len(ids) > MaxRetryIDs {
 		return errortypes.NewValidationError(
@@ -271,22 +287,6 @@ func (s *Service) Skip(
 	}
 	s.effects.PublishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
 	return updated, nil
-}
-
-type Params struct {
-	fx.In
-
-	Records accountingsyncports.AccountingSyncRecordRepository
-	Effects *accountingsynceffects.Effects
-}
-
-type Service struct {
-	records accountingsyncports.AccountingSyncRecordRepository
-	effects *accountingsynceffects.Effects
-}
-
-func New(p Params) *Service {
-	return &Service{records: p.Records, effects: p.Effects}
 }
 
 func (s *Service) record(

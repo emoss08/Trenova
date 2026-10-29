@@ -23,6 +23,36 @@ import (
 	"go.uber.org/zap"
 )
 
+type Params struct {
+	fx.In
+
+	Logger      *zap.Logger
+	Audit       auditports.AuditService
+	Realtime    realtimeports.RealtimeService                      `optional:"true"`
+	SyncRecords accountingsyncports.AccountingSyncRecordRepository `optional:"true"`
+	Dispatcher  accountingsyncports.AccountingSyncDispatcher       `optional:"true"`
+}
+
+type Kit struct {
+	l           *zap.Logger
+	audit       auditports.AuditService
+	realtime    realtimeports.RealtimeService
+	syncRecords accountingsyncports.AccountingSyncRecordRepository
+	dispatcher  accountingsyncports.AccountingSyncDispatcher
+}
+
+func New(p Params) *Kit {
+	return &Kit{
+		l:           p.Logger.Named("service.accounting-mapping"),
+		audit:       p.Audit,
+		realtime:    p.Realtime,
+		syncRecords: p.SyncRecords,
+		dispatcher:  p.Dispatcher,
+	}
+}
+
+var _ accountingmappingports.AccountingMappingHistoryGuard = (*Kit)(nil)
+
 func (k *Kit) LogAudit(
 	row *accountingmapping.AccountingMapping,
 	userID pulid.ID,
@@ -178,33 +208,3 @@ func (k *Kit) RequeueMappingBlocked(
 		}
 	}
 }
-
-type Params struct {
-	fx.In
-
-	Logger      *zap.Logger
-	Audit       auditports.AuditService
-	Realtime    realtimeports.RealtimeService                      `optional:"true"`
-	SyncRecords accountingsyncports.AccountingSyncRecordRepository `optional:"true"`
-	Dispatcher  accountingsyncports.AccountingSyncDispatcher       `optional:"true"`
-}
-
-type Kit struct {
-	l           *zap.Logger
-	audit       auditports.AuditService
-	realtime    realtimeports.RealtimeService
-	syncRecords accountingsyncports.AccountingSyncRecordRepository
-	dispatcher  accountingsyncports.AccountingSyncDispatcher
-}
-
-func New(p Params) *Kit {
-	return &Kit{
-		l:           p.Logger.Named("service.accounting-mapping"),
-		audit:       p.Audit,
-		realtime:    p.Realtime,
-		syncRecords: p.SyncRecords,
-		dispatcher:  p.Dispatcher,
-	}
-}
-
-var _ accountingmappingports.AccountingMappingHistoryGuard = (*Kit)(nil)

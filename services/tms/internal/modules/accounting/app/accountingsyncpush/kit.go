@@ -35,7 +35,6 @@ type Kit struct {
 	effects   *accountingsynceffects.Effects
 }
 
-//nolint:gocritic // dependency injection
 func New(p Params) *Kit {
 	return &Kit{
 		l:         p.Logger.Named("service.accounting-sync"),

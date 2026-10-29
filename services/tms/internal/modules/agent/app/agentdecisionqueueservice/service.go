@@ -61,6 +61,7 @@ type shadowReader interface {
 	Organization(ctx context.Context, tenant pagination.TenantInfo) (bool, error)
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentdecisionqueueports.AgentDecisionQueueService {
 	return &Service{
 		l:         p.Logger.Named("service.agentdecisionqueue"),
@@ -460,7 +461,9 @@ func validateBatch(req *agentdecisionqueueports.DecideAgentProposalsRequest) err
 	if strings.TrimSpace(req.ReasonCode) == "" && req.Decision == agentdecision.DecisionRejected {
 		multiErr.Add("reasonCode", errortypes.ErrRequired, "Say why these are rejected")
 	}
-	if err := agentdecision.CheckDecisionNote(agentdecision.NormalizeDecisionNote(req.Note)); err != nil {
+	if err := agentdecision.CheckDecisionNote(
+		agentdecision.NormalizeDecisionNote(req.Note),
+	); err != nil {
 		multiErr.Add(
 			"note",
 			errortypes.ErrInvalid,

@@ -24,6 +24,46 @@ import (
 	"go.uber.org/zap"
 )
 
+type Params struct {
+	fx.In
+
+	Logger        *zap.Logger
+	DB            kernelports.Transactor
+	Connections   accountingconnectionports.AccountingConnectionRepository
+	Certificates  accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
+	Encryption    *encryptionservice.Service
+	Organizations tenantports.OrganizationRepository `optional:"true"`
+	Kit           *accountingconnectionkit.Kit
+	Auth          *accountingconnectionauth.Service
+}
+
+type Service struct {
+	l             *zap.Logger
+	db            kernelports.Transactor
+	connections   accountingconnectionports.AccountingConnectionRepository
+	certificates  accountingconnectionports.AccountingPendingCertificateRepository
+	encryption    *encryptionservice.Service
+	organizations tenantports.OrganizationRepository
+	kit           *accountingconnectionkit.Kit
+	auth          *accountingconnectionauth.Service
+}
+
+//nolint:gocritic // dependency injection
+func New(p Params) *Service {
+	return &Service{
+		l:             p.Logger.Named("service.accounting-connection"),
+		db:            p.DB,
+		connections:   p.Connections,
+		certificates:  p.Certificates,
+		encryption:    p.Encryption,
+		organizations: p.Organizations,
+		kit:           p.Kit,
+		auth:          p.Auth,
+	}
+}
+
+var _ accountingconnectionports.AccountingCertificateService = (*Service)(nil)
+
 func (s *Service) requireCertificates(
 	typ integration.Type,
 ) (accountingconnectorports.AccountingProvider, error) {
@@ -330,7 +370,10 @@ func (s *Service) storeRenewedCertificate(
 		if _, updateErr := s.connections.Update(txCtx, locked); updateErr != nil {
 			return updateErr
 		}
-		if storeErr := s.connections.StoreTokens(txCtx, accountingconnectionkit.TokensOf(locked, in.now)); storeErr != nil {
+		if storeErr := s.connections.StoreTokens(
+			txCtx,
+			accountingconnectionkit.TokensOf(locked, in.now),
+		); storeErr != nil {
 			return storeErr
 		}
 		out.conn = locked
@@ -347,43 +390,3 @@ func (s *Service) storeRenewedCertificate(
 	}
 	return out, nil
 }
-
-type Params struct {
-	fx.In
-
-	Logger        *zap.Logger
-	DB            kernelports.Transactor
-	Connections   accountingconnectionports.AccountingConnectionRepository
-	Certificates  accountingconnectionports.AccountingPendingCertificateRepository `optional:"true"`
-	Encryption    *encryptionservice.Service
-	Organizations tenantports.OrganizationRepository `optional:"true"`
-	Kit           *accountingconnectionkit.Kit
-	Auth          *accountingconnectionauth.Service
-}
-
-type Service struct {
-	l             *zap.Logger
-	db            kernelports.Transactor
-	connections   accountingconnectionports.AccountingConnectionRepository
-	certificates  accountingconnectionports.AccountingPendingCertificateRepository
-	encryption    *encryptionservice.Service
-	organizations tenantports.OrganizationRepository
-	kit           *accountingconnectionkit.Kit
-	auth          *accountingconnectionauth.Service
-}
-
-//nolint:gocritic // dependency injection
-func New(p Params) *Service {
-	return &Service{
-		l:             p.Logger.Named("service.accounting-connection"),
-		db:            p.DB,
-		connections:   p.Connections,
-		certificates:  p.Certificates,
-		encryption:    p.Encryption,
-		organizations: p.Organizations,
-		kit:           p.Kit,
-		auth:          p.Auth,
-	}
-}
-
-var _ accountingconnectionports.AccountingCertificateService = (*Service)(nil)

@@ -13,6 +13,26 @@ import (
 	"go.uber.org/fx"
 )
 
+type Params struct {
+	fx.In
+
+	Connections accountingconnectionports.AccountingConnectionRepository
+	Kit         *accountingconnectionkit.Kit
+	Subs        *accountingconnectionsubscriptions.Service
+}
+
+type Service struct {
+	connections accountingconnectionports.AccountingConnectionRepository
+	kit         *accountingconnectionkit.Kit
+	subs        *accountingconnectionsubscriptions.Service
+}
+
+func New(p Params) *Service {
+	return &Service{connections: p.Connections, kit: p.Kit, subs: p.Subs}
+}
+
+var _ accountingconnectionports.AccountingConnectionStatusReader = (*Service)(nil)
+
 func (s *Service) Status(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -63,23 +83,3 @@ func (s *Service) Status(
 
 	return status, nil
 }
-
-type Params struct {
-	fx.In
-
-	Connections accountingconnectionports.AccountingConnectionRepository
-	Kit         *accountingconnectionkit.Kit
-	Subs        *accountingconnectionsubscriptions.Service
-}
-
-type Service struct {
-	connections accountingconnectionports.AccountingConnectionRepository
-	kit         *accountingconnectionkit.Kit
-	subs        *accountingconnectionsubscriptions.Service
-}
-
-func New(p Params) *Service {
-	return &Service{connections: p.Connections, kit: p.Kit, subs: p.Subs}
-}
-
-var _ accountingconnectionports.AccountingConnectionStatusReader = (*Service)(nil)
