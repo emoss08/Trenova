@@ -9,7 +9,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
@@ -131,7 +132,7 @@ func documentTypeID(
 
 type fakeSetup struct {
 	partners   []*edi.EDIPartner
-	transports []*ediservice.UpsertEDICommunicationProfileRequest
+	transports []*edisetup.UpsertEDICommunicationProfileRequest
 	mappings   []*edipartnerports.SaveMappingItemsRequest
 	controls   []*edipartnerports.ResetEDIControlNumberRequest
 	failOn     string
@@ -172,7 +173,7 @@ func (f *fakeSetup) UpdatePartner(
 
 func (f *fakeSetup) CreateCommunicationProfile(
 	_ context.Context,
-	req *ediservice.UpsertEDICommunicationProfileRequest,
+	req *edisetup.UpsertEDICommunicationProfileRequest,
 	_ *permissionports.RequestActor,
 ) (*edi.EDICommunicationProfile, error) {
 	if err := f.fail("transport"); err != nil {
@@ -184,7 +185,7 @@ func (f *fakeSetup) CreateCommunicationProfile(
 
 func (f *fakeSetup) UpdateCommunicationProfile(
 	_ context.Context,
-	req *ediservice.UpsertEDICommunicationProfileRequest,
+	req *edisetup.UpsertEDICommunicationProfileRequest,
 	_ *permissionports.RequestActor,
 ) (*edi.EDICommunicationProfile, error) {
 	f.transports = append(f.transports, req)
@@ -300,7 +301,7 @@ func newHarness(t *testing.T) *harness {
 		repo:          h.repo,
 		documentTypes: fakeDocumentTypes{},
 		setup:         h.setup,
-		validator:     ediservice.NewValidator(),
+		validator:     edivalidation.NewValidator(),
 		lading: edilading.NewRuntime(edilading.RuntimeParams{
 			Logger: zap.NewNop(),
 			Orgs:   orgs,

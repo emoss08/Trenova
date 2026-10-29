@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -32,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -378,7 +378,7 @@ func ediReader(
 
 	logger := zap.NewNop()
 	files := &fakeEDIInboundFileRepo{ediFakes: fakes}
-	edis := ediservice.New(ediservice.Params{
+	edis := ediservicetest.New(ediservicetest.Deps{
 		Logger:          logger,
 		PartnerRepo:     &fakeEDIPartnerRepo{ediFakes: fakes},
 		MessageRepo:     &fakeEDIMessageRepo{ediFakes: fakes},
@@ -389,9 +389,17 @@ func ediReader(
 	return agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: engine,
 		Resolvers: agentread.ResolverParams{
-			EDIService: edis,
+			EDISetupService:    edis.Setup,
+			EDITransferService: edis.Transfers,
+			EDIOutboundService: edis.Outbound,
+			EDIMessageService:  edis.Messages,
+			EDIOverviewService: edis.Overview,
 			EDIInboundService: ediinboundservice.New(ediinboundservice.Params{
-				Logger: logger, InboundFileRepo: files, EDIService: edis,
+				Logger:          logger,
+				InboundFileRepo: files,
+				InboundApply:    edis.InboundApply,
+				Outbound:        edis.Outbound,
+				Alerts:          edis.Alerts,
 			}),
 			CarrierSettlementService: carriersettlementservice.New(carriersettlementservice.Params{
 				Logger:         logger,

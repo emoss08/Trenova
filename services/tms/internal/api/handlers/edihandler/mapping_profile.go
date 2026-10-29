@@ -56,7 +56,7 @@ func (h *Handler) getMappingProfile(c *gin.Context) {
 		return
 	}
 
-	profile, err := h.service.GetMappingProfile(
+	profile, err := h.setup.GetMappingProfile(
 		c.Request.Context(),
 		edipartnerports.GetMappingProfileRequest{
 			PartnerID:  partnerID,
@@ -87,7 +87,7 @@ func (h *Handler) updateMappingProfile(c *gin.Context) {
 		return
 	}
 
-	items, err := h.service.SaveMappingProfile(
+	items, err := h.setup.SaveMappingProfile(
 		c.Request.Context(),
 		&edipartnerports.SaveMappingItemsRequest{
 			PartnerID:  partnerID,
@@ -117,7 +117,7 @@ func (h *Handler) deleteMappingItem(c *gin.Context) {
 		return
 	}
 
-	err = h.service.DeleteMappingItem(
+	err = h.setup.DeleteMappingItem(
 		c.Request.Context(),
 		edipartnerports.DeleteMappingItemRequest{
 			PartnerID:     partnerID,
@@ -138,7 +138,7 @@ func (h *Handler) listMappingProfiles(c *gin.Context) {
 	req := pagination.NewQueryOptions(c, authCtx)
 
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-		return h.service.ListMappingProfiles(
+		return h.setup.ListMappingProfiles(
 			c.Request.Context(),
 			&edipartnerports.ListEDIMappingProfilesRequest{Filter: req},
 		)
@@ -154,7 +154,7 @@ func (h *Handler) selectMappingProfileOptions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-			return h.service.SelectMappingProfileOptions(
+			return h.setup.SelectMappingProfileOptions(
 				c.Request.Context(),
 				&edipartnerports.EDIMappingProfileSelectOptionsRequest{
 					SelectQueryRequest: req,
@@ -177,7 +177,7 @@ func (h *Handler) getMappingProfileByID(c *gin.Context) {
 		return
 	}
 
-	profile, err := h.service.GetMappingProfileByID(
+	profile, err := h.setup.GetMappingProfileByID(
 		c.Request.Context(),
 		edipartnerports.GetMappingProfileByIDRequest{
 			ProfileID:  profileID,
@@ -208,7 +208,7 @@ func (h *Handler) updateMappingProfileItems(c *gin.Context) {
 		return
 	}
 
-	items, err := h.service.SaveMappingProfileItems(
+	items, err := h.setup.SaveMappingProfileItems(
 		c.Request.Context(),
 		&edipartnerports.SaveMappingProfileItemsRequest{
 			ProfileID:  profileID,
@@ -238,7 +238,7 @@ func (h *Handler) deleteMappingProfileItem(c *gin.Context) {
 		return
 	}
 
-	err = h.service.DeleteMappingProfileItem(
+	err = h.setup.DeleteMappingProfileItem(
 		c.Request.Context(),
 		edipartnerports.DeleteMappingProfileItemRequest{
 			ProfileID:     profileID,

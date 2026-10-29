@@ -181,7 +181,11 @@ import (
 	triageruleservice "github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
 	triageworkservice "github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	edimessageview "github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
+	edioutbound "github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	edioverview "github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
+	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	editransferservice "github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -317,7 +321,11 @@ type ResolverParams struct {
 	DriverSettlementRepo          driversettlementports.DriverSettlementRepository
 	DriverSettlementService       *driversettlementservice.Service
 	EDIInboundService             *ediinboundservice.Service
-	EDIService                    *ediservice.Service
+	EDIMessageService             *edimessageview.Service
+	EDIOutboundService            *edioutbound.Service
+	EDIOverviewService            *edioverview.Service
+	EDISetupService               *edisetup.Service
+	EDITransferService            *editransferservice.Service
 	EmailService                  *emailservice.Service
 	EquipmentManufacturerService  *equipmentmanufacturerservice.Service
 	EquipmentTypeService          *equipmenttypeservice.Service
@@ -1339,9 +1347,13 @@ func NewSchema(p ResolverParams) Schema {
 		PayEventRepo:             p.PayEventRepo,
 	}
 	ediDeps := &ediresolver.Deps{
-		Core:              core,
-		EdiService:        p.EDIService,
-		EdiInboundService: p.EDIInboundService,
+		Core:               core,
+		EdiSetupService:    p.EDISetupService,
+		EdiTransferService: p.EDITransferService,
+		EdiOutboundService: p.EDIOutboundService,
+		EdiMessageService:  p.EDIMessageService,
+		EdiOverviewService: p.EDIOverviewService,
+		EdiInboundService:  p.EDIInboundService,
 	}
 	emailprofileDeps := &emailprofileresolver.Deps{
 		Core:         core,

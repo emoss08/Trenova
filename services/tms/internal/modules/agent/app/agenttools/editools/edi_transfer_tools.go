@@ -13,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidecision"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -48,27 +49,27 @@ type ediTransferDecider interface {
 	) (*editransfer.EDITransfer, error)
 	PlanApproveTransfer(
 		ctx context.Context,
-		req *ediservice.ApproveTransferRequest,
+		req *editransferservice.ApproveTransferRequest,
 		actor *permissionports.RequestActor,
-	) (*ediservice.TransferApprovalPlan, error)
+	) (*editransferservice.TransferApprovalPlan, error)
 	ApproveTransfer(
 		ctx context.Context,
-		req *ediservice.ApproveTransferRequest,
+		req *editransferservice.ApproveTransferRequest,
 		actor *permissionports.RequestActor,
 	) (*editransfer.EDITransfer, error)
 	RejectTransfer(
 		ctx context.Context,
-		req *ediservice.RejectTransferRequest,
+		req *editransferservice.RejectTransferRequest,
 		actor *permissionports.RequestActor,
 	) (*editransfer.EDITransfer, error)
 	CancelTransfer(
 		ctx context.Context,
-		req *ediservice.CancelTransferRequest,
+		req *editransferservice.CancelTransferRequest,
 		actor *permissionports.RequestActor,
 	) (*editransfer.EDITransfer, error)
 	ExpireTransfer(
 		ctx context.Context,
-		req *ediservice.ExpireTransferRequest,
+		req *editransferservice.ExpireTransferRequest,
 		actor *permissionports.RequestActor,
 	) (*editransfer.EDITransfer, error)
 }
@@ -83,7 +84,7 @@ type tenderCall struct {
 type tenderOutcome struct {
 	before   *editransfer.EDITransfer
 	after    *editransfer.EDITransfer
-	approval *ediservice.TransferApprovalPlan
+	approval *editransferservice.TransferApprovalPlan
 	refusal  error
 }
 
@@ -172,7 +173,7 @@ func (t *EdiTransferDecisionTool) call(
 		return call, nil
 	}
 
-	call.reason, err = ediservice.TransferRejectionReason(
+	call.reason, err = edidecision.TransferRejectionReason(
 		toolparams.OptionalString(params.Params, changepreview.FieldReason),
 	)
 	if err != nil {
@@ -258,7 +259,7 @@ func (s tenderSettlement) settle(
 
 	outcome := &tenderOutcome{
 		before:  transfer,
-		refusal: ediservice.RequireActionableTransfer(transfer, s.verb),
+		refusal: edidecision.RequireActionableTransfer(transfer, s.verb),
 	}
 	if outcome.refusal == nil {
 		after := *transfer
@@ -282,7 +283,7 @@ func planAcceptTender(
 	decider ediTransferDecider,
 	call *tenderCall,
 ) (*tenderOutcome, error) {
-	plan, err := decider.PlanApproveTransfer(ctx, &ediservice.ApproveTransferRequest{
+	plan, err := decider.PlanApproveTransfer(ctx, &editransferservice.ApproveTransferRequest{
 		TransferID: call.transferID,
 		TenantInfo: call.tenant,
 	}, call.actor)
@@ -304,10 +305,10 @@ func planDeclineTender(
 	call *tenderCall,
 ) (*tenderOutcome, error) {
 	return tenderSettlement{
-		direction: ediservice.TransferDirectionInbound,
-		verb:      ediservice.TransferVerbRejected,
+		direction: editransferservice.TransferDirectionInbound,
+		verb:      edidecision.TransferVerbRejected,
 		mark: func(transfer *editransfer.EDITransfer) {
-			ediservice.MarkTransferRejected(
+			edidecision.MarkTransferRejected(
 				transfer, call.reason, actorUserID(call.actor), timeutils.NowUnix(),
 			)
 		},
@@ -320,10 +321,10 @@ func planCancelTender(
 	call *tenderCall,
 ) (*tenderOutcome, error) {
 	return tenderSettlement{
-		direction: ediservice.TransferDirectionOutbound,
-		verb:      ediservice.TransferVerbCanceled,
+		direction: editransferservice.TransferDirectionOutbound,
+		verb:      edidecision.TransferVerbCanceled,
 		mark: func(transfer *editransfer.EDITransfer) {
-			ediservice.MarkTransferCanceled(transfer, actorUserID(call.actor), timeutils.NowUnix())
+			edidecision.MarkTransferCanceled(transfer, actorUserID(call.actor), timeutils.NowUnix())
 		},
 	}.settle(ctx, decider, call)
 }
@@ -334,10 +335,10 @@ func planExpireTender(
 	call *tenderCall,
 ) (*tenderOutcome, error) {
 	return tenderSettlement{
-		direction: ediservice.TransferDirectionAny,
-		verb:      ediservice.TransferVerbExpired,
+		direction: editransferservice.TransferDirectionAny,
+		verb:      edidecision.TransferVerbExpired,
 		mark: func(transfer *editransfer.EDITransfer) {
-			ediservice.MarkTransferExpired(transfer, timeutils.NowUnix())
+			edidecision.MarkTransferExpired(transfer, timeutils.NowUnix())
 		},
 	}.settle(ctx, decider, call)
 }
@@ -365,7 +366,7 @@ func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agent
 		summary: summarizeAcceptTender,
 		plan:    planAcceptTender,
 		run: func(ctx context.Context, decider ediTransferDecider, call *tenderCall) error {
-			_, err := decider.ApproveTransfer(ctx, &ediservice.ApproveTransferRequest{
+			_, err := decider.ApproveTransfer(ctx, &editransferservice.ApproveTransferRequest{
 				TransferID: call.transferID,
 				TenantInfo: call.tenant,
 			}, call.actor)
@@ -390,7 +391,7 @@ func NewDeclineEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agen
 		summary:     summarizeDeclineTender,
 		plan:        planDeclineTender,
 		run: func(ctx context.Context, decider ediTransferDecider, call *tenderCall) error {
-			_, err := decider.RejectTransfer(ctx, &ediservice.RejectTransferRequest{
+			_, err := decider.RejectTransfer(ctx, &editransferservice.RejectTransferRequest{
 				TransferID: call.transferID,
 				TenantInfo: call.tenant,
 				Reason:     call.reason,
@@ -415,7 +416,7 @@ func NewCancelEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agent
 		summary: summarizeCancelTender,
 		plan:    planCancelTender,
 		run: func(ctx context.Context, decider ediTransferDecider, call *tenderCall) error {
-			_, err := decider.CancelTransfer(ctx, &ediservice.CancelTransferRequest{
+			_, err := decider.CancelTransfer(ctx, &editransferservice.CancelTransferRequest{
 				TransferID: call.transferID,
 				TenantInfo: call.tenant,
 			}, call.actor)
@@ -438,7 +439,7 @@ func NewExpireEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agent
 		summary: summarizeExpireTender,
 		plan:    planExpireTender,
 		run: func(ctx context.Context, decider ediTransferDecider, call *tenderCall) error {
-			_, err := decider.ExpireTransfer(ctx, &ediservice.ExpireTransferRequest{
+			_, err := decider.ExpireTransfer(ctx, &editransferservice.ExpireTransferRequest{
 				TransferID: call.transferID,
 				TenantInfo: call.tenant,
 			}, call.actor)

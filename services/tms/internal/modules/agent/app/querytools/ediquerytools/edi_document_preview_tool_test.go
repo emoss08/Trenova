@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -25,17 +26,17 @@ const rendered214 = "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*ACMER
 	"IEA*1*000000000~"
 
 type fakeDocumentPreviewer struct {
-	outbound     *ediservice.OutboundDocumentPreview
-	response     *ediservice.TenderResponsePreview
-	outboundReq  *ediservice.GenerateEDIDocumentRequest
-	responseReq  *ediservice.PreviewTenderResponseRequest
+	outbound     *edioutbound.OutboundDocumentPreview
+	response     *editransferservice.TenderResponsePreview
+	outboundReq  *edioutbound.GenerateEDIDocumentRequest
+	responseReq  *editransferservice.PreviewTenderResponseRequest
 	previewCalls int
 }
 
 func (f *fakeDocumentPreviewer) PreviewOutboundDocument(
 	_ context.Context,
-	req *ediservice.GenerateEDIDocumentRequest,
-) (*ediservice.OutboundDocumentPreview, error) {
+	req *edioutbound.GenerateEDIDocumentRequest,
+) (*edioutbound.OutboundDocumentPreview, error) {
 	f.previewCalls++
 	f.outboundReq = req
 
@@ -44,8 +45,8 @@ func (f *fakeDocumentPreviewer) PreviewOutboundDocument(
 
 func (f *fakeDocumentPreviewer) PreviewTenderResponse(
 	_ context.Context,
-	req *ediservice.PreviewTenderResponseRequest,
-) (*ediservice.TenderResponsePreview, error) {
+	req *editransferservice.PreviewTenderResponseRequest,
+) (*editransferservice.TenderResponsePreview, error) {
 	f.previewCalls++
 	f.responseReq = req
 
@@ -68,8 +69,8 @@ func readers(resources ...permission.Resource) *querytooltest.FakePermissions {
 func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *testing.T) {
 	t.Parallel()
 
-	fake := &fakeDocumentPreviewer{outbound: &ediservice.OutboundDocumentPreview{
-		Document: &ediservice.EDIDocumentPreview{
+	fake := &fakeDocumentPreviewer{outbound: &edioutbound.OutboundDocumentPreview{
+		Document: &edioutbound.EDIDocumentPreview{
 			RawX12:       rendered214,
 			SegmentCount: 5,
 			X12Version:   "004010",
@@ -89,6 +90,7 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 	partnerID := pulid.MustNew("edip_")
 	shipmentID := pulid.MustNew("shp_")
 	tool := newPreviewEDIDocumentTool(
+		fake,
 		fake,
 		readers(permission.ResourceEDI, permission.ResourceShipment),
 	)
@@ -137,18 +139,18 @@ func TestPreviewEDIDocument_AnswersATenderWithThe990ItWouldSend(t *testing.T) {
 		ID:     pulid.MustNew("edilt_"),
 		Status: editransfer.TransferStatusPendingApproval,
 	}
-	fake := &fakeDocumentPreviewer{response: &ediservice.TenderResponsePreview{
-		OutboundDocumentPreview: ediservice.OutboundDocumentPreview{
-			Document: &ediservice.EDIDocumentPreview{
+	fake := &fakeDocumentPreviewer{response: &editransferservice.TenderResponsePreview{
+		OutboundDocumentPreview: edioutbound.OutboundDocumentPreview{
+			Document: &edioutbound.EDIDocumentPreview{
 				RawX12:      "ST*990*0000~B1*BOLT*BOL-5*20261014*D~SE*3*0000~",
 				PartnerName: "Bolt Freight",
 			},
 		},
 		Transfer: transfer,
-		Choice:   ediservice.TenderResponseDecline,
+		Choice:   editransferservice.TenderResponseDecline,
 	}}
 	partnerID := pulid.MustNew("edip_")
-	tool := newPreviewEDIDocumentTool(fake, readers(permission.ResourceEDI))
+	tool := newPreviewEDIDocumentTool(fake, fake, readers(permission.ResourceEDI))
 
 	result, err := tool.Query(t.Context(), querytooltest.ChatParams(map[string]any{
 		paramTransactionSet:      "990",
@@ -162,7 +164,7 @@ func TestPreviewEDIDocument_AnswersATenderWithThe990ItWouldSend(t *testing.T) {
 	require.NotNil(t, fake.responseReq)
 	assert.Equal(t, transfer.ID, fake.responseReq.TransferID)
 	assert.Equal(t, partnerID, fake.responseReq.PartnerID)
-	assert.Equal(t, ediservice.TenderResponseDecline, fake.responseReq.Choice)
+	assert.Equal(t, editransferservice.TenderResponseDecline, fake.responseReq.Choice)
 	assert.Equal(t, "No trucks Friday", fake.responseReq.Reason)
 
 	view := result.(*ediDocumentPreviewView)
@@ -176,8 +178,8 @@ func TestPreviewEDIDocument_AnswersATenderWithThe990ItWouldSend(t *testing.T) {
 func TestPreviewEDIDocument_WithholdsTheX12BelowRestrictedButKeepsTheFindings(t *testing.T) {
 	t.Parallel()
 
-	fake := &fakeDocumentPreviewer{outbound: &ediservice.OutboundDocumentPreview{
-		Document: &ediservice.EDIDocumentPreview{
+	fake := &fakeDocumentPreviewer{outbound: &edioutbound.OutboundDocumentPreview{
+		Document: &edioutbound.EDIDocumentPreview{
 			RawX12:      rendered214,
 			PartnerName: "Acme Retail",
 			Diagnostics: []edidocument.Diagnostic{
@@ -185,7 +187,7 @@ func TestPreviewEDIDocument_WithholdsTheX12BelowRestrictedButKeepsTheFindings(t 
 			},
 		},
 	}}
-	tool := newPreviewEDIDocumentTool(fake, &querytooltest.FakePermissions{})
+	tool := newPreviewEDIDocumentTool(fake, fake, &querytooltest.FakePermissions{})
 
 	result, err := tool.Query(t.Context(), querytooltest.AgentParams(map[string]any{
 		paramTransactionSet:       "214",
@@ -222,13 +224,14 @@ func TestPreviewEDIDocument_SaysWhoseAccessHeldTheX12Back(t *testing.T) {
 			MaxSensitivity: permission.SensitivityRestricted,
 		}
 
-		fake := &fakeDocumentPreviewer{outbound: &ediservice.OutboundDocumentPreview{
-			Document: &ediservice.EDIDocumentPreview{
+		fake := &fakeDocumentPreviewer{outbound: &edioutbound.OutboundDocumentPreview{
+			Document: &edioutbound.EDIDocumentPreview{
 				RawX12:      rendered214,
 				PartnerName: "Acme Retail",
 			},
 		}}
 		result, err := newPreviewEDIDocumentTool(
+			fake,
 			fake,
 			permissions,
 		).Query(t.Context(), querytooltest.ChatParams(map[string]any{
@@ -323,7 +326,7 @@ func TestPreviewEDIDocument_RefusesWhatItCannotPreview(t *testing.T) {
 			t.Parallel()
 
 			fake := &fakeDocumentPreviewer{}
-			_, err := newPreviewEDIDocumentTool(fake, tc.permissions).
+			_, err := newPreviewEDIDocumentTool(fake, fake, tc.permissions).
 				Query(t.Context(), querytooltest.ChatParams(tc.params, ""))
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tc.contains)
@@ -336,6 +339,7 @@ func TestPreviewEDIDocument_IsAReadOnEDI(t *testing.T) {
 	t.Parallel()
 
 	policy := newPreviewEDIDocumentTool(
+		&fakeDocumentPreviewer{},
 		&fakeDocumentPreviewer{},
 		&querytooltest.FakePermissions{},
 	).Policy()

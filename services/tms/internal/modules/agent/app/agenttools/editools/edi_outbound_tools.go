@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
@@ -37,11 +38,11 @@ var errStatusUpdateSource = errors.New(
 type loadTenderSubmitter interface {
 	PlanLoadTender(
 		ctx context.Context,
-		req *ediservice.SubmitLoadTenderRequest,
-	) (*ediservice.LoadTenderPlan, error)
+		req *editenderservice.SubmitLoadTenderRequest,
+	) (*editenderservice.LoadTenderPlan, error)
 	SubmitLoadTender(
 		ctx context.Context,
-		req *ediservice.SubmitLoadTenderRequest,
+		req *editenderservice.SubmitLoadTenderRequest,
 		actor *permissionports.RequestActor,
 	) (*editransfer.EDITransfer, error)
 }
@@ -49,11 +50,11 @@ type loadTenderSubmitter interface {
 type ediDocumentGenerator interface {
 	PlanGenerateDocument(
 		ctx context.Context,
-		req *ediservice.GenerateEDIDocumentRequest,
-	) (*ediservice.EDIDocumentPreview, error)
+		req *edioutbound.GenerateEDIDocumentRequest,
+	) (*edioutbound.EDIDocumentPreview, error)
 	GenerateDocument(
 		ctx context.Context,
-		req *ediservice.GenerateEDIDocumentRequest,
+		req *edioutbound.GenerateEDIDocumentRequest,
 	) (*edimessage.EDIMessage, error)
 }
 
@@ -117,7 +118,7 @@ func (t *SendEDILoadTenderTool) Target(params map[string]any) (agenttoolports.To
 
 func (t *SendEDILoadTenderTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*ediservice.SubmitLoadTenderRequest, error) {
+) (*editenderservice.SubmitLoadTenderRequest, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -131,7 +132,7 @@ func (t *SendEDILoadTenderTool) request(
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramEDIPartnerID, err)
 	}
 
-	return &ediservice.SubmitLoadTenderRequest{
+	return &editenderservice.SubmitLoadTenderRequest{
 		TenantInfo:       toolparams.TenantFrom(*params),
 		SourceShipmentID: shipmentID,
 		EDIPartnerID:     partnerID,
@@ -214,7 +215,7 @@ func (t *SendEDIStatusUpdateTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *SendEDIStatusUpdateTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*ediservice.GenerateEDIDocumentRequest, error) {
+) (*edioutbound.GenerateEDIDocumentRequest, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -223,7 +224,7 @@ func (t *SendEDIStatusUpdateTool) request(
 	if err != nil {
 		return nil, err
 	}
-	req := &ediservice.GenerateEDIDocumentRequest{
+	req := &edioutbound.GenerateEDIDocumentRequest{
 		TenantInfo:     toolparams.TenantFrom(*params),
 		EDIPartnerID:   partnerID,
 		TransactionSet: edidocument.TransactionSet214,

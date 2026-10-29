@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
@@ -175,9 +175,9 @@ func (s *Service) routeTenderResponse(
 		}
 		return warnings, err
 	}
-	return warnings, s.ediService.ApplyExternalTenderResponse(
+	return warnings, s.inboundApply.ApplyExternalTenderResponse(
 		ctx,
-		&ediservice.ApplyExternalTenderResponseRequest{
+		&ediinboundapply.ApplyExternalTenderResponseRequest{
 			Recipient:       recipient,
 			Accepted:        details.reservationCode == "A",
 			ReasonCode:      details.reservationCode,
@@ -343,9 +343,9 @@ func (s *Service) routeShipmentStatus(
 	}
 	for index := range details.events {
 		event := &details.events[index]
-		if err = s.ediService.RecordExternalShipmentStatus(
+		if err = s.inboundApply.RecordExternalShipmentStatus(
 			ctx,
-			&ediservice.RecordExternalShipmentStatusRequest{
+			&ediinboundapply.RecordExternalShipmentStatusRequest{
 				Recipient:   recipient,
 				StatusCode:  statusEventCode(event),
 				ReasonCode:  statusEventReason(event),
@@ -422,9 +422,9 @@ func (s *Service) routeFreightInvoice(
 		warnings = append(warnings, offerWarnings...)
 		acceptedOffer = offer
 	}
-	result, err := s.ediService.RecordInboundFreightInvoice(
+	result, err := s.inboundApply.RecordInboundFreightInvoice(
 		ctx,
-		&ediservice.RecordInboundFreightInvoiceRequest{
+		&ediinboundapply.RecordInboundFreightInvoiceRequest{
 			Partner:       partner,
 			Message:       message,
 			Recipient:     recipient,
@@ -524,7 +524,7 @@ func (s *Service) routeLoadTender(
 		warnings = append(warnings, supersedeWarnings...)
 	}
 
-	preview, err := s.ediService.BuildInboundMappingPreview(ctx, partner, *payload)
+	preview, err := s.inboundApply.BuildInboundMappingPreview(ctx, partner, *payload)
 	if err != nil {
 		return nil, warnings, err
 	}

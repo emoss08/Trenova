@@ -50,7 +50,7 @@ func (h *Handler) listTransferChanges(c *gin.Context) {
 	}
 
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edisync.TransferChange], error) {
-		return h.service.ListTransferChanges(
+		return h.transferChanges.ListTransferChanges(
 			c.Request.Context(),
 			&editenderports.ListEDITransferChangesRequest{
 				Filter:         req,
@@ -68,7 +68,7 @@ func (h *Handler) getTransferChange(c *gin.Context) {
 		return
 	}
 
-	change, err := h.service.GetTransferChange(
+	change, err := h.transferChanges.GetTransferChange(
 		c.Request.Context(),
 		editenderports.GetEDITransferChangeByIDRequest{
 			ID:         changeID,
@@ -84,9 +84,9 @@ func (h *Handler) getTransferChange(c *gin.Context) {
 }
 
 func (h *Handler) applyTransferChange(c *gin.Context) {
-	h.transferChangeAction(c, h.service.ApplyTransferChange)
+	h.transferChangeAction(c, h.transferChanges.ApplyTransferChange)
 }
 
 func (h *Handler) rejectTransferChange(c *gin.Context) {
-	h.transferChangeAction(c, h.service.RejectTransferChange)
+	h.transferChangeAction(c, h.transferChanges.RejectTransferChange)
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -76,7 +76,7 @@ func (h *Handler) listCommunicationProfiles(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-			return h.service.ListCommunicationProfiles(
+			return h.setup.ListCommunicationProfiles(
 				c.Request.Context(),
 				&edipartnerports.ListEDICommunicationProfilesRequest{Filter: req},
 			)
@@ -93,7 +93,7 @@ func (h *Handler) selectCommunicationProfileOptions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-			return h.service.SelectCommunicationProfileOptions(
+			return h.setup.SelectCommunicationProfileOptions(
 				c.Request.Context(),
 				&edipartnerports.EDICommunicationProfileSelectOptionsRequest{
 					SelectQueryRequest: req,
@@ -108,7 +108,7 @@ func (h *Handler) selectCommunicationProfileOptions(c *gin.Context) {
 
 func (h *Handler) createCommunicationProfile(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.UpsertEDICommunicationProfileRequest)
+	req := new(edisetup.UpsertEDICommunicationProfileRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -120,7 +120,7 @@ func (h *Handler) createCommunicationProfile(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	profile, err := h.service.CreateCommunicationProfile(
+	profile, err := h.setup.CreateCommunicationProfile(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -145,7 +145,7 @@ func (h *Handler) getCommunicationProfile(c *gin.Context) {
 		return
 	}
 
-	profile, err := h.service.GetCommunicationProfile(
+	profile, err := h.setup.GetCommunicationProfile(
 		c.Request.Context(),
 		edipartnerports.GetEDICommunicationProfileByIDRequest{
 			ID:         profileID,
@@ -168,7 +168,7 @@ func (h *Handler) updateCommunicationProfile(c *gin.Context) {
 		return
 	}
 
-	req := new(ediservice.UpsertEDICommunicationProfileRequest)
+	req := new(edisetup.UpsertEDICommunicationProfileRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -180,7 +180,7 @@ func (h *Handler) updateCommunicationProfile(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	profile, err := h.service.UpdateCommunicationProfile(
+	profile, err := h.setup.UpdateCommunicationProfile(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -221,9 +221,9 @@ func (h *Handler) testCommunicationProfileConnection(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.service.TestCommunicationProfileConnection(
+	result, err := h.setup.TestCommunicationProfileConnection(
 		c.Request.Context(),
-		&ediservice.TestCommunicationProfileConnectionRequest{
+		&edisetup.TestCommunicationProfileConnectionRequest{
 			ProfileID:  profileID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

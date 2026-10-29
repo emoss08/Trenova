@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -17,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -96,7 +96,7 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 		Runtime: runtime,
 		Flows:   fixture.flowRepo,
 	})
-	ediSvc := ediservice.New(ediservice.Params{
+	edis := ediservicetest.New(ediservicetest.Deps{
 		Logger:              zap.NewNop(),
 		PartnerRepo:         fixture.partnerRepo,
 		MappingProfileRepo:  fixture.mappingProfileRepo,
@@ -117,7 +117,9 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 		documentTypeRepo:    fixture.documentTypeRepo,
 		transferRepo:        fixture.transferRepo,
 		tenderRecipientRepo: fixture.recipientRepo,
-		ediService:          ediSvc,
+		inboundApply:        edis.InboundApply,
+		outbound:            edis.Outbound,
+		alerts:              edis.Alerts,
 		lading:              runtime,
 		flows:               flows,
 	}

@@ -3,14 +3,14 @@ package ediresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 )
 
-func ediPartnerCardToModel(card *ediservice.EDIPartnerCard) *gqlmodel.EDIPartnerCard {
+func ediPartnerCardToModel(card *edioverview.EDIPartnerCard) *gqlmodel.EDIPartnerCard {
 	model := &gqlmodel.EDIPartnerCard{
 		Partner:    card.Partner,
 		Lading:     &gqlmodel.EDIPartnerLading{},
@@ -42,7 +42,7 @@ func ediPartnerCardToModel(card *ediservice.EDIPartnerCard) *gqlmodel.EDIPartner
 }
 
 func ediPartnerTransportsToModel(
-	transports []*ediservice.EDIPartnerTransport,
+	transports []*edioverview.EDIPartnerTransport,
 ) []*gqlmodel.EDIPartnerTransport {
 	models := make([]*gqlmodel.EDIPartnerTransport, 0, len(transports))
 	for _, transport := range transports {
@@ -81,7 +81,7 @@ func ediTransportCredentialsToModel(
 }
 
 func ediTransportCertificatesToModel(
-	certificates []ediservice.EDIPartnerCertificate,
+	certificates []edioverview.EDIPartnerCertificate,
 ) []*gqlmodel.EDITransportCertificate {
 	models := make([]*gqlmodel.EDITransportCertificate, 0, len(certificates))
 	for index := range certificates {
@@ -106,7 +106,7 @@ func ediTransportCertificatesToModel(
 }
 
 func ediPartnerReadinessToModel(
-	readiness *ediservice.EDIPartnerReadiness,
+	readiness *edioverview.EDIPartnerReadiness,
 ) *gqlmodel.EDIPartnerCardReadiness {
 	model := &gqlmodel.EDIPartnerCardReadiness{
 		Ready:          readiness.Ready,
@@ -148,7 +148,7 @@ func ediPartnerMappingsToModel(
 }
 
 func ediPartnerActivityToModel(
-	activity *ediservice.EDIPartnerActivity,
+	activity *edioverview.EDIPartnerActivity,
 ) *gqlmodel.EDIPartnerActivity {
 	model := &gqlmodel.EDIPartnerActivity{
 		Since:           int(activity.Since),
@@ -156,7 +156,7 @@ func ediPartnerActivityToModel(
 		Scorecard:       ediPartnerScorecardsToModel([]*edimessageports.EDIPartnerScorecardRow{activity.Scorecard})[0],
 		AckStatusCounts: summaryStatusCounts(activity.AckCounts),
 		Sets:            make([]*gqlmodel.EDIPartnerSetActivity, 0, len(activity.Sets)),
-		Series: ediVolumeSeriesToModel(&ediservice.EDIVolumeSeries{
+		Series: ediVolumeSeriesToModel(&edioverview.EDIVolumeSeries{
 			BucketSeconds: activity.BucketSeconds,
 			Points:        activity.Series,
 		}),
@@ -180,7 +180,7 @@ func ediPartnerActivityToModel(
 }
 
 func ediPartnerAttentionToModel(
-	attention *ediservice.EDIPartnerAttention,
+	attention *edioverview.EDIPartnerAttention,
 ) *gqlmodel.EDIPartnerAttention {
 	model := &gqlmodel.EDIPartnerAttention{
 		OverdueAckAgeSeconds: int(attention.OverdueAckAge),

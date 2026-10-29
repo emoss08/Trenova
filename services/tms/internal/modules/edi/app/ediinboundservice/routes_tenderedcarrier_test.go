@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
@@ -30,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -113,7 +113,7 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 		GetCarrierInvoiceByNumber(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("CarrierInvoice not found")).
 		Maybe()
-	params := ediservice.Params{
+	params := ediservicetest.Deps{
 		Logger:              zap.NewNop(),
 		ShipmentCommentRepo: fixture.commentRepo,
 		UserRepo:            fixture.userRepo,
@@ -126,13 +126,15 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 		params.ShipmentMoveRepo = fixture.moveRepo
 		params.TrackingEvents = fixture.tracking
 	}
-	ediSvc := ediservice.New(params)
+	edis := ediservicetest.New(params)
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
 		metrics:             documentmetrics.NewEDI(nil, zap.NewNop(), false),
 		tenderRecipientRepo: fixture.recipientRepo,
 		tenderRepo:          fixture.tenderRepo,
-		ediService:          ediSvc,
+		inboundApply:        edis.InboundApply,
+		outbound:            edis.Outbound,
+		alerts:              edis.Alerts,
 	}
 	return fixture
 }

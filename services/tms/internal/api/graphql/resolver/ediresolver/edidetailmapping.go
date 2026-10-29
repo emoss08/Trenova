@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
@@ -247,12 +247,12 @@ type ackHealthArguments struct {
 
 // ackHealthRequest reads the acknowledgment health read's arguments,
 // refusing a transaction set, overdue age or window outside what it reads.
-func ackHealthRequest(args *ackHealthArguments) (*ediservice.GetEDIAckHealthRequest, error) {
+func ackHealthRequest(args *ackHealthArguments) (*edioverview.GetEDIAckHealthRequest, error) {
 	partnerID, err := gqlid.ParseOptionalIDField("partnerId", args.partnerID)
 	if err != nil {
 		return nil, err
 	}
-	req := &ediservice.GetEDIAckHealthRequest{
+	req := &edioverview.GetEDIAckHealthRequest{
 		TenantInfo:   args.tenant,
 		PartnerID:    partnerID,
 		OverdueLimit: ackHealthOverdueRows,
@@ -285,7 +285,7 @@ func ackHealthRequest(args *ackHealthArguments) (*ediservice.GetEDIAckHealthRequ
 	return req, nil
 }
 
-func ediAckHealthToModel(health *ediservice.EDIAckHealth) *gqlmodel.EDIAckHealth {
+func ediAckHealthToModel(health *edioverview.EDIAckHealth) *gqlmodel.EDIAckHealth {
 	model := &gqlmodel.EDIAckHealth{
 		AsOf:                int(health.AsOf),
 		Since:               int(health.Since),

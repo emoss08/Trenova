@@ -11,7 +11,8 @@ import (
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	editransferservice "github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -60,7 +61,8 @@ type Deps struct {
 	*resolvercore.Core
 	OrganizationService          tenantports.OrganizationService
 	ShipmentService              shipmentserviceports.ShipmentService
-	EdiService                   *ediservice.Service
+	EdiSetupService              *edisetup.Service
+	EdiTransferService           *editransferservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	AccessorialChargeService     *accessorialchargeservice.Service
 	AccountTypeService           *accounttypeservice.Service

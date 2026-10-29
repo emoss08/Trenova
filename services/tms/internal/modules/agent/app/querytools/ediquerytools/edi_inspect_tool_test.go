@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -17,16 +17,16 @@ import (
 )
 
 type recordingInspector struct {
-	requests []*ediservice.InspectX12Request
+	requests []*edimessageview.InspectX12Request
 }
 
 func (r *recordingInspector) InspectX12(
 	ctx context.Context,
-	req *ediservice.InspectX12Request,
+	req *edimessageview.InspectX12Request,
 ) (*edix12inspect.InspectX12Result, error) {
 	r.requests = append(r.requests, req)
 
-	return (&ediservice.Service{}).InspectX12(ctx, req)
+	return (&edimessageview.Service{}).InspectX12(ctx, req)
 }
 
 const pastedShipmentStatus = "ISA*00*          *00*          *ZZ*ACMERETAIL     *ZZ*TRENOVA        " +

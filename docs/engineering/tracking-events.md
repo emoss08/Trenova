@@ -32,7 +32,7 @@ EDI 214 (every AT7)  ─────────────────┴ Reco
 | Repository and table | `adapters/postgres/trackingeventrepository`, migration `20261231008990_tracking_events` |
 | Telematics port | `workforce/ports/telematicsports.StopVisitRecorder` |
 | Driver portal port | `workforce/ports/driverportalports.StopReporter` |
-| EDI 214 parser and stop targeting | `edi/app/ediinboundservice/parse.go`, `edi/app/ediservice/stopactuals214.go`, `edi/domain/x12field/x12time.go` |
+| EDI 214 parser and stop targeting | `edi/app/ediinboundservice/parse.go`, `edi/app/ediinboundapply/stopactuals214.go`, `edi/domain/x12field/x12time.go` |
 | Carrier tracking link and check calls | `checkcallservice`; see [check-calls.md](check-calls.md) |
 | GraphQL read | `shipmentTrackingEvents(shipmentId)` in `shipment.graphqls`; the web app does not show it |
 

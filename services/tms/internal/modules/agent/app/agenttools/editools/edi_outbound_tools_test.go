@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
@@ -24,17 +26,17 @@ import (
 )
 
 type fakeLoadTenders struct {
-	plan      *ediservice.LoadTenderPlan
+	plan      *editenderservice.LoadTenderPlan
 	err       error
 	guard     *agenttoolstest.WriteGuard
-	submitted *ediservice.SubmitLoadTenderRequest
+	submitted *editenderservice.SubmitLoadTenderRequest
 	actor     *permissionports.RequestActor
 }
 
 func (f *fakeLoadTenders) PlanLoadTender(
 	_ context.Context,
-	req *ediservice.SubmitLoadTenderRequest,
-) (*ediservice.LoadTenderPlan, error) {
+	req *editenderservice.SubmitLoadTenderRequest,
+) (*editenderservice.LoadTenderPlan, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -47,7 +49,7 @@ func (f *fakeLoadTenders) PlanLoadTender(
 
 func (f *fakeLoadTenders) SubmitLoadTender(
 	_ context.Context,
-	req *ediservice.SubmitLoadTenderRequest,
+	req *editenderservice.SubmitLoadTenderRequest,
 	actor *permissionports.RequestActor,
 ) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
@@ -58,8 +60,8 @@ func (f *fakeLoadTenders) SubmitLoadTender(
 	return &editransfer.EDITransfer{ID: pulid.MustNew("edilt_")}, nil
 }
 
-func tenderPlan(status editransfer.TransferStatus) *ediservice.LoadTenderPlan {
-	return &ediservice.LoadTenderPlan{
+func tenderPlan(status editransfer.TransferStatus) *editenderservice.LoadTenderPlan {
+	return &editenderservice.LoadTenderPlan{
 		SourceShipment: &shipment.Shipment{
 			ID:        pulid.MustNew("shp_"),
 			ProNumber: "PRO-88",
@@ -76,7 +78,7 @@ func tenderPlan(status editransfer.TransferStatus) *ediservice.LoadTenderPlan {
 				{Type: "Delivery", LocationLabel: "Tulsa Store"},
 			}}},
 		},
-		Mapping: &ediservice.MappingPreview{},
+		Mapping: &editendermapping.MappingPreview{},
 		Status:  status,
 	}
 }
@@ -170,17 +172,17 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 }
 
 type fakeDocuments struct {
-	preview   *ediservice.EDIDocumentPreview
+	preview   *edioutbound.EDIDocumentPreview
 	err       error
 	guard     *agenttoolstest.WriteGuard
-	planned   *ediservice.GenerateEDIDocumentRequest
-	generated *ediservice.GenerateEDIDocumentRequest
+	planned   *edioutbound.GenerateEDIDocumentRequest
+	generated *edioutbound.GenerateEDIDocumentRequest
 }
 
 func (f *fakeDocuments) PlanGenerateDocument(
 	_ context.Context,
-	req *ediservice.GenerateEDIDocumentRequest,
-) (*ediservice.EDIDocumentPreview, error) {
+	req *edioutbound.GenerateEDIDocumentRequest,
+) (*edioutbound.EDIDocumentPreview, error) {
 	f.planned = req
 
 	return f.preview, f.err
@@ -188,7 +190,7 @@ func (f *fakeDocuments) PlanGenerateDocument(
 
 func (f *fakeDocuments) GenerateDocument(
 	_ context.Context,
-	req *ediservice.GenerateEDIDocumentRequest,
+	req *edioutbound.GenerateEDIDocumentRequest,
 ) (*edimessage.EDIMessage, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -202,7 +204,7 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 	t.Parallel()
 
 	documents := &fakeDocuments{
-		preview: &ediservice.EDIDocumentPreview{
+		preview: &edioutbound.EDIDocumentPreview{
 			RawX12:       "ISA*00*~ST*214*0001~B10*PRO-88*BOL-88~",
 			SegmentCount: 3,
 			PartnerName:  "Acme Trucking",

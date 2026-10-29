@@ -3,7 +3,7 @@ package ediresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -51,7 +51,7 @@ func TestEDIPartnerScorecardsToModel(t *testing.T) {
 func TestEDIVolumeSeriesToModel(t *testing.T) {
 	t.Parallel()
 
-	series := &ediservice.EDIVolumeSeries{
+	series := &edioverview.EDIVolumeSeries{
 		BucketSeconds: 3600,
 		Points: []*edimessageports.EDIVolumePoint{
 			{

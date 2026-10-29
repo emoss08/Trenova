@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -32,10 +32,10 @@ func (f *fakePartnerNotices) PreviewTenderChanges(
 	_ context.Context,
 	original, updated *shipment.Shipment,
 	_ *permissionports.RequestActor,
-) ([]*ediservice.PartnerNotice, error) {
+) ([]*editenderchangeservice.PartnerNotice, error) {
 	f.original, f.updated = original, updated
 
-	return []*ediservice.PartnerNotice{{
+	return []*editenderchangeservice.PartnerNotice{{
 		RecordID:       pulid.MustNew("etr_"),
 		PartnerName:    "Halstead Grocery EDI",
 		TransactionSet: edidocument.TransactionSet204,
@@ -48,8 +48,8 @@ func (f *fakePartnerNotices) PreviewCancelNotices(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) ([]*ediservice.PartnerNotice, error) {
-	return []*ediservice.PartnerNotice{{
+) ([]*editenderchangeservice.PartnerNotice, error) {
+	return []*editenderchangeservice.PartnerNotice{{
 		RecordID:       pulid.MustNew("esl_"),
 		PartnerName:    "Linked trading partner",
 		TransactionSet: edidocument.TransactionSet214,

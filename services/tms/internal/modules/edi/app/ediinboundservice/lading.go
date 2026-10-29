@@ -7,8 +7,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -295,11 +296,11 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 			return outcome
 		}
 	}
-	if _, err = s.ediService.ExecuteFlowActions(
+	if _, err = s.outbound.ExecuteFlowActions(
 		ctx,
 		tenantInfo,
 		dispatched,
-		&ediservice.FlowActionContext{TransferID: transfer},
+		&edioutbound.FlowActionContext{TransferID: transfer},
 	); err != nil {
 		outcome.warnings = append(outcome.warnings, fmt.Sprintf(
 			"the partner's flow %s could not finish what it asked: %s",
@@ -324,9 +325,9 @@ func (s *Service) act(
 		if tender := in.message.PayloadSnapshot.LoadTender; tender != nil {
 			key, _ = tender.RatingDetail["externalShipmentId"].(string)
 		}
-		warnings, err := s.ediService.CancelInboundTender(
+		warnings, err := s.inboundApply.CancelInboundTender(
 			ctx,
-			&ediservice.CancelInboundTenderRequest{
+			&ediinboundapply.CancelInboundTenderRequest{
 				TenantInfo: inboundFileTenant(in.file),
 				Partner:    in.partner,
 				Key:        key,

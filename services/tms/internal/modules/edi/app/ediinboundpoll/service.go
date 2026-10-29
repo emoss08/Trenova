@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"go.uber.org/fx"
@@ -16,7 +16,7 @@ type Params struct {
 
 	Logger      *zap.Logger
 	ProfileRepo edipartnerports.EDICommunicationProfileRepository
-	EDIService  *ediservice.Service
+	Secrets     *ediprofilesecret.Service
 	Inbound     *ediinboundservice.Service
 	Transport   editransportports.EDITransportDispatcher
 	Metrics     *metrics.Registry `optional:"true"`
@@ -25,7 +25,7 @@ type Params struct {
 type Service struct {
 	l           *zap.Logger
 	profileRepo edipartnerports.EDICommunicationProfileRepository
-	ediService  *ediservice.Service
+	secrets     *ediprofilesecret.Service
 	inbound     *ediinboundservice.Service
 	transport   editransportports.EDITransportDispatcher
 	metrics     *documentmetrics.EDI
@@ -39,7 +39,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:           p.Logger.Named("service.edi-inbound"),
 		profileRepo: p.ProfileRepo,
-		ediService:  p.EDIService,
+		secrets:     p.Secrets,
 		inbound:     p.Inbound,
 		transport:   p.Transport,
 		metrics:     ediMetrics,

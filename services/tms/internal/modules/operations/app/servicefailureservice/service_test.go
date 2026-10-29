@@ -699,7 +699,7 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 	t.Parallel()
 
 	failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-	ediSvc := ediportsmock.NewMockEDIService(t)
+	ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
 	svc := &service{l: zap.NewNop(), ediService: ediSvc}
 
 	ediSvc.EXPECT().
@@ -749,7 +749,7 @@ func TestPreflightServiceFailure214AllowsNonMandatoryBlockedAndSkipped(t *testin
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-			ediSvc := ediportsmock.NewMockEDIService(t)
+			ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
 			svc := &service{l: zap.NewNop(), ediService: ediSvc}
 			ediSvc.EXPECT().
 				PreviewServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
@@ -791,7 +791,7 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-			ediSvc := ediportsmock.NewMockEDIService(t)
+			ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
 			audit := auditportsmock.NewMockAuditService(t)
 			comments := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 			svc := &service{

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -60,7 +60,7 @@ func (h *Handler) listConnections(c *gin.Context) {
 	req := pagination.NewQueryOptions(c, authCtx)
 
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIConnection], error) {
-		return h.service.ListConnections(
+		return h.setup.ListConnections(
 			c.Request.Context(),
 			&edipartnerports.ListEDIConnectionsRequest{Filter: req},
 		)
@@ -69,7 +69,7 @@ func (h *Handler) listConnections(c *gin.Context) {
 
 func (h *Handler) createConnection(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.CreateEDIConnectionRequest)
+	req := new(edisetup.CreateEDIConnectionRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -81,7 +81,7 @@ func (h *Handler) createConnection(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	connection, err := h.service.CreateConnection(
+	connection, err := h.setup.CreateConnection(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -102,7 +102,7 @@ func (h *Handler) getConnection(c *gin.Context) {
 		return
 	}
 
-	connection, err := h.service.GetConnection(
+	connection, err := h.setup.GetConnection(
 		c.Request.Context(),
 		edipartnerports.GetEDIConnectionByIDRequest{
 			ID:         connectionID,
@@ -118,26 +118,26 @@ func (h *Handler) getConnection(c *gin.Context) {
 }
 
 func (h *Handler) acceptConnection(c *gin.Context) {
-	h.connectionAction(c, h.service.AcceptConnection)
+	h.connectionAction(c, h.setup.AcceptConnection)
 }
 
 func (h *Handler) rejectConnection(c *gin.Context) {
-	h.connectionAction(c, h.service.RejectConnection)
+	h.connectionAction(c, h.setup.RejectConnection)
 }
 
 func (h *Handler) suspendConnection(c *gin.Context) {
-	h.connectionAction(c, h.service.SuspendConnection)
+	h.connectionAction(c, h.setup.SuspendConnection)
 }
 
 func (h *Handler) revokeConnection(c *gin.Context) {
-	h.connectionAction(c, h.service.RevokeConnection)
+	h.connectionAction(c, h.setup.RevokeConnection)
 }
 
 func (h *Handler) connectionAction(
 	c *gin.Context,
 	fn func(
 		context.Context,
-		*ediservice.EDIConnectionActionRequest,
+		*edisetup.EDIConnectionActionRequest,
 		*permissionports.RequestActor,
 	) (*edi.EDIConnection, error),
 ) {
@@ -148,7 +148,7 @@ func (h *Handler) connectionAction(
 		return
 	}
 
-	req := new(ediservice.EDIConnectionActionRequest)
+	req := new(edisetup.EDIConnectionActionRequest)
 	if c.Request.ContentLength > 0 {
 		if err = c.ShouldBindJSON(req); err != nil {
 			h.eh.HandleError(c, err)

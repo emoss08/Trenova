@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidecision"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferchangeservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -48,12 +50,12 @@ type tenderChangeReviewer interface {
 	) (*editenderchange.TenderChange, error)
 	ApplyTenderChange(
 		ctx context.Context,
-		req *ediservice.TenderChangeActionRequest,
+		req *editenderchangeservice.TenderChangeActionRequest,
 		actor *permissionports.RequestActor,
 	) (*editenderchange.TenderChange, error)
 	RejectTenderChange(
 		ctx context.Context,
-		req *ediservice.TenderChangeActionRequest,
+		req *editenderchangeservice.TenderChangeActionRequest,
 		actor *permissionports.RequestActor,
 	) (*editenderchange.TenderChange, error)
 }
@@ -72,15 +74,15 @@ type transferChangeReviewer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		change *edisync.TransferChange,
-	) (*ediservice.TransferChangeEffect, error)
+	) (*editransferchangeservice.TransferChangeEffect, error)
 	ApplyTransferChange(
 		ctx context.Context,
-		req *ediservice.TransferChangeActionRequest,
+		req *editransferchangeservice.TransferChangeActionRequest,
 		actor *permissionports.RequestActor,
 	) (*edisync.TransferChange, error)
 	RejectTransferChange(
 		ctx context.Context,
-		req *ediservice.TransferChangeActionRequest,
+		req *editransferchangeservice.TransferChangeActionRequest,
 		actor *permissionports.RequestActor,
 	) (*edisync.TransferChange, error)
 }
@@ -237,8 +239,8 @@ func (t *EdiChangeReviewTool) Execute(
 	return t.kind.run(ctx, call)
 }
 
-func (c *changeReviewCall) mark() *ediservice.ChangeReviewMark {
-	return &ediservice.ChangeReviewMark{
+func (c *changeReviewCall) mark() *edidecision.ChangeReviewMark {
+	return &edidecision.ChangeReviewMark{
 		Applied:    c.apply,
 		ReviewerID: actorUserID(c.actor),
 		Reason:     c.reason,
@@ -283,7 +285,7 @@ func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agenttoolports.
 			return planTenderChangeReview(change, call)
 		},
 		run: func(ctx context.Context, call *changeReviewCall) error {
-			req := &ediservice.TenderChangeActionRequest{
+			req := &editenderchangeservice.TenderChangeActionRequest{
 				ChangeID:   call.changeID,
 				TenantInfo: call.tenant,
 				Reason:     call.reason,
@@ -332,7 +334,7 @@ func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agenttoolpo
 			return planTransferChangeReview(ctx, reviewer, change, call)
 		},
 		run: func(ctx context.Context, call *changeReviewCall) error {
-			req := &ediservice.TransferChangeActionRequest{
+			req := &editransferchangeservice.TransferChangeActionRequest{
 				ChangeID:   call.changeID,
 				TenantInfo: call.tenant,
 				Reason:     call.reason,

@@ -12,8 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edibulk"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
@@ -37,22 +38,22 @@ const ediMessageRecordEntity = "edi_message"
 type ediDeliveryRetrier interface {
 	PlanRetryMessageDelivery(
 		ctx context.Context,
-		req *ediservice.RetryMessageDeliveryRequest,
-	) (*ediservice.DeliveryPlan, error)
+		req *edidelivery.RetryMessageDeliveryRequest,
+	) (*edidelivery.DeliveryPlan, error)
 	BulkRetryMessageDelivery(
 		ctx context.Context,
-		req *ediservice.BulkRetryMessageDeliveryRequest,
-	) (*ediservice.BulkEDIActionResult, error)
+		req *edidelivery.BulkRetryMessageDeliveryRequest,
+	) (*edibulk.Result, error)
 }
 
 type ediMessageReplayer interface {
 	PlanReplayMessageDelivery(
 		ctx context.Context,
-		req *ediservice.RetryMessageDeliveryRequest,
-	) (*ediservice.DeliveryPlan, error)
+		req *edidelivery.RetryMessageDeliveryRequest,
+	) (*edidelivery.DeliveryPlan, error)
 	ReplayMessageDelivery(
 		ctx context.Context,
-		req *ediservice.RetryMessageDeliveryRequest,
+		req *edidelivery.RetryMessageDeliveryRequest,
 	) (*edimessage.EDIMessage, error)
 }
 
@@ -64,7 +65,7 @@ type inboundFileReprocessor interface {
 	BulkReprocessInboundFiles(
 		ctx context.Context,
 		req *ediinboundservice.BulkReprocessInboundFilesRequest,
-	) (*ediservice.BulkEDIActionResult, error)
+	) (*edibulk.Result, error)
 }
 
 func ediRecordSet(
@@ -76,7 +77,7 @@ func ediRecordSet(
 		return nil, err
 	}
 
-	ids, err := toolparams.RequirePulidSlice(params.Params, key, ediservice.MaxBulkEDIActionItems)
+	ids, err := toolparams.RequirePulidSlice(params.Params, key, edibulk.MaxItems)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +90,7 @@ func ediRecordSubset(description string) map[string]any {
 		toolschema.KeyType:        toolschema.TypeArray,
 		toolschema.KeyDescription: description,
 		toolschema.KeyMinItems:    1,
-		toolschema.KeyMaxItems:    ediservice.MaxBulkEDIActionItems,
+		toolschema.KeyMaxItems:    edibulk.MaxItems,
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
 		},
@@ -112,7 +113,7 @@ func ediOutboundPolicy(name, rationale string) agenttoolports.ToolPolicy {
 	}
 }
 
-func bulkOutcome(result *ediservice.BulkEDIActionResult, verb string) string {
+func bulkOutcome(result *edibulk.Result, verb string) string {
 	total := len(result.Succeeded) + len(result.Failed)
 	outcome := fmt.Sprintf("%d of %d %s", len(result.Succeeded), total, verb)
 	failures := make([]string, 0, min(len(result.Failed), maxBulkOutcomeFailures))
@@ -200,7 +201,7 @@ func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 
 	result, err := t.deliveries.BulkRetryMessageDelivery(
 		ctx,
-		&ediservice.BulkRetryMessageDeliveryRequest{
+		&edidelivery.BulkRetryMessageDeliveryRequest{
 			TenantInfo: toolparams.TenantFrom(params),
 			MessageIDs: ids,
 		},
@@ -252,7 +253,7 @@ func (t *ReplayEDIMessageTool) Target(params map[string]any) (agenttoolports.Too
 
 func (t *ReplayEDIMessageTool) request(
 	params *agenttoolports.ToolExecuteParams,
-) (*ediservice.RetryMessageDeliveryRequest, error) {
+) (*edidelivery.RetryMessageDeliveryRequest, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -262,7 +263,7 @@ func (t *ReplayEDIMessageTool) request(
 		return nil, err
 	}
 
-	return &ediservice.RetryMessageDeliveryRequest{
+	return &edidelivery.RetryMessageDeliveryRequest{
 		MessageID:  messageID,
 		TenantInfo: toolparams.TenantFrom(*params),
 	}, nil

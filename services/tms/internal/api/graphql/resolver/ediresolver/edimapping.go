@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
@@ -140,7 +140,7 @@ func ediPartnerScorecardsToModel(
 	return cards
 }
 
-func ediVolumeSeriesToModel(series *ediservice.EDIVolumeSeries) []*gqlmodel.EDIVolumePoint {
+func ediVolumeSeriesToModel(series *edioverview.EDIVolumeSeries) []*gqlmodel.EDIVolumePoint {
 	points := make([]*gqlmodel.EDIVolumePoint, 0, len(series.Points))
 	for _, point := range series.Points {
 		points = append(points, &gqlmodel.EDIVolumePoint{
@@ -155,7 +155,7 @@ func ediVolumeSeriesToModel(series *ediservice.EDIVolumeSeries) []*gqlmodel.EDIV
 	return points
 }
 
-func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EDISummary {
+func ediSummaryToModel(summary *edioverview.EDISummary) *gqlmodel.EDISummary {
 	attention := make(
 		[]*gqlmodel.EDISummaryAttentionItem,
 		0,

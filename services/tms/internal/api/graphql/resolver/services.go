@@ -72,7 +72,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -225,7 +229,11 @@ type Params struct {
 	BoardCapabilities             shipmentboardports.ShipmentBoardCapabilitiesReader
 	ShipmentImportAssistant       shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
 	EquipmentManufacturerService  *equipmentmanufacturerservice.Service
-	EDIService                    *ediservice.Service
+	EDISetupService               *edisetup.Service
+	EDITransferService            *editransferservice.Service
+	EDIOutboundService            *edioutbound.Service
+	EDIMessageService             *edimessageview.Service
+	EDIOverviewService            *edioverview.Service
 	EDIInboundService             *ediinboundservice.Service
 	EquipmentTypeService          *equipmenttypeservice.Service
 	AccessorialChargeService      *accessorialchargeservice.Service
@@ -469,7 +477,11 @@ type Services struct {
 	BoardGroups                   shipmentboardports.ShipmentBoardGroupSummarizer
 	BoardCapabilities             shipmentboardports.ShipmentBoardCapabilitiesReader
 	ShipmentImportAssistant       shipmentimportassistantports.ShipmentImportAssistantService
-	EdiService                    *ediservice.Service
+	EdiSetupService               *edisetup.Service
+	EdiTransferService            *editransferservice.Service
+	EdiOutboundService            *edioutbound.Service
+	EdiMessageService             *edimessageview.Service
+	EdiOverviewService            *edioverview.Service
 	EdiInboundService             *ediinboundservice.Service
 	EquipmentTypeService          *equipmenttypeservice.Service
 	AccessorialChargeService      *accessorialchargeservice.Service
@@ -718,7 +730,11 @@ func newServices(p *Params) *Services {
 		BoardGroups:                   p.BoardGroups,
 		BoardCapabilities:             p.BoardCapabilities,
 		ShipmentImportAssistant:       p.ShipmentImportAssistant,
-		EdiService:                    p.EDIService,
+		EdiSetupService:               p.EDISetupService,
+		EdiTransferService:            p.EDITransferService,
+		EdiOutboundService:            p.EDIOutboundService,
+		EdiMessageService:             p.EDIMessageService,
+		EdiOverviewService:            p.EDIOverviewService,
 		EdiInboundService:             p.EDIInboundService,
 		EquipmentTypeService:          p.EquipmentTypeService,
 		AccessorialChargeService:      p.AccessorialChargeService,

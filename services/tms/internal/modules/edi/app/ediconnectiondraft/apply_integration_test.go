@@ -15,8 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediladingrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimappingprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnerrepository"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
@@ -57,8 +60,8 @@ func realService(t *testing.T) (context.Context, *keel.DB, *Service, pagination.
 		edidocumenttyperepository.Params{DB: conn, Logger: logger},
 	)
 	partners := edipartnerrepository.New(edipartnerrepository.Params{DB: conn, Logger: logger})
-	validator := ediservice.NewValidator()
-	setup := ediservice.New(ediservice.Params{
+	validator := edivalidation.NewValidator()
+	setup := edisetup.New(edisetup.Params{
 		Logger:      logger,
 		PartnerRepo: partners,
 		ProfileRepo: edicommunicationprofilerepository.New(
@@ -72,8 +75,7 @@ func realService(t *testing.T) (context.Context, *keel.DB, *Service, pagination.
 		),
 		DocumentTypeRepo: documentTypes,
 		Validator:        validator,
-		DB:               conn,
-		Savepoints:       conn,
+		Secret:           ediprofilesecret.New(ediprofilesecret.Params{}),
 	})
 	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
@@ -182,9 +184,9 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 	revised := acmeRequest(t)
 	revised.TenantInfo = tenant
 	for index := range revised.Values {
-		if revised.Values[index].Field == fieldPartnerContactName {
+		if revised.Values[index].Field == ediconnectionfield.PartnerContactName {
 			revised.Values[index] = value(
-				fieldPartnerContactName,
+				ediconnectionfield.PartnerContactName,
 				"Whitfield",
 				1,
 				"EDI Coordinator: Dana Whitfield",

@@ -19,8 +19,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edialert"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
@@ -57,7 +59,9 @@ type Params struct {
 	TenderRepo          tenderports.TenderRepository           `optional:"true"`
 	TenderResponses     tenderports.TenderResponseRecorder     `optional:"true"`
 	InvoiceMatcher      carrierports.CarrierInvoiceAutoMatcher `optional:"true"`
-	EDIService          *ediservice.Service
+	InboundApply        *ediinboundapply.Service
+	Outbound            *edioutbound.Service
+	Alerts              *edialert.Service
 	Lading              *edilading.Runtime
 	Flows               *edilading.Flows
 	Replayer            *edilading.Replayer `optional:"true"`
@@ -81,7 +85,9 @@ type Service struct {
 	tenderRepo          tenderports.TenderRepository
 	tenderResponses     tenderports.TenderResponseRecorder
 	invoiceMatcher      carrierports.CarrierInvoiceAutoMatcher
-	ediService          *ediservice.Service
+	inboundApply        *ediinboundapply.Service
+	outbound            *edioutbound.Service
+	alerts              *edialert.Service
 	lading              *edilading.Runtime
 	flows               *edilading.Flows
 	replayer            *edilading.Replayer
@@ -111,7 +117,9 @@ func New(p Params) *Service {
 		tenderRepo:          p.TenderRepo,
 		tenderResponses:     p.TenderResponses,
 		invoiceMatcher:      p.InvoiceMatcher,
-		ediService:          p.EDIService,
+		inboundApply:        p.InboundApply,
+		outbound:            p.Outbound,
+		alerts:              p.Alerts,
 		lading:              p.Lading,
 		flows:               p.Flows,
 		replayer:            p.Replayer,
@@ -380,10 +388,10 @@ func (s *Service) notifyQuarantinedFile(ctx context.Context, file *ediinboundfil
 		TenantInfo: inboundFileTenant(file),
 	})
 
-	s.ediService.NotifyOperationalFailure(ctx, &ediservice.EDIOperationalAlert{
+	s.alerts.NotifyOperationalFailure(ctx, &edialert.EDIOperationalAlert{
 		OrganizationID: file.OrganizationID,
 		BusinessUnitID: file.BusinessUnitID,
-		EventType:      ediservice.EDIAlertEventInboundFileQuarantined,
+		EventType:      edialert.EDIAlertEventInboundFileQuarantined,
 		PartnerID:      file.EDIPartnerID,
 		Title:          "EDI inbound file quarantined",
 		Message: fmt.Sprintf(
@@ -629,9 +637,9 @@ func (s *Service) generateInboundAcknowledgments(
 		if ackType == edidocument.AcknowledgmentTypeNone {
 			continue
 		}
-		_, err := s.ediService.GenerateAcknowledgment(
+		_, err := s.outbound.GenerateAcknowledgment(
 			ctx,
-			&ediservice.GenerateAcknowledgmentRequest{
+			&edioutbound.GenerateAcknowledgmentRequest{
 				TenantInfo:   tenantInfo,
 				EDIPartnerID: partner.ID,
 				Type:         ackType,

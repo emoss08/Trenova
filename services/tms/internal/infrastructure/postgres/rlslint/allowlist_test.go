@@ -2,7 +2,7 @@ package rlslint
 
 var allowed = map[string]string{
 	"internal/modules/documents/app/captureservice/pairing.go:Service.ExchangePairing":                                                                          "exchange an approved pairing, which belongs to no organization until now, for its device",
-	"internal/modules/edi/app/ediservice/transfer_changes.go:Service.reviewTransferChange":                                                                      "apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
+	"internal/modules/edi/app/editransferchangeservice/transfer_changes.go:Service.reviewTransferChange":                                                        "apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
 	"internal/modules/identity/app/instancebootstrapservice/service.go:Service.Bootstrap":                                                                       "create the first business unit, organization, administrator and system user of an instance in one transaction before any tenant exists",
 	"internal/modules/identity/app/organizationservice/validator.go:businessUnitWideScope":                                                                      "check organization names, SCAC and DOT numbers and login slugs across the business unit",
 	"internal/infrastructure/database/dbcli/migrated.go:markMigratedTables":                                                                                     "record every table a migration run changed for every tenant, so cached reads of the old schema are dropped",

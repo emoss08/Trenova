@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 )
@@ -61,9 +61,9 @@ func (r *QueryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 		return nil
 	})
 	run(permission.ResourceEDI, "edi attention count", func(ctx context.Context) error {
-		count, sErr := r.EdiService.GetEDIAttentionCount(
+		count, sErr := r.EdiOverviewService.GetEDIAttentionCount(
 			ctx,
-			&ediservice.GetEDIAttentionCountRequest{TenantInfo: resolvercore.TenantInfo(authCtx)},
+			&edioverview.GetEDIAttentionCountRequest{TenantInfo: resolvercore.TenantInfo(authCtx)},
 		)
 		if sErr != nil {
 			return sErr

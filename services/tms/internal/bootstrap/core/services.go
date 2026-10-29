@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/ledgersync"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledistatussync"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
@@ -55,7 +56,9 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	),
 	inboundmail.New,
 	fx.Annotate(
-		func(s *ediservice.Service) shipmentserviceports.ShipmentMutationObserver { return s },
+		func(s *editenderchangeservice.Service) shipmentserviceports.ShipmentMutationObserver {
+			return s
+		},
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
@@ -93,7 +96,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 			},
 		})
 	},
-	func(setter servicefailureservice.EDIServiceSetter, service ediports.EDIService) {
+	func(setter servicefailureservice.EDIServiceSetter, service ediports.ServiceFailure214Service) {
 		setter.SetEDIService(service)
 	},
 	func(s *tenderservice.Service, assigner tenderports.CarrierMoveAssigner) {
@@ -126,10 +129,10 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 		s.SetPortalRevoker(portal)
 	},
 	// Providing services.EDITenderChannel would close the constructor cycle
-	// ediservice -> ShipmentService -> TenderGuard -> tenderservice ->
+	// editenderservice -> ShipmentService -> TenderGuard -> tenderservice ->
 	// EDITenderChannel, so the channel arrives after both services are built.
-	func(s *tenderservice.Service, ediSvc *ediservice.Service) {
-		s.SetEDITenderChannel(ediSvc)
+	func(s *tenderservice.Service, ediTenders *editenderservice.Service) {
+		s.SetEDITenderChannel(ediTenders)
 	},
 	fx.Annotate(
 		func(

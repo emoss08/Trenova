@@ -54,7 +54,10 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		TractorService:               r.TractorService,
 		FleetCodeService:             r.FleetCodeService,
 	}
-	ediSources := &ediselectoptions.Sources{EdiService: r.EdiService}
+	ediSources := &ediselectoptions.Sources{
+		EdiSetupService:    r.EdiSetupService,
+		EdiTransferService: r.EdiTransferService,
+	}
 	places := &placesselectoptions.Sources{
 		UsStateService:          r.UsStateService,
 		LocationService:         r.LocationService,

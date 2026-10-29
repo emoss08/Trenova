@@ -13,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferchangeservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -81,12 +82,16 @@ type ediTransferChangeLister interface {
 	) (*pagination.ListResult[*edisync.TransferChange], error)
 }
 
-func provideListEDITenderChangesTool(ediSvc *ediservice.Service) agenttoolports.AgentQueryTool {
-	return newListEDITenderChangesTool(ediSvc)
+func provideListEDITenderChangesTool(
+	changes *editenderchangeservice.Service,
+) agenttoolports.AgentQueryTool {
+	return newListEDITenderChangesTool(changes)
 }
 
-func provideListEDITransferChangesTool(ediSvc *ediservice.Service) agenttoolports.AgentQueryTool {
-	return newListEDITransferChangesTool(ediSvc)
+func provideListEDITransferChangesTool(
+	changes *editransferchangeservice.Service,
+) agenttoolports.AgentQueryTool {
+	return newListEDITransferChangesTool(changes)
 }
 
 type listEDITenderChangesTool struct {

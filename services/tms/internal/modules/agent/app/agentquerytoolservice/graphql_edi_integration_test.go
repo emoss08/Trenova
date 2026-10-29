@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnerrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
@@ -34,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -201,16 +201,24 @@ func TestConvertedReads_EDIReadsUnderRowLevelSecurity(t *testing.T) {
 	transfers := editransferrepository.New(editransferrepository.Params{DB: conn, Logger: logger})
 	invoices := edicarrierinvoicerepository.New(
 		edicarrierinvoicerepository.Params{DB: conn, Logger: logger})
-	edis := ediservice.New(ediservice.Params{
+	edis := ediservicetest.New(ediservicetest.Deps{
 		Logger: logger, PartnerRepo: partners, InboundFileRepo: files, MessageRepo: messages,
 		TransferRepo: transfers,
 		MappingProfileRepo: edimappingprofilerepository.New(
 			edimappingprofilerepository.Params{DB: conn, Logger: logger}),
 	})
 	resolvers := agentread.ResolverParams{
-		EDIService: edis,
+		EDISetupService:    edis.Setup,
+		EDITransferService: edis.Transfers,
+		EDIOutboundService: edis.Outbound,
+		EDIMessageService:  edis.Messages,
+		EDIOverviewService: edis.Overview,
 		EDIInboundService: ediinboundservice.New(ediinboundservice.Params{
-			Logger: logger, InboundFileRepo: files, EDIService: edis,
+			Logger:          logger,
+			InboundFileRepo: files,
+			InboundApply:    edis.InboundApply,
+			Outbound:        edis.Outbound,
+			Alerts:          edis.Alerts,
 		}),
 		CarrierSettlementService: carriersettlementservice.New(carriersettlementservice.Params{
 			Logger: logger, EDIInvoiceRepo: invoices,

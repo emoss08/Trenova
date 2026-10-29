@@ -129,7 +129,7 @@ type ediActivityFixture struct {
 	inv            *invoice.Invoice
 	invoiceService *invoiceportsmock.MockInvoiceService
 	invoiceRepo    *invoiceportsmock.MockInvoiceRepository
-	ediService     *ediportsmock.MockEDIService
+	ediService     *ediportsmock.MockEDIDocumentService
 	activities     *Activities
 }
 
@@ -143,7 +143,7 @@ func newEDIActivityFixture(t *testing.T) *ediActivityFixture {
 		},
 		invoiceService: invoiceportsmock.NewMockInvoiceService(t),
 		invoiceRepo:    invoiceportsmock.NewMockInvoiceRepository(t),
-		ediService:     ediportsmock.NewMockEDIService(t),
+		ediService:     ediportsmock.NewMockEDIDocumentService(t),
 	}
 	f.inv = &invoice.Invoice{
 		ID:            pulid.MustNew("inv_"),

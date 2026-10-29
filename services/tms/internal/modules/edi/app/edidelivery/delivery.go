@@ -1,0 +1,569 @@
+package edidelivery
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edialert"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderrecipient"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/api/serviceerror"
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
+	"go.uber.org/zap"
+)
+
+var deliverableMethods = []edi.ConnectionMethod{
+	edi.ConnectionMethodSFTP,
+	edi.ConnectionMethodVAN,
+	edi.ConnectionMethodAS2,
+}
+
+func (s *Service) DeliverMessage(
+	ctx context.Context,
+	payload *DeliverEDIMessageWorkflowPayload,
+) (*DeliverEDIMessageWorkflowResult, error) {
+	return observability.RunWithSpanReturn(
+		ctx,
+		"edi.deliver_message",
+		func(ctx context.Context) (*DeliverEDIMessageWorkflowResult, error) {
+			return s.deliverMessage(ctx, payload)
+		},
+	)
+}
+
+//nolint:funlen // Delivery walks load, secrets, transport send, and terminal-state persistence sequentially.
+func (s *Service) deliverMessage(
+	ctx context.Context,
+	payload *DeliverEDIMessageWorkflowPayload,
+) (*DeliverEDIMessageWorkflowResult, error) {
+	message, earlyResult, err := s.loadDeliverableMessage(ctx, payload)
+	if err != nil || earlyResult != nil {
+		return earlyResult, err
+	}
+
+	profile, err := s.deliveryProfileForMessage(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+	secrets, err := s.secret.TransportSecrets(profile)
+	if err != nil {
+		return nil, err
+	}
+
+	now := timeutils.NowUnix()
+	message, err = s.messageRepo.UpdateMessageDelivery(
+		ctx,
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
+			ID:                    message.ID,
+			TenantInfo:            editenderrecipient.MessageTenantInfo(message),
+			DeliveryStatus:        edimessage.MessageDeliveryStatusSending,
+			DeliveryRemotePath:    message.DeliveryRemotePath,
+			IncrementAttempts:     true,
+			DeliveryLastAttemptAt: &now,
+			DeliveryLastError:     message.DeliveryLastError,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	s.syncInvoiceEDIStatus(ctx, message, invoice.EDISendStatusSending, "", nil)
+
+	transportStartedAt := time.Now()
+	transportResult, deliveryErr := s.transport.Deliver(
+		ctx,
+		profile.Method,
+		&editransportports.EDITransportRequest{
+			Profile:  profile,
+			Secrets:  secrets,
+			FileName: editransport.OutboundFileName(profile, message),
+			Contents: message.RawX12,
+		},
+	)
+	transportSeconds := time.Since(transportStartedAt).Seconds()
+	remotePath := ""
+	as2MessageID := ""
+	as2MIC := ""
+	pending := false
+	if transportResult != nil {
+		remotePath = transportResult.RemotePath
+		as2MessageID = transportResult.MessageID
+		as2MIC = transportResult.MIC
+		pending = transportResult.Pending
+	}
+	deliveryMetricStatus := deliveryStatusLabel(deliveryErr, pending)
+	s.metrics.RecordDelivery(
+		message.EDIPartnerID.String(),
+		string(message.TransactionSet),
+		string(profile.Method),
+		deliveryMetricStatus,
+		transportSeconds,
+	)
+	if deliveryErr != nil {
+		s.recordDeliveryFailure(ctx, message, remotePath, &now, deliveryErr)
+		return nil, deliveryErr
+	}
+	if profile.Method == edi.ConnectionMethodAS2 && !pending {
+		s.metrics.RecordMDNRoundTrip("sync", transportSeconds)
+	}
+
+	if pending {
+		message, err = s.messageRepo.UpdateMessageDelivery(
+			ctx,
+			&edimessageports.UpdateEDIMessageDeliveryRequest{
+				ID:                    message.ID,
+				TenantInfo:            editenderrecipient.MessageTenantInfo(message),
+				DeliveryStatus:        edimessage.MessageDeliveryStatusSending,
+				DeliveryRemotePath:    remotePath,
+				AS2MessageID:          as2MessageID,
+				AS2MIC:                as2MIC,
+				DeliveryLastAttemptAt: &now,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		return &DeliverEDIMessageWorkflowResult{
+			MessageID:      message.ID,
+			DeliveryStatus: message.DeliveryStatus,
+			RemotePath:     remotePath,
+		}, nil
+	}
+
+	message, err = s.messageRepo.UpdateMessageDelivery(
+		ctx,
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
+			ID:                    message.ID,
+			TenantInfo:            editenderrecipient.MessageTenantInfo(message),
+			DeliveryStatus:        edimessage.MessageDeliveryStatusSent,
+			DeliveryRemotePath:    remotePath,
+			AS2MessageID:          as2MessageID,
+			AS2MIC:                as2MIC,
+			DeliveryLastAttemptAt: &now,
+			DeliverySentAt:        &now,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	s.syncInvoiceEDIStatus(ctx, message, invoice.EDISendStatusSent, "", &now)
+	if err = s.recipient.CompleteChangeDelivery(ctx, message); err != nil {
+		return nil, err
+	}
+	return &DeliverEDIMessageWorkflowResult{
+		MessageID:      message.ID,
+		DeliveryStatus: message.DeliveryStatus,
+		RemotePath:     remotePath,
+	}, nil
+}
+
+func deliveryStatusLabel(deliveryErr error, pending bool) string {
+	switch {
+	case deliveryErr != nil:
+		return "failed"
+	case pending:
+		return "pending"
+	default:
+		return "sent"
+	}
+}
+
+func (s *Service) loadDeliverableMessage(
+	ctx context.Context,
+	payload *DeliverEDIMessageWorkflowPayload,
+) (*edimessage.EDIMessage, *DeliverEDIMessageWorkflowResult, error) {
+	if payload == nil || payload.MessageID.IsNil() {
+		return nil, nil, temporal.NewNonRetryableApplicationError(
+			"EDI message ID is required for delivery",
+			"InvalidDeliveryPayload",
+			nil,
+		)
+	}
+	message, err := s.messageRepo.GetMessageByID(ctx, edimessageports.GetEDIMessageByIDRequest{
+		ID:         payload.MessageID,
+		TenantInfo: payload.TenantInfo,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if message.Direction != edidocument.DocumentDirectionOutbound {
+		return nil, nil, temporal.NewNonRetryableApplicationError(
+			"only outbound EDI messages can be delivered",
+			"MessageNotOutbound",
+			nil,
+		)
+	}
+	if message.DeliveryStatus == edimessage.MessageDeliveryStatusSent {
+		return nil, &DeliverEDIMessageWorkflowResult{
+			MessageID:      message.ID,
+			DeliveryStatus: message.DeliveryStatus,
+			RemotePath:     message.DeliveryRemotePath,
+		}, nil
+	}
+	if !message.DeliveryStatus.IsDeliverable() {
+		return nil, nil, temporal.NewNonRetryableApplicationError(
+			fmt.Sprintf(
+				"EDI message delivery status %s is not deliverable",
+				message.DeliveryStatus,
+			),
+			"MessageNotDeliverable",
+			nil,
+		)
+	}
+	return message, nil, nil
+}
+
+func (s *Service) recordDeliveryFailure(
+	ctx context.Context,
+	message *edimessage.EDIMessage,
+	remotePath string,
+	attemptedAt *int64,
+	deliveryErr error,
+) {
+	if _, updateErr := s.messageRepo.UpdateMessageDelivery(
+		ctx,
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
+			ID:                    message.ID,
+			TenantInfo:            editenderrecipient.MessageTenantInfo(message),
+			DeliveryStatus:        edimessage.MessageDeliveryStatusFailed,
+			DeliveryRemotePath:    remotePath,
+			DeliveryLastAttemptAt: attemptedAt,
+			DeliveryLastError:     deliveryErr.Error(),
+		},
+	); updateErr != nil {
+		s.l.Warn(
+			"failed to record EDI message delivery failure",
+			zap.String("messageId", message.ID.String()),
+			zap.Error(updateErr),
+		)
+	}
+	s.syncInvoiceEDIStatus(ctx, message, invoice.EDISendStatusFailed, deliveryErr.Error(), nil)
+}
+
+func (s *Service) MarkMessageDeadLettered(
+	ctx context.Context,
+	payload *MarkEDIMessageDeadLetteredPayload,
+) error {
+	if payload == nil || payload.MessageID.IsNil() {
+		return errors.New("EDI message ID is required for dead-letter handling")
+	}
+	message, err := s.messageRepo.GetMessageByID(ctx, edimessageports.GetEDIMessageByIDRequest{
+		ID:         payload.MessageID,
+		TenantInfo: payload.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if message.DeliveryStatus == edimessage.MessageDeliveryStatusSent {
+		return nil
+	}
+	now := timeutils.NowUnix()
+	message, err = s.messageRepo.UpdateMessageDelivery(
+		ctx,
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
+			ID:                    message.ID,
+			TenantInfo:            editenderrecipient.MessageTenantInfo(message),
+			DeliveryStatus:        edimessage.MessageDeliveryStatusDeadLettered,
+			DeliveryRemotePath:    message.DeliveryRemotePath,
+			DeliveryLastAttemptAt: &now,
+			DeliveryLastError:     payload.Reason,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	s.syncInvoiceEDIStatus(ctx, message, invoice.EDISendStatusDeadLettered, payload.Reason, nil)
+	s.metrics.RecordDeadLetter(message.EDIPartnerID.String(), string(message.TransactionSet))
+	s.alert.NotifyOperationalFailure(ctx, &edialert.EDIOperationalAlert{
+		OrganizationID: message.OrganizationID,
+		BusinessUnitID: message.BusinessUnitID,
+		EventType:      edialert.EDIAlertEventMessageDeadLettered,
+		PartnerID:      message.EDIPartnerID,
+		Title:          "EDI message dead-lettered",
+		Message: fmt.Sprintf(
+			"Outbound %s message %s exhausted its delivery retries: %s",
+			message.TransactionSet,
+			message.ID,
+			payload.Reason,
+		),
+		RelatedEntities: map[string]any{
+			"messageId": message.ID,
+			"partnerId": message.EDIPartnerID,
+		},
+		Data: map[string]any{
+			"transactionSet": message.TransactionSet,
+			"error":          payload.Reason,
+			"link":           "/edi/messages?panelType=edit&panelEntityId=" + message.ID.String(),
+		},
+	})
+	return s.recipient.FailChangeDelivery(ctx, message, payload.Reason)
+}
+
+func (s *Service) RetryMessageDelivery(
+	ctx context.Context,
+	req *RetryMessageDeliveryRequest,
+) (*edimessage.EDIMessage, error) {
+	plan, err := s.PlanRetryMessageDelivery(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	now := timeutils.NowUnix()
+	message, err := s.messageRepo.UpdateMessageDelivery(
+		ctx,
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
+			ID:                    plan.Message.ID,
+			TenantInfo:            editenderrecipient.MessageTenantInfo(plan.Message),
+			DeliveryStatus:        edimessage.MessageDeliveryStatusQueued,
+			DeliveryRemotePath:    plan.Message.DeliveryRemotePath,
+			DeliveryLastAttemptAt: &now,
+			DeliveryLastError:     plan.Message.DeliveryLastError,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.startDeliveryWorkflow(ctx, message, plan.Profile); err != nil {
+		return nil, err
+	}
+	return message, nil
+}
+
+func (s *Service) ReplayMessageDelivery(
+	ctx context.Context,
+	req *RetryMessageDeliveryRequest,
+) (*edimessage.EDIMessage, error) {
+	plan, err := s.PlanReplayMessageDelivery(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	now := timeutils.NowUnix()
+	message, err := s.messageRepo.UpdateMessageDelivery(
+		ctx,
+		&edimessageports.UpdateEDIMessageDeliveryRequest{
+			ID:                    plan.Message.ID,
+			TenantInfo:            editenderrecipient.MessageTenantInfo(plan.Message),
+			DeliveryStatus:        edimessage.MessageDeliveryStatusQueued,
+			DeliveryRemotePath:    plan.Message.DeliveryRemotePath,
+			DeliveryLastAttemptAt: &now,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	s.l.Info(
+		"EDI message replay requested",
+		zap.String("messageId", message.ID.String()),
+		zap.String("requestedBy", req.TenantInfo.UserID.String()),
+	)
+	if err = s.startDeliveryWorkflow(ctx, message, plan.Profile); err != nil {
+		return nil, err
+	}
+	return message, nil
+}
+
+func (s *Service) QueueMessage(
+	ctx context.Context,
+	message *edimessage.EDIMessage,
+) error {
+	if message == nil ||
+		message.Direction != edidocument.DocumentDirectionOutbound ||
+		message.Status != edimessage.MessageStatusGenerated {
+		return nil
+	}
+	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
+		ID:         message.EDIPartnerID,
+		TenantInfo: editenderrecipient.MessageTenantInfo(message),
+	})
+	if err != nil {
+		return err
+	}
+	if partner.Kind != edi.PartnerKindExternal {
+		return nil
+	}
+	profile, err := s.deliveryProfileForMessage(ctx, message)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil
+		}
+		return err
+	}
+	if message.DeliveryStatus != edimessage.MessageDeliveryStatusQueued {
+		now := timeutils.NowUnix()
+		updated, updateErr := s.messageRepo.UpdateMessageDelivery(
+			ctx,
+			&edimessageports.UpdateEDIMessageDeliveryRequest{
+				ID:                    message.ID,
+				TenantInfo:            editenderrecipient.MessageTenantInfo(message),
+				DeliveryStatus:        edimessage.MessageDeliveryStatusQueued,
+				DeliveryLastAttemptAt: &now,
+			},
+		)
+		if updateErr != nil {
+			return updateErr
+		}
+		*message = *updated
+	}
+	return s.startDeliveryWorkflow(ctx, message, profile)
+}
+
+func (s *Service) startDeliveryWorkflow(
+	ctx context.Context,
+	message *edimessage.EDIMessage,
+	profile *edi.EDICommunicationProfile,
+) error {
+	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
+		return errortypes.NewBusinessError("EDI delivery workflow is not configured")
+	}
+	payload := &DeliverEDIMessageWorkflowPayload{
+		MessageID:  message.ID,
+		TenantInfo: editenderrecipient.MessageTenantInfo(message),
+	}
+	if profile != nil {
+		payload.RetryPolicy = editransport.DeliveryRetryPolicyFromConfig(profile.Config)
+	}
+	_, err := s.workflowStarter.StartWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID:                                       buildDeliverMessageWorkflowID(message.ID),
+			TaskQueue:                                temporaltype.EDITaskQueue,
+			WorkflowExecutionErrorWhenAlreadyStarted: true,
+			StaticSummary: fmt.Sprintf(
+				"Deliver EDI message %s",
+				message.ID.String(),
+			),
+		},
+		temporaltype.DeliverEDIMessageWorkflowName,
+		payload,
+	)
+	if err != nil {
+		var alreadyStartedErr *serviceerror.WorkflowExecutionAlreadyStarted
+		if errors.As(err, &alreadyStartedErr) {
+			return nil
+		}
+		return errortypes.NewBusinessError("failed to start EDI delivery workflow").
+			WithInternal(err)
+	}
+	return nil
+}
+
+func (s *Service) deliveryProfileForMessage(
+	ctx context.Context,
+	message *edimessage.EDIMessage,
+) (*edi.EDICommunicationProfile, error) {
+	change, found, err := s.recipient.ChangeForOutboundMessage(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+	if found &&
+		change.Recipient != nil &&
+		change.Recipient.CommunicationProfileID.IsNotNil() {
+		return s.profileRepo.GetProfileByID(
+			ctx,
+			edipartnerports.GetEDICommunicationProfileByIDRequest{
+				ID:         change.Recipient.CommunicationProfileID,
+				TenantInfo: editenderrecipient.MessageTenantInfo(message),
+			},
+		)
+	}
+	if pinned := message.PayloadSnapshot.DeliveryCommunicationProfileID; pinned.IsNotNil() {
+		return s.profileRepo.GetProfileByID(
+			ctx,
+			edipartnerports.GetEDICommunicationProfileByIDRequest{
+				ID:         pinned,
+				TenantInfo: editenderrecipient.MessageTenantInfo(message),
+			},
+		)
+	}
+	if message.EDIPartnerID.IsNil() {
+		return nil, errors.New("EDI partner is required for message delivery")
+	}
+	return s.profileRepo.GetActiveProfileByPartner(
+		ctx,
+		edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest{
+			PartnerID:  message.EDIPartnerID,
+			TenantInfo: editenderrecipient.MessageTenantInfo(message),
+			Methods:    deliverableMethods,
+		},
+	)
+}
+
+func buildDeliverMessageWorkflowID(messageID pulid.ID) string {
+	return "edi-deliver-message-" + messageID.String()
+}
+
+// syncInvoiceEDIStatus writes a 210's delivery outcome back to the invoice it
+// bills, so the invoice reads Sent or Failed without a trip through the EDI
+// console. Any other message, or a write failure, leaves the invoice alone.
+func (s *Service) syncInvoiceEDIStatus(
+	ctx context.Context,
+	message *edimessage.EDIMessage,
+	status invoice.EDISendStatus,
+	lastError string,
+	sentAt *int64,
+) {
+	if message == nil || message.InvoiceID.IsNil() ||
+		message.TransactionSet != edidocument.TransactionSet210 || s.invoiceRepo == nil {
+		return
+	}
+	if err := s.invoiceRepo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
+		TenantInfo: editenderrecipient.MessageTenantInfo(message),
+		InvoiceID:  message.InvoiceID,
+		MessageID:  message.ID,
+		Status:     status,
+		Error:      lastError,
+		SentAt:     sentAt,
+	}); err != nil {
+		s.l.Warn(
+			"failed to sync invoice EDI status",
+			zap.String("invoiceId", message.InvoiceID.String()),
+			zap.String("messageId", message.ID.String()),
+			zap.Error(err),
+		)
+		return
+	}
+	s.publishInvoiceEDIStatus(ctx, message)
+}
+
+func (s *Service) publishInvoiceEDIStatus(ctx context.Context, message *edimessage.EDIMessage) {
+	if s.realtime == nil {
+		return
+	}
+	entity, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+		ID:         message.InvoiceID,
+		TenantInfo: editenderrecipient.MessageTenantInfo(message),
+	})
+	if err != nil {
+		s.l.Warn(
+			"failed to load invoice to publish its EDI status",
+			zap.String("invoiceId", message.InvoiceID.String()),
+			zap.Error(err),
+		)
+		return
+	}
+	realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
+		permission.ResourceInvoice.String(),
+		entity,
+		invoicerealtime.RealtimeActionEDIUpdated,
+		permissionports.SystemAuditActor(),
+		invoicerealtime.NewRealtimeSnapshot(entity),
+	))
+}

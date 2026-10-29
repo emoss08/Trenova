@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edibulk"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -26,8 +27,8 @@ import (
 type fakeDeliveries struct {
 	messages map[pulid.ID]*edimessage.EDIMessage
 	guard    *agenttoolstest.WriteGuard
-	retried  *ediservice.BulkRetryMessageDeliveryRequest
-	replayed *ediservice.RetryMessageDeliveryRequest
+	retried  *edidelivery.BulkRetryMessageDeliveryRequest
+	replayed *edidelivery.RetryMessageDeliveryRequest
 }
 
 func (f *fakeDeliveries) message(id pulid.ID) (*edimessage.EDIMessage, error) {
@@ -41,8 +42,8 @@ func (f *fakeDeliveries) message(id pulid.ID) (*edimessage.EDIMessage, error) {
 
 func (f *fakeDeliveries) PlanRetryMessageDelivery(
 	_ context.Context,
-	req *ediservice.RetryMessageDeliveryRequest,
-) (*ediservice.DeliveryPlan, error) {
+	req *edidelivery.RetryMessageDeliveryRequest,
+) (*edidelivery.DeliveryPlan, error) {
 	message, err := f.message(req.MessageID)
 	if err != nil {
 		return nil, err
@@ -54,7 +55,7 @@ func (f *fakeDeliveries) PlanRetryMessageDelivery(
 		)
 	}
 
-	return &ediservice.DeliveryPlan{
+	return &edidelivery.DeliveryPlan{
 		Message: message,
 		Profile: &edi.EDICommunicationProfile{Name: "Acme SFTP", Method: edi.ConnectionMethodSFTP},
 	}, nil
@@ -62,8 +63,8 @@ func (f *fakeDeliveries) PlanRetryMessageDelivery(
 
 func (f *fakeDeliveries) PlanReplayMessageDelivery(
 	_ context.Context,
-	req *ediservice.RetryMessageDeliveryRequest,
-) (*ediservice.DeliveryPlan, error) {
+	req *edidelivery.RetryMessageDeliveryRequest,
+) (*edidelivery.DeliveryPlan, error) {
 	message, err := f.message(req.MessageID)
 	if err != nil {
 		return nil, err
@@ -75,24 +76,24 @@ func (f *fakeDeliveries) PlanReplayMessageDelivery(
 		)
 	}
 
-	return &ediservice.DeliveryPlan{Message: message}, nil
+	return &edidelivery.DeliveryPlan{Message: message}, nil
 }
 
 func (f *fakeDeliveries) BulkRetryMessageDelivery(
 	_ context.Context,
-	req *ediservice.BulkRetryMessageDeliveryRequest,
-) (*ediservice.BulkEDIActionResult, error) {
+	req *edidelivery.BulkRetryMessageDeliveryRequest,
+) (*edibulk.Result, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.retried = req
 
-	return &ediservice.BulkEDIActionResult{Succeeded: req.MessageIDs}, nil
+	return &edibulk.Result{Succeeded: req.MessageIDs}, nil
 }
 
 func (f *fakeDeliveries) ReplayMessageDelivery(
 	_ context.Context,
-	req *ediservice.RetryMessageDeliveryRequest,
+	req *edidelivery.RetryMessageDeliveryRequest,
 ) (*edimessage.EDIMessage, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -258,15 +259,15 @@ func (f *fakeReprocessor) GetInboundFile(
 func (f *fakeReprocessor) BulkReprocessInboundFiles(
 	_ context.Context,
 	req *ediinboundservice.BulkReprocessInboundFilesRequest,
-) (*ediservice.BulkEDIActionResult, error) {
+) (*edibulk.Result, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.reprocessed = req
 
-	return &ediservice.BulkEDIActionResult{
+	return &edibulk.Result{
 		Succeeded: req.FileIDs[:1],
-		Failed: []ediservice.BulkEDIActionFailure{{
+		Failed: []edibulk.Failure{{
 			ID: req.FileIDs[len(req.FileIDs)-1], Error: "Only quarantined files",
 		}},
 	}, nil
@@ -329,8 +330,8 @@ func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) 
 func TestEDIBulkTools_RefuseMoreThanTheServiceTakes(t *testing.T) {
 	t.Parallel()
 
-	ids := make([]any, 0, ediservice.MaxBulkEDIActionItems+1)
-	for range ediservice.MaxBulkEDIActionItems + 1 {
+	ids := make([]any, 0, edibulk.MaxItems+1)
+	for range edibulk.MaxItems + 1 {
 		ids = append(ids, pulid.MustNew("edimsg_").String())
 	}
 

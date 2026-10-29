@@ -38,7 +38,7 @@ func (h *Handler) selectTransactionSetOptions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*edidocument.EDITransactionSet], error) {
-			return h.service.SelectTransactionSetOptions(
+			return h.setup.SelectTransactionSetOptions(
 				c.Request.Context(),
 				&edipartnerports.EDITransactionSetSelectOptionsRequest{
 					SelectQueryRequest: req,
@@ -70,7 +70,7 @@ func (h *Handler) getTransactionSetOption(c *gin.Context) {
 	req.Query = ""
 	req.Pagination = pagination.Info{Limit: 1}
 
-	result, err := h.service.SelectTransactionSetOptions(
+	result, err := h.setup.SelectTransactionSetOptions(
 		c.Request.Context(),
 		&edipartnerports.EDITransactionSetSelectOptionsRequest{
 			SelectQueryRequest: req,

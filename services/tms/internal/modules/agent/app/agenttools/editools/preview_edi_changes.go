@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidecision"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -57,7 +57,7 @@ func planTenderChangeReview(
 		"Would %s the change another organization made to load tender BOL %s.",
 		call.verb(), change.NewTenderPayload.BOL,
 	)}
-	plan.refusal = ediservice.CheckTenderChangeReview(change, call.tenant)
+	plan.refusal = edidecision.CheckTenderChangeReview(change, call.tenant)
 	if plan.refusal == nil {
 		if err := describeTenderChangeReview(plan, change, call); err != nil {
 			return nil, err
@@ -73,7 +73,7 @@ func describeTenderChangeReview(
 	call *changeReviewCall,
 ) error {
 	after := *change
-	ediservice.MarkTenderChangeReviewed(&after, call.mark())
+	edidecision.MarkTenderChangeReviewed(&after, call.mark())
 	status, err := changeStatusRecord(toolpreview.Record{
 		Resource: permission.ResourceEDI,
 		ID:       change.ID,
@@ -139,7 +139,7 @@ type transferChangeReview struct {
 func (r transferChangeReview) describe(ctx context.Context, plan *changeReviewPlan) error {
 	change, call := r.change, r.call
 	after := *change
-	ediservice.MarkTransferChangeReviewed(&after, call.mark())
+	edidecision.MarkTransferChangeReviewed(&after, call.mark())
 	status, err := changeStatusRecord(toolpreview.Record{
 		Resource: permission.ResourceEDI,
 		ID:       change.ID,

@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,19 +37,18 @@ func setupInboundFileHandler(
 		Logger:    logger,
 		AppConfig: &appconfig.Config{Debug: true},
 	})
-	return edihandler.New(edihandler.Params{
-		Service: ediservice.New(ediservice.Params{Logger: logger}),
-		InboundService: ediinboundservice.New(
-			ediinboundservice.Params{Logger: logger, InboundFileRepo: files},
-		),
-		ErrorHandler: errorHandler,
-		PermissionMiddleware: middleware.NewPermissionMiddleware(
-			middleware.PermissionMiddlewareParams{
-				PermissionEngine: &mocks.AllowAllPermissionEngine{},
-				ErrorHandler:     errorHandler,
-			},
-		),
-	})
+	params := serviceParams(ediservicetest.New(ediservicetest.Deps{Logger: logger}))
+	params.InboundService = ediinboundservice.New(
+		ediinboundservice.Params{Logger: logger, InboundFileRepo: files},
+	)
+	params.ErrorHandler = errorHandler
+	params.PermissionMiddleware = middleware.NewPermissionMiddleware(
+		middleware.PermissionMiddlewareParams{
+			PermissionEngine: &mocks.AllowAllPermissionEngine{},
+			ErrorHandler:     errorHandler,
+		},
+	)
+	return edihandler.New(params)
 }
 
 func TestEDIHandler_InspectInboundFileLaysOutTheFileItHolds(t *testing.T) {

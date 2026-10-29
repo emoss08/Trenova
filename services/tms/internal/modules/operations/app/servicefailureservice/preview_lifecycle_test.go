@@ -52,7 +52,7 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 			copied := *stored
 			return &copied, nil
 		})
-	ediSvc := ediportsmock.NewMockEDIService(t)
+	ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
 	ediSvc.EXPECT().PreviewServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
 		Return(&servicefailureports.ServiceFailure214LifecycleResult{
 			Trigger:       servicefailureports.ServiceFailureEDITriggerResolved,

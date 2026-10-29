@@ -33,7 +33,6 @@ debt:
   services/tms/internal/modules/documents/app/captureservice: 5885
   services/tms/internal/modules/documents/app/inboundmessageservice: 6558
   services/tms/internal/modules/documents/jobs/documentextractionjobs: 7211
-  services/tms/internal/modules/edi/app/ediservice: 13348
   services/tms/internal/modules/identity/domain/permission: 10640
   services/tms/internal/modules/operations/app/shipmentservice: 9249
   services/tms/internal/modules/operations/domain/shipment: 6025

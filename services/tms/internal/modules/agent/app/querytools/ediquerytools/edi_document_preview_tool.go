@@ -13,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -43,39 +44,49 @@ var (
 		string(edidocument.TransactionSet990),
 	})
 	tenderResponses = agenttoolschema.Source("edi.tenderResponseChoice", []string{
-		string(ediservice.TenderResponseAccept),
-		string(ediservice.TenderResponseDecline),
+		string(editransferservice.TenderResponseAccept),
+		string(editransferservice.TenderResponseDecline),
 	})
 )
 
 type ediDocumentPreviewer interface {
 	PreviewOutboundDocument(
 		ctx context.Context,
-		req *ediservice.GenerateEDIDocumentRequest,
-	) (*ediservice.OutboundDocumentPreview, error)
+		req *edioutbound.GenerateEDIDocumentRequest,
+	) (*edioutbound.OutboundDocumentPreview, error)
+}
+
+type tenderResponsePreviewer interface {
 	PreviewTenderResponse(
 		ctx context.Context,
-		req *ediservice.PreviewTenderResponseRequest,
-	) (*ediservice.TenderResponsePreview, error)
+		req *editransferservice.PreviewTenderResponseRequest,
+	) (*editransferservice.TenderResponsePreview, error)
 }
 
 func providePreviewEDIDocumentTool(
-	ediSvc *ediservice.Service,
+	documents *edioutbound.Service,
+	transfers *editransferservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return newPreviewEDIDocumentTool(ediSvc, permissions)
+	return newPreviewEDIDocumentTool(documents, transfers, permissions)
 }
 
 type previewEDIDocumentTool struct {
 	documents ediDocumentPreviewer
+	responses tenderResponsePreviewer
 	access    fieldgate.Access
 }
 
 func newPreviewEDIDocumentTool(
 	documents ediDocumentPreviewer,
+	responses tenderResponsePreviewer,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return &previewEDIDocumentTool{documents: documents, access: fieldgate.NewAccess(permissions)}
+	return &previewEDIDocumentTool{
+		documents: documents,
+		responses: responses,
+		access:    fieldgate.NewAccess(permissions),
+	}
 }
 
 func (t *previewEDIDocumentTool) Name() string { return "edi_preview_x12" }
@@ -155,7 +166,7 @@ type documentPreviewCall struct {
 	partnerID  pulid.ID
 	shipmentID pulid.ID
 	transferID pulid.ID
-	response   ediservice.TenderResponseChoice
+	response   editransferservice.TenderResponseChoice
 	reason     string
 }
 
@@ -177,9 +188,9 @@ func (t *previewEDIDocumentTool) Query(
 
 	tenant := querytool.TenantOf(params)
 	if call.set == edidocument.TransactionSet990 {
-		answered, pErr := t.documents.PreviewTenderResponse(
+		answered, pErr := t.responses.PreviewTenderResponse(
 			ctx,
-			&ediservice.PreviewTenderResponseRequest{
+			&editransferservice.PreviewTenderResponseRequest{
 				TenantInfo: tenant,
 				PartnerID:  call.partnerID,
 				TransferID: call.transferID,
@@ -202,14 +213,17 @@ func (t *previewEDIDocumentTool) Query(
 		return t.gated(ctx, params, view), nil
 	}
 
-	preview, err := t.documents.PreviewOutboundDocument(ctx, &ediservice.GenerateEDIDocumentRequest{
-		TenantInfo:     tenant,
-		EDIPartnerID:   call.partnerID,
-		ShipmentID:     call.shipmentID,
-		TransactionSet: call.set,
-		Direction:      edidocument.DocumentDirectionOutbound,
-		GeneratedByID:  params.Actor.UserID,
-	})
+	preview, err := t.documents.PreviewOutboundDocument(
+		ctx,
+		&edioutbound.GenerateEDIDocumentRequest{
+			TenantInfo:     tenant,
+			EDIPartnerID:   call.partnerID,
+			ShipmentID:     call.shipmentID,
+			TransactionSet: call.set,
+			Direction:      edidocument.DocumentDirectionOutbound,
+			GeneratedByID:  params.Actor.UserID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +277,7 @@ func readDocumentPreviewCall(params map[string]any) (*documentPreviewCall, error
 	if err != nil {
 		return nil, err
 	}
-	call.response = ediservice.TenderResponseChoice(response)
+	call.response = editransferservice.TenderResponseChoice(response)
 	call.reason = strings.TrimSpace(querytool.OptionalString(params, paramDeclineReason))
 
 	if call.set == edidocument.TransactionSet990 {
@@ -286,7 +300,7 @@ func (c *documentPreviewCall) check990() error {
 	case c.shipmentID.IsNotNil():
 		return fmt.Errorf("a 990 is named by %q, not %q; leave the shipment out",
 			paramEDITransferID, querytool.ParamShipmentID)
-	case c.reason != "" && c.response != ediservice.TenderResponseDecline:
+	case c.reason != "" && c.response != editransferservice.TenderResponseDecline:
 		return fmt.Errorf("parameter %q goes only with %q Decline", paramDeclineReason,
 			paramTenderResponse)
 	case len(c.reason) > maxDeclineReasonLength:
@@ -344,7 +358,7 @@ func (t *previewEDIDocumentTool) mayReadSource(
 func documentPreviewView(
 	ctx context.Context,
 	set edidocument.TransactionSet,
-	preview *ediservice.OutboundDocumentPreview,
+	preview *edioutbound.OutboundDocumentPreview,
 ) (*ediDocumentPreviewView, error) {
 	document := preview.Document
 	view := &ediDocumentPreviewView{

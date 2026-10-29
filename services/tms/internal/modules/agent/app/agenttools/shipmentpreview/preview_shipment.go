@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -24,12 +24,12 @@ type ShipmentPartnerNotices interface {
 		ctx context.Context,
 		original, updated *shipment.Shipment,
 		actor *permissionports.RequestActor,
-	) ([]*ediservice.PartnerNotice, error)
+	) ([]*editenderchangeservice.PartnerNotice, error)
 	PreviewCancelNotices(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		shipmentID pulid.ID,
-	) ([]*ediservice.PartnerNotice, error)
+	) ([]*editenderchangeservice.PartnerNotice, error)
 }
 
 var UpdateShipmentRefs = map[string]permission.Resource{
@@ -41,7 +41,10 @@ var UpdateShipmentRefs = map[string]permission.Resource{
 }
 
 // partnerNoticeSend is one EDI message to a trading partner.
-func PartnerNoticeSend(notice *ediservice.PartnerNotice, reason string) *agentpreview.RecordChange {
+func PartnerNoticeSend(
+	notice *editenderchangeservice.PartnerNotice,
+	reason string,
+) *agentpreview.RecordChange {
 	subject := fmt.Sprintf("EDI %s %s", notice.TransactionSet, strings.ToLower(notice.Purpose))
 	body := ""
 	switch {

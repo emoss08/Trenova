@@ -58,7 +58,7 @@ func (s *Service) PollMailbox(
 			"EDI communication profile requires a partner before inbound polling",
 		)
 	}
-	secrets, err := s.ediService.ProfileTransportSecrets(profile)
+	secrets, err := s.secrets.TransportSecrets(profile)
 	if err != nil {
 		return nil, err
 	}

@@ -31,7 +31,7 @@ func (h *Handler) listShipmentLinks(c *gin.Context) {
 	req := pagination.NewQueryOptions(c, authCtx)
 
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edisync.ShipmentLink], error) {
-		return h.service.ListShipmentLinks(
+		return h.transfers.ListShipmentLinks(
 			c.Request.Context(),
 			&editenderports.ListEDIShipmentLinksRequest{Filter: req},
 		)
@@ -46,7 +46,7 @@ func (h *Handler) getShipmentLink(c *gin.Context) {
 		return
 	}
 
-	link, err := h.service.GetShipmentLink(
+	link, err := h.transfers.GetShipmentLink(
 		c.Request.Context(),
 		editenderports.GetEDIShipmentLinkByIDRequest{
 			ID:         linkID,

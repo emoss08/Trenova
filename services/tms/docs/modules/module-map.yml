@@ -704,14 +704,32 @@ modules:
       - ladingproject
       - x12field
     service:
+      - edialert
+      - edibulk
       - ediconnectiondraft
       - ediconnectionfield
       - ediconnectionguide
+      - edidecision
+      - edidelivery
+      - ediinboundapply
       - ediinboundas2
       - ediinboundpoll
       - ediinboundservice
-      - ediservice
+      - edimessageview
+      - edioutbound
+      - edioverview
+      - edipayloadbuild
+      - ediprofilesecret
+      - ediservicefailure
+      - edisetup
       - edistarlark
+      - editenderchangeservice
+      - editendermapping
+      - editenderrecipient
+      - editenderservice
+      - editendershipment
+      - editransferchangeservice
+      - editransferservice
       - editransport
       - edix12
       - edix12inspect

@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,16 +30,18 @@ func setupTransferHandler(
 		Logger:    logger,
 		AppConfig: &appconfig.Config{Debug: true},
 	})
-	return edihandler.New(edihandler.Params{
-		Service:      ediservice.New(ediservice.Params{Logger: logger, TransferRepo: transfers}),
-		ErrorHandler: errorHandler,
-		PermissionMiddleware: middleware.NewPermissionMiddleware(
-			middleware.PermissionMiddlewareParams{
-				PermissionEngine: &mocks.AllowAllPermissionEngine{},
-				ErrorHandler:     errorHandler,
-			},
-		),
-	})
+	params := serviceParams(ediservicetest.New(ediservicetest.Deps{
+		Logger:       logger,
+		TransferRepo: transfers,
+	}))
+	params.ErrorHandler = errorHandler
+	params.PermissionMiddleware = middleware.NewPermissionMiddleware(
+		middleware.PermissionMiddlewareParams{
+			PermissionEngine: &mocks.AllowAllPermissionEngine{},
+			ErrorHandler:     errorHandler,
+		},
+	)
+	return edihandler.New(params)
 }
 
 func TestEDIHandler_ListInboundTransfersFromOneInboundFile(t *testing.T) {

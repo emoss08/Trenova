@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
@@ -129,14 +129,15 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
-	ediSvc := ediservice.New(ediservice.Params{Logger: zap.NewNop()})
+	edis := ediServices()
 	service := New(Params{
 		Logger: zap.NewNop(),
 		Inbound: ediinboundservice.New(
 			ediinboundservice.Params{Logger: zap.NewNop(), InboundFileRepo: inboundFileRepo},
 		),
 		ProfileRepo:     profileRepo,
-		EDIService:      ediSvc,
+		Delivery:        edis.Delivery,
+		Secrets:         edis.Secrets,
 		WorkflowStarter: workflowStarter,
 	})
 
@@ -220,7 +221,8 @@ func TestReceiveAS2MessageRejectsUnsignedWhenPartnerCertConfigured(t *testing.T)
 	service := New(Params{
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
-		EDIService:  ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+		Delivery:    ediServices().Delivery,
+		Secrets:     ediServices().Secrets,
 	})
 
 	built, err := as2.BuildMessage(&as2.BuildMessageOptions{
@@ -304,7 +306,8 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 			ediinboundservice.Params{Logger: zap.NewNop(), InboundFileRepo: inboundFileRepo},
 		),
 		ProfileRepo:     profileRepo,
-		EDIService:      ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+		Delivery:        ediServices().Delivery,
+		Secrets:         ediServices().Secrets,
 		WorkflowStarter: workflowStarter,
 	})
 
@@ -341,7 +344,8 @@ func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
 	service := New(Params{
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
-		EDIService:  ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+		Delivery:    ediServices().Delivery,
+		Secrets:     ediServices().Secrets,
 	})
 
 	_, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
@@ -357,8 +361,9 @@ func TestSendAsyncAS2MDNRejectsUncontrolledReturnURL(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
-		Logger:     zap.NewNop(),
-		EDIService: ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+		Logger:   zap.NewNop(),
+		Delivery: ediServices().Delivery,
+		Secrets:  ediServices().Secrets,
 	})
 
 	result := &ReceiveAS2MessageResult{
@@ -382,8 +387,9 @@ func TestSendAsyncAS2MDNRequiresPayload(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
-		Logger:     zap.NewNop(),
-		EDIService: ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+		Logger:   zap.NewNop(),
+		Delivery: ediServices().Delivery,
+		Secrets:  ediServices().Secrets,
 	})
 
 	err := service.SendAsyncAS2MDN(
@@ -426,7 +432,8 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 	service := New(Params{
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
-		EDIService:  ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+		Delivery:    ediServices().Delivery,
+		Secrets:     ediServices().Secrets,
 	})
 
 	built, err := as2.BuildMessage(&as2.BuildMessageOptions{
@@ -454,4 +461,8 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 	mdn, err := as2.ParseMDN(result.MDNContentType, result.MDNBody, nil)
 	require.NoError(t, err)
 	require.False(t, mdn.Processed())
+}
+
+func ediServices() *ediservicetest.Services {
+	return ediservicetest.New(ediservicetest.Deps{Logger: zap.NewNop()})
 }

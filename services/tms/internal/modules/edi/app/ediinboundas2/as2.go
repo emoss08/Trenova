@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -86,7 +86,7 @@ func (s *Service) receiveAS2Message(
 		)
 	}
 	if as2.IsMDNContentType(req.ContentType) {
-		if err := s.ediService.ApplyAS2MDN(ctx, &ediservice.ApplyAS2MDNRequest{
+		if err := s.delivery.ApplyAS2MDN(ctx, &edidelivery.ApplyAS2MDNRequest{
 			ContentType: req.ContentType,
 			Body:        req.Body,
 		}); err != nil {
@@ -112,7 +112,7 @@ func (s *Service) receiveAS2Message(
 		OrganizationID: profile.OrganizationID,
 		BusinessUnitID: profile.BusinessUnitID,
 	})
-	secrets, err := s.ediService.ProfileTransportSecrets(profile)
+	secrets, err := s.secrets.TransportSecrets(profile)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/jobs/edijobs/edijobscontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -148,7 +148,7 @@ func (a *Activities) DispatchFlowTimerActivity(
 	ctx context.Context,
 	input *edijobscontract.FlowTimerInput,
 ) (int64, error) {
-	instance, err := a.ediService.DispatchFlowTimer(ctx, input.TenantInfo, input.InstanceID)
+	instance, err := a.outboundService.DispatchFlowTimer(ctx, input.TenantInfo, input.InstanceID)
 	if err != nil {
 		return 0, err
 	}
@@ -172,7 +172,7 @@ func (a *Activities) NotifyFlowShipmentEventActivity(
 	ctx context.Context,
 	input *edijobscontract.FlowEventInput,
 ) error {
-	return a.ediService.NotifyShipmentEvent(ctx, &ediservice.NotifyShipmentEventRequest{
+	return a.outboundService.NotifyShipmentEvent(ctx, &edioutbound.NotifyShipmentEventRequest{
 		TenantInfo: input.TenantInfo,
 		EventID:    input.EventID,
 	})

@@ -61,8 +61,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
@@ -359,14 +364,14 @@ func provideCreateLocationTool(
 
 func provideUpdateShipmentTool(
 	shipments shipmentserviceports.ShipmentService,
-	partners *ediservice.Service,
+	partners *editenderchangeservice.Service,
 ) agenttoolports.AgentTool {
 	return intaketools.NewUpdateShipmentTool(shipments, partners)
 }
 
 func provideRescheduleStopTool(
 	shipments shipmentserviceports.ShipmentService,
-	partners *ediservice.Service,
+	partners *editenderchangeservice.Service,
 ) agenttoolports.AgentTool {
 	return shipmentedittools.NewRescheduleStopTool(shipments, partners)
 }
@@ -380,7 +385,7 @@ func provideAddShipmentChargeTool(
 
 func provideCancelShipmentTool(
 	shipments shipmentserviceports.ShipmentService,
-	partners *ediservice.Service,
+	partners *editenderchangeservice.Service,
 	tenders *tenderservice.Service,
 ) agenttoolports.AgentTool {
 	return shipmenttools.NewCancelShipmentTool(shipments, partners, tenders)
@@ -541,35 +546,39 @@ func ediToolProviders() []any {
 	}
 }
 
-func provideAcceptEDILoadTenderTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideAcceptEDILoadTenderTool(edi *editransferservice.Service) agenttoolports.AgentTool {
 	return editools.NewAcceptEDILoadTenderTool(edi)
 }
 
-func provideDeclineEDILoadTenderTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideDeclineEDILoadTenderTool(edi *editransferservice.Service) agenttoolports.AgentTool {
 	return editools.NewDeclineEDILoadTenderTool(edi)
 }
 
-func provideCancelEDILoadTenderTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideCancelEDILoadTenderTool(edi *editransferservice.Service) agenttoolports.AgentTool {
 	return editools.NewCancelEDILoadTenderTool(edi)
 }
 
-func provideExpireEDILoadTenderTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideExpireEDILoadTenderTool(edi *editransferservice.Service) agenttoolports.AgentTool {
 	return editools.NewExpireEDILoadTenderTool(edi)
 }
 
-func provideReviewEDITenderChangeTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideReviewEDITenderChangeTool(
+	edi *editenderchangeservice.Service,
+) agenttoolports.AgentTool {
 	return editools.NewReviewEDITenderChangeTool(edi)
 }
 
-func provideReviewEDITransferChangeTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideReviewEDITransferChangeTool(
+	edi *editransferchangeservice.Service,
+) agenttoolports.AgentTool {
 	return editools.NewReviewEDITransferChangeTool(edi)
 }
 
-func provideRetryEDIMessageDeliveryTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideRetryEDIMessageDeliveryTool(edi *edidelivery.Service) agenttoolports.AgentTool {
 	return editools.NewRetryEDIMessageDeliveryTool(edi)
 }
 
-func provideReplayEDIMessageTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideReplayEDIMessageTool(edi *edidelivery.Service) agenttoolports.AgentTool {
 	return editools.NewReplayEDIMessageTool(edi)
 }
 
@@ -579,11 +588,11 @@ func provideReprocessEDIInboundFilesTool(
 	return editools.NewReprocessEDIInboundFilesTool(inbound)
 }
 
-func provideSendEDILoadTenderTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideSendEDILoadTenderTool(edi *editenderservice.Service) agenttoolports.AgentTool {
 	return editools.NewSendEDILoadTenderTool(edi)
 }
 
-func provideSendEDIStatusUpdateTool(edi *ediservice.Service) agenttoolports.AgentTool {
+func provideSendEDIStatusUpdateTool(edi *edioutbound.Service) agenttoolports.AgentTool {
 	return editools.NewSendEDIStatusUpdateTool(edi)
 }
 

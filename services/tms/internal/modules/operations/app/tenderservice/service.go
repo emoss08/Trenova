@@ -165,7 +165,7 @@ func (s *Service) SetLifecycleObserver(observer carrierintelports.CarrierLifecyc
 }
 
 // SetEDITenderChannel injects the EDI delivery seam after construction:
-// providing it through FX would close the cycle ediservice -> ShipmentService
+// providing it through FX would close the cycle editenderservice -> ShipmentService
 // -> TenderGuard -> tenderservice -> EDITenderChannel.
 func (s *Service) SetEDITenderChannel(channel tenderports.EDITenderChannel) {
 	s.ediChannel = channel

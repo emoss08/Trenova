@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edipayloadbuild"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
@@ -99,7 +99,7 @@ func tenderResponseChange(after *editransfer.EDITransfer) *agentpreview.RecordCh
 		return nil
 	}
 
-	response := ediservice.TenderResponseFor(after)
+	response := edipayloadbuild.TenderResponseFor(after)
 	if response == nil {
 		return nil
 	}

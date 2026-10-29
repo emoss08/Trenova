@@ -368,7 +368,7 @@ array-of-ids parameter as a subset of one permission resource's records with
   "everything awaiting approval" unseen is what the tool exists to prevent),
   `carrier_set_monitoring` (billed per carrier from `carrier_list`, a general list), and
   `edi_retry_message` and `edi_reprocess_inbound_file` (general lists of messages
-  and files, capped at `ediservice.MaxBulkEDIActionItems`), and `invoice_post`,
+  and files, capped at `edibulk.MaxItems`), and `invoice_post`,
   `invoice_send`, `billing_approve_queue_item` and the four settlement approve and post
   tools (up to 50, each record previewed and run through its single-record tool; see
   [Tools that take one record or many](#tools-that-take-one-record-or-many)).

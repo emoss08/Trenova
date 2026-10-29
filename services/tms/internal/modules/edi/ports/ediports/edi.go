@@ -81,11 +81,14 @@ type ServiceFailure214LifecycleRequest struct {
 
 type ServiceFailure214Status = edimessageports.ServiceFailure214StatusRow
 
-type EDIService interface {
+type ServiceFailurePayloadBuilder interface {
 	BuildShipmentStatusPayloadForServiceFailure(
 		ctx context.Context,
 		req *servicefailureports.BuildServiceFailureEDIPayloadRequest,
 	) (*servicefailureports.ServiceFailureEDIPayloadResult, error)
+}
+
+type EDIDocumentService interface {
 	PreviewDocument(
 		ctx context.Context,
 		req *PreviewEDIDocumentRequest,
@@ -94,6 +97,9 @@ type EDIService interface {
 		ctx context.Context,
 		req *GenerateEDIDocumentRequest,
 	) (*edimessage.EDIMessage, error)
+}
+
+type ServiceFailure214Service interface {
 	PreviewServiceFailure214ForLifecycle(
 		ctx context.Context,
 		req *ServiceFailure214LifecycleRequest,

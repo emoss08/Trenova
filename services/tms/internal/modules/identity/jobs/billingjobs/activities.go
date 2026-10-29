@@ -45,7 +45,7 @@ type ActivitiesParams struct {
 	LateChargeService  latechargeports.LateChargeService    `optional:"true"`
 	LateChargeRepo     latechargeports.LateChargeRepository `optional:"true"`
 	BillingControlRepo tenantports.BillingControlRepository
-	EDIService         ediports.EDIService `optional:"true"`
+	EDIService         ediports.EDIDocumentService `optional:"true"`
 }
 
 type Activities struct {
@@ -61,7 +61,7 @@ type Activities struct {
 	lateChargeService  latechargeports.LateChargeService
 	lateChargeRepo     latechargeports.LateChargeRepository
 	billingControlRepo tenantports.BillingControlRepository
-	ediService         ediports.EDIService
+	ediService         ediports.EDIDocumentService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {

@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -97,7 +98,7 @@ func (h *Handler) listPartners(c *gin.Context) {
 	req := pagination.NewQueryOptions(c, authCtx)
 
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIPartner], error) {
-		return h.service.ListPartners(
+		return h.setup.ListPartners(
 			c.Request.Context(),
 			&edipartnerports.ListEDIPartnersRequest{Filter: req},
 		)
@@ -109,7 +110,7 @@ func (h *Handler) selectPartnerOptions(c *gin.Context) {
 	req := pagination.NewSelectQueryRequest(c, authCtx)
 
 	pagination.SelectOptions(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIPartner], error) {
-		return h.service.SelectPartnerOptions(
+		return h.setup.SelectPartnerOptions(
 			c.Request.Context(),
 			&edipartnerports.EDIPartnerSelectOptionsRequest{
 				SelectQueryRequest: req,
@@ -128,7 +129,7 @@ func (h *Handler) getPartner(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetPartner(
+	entity, err := h.setup.GetPartner(
 		c.Request.Context(),
 		edipartnerports.GetEDIPartnerByIDRequest{
 			ID:         partnerID,
@@ -155,7 +156,7 @@ func (h *Handler) createPartner(c *gin.Context) {
 	entity.OrganizationID = authCtx.OrganizationID
 	entity.BusinessUnitID = authCtx.BusinessUnitID
 
-	created, err := h.service.CreatePartner(
+	created, err := h.setup.CreatePartner(
 		c.Request.Context(),
 		entity,
 		actorutil.FromAuthContext(authCtx),
@@ -170,7 +171,7 @@ func (h *Handler) createPartner(c *gin.Context) {
 
 func (h *Handler) createInternalPartnerPair(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.CreateInternalPartnerPairRequest)
+	req := new(edisetup.CreateInternalPartnerPairRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -182,7 +183,7 @@ func (h *Handler) createInternalPartnerPair(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	pair, err := h.service.CreateInternalPartnerPair(
+	pair, err := h.setup.CreateInternalPartnerPair(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -214,7 +215,7 @@ func (h *Handler) updatePartner(c *gin.Context) {
 	entity.OrganizationID = authCtx.OrganizationID
 	entity.BusinessUnitID = authCtx.BusinessUnitID
 
-	updated, err := h.service.UpdatePartner(
+	updated, err := h.setup.UpdatePartner(
 		c.Request.Context(),
 		entity,
 		actorutil.FromAuthContext(authCtx),
@@ -270,7 +271,7 @@ func (h *Handler) inspectCertificate(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	summary, err := h.service.InspectAS2Certificate(req.Certificate)
+	summary, err := h.setup.InspectAS2Certificate(req.Certificate)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -285,9 +286,9 @@ func (h *Handler) getPartnerReadiness(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	states, err := h.service.GetPartnerReadiness(
+	states, err := h.overview.GetPartnerReadiness(
 		c.Request.Context(),
-		&ediservice.GetEDIPartnerReadinessRequest{
+		&edioverview.GetEDIPartnerReadinessRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			PartnerIDs: []pulid.ID{partnerID},
 		},

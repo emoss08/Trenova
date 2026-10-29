@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferchangeservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
@@ -27,8 +28,8 @@ import (
 type fakeTenderChanges struct {
 	change  *editenderchange.TenderChange
 	guard   *agenttoolstest.WriteGuard
-	applied *ediservice.TenderChangeActionRequest
-	refused *ediservice.TenderChangeActionRequest
+	applied *editenderchangeservice.TenderChangeActionRequest
+	refused *editenderchangeservice.TenderChangeActionRequest
 }
 
 func (f *fakeTenderChanges) GetTenderChange(
@@ -45,7 +46,7 @@ func (f *fakeTenderChanges) GetTenderChange(
 
 func (f *fakeTenderChanges) ApplyTenderChange(
 	_ context.Context,
-	req *ediservice.TenderChangeActionRequest,
+	req *editenderchangeservice.TenderChangeActionRequest,
 	_ *permissionports.RequestActor,
 ) (*editenderchange.TenderChange, error) {
 	if err := f.guard.Write(); err != nil {
@@ -58,7 +59,7 @@ func (f *fakeTenderChanges) ApplyTenderChange(
 
 func (f *fakeTenderChanges) RejectTenderChange(
 	_ context.Context,
-	req *ediservice.TenderChangeActionRequest,
+	req *editenderchangeservice.TenderChangeActionRequest,
 	_ *permissionports.RequestActor,
 ) (*editenderchange.TenderChange, error) {
 	if err := f.guard.Write(); err != nil {
@@ -71,11 +72,11 @@ func (f *fakeTenderChanges) RejectTenderChange(
 
 type fakeTransferChanges struct {
 	change  *edisync.TransferChange
-	effect  *ediservice.TransferChangeEffect
+	effect  *editransferchangeservice.TransferChangeEffect
 	checked error
 	guard   *agenttoolstest.WriteGuard
-	applied *ediservice.TransferChangeActionRequest
-	refused *ediservice.TransferChangeActionRequest
+	applied *editransferchangeservice.TransferChangeActionRequest
+	refused *editransferchangeservice.TransferChangeActionRequest
 }
 
 func (f *fakeTransferChanges) GetTransferChange(
@@ -109,9 +110,9 @@ func (f *fakeTransferChanges) PlanTransferChangeEffect(
 	context.Context,
 	pagination.TenantInfo,
 	*edisync.TransferChange,
-) (*ediservice.TransferChangeEffect, error) {
+) (*editransferchangeservice.TransferChangeEffect, error) {
 	if f.effect == nil {
-		return &ediservice.TransferChangeEffect{}, nil
+		return &editransferchangeservice.TransferChangeEffect{}, nil
 	}
 
 	return f.effect, nil
@@ -119,7 +120,7 @@ func (f *fakeTransferChanges) PlanTransferChangeEffect(
 
 func (f *fakeTransferChanges) ApplyTransferChange(
 	_ context.Context,
-	req *ediservice.TransferChangeActionRequest,
+	req *editransferchangeservice.TransferChangeActionRequest,
 	_ *permissionports.RequestActor,
 ) (*edisync.TransferChange, error) {
 	if err := f.guard.Write(); err != nil {
@@ -132,7 +133,7 @@ func (f *fakeTransferChanges) ApplyTransferChange(
 
 func (f *fakeTransferChanges) RejectTransferChange(
 	_ context.Context,
-	req *ediservice.TransferChangeActionRequest,
+	req *editransferchangeservice.TransferChangeActionRequest,
 	_ *permissionports.RequestActor,
 ) (*edisync.TransferChange, error) {
 	if err := f.guard.Write(); err != nil {
@@ -285,7 +286,7 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 			ChangeType: edisync.TransferChangeTypeShipmentStatus214,
 			Version:    6,
 		},
-		effect: &ediservice.TransferChangeEffect{
+		effect: &editransferchangeservice.TransferChangeEffect{
 			Shipment: &shipment.Shipment{
 				ID:        shipmentID,
 				ProNumber: "PRO-31",

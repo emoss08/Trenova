@@ -9,12 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
@@ -30,7 +31,7 @@ import (
 
 func setupEDIHandler(
 	t *testing.T,
-	applyParams ...func(*ediservice.Params),
+	applyParams ...func(*ediservicetest.Deps),
 ) *edihandler.Handler {
 	t.Helper()
 
@@ -43,24 +44,36 @@ func setupEDIHandler(
 		PermissionEngine: &mocks.AllowAllPermissionEngine{},
 		ErrorHandler:     errorHandler,
 	})
-	params := ediservice.Params{
+	params := ediservicetest.Deps{
 		Logger:             logger,
 		DocumentTypeRepo:   edipartnerportsmock.NewMockEDIDocumentTypeRepository(t),
 		TransactionSetRepo: edipartnerportsmock.NewMockEDITransactionSetRepository(t),
 		ControlNumberRepo:  edipartnerportsmock.NewMockEDIControlNumberRepository(t),
 		MessageRepo:        edimessageportsmock.NewMockEDIMessageRepository(t),
-		Validator:          ediservice.NewValidator(),
+		Validator:          edivalidation.NewValidator(),
 	}
 	for _, apply := range applyParams {
 		apply(&params)
 	}
-	service := ediservice.New(params)
+	handlerParams := serviceParams(ediservicetest.New(params))
+	handlerParams.ErrorHandler = errorHandler
+	handlerParams.PermissionMiddleware = pm
 
-	return edihandler.New(edihandler.Params{
-		Service:              service,
-		ErrorHandler:         errorHandler,
-		PermissionMiddleware: pm,
-	})
+	return edihandler.New(handlerParams)
+}
+
+func serviceParams(edis *ediservicetest.Services) edihandler.Params {
+	return edihandler.Params{
+		Setup:           edis.Setup,
+		Transfers:       edis.Transfers,
+		TenderChanges:   edis.TenderChanges,
+		TransferChanges: edis.TransferChanges,
+		Delivery:        edis.Delivery,
+		Outbound:        edis.Outbound,
+		Messages:        edis.Messages,
+		Overview:        edis.Overview,
+		Tenders:         edis.Tenders,
+	}
 }
 
 func TestEDIHandler_DocumentTypeSelectOptionsRoute(t *testing.T) {
@@ -89,7 +102,7 @@ func TestEDIHandler_DocumentTypeSelectOptionsRoute(t *testing.T) {
 		Total:      1,
 		TotalExact: true,
 	}, nil).Once()
-	handler := setupEDIHandler(t, func(params *ediservice.Params) {
+	handler := setupEDIHandler(t, func(params *ediservicetest.Deps) {
 		params.DocumentTypeRepo = repo
 	})
 
@@ -153,7 +166,7 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 		}),
 	).Return(&pagination.ListResult[*edidocument.EDITransactionSet]{}, nil).Once()
 
-	handler := setupEDIHandler(t, func(params *ediservice.Params) {
+	handler := setupEDIHandler(t, func(params *ediservicetest.Deps) {
 		params.TransactionSetRepo = repo
 	})
 
@@ -216,7 +229,7 @@ func TestEDIHandler_DocumentTypeOptionAcceptsCatalogID(t *testing.T) {
 		}}, nil).
 		Once()
 
-	handler := setupEDIHandler(t, func(params *ediservice.Params) {
+	handler := setupEDIHandler(t, func(params *ediservicetest.Deps) {
 		params.DocumentTypeRepo = repo
 	})
 
@@ -279,7 +292,7 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 		}, nil).
 		Once()
 
-	handler := setupEDIHandler(t, func(params *ediservice.Params) {
+	handler := setupEDIHandler(t, func(params *ediservicetest.Deps) {
 		params.DocumentTypeRepo = repo
 		params.ProfileRepo = profileRepo
 		params.PartnerRepo = partnerRepo
@@ -337,7 +350,7 @@ func TestEDIHandler_TransferListDirectionRoutes(t *testing.T) {
 		}, nil).
 		Once()
 
-	handler := setupEDIHandler(t, func(params *ediservice.Params) {
+	handler := setupEDIHandler(t, func(params *ediservicetest.Deps) {
 		params.DocumentTypeRepo = repo
 		params.TransferRepo = transferRepo
 	})
@@ -401,7 +414,7 @@ func TestEDIHandler_CreatePartnerDefaultsAndExplicitFalseFlags(t *testing.T) {
 			return entity, nil
 		}).
 		Once()
-	handler := setupEDIHandler(t, func(params *ediservice.Params) {
+	handler := setupEDIHandler(t, func(params *ediservicetest.Deps) {
 		params.DocumentTypeRepo = repo
 		params.PartnerRepo = partnerRepo
 	})
@@ -494,7 +507,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		}, nil).
 		Once()
 
-	handler := setupEDIHandler(t, func(params *ediservice.Params) {
+	handler := setupEDIHandler(t, func(params *ediservicetest.Deps) {
 		params.DocumentTypeRepo = repo
 		params.PartnerRepo = partnerRepo
 		params.MappingProfileRepo = mappingProfileRepo

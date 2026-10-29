@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -77,7 +78,7 @@ func (h *Handler) resetControlNumber(c *gin.Context) {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
-	sequence, err := h.service.ResetControlNumber(
+	sequence, err := h.setup.ResetControlNumber(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -91,7 +92,7 @@ func (h *Handler) resetControlNumber(c *gin.Context) {
 
 func (h *Handler) bulkApproveTransfers(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.BulkApproveTransfersRequest)
+	req := new(editransferservice.BulkApproveTransfersRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -101,7 +102,7 @@ func (h *Handler) bulkApproveTransfers(c *gin.Context) {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
-	result, err := h.service.BulkApproveTransfers(
+	result, err := h.transfers.BulkApproveTransfers(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -115,7 +116,7 @@ func (h *Handler) bulkApproveTransfers(c *gin.Context) {
 
 func (h *Handler) bulkRejectTransfers(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.BulkRejectTransfersRequest)
+	req := new(editransferservice.BulkRejectTransfersRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -125,7 +126,7 @@ func (h *Handler) bulkRejectTransfers(c *gin.Context) {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
-	result, err := h.service.BulkRejectTransfers(
+	result, err := h.transfers.BulkRejectTransfers(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -139,7 +140,7 @@ func (h *Handler) bulkRejectTransfers(c *gin.Context) {
 
 func (h *Handler) submitLoadTender(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.SubmitLoadTenderRequest)
+	req := new(editenderservice.SubmitLoadTenderRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -151,7 +152,7 @@ func (h *Handler) submitLoadTender(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	transfer, err := h.service.SubmitLoadTender(
+	transfer, err := h.tenders.SubmitLoadTender(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -183,7 +184,7 @@ func (h *Handler) listInboundTransfers(c *gin.Context) {
 	}
 
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*editransfer.EDITransfer], error) {
-		return h.service.ListInboundTransfers(
+		return h.transfers.ListInboundTransfers(
 			c.Request.Context(),
 			&editenderports.ListEDITransfersRequest{Filter: req, InboundFileID: inboundFileID},
 		)
@@ -211,7 +212,7 @@ func (h *Handler) listOutboundTransfers(c *gin.Context) {
 	req := pagination.NewQueryOptions(c, authCtx)
 
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*editransfer.EDITransfer], error) {
-		return h.service.ListOutboundTransfers(
+		return h.transfers.ListOutboundTransfers(
 			c.Request.Context(),
 			&editenderports.ListEDITransfersRequest{Filter: req},
 		)
@@ -232,7 +233,7 @@ func (h *Handler) mappingPreview(c *gin.Context) {
 		return
 	}
 
-	preview, err := h.service.MappingPreview(
+	preview, err := h.transfers.MappingPreview(
 		c.Request.Context(),
 		editenderports.GetEDITransferByIDRequest{
 			ID:         transferID,
@@ -255,7 +256,7 @@ func (h *Handler) approveTransfer(c *gin.Context) {
 		return
 	}
 
-	req := new(ediservice.ApproveTransferRequest)
+	req := new(editransferservice.ApproveTransferRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -268,7 +269,7 @@ func (h *Handler) approveTransfer(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	transfer, err := h.service.ApproveTransfer(
+	transfer, err := h.transfers.ApproveTransfer(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -289,7 +290,7 @@ func (h *Handler) rejectTransfer(c *gin.Context) {
 		return
 	}
 
-	req := new(ediservice.RejectTransferRequest)
+	req := new(editransferservice.RejectTransferRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -301,7 +302,7 @@ func (h *Handler) rejectTransfer(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	transfer, err := h.service.RejectTransfer(
+	transfer, err := h.transfers.RejectTransfer(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),
@@ -322,9 +323,9 @@ func (h *Handler) cancelTransfer(c *gin.Context) {
 		return
 	}
 
-	transfer, err := h.service.CancelTransfer(
+	transfer, err := h.transfers.CancelTransfer(
 		c.Request.Context(),
-		&ediservice.CancelTransferRequest{
+		&editransferservice.CancelTransferRequest{
 			TransferID: transferID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -346,9 +347,9 @@ func (h *Handler) expireTransfer(c *gin.Context) {
 		return
 	}
 
-	transfer, err := h.service.ExpireTransfer(
+	transfer, err := h.transfers.ExpireTransfer(
 		c.Request.Context(),
-		&ediservice.ExpireTransferRequest{
+		&editransferservice.ExpireTransferRequest{
 			TransferID: transferID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

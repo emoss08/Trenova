@@ -460,7 +460,7 @@ func (h *Handler) listFlowInstances(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*ladingproject.FlowInstance], error) {
-			return h.service.ListFlowInstances(
+			return h.outbound.ListFlowInstances(
 				c.Request.Context(),
 				&ladingports.ListFlowInstancesRequest{
 					Filter:     req,
@@ -479,7 +479,7 @@ func (h *Handler) getFlowInstance(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	detail, err := h.service.GetFlowInstance(
+	detail, err := h.outbound.GetFlowInstance(
 		c.Request.Context(),
 		ladingports.GetFlowInstanceRequest{
 			TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
@@ -500,7 +500,7 @@ func (h *Handler) releaseFlowInstance(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	released, err := h.service.ReleaseFlowInstance(
+	released, err := h.outbound.ReleaseFlowInstance(
 		c.Request.Context(),
 		ladingports.GetFlowInstanceRequest{TenantInfo: tenantInfoFromAuth(authCtx), ID: instanceID},
 		actorutil.FromAuthContext(authCtx),

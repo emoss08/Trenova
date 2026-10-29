@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
@@ -23,7 +24,7 @@ func (r *Sources) EDICommunicationProfile(
 	if len(req.IDs) > 0 {
 		items := make([]selectoption.Item, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.EdiService.GetCommunicationProfile(
+			entity, err := r.EdiSetupService.GetCommunicationProfile(
 				ctx,
 				edipartnerports.GetEDICommunicationProfileByIDRequest{
 					ID:         id,
@@ -39,7 +40,7 @@ func (r *Sources) EDICommunicationProfile(
 		return selectoption.Connection(items, len(items), 0)
 	}
 
-	result, err := r.EdiService.SelectCommunicationProfileOptions(
+	result, err := r.EdiSetupService.SelectCommunicationProfileOptions(
 		ctx,
 		&edipartnerports.EDICommunicationProfileSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
@@ -61,7 +62,7 @@ func (r *Sources) EDIDocumentType(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		result, err := r.EdiService.SelectDocumentTypeOptions(
+		result, err := r.EdiSetupService.SelectDocumentTypeOptions(
 			ctx,
 			&edipartnerports.EDIDocumentTypeSelectOptionsRequest{
 				SelectQueryRequest: req.SelectQuery,
@@ -79,7 +80,7 @@ func (r *Sources) EDIDocumentType(
 		return selectoption.Connection(items, len(items), 0)
 	}
 
-	result, err := r.EdiService.SelectDocumentTypeOptions(
+	result, err := r.EdiSetupService.SelectDocumentTypeOptions(
 		ctx,
 		&edipartnerports.EDIDocumentTypeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
@@ -107,7 +108,7 @@ func (r *Sources) EDITransactionSet(
 		selectQuery = &byIDs
 	}
 
-	result, err := r.EdiService.SelectTransactionSetOptions(
+	result, err := r.EdiSetupService.SelectTransactionSetOptions(
 		ctx,
 		&edipartnerports.EDITransactionSetSelectOptionsRequest{
 			SelectQueryRequest: selectQuery,
@@ -148,7 +149,7 @@ func (r *Sources) EDIMappingProfile(
 	if len(req.IDs) > 0 {
 		items := make([]selectoption.Item, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.EdiService.GetMappingProfileByID(
+			entity, err := r.EdiSetupService.GetMappingProfileByID(
 				ctx,
 				edipartnerports.GetMappingProfileByIDRequest{
 					ProfileID:  id,
@@ -164,7 +165,7 @@ func (r *Sources) EDIMappingProfile(
 		return selectoption.Connection(items, len(items), 0)
 	}
 
-	result, err := r.EdiService.SelectMappingProfileOptions(
+	result, err := r.EdiSetupService.SelectMappingProfileOptions(
 		ctx,
 		&edipartnerports.EDIMappingProfileSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
@@ -188,7 +189,7 @@ func (r *Sources) EDIPartner(
 	if len(req.IDs) > 0 {
 		items := make([]selectoption.Item, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.EdiService.GetPartner(
+			entity, err := r.EdiSetupService.GetPartner(
 				ctx,
 				edipartnerports.GetEDIPartnerByIDRequest{
 					ID:         id,
@@ -204,7 +205,7 @@ func (r *Sources) EDIPartner(
 		return selectoption.Connection(items, len(items), 0)
 	}
 
-	result, err := r.EdiService.SelectPartnerOptions(
+	result, err := r.EdiSetupService.SelectPartnerOptions(
 		ctx,
 		&edipartnerports.EDIPartnerSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
@@ -226,7 +227,7 @@ func (r *Sources) EDIConnection(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		entities, err := r.EdiService.GetConnectionsByIDs(
+		entities, err := r.EdiSetupService.GetConnectionsByIDs(
 			ctx,
 			edipartnerports.GetEDIConnectionsByIDsRequest{
 				TenantInfo:    req.TenantInfo,
@@ -246,7 +247,7 @@ func (r *Sources) EDIConnection(
 		return selectoption.Connection(items, len(items), 0)
 	}
 
-	result, err := r.EdiService.ConnectionSelectOptions(
+	result, err := r.EdiSetupService.ConnectionSelectOptions(
 		ctx,
 		&edipartnerports.EDIConnectionSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
@@ -268,7 +269,7 @@ func (r *Sources) EDITransfer(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		entities, err := r.EdiService.GetTransfersByIDs(
+		entities, err := r.EdiTransferService.GetTransfersByIDs(
 			ctx,
 			editenderports.GetEDITransfersByIDsRequest{
 				TenantInfo:  req.TenantInfo,
@@ -288,7 +289,7 @@ func (r *Sources) EDITransfer(
 		return selectoption.Connection(items, len(items), 0)
 	}
 
-	result, err := r.EdiService.TransferSelectOptions(
+	result, err := r.EdiTransferService.TransferSelectOptions(
 		ctx,
 		&editenderports.EDITransferSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
@@ -511,5 +512,6 @@ func ediTransferID(entity *editransfer.EDITransfer) pulid.ID {
 }
 
 type Sources struct {
-	EdiService *ediservice.Service
+	EdiSetupService    *edisetup.Service
+	EdiTransferService *editransferservice.Service
 }

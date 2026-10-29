@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -324,7 +324,7 @@ func TestSelectOptions_EDIConnectionByIDsResolvesLabels(t *testing.T) {
 
 	resolver := &QueryResolver{&Deps{
 		Core: &resolvercore.Core{},
-		EdiService: ediservice.New(ediservice.Params{
+		EdiSetupService: edisetup.New(edisetup.Params{
 			Logger:         zap.NewNop(),
 			ConnectionRepo: repo,
 		}),
@@ -377,7 +377,7 @@ func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
 
 	resolver := &QueryResolver{&Deps{
 		Core: &resolvercore.Core{},
-		EdiService: ediservice.New(ediservice.Params{
+		EdiSetupService: edisetup.New(edisetup.Params{
 			Logger:         zap.NewNop(),
 			ConnectionRepo: repo,
 		}),
@@ -437,7 +437,7 @@ func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
 
 	resolver := &QueryResolver{&Deps{
 		Core: &resolvercore.Core{},
-		EdiService: ediservice.New(ediservice.Params{
+		EdiSetupService: edisetup.New(edisetup.Params{
 			Logger:           zap.NewNop(),
 			DocumentTypeRepo: repo,
 		}),
@@ -481,7 +481,7 @@ func TestSelectOptions_EDIDocumentTypeRejectsBlankID(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	resolver := &QueryResolver{&Deps{
 		Core: &resolvercore.Core{},
-		EdiService: ediservice.New(ediservice.Params{
+		EdiSetupService: edisetup.New(edisetup.Params{
 			Logger:           zap.NewNop(),
 			DocumentTypeRepo: edipartnerportsmock.NewMockEDIDocumentTypeRepository(t),
 		}),
@@ -554,7 +554,7 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 
 	resolver := &QueryResolver{&Deps{
 		Core: &resolvercore.Core{},
-		EdiService: ediservice.New(ediservice.Params{
+		EdiSetupService: edisetup.New(edisetup.Params{
 			Logger:             zap.NewNop(),
 			TransactionSetRepo: repo,
 		}),

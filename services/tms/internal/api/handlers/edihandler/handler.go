@@ -3,11 +3,19 @@ package edihandler
 import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -16,7 +24,15 @@ import (
 type Params struct {
 	fx.In
 
-	Service              *ediservice.Service
+	Setup                *edisetup.Service
+	Transfers            *editransferservice.Service
+	TenderChanges        *editenderchangeservice.Service
+	TransferChanges      *editransferchangeservice.Service
+	Delivery             *edidelivery.Service
+	Outbound             *edioutbound.Service
+	Messages             *edimessageview.Service
+	Overview             *edioverview.Service
+	Tenders              *editenderservice.Service
 	InboundService       *ediinboundservice.Service
 	AS2Service           *ediinboundas2.Service
 	PollService          *ediinboundpoll.Service
@@ -27,26 +43,42 @@ type Params struct {
 }
 
 type Handler struct {
-	service        *ediservice.Service
-	inboundService *ediinboundservice.Service
-	as2Service     *ediinboundas2.Service
-	pollService    *ediinboundpoll.Service
-	projects       *edilading.Projects
-	ladingRuntime  *edilading.Runtime
-	eh             *helpers.ErrorHandler
-	pm             *middleware.PermissionMiddleware
+	setup           *edisetup.Service
+	transfers       *editransferservice.Service
+	tenderChanges   *editenderchangeservice.Service
+	transferChanges *editransferchangeservice.Service
+	delivery        *edidelivery.Service
+	outbound        *edioutbound.Service
+	messages        *edimessageview.Service
+	overview        *edioverview.Service
+	tenders         *editenderservice.Service
+	inboundService  *ediinboundservice.Service
+	as2Service      *ediinboundas2.Service
+	pollService     *ediinboundpoll.Service
+	projects        *edilading.Projects
+	ladingRuntime   *edilading.Runtime
+	eh              *helpers.ErrorHandler
+	pm              *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:        p.Service,
-		inboundService: p.InboundService,
-		as2Service:     p.AS2Service,
-		pollService:    p.PollService,
-		projects:       p.Projects,
-		ladingRuntime:  p.LadingRuntime,
-		eh:             p.ErrorHandler,
-		pm:             p.PermissionMiddleware,
+		setup:           p.Setup,
+		transfers:       p.Transfers,
+		tenderChanges:   p.TenderChanges,
+		transferChanges: p.TransferChanges,
+		delivery:        p.Delivery,
+		outbound:        p.Outbound,
+		messages:        p.Messages,
+		overview:        p.Overview,
+		tenders:         p.Tenders,
+		inboundService:  p.InboundService,
+		as2Service:      p.AS2Service,
+		pollService:     p.PollService,
+		projects:        p.Projects,
+		ladingRuntime:   p.LadingRuntime,
+		eh:              p.ErrorHandler,
+		pm:              p.PermissionMiddleware,
 	}
 }
 

@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
@@ -38,7 +39,7 @@ type controlWrite struct {
 
 type writePlan struct {
 	partner         *edi.EDIPartner
-	transport       *ediservice.UpsertEDICommunicationProfileRequest
+	transport       *edisetup.UpsertEDICommunicationProfileRequest
 	transportChange ediconnectiondraftports.ChangeKind
 	project         *projectWrite
 	mappings        []*edi.EDIMappingProfileItem
@@ -530,7 +531,7 @@ func (p *planner) buildTransport() {
 		Status:      entity.Status,
 		Change:      change,
 		Fields:      fields,
-		Credentials: ediservice.CredentialRequirements(entity),
+		Credentials: edivalidation.CredentialRequirements(entity),
 	}
 	if multiErr := p.s.validator.ValidateCommunicationProfile(entity); multiErr != nil {
 		p.addFailures(transportLabel, multiErr.Errors)
@@ -562,8 +563,8 @@ func (p *planner) transportFields(isNew bool) []ediconnectiondraftports.DraftVal
 
 func (p *planner) transportRequest(
 	existing *edi.EDICommunicationProfile,
-) (request *ediservice.UpsertEDICommunicationProfileRequest, secrets map[string]string) {
-	request = &ediservice.UpsertEDICommunicationProfileRequest{
+) (request *edisetup.UpsertEDICommunicationProfileRequest, secrets map[string]string) {
+	request = &edisetup.UpsertEDICommunicationProfileRequest{
 		TenantInfo:   p.req.TenantInfo,
 		EDIPartnerID: p.match.partnerID(),
 		Method:       p.method,

@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidecision"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
@@ -29,10 +31,10 @@ type fakeTransfers struct {
 	unresolved []editransfer.MappingResolution
 	guard      *agenttoolstest.WriteGuard
 	directions []string
-	approved   *ediservice.ApproveTransferRequest
-	rejected   *ediservice.RejectTransferRequest
-	canceled   *ediservice.CancelTransferRequest
-	expired    *ediservice.ExpireTransferRequest
+	approved   *editransferservice.ApproveTransferRequest
+	rejected   *editransferservice.RejectTransferRequest
+	canceled   *editransferservice.CancelTransferRequest
+	expired    *editransferservice.ExpireTransferRequest
 	actor      *permissionports.RequestActor
 }
 
@@ -51,23 +53,23 @@ func (f *fakeTransfers) GetTransfer(
 
 func (f *fakeTransfers) PlanApproveTransfer(
 	ctx context.Context,
-	req *ediservice.ApproveTransferRequest,
+	req *editransferservice.ApproveTransferRequest,
 	actor *permissionports.RequestActor,
-) (*ediservice.TransferApprovalPlan, error) {
+) (*editransferservice.TransferApprovalPlan, error) {
 	transfer, err := f.GetTransfer(ctx, editenderports.GetEDITransferByIDRequest{
 		ID:        req.TransferID,
-		Direction: ediservice.TransferDirectionInbound,
+		Direction: editransferservice.TransferDirectionInbound,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	plan := &ediservice.TransferApprovalPlan{
+	plan := &editransferservice.TransferApprovalPlan{
 		Transfer:      transfer,
 		SendsResponse: transfer.InboundMessageID.IsNotNil(),
-		Mapping:       &ediservice.MappingPreview{Unresolved: f.unresolved},
+		Mapping:       &editendermapping.MappingPreview{Unresolved: f.unresolved},
 	}
-	if plan.Refusal = ediservice.RequireActionableTransfer(transfer, "approved"); plan.Refusal != nil {
+	if plan.Refusal = edidecision.RequireActionableTransfer(transfer, "approved"); plan.Refusal != nil {
 		return plan, nil
 	}
 	if len(f.unresolved) > 0 {
@@ -78,7 +80,7 @@ func (f *fakeTransfers) PlanApproveTransfer(
 	}
 
 	after := *transfer
-	ediservice.MarkTransferApprovalStarted(&after, &ediservice.TransferApprovalMark{
+	edidecision.MarkTransferApprovalStarted(&after, &edidecision.TransferApprovalMark{
 		BusinessUnitID: req.TenantInfo.BuID,
 		ApproverID:     actorUserID(actor),
 		At:             timeutils.NowUnix(),
@@ -96,7 +98,7 @@ func (f *fakeTransfers) PlanApproveTransfer(
 
 func (f *fakeTransfers) ApproveTransfer(
 	_ context.Context,
-	req *ediservice.ApproveTransferRequest,
+	req *editransferservice.ApproveTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
@@ -109,7 +111,7 @@ func (f *fakeTransfers) ApproveTransfer(
 
 func (f *fakeTransfers) RejectTransfer(
 	_ context.Context,
-	req *ediservice.RejectTransferRequest,
+	req *editransferservice.RejectTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
@@ -122,7 +124,7 @@ func (f *fakeTransfers) RejectTransfer(
 
 func (f *fakeTransfers) CancelTransfer(
 	_ context.Context,
-	req *ediservice.CancelTransferRequest,
+	req *editransferservice.CancelTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
@@ -135,7 +137,7 @@ func (f *fakeTransfers) CancelTransfer(
 
 func (f *fakeTransfers) ExpireTransfer(
 	_ context.Context,
-	req *ediservice.ExpireTransferRequest,
+	req *editransferservice.ExpireTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
@@ -310,7 +312,7 @@ func TestDeclineEDILoadTender_CarriesTheReasonToThePartner(t *testing.T) {
 	require.NotNil(t, response.Message)
 	assert.Contains(t, response.Message.Body, "Declined (D)")
 	assert.Contains(t, response.Message.Body, "No reefer capacity on that lane this week")
-	assert.Equal(t, []string{ediservice.TransferDirectionInbound}, transfers.directions)
+	assert.Equal(t, []string{editransferservice.TransferDirectionInbound}, transfers.directions)
 
 	require.ErrorIs(
 		t,
@@ -333,13 +335,13 @@ func TestCancelAndExpireEDILoadTender_ReadTheSideTheServiceActsOn(t *testing.T) 
 	}{
 		"cancel": {
 			build:     NewCancelEDILoadTenderTool,
-			direction: ediservice.TransferDirectionOutbound,
+			direction: editransferservice.TransferDirectionOutbound,
 			status:    "Canceled",
 			wrote:     func(f *fakeTransfers) bool { return f.canceled != nil },
 		},
 		"expire": {
 			build:     NewExpireEDILoadTenderTool,
-			direction: ediservice.TransferDirectionAny,
+			direction: editransferservice.TransferDirectionAny,
 			status:    "Expired",
 			wrote:     func(f *fakeTransfers) bool { return f.expired != nil },
 		},

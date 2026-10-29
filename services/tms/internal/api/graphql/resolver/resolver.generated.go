@@ -576,7 +576,7 @@ func FromServices(s *Services) *Resolver {
 	}
 	attentionDeps := &attentionresolver.Deps{
 		Core:                      s.Core,
-		EdiService:                s.EdiService,
+		EdiOverviewService:        s.EdiOverviewService,
 		ServiceFailureSvc:         s.ServiceFailureSvc,
 		BillingQueueService:       s.BillingQueueService,
 		InvoiceAdjustmentService:  s.InvoiceAdjustmentService,
@@ -743,8 +743,12 @@ func FromServices(s *Services) *Resolver {
 	}
 	ediDeps := &ediresolver.Deps{
 		Core:              s.Core,
-		EdiService:        s.EdiService,
-		EdiInboundService: s.EdiInboundService,
+		EdiSetupService:    s.EdiSetupService,
+		EdiTransferService: s.EdiTransferService,
+		EdiOutboundService: s.EdiOutboundService,
+		EdiMessageService:  s.EdiMessageService,
+		EdiOverviewService: s.EdiOverviewService,
+		EdiInboundService:  s.EdiInboundService,
 	}
 	emailprofileDeps := &emailprofileresolver.Deps{
 		Core:         s.Core,
@@ -971,7 +975,8 @@ func FromServices(s *Services) *Resolver {
 		Core:                         s.Core,
 		OrganizationService:          s.OrganizationService,
 		ShipmentService:              s.ShipmentService,
-		EdiService:                   s.EdiService,
+		EdiSetupService:              s.EdiSetupService,
+		EdiTransferService:           s.EdiTransferService,
 		EquipmentTypeService:         s.EquipmentTypeService,
 		AccessorialChargeService:     s.AccessorialChargeService,
 		AccountTypeService:           s.AccountTypeService,

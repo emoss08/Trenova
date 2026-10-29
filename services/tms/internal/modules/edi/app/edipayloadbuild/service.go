@@ -1,0 +1,26 @@
+package edipayloadbuild
+
+import (
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
+	"go.uber.org/fx"
+)
+
+type Params struct {
+	fx.In
+
+	ServiceFailureRepo servicefailureports.ServiceFailureRepository
+	ShipmentSvc        shipmentserviceports.ShipmentService
+}
+
+type Service struct {
+	serviceFailureRepo servicefailureports.ServiceFailureRepository
+	shipmentSvc        shipmentserviceports.ShipmentService
+}
+
+func New(p Params) *Service {
+	return &Service{
+		serviceFailureRepo: p.ServiceFailureRepo,
+		shipmentSvc:        p.ShipmentSvc,
+	}
+}

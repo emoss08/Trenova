@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -118,7 +118,7 @@ func NewShipmentObserver(p ShipmentObserverParams) shipmenteventports.ShipmentEv
 // OnShipmentEvent hands an event to a worker when a partner's flow follows the shipment; the
 // check is one indexed read, and a shipment no flow follows costs nothing more.
 func (o *ShipmentObserver) OnShipmentEvent(ctx context.Context, event *shipmentevent.Event) error {
-	if o.workflows == nil || !o.workflows.Enabled() || !ediservice.FlowShipmentEvent(event.Type) {
+	if o.workflows == nil || !o.workflows.Enabled() || !edioutbound.FlowShipmentEvent(event.Type) {
 		return nil
 	}
 	tenant := pagination.TenantInfo{OrgID: event.OrganizationID, BuID: event.BusinessUnitID}

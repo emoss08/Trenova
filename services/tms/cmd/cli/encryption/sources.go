@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
 	"github.com/emoss08/trenova/internal/modules/identity/app/authservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/mfaservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -26,7 +26,7 @@ func envelopeSources(includeObjects bool) *kernelports.EnvelopeSources {
 			integrationservice.EnvelopeColumns(),
 			factoringtransportservice.EnvelopeColumns(),
 			inboundmessageservice.EnvelopeColumns(),
-			ediservice.EnvelopeColumns(),
+			ediprofilesecret.EnvelopeColumns(),
 			authservice.EnvelopeColumns(),
 			mfaservice.EnvelopeColumns(),
 		),

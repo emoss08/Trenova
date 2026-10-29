@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -22,21 +22,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func partnerCardFixture() *ediservice.EDIPartnerCard {
+func partnerCardFixture() *edioverview.EDIPartnerCard {
 	partnerID := pulid.MustNew("edip_")
-	return &ediservice.EDIPartnerCard{
+	return &edioverview.EDIPartnerCard{
 		Partner: &edi.EDIPartner{ID: partnerID, Code: "TYSON", Name: "Tyson Foods"},
-		Readiness: &ediservice.EDIPartnerReadiness{
+		Readiness: &edioverview.EDIPartnerReadiness{
 			PartnerID:      partnerID,
 			CompletedCount: 1,
 			TotalCount:     2,
-			Items: []ediservice.EDIPartnerReadinessItem{
+			Items: []edioverview.EDIPartnerReadinessItem{
 				{Key: "details", Label: "Partner details", Complete: true},
 				{Key: "lading-active", Label: "An active Lading version"},
 			},
 		},
 		Mappings: &edipartnerports.EDIMappingSummary{},
-		Activity: &ediservice.EDIPartnerActivity{
+		Activity: &edioverview.EDIPartnerActivity{
 			Since:         100,
 			SeriesSince:   50,
 			BucketSeconds: 3600,
@@ -47,7 +47,7 @@ func partnerCardFixture() *ediservice.EDIPartnerCard {
 			},
 			OverdueAckCount: 3,
 		},
-		Attention: &ediservice.EDIPartnerAttention{OverdueAckAge: 14400},
+		Attention: &edioverview.EDIPartnerAttention{OverdueAckAge: 14400},
 	}
 }
 
@@ -56,7 +56,7 @@ func TestEDIPartnerCardToModel_NamesCredentialsWithoutValues(t *testing.T) {
 
 	card := partnerCardFixture()
 	pollAttempt, pollSuccess := int64(1_700_000_100), int64(1_700_000_000)
-	card.Transports = []*ediservice.EDIPartnerTransport{{
+	card.Transports = []*edioverview.EDIPartnerTransport{{
 		Profile: &edi.EDICommunicationProfile{
 			Method:            edi.ConnectionMethodAS2,
 			LastPollAttemptAt: &pollAttempt,
@@ -77,9 +77,9 @@ func TestEDIPartnerCardToModel_NamesCredentialsWithoutValues(t *testing.T) {
 			},
 			{Keys: nil, Kind: ediconnectiondraftports.CredentialKindSecret},
 		},
-		Certificates: []ediservice.EDIPartnerCertificate{
+		Certificates: []edioverview.EDIPartnerCertificate{
 			{
-				Role: ediservice.PartnerCertificateRolePartnerEncryption,
+				Role: edioverview.PartnerCertificateRolePartnerEncryption,
 				Summary: &smime.CertificateSummary{
 					Subject:   "CN=edi.tyson.example",
 					Issuer:    "CN=Sectigo RSA",
@@ -87,7 +87,7 @@ func TestEDIPartnerCardToModel_NamesCredentialsWithoutValues(t *testing.T) {
 					NotAfter:  1_800_000_000,
 				},
 			},
-			{Role: ediservice.PartnerCertificateRolePartnerSigning, Unreadable: true},
+			{Role: edioverview.PartnerCertificateRolePartnerSigning, Unreadable: true},
 		},
 	}}
 
@@ -217,7 +217,7 @@ func TestEDIPartnerCardToModel_CarriesTheLadingVersionsRunning(t *testing.T) {
 	t.Parallel()
 
 	card := partnerCardFixture()
-	card.Lading = &ediservice.EDIPartnerLading{
+	card.Lading = &edioverview.EDIPartnerLading{
 		Project: &ladingproject.LadingProject{
 			ID:           pulid.MustNew("ldp_"),
 			EDIPartnerID: card.Partner.ID,

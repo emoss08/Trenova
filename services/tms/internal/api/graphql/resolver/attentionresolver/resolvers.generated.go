@@ -7,13 +7,13 @@ import (
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	billingqueueports "github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	edioverview "github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	EdiService                *ediservice.Service
+	EdiOverviewService        *edioverview.Service
 	ServiceFailureSvc         servicefailureports.ServiceFailureService
 	BillingQueueService       billingqueueports.BillingQueueService
 	InvoiceAdjustmentService  invoiceadjustmentports.InvoiceAdjustmentService

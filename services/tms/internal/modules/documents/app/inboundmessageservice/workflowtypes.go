@@ -9,7 +9,7 @@ import (
 // The workflow's payloads live with the service rather than with the jobs
 // package, because the service starts the workflow and the jobs package runs
 // it. Putting them in the jobs package would make the two import each other.
-// edijobs re-exports ediservice's payloads the same way.
+// edijobs re-exports edidelivery's and editransferservice's payloads the same way.
 
 type ProcessInboundMessagePayload struct {
 	temporaltype.BasePayload

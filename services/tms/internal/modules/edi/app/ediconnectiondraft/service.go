@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
@@ -31,12 +32,12 @@ type setupService interface {
 	) (*edi.EDIPartner, error)
 	CreateCommunicationProfile(
 		ctx context.Context,
-		req *ediservice.UpsertEDICommunicationProfileRequest,
+		req *edisetup.UpsertEDICommunicationProfileRequest,
 		actor *permissionports.RequestActor,
 	) (*edi.EDICommunicationProfile, error)
 	UpdateCommunicationProfile(
 		ctx context.Context,
-		req *ediservice.UpsertEDICommunicationProfileRequest,
+		req *edisetup.UpsertEDICommunicationProfileRequest,
 		actor *permissionports.RequestActor,
 	) (*edi.EDICommunicationProfile, error)
 	SaveMappingProfile(
@@ -68,8 +69,8 @@ type Params struct {
 
 	Repo          ediconnectiondraftports.EDIConnectionDraftRepository
 	DocumentTypes edipartnerports.EDIDocumentTypeRepository
-	Setup         *ediservice.Service
-	Validator     *ediservice.Validator
+	Setup         *edisetup.Service
+	Validator     *edivalidation.Validator
 	Lading        *edilading.Runtime
 	Projects      *edilading.Projects
 	DB            kernelports.Transactor
@@ -80,7 +81,7 @@ type Service struct {
 	repo          ediconnectiondraftports.EDIConnectionDraftRepository
 	documentTypes edipartnerports.EDIDocumentTypeRepository
 	setup         setupService
-	validator     *ediservice.Validator
+	validator     *edivalidation.Validator
 	lading        *edilading.Runtime
 	projects      projectStore
 	db            kernelports.Transactor

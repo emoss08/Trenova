@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -86,7 +86,7 @@ func messagePartner(message *edimessage.EDIMessage) string {
 	return tradingPartnerFallback
 }
 
-func deliveryChange(plan *ediservice.DeliveryPlan) (*agentpreview.RecordChange, error) {
+func deliveryChange(plan *edidelivery.DeliveryPlan) (*agentpreview.RecordChange, error) {
 	message := plan.Message
 	route := "over the partner's communication profile"
 	if plan.Profile != nil && plan.Profile.Name != "" {
@@ -157,7 +157,7 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 	for _, id := range checked {
 		plan, planErr := t.deliveries.PlanRetryMessageDelivery(
 			ctx,
-			&ediservice.RetryMessageDeliveryRequest{
+			&edidelivery.RetryMessageDeliveryRequest{
 				MessageID:  id,
 				TenantInfo: toolparams.TenantFrom(params),
 			},

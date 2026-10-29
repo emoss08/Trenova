@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -29,12 +29,12 @@ const (
 type x12Inspector interface {
 	InspectX12(
 		ctx context.Context,
-		req *ediservice.InspectX12Request,
+		req *edimessageview.InspectX12Request,
 	) (*edix12inspect.InspectX12Result, error)
 }
 
-func provideInspectX12Tool(ediSvc *ediservice.Service) agenttoolports.AgentQueryTool {
-	return newInspectX12Tool(ediSvc)
+func provideInspectX12Tool(messages *edimessageview.Service) agenttoolports.AgentQueryTool {
+	return newInspectX12Tool(messages)
 }
 
 type inspectX12Tool struct {
@@ -120,7 +120,7 @@ func (t *inspectX12Tool) Query(
 		)
 	}
 
-	result, err := t.inspector.InspectX12(ctx, &ediservice.InspectX12Request{
+	result, err := t.inspector.InspectX12(ctx, &edimessageview.InspectX12Request{
 		TenantInfo: querytool.TenantOf(params),
 		RawX12:     content,
 	})

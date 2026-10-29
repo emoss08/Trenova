@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferchangeservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
@@ -69,7 +70,7 @@ func (h *Handler) listTenderChanges(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*editenderchange.TenderChange], error) {
-			return h.service.ListTenderChanges(
+			return h.tenderChanges.ListTenderChanges(
 				c.Request.Context(),
 				&editenderports.ListEDITenderChangesRequest{
 					Filter:           req,
@@ -92,7 +93,7 @@ func (h *Handler) getTenderChange(c *gin.Context) {
 		return
 	}
 
-	change, err := h.service.GetTenderChange(
+	change, err := h.tenderChanges.GetTenderChange(
 		c.Request.Context(),
 		editenderports.GetEDITenderChangeByIDRequest{
 			ID:         changeID,
@@ -108,18 +109,18 @@ func (h *Handler) getTenderChange(c *gin.Context) {
 }
 
 func (h *Handler) applyTenderChange(c *gin.Context) {
-	h.tenderChangeAction(c, h.service.ApplyTenderChange)
+	h.tenderChangeAction(c, h.tenderChanges.ApplyTenderChange)
 }
 
 func (h *Handler) rejectTenderChange(c *gin.Context) {
-	h.tenderChangeAction(c, h.service.RejectTenderChange)
+	h.tenderChangeAction(c, h.tenderChanges.RejectTenderChange)
 }
 
 func (h *Handler) tenderChangeAction(
 	c *gin.Context,
 	fn func(
 		context.Context,
-		*ediservice.TenderChangeActionRequest,
+		*editenderchangeservice.TenderChangeActionRequest,
 		*permissionports.RequestActor,
 	) (*editenderchange.TenderChange, error),
 ) {
@@ -130,7 +131,7 @@ func (h *Handler) tenderChangeAction(
 		return
 	}
 
-	req := new(ediservice.TenderChangeActionRequest)
+	req := new(editenderchangeservice.TenderChangeActionRequest)
 	if c.Request.ContentLength > 0 {
 		if err = c.ShouldBindJSON(req); err != nil {
 			h.eh.HandleError(c, err)
@@ -157,7 +158,7 @@ func (h *Handler) transferChangeAction(
 	c *gin.Context,
 	fn func(
 		context.Context,
-		*ediservice.TransferChangeActionRequest,
+		*editransferchangeservice.TransferChangeActionRequest,
 		*permissionports.RequestActor,
 	) (*edisync.TransferChange, error),
 ) {
@@ -168,7 +169,7 @@ func (h *Handler) transferChangeAction(
 		return
 	}
 
-	req := new(ediservice.TransferChangeActionRequest)
+	req := new(editransferchangeservice.TransferChangeActionRequest)
 	if c.Request.ContentLength > 0 {
 		if err = c.ShouldBindJSON(req); err != nil {
 			h.eh.HandleError(c, err)
@@ -203,7 +204,7 @@ func (h *Handler) withTransfer(
 		return
 	}
 
-	transfer, err := h.service.GetTransfer(
+	transfer, err := h.transfers.GetTransfer(
 		c.Request.Context(),
 		editenderports.GetEDITransferByIDRequest{
 			ID:         transferID,

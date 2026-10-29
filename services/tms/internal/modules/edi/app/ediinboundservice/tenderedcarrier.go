@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -122,9 +122,9 @@ func (s *Service) recordTenderedStatusEvent(
 	event *edipayload.ShipmentStatusEvent,
 ) ([]string, error) {
 	statusCode := statusEventCode(event)
-	warnings, err := s.ediService.RecordTenderedShipmentStatus(
+	warnings, err := s.inboundApply.RecordTenderedShipmentStatus(
 		ctx,
-		&ediservice.RecordTenderedShipmentStatusRequest{
+		&ediinboundapply.RecordTenderedShipmentStatusRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: file.OrganizationID,
 				BuID:  file.BusinessUnitID,

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
@@ -53,7 +53,7 @@ func (h *Handler) listMessages(c *gin.Context) {
 	req := pagination.NewQueryOptions(c, authCtx)
 	partnerID, _ := pulid.MustParse(helpers.QueryString(c, "partnerId", ""))
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edimessage.EDIMessage], error) {
-		return h.service.ListMessages(
+		return h.messages.ListMessages(
 			c.Request.Context(),
 			&edimessageports.ListEDIMessagesRequest{
 				Filter: req,
@@ -80,7 +80,7 @@ func (h *Handler) getMessage(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	message, err := h.service.GetMessage(
+	message, err := h.messages.GetMessage(
 		c.Request.Context(),
 		edimessageports.GetEDIMessageByIDRequest{
 			ID:         messageID,
@@ -101,7 +101,7 @@ func (h *Handler) inspectMessage(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	inspection, err := h.service.InspectMessage(
+	inspection, err := h.messages.InspectMessage(
 		c.Request.Context(),
 		edimessageports.GetEDIMessageByIDRequest{
 			ID:         messageID,
@@ -122,9 +122,9 @@ func (h *Handler) retryMessageDelivery(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	message, err := h.service.RetryMessageDelivery(
+	message, err := h.delivery.RetryMessageDelivery(
 		c.Request.Context(),
-		&ediservice.RetryMessageDeliveryRequest{
+		&edidelivery.RetryMessageDeliveryRequest{
 			MessageID:  messageID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -143,9 +143,9 @@ func (h *Handler) replayMessageDelivery(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	message, err := h.service.ReplayMessageDelivery(
+	message, err := h.delivery.ReplayMessageDelivery(
 		c.Request.Context(),
-		&ediservice.RetryMessageDeliveryRequest{
+		&edidelivery.RetryMessageDeliveryRequest{
 			MessageID:  messageID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -159,7 +159,7 @@ func (h *Handler) replayMessageDelivery(c *gin.Context) {
 
 func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.BulkRetryMessageDeliveryRequest)
+	req := new(edidelivery.BulkRetryMessageDeliveryRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -169,7 +169,7 @@ func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
-	result, err := h.service.BulkRetryMessageDelivery(c.Request.Context(), req)
+	result, err := h.delivery.BulkRetryMessageDelivery(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

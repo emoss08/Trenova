@@ -34,7 +34,7 @@ func (h *Handler) registerDocumentTypeRoutes(documentTypes *gin.RouterGroup) {
 }
 
 func (h *Handler) listDocumentTypes(c *gin.Context) {
-	entities, err := h.service.ListDocumentTypes(
+	entities, err := h.setup.ListDocumentTypes(
 		c.Request.Context(),
 		edipartnerports.ListEDIDocumentTypesRequest{
 			Standard: edidocument.EDIStandard(helpers.QueryString(c, "standard", "")),
@@ -61,7 +61,7 @@ func (h *Handler) selectDocumentTypeOptions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*edidocument.EDIDocumentType], error) {
-			return h.service.SelectDocumentTypeOptions(
+			return h.setup.SelectDocumentTypeOptions(
 				c.Request.Context(),
 				&edipartnerports.EDIDocumentTypeSelectOptionsRequest{
 					SelectQueryRequest: req,
@@ -92,7 +92,7 @@ func (h *Handler) getDocumentTypeOption(c *gin.Context) {
 		return
 	}
 
-	entities, err := h.service.ListDocumentTypes(
+	entities, err := h.setup.ListDocumentTypes(
 		c.Request.Context(),
 		edipartnerports.ListEDIDocumentTypesRequest{},
 	)

@@ -38,7 +38,7 @@ type Params struct {
 }
 
 type EDIServiceSetter interface {
-	SetEDIService(service ediports.EDIService)
+	SetEDIService(service ediports.ServiceFailure214Service)
 }
 
 type service struct {
@@ -50,7 +50,7 @@ type service struct {
 	commentService shipmentcommentports.ShipmentCommentService
 	auditService   auditports.AuditService
 	realtime       realtimeports.RealtimeService
-	ediService     ediports.EDIService
+	ediService     ediports.ServiceFailure214Service
 	delayedMarker  delayedShipmentMarker
 	publisher      agentports.AgentEventPublisher
 	watchtower     watchtowerports.WatchtowerProjector
@@ -79,7 +79,7 @@ func New(p Params) *service {
 	return s
 }
 
-func (s *service) SetEDIService(service ediports.EDIService) {
+func (s *service) SetEDIService(service ediports.ServiceFailure214Service) {
 	s.ediService = service
 }
 

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -317,7 +317,7 @@ func ackHealthGetSpec() readspec.Get {
 				"for \"what hasn't been acked\" or \"is a partner keeping up\"; "+
 				"edi_list_messages lists messages by filter. Each message has its id for "+
 				"edi_get_message or edi_retry_message.",
-			timeutils.FormatLongDurationMs(ediservice.DefaultOverdueAckAgeSeconds*1000),
+			timeutils.FormatLongDurationMs(edioverview.DefaultOverdueAckAgeSeconds*1000),
 		),
 		SearchTerms: []string{
 			"overdue acknowledgment", "missing 997", "missing 999", "unacknowledged",

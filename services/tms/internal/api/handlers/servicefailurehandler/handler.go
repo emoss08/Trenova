@@ -24,24 +24,27 @@ type Params struct {
 	fx.In
 
 	Service              servicefailureports.ServiceFailureService
-	EDIService           ediports.EDIService
+	EDIPayloads          ediports.ServiceFailurePayloadBuilder
+	EDIServiceFailure214 ediports.ServiceFailure214Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service    servicefailureports.ServiceFailureService
-	ediService ediports.EDIService
-	eh         *helpers.ErrorHandler
-	pm         *middleware.PermissionMiddleware
+	service     servicefailureports.ServiceFailureService
+	ediPayloads ediports.ServiceFailurePayloadBuilder
+	edi214      ediports.ServiceFailure214Service
+	eh          *helpers.ErrorHandler
+	pm          *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:    p.Service,
-		ediService: p.EDIService,
-		eh:         p.ErrorHandler,
-		pm:         p.PermissionMiddleware,
+		service:     p.Service,
+		ediPayloads: p.EDIPayloads,
+		edi214:      p.EDIServiceFailure214,
+		eh:          p.ErrorHandler,
+		pm:          p.PermissionMiddleware,
 	}
 }
 
@@ -368,7 +371,7 @@ func (h *Handler) buildEDI214Payload(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.ediService.BuildShipmentStatusPayloadForServiceFailure(
+	result, err := h.ediPayloads.BuildShipmentStatusPayloadForServiceFailure(
 		c.Request.Context(),
 		&servicefailureports.BuildServiceFailureEDIPayloadRequest{
 			TenantInfo:       pagination.FromAuth(authCtx),
@@ -407,7 +410,7 @@ func (h *Handler) edi214Readiness(c *gin.Context) {
 	trigger, nextStatus := readinessTrigger(c.Query("trigger"), current.Status)
 	preview := *current
 	preview.Status = nextStatus
-	result, err := h.ediService.PreviewServiceFailure214ForLifecycle(
+	result, err := h.edi214.PreviewServiceFailure214ForLifecycle(
 		c.Request.Context(),
 		&ediports.ServiceFailure214LifecycleRequest{
 			TenantInfo:       tenantInfo,
@@ -433,7 +436,7 @@ func (h *Handler) edi214Status(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	status, err := h.ediService.GetServiceFailure214Status(
+	status, err := h.edi214.GetServiceFailure214Status(
 		c.Request.Context(),
 		edimessageports.GetServiceFailure214StatusRequest{
 			TenantInfo:       pagination.FromAuth(authCtx),
