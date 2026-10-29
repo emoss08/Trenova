@@ -41,8 +41,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/customerstatementservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentionbillingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/detentioncreditservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringagreementservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringledgerservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringnoaservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringreadinessservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringsubmissionservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransport"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransportservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedisputeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
@@ -173,14 +179,14 @@ func factoringOptions() fx.Option {
 			factoringrepository.NewTransportRepository,
 			factoringrepository.NewWatchtowerReader,
 			factoringcontract.NewRequester,
-			factoringservice.NewAgreementService,
-			factoringservice.NewNoaService,
-			factoringservice.NewReadinessService,
-			factoringservice.NewSubmissionService,
-			factoringservice.NewLedgerService,
-			factoringservice.NewRemittanceService,
-			factoringservice.NewRemittanceIntake,
-			factoringservice.NewTransportService,
+			factoringagreementservice.NewAgreementService,
+			factoringnoaservice.NewNoaService,
+			factoringreadinessservice.NewReadinessService,
+			factoringsubmissionservice.NewSubmissionService,
+			factoringledgerservice.NewLedgerService,
+			factoringremittanceservice.NewRemittanceService,
+			factoringremittanceservice.NewRemittanceIntake,
+			factoringtransportservice.NewTransportService,
 			factoringcontract.NewSendStarter,
 			factoringcontract.NewRemittanceStageStarter,
 			fx.Annotate(
@@ -192,7 +198,7 @@ func factoringOptions() fx.Option {
 				fx.ResultTags(factoringsubmissionports.TransportGroup),
 			),
 			fx.Annotate(
-				factoringservice.NewDocumentObserver,
+				factoringreadinessservice.NewDocumentObserver,
 				fx.ResultTags(documentports.DocumentChangeObserverGroup),
 			),
 			fx.Annotate(
@@ -200,7 +206,7 @@ func factoringOptions() fx.Option {
 				fx.ResultTags(documentports.DocumentChangeObserverGroup),
 			),
 		),
-		fx.Decorate(factoringservice.WatchInvoices),
+		fx.Decorate(factoringreadinessservice.WatchInvoices),
 	)
 }
 

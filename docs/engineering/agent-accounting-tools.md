@@ -108,7 +108,7 @@ it never writes one.
 
 ## Factoring
 
-`factoringservice.LedgerService` books what a factor does with each invoice on a schedule:
+`factoringledgerservice.LedgerService` books what a factor does with each invoice on a schedule:
 `PlanFunding`/`RecordFunding`, `PlanRelease`/`ReleaseReserve`, `PlanChargeback`/
 `RecordChargeback` and `PlanChargebackReversal`/`ReverseChargeback`. Each plan returns the
 journal's lines by account role and account, the period it books in (the first open day when
@@ -131,7 +131,7 @@ behind it (an API key), because the journal and customer ledger rows name who bo
 The factoring clerk holds the balance read, funding and release; chargebacks and their
 reversals are a person's and sit on no template.
 
-`factoringservice.RemittanceService` reads a factor's funding or reserve report (a CSV or
+`factoringremittanceservice.RemittanceService` reads a factor's funding or reserve report (a CSV or
 spreadsheet by its headers, or a PDF through the `RemittanceExtraction` model task), matches
 each line to the factor's schedule items, and books the matched lines through the same
 `LedgerService` in one transaction: funding and rejection lines become one `RecordFunding`

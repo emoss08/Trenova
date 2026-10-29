@@ -4528,7 +4528,7 @@ findings:
     files:
       - services/tms/internal/modules/agent/domain/agentinstructions/instructions.go
       - services/tms/internal/modules/agent/app/agenttools/factoringtools/noa_tools.go
-      - services/tms/internal/modules/billing/app/factoringservice/noa.go
+      - services/tms/internal/modules/billing/app/factoringnoaservice/noa.go
 
   - id: DB-196
     title: BillingException holds request_missing_docs but not the tool that fills its profileId

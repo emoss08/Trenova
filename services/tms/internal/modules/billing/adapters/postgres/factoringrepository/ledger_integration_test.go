@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/paymentreminderrepository"
-	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringledgerservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
@@ -101,7 +101,7 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 	)
 	submissions := NewSubmissionRepository(p)
 	entries := NewReserveEntryRepository(p)
-	svc := factoringservice.NewLedgerService(factoringservice.LedgerParams{
+	svc := factoringledgerservice.NewLedgerService(factoringledgerservice.LedgerParams{
 		DB:          conn,
 		Submissions: submissions,
 		Entries:     entries,

@@ -14,7 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
-	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringagreementservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringledgerservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringnoaservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringreadinessservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringsubmissionservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -90,15 +95,15 @@ func (r *factoringRepos) resolvers(conn *postgres.Connection) agentread.Resolver
 	logger := zap.NewNop()
 
 	return agentread.ResolverParams{
-		FactoringAgreementService: factoringservice.NewAgreementService(
-			factoringservice.AgreementParams{
+		FactoringAgreementService: factoringagreementservice.NewAgreementService(
+			factoringagreementservice.AgreementParams{
 				DB: conn, Repo: r.agreements, Factors: r.factors, Logger: logger,
 			}),
-		FactoringNoaService: factoringservice.NewNoaService(factoringservice.NoaParams{
+		FactoringNoaService: factoringnoaservice.NewNoaService(factoringnoaservice.NoaParams{
 			Repo: r.noas, Customers: r.customers, Factors: r.factors, Logger: logger,
 		}),
-		FactoringReadinessService: factoringservice.NewReadinessService(
-			factoringservice.ReadinessParams{
+		FactoringReadinessService: factoringreadinessservice.NewReadinessService(
+			factoringreadinessservice.ReadinessParams{
 				States: r.states, Agreements: r.agreements, Noas: r.noas,
 				Submissions: r.submissions, Invoices: r.invoices, Customers: r.customers,
 				Documents: documentrepository.New(documentrepository.Params{
@@ -106,18 +111,20 @@ func (r *factoringRepos) resolvers(conn *postgres.Connection) agentread.Resolver
 				}),
 				Logger: logger,
 			}),
-		FactoringSubmissionService: factoringservice.NewSubmissionService(
-			factoringservice.SubmissionParams{
+		FactoringSubmissionService: factoringsubmissionservice.NewSubmissionService(
+			factoringsubmissionservice.SubmissionParams{
 				Repo: r.submissions, States: r.states, Agreements: r.agreements,
 				Invoices: r.invoices, Factors: r.factors, Customers: r.customers,
 				Logger: logger,
 			}),
-		FactoringLedgerService: factoringservice.NewLedgerService(factoringservice.LedgerParams{
-			DB: conn, Submissions: r.submissions, Entries: r.entries,
-			Agreements: r.agreements, Invoices: r.invoices, Logger: logger,
-		}),
-		FactoringRemittanceService: factoringservice.NewRemittanceService(
-			factoringservice.RemittanceParams{
+		FactoringLedgerService: factoringledgerservice.NewLedgerService(
+			factoringledgerservice.LedgerParams{
+				DB: conn, Submissions: r.submissions, Entries: r.entries,
+				Agreements: r.agreements, Invoices: r.invoices, Logger: logger,
+			},
+		),
+		FactoringRemittanceService: factoringremittanceservice.NewRemittanceService(
+			factoringremittanceservice.RemittanceParams{
 				DB: conn, Remittances: r.remittances, Submissions: r.submissions,
 				Factors: r.factors, Logger: logger,
 			}),

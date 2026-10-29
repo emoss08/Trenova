@@ -131,7 +131,7 @@ Delete these Go implementations and dependencies; their responsibilities move to
   - `thumbnailjobs`, `documentuploadjobs`
   - `captureservice` (processing, batches checkPDF, filing, storage)
   - `triageworkservice` (split)
-  - `billing/app/factoringservice` (submission packets)
+  - `billing/app/factoringsubmissionservice` (submission packets)
   - `agent/app/messagefileservice`
   - `internal/testutil/pdftest`
   - `bootstrap/modules/infrastructure/pdfrender.go`

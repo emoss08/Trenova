@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiproviderservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransportservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
@@ -24,7 +24,7 @@ func envelopeSources(includeObjects bool) *kernelports.EnvelopeSources {
 			aiproviderservice.EnvelopeColumns(),
 			agentextensionservice.EnvelopeColumns(),
 			integrationservice.EnvelopeColumns(),
-			factoringservice.EnvelopeColumns(),
+			factoringtransportservice.EnvelopeColumns(),
 			inboundmessageservice.EnvelopeColumns(),
 			ediservice.EnvelopeColumns(),
 			authservice.EnvelopeColumns(),

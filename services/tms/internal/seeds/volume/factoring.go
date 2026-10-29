@@ -1180,7 +1180,7 @@ func (g *generator) facNewSub(f *facFactor, slot int64, members []*facInvoice) *
 	return fs
 }
 
-// facSubmissionKey is factoringservice.submissionKey: the factor, then the
+// facSubmissionKey is factoringsubmissionservice.submissionKey: the factor, then the
 // sorted invoices with the moment each became ready.
 func facSubmissionKey(parts []string) string {
 	sorted := slices.Clone(parts)

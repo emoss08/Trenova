@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
@@ -61,16 +61,18 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 		docs:     map[pulid.ID]*document.Document{},
 		contents: map[pulid.ID][]byte{},
 	}
-	svc := factoringservice.NewRemittanceService(factoringservice.RemittanceParams{
-		DB:          conn,
-		Remittances: remittances,
-		Submissions: e.submissions,
-		Ledger:      e.svc,
-		Factors:     e.factors,
-		Documents:   files,
-		Audit:       &mocks.NoopAuditService{},
-		Logger:      zap.NewNop(),
-	})
+	svc := factoringremittanceservice.NewRemittanceService(
+		factoringremittanceservice.RemittanceParams{
+			DB:          conn,
+			Remittances: remittances,
+			Submissions: e.submissions,
+			Ledger:      e.svc,
+			Factors:     e.factors,
+			Documents:   files,
+			Audit:       &mocks.NoopAuditService{},
+			Logger:      zap.NewNop(),
+		},
+	)
 
 	factor := e.createFactor(t, "FRAP")
 	terms := e.agreement(factor.ID, now-3600, nil)
