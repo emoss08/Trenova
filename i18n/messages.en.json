@@ -325789,6 +325789,15 @@
       "routes/agent-control"
     ]
   },
+  "assignment blocked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "at least": {
     "sites": 1,
     "scope": [
@@ -326231,6 +326240,15 @@
     ]
   },
   "calls a rule blocked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "can be assigned": {
     "sites": 1,
     "scope": [
       "go"
