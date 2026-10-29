@@ -3,8 +3,8 @@
 package airetrievalresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	retrievalports "github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 )
 
 type Deps struct {

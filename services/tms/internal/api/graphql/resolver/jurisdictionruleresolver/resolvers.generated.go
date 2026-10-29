@@ -3,7 +3,7 @@
 package jurisdictionruleresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	jurisdictionruleports "github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	permitports "github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 )

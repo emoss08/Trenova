@@ -3,7 +3,7 @@
 package distanceprofileresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	distanceprofileservice "github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
 )
 

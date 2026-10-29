@@ -3,8 +3,8 @@
 package aiproviderresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	aiproviderports "github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 )
 
 type Deps struct {

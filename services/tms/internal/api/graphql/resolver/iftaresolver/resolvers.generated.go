@@ -3,8 +3,8 @@
 package iftaresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	shipmentdistanceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 )
 

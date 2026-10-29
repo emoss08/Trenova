@@ -3,7 +3,7 @@
 package aifeedbackresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	aifeedbackports "github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 )
 

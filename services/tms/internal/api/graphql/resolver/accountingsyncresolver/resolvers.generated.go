@@ -3,11 +3,11 @@
 package accountingsyncresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	accountingconnectionports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	accountingdriftports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	accountinginboundports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	accountingmappingports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 )
 

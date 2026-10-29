@@ -3,7 +3,7 @@
 package manualjournalresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	journalcardservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	manualjournalservice "github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
 )

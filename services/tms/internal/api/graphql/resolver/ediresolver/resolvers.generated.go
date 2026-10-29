@@ -3,7 +3,7 @@
 package ediresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	edimessageview "github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
 	edioutbound "github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"

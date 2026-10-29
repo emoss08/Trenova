@@ -3,7 +3,6 @@
 package schedulingexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"context"
 	"errors"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -40,7 +40,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateShiftTemplate(ctx, fc.Args["input"].(gqlmodel.ShiftTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplate),
+				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate),
 			},
 			{
 				Name:       "updateShiftTemplate",
@@ -53,7 +53,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateShiftTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ShiftTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplate),
+				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate),
 			},
 			{
 				Name:       "assignWorkerShift",
@@ -66,7 +66,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssignWorkerShift(ctx, fc.Args["input"].(gqlmodel.AssignShiftInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerShiftAssignment),
+				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignment),
 			},
 			{
 				Name:       "endWorkerShiftAssignment",
@@ -79,7 +79,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EndWorkerShiftAssignment(ctx, fc.Args["id"].(string), fc.Args["effectiveTo"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerShiftAssignment),
+				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignment),
 			},
 			{
 				Name:       "setWorkerAvailabilityPreference",
@@ -92,7 +92,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetWorkerAvailabilityPreference(ctx, fc.Args["input"].(gqlmodel.SetAvailabilityPreferenceInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerAvailabilityPreference),
+				Marshal: gqlexec.Marshal(marshalNWorkerAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerAvailabilityPreference),
 			},
 			{
 				Name:       "proposeShiftSwap",
@@ -105,7 +105,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ProposeShiftSwap(ctx, fc.Args["input"].(gqlmodel.ProposeShiftSwapInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapRequest),
+				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequest),
 			},
 			{
 				Name:       "transitionShiftSwap",
@@ -118,7 +118,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TransitionShiftSwap(ctx, fc.Args["input"].(gqlmodel.TransitionShiftSwapInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapRequest),
+				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequest),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -134,7 +134,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ShiftTemplates(ctx, fc.Args["activeOnly"].(*bool), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplateᚄ),
+				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplateᚄ),
 			},
 			{
 				Name:       "shiftTemplate",
@@ -148,7 +148,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ShiftTemplate(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplate),
+				Marshal: gqlexec.Marshal(marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate),
 			},
 			{
 				Name:       "workerShiftAssignments",
@@ -162,7 +162,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerShiftAssignments(ctx, fc.Args["workerId"].(string), fc.Args["activeOnly"].(*bool))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerShiftAssignmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerShiftAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignmentᚄ),
 			},
 			{
 				Name:       "workerAvailabilityPreferences",
@@ -176,7 +176,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerAvailabilityPreferences(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerAvailabilityPreference2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerAvailabilityPreferenceᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerAvailabilityPreference2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerAvailabilityPreferenceᚄ),
 			},
 			{
 				Name:       "shiftSwapRequests",
@@ -190,7 +190,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ShiftSwapRequests(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["since"].(*int), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapRequestᚄ),
+				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequestᚄ),
 			},
 			{
 				Name:       "shiftSwapRequest",
@@ -204,7 +204,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ShiftSwapRequest(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapRequest),
+				Marshal: gqlexec.Marshal(marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequest),
 			},
 			{
 				Name:       "rota",
@@ -303,7 +303,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.RotaDay)
 					return obj.State, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNRotaDayState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐRotaDayState),
+				Marshal: gqlexec.Marshal(marshalNRotaDayState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐRotaDayState),
 			},
 			{
 				Name:     "scheduled",
@@ -342,7 +342,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.RotaDay)
 					return obj.Preference, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐAvailabilityPreference),
+				Marshal: gqlexec.Marshal(marshalOAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐAvailabilityPreference),
 			},
 			{
 				Name:     "assignmentCount",
@@ -521,7 +521,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workerschedule.ShiftSwapRequest)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapStatus),
+				Marshal: gqlexec.Marshal(marshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapStatus),
 			},
 			{
 				Name:     "shiftDate",
@@ -857,7 +857,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workerschedule.WorkerAvailabilityPreference)
 					return obj.Preference, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAvailabilityPreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐAvailabilityPreference),
+				Marshal: gqlexec.Marshal(marshalNAvailabilityPreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐAvailabilityPreference),
 			},
 			{
 				Name:     "note",
@@ -1035,7 +1035,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workerschedule.WorkerShiftAssignment)
 					return obj.ShiftTemplate, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplate),
+				Marshal: gqlexec.Marshal(marshalOShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate),
 			},
 			{
 				Name:      "worker",
@@ -1553,7 +1553,7 @@ func unmarshalInputSetAvailabilityPreferenceInput(ctx context.Context, ec *gqlex
 			it.DayOfWeek = data
 		case "preference":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preference"))
-			data, err := unmarshalNAvailabilityPreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐAvailabilityPreference(ctx, ec, v)
+			data, err := unmarshalNAvailabilityPreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐAvailabilityPreference(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1683,7 +1683,7 @@ func unmarshalInputTransitionShiftSwapInput(ctx context.Context, ec *gqlexec.Exe
 			it.ID = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapStatus(ctx, ec, v)
+			data, err := unmarshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1705,7 +1705,7 @@ func unmarshalNAssignShiftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAvailabilityPreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐAvailabilityPreference(ctx context.Context, ec *gqlexec.Exec, v any) (workerschedule.AvailabilityPreference, error) {
+func unmarshalNAvailabilityPreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐAvailabilityPreference(ctx context.Context, ec *gqlexec.Exec, v any) (workerschedule.AvailabilityPreference, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := workerschedule.AvailabilityPreference(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1731,7 +1731,7 @@ func unmarshalNSetAvailabilityPreferenceInput2githubᚗcomᚋemoss08ᚋtrenova�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapStatus(ctx context.Context, ec *gqlexec.Exec, v any) (workerschedule.ShiftSwapStatus, error) {
+func unmarshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapStatus(ctx context.Context, ec *gqlexec.Exec, v any) (workerschedule.ShiftSwapStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := workerschedule.ShiftSwapStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1821,7 +1821,7 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAvailabilityPreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐAvailabilityPreference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerschedule.AvailabilityPreference) graphql.Marshaler {
+func marshalNAvailabilityPreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐAvailabilityPreference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerschedule.AvailabilityPreference) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1909,7 +1909,7 @@ func marshalNRotaDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgrap
 	return ec.MarshalType(ctx, sel, "RotaDay", v)
 }
 
-func marshalNRotaDayState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐRotaDayState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerschedule.RotaDayState) graphql.Marshaler {
+func marshalNRotaDayState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐRotaDayState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerschedule.RotaDayState) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1933,15 +1933,15 @@ func marshalNRotaRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgrap
 	return ec.MarshalType(ctx, sel, "RotaRow", v)
 }
 
-func marshalNShiftSwapRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerschedule.ShiftSwapRequest) graphql.Marshaler {
+func marshalNShiftSwapRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerschedule.ShiftSwapRequest) graphql.Marshaler {
 	return gqlexec.List[*workerschedule.ShiftSwapRequest]{
-		Elem:        marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapRequest,
+		Elem:        marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequest,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.ShiftSwapRequest) graphql.Marshaler {
+func marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.ShiftSwapRequest) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1949,7 +1949,7 @@ func marshalNShiftSwapRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "ShiftSwapRequest", v)
 }
 
-func marshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftSwapStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerschedule.ShiftSwapStatus) graphql.Marshaler {
+func marshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftSwapStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerschedule.ShiftSwapStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1957,15 +1957,15 @@ func marshalNShiftSwapStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNShiftTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerschedule.ShiftTemplate) graphql.Marshaler {
+func marshalNShiftTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerschedule.ShiftTemplate) graphql.Marshaler {
 	return gqlexec.List[*workerschedule.ShiftTemplate]{
-		Elem:        marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplate,
+		Elem:        marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.ShiftTemplate) graphql.Marshaler {
+func marshalNShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.ShiftTemplate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1997,15 +1997,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerAvailabilityPreference2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerAvailabilityPreferenceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerschedule.WorkerAvailabilityPreference) graphql.Marshaler {
+func marshalNWorkerAvailabilityPreference2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerAvailabilityPreferenceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerschedule.WorkerAvailabilityPreference) graphql.Marshaler {
 	return gqlexec.List[*workerschedule.WorkerAvailabilityPreference]{
-		Elem:        marshalNWorkerAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerAvailabilityPreference,
+		Elem:        marshalNWorkerAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerAvailabilityPreference,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerAvailabilityPreference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.WorkerAvailabilityPreference) graphql.Marshaler {
+func marshalNWorkerAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerAvailabilityPreference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.WorkerAvailabilityPreference) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2013,15 +2013,15 @@ func marshalNWorkerAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "WorkerAvailabilityPreference", v)
 }
 
-func marshalNWorkerShiftAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerShiftAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerschedule.WorkerShiftAssignment) graphql.Marshaler {
+func marshalNWorkerShiftAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerschedule.WorkerShiftAssignment) graphql.Marshaler {
 	return gqlexec.List[*workerschedule.WorkerShiftAssignment]{
-		Elem:        marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerShiftAssignment,
+		Elem:        marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerShiftAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.WorkerShiftAssignment) graphql.Marshaler {
+func marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐWorkerShiftAssignment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.WorkerShiftAssignment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2029,7 +2029,7 @@ func marshalNWorkerShiftAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "WorkerShiftAssignment", v)
 }
 
-func marshalOAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐAvailabilityPreference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.AvailabilityPreference) graphql.Marshaler {
+func marshalOAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐAvailabilityPreference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.AvailabilityPreference) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -2047,7 +2047,7 @@ func marshalOInt2int16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalOShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐShiftTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.ShiftTemplate) graphql.Marshaler {
+func marshalOShiftTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerscheduleᚐShiftTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerschedule.ShiftTemplate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

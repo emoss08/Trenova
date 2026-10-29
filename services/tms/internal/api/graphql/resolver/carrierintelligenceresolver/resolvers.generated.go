@@ -3,7 +3,7 @@
 package carrierintelligenceresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	carrierintelenrollmentservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
 	carrierintelmonitorservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
 	carrierintelreviewservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"

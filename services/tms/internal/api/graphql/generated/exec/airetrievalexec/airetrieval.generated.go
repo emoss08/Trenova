@@ -212,7 +212,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AIRetrievalFailedEntryEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIRetrievalFailedEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalFailedEntry),
+				Marshal: gqlexec.Marshal(marshalNAIRetrievalFailedEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalFailedEntry),
 			},
 			{
 				Name:     "cursor",
@@ -621,7 +621,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*retrievalports.AIRetrievalStatus)
 					return obj.Availability, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalAvailability),
+				Marshal: gqlexec.Marshal(marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalAvailability),
 			},
 			{
 				Name:      "settings",
@@ -632,7 +632,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*retrievalports.AIRetrievalStatus)
 					return obj.Settings, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalSettings),
+				Marshal: gqlexec.Marshal(marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalSettings),
 			},
 			{
 				Name:      "sources",
@@ -643,7 +643,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*retrievalports.AIRetrievalStatus)
 					return obj.Sources, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIRetrievalSourceStatus2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalSourceStatusᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIRetrievalSourceStatus2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalSourceStatusᚄ),
 			},
 			{
 				Name:     "monthStartedAt",
@@ -712,7 +712,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*retrievalports.AIRetrievalStatus)
 					return obj.ModelChange, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAIRetrievalModelChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalModelChange),
+				Marshal: gqlexec.Marshal(marshalOAIRetrievalModelChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalModelChange),
 			},
 			{
 				Name:     "configuredModelKey",
@@ -746,7 +746,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAIRetrievalSettings(ctx, fc.Args["input"].(gqlmodel.AIRetrievalSettingsPatchInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalStatus),
+				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalStatus),
 			},
 			{
 				Name:       "reindexAIRetrievalSource",
@@ -759,7 +759,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReindexAIRetrievalSource(ctx, fc.Args["sourceType"].(airetrieval.SourceType))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalStatus),
+				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalStatus),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -773,7 +773,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiRetrievalStatus(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalStatus),
+				Marshal: gqlexec.Marshal(marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalStatus),
 			},
 			{
 				Name:       "aiRetrievalReindexEstimate",
@@ -787,7 +787,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiRetrievalReindexEstimate(ctx, fc.Args["sourceType"].(airetrieval.SourceType))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalReindexEstimate),
+				Marshal: gqlexec.Marshal(marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalReindexEstimate),
 			},
 			{
 				Name:       "aiRetrievalFailedEntryConnection",
@@ -1002,7 +1002,7 @@ func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalAvailability(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalAvailability) graphql.Marshaler {
+func marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalAvailability(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalAvailability) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1010,7 +1010,7 @@ func marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "AIRetrievalAvailability", v)
 }
 
-func marshalNAIRetrievalFailedEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalFailedEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalFailedEntry) graphql.Marshaler {
+func marshalNAIRetrievalFailedEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalFailedEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalFailedEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1050,7 +1050,7 @@ func marshalNAIRetrievalIndexStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalReindexEstimate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalReindexEstimate) graphql.Marshaler {
+func marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalReindexEstimate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalReindexEstimate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1058,7 +1058,7 @@ func marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "AIRetrievalReindexEstimate", v)
 }
 
-func marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalSettings) graphql.Marshaler {
+func marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalSettings) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1066,15 +1066,15 @@ func marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AIRetrievalSettings", v)
 }
 
-func marshalNAIRetrievalSourceStatus2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalSourceStatusᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*retrievalports.AIRetrievalSourceStatus) graphql.Marshaler {
+func marshalNAIRetrievalSourceStatus2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalSourceStatusᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*retrievalports.AIRetrievalSourceStatus) graphql.Marshaler {
 	return gqlexec.List[*retrievalports.AIRetrievalSourceStatus]{
-		Elem:        marshalNAIRetrievalSourceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalSourceStatus,
+		Elem:        marshalNAIRetrievalSourceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalSourceStatus,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIRetrievalSourceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalSourceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalSourceStatus) graphql.Marshaler {
+func marshalNAIRetrievalSourceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalSourceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalSourceStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1090,7 +1090,7 @@ func marshalNAIRetrievalSourceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalStatus) graphql.Marshaler {
+func marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1178,7 +1178,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAIRetrievalModelChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAIRetrievalModelChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalModelChange) graphql.Marshaler {
+func marshalOAIRetrievalModelChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋretrievalportsᚐAIRetrievalModelChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *retrievalports.AIRetrievalModelChange) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

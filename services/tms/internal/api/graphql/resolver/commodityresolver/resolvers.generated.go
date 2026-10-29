@@ -3,7 +3,7 @@
 package commodityresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	commodityservice "github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
 )
 

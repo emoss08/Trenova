@@ -3,7 +3,6 @@
 package workeremploymentexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"context"
 	"errors"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -52,7 +52,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AmendWorkerEmploymentEvent(ctx, fc.Args["input"].(gqlmodel.AmendWorkerEmploymentEventInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentEvent),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -68,7 +68,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEmploymentEvents(ctx, fc.Args["workerId"].(string), fc.Args["kinds"].([]employment.EmploymentEventKind))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentEventᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEventᚄ),
 			},
 			{
 				Name:       "workerEmploymentEvent",
@@ -82,7 +82,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEmploymentEvent(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentEvent),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent),
 			},
 		}},
 		{Object: "RecordWorkerEmploymentEventPayload", Fields: []*gqlexec.Field{
@@ -95,7 +95,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeremploymentservice.RecordResult)
 					return obj.Event, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentEvent),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent),
 			},
 			{
 				Name:      "cascade",
@@ -274,7 +274,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*employment.WorkerEmploymentEvent)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentEventKind),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentEventKind),
 			},
 			{
 				Name:     "effectiveAt",
@@ -548,7 +548,7 @@ func field_Query_workerEmploymentEvents_args(ctx context.Context, ec *gqlexec.Ex
 	args["workerId"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "kinds",
 		func(ctx context.Context, v any) ([]employment.EmploymentEventKind, error) {
-			return unmarshalOWorkerEmploymentEventKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentEventKindᚄ(ctx, ec, v)
+			return unmarshalOWorkerEmploymentEventKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentEventKindᚄ(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -669,7 +669,7 @@ func unmarshalInputRecordWorkerEmploymentEventInput(ctx context.Context, ec *gql
 			it.WorkerID = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentEventKind(ctx, ec, v)
+			data, err := unmarshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentEventKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -781,7 +781,7 @@ func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int,
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentEventKind(ctx context.Context, ec *gqlexec.Exec, v any) (employment.EmploymentEventKind, error) {
+func unmarshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentEventKind(ctx context.Context, ec *gqlexec.Exec, v any) (employment.EmploymentEventKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := employment.EmploymentEventKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -828,11 +828,11 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOWorkerEmploymentEventKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentEventKindᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]employment.EmploymentEventKind, error) {
+func unmarshalOWorkerEmploymentEventKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentEventKindᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]employment.EmploymentEventKind, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentEventKind)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentEventKind)
 }
 
 func unmarshalOWorkerLeaveType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐLeaveType(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.LeaveType, error) {
@@ -921,15 +921,15 @@ func marshalNWorkerEmploymentCascade2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "WorkerEmploymentCascade", &v)
 }
 
-func marshalNWorkerEmploymentEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentEventᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*employment.WorkerEmploymentEvent) graphql.Marshaler {
+func marshalNWorkerEmploymentEvent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEventᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*employment.WorkerEmploymentEvent) graphql.Marshaler {
 	return gqlexec.List[*employment.WorkerEmploymentEvent]{
-		Elem:        marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentEvent,
+		Elem:        marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *employment.WorkerEmploymentEvent) graphql.Marshaler {
+func marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *employment.WorkerEmploymentEvent) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -937,7 +937,7 @@ func marshalNWorkerEmploymentEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "WorkerEmploymentEvent", v)
 }
 
-func marshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentEventKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v employment.EmploymentEventKind) graphql.Marshaler {
+func marshalNWorkerEmploymentEventKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentEventKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v employment.EmploymentEventKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

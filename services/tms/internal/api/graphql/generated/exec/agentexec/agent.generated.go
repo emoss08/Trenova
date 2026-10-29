@@ -3,7 +3,13 @@
 package agentexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"context"
+	"errors"
+
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
@@ -12,15 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
-	"context"
-	"errors"
-
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -464,7 +464,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentdecision.AgentDecision)
 					return obj.Decision, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType),
+				Marshal: gqlexec.Marshal(marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType),
 			},
 			{
 				Name:     "modifications",
@@ -642,7 +642,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentevaluation.Evaluation)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentEvaluationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluationStatus),
+				Marshal: gqlexec.Marshal(marshalNAgentEvaluationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluationStatus),
 			},
 			{
 				Name:     "trigger",
@@ -960,7 +960,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentEvaluationEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation),
+				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation),
 			},
 			{
 				Name:     "cursor",
@@ -1054,7 +1054,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentexception.AgentException)
 					return obj.Category, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentExceptionCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExceptionCategory),
+				Marshal: gqlexec.Marshal(marshalNAgentExceptionCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐExceptionCategory),
 			},
 			{
 				Name:     "severity",
@@ -1064,7 +1064,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentexception.AgentException)
 					return obj.Severity, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐSeverity),
+				Marshal: gqlexec.Marshal(marshalNAgentSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐSeverity),
 			},
 			{
 				Name:     "subjectType",
@@ -1105,7 +1105,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentexception.AgentException)
 					return obj.Evidence, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentEvidenceRef2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvidenceRefᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentEvidenceRef2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevidenceᚐEvidenceRefᚄ),
 			},
 			{
 				Name:     "blastRadius",
@@ -1125,7 +1125,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentexception.AgentException)
 					return obj.ResolutionState, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentResolutionState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐResolutionState),
+				Marshal: gqlexec.Marshal(marshalNAgentResolutionState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐResolutionState),
 			},
 			{
 				Name:     "resolutionNotes",
@@ -1221,7 +1221,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentExceptionEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentException),
+				Marshal: gqlexec.Marshal(marshalNAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐAgentException),
 			},
 			{
 				Name:     "cursor",
@@ -1273,7 +1273,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentmemory.Memory)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryKind),
+				Marshal: gqlexec.Marshal(marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind),
 			},
 			{
 				Name:     "source",
@@ -1283,7 +1283,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentmemory.Memory)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemorySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemorySource),
+				Marshal: gqlexec.Marshal(marshalNAgentMemorySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySource),
 			},
 			{
 				Name:     "status",
@@ -1293,7 +1293,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentmemory.Memory)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryStatus),
+				Marshal: gqlexec.Marshal(marshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryStatus),
 			},
 			{
 				Name:     "subjectType",
@@ -1302,7 +1302,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentmemory.Memory)
 					return obj.SubjectType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentMemorySubjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemorySubjectType),
+				Marshal: gqlexec.Marshal(marshalOAgentMemorySubjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType),
 			},
 			{
 				Name:     "subjectId",
@@ -1360,7 +1360,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentmemory.Memory)
 					return obj.Scope, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryScope),
+				Marshal: gqlexec.Marshal(marshalNAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryScope),
 			},
 			{
 				Name:     "ownerUserId",
@@ -1483,7 +1483,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentmemory.Memory)
 					return gqlexec.Resolver[resolverAgentMemory](ec, "AgentMemory").Supersedes(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:       "replacedBy",
@@ -1495,7 +1495,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentmemory.Memory)
 					return gqlexec.Resolver[resolverAgentMemory](ec, "AgentMemory").ReplacedBy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:     "createdByUserId",
@@ -1560,7 +1560,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentmemory.Memory)
 					return obj.Evidence, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentMemoryEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryEvidence),
+				Marshal: gqlexec.Marshal(marshalOAgentMemoryEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryEvidence),
 			},
 			{
 				Name:     "version",
@@ -1646,7 +1646,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentMemoryEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:     "cursor",
@@ -1862,7 +1862,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentplan.AgentPlan)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlanStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanStatus),
+				Marshal: gqlexec.Marshal(marshalNAgentPlanStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐPlanStatus),
 			},
 			{
 				Name:     "stepCount",
@@ -1963,7 +1963,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentplan.AgentPlan)
 					return gqlexec.Resolver[resolverAgentPlan](ec, "AgentPlan").RunMode(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlanRunMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanRunMode),
+				Marshal: gqlexec.Marshal(marshalNAgentPlanRunMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐPlanRunMode),
 			},
 			{
 				Name:     "expiresAt",
@@ -2000,7 +2000,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentplan.AgentPlan)
 					return obj.Script, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPlanScript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐScriptOrigin),
+				Marshal: gqlexec.Marshal(marshalOAgentPlanScript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐScriptOrigin),
 			},
 			{
 				Name:     "version",
@@ -2086,7 +2086,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentPlanDecisionResult)
 					return obj.Plan, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentPlan),
+				Marshal: gqlexec.Marshal(marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐAgentPlan),
 			},
 			{
 				Name:     "refused",
@@ -2109,7 +2109,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentPlanEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentPlan),
+				Marshal: gqlexec.Marshal(marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐAgentPlan),
 			},
 			{
 				Name:     "cursor",
@@ -2246,7 +2246,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.AgentProposal)
 					return obj.Evidence, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentEvidenceRef2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvidenceRefᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentEvidenceRef2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevidenceᚐEvidenceRefᚄ),
 			},
 			{
 				Name:     "autonomyTier",
@@ -2716,7 +2716,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.Reflection)
 					return obj.SubjectType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentReflectionSubject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSubject),
+				Marshal: gqlexec.Marshal(marshalNAgentReflectionSubject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSubject),
 			},
 			{
 				Name:     "threadId",
@@ -2773,7 +2773,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.Reflection)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentReflectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionStatus),
+				Marshal: gqlexec.Marshal(marshalNAgentReflectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionStatus),
 			},
 			{
 				Name:     "skipReason",
@@ -2782,7 +2782,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.Reflection)
 					return obj.SkipReason, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentReflectionSkip2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSkip),
+				Marshal: gqlexec.Marshal(marshalOAgentReflectionSkip2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSkip),
 			},
 			{
 				Name:       "signals",
@@ -2795,7 +2795,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.Reflection)
 					return gqlexec.Resolver[resolverAgentReflection](ec, "AgentReflection").Signals(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentReflectionSignal2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSignalᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentReflectionSignal2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSignalᚄ),
 			},
 			{
 				Name:      "changes",
@@ -2806,7 +2806,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.Reflection)
 					return obj.Changes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentReflectionChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionChangeᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentReflectionChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionChangeᚄ),
 			},
 			{
 				Name:     "notes",
@@ -2917,7 +2917,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.ReflectionChange)
 					return obj.Action, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentReflectionAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionAction),
+				Marshal: gqlexec.Marshal(marshalNAgentReflectionAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionAction),
 			},
 			{
 				Name:     "memoryId",
@@ -2945,7 +2945,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.ReflectionChange)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryKind),
+				Marshal: gqlexec.Marshal(marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind),
 			},
 			{
 				Name:     "scope",
@@ -2954,7 +2954,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.ReflectionChange)
 					return obj.Scope, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryScope),
+				Marshal: gqlexec.Marshal(marshalOAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryScope),
 			},
 			{
 				Name:     "content",
@@ -3030,7 +3030,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentReflectionEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentReflection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflection),
+				Marshal: gqlexec.Marshal(marshalNAgentReflection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflection),
 			},
 			{
 				Name:     "cursor",
@@ -3052,7 +3052,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentreflection.ReflectionSignal)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentReflectionSignalKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSignalKind),
+				Marshal: gqlexec.Marshal(marshalNAgentReflectionSignalKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSignalKind),
 			},
 			{
 				Name:     "count",
@@ -3693,7 +3693,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agent.TaintMark)
 					return obj.Ref, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentTaintRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordRef),
+				Marshal: gqlexec.Marshal(marshalOAgentTaintRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentrecordᚐRecordRef),
 			},
 			{
 				Name:     "at",
@@ -3891,7 +3891,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReplayAgentRun(ctx, fc.Args["runId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation),
+				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation),
 			},
 			{
 				Name:       "createAgentMemory",
@@ -3904,7 +3904,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateAgentMemory(ctx, fc.Args["input"].(gqlmodel.AgentMemoryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:       "updateAgentMemory",
@@ -3917,7 +3917,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentMemory(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentMemoryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:       "setAgentMemoryStatus",
@@ -3930,7 +3930,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetAgentMemoryStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(agentmemory.MemoryStatus))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:       "reviewAgentMemory",
@@ -3943,7 +3943,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReviewAgentMemory(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:       "approveAgentMemorySuggestion",
@@ -3956,7 +3956,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveAgentMemorySuggestion(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ApproveAgentMemorySuggestionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:       "dismissAgentMemorySuggestion",
@@ -3969,7 +3969,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissAgentMemorySuggestion(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:       "resolveAgentException",
@@ -3982,7 +3982,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveAgentException(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentExceptionResolveInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentException),
+				Marshal: gqlexec.Marshal(marshalNAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐAgentException),
 			},
 			{
 				Name:       "updateAgentControl",
@@ -3995,7 +3995,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentControl(ctx, fc.Args["input"].(gqlmodel.AgentControlInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAgentControl),
+				Marshal: gqlexec.Marshal(marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋagentcontrolᚐAgentControl),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -4078,7 +4078,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentPlan(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentPlan),
+				Marshal: gqlexec.Marshal(marshalOAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐAgentPlan),
 			},
 			{
 				Name:       "agentMemories",
@@ -4119,7 +4119,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentEvaluation(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation),
+				Marshal: gqlexec.Marshal(marshalOAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation),
 			},
 			{
 				Name:       "agentMemory",
@@ -4132,7 +4132,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentMemory(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory),
+				Marshal: gqlexec.Marshal(marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory),
 			},
 			{
 				Name:       "agentReflections",
@@ -4158,7 +4158,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentMemoryUsage(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAgentMemoryUsage),
+				Marshal: gqlexec.Marshal(marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentmemoryportsᚐAgentMemoryUsage),
 			},
 			{
 				Name:       "agentExceptions",
@@ -4185,7 +4185,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentException(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentException),
+				Marshal: gqlexec.Marshal(marshalOAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐAgentException),
 			},
 			{
 				Name:       "agentControl",
@@ -4197,7 +4197,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentControl(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAgentControl),
+				Marshal: gqlexec.Marshal(marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋagentcontrolᚐAgentControl),
 			},
 			{
 				Name:       "agentPromotionPreview",
@@ -4211,7 +4211,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentPromotionPreview(ctx, fc.Args["threshold"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentToolPromotion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐToolPromotionᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentToolPromotion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagenttrustportsᚐToolPromotionᚄ),
 			},
 			{
 				Name:       "agentActivitySummary",
@@ -4590,7 +4590,7 @@ func field_Mutation_setAgentMemoryStatus_args(ctx context.Context, ec *gqlexec.E
 	args["id"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
 		func(ctx context.Context, v any) (agentmemory.MemoryStatus, error) {
-			return unmarshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryStatus(ctx, ec, v)
+			return unmarshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryStatus(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5025,7 +5025,7 @@ func unmarshalInputAgentExceptionResolveInput(ctx context.Context, ec *gqlexec.E
 		switch k {
 		case "resolutionState":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resolutionState"))
-			data, err := unmarshalNAgentResolutionState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐResolutionState(ctx, ec, v)
+			data, err := unmarshalNAgentResolutionState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐResolutionState(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5062,7 +5062,7 @@ func unmarshalInputAgentMemoryInput(ctx context.Context, ec *gqlexec.Exec, obj a
 		switch k {
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryKind(ctx, ec, v)
+			data, err := unmarshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5076,7 +5076,7 @@ func unmarshalInputAgentMemoryInput(ctx context.Context, ec *gqlexec.Exec, obj a
 			it.Content = data
 		case "subjectType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subjectType"))
-			data, err := unmarshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemorySubjectType(ctx, ec, v)
+			data, err := unmarshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5134,7 +5134,7 @@ func unmarshalInputAgentPlanDecisionInput(ctx context.Context, ec *gqlexec.Exec,
 		switch k {
 		case "decision":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decision"))
-			data, err := unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx, ec, v)
+			data, err := unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5185,7 +5185,7 @@ func unmarshalInputAgentProposalDecisionInput(ctx context.Context, ec *gqlexec.E
 		switch k {
 		case "decision":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decision"))
-			data, err := unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx, ec, v)
+			data, err := unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5250,14 +5250,14 @@ func unmarshalInputApproveAgentMemorySuggestionInput(ctx context.Context, ec *gq
 			it.Content = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryKind(ctx, ec, v)
+			data, err := unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kind = data
 		case "scope":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scope"))
-			data, err := unmarshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryScope(ctx, ec, v)
+			data, err := unmarshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryScope(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5335,7 +5335,7 @@ func unmarshalNAgentControlInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, v any) (agentdecision.DecisionType, error) {
+func unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, v any) (agentdecision.DecisionType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := agentdecision.DecisionType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5351,13 +5351,13 @@ func unmarshalNAgentMemoryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryKind(ctx context.Context, ec *gqlexec.Exec, v any) (agentmemory.MemoryKind, error) {
+func unmarshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind(ctx context.Context, ec *gqlexec.Exec, v any) (agentmemory.MemoryKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := agentmemory.MemoryKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryStatus(ctx context.Context, ec *gqlexec.Exec, v any) (agentmemory.MemoryStatus, error) {
+func unmarshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryStatus(ctx context.Context, ec *gqlexec.Exec, v any) (agentmemory.MemoryStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := agentmemory.MemoryStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5373,7 +5373,7 @@ func unmarshalNAgentProposalDecisionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAgentResolutionState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐResolutionState(ctx context.Context, ec *gqlexec.Exec, v any) (agentexception.ResolutionState, error) {
+func unmarshalNAgentResolutionState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐResolutionState(ctx context.Context, ec *gqlexec.Exec, v any) (agentexception.ResolutionState, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := agentexception.ResolutionState(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5423,7 +5423,7 @@ func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int,
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryKind(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemoryKind, error) {
+func unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemoryKind, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -5432,7 +5432,7 @@ func unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryScope(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemoryScope, error) {
+func unmarshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryScope(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemoryScope, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -5441,7 +5441,7 @@ func unmarshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemorySubjectType(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemorySubjectType, error) {
+func unmarshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemorySubjectType, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -5522,7 +5522,7 @@ func marshalNAgentAutonomyTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐAgentControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentcontrol.AgentControl) graphql.Marshaler {
+func marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋagentcontrolᚐAgentControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentcontrol.AgentControl) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5530,7 +5530,7 @@ func marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "AgentControl", v)
 }
 
-func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdecision.DecisionType) graphql.Marshaler {
+func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdecision.DecisionType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5538,7 +5538,7 @@ func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentevaluation.Evaluation) graphql.Marshaler {
+func marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentevaluation.Evaluation) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5570,7 +5570,7 @@ func marshalNAgentEvaluationEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AgentEvaluationEdge", v)
 }
 
-func marshalNAgentEvaluationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentevaluation.EvaluationStatus) graphql.Marshaler {
+func marshalNAgentEvaluationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentevaluation.EvaluationStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5578,19 +5578,19 @@ func marshalNAgentEvaluationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAgentEvidenceRef2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvidenceRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentevidence.EvidenceRef) graphql.Marshaler {
+func marshalNAgentEvidenceRef2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevidenceᚐEvidenceRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentevidence.EvidenceRef) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentEvidenceRef", &v)
 }
 
-func marshalNAgentEvidenceRef2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvidenceRefᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agentevidence.EvidenceRef) graphql.Marshaler {
+func marshalNAgentEvidenceRef2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevidenceᚐEvidenceRefᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agentevidence.EvidenceRef) graphql.Marshaler {
 	return gqlexec.List[agentevidence.EvidenceRef]{
-		Elem:        marshalNAgentEvidenceRef2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvidenceRef,
+		Elem:        marshalNAgentEvidenceRef2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevidenceᚐEvidenceRef,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentException(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentexception.AgentException) graphql.Marshaler {
+func marshalNAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐAgentException(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentexception.AgentException) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5598,7 +5598,7 @@ func marshalNAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "AgentException", v)
 }
 
-func marshalNAgentExceptionCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐExceptionCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentexception.ExceptionCategory) graphql.Marshaler {
+func marshalNAgentExceptionCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐExceptionCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentexception.ExceptionCategory) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5630,7 +5630,7 @@ func marshalNAgentExceptionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AgentExceptionEdge", v)
 }
 
-func marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemory.Memory) graphql.Marshaler {
+func marshalNAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemory.Memory) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5662,7 +5662,7 @@ func marshalNAgentMemoryEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return ec.MarshalType(ctx, sel, "AgentMemoryEdge", v)
 }
 
-func marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemoryKind) graphql.Marshaler {
+func marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemoryKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5670,7 +5670,7 @@ func marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemoryScope) graphql.Marshaler {
+func marshalNAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemoryScope) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5678,7 +5678,7 @@ func marshalNAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return res
 }
 
-func marshalNAgentMemorySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemorySource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemorySource) graphql.Marshaler {
+func marshalNAgentMemorySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemorySource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5686,7 +5686,7 @@ func marshalNAgentMemorySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemoryStatus) graphql.Marshaler {
+func marshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemoryStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5694,7 +5694,7 @@ func marshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐAgentMemoryUsage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemoryports.AgentMemoryUsage) graphql.Marshaler {
+func marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentmemoryportsᚐAgentMemoryUsage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemoryports.AgentMemoryUsage) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5702,7 +5702,7 @@ func marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "AgentMemoryUsage", v)
 }
 
-func marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentplan.AgentPlan) graphql.Marshaler {
+func marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐAgentPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentplan.AgentPlan) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5742,7 +5742,7 @@ func marshalNAgentPlanEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return ec.MarshalType(ctx, sel, "AgentPlanEdge", v)
 }
 
-func marshalNAgentPlanRunMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanRunMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentplan.PlanRunMode) graphql.Marshaler {
+func marshalNAgentPlanRunMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐPlanRunMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentplan.PlanRunMode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5750,7 +5750,7 @@ func marshalNAgentPlanRunMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return res
 }
 
-func marshalNAgentPlanStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐPlanStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentplan.PlanStatus) graphql.Marshaler {
+func marshalNAgentPlanStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐPlanStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentplan.PlanStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5846,7 +5846,7 @@ func marshalNAgentProposalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNAgentReflection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentreflection.Reflection) graphql.Marshaler {
+func marshalNAgentReflection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentreflection.Reflection) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5854,7 +5854,7 @@ func marshalNAgentReflection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return ec.MarshalType(ctx, sel, "AgentReflection", v)
 }
 
-func marshalNAgentReflectionAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionAction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionAction) graphql.Marshaler {
+func marshalNAgentReflectionAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionAction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionAction) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5862,13 +5862,13 @@ func marshalNAgentReflectionAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAgentReflectionChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionChange) graphql.Marshaler {
+func marshalNAgentReflectionChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionChange) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentReflectionChange", &v)
 }
 
-func marshalNAgentReflectionChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agentreflection.ReflectionChange) graphql.Marshaler {
+func marshalNAgentReflectionChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agentreflection.ReflectionChange) graphql.Marshaler {
 	return gqlexec.List[agentreflection.ReflectionChange]{
-		Elem:        marshalNAgentReflectionChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionChange,
+		Elem:        marshalNAgentReflectionChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionChange,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -5898,15 +5898,15 @@ func marshalNAgentReflectionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AgentReflectionEdge", v)
 }
 
-func marshalNAgentReflectionSignal2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSignalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentreflection.ReflectionSignal) graphql.Marshaler {
+func marshalNAgentReflectionSignal2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSignalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentreflection.ReflectionSignal) graphql.Marshaler {
 	return gqlexec.List[*agentreflection.ReflectionSignal]{
-		Elem:        marshalNAgentReflectionSignal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSignal,
+		Elem:        marshalNAgentReflectionSignal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSignal,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentReflectionSignal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSignal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentreflection.ReflectionSignal) graphql.Marshaler {
+func marshalNAgentReflectionSignal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSignal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentreflection.ReflectionSignal) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5914,7 +5914,7 @@ func marshalNAgentReflectionSignal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "AgentReflectionSignal", v)
 }
 
-func marshalNAgentReflectionSignalKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSignalKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionSignalKind) graphql.Marshaler {
+func marshalNAgentReflectionSignalKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSignalKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionSignalKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5922,7 +5922,7 @@ func marshalNAgentReflectionSignalKind2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNAgentReflectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionStatus) graphql.Marshaler {
+func marshalNAgentReflectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5930,7 +5930,7 @@ func marshalNAgentReflectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAgentReflectionSubject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSubject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionSubject) graphql.Marshaler {
+func marshalNAgentReflectionSubject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSubject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionSubject) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5938,7 +5938,7 @@ func marshalNAgentReflectionSubject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAgentResolutionState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐResolutionState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentexception.ResolutionState) graphql.Marshaler {
+func marshalNAgentResolutionState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐResolutionState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentexception.ResolutionState) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -6018,7 +6018,7 @@ func marshalNAgentRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNAgentSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentexception.Severity) graphql.Marshaler {
+func marshalNAgentSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentexception.Severity) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -6054,15 +6054,15 @@ func marshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return res
 }
 
-func marshalNAgentToolPromotion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐToolPromotionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agenttrustports.ToolPromotion) graphql.Marshaler {
+func marshalNAgentToolPromotion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagenttrustportsᚐToolPromotionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agenttrustports.ToolPromotion) graphql.Marshaler {
 	return gqlexec.List[*agenttrustports.ToolPromotion]{
-		Elem:        marshalNAgentToolPromotion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐToolPromotion,
+		Elem:        marshalNAgentToolPromotion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagenttrustportsᚐToolPromotion,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentToolPromotion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentportsᚐToolPromotion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agenttrustports.ToolPromotion) graphql.Marshaler {
+func marshalNAgentToolPromotion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagenttrustportsᚐToolPromotion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agenttrustports.ToolPromotion) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -6213,52 +6213,52 @@ func marshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalOAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentevaluation.Evaluation) graphql.Marshaler {
+func marshalOAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentevaluation.Evaluation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentEvaluation", v)
 }
 
-func marshalOAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentException(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentexception.AgentException) graphql.Marshaler {
+func marshalOAgentException2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentexceptionᚐAgentException(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentexception.AgentException) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentException", v)
 }
 
-func marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemory.Memory) graphql.Marshaler {
+func marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemory.Memory) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentMemory", v)
 }
 
-func marshalOAgentMemoryEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryEvidence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemory.MemoryEvidence) graphql.Marshaler {
+func marshalOAgentMemoryEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryEvidence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemory.MemoryEvidence) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentMemoryEvidence", v)
 }
 
-func marshalOAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemoryScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemoryScope) graphql.Marshaler {
+func marshalOAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryScope(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemoryScope) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func marshalOAgentMemorySubjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐMemorySubjectType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemorySubjectType) graphql.Marshaler {
+func marshalOAgentMemorySubjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentmemory.MemorySubjectType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func marshalOAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentplan.AgentPlan) graphql.Marshaler {
+func marshalOAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐAgentPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentplan.AgentPlan) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentPlan", v)
 }
 
-func marshalOAgentPlanScript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐScriptOrigin(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentplan.ScriptOrigin) graphql.Marshaler {
+func marshalOAgentPlanScript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentplanᚐScriptOrigin(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentplan.ScriptOrigin) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6279,7 +6279,7 @@ func marshalOAgentProposalFieldChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋp
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOAgentReflectionSkip2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐReflectionSkip(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionSkip) graphql.Marshaler {
+func marshalOAgentReflectionSkip2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentreflectionᚐReflectionSkip(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentreflection.ReflectionSkip) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
@@ -6312,7 +6312,7 @@ func marshalOAgentRunTranscript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AgentRunTranscript", v)
 }
 
-func marshalOAgentTaintRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐRecordRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentrecord.RecordRef) graphql.Marshaler {
+func marshalOAgentTaintRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentrecordᚐRecordRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentrecord.RecordRef) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

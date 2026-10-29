@@ -3,8 +3,8 @@
 package decisionsresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentdecisionqueueports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 )
 
 type Deps struct {

@@ -3,7 +3,7 @@
 package extractionrolloutresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	extractionrolloutports "github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 )
 

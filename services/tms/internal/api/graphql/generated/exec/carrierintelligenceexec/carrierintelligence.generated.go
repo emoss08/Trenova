@@ -5,7 +5,14 @@ package carrierintelligenceexec
 import (
 	"context"
 	"errors"
+
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
@@ -14,16 +21,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
-
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -130,7 +130,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrier.Carrier)
 					return gqlexec.Resolver[resolverCarrier](ec, "Carrier").Intelligence(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshot),
+				Marshal: gqlexec.Marshal(marshalOCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshot),
 			},
 			{
 				Name:       "openIntelEventCount",
@@ -154,7 +154,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrier.Carrier)
 					return gqlexec.Resolver[resolverCarrier](ec, "Carrier").MonitoringEnrollment(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierMonitoringEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierMonitoringEnrollment),
+				Marshal: gqlexec.Marshal(marshalOCarrierMonitoringEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐCarrierMonitoringEnrollment),
 			},
 		}},
 		{Object: "CarrierEquipmentVerification", Fields: []*gqlexec.Field{
@@ -262,7 +262,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelverification.CarrierEquipmentVerification)
 					return obj.Result, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierEquipmentVerificationResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐVerificationResult),
+				Marshal: gqlexec.Marshal(marshalNCarrierEquipmentVerificationResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelverificationᚐVerificationResult),
 			},
 			{
 				Name:     "matchedDotNumbers",
@@ -610,7 +610,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintel.BasicMeasure)
 					return obj.Basic, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic),
+				Marshal: gqlexec.Marshal(marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋfleetsafetyᚐCSABasic),
 			},
 			{
 				Name:     "measure",
@@ -924,7 +924,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelcontrol.CarrierIntelControl)
 					return obj.EnrollmentPolicy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentPolicy),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐEnrollmentPolicy),
 			},
 			{
 				Name:     "recentUsageDays",
@@ -1054,7 +1054,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelcontrol.CarrierIntelControl)
 					return obj.OutagePolicy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelOutagePolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐOutagePolicy),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelOutagePolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐOutagePolicy),
 			},
 			{
 				Name:     "autoDisqualifyOnBlock",
@@ -1097,7 +1097,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelcontrol.CarrierIntelControl)
 					return obj.AutoSyncFields, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncFieldᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncFieldᚄ),
 			},
 			{
 				Name:       "monthlySpendCap",
@@ -1209,7 +1209,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CarrierIntelCostEstimate)
 					return obj.Policy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentPolicy),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐEnrollmentPolicy),
 			},
 			{
 				Name:     "subjectCount",
@@ -1497,7 +1497,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelevent.CarrierIntelEvent)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelEventSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventSource),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelEventSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventSource),
 			},
 			{
 				Name:     "category",
@@ -1631,7 +1631,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelevent.CarrierIntelEvent)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventStatus),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventStatus),
 			},
 			{
 				Name:       "acknowledgedById",
@@ -1706,7 +1706,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelevent.CarrierIntelEvent)
 					return gqlexec.Resolver[resolverCarrierIntelEvent](ec, "CarrierIntelEvent").Resolution(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierIntelEventResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventResolution),
+				Marshal: gqlexec.Marshal(marshalOCarrierIntelEventResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventResolution),
 			},
 			{
 				Name:     "resolutionNote",
@@ -1845,7 +1845,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CarrierIntelEventEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelEvent),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐCarrierIntelEvent),
 			},
 			{
 				Name:     "cursor",
@@ -1879,7 +1879,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelenrollment.CarrierIntelFeedState)
 					return obj.FeedType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelFeedType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFeedType),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelFeedType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐFeedType),
 			},
 			{
 				Name:     "lastPolledAt",
@@ -1958,7 +1958,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CarrierIntelFetchResult)
 					return obj.Snapshot, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshot),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshot),
 			},
 			{
 				Name:     "fromCache",
@@ -2010,7 +2010,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsync.FieldUpdate)
 					return obj.Field, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncField),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncField),
 			},
 			{
 				Name:     "current",
@@ -2594,7 +2594,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsync.InsuranceChange)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelInsuranceChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐInsuranceChangeKind),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelInsuranceChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐInsuranceChangeKind),
 			},
 			{
 				Name:       "policyId",
@@ -2939,7 +2939,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CarrierIntelMonitoringStatus)
 					return obj.Feeds, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelFeedState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelFeedStateᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelFeedState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐCarrierIntelFeedStateᚄ),
 			},
 			{
 				Name:     "reviewQueueCount",
@@ -3456,7 +3456,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CarrierIntelProspectLookup)
 					return obj.Snapshot, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshot),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshot),
 			},
 			{
 				Name:     "existingCarrierId",
@@ -3600,7 +3600,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelrule.RuleDefinition)
 					return obj.Params, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelRuleParam2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleParamSpecᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelRuleParam2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleParamSpecᚄ),
 			},
 			{
 				Name:     "subjects",
@@ -3652,7 +3652,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelrule.RuleParamSpec)
 					return obj.Type, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelRuleParamType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleParamType),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelRuleParamType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleParamType),
 			},
 			{
 				Name:     "default",
@@ -4027,7 +4027,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsnapshot.CarrierIntelSnapshot)
 					return obj.Findings, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelFinding2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFindingᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelFinding2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐFindingᚄ),
 			},
 			{
 				Name:     "blockingCodes",
@@ -4067,7 +4067,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsnapshot.CarrierIntelSnapshot)
 					return obj.ReviewState, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelReviewState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐReviewState),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelReviewState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐReviewState),
 			},
 			{
 				Name:       "reviewedById",
@@ -4249,7 +4249,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsync.SyncPlan)
 					return obj.AutoApply, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelFieldUpdate2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFieldUpdateᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelFieldUpdate2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐFieldUpdateᚄ),
 			},
 			{
 				Name:      "suggestions",
@@ -4260,7 +4260,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsync.SyncPlan)
 					return obj.Suggestions, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelFieldUpdate2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFieldUpdateᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelFieldUpdate2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐFieldUpdateᚄ),
 			},
 			{
 				Name:      "insuranceAutoApply",
@@ -4271,7 +4271,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsync.SyncPlan)
 					return obj.InsuranceAutoApply, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelInsuranceChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐInsuranceChangeᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelInsuranceChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐInsuranceChangeᚄ),
 			},
 			{
 				Name:      "insuranceSuggestions",
@@ -4282,7 +4282,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsync.SyncPlan)
 					return obj.InsuranceSuggestions, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelInsuranceChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐInsuranceChangeᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelInsuranceChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐInsuranceChangeᚄ),
 			},
 		}},
 		{Object: "CarrierIntelUsageDay", Fields: []*gqlexec.Field{
@@ -4561,7 +4561,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelenrollment.CarrierMonitoringEnrollment)
 					return obj.DesiredState, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelDesiredState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐDesiredState),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelDesiredState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐDesiredState),
 			},
 			{
 				Name:     "vendorState",
@@ -4571,7 +4571,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelenrollment.CarrierMonitoringEnrollment)
 					return obj.VendorState, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐVendorState),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐVendorState),
 			},
 			{
 				Name:     "reason",
@@ -4581,7 +4581,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelenrollment.CarrierMonitoringEnrollment)
 					return obj.Reason, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelEnrollmentReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentReason),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelEnrollmentReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐEnrollmentReason),
 			},
 			{
 				Name:     "ownedByTrenova",
@@ -4741,7 +4741,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CarrierMonitoringEnrollmentEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierMonitoringEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierMonitoringEnrollment),
+				Marshal: gqlexec.Marshal(marshalNCarrierMonitoringEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐCarrierMonitoringEnrollment),
 			},
 			{
 				Name:     "cursor",
@@ -4867,7 +4867,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrierintelsourcingservice.SourcingResult)
 					return obj.Findings, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelFinding2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFindingᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelFinding2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐFindingᚄ),
 			},
 			{
 				Name:     "riskLevel",
@@ -4929,7 +4929,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customer.Customer)
 					return gqlexec.Resolver[resolverCustomer](ec, "Customer").BrokerIntelligence(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshot),
+				Marshal: gqlexec.Marshal(marshalOCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshot),
 			},
 		}},
 		{Object: "DispatchCarrierEligibility", Fields: []*gqlexec.Field{
@@ -5019,7 +5019,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCarrierIntelControl(ctx, fc.Args["input"].(gqlmodel.CarrierIntelControlPatchInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelControl),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐCarrierIntelControl),
 			},
 			{
 				Name:       "switchCarrierIntelProvider",
@@ -5032,7 +5032,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SwitchCarrierIntelProvider(ctx, fc.Args["provider"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelControl),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐCarrierIntelControl),
 			},
 			{
 				Name:       "resumeCarrierIntelMonitoring",
@@ -5105,7 +5105,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveCarrierIntelEvent(ctx, fc.Args["input"].(gqlmodel.ResolveCarrierIntelEventInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelEvent),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐCarrierIntelEvent),
 			},
 			{
 				Name:       "markCarrierIntelReviewed",
@@ -5130,7 +5130,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GrantCarrierIntelOverride(ctx, fc.Args["input"].(gqlmodel.GrantCarrierIntelOverrideInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelOverride),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteloverrideᚐCarrierIntelOverride),
 			},
 			{
 				Name:       "revokeCarrierIntelOverride",
@@ -5143,7 +5143,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RevokeCarrierIntelOverride(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelOverride),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteloverrideᚐCarrierIntelOverride),
 			},
 			{
 				Name:       "applyCarrierIntelSuggestions",
@@ -5181,7 +5181,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VerifyCarrierEquipment(ctx, fc.Args["input"].(gqlmodel.VerifyCarrierEquipmentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierEquipmentVerification),
+				Marshal: gqlexec.Marshal(marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelverificationᚐCarrierEquipmentVerification),
 			},
 			{
 				Name:       "overrideCarrierEquipmentVerification",
@@ -5194,7 +5194,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").OverrideCarrierEquipmentVerification(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierEquipmentVerification),
+				Marshal: gqlexec.Marshal(marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelverificationᚐCarrierEquipmentVerification),
 			},
 		}},
 		{Object: "MyCarrierIntelligence", Fields: []*gqlexec.Field{
@@ -5225,7 +5225,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.MyCarrierIntelligence)
 					return obj.Snapshot, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshot),
+				Marshal: gqlexec.Marshal(marshalOCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshot),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -5239,7 +5239,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierIntelControl(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelControl),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐCarrierIntelControl),
 			},
 			{
 				Name:       "carrierIntelProvider",
@@ -5263,7 +5263,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierIntelRuleCatalog(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelRuleDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleDefinitionᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelRuleDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleDefinitionᚄ),
 			},
 			{
 				Name:       "carrierIntelEvents",
@@ -5290,7 +5290,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierIntelEvent(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelEvent),
+				Marshal: gqlexec.Marshal(marshalOCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐCarrierIntelEvent),
 			},
 			{
 				Name:       "carrierIntelMonitoringStatus",
@@ -5330,7 +5330,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierIntelReviewQueue(ctx, fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelSnapshot2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshotᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelSnapshot2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshotᚄ),
 			},
 			{
 				Name:       "carrierIntelSnapshotHistory",
@@ -5344,7 +5344,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierIntelSnapshotHistory(ctx, fc.Args["carrierId"].(string), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelSnapshot2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshotᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelSnapshot2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshotᚄ),
 			},
 			{
 				Name:       "carrierIntelUsage",
@@ -5386,7 +5386,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierIntelSyncPlan(ctx, fc.Args["carrierId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelSyncPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncPlan),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelSyncPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncPlan),
 			},
 			{
 				Name:       "carrierIntelOverrides",
@@ -5400,7 +5400,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierIntelOverrides(ctx, fc.Args["carrierId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierIntelOverride2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelOverrideᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierIntelOverride2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteloverrideᚐCarrierIntelOverrideᚄ),
 			},
 			{
 				Name:       "carrierIntelRawPayload",
@@ -5468,7 +5468,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierEquipmentVerifications(ctx, fc.Args["carrierAssignmentId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierEquipmentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierEquipmentVerificationᚄ),
+				Marshal: gqlexec.Marshal(marshalNCarrierEquipmentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelverificationᚐCarrierEquipmentVerificationᚄ),
 			},
 			{
 				Name:       "myCarrierIntelligence",
@@ -6052,7 +6052,7 @@ func field_Query_carrierIntelCostEstimate_args(ctx context.Context, ec *gqlexec.
 	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "policy",
 		func(ctx context.Context, v any) (carrierintelcontrol.EnrollmentPolicy, error) {
-			return unmarshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentPolicy(ctx, ec, v)
+			return unmarshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐEnrollmentPolicy(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -6224,7 +6224,7 @@ func unmarshalInputApplyCarrierIntelSuggestionsInput(ctx context.Context, ec *gq
 			it.CarrierID = data
 		case "fields":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fields"))
-			data, err := unmarshalOCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncFieldᚄ(ctx, ec, v)
+			data, err := unmarshalOCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncFieldᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6268,7 +6268,7 @@ func unmarshalInputCarrierIntelControlPatchInput(ctx context.Context, ec *gqlexe
 			it.Version = data
 		case "enrollmentPolicy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enrollmentPolicy"))
-			data, err := unmarshalOCarrierIntelEnrollmentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentPolicy(ctx, ec, v)
+			data, err := unmarshalOCarrierIntelEnrollmentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐEnrollmentPolicy(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6359,7 +6359,7 @@ func unmarshalInputCarrierIntelControlPatchInput(ctx context.Context, ec *gqlexe
 			it.ConfirmBlockingChanges = graphql.OmittableOf(data)
 		case "outagePolicy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("outagePolicy"))
-			data, err := unmarshalOCarrierIntelOutagePolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐOutagePolicy(ctx, ec, v)
+			data, err := unmarshalOCarrierIntelOutagePolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐOutagePolicy(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6387,7 +6387,7 @@ func unmarshalInputCarrierIntelControlPatchInput(ctx context.Context, ec *gqlexe
 			it.Rules = graphql.OmittableOf(data)
 		case "autoSyncFields":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoSyncFields"))
-			data, err := unmarshalOCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncFieldᚄ(ctx, ec, v)
+			data, err := unmarshalOCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncFieldᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6466,7 +6466,7 @@ func unmarshalInputCarrierIntelEventFilterInput(ctx context.Context, ec *gqlexec
 		switch k {
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOCarrierIntelEventStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOCarrierIntelEventStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6663,14 +6663,14 @@ func unmarshalInputCarrierMonitoringEnrollmentFilterInput(ctx context.Context, e
 		switch k {
 		case "desiredState":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("desiredState"))
-			data, err := unmarshalOCarrierIntelDesiredState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐDesiredState(ctx, ec, v)
+			data, err := unmarshalOCarrierIntelDesiredState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐDesiredState(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.DesiredState = data
 		case "vendorStates":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorStates"))
-			data, err := unmarshalOCarrierIntelVendorState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐVendorStateᚄ(ctx, ec, v)
+			data, err := unmarshalOCarrierIntelVendorState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐVendorStateᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6923,7 +6923,7 @@ func unmarshalInputResolveCarrierIntelEventInput(ctx context.Context, ec *gqlexe
 			it.ID = data
 		case "resolution":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resolution"))
-			data, err := unmarshalNCarrierIntelEventResolution2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventResolution(ctx, ec, v)
+			data, err := unmarshalNCarrierIntelEventResolution2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventResolution(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -7024,19 +7024,19 @@ func unmarshalNCarrierIntelControlPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelcontrol.EnrollmentPolicy, error) {
+func unmarshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐEnrollmentPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelcontrol.EnrollmentPolicy, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := carrierintelcontrol.EnrollmentPolicy(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCarrierIntelEventResolution2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventResolution(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelevent.EventResolution, error) {
+func unmarshalNCarrierIntelEventResolution2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventResolution(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelevent.EventResolution, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := carrierintelevent.EventResolution(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventStatus(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelevent.EventStatus, error) {
+func unmarshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventStatus(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelevent.EventStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := carrierintelevent.EventStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7075,7 +7075,7 @@ func unmarshalNCarrierIntelSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncField(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelsync.SyncField, error) {
+func unmarshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncField(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelsync.SyncField, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := carrierintelsync.SyncField(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7087,7 +7087,7 @@ func unmarshalNCarrierIntelUnitType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐVendorState(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelenrollment.VendorState, error) {
+func unmarshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐVendorState(ctx context.Context, ec *gqlexec.Exec, v any) (carrierintelenrollment.VendorState, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := carrierintelenrollment.VendorState(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7154,7 +7154,7 @@ func unmarshalOCarrierIntelDepth2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCarrierIntelDesiredState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐDesiredState(ctx context.Context, ec *gqlexec.Exec, v any) (*carrierintelenrollment.DesiredState, error) {
+func unmarshalOCarrierIntelDesiredState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐDesiredState(ctx context.Context, ec *gqlexec.Exec, v any) (*carrierintelenrollment.DesiredState, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7163,7 +7163,7 @@ func unmarshalOCarrierIntelDesiredState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCarrierIntelEnrollmentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (*carrierintelcontrol.EnrollmentPolicy, error) {
+func unmarshalOCarrierIntelEnrollmentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐEnrollmentPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (*carrierintelcontrol.EnrollmentPolicy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7180,14 +7180,14 @@ func unmarshalOCarrierIntelEventFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCarrierIntelEventStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]carrierintelevent.EventStatus, error) {
+func unmarshalOCarrierIntelEventStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]carrierintelevent.EventStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventStatus)
 }
 
-func unmarshalOCarrierIntelOutagePolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐOutagePolicy(ctx context.Context, ec *gqlexec.Exec, v any) (*carrierintelcontrol.OutagePolicy, error) {
+func unmarshalOCarrierIntelOutagePolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐOutagePolicy(ctx context.Context, ec *gqlexec.Exec, v any) (*carrierintelcontrol.OutagePolicy, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7233,18 +7233,18 @@ func unmarshalOCarrierIntelSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncFieldᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]carrierintelsync.SyncField, error) {
+func unmarshalOCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncFieldᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]carrierintelsync.SyncField, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncField)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncField)
 }
 
-func unmarshalOCarrierIntelVendorState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐVendorStateᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]carrierintelenrollment.VendorState, error) {
+func unmarshalOCarrierIntelVendorState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐVendorStateᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]carrierintelenrollment.VendorState, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐVendorState)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐVendorState)
 }
 
 func unmarshalOCarrierMonitoringEnrollmentFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierMonitoringEnrollmentFilterInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CarrierMonitoringEnrollmentFilterInput, error) {
@@ -7319,7 +7319,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCSABasic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.CSABasic) graphql.Marshaler {
+func marshalNCSABasic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋfleetsafetyᚐCSABasic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fleetsafety.CSABasic) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7335,15 +7335,15 @@ func marshalNCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 	return ec.MarshalType(ctx, sel, "Carrier", v)
 }
 
-func marshalNCarrierEquipmentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierEquipmentVerificationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelverification.CarrierEquipmentVerification) graphql.Marshaler {
+func marshalNCarrierEquipmentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelverificationᚐCarrierEquipmentVerificationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelverification.CarrierEquipmentVerification) graphql.Marshaler {
 	return gqlexec.List[*carrierintelverification.CarrierEquipmentVerification]{
-		Elem:        marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierEquipmentVerification,
+		Elem:        marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelverificationᚐCarrierEquipmentVerification,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierEquipmentVerification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelverification.CarrierEquipmentVerification) graphql.Marshaler {
+func marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelverificationᚐCarrierEquipmentVerification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelverification.CarrierEquipmentVerification) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7351,7 +7351,7 @@ func marshalNCarrierEquipmentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "CarrierEquipmentVerification", v)
 }
 
-func marshalNCarrierEquipmentVerificationResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐVerificationResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelverification.VerificationResult) graphql.Marshaler {
+func marshalNCarrierEquipmentVerificationResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelverificationᚐVerificationResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelverification.VerificationResult) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7383,7 +7383,7 @@ func marshalNCarrierIntelBasicMeasure2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "CarrierIntelBasicMeasure", &v)
 }
 
-func marshalNCarrierIntelControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelcontrol.CarrierIntelControl) graphql.Marshaler {
+func marshalNCarrierIntelControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐCarrierIntelControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelcontrol.CarrierIntelControl) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7407,7 +7407,7 @@ func marshalNCarrierIntelDepth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNCarrierIntelDesiredState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐDesiredState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelenrollment.DesiredState) graphql.Marshaler {
+func marshalNCarrierIntelDesiredState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐDesiredState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelenrollment.DesiredState) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7431,7 +7431,7 @@ func marshalNCarrierIntelEnrollmentMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelcontrol.EnrollmentPolicy) graphql.Marshaler {
+func marshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐEnrollmentPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelcontrol.EnrollmentPolicy) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7439,7 +7439,7 @@ func marshalNCarrierIntelEnrollmentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res
 }
 
-func marshalNCarrierIntelEnrollmentReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEnrollmentReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelenrollment.EnrollmentReason) graphql.Marshaler {
+func marshalNCarrierIntelEnrollmentReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐEnrollmentReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelenrollment.EnrollmentReason) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7451,7 +7451,7 @@ func marshalNCarrierIntelEquipment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "CarrierIntelEquipment", &v)
 }
 
-func marshalNCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelevent.CarrierIntelEvent) graphql.Marshaler {
+func marshalNCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐCarrierIntelEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelevent.CarrierIntelEvent) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7491,7 +7491,7 @@ func marshalNCarrierIntelEventEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "CarrierIntelEventEdge", v)
 }
 
-func marshalNCarrierIntelEventSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelevent.EventSource) graphql.Marshaler {
+func marshalNCarrierIntelEventSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelevent.EventSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7499,7 +7499,7 @@ func marshalNCarrierIntelEventSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelevent.EventStatus) graphql.Marshaler {
+func marshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelevent.EventStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7507,15 +7507,15 @@ func marshalNCarrierIntelEventStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNCarrierIntelFeedState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelFeedStateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelenrollment.CarrierIntelFeedState) graphql.Marshaler {
+func marshalNCarrierIntelFeedState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐCarrierIntelFeedStateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelenrollment.CarrierIntelFeedState) graphql.Marshaler {
 	return gqlexec.List[*carrierintelenrollment.CarrierIntelFeedState]{
-		Elem:        marshalNCarrierIntelFeedState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelFeedState,
+		Elem:        marshalNCarrierIntelFeedState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐCarrierIntelFeedState,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelFeedState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelFeedState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelenrollment.CarrierIntelFeedState) graphql.Marshaler {
+func marshalNCarrierIntelFeedState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐCarrierIntelFeedState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelenrollment.CarrierIntelFeedState) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7523,7 +7523,7 @@ func marshalNCarrierIntelFeedState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "CarrierIntelFeedState", v)
 }
 
-func marshalNCarrierIntelFeedType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFeedType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelenrollment.FeedType) graphql.Marshaler {
+func marshalNCarrierIntelFeedType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐFeedType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelenrollment.FeedType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7539,43 +7539,43 @@ func marshalNCarrierIntelFetchResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "CarrierIntelFetchResult", v)
 }
 
-func marshalNCarrierIntelFieldUpdate2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFieldUpdate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsync.FieldUpdate) graphql.Marshaler {
+func marshalNCarrierIntelFieldUpdate2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐFieldUpdate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsync.FieldUpdate) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CarrierIntelFieldUpdate", &v)
 }
 
-func marshalNCarrierIntelFieldUpdate2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFieldUpdateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelsync.FieldUpdate) graphql.Marshaler {
+func marshalNCarrierIntelFieldUpdate2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐFieldUpdateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelsync.FieldUpdate) graphql.Marshaler {
 	return gqlexec.List[carrierintelsync.FieldUpdate]{
-		Elem:        marshalNCarrierIntelFieldUpdate2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFieldUpdate,
+		Elem:        marshalNCarrierIntelFieldUpdate2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐFieldUpdate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelFinding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFinding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelrule.Finding) graphql.Marshaler {
+func marshalNCarrierIntelFinding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐFinding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelrule.Finding) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CarrierIntelFinding", &v)
 }
 
-func marshalNCarrierIntelFinding2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFindingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelrule.Finding) graphql.Marshaler {
+func marshalNCarrierIntelFinding2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐFindingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelrule.Finding) graphql.Marshaler {
 	return gqlexec.List[carrierintelrule.Finding]{
-		Elem:        marshalNCarrierIntelFinding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐFinding,
+		Elem:        marshalNCarrierIntelFinding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐFinding,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelInsuranceChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐInsuranceChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsync.InsuranceChange) graphql.Marshaler {
+func marshalNCarrierIntelInsuranceChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐInsuranceChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsync.InsuranceChange) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CarrierIntelInsuranceChange", &v)
 }
 
-func marshalNCarrierIntelInsuranceChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐInsuranceChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelsync.InsuranceChange) graphql.Marshaler {
+func marshalNCarrierIntelInsuranceChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐInsuranceChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelsync.InsuranceChange) graphql.Marshaler {
 	return gqlexec.List[carrierintelsync.InsuranceChange]{
-		Elem:        marshalNCarrierIntelInsuranceChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐInsuranceChange,
+		Elem:        marshalNCarrierIntelInsuranceChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐInsuranceChange,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelInsuranceChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐInsuranceChangeKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsync.InsuranceChangeKind) graphql.Marshaler {
+func marshalNCarrierIntelInsuranceChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐInsuranceChangeKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsync.InsuranceChangeKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7619,7 +7619,7 @@ func marshalNCarrierIntelNetworkLink2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "CarrierIntelNetworkLink", &v)
 }
 
-func marshalNCarrierIntelOutagePolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐOutagePolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelcontrol.OutagePolicy) graphql.Marshaler {
+func marshalNCarrierIntelOutagePolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelcontrolᚐOutagePolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelcontrol.OutagePolicy) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7627,15 +7627,15 @@ func marshalNCarrierIntelOutagePolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNCarrierIntelOverride2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelOverrideᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierinteloverride.CarrierIntelOverride) graphql.Marshaler {
+func marshalNCarrierIntelOverride2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteloverrideᚐCarrierIntelOverrideᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierinteloverride.CarrierIntelOverride) graphql.Marshaler {
 	return gqlexec.List[*carrierinteloverride.CarrierIntelOverride]{
-		Elem:        marshalNCarrierIntelOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelOverride,
+		Elem:        marshalNCarrierIntelOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteloverrideᚐCarrierIntelOverride,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierinteloverride.CarrierIntelOverride) graphql.Marshaler {
+func marshalNCarrierIntelOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteloverrideᚐCarrierIntelOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierinteloverride.CarrierIntelOverride) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7667,7 +7667,7 @@ func marshalNCarrierIntelProviderInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "CarrierIntelProviderInfo", v)
 }
 
-func marshalNCarrierIntelReviewState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐReviewState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsnapshot.ReviewState) graphql.Marshaler {
+func marshalNCarrierIntelReviewState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐReviewState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsnapshot.ReviewState) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7691,15 +7691,15 @@ func marshalNCarrierIntelRuleAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNCarrierIntelRuleDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelrule.RuleDefinition) graphql.Marshaler {
+func marshalNCarrierIntelRuleDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelrule.RuleDefinition) graphql.Marshaler {
 	return gqlexec.List[*carrierintelrule.RuleDefinition]{
-		Elem:        marshalNCarrierIntelRuleDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleDefinition,
+		Elem:        marshalNCarrierIntelRuleDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleDefinition,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelRuleDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelrule.RuleDefinition) graphql.Marshaler {
+func marshalNCarrierIntelRuleDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelrule.RuleDefinition) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7707,19 +7707,19 @@ func marshalNCarrierIntelRuleDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "CarrierIntelRuleDefinition", v)
 }
 
-func marshalNCarrierIntelRuleParam2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleParamSpec(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelrule.RuleParamSpec) graphql.Marshaler {
+func marshalNCarrierIntelRuleParam2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleParamSpec(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelrule.RuleParamSpec) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CarrierIntelRuleParam", &v)
 }
 
-func marshalNCarrierIntelRuleParam2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleParamSpecᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelrule.RuleParamSpec) graphql.Marshaler {
+func marshalNCarrierIntelRuleParam2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleParamSpecᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelrule.RuleParamSpec) graphql.Marshaler {
 	return gqlexec.List[carrierintelrule.RuleParamSpec]{
-		Elem:        marshalNCarrierIntelRuleParam2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleParamSpec,
+		Elem:        marshalNCarrierIntelRuleParam2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleParamSpec,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelRuleParamType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐRuleParamType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelrule.RuleParamType) graphql.Marshaler {
+func marshalNCarrierIntelRuleParamType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelruleᚐRuleParamType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelrule.RuleParamType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7799,15 +7799,15 @@ func marshalNCarrierIntelSeverityCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "CarrierIntelSeverityCount", v)
 }
 
-func marshalNCarrierIntelSnapshot2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshotᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelsnapshot.CarrierIntelSnapshot) graphql.Marshaler {
+func marshalNCarrierIntelSnapshot2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshotᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelsnapshot.CarrierIntelSnapshot) graphql.Marshaler {
 	return gqlexec.List[*carrierintelsnapshot.CarrierIntelSnapshot]{
-		Elem:        marshalNCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshot,
+		Elem:        marshalNCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshot,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelsnapshot.CarrierIntelSnapshot) graphql.Marshaler {
+func marshalNCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelsnapshot.CarrierIntelSnapshot) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7847,7 +7847,7 @@ func marshalNCarrierIntelSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "CarrierIntelSuggestion", v)
 }
 
-func marshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncField(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsync.SyncField) graphql.Marshaler {
+func marshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncField(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelsync.SyncField) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7855,15 +7855,15 @@ func marshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncFieldᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelsync.SyncField) graphql.Marshaler {
+func marshalNCarrierIntelSyncField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncFieldᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []carrierintelsync.SyncField) graphql.Marshaler {
 	return gqlexec.List[carrierintelsync.SyncField]{
-		Elem:        marshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncField,
+		Elem:        marshalNCarrierIntelSyncField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncField,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelSyncPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐSyncPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelsync.SyncPlan) graphql.Marshaler {
+func marshalNCarrierIntelSyncPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsyncᚐSyncPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelsync.SyncPlan) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7919,7 +7919,7 @@ func marshalNCarrierIntelUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "CarrierIntelUsageSummary", v)
 }
 
-func marshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐVendorState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelenrollment.VendorState) graphql.Marshaler {
+func marshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐVendorState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrierintelenrollment.VendorState) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7927,7 +7927,7 @@ func marshalNCarrierIntelVendorState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNCarrierMonitoringEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierMonitoringEnrollment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelenrollment.CarrierMonitoringEnrollment) graphql.Marshaler {
+func marshalNCarrierMonitoringEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐCarrierMonitoringEnrollment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelenrollment.CarrierMonitoringEnrollment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8173,14 +8173,14 @@ func marshalOCarrierIntelEquipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "CarrierIntelEquipment", v)
 }
 
-func marshalOCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelevent.CarrierIntelEvent) graphql.Marshaler {
+func marshalOCarrierIntelEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐCarrierIntelEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelevent.CarrierIntelEvent) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CarrierIntelEvent", v)
 }
 
-func marshalOCarrierIntelEventResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐEventResolution(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelevent.EventResolution) graphql.Marshaler {
+func marshalOCarrierIntelEventResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierinteleventᚐEventResolution(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelevent.EventResolution) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -8273,14 +8273,14 @@ func marshalOCarrierIntelSafety2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "CarrierIntelSafety", v)
 }
 
-func marshalOCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierIntelSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelsnapshot.CarrierIntelSnapshot) graphql.Marshaler {
+func marshalOCarrierIntelSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelsnapshotᚐCarrierIntelSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelsnapshot.CarrierIntelSnapshot) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CarrierIntelSnapshot", v)
 }
 
-func marshalOCarrierMonitoringEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelᚐCarrierMonitoringEnrollment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelenrollment.CarrierMonitoringEnrollment) graphql.Marshaler {
+func marshalOCarrierMonitoringEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierintelenrollmentᚐCarrierMonitoringEnrollment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelenrollment.CarrierMonitoringEnrollment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -5,12 +5,12 @@ package scimgrouprolemappingexec
 import (
 	"context"
 	"errors"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -148,7 +148,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*iam.SCIMGroupRoleMapping)
 					return obj.Role, nil
 				},
-				Marshal: gqlexec.Marshal(marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐRole),
+				Marshal: gqlexec.Marshal(marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole),
 			},
 		}},
 		{Object: "SCIMGroupRoleMappingConnection", Fields: []*gqlexec.Field{
@@ -358,7 +358,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *rbac.Role) graphql.Marshaler {
+func marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋrbacᚐRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *rbac.Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

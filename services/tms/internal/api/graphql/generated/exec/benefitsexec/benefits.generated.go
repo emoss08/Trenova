@@ -3,14 +3,14 @@
 package benefitsexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"context"
 	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -178,7 +178,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*paybenefit.BenefitPlan)
 					return obj.PlanType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlanType),
+				Marshal: gqlexec.Marshal(marshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlanType),
 			},
 			{
 				Name:     "carrier",
@@ -296,7 +296,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*paybenefit.BenefitPlan)
 					return obj.PayCode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode),
+				Marshal: gqlexec.Marshal(marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaycodeᚐPayCode),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -311,7 +311,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateBenefitPlan(ctx, fc.Args["input"].(gqlmodel.BenefitPlanInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlan),
+				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan),
 			},
 			{
 				Name:       "updateBenefitPlan",
@@ -324,7 +324,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateBenefitPlan(ctx, fc.Args["input"].(gqlmodel.UpdateBenefitPlanInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlan),
+				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan),
 			},
 			{
 				Name:       "enrollBenefit",
@@ -337,7 +337,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EnrollBenefit(ctx, fc.Args["input"].(gqlmodel.EnrollBenefitInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerBenefitEnrollment),
+				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollment),
 			},
 			{
 				Name:       "endBenefitEnrollment",
@@ -350,7 +350,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EndBenefitEnrollment(ctx, fc.Args["input"].(gqlmodel.EndBenefitEnrollmentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerBenefitEnrollment),
+				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollment),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -366,7 +366,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").BenefitPlans(ctx, fc.Args["activeOnly"].(*bool), fc.Args["planYear"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlanᚄ),
+				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlanᚄ),
 			},
 			{
 				Name:       "benefitPlan",
@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").BenefitPlan(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlan),
+				Marshal: gqlexec.Marshal(marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan),
 			},
 			{
 				Name:       "workerBenefitEnrollments",
@@ -394,7 +394,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerBenefitEnrollments(ctx, fc.Args["workerId"].(string), fc.Args["openOnly"].(*bool))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerBenefitEnrollmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollmentᚄ),
 			},
 			{
 				Name:       "benefitEnrollments",
@@ -408,7 +408,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").BenefitEnrollments(ctx, fc.Args["planId"].(*string), fc.Args["statuses"].([]paybenefit.BenefitEnrollmentStatus), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerBenefitEnrollmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollmentᚄ),
 			},
 			{
 				Name:       "benefitCosts",
@@ -533,7 +533,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*benefitsservice.TotalCompensation)
 					return obj.Enrollments, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerBenefitEnrollmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollmentᚄ),
 			},
 		}},
 		{Object: "WorkerBenefitEnrollment", Fields: []*gqlexec.Field{
@@ -575,7 +575,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*paybenefit.WorkerBenefitEnrollment)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitEnrollmentStatus),
+				Marshal: gqlexec.Marshal(marshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitEnrollmentStatus),
 			},
 			{
 				Name:     "coverageTier",
@@ -585,7 +585,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*paybenefit.WorkerBenefitEnrollment)
 					return obj.CoverageTier, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCoverageTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐCoverageTier),
+				Marshal: gqlexec.Marshal(marshalNCoverageTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐCoverageTier),
 			},
 			{
 				Name:     "effectiveFrom",
@@ -685,7 +685,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*paybenefit.WorkerBenefitEnrollment)
 					return obj.BenefitPlan, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlan),
+				Marshal: gqlexec.Marshal(marshalOBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan),
 			},
 			{
 				Name:      "worker",
@@ -864,7 +864,7 @@ func field_Query_benefitEnrollments_args(ctx context.Context, ec *gqlexec.Exec, 
 	args["planId"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "statuses",
 		func(ctx context.Context, v any) ([]paybenefit.BenefitEnrollmentStatus, error) {
-			return unmarshalOBenefitEnrollmentStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitEnrollmentStatusᚄ(ctx, ec, v)
+			return unmarshalOBenefitEnrollmentStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitEnrollmentStatusᚄ(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -977,7 +977,7 @@ func unmarshalInputBenefitPlanInput(ctx context.Context, ec *gqlexec.Exec, obj a
 			it.Description = data
 		case "planType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("planType"))
-			data, err := unmarshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlanType(ctx, ec, v)
+			data, err := unmarshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlanType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1128,7 +1128,7 @@ func unmarshalInputEnrollBenefitInput(ctx context.Context, ec *gqlexec.Exec, obj
 			it.BenefitPlanID = data
 		case "coverageTier":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coverageTier"))
-			data, err := unmarshalOCoverageTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐCoverageTier(ctx, ec, v)
+			data, err := unmarshalOCoverageTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐCoverageTier(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1221,7 +1221,7 @@ func unmarshalInputUpdateBenefitPlanInput(ctx context.Context, ec *gqlexec.Exec,
 			it.Description = data
 		case "planType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("planType"))
-			data, err := unmarshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlanType(ctx, ec, v)
+			data, err := unmarshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlanType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1294,7 +1294,7 @@ func unmarshalInputUpdateBenefitPlanInput(ctx context.Context, ec *gqlexec.Exec,
 	return it, nil
 }
 
-func unmarshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitEnrollmentStatus(ctx context.Context, ec *gqlexec.Exec, v any) (paybenefit.BenefitEnrollmentStatus, error) {
+func unmarshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitEnrollmentStatus(ctx context.Context, ec *gqlexec.Exec, v any) (paybenefit.BenefitEnrollmentStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := paybenefit.BenefitEnrollmentStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1305,7 +1305,7 @@ func unmarshalNBenefitPlanInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlanType(ctx context.Context, ec *gqlexec.Exec, v any) (paybenefit.BenefitPlanType, error) {
+func unmarshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlanType(ctx context.Context, ec *gqlexec.Exec, v any) (paybenefit.BenefitPlanType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := paybenefit.BenefitPlanType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1341,11 +1341,11 @@ func unmarshalNUpdateBenefitPlanInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBenefitEnrollmentStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitEnrollmentStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]paybenefit.BenefitEnrollmentStatus, error) {
+func unmarshalOBenefitEnrollmentStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitEnrollmentStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]paybenefit.BenefitEnrollmentStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitEnrollmentStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitEnrollmentStatus)
 }
 
 func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
@@ -1356,7 +1356,7 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOCoverageTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐCoverageTier(ctx context.Context, ec *gqlexec.Exec, v any) (*paybenefit.CoverageTier, error) {
+func unmarshalOCoverageTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐCoverageTier(ctx context.Context, ec *gqlexec.Exec, v any) (*paybenefit.CoverageTier, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1422,7 +1422,7 @@ func marshalNBenefitCostRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "BenefitCostRow", v)
 }
 
-func marshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitEnrollmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v paybenefit.BenefitEnrollmentStatus) graphql.Marshaler {
+func marshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitEnrollmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v paybenefit.BenefitEnrollmentStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1430,15 +1430,15 @@ func marshalNBenefitEnrollmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNBenefitPlan2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlanᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*paybenefit.BenefitPlan) graphql.Marshaler {
+func marshalNBenefitPlan2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlanᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*paybenefit.BenefitPlan) graphql.Marshaler {
 	return gqlexec.List[*paybenefit.BenefitPlan]{
-		Elem:        marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlan,
+		Elem:        marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paybenefit.BenefitPlan) graphql.Marshaler {
+func marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paybenefit.BenefitPlan) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1446,7 +1446,7 @@ func marshalNBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return ec.MarshalType(ctx, sel, "BenefitPlan", v)
 }
 
-func marshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlanType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v paybenefit.BenefitPlanType) graphql.Marshaler {
+func marshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlanType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v paybenefit.BenefitPlanType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1454,7 +1454,7 @@ func marshalNBenefitPlanType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNCoverageTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐCoverageTier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v paybenefit.CoverageTier) graphql.Marshaler {
+func marshalNCoverageTier2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐCoverageTier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v paybenefit.CoverageTier) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1534,15 +1534,15 @@ func marshalNTotalCompensation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "TotalCompensation", v)
 }
 
-func marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerBenefitEnrollmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*paybenefit.WorkerBenefitEnrollment) graphql.Marshaler {
+func marshalNWorkerBenefitEnrollment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*paybenefit.WorkerBenefitEnrollment) graphql.Marshaler {
 	return gqlexec.List[*paybenefit.WorkerBenefitEnrollment]{
-		Elem:        marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerBenefitEnrollment,
+		Elem:        marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐWorkerBenefitEnrollment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paybenefit.WorkerBenefitEnrollment) graphql.Marshaler {
+func marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐWorkerBenefitEnrollment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paybenefit.WorkerBenefitEnrollment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1550,7 +1550,7 @@ func marshalNWorkerBenefitEnrollment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "WorkerBenefitEnrollment", v)
 }
 
-func marshalOBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐBenefitPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paybenefit.BenefitPlan) graphql.Marshaler {
+func marshalOBenefitPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaybenefitᚐBenefitPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paybenefit.BenefitPlan) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1565,7 +1565,7 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriverpayᚐPayCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paycode.PayCode) graphql.Marshaler {
+func marshalOPayCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋpaycodeᚐPayCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *paycode.PayCode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

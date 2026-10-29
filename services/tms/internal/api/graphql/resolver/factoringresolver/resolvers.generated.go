@@ -3,11 +3,11 @@
 package factoringresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	factoringledgerports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	factoringremittanceports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	factoringsubmissionports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 )
 
 type Deps struct {

@@ -3,7 +3,7 @@
 package workerresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 )
 

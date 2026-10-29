@@ -3,9 +3,9 @@
 package dispatchconsoleresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	dispatchconsoleports "github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 )
 

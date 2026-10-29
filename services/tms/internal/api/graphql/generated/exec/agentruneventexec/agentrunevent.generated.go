@@ -3,13 +3,13 @@
 package agentruneventexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"context"
 	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -219,7 +219,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentRunEventEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentRunEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRunEvent),
+				Marshal: gqlexec.Marshal(marshalNAgentRunEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentruneventᚐAgentRunEvent),
 			},
 			{
 				Name:     "cursor",
@@ -295,7 +295,7 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAgentRunEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRunEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentrunevent.AgentRunEvent) graphql.Marshaler {
+func marshalNAgentRunEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentruneventᚐAgentRunEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentrunevent.AgentRunEvent) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

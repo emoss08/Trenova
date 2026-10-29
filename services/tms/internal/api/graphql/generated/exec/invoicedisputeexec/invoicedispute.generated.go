@@ -3,7 +3,6 @@
 package invoicedisputeexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"context"
 	"errors"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +35,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").Disputes(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDisputeᚄ),
+				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDisputeᚄ),
 			},
 			{
 				Name:       "openDispute",
@@ -47,7 +47,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").OpenDispute(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDispute),
+				Marshal: gqlexec.Marshal(marshalOInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute),
 			},
 		}},
 		{Object: "InvoiceDispute", Fields: []*gqlexec.Field{
@@ -109,7 +109,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoicedispute.InvoiceDispute)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceDisputeCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeCaseStatus),
+				Marshal: gqlexec.Marshal(marshalNInvoiceDisputeCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeCaseStatus),
 			},
 			{
 				Name:     "reasonCode",
@@ -119,7 +119,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoicedispute.InvoiceDispute)
 					return obj.ReasonCode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeReasonCode),
+				Marshal: gqlexec.Marshal(marshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeReasonCode),
 			},
 			{
 				Name:       "disputedAmount",
@@ -198,7 +198,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoicedispute.InvoiceDispute)
 					return gqlexec.Resolver[resolverInvoiceDispute](ec, "InvoiceDispute").Resolution(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoiceDisputeResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeResolution),
+				Marshal: gqlexec.Marshal(marshalOInvoiceDisputeResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeResolution),
 			},
 			{
 				Name:     "resolutionAdjustmentId",
@@ -305,7 +305,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").OpenInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.OpenInvoiceDisputeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDispute),
+				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute),
 			},
 			{
 				Name:       "resolveInvoiceDispute",
@@ -318,7 +318,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.ResolveInvoiceDisputeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDispute),
+				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute),
 			},
 			{
 				Name:       "withdrawInvoiceDispute",
@@ -331,7 +331,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").WithdrawInvoiceDispute(ctx, fc.Args["input"].(gqlmodel.WithdrawInvoiceDisputeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDispute),
+				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -347,7 +347,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceDisputes(ctx, fc.Args["invoiceId"].(*string), fc.Args["invoiceIds"].([]string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDisputeᚄ),
+				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDisputeᚄ),
 			},
 		}},
 	},
@@ -484,7 +484,7 @@ func unmarshalInputOpenInvoiceDisputeInput(ctx context.Context, ec *gqlexec.Exec
 			it.InvoiceID = data
 		case "reasonCode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reasonCode"))
-			data, err := unmarshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeReasonCode(ctx, ec, v)
+			data, err := unmarshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeReasonCode(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -535,7 +535,7 @@ func unmarshalInputResolveInvoiceDisputeInput(ctx context.Context, ec *gqlexec.E
 			it.DisputeID = data
 		case "resolution":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resolution"))
-			data, err := unmarshalNInvoiceDisputeResolution2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeResolution(ctx, ec, v)
+			data, err := unmarshalNInvoiceDisputeResolution2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeResolution(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -606,13 +606,13 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeReasonCode(ctx context.Context, ec *gqlexec.Exec, v any) (invoicedispute.DisputeReasonCode, error) {
+func unmarshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeReasonCode(ctx context.Context, ec *gqlexec.Exec, v any) (invoicedispute.DisputeReasonCode, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := invoicedispute.DisputeReasonCode(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNInvoiceDisputeResolution2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeResolution(ctx context.Context, ec *gqlexec.Exec, v any) (invoicedispute.DisputeResolution, error) {
+func unmarshalNInvoiceDisputeResolution2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeResolution(ctx context.Context, ec *gqlexec.Exec, v any) (invoicedispute.DisputeResolution, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := invoicedispute.DisputeResolution(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -672,15 +672,15 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDisputeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoicedispute.InvoiceDispute) graphql.Marshaler {
+func marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDisputeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoicedispute.InvoiceDispute) graphql.Marshaler {
 	return gqlexec.List[*invoicedispute.InvoiceDispute]{
-		Elem:        marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDispute,
+		Elem:        marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDispute(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoicedispute.InvoiceDispute) graphql.Marshaler {
+func marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoicedispute.InvoiceDispute) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -688,7 +688,7 @@ func marshalNInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "InvoiceDispute", v)
 }
 
-func marshalNInvoiceDisputeCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeCaseStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoicedispute.DisputeCaseStatus) graphql.Marshaler {
+func marshalNInvoiceDisputeCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeCaseStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoicedispute.DisputeCaseStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -696,7 +696,7 @@ func marshalNInvoiceDisputeCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeReasonCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoicedispute.DisputeReasonCode) graphql.Marshaler {
+func marshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeReasonCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoicedispute.DisputeReasonCode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -739,14 +739,14 @@ func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 	return ec.MarshalType(ctx, sel, "Invoice", v)
 }
 
-func marshalOInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDispute(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoicedispute.InvoiceDispute) graphql.Marshaler {
+func marshalOInvoiceDispute2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐInvoiceDispute(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoicedispute.InvoiceDispute) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "InvoiceDispute", v)
 }
 
-func marshalOInvoiceDisputeResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐDisputeResolution(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoicedispute.DisputeResolution) graphql.Marshaler {
+func marshalOInvoiceDisputeResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicedisputeᚐDisputeResolution(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoicedispute.DisputeResolution) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -3,7 +3,7 @@
 package benefitsresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	driversettlementworkspaceservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	benefitsservice "github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"

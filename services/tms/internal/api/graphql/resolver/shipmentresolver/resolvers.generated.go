@@ -3,14 +3,14 @@
 package shipmentresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	ratingreviewports "github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
+	shipmentcommentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
+	shipmentimportassistantports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	shipmentserviceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"

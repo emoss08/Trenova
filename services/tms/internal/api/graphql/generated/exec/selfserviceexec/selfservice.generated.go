@@ -3,15 +3,15 @@
 package selfserviceexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"context"
 	"errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -40,7 +40,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorkerPolicy(ctx, fc.Args["input"].(gqlmodel.WorkerPolicyInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 			{
 				Name:       "updateWorkerPolicy",
@@ -53,7 +53,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerPolicyInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 			{
 				Name:       "decideProfileChange",
@@ -66,7 +66,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideProfileChange(ctx, fc.Args["input"].(gqlmodel.DecideProfileChangeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequest),
+				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequest),
 			},
 		}},
 		{Object: "PolicyCompliance", Fields: []*gqlexec.Field{
@@ -79,7 +79,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.PolicyCompliance)
 					return obj.Policy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 			{
 				Name:     "signed",
@@ -218,7 +218,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicies(ctx, fc.Args["activeOnly"].(*bool), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyᚄ),
 			},
 			{
 				Name:       "workerPolicy",
@@ -232,7 +232,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicy(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 			{
 				Name:       "workerPolicyCompliance",
@@ -260,7 +260,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicyAcknowledgements(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyAcknowledgementᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgementᚄ),
 			},
 			{
 				Name:       "profileChangeRequests",
@@ -274,7 +274,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ProfileChangeRequests(ctx, fc.Args["filter"].(*gqlmodel.ProfileChangeFilterInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequestᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequestᚄ),
 			},
 		}},
 		{Object: "WorkerPolicy", Fields: []*gqlexec.Field{
@@ -393,7 +393,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.AppliesTo, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPolicyAudience),
+				Marshal: gqlexec.Marshal(marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience),
 			},
 			{
 				Name:     "effectiveFrom",
@@ -580,7 +580,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.Policy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 		}},
 		{Object: "WorkerProfileChangeRequest", Fields: []*gqlexec.Field{
@@ -632,7 +632,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatus),
+				Marshal: gqlexec.Marshal(marshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatus),
 			},
 			{
 				Name:       "changes",
@@ -947,7 +947,7 @@ func unmarshalInputProfileChangeFilterInput(ctx context.Context, ec *gqlexec.Exe
 			it.WorkerID = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOProfileChangeStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOProfileChangeStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1040,7 +1040,7 @@ func unmarshalInputWorkerPolicyInput(ctx context.Context, ec *gqlexec.Exec, obj 
 			it.RequiresSignature = data
 		case "appliesTo":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appliesTo"))
-			data, err := unmarshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPolicyAudience(ctx, ec, v)
+			data, err := unmarshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1079,13 +1079,13 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, v any) (workerpolicy.PolicyAudience, error) {
+func unmarshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, v any) (workerpolicy.PolicyAudience, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := workerpolicy.PolicyAudience(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatus(ctx context.Context, ec *gqlexec.Exec, v any) (profilechange.ProfileChangeStatus, error) {
+func unmarshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatus(ctx context.Context, ec *gqlexec.Exec, v any) (profilechange.ProfileChangeStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := profilechange.ProfileChangeStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1142,11 +1142,11 @@ func unmarshalOProfileChangeFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOProfileChangeStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]profilechange.ProfileChangeStatus, error) {
+func unmarshalOProfileChangeStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]profilechange.ProfileChangeStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatus)
 }
 
 func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -1213,7 +1213,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerpolicy.PolicyAudience) graphql.Marshaler {
+func marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerpolicy.PolicyAudience) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1245,7 +1245,7 @@ func marshalNPolicyComplianceRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "PolicyComplianceRow", v)
 }
 
-func marshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v profilechange.ProfileChangeStatus) graphql.Marshaler {
+func marshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v profilechange.ProfileChangeStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1285,15 +1285,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerpolicy.WorkerPolicy) graphql.Marshaler {
+func marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerpolicy.WorkerPolicy) graphql.Marshaler {
 	return gqlexec.List[*workerpolicy.WorkerPolicy]{
-		Elem:        marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy,
+		Elem:        marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicy) graphql.Marshaler {
+func marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicy) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1301,15 +1301,15 @@ func marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "WorkerPolicy", v)
 }
 
-func marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyAcknowledgementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerpolicy.WorkerPolicyAcknowledgement) graphql.Marshaler {
+func marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerpolicy.WorkerPolicyAcknowledgement) graphql.Marshaler {
 	return gqlexec.List[*workerpolicy.WorkerPolicyAcknowledgement]{
-		Elem:        marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyAcknowledgement,
+		Elem:        marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgement,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyAcknowledgement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicyAcknowledgement) graphql.Marshaler {
+func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicyAcknowledgement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1317,15 +1317,15 @@ func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "WorkerPolicyAcknowledgement", v)
 }
 
-func marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*profilechange.WorkerProfileChangeRequest) graphql.Marshaler {
+func marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*profilechange.WorkerProfileChangeRequest) graphql.Marshaler {
 	return gqlexec.List[*profilechange.WorkerProfileChangeRequest]{
-		Elem:        marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequest,
+		Elem:        marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequest,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *profilechange.WorkerProfileChangeRequest) graphql.Marshaler {
+func marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *profilechange.WorkerProfileChangeRequest) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1374,7 +1374,7 @@ func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋw
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
-func marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicy) graphql.Marshaler {
+func marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

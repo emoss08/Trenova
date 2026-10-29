@@ -3,7 +3,7 @@
 package formulalibraryresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	formulalibraryservice "github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 )
 

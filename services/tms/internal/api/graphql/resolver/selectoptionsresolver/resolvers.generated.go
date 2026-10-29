@@ -3,13 +3,13 @@
 package selectoptionsresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	accounttypeservice "github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	fiscalperiodports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	fiscalyearports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	aiproviderports "github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	capturedevices "github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	captureprofiles "github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
@@ -26,7 +26,7 @@ import (
 	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
+	shipmentserviceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	carrierports "github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	customerports "github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	factoringcompanyports "github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"

@@ -3,7 +3,7 @@
 package aicontrolresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	agentrosterports "github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	aicontrolsummaryports "github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	aituneupports "github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"

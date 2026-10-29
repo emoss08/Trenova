@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 func (r *AgentDefinitionResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error) {
@@ -78,8 +79,8 @@ func (r *AgentDefinitionResolver) AccessRoles(ctx context.Context, obj *agentdef
 	return r.AgentDefinitionAccessRoles(ctx, obj)
 }
 
-func (r *AgentDefinitionResolver) Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error) {
-	return agentstarter.Starters(obj), nil
+func (r *AgentDefinitionResolver) Starters(ctx context.Context, obj *agentdefinition.Definition) ([]*agentstarter.Starter, error) {
+	return sliceutils.Pointers(agentstarter.Starters(obj)), nil
 }
 
 func (r *AgentDefinitionResolver) PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error) {
@@ -162,8 +163,8 @@ func (r *MyAgentResolver) Template(ctx context.Context, obj *agentdefinition.Def
 	return definitionTemplate(obj), nil
 }
 
-func (r *MyAgentResolver) Starters(ctx context.Context, obj *agentdefinition.Definition) ([]agentstarter.Starter, error) {
-	return agentstarter.Starters(obj), nil
+func (r *MyAgentResolver) Starters(ctx context.Context, obj *agentdefinition.Definition) ([]*agentstarter.Starter, error) {
+	return sliceutils.Pointers(agentstarter.Starters(obj)), nil
 }
 
 func (r *MyAgentResolver) Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error) {

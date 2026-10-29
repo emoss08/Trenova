@@ -3,7 +3,7 @@
 package triageresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	triagebriefingservice "github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
 	triageconflictservice "github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	triagecorrectionservice "github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"

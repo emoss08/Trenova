@@ -3,7 +3,7 @@
 package briefingresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 )
 

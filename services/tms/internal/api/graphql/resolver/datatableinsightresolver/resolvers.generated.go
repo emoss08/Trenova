@@ -3,7 +3,7 @@
 package datatableinsightresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	tableinsightservice "github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 )
 

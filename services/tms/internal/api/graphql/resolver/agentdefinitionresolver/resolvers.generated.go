@@ -3,11 +3,11 @@
 package agentdefinitionresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentcapabilityports "github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	agentdefinitionports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	agentdraftports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	agentrecommendationports "github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	agentshadowports "github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 )
 

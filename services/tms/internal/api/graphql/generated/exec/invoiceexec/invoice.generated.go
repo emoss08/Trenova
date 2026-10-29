@@ -3,7 +3,6 @@
 package invoiceexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
 	"context"
 	"errors"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -904,7 +904,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").ChargeSummary(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceChargeGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐChargeGroupᚄ),
+				Marshal: gqlexec.Marshal(marshalNInvoiceChargeGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicechargegroupᚐChargeGroupᚄ),
 			},
 			{
 				Name:       "voidedBy",
@@ -2278,15 +2278,15 @@ func marshalNInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 	return ec.MarshalType(ctx, sel, "Invoice", v)
 }
 
-func marshalNInvoiceChargeGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐChargeGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoicechargegroup.ChargeGroup) graphql.Marshaler {
+func marshalNInvoiceChargeGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicechargegroupᚐChargeGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoicechargegroup.ChargeGroup) graphql.Marshaler {
 	return gqlexec.List[*invoicechargegroup.ChargeGroup]{
-		Elem:        marshalNInvoiceChargeGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐChargeGroup,
+		Elem:        marshalNInvoiceChargeGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicechargegroupᚐChargeGroup,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInvoiceChargeGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐChargeGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoicechargegroup.ChargeGroup) graphql.Marshaler {
+func marshalNInvoiceChargeGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoicechargegroupᚐChargeGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoicechargegroup.ChargeGroup) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

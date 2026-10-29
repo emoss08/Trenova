@@ -3,11 +3,11 @@
 package agentpreviewresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentdecisionports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	agentplanports "github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	agentproposalports "github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	agentruntimeports "github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 )
 
 type Deps struct {

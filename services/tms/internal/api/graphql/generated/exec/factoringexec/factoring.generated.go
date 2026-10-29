@@ -3,13 +3,6 @@
 package factoringexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"context"
 	"errors"
 
@@ -17,8 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -381,7 +381,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringreadiness.Check)
 					return obj.Code, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringCheckCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐCheckCode),
+				Marshal: gqlexec.Marshal(marshalNFactoringCheckCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckCode),
 			},
 			{
 				Name:     "passed",
@@ -412,7 +412,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringreadiness.Check)
 					return gqlexec.Resolver[resolverFactoringCheck](ec, "FactoringCheck").Fix(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringFixAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐFixAction),
+				Marshal: gqlexec.Marshal(marshalOFactoringFixAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐFixAction),
 			},
 			{
 				Name:       "documentTypeId",
@@ -677,7 +677,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledgerports.FundingPlan)
 					return gqlexec.Resolver[resolverFactoringFundingPlan](ec, "FactoringFundingPlan").Status(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatus),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionStatus),
 			},
 			{
 				Name:      "movements",
@@ -688,7 +688,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledgerports.FundingPlan)
 					return obj.Movements, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringPlannedMovement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovementᚄ),
+				Marshal: gqlexec.Marshal(marshalNFactoringPlannedMovement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedMovementᚄ),
 			},
 			{
 				Name:     "fundedCount",
@@ -779,7 +779,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.Verdict, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐVerdict),
+				Marshal: gqlexec.Marshal(marshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdict),
 			},
 			{
 				Name:      "checks",
@@ -790,7 +790,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.Checks, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringCheck2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐCheckᚄ),
+				Marshal: gqlexec.Marshal(marshalNFactoringCheck2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckᚄ),
 			},
 			{
 				Name:     "failedChecks",
@@ -877,7 +877,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringreadiness.InvoiceState)
 					return gqlexec.Resolver[resolverFactoringInvoiceState](ec, "FactoringInvoiceState").Submission(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringLiveSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐLiveItem),
+				Marshal: gqlexec.Marshal(marshalOFactoringLiveSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐLiveItem),
 			},
 		}},
 		{Object: "FactoringInvoiceStateConnection", Fields: []*gqlexec.Field{
@@ -933,7 +933,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FactoringInvoiceStateEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐInvoiceState),
+				Marshal: gqlexec.Marshal(marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐInvoiceState),
 			},
 			{
 				Name:     "cursor",
@@ -975,7 +975,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmissionports.LiveItem)
 					return obj.SubmissionStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatus),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionStatus),
 			},
 			{
 				Name:     "itemId",
@@ -995,7 +995,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmissionports.LiveItem)
 					return obj.ItemStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItemStatus),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionItemStatus),
 			},
 		}},
 		{Object: "FactoringMovement", Fields: []*gqlexec.Field{
@@ -1007,7 +1007,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledger.Movement)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind),
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntryKind),
 			},
 			{
 				Name:     "treatment",
@@ -1452,7 +1452,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledgerports.PlannedMovement)
 					return obj.Movement, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringMovement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐMovement),
+				Marshal: gqlexec.Marshal(marshalNFactoringMovement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐMovement),
 			},
 			{
 				Name:      "lines",
@@ -1463,7 +1463,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledgerports.PlannedMovement)
 					return obj.Lines, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringPlannedLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNFactoringPlannedLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedLineᚄ),
 			},
 			{
 				Name:     "requestedDate",
@@ -1585,7 +1585,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.Remittance)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceSource),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceSource),
 			},
 			{
 				Name:       "inboundMessageId",
@@ -1607,7 +1607,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.Remittance)
 					return gqlexec.Resolver[resolverFactoringRemittance](ec, "FactoringRemittance").SourceFormat(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringRemittanceFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceFormat),
+				Marshal: gqlexec.Marshal(marshalOFactoringRemittanceFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceFormat),
 			},
 			{
 				Name:     "status",
@@ -1617,7 +1617,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.Remittance)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceStatus),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceStatus),
 			},
 			{
 				Name:     "defaultKind",
@@ -1627,7 +1627,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.Remittance)
 					return obj.DefaultKind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineKind),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineKind),
 			},
 			{
 				Name:     "remittedOn",
@@ -1853,7 +1853,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverFactoringRemittance](ec, "FactoringRemittance").Lines(ctx, obj, fc.Args["matchStatuses"].([]factoringremittance.RemittanceMatchStatus))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineᚄ),
 			},
 		}},
 		{Object: "FactoringRemittanceColumn", Fields: []*gqlexec.Field{
@@ -1931,7 +1931,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FactoringRemittanceEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance),
 			},
 			{
 				Name:     "cursor",
@@ -1993,7 +1993,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.RemittanceLine)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineKind),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineKind),
 			},
 			{
 				Name:     "invoiceNumber",
@@ -2084,7 +2084,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.RemittanceLine)
 					return obj.MatchStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchStatus),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchStatus),
 			},
 			{
 				Name:       "matchedBy",
@@ -2095,7 +2095,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.RemittanceLine)
 					return gqlexec.Resolver[resolverFactoringRemittanceLine](ec, "FactoringRemittanceLine").MatchedBy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringRemittanceMatchedBy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchedBy),
+				Marshal: gqlexec.Marshal(marshalOFactoringRemittanceMatchedBy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchedBy),
 			},
 			{
 				Name:       "submissionItemId",
@@ -2147,7 +2147,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.RemittanceLine)
 					return gqlexec.Resolver[resolverFactoringRemittanceLine](ec, "FactoringRemittanceLine").Reason(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringRemittanceMatchReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchReason),
+				Marshal: gqlexec.Marshal(marshalOFactoringRemittanceMatchReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchReason),
 			},
 			{
 				Name:      "suggestions",
@@ -2158,7 +2158,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.RemittanceLine)
 					return obj.Suggestions, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceSuggestion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceSuggestionᚄ),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceSuggestion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceSuggestionᚄ),
 			},
 			{
 				Name:     "error",
@@ -2263,7 +2263,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FactoringRemittanceLineEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLine),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLine),
 			},
 			{
 				Name:     "cursor",
@@ -2298,7 +2298,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittanceports.RemittancePlan)
 					return obj.Lines, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittancePlanLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedRemittanceLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittancePlanLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringremittanceportsᚐPlannedRemittanceLineᚄ),
 			},
 			{
 				Name:     "fundedCount",
@@ -2420,7 +2420,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittanceports.PlannedRemittanceLine)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineKind),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineKind),
 			},
 			{
 				Name:     "invoiceNumber",
@@ -2470,7 +2470,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittanceports.PlannedRemittanceLine)
 					return obj.Movement, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement),
+				Marshal: gqlexec.Marshal(marshalOFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedMovement),
 			},
 		}},
 		{Object: "FactoringRemittanceSuggestion", Fields: []*gqlexec.Field{
@@ -2522,7 +2522,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringremittance.RemittanceSuggestion)
 					return obj.Reason, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceMatchReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchReason),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceMatchReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchReason),
 			},
 		}},
 		{Object: "FactoringReserveBalance", Fields: []*gqlexec.Field{
@@ -2715,7 +2715,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledger.ReserveEntry)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind),
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntryKind),
 			},
 			{
 				Name:     "treatment",
@@ -2914,7 +2914,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledger.ReserveEntry)
 					return gqlexec.Resolver[resolverFactoringReserveEntry](ec, "FactoringReserveEntry").Submission(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalOFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 		}},
 		{Object: "FactoringReserveEntryConnection", Fields: []*gqlexec.Field{
@@ -2970,7 +2970,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FactoringReserveEntryEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntry),
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntry),
 			},
 			{
 				Name:     "cursor",
@@ -3018,7 +3018,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledgerports.ReserveMovementPlan)
 					return gqlexec.Resolver[resolverFactoringReserveMovementPlan](ec, "FactoringReserveMovementPlan").ItemStatus(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItemStatus),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionItemStatus),
 			},
 			{
 				Name:      "movement",
@@ -3028,7 +3028,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledgerports.ReserveMovementPlan)
 					return obj.Movement, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement),
+				Marshal: gqlexec.Marshal(marshalOFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedMovement),
 			},
 			{
 				Name:      "reverses",
@@ -3038,7 +3038,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringledgerports.ReserveMovementPlan)
 					return obj.Reverses, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntry),
+				Marshal: gqlexec.Marshal(marshalOFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntry),
 			},
 		}},
 		{Object: "FactoringSubmission", Fields: []*gqlexec.Field{
@@ -3110,7 +3110,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmission.Submission)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatus),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionStatus),
 			},
 			{
 				Name:     "currencyCode",
@@ -3202,7 +3202,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmission.Submission)
 					return obj.TransportMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransportMethod),
+				Marshal: gqlexec.Marshal(marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransportMethod),
 			},
 			{
 				Name:     "transportTarget",
@@ -3349,7 +3349,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmission.Submission)
 					return gqlexec.Resolver[resolverFactoringSubmission](ec, "FactoringSubmission").Items(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionItemᚄ),
 			},
 			{
 				Name:       "factoringCompany",
@@ -3417,7 +3417,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FactoringSubmissionEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:     "cursor",
@@ -3560,7 +3560,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmission.SubmissionItem)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItemStatus),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionItemStatus),
 			},
 			{
 				Name:     "releasedAt",
@@ -3718,7 +3718,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmissionports.SubmissionPlan)
 					return obj.TransportMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransportMethod),
+				Marshal: gqlexec.Marshal(marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransportMethod),
 			},
 			{
 				Name:     "transportTarget",
@@ -3759,7 +3759,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmissionports.SubmissionPlan)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionPlanItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐSubmissionPlanItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionPlanItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐSubmissionPlanItemᚄ),
 			},
 			{
 				Name:     "invoiceCount",
@@ -3992,7 +3992,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmission.Transport)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransportMethod),
+				Marshal: gqlexec.Marshal(marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransportMethod),
 			},
 			{
 				Name:       "emailRecipients",
@@ -4050,7 +4050,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmission.Transport)
 					return obj.SftpAuthMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringSftpAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSftpAuthMethod),
+				Marshal: gqlexec.Marshal(marshalOFactoringSftpAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSftpAuthMethod),
 			},
 			{
 				Name:       "sftpSecretSet",
@@ -4121,7 +4121,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*factoringsubmissionports.TransportTestResult)
 					return obj.Transport, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransport),
+				Marshal: gqlexec.Marshal(marshalNFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransport),
 			},
 			{
 				Name:     "passed",
@@ -4217,7 +4217,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").FactoringState(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐInvoiceState),
+				Marshal: gqlexec.Marshal(marshalOFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐInvoiceState),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -4336,7 +4336,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetInvoiceFactoringOverride(ctx, fc.Args["input"].(gqlmodel.SetInvoiceFactoringOverrideInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐInvoiceState),
+				Marshal: gqlexec.Marshal(marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐInvoiceState),
 			},
 			{
 				Name:       "requestMissingFactoringDocuments",
@@ -4362,7 +4362,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitInvoicesToFactor(ctx, fc.Args["input"].(gqlmodel.FactoringSubmissionPlanInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:       "retryFactoringSubmission",
@@ -4375,7 +4375,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RetryFactoringSubmission(ctx, fc.Args["input"].(gqlmodel.RetryFactoringSubmissionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:       "cancelFactoringSubmission",
@@ -4388,7 +4388,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelFactoringSubmission(ctx, fc.Args["input"].(gqlmodel.CancelFactoringSubmissionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:       "saveFactoringTransport",
@@ -4401,7 +4401,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveFactoringTransport(ctx, fc.Args["input"].(gqlmodel.SaveFactoringTransportInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransport),
+				Marshal: gqlexec.Marshal(marshalNFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransport),
 			},
 			{
 				Name:       "testFactoringTransport",
@@ -4414,7 +4414,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TestFactoringTransport(ctx, fc.Args["factoringCompanyId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringTransportTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐTransportTestResult),
+				Marshal: gqlexec.Marshal(marshalNFactoringTransportTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐTransportTestResult),
 			},
 			{
 				Name:       "recordFactoringFunding",
@@ -4427,7 +4427,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordFactoringFunding(ctx, fc.Args["input"].(gqlmodel.RecordFactoringFundingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:       "releaseFactoringReserve",
@@ -4440,7 +4440,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReleaseFactoringReserve(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:       "recordFactoringChargeback",
@@ -4453,7 +4453,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordFactoringChargeback(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:       "reverseFactoringChargeback",
@@ -4466,7 +4466,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReverseFactoringChargeback(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:       "createFactoringRemittance",
@@ -4479,7 +4479,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFactoringRemittance(ctx, fc.Args["input"].(gqlmodel.CreateFactoringRemittanceInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance),
 			},
 			{
 				Name:       "stageFactoringRemittance",
@@ -4492,7 +4492,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StageFactoringRemittance(ctx, fc.Args["input"].(gqlmodel.StageFactoringRemittanceInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance),
 			},
 			{
 				Name:       "rematchFactoringRemittance",
@@ -4505,7 +4505,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RematchFactoringRemittance(ctx, fc.Args["input"].(gqlmodel.FactoringRemittanceVersionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance),
 			},
 			{
 				Name:       "updateFactoringRemittanceLine",
@@ -4518,7 +4518,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFactoringRemittanceLine(ctx, fc.Args["input"].(gqlmodel.UpdateFactoringRemittanceLineInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance),
 			},
 			{
 				Name:       "applyFactoringRemittance",
@@ -4531,7 +4531,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyFactoringRemittance(ctx, fc.Args["input"].(gqlmodel.FactoringRemittanceVersionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance),
 			},
 			{
 				Name:       "discardFactoringRemittance",
@@ -4544,7 +4544,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DiscardFactoringRemittance(ctx, fc.Args["input"].(gqlmodel.DiscardFactoringRemittanceInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -4616,7 +4616,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringReadiness(ctx, fc.Args["invoiceId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐInvoiceState),
+				Marshal: gqlexec.Marshal(marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐInvoiceState),
 			},
 			{
 				Name:       "factoringInvoiceStates",
@@ -4670,7 +4670,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringSubmission(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission),
 			},
 			{
 				Name:       "factoringSubmissionPlan",
@@ -4684,7 +4684,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringSubmissionPlan(ctx, fc.Args["input"].(gqlmodel.FactoringSubmissionPlanInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐSubmissionPlan),
+				Marshal: gqlexec.Marshal(marshalNFactoringSubmissionPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐSubmissionPlan),
 			},
 			{
 				Name:       "factoringTransport",
@@ -4697,7 +4697,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringTransport(ctx, fc.Args["factoringCompanyId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransport),
+				Marshal: gqlexec.Marshal(marshalOFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransport),
 			},
 			{
 				Name:       "factoringReserveEntries",
@@ -4725,7 +4725,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringReserveBalance(ctx, fc.Args["factoringCompanyId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringReserveBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveBalance),
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐReserveBalance),
 			},
 			{
 				Name:       "factoringFundingPlan",
@@ -4739,7 +4739,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringFundingPlan(ctx, fc.Args["input"].(gqlmodel.RecordFactoringFundingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringFundingPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐFundingPlan),
+				Marshal: gqlexec.Marshal(marshalNFactoringFundingPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐFundingPlan),
 			},
 			{
 				Name:       "factoringReleasePlan",
@@ -4753,7 +4753,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringReleasePlan(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveMovementPlan),
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐReserveMovementPlan),
 			},
 			{
 				Name:       "factoringChargebackPlan",
@@ -4767,7 +4767,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringChargebackPlan(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveMovementPlan),
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐReserveMovementPlan),
 			},
 			{
 				Name:       "factoringChargebackReversalPlan",
@@ -4781,7 +4781,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringChargebackReversalPlan(ctx, fc.Args["input"].(gqlmodel.FactoringReserveMovementInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveMovementPlan),
+				Marshal: gqlexec.Marshal(marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐReserveMovementPlan),
 			},
 			{
 				Name:       "factoringRemittances",
@@ -4809,7 +4809,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringRemittance(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance),
 			},
 			{
 				Name:       "factoringRemittanceLines",
@@ -4837,7 +4837,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FactoringRemittancePlan(ctx, fc.Args["input"].(gqlmodel.FactoringRemittanceVersionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringRemittancePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐRemittancePlan),
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittancePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringremittanceportsᚐRemittancePlan),
 			},
 		}},
 	},
@@ -5103,7 +5103,7 @@ func field_FactoringRemittance_lines_args(ctx context.Context, ec *gqlexec.Exec,
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "matchStatuses",
 		func(ctx context.Context, v any) ([]factoringremittance.RemittanceMatchStatus, error) {
-			return unmarshalOFactoringRemittanceMatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchStatusᚄ(ctx, ec, v)
+			return unmarshalOFactoringRemittanceMatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchStatusᚄ(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5870,7 +5870,7 @@ func unmarshalInputCreateFactoringRemittanceInput(ctx context.Context, ec *gqlex
 			it.FactoringCompanyID = data
 		case "defaultKind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultKind"))
-			data, err := unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineKind(ctx, ec, v)
+			data, err := unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6208,7 +6208,7 @@ func unmarshalInputFactoringFundingItemInput(ctx context.Context, ec *gqlexec.Ex
 			it.ItemID = data
 		case "outcome":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("outcome"))
-			data, err := unmarshalNFactoringFundingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐFundingOutcome(ctx, ec, v)
+			data, err := unmarshalNFactoringFundingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐFundingOutcome(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6266,7 +6266,7 @@ func unmarshalInputFactoringInvoiceStateListInput(ctx context.Context, ec *gqlex
 			it.Table = data
 		case "verdicts":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("verdicts"))
-			data, err := unmarshalOFactoringVerdict2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐVerdictᚄ(ctx, ec, v)
+			data, err := unmarshalOFactoringVerdict2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdictᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6412,7 +6412,7 @@ func unmarshalInputFactoringRemittanceLineListInput(ctx context.Context, ec *gql
 			it.RemittanceID = data
 		case "matchStatuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchStatuses"))
-			data, err := unmarshalOFactoringRemittanceMatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOFactoringRemittanceMatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6463,7 +6463,7 @@ func unmarshalInputFactoringRemittanceListInput(ctx context.Context, ec *gqlexec
 			it.InboundMessageID = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOFactoringRemittanceStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOFactoringRemittanceStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6558,7 +6558,7 @@ func unmarshalInputFactoringReserveEntryListInput(ctx context.Context, ec *gqlex
 			it.InvoiceID = data
 		case "kinds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kinds"))
-			data, err := unmarshalOFactoringReserveEntryKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKindᚄ(ctx, ec, v)
+			data, err := unmarshalOFactoringReserveEntryKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntryKindᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6667,7 +6667,7 @@ func unmarshalInputFactoringSubmissionListInput(ctx context.Context, ec *gqlexec
 			it.FactoringCompanyID = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOFactoringSubmissionStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOFactoringSubmissionStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6941,7 +6941,7 @@ func unmarshalInputSaveFactoringTransportInput(ctx context.Context, ec *gqlexec.
 			it.Version = data
 		case "method":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("method"))
-			data, err := unmarshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransportMethod(ctx, ec, v)
+			data, err := unmarshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransportMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6983,7 +6983,7 @@ func unmarshalInputSaveFactoringTransportInput(ctx context.Context, ec *gqlexec.
 			it.SftpUsername = data
 		case "sftpAuthMethod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sftpAuthMethod"))
-			data, err := unmarshalOFactoringSftpAuthMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSftpAuthMethod(ctx, ec, v)
+			data, err := unmarshalOFactoringSftpAuthMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSftpAuthMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -7150,7 +7150,7 @@ func unmarshalInputStageFactoringRemittanceInput(ctx context.Context, ec *gqlexe
 			it.Mapping = data
 		case "defaultKind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultKind"))
-			data, err := unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineKind(ctx, ec, v)
+			data, err := unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -7252,7 +7252,7 @@ func unmarshalInputUpdateFactoringRemittanceLineInput(ctx context.Context, ec *g
 			it.LineID = data
 		case "action":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("action"))
-			data, err := unmarshalNFactoringRemittanceLineAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐRemittanceLineAction(ctx, ec, v)
+			data, err := unmarshalNFactoringRemittanceLineAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringremittanceportsᚐRemittanceLineAction(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -7266,7 +7266,7 @@ func unmarshalInputUpdateFactoringRemittanceLineInput(ctx context.Context, ec *g
 			it.ItemID = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineKind(ctx, ec, v)
+			data, err := unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -7356,7 +7356,7 @@ func unmarshalNFactoringFundingItemInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFactoringFundingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐFundingOutcome(ctx context.Context, ec *gqlexec.Exec, v any) (factoringledger.FundingOutcome, error) {
+func unmarshalNFactoringFundingOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐFundingOutcome(ctx context.Context, ec *gqlexec.Exec, v any) (factoringledger.FundingOutcome, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoringledger.FundingOutcome(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7395,7 +7395,7 @@ func unmarshalNFactoringRemittanceField2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFactoringRemittanceLineAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐRemittanceLineAction(ctx context.Context, ec *gqlexec.Exec, v any) (factoringremittanceports.RemittanceLineAction, error) {
+func unmarshalNFactoringRemittanceLineAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringremittanceportsᚐRemittanceLineAction(ctx context.Context, ec *gqlexec.Exec, v any) (factoringremittanceports.RemittanceLineAction, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoringremittanceports.RemittanceLineAction(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7411,13 +7411,13 @@ func unmarshalNFactoringRemittanceListInput2githubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchStatus(ctx context.Context, ec *gqlexec.Exec, v any) (factoringremittance.RemittanceMatchStatus, error) {
+func unmarshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchStatus(ctx context.Context, ec *gqlexec.Exec, v any) (factoringremittance.RemittanceMatchStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoringremittance.RemittanceMatchStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (factoringremittance.RemittanceStatus, error) {
+func unmarshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (factoringremittance.RemittanceStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoringremittance.RemittanceStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7428,7 +7428,7 @@ func unmarshalNFactoringRemittanceVersionInput2githubᚗcomᚋemoss08ᚋtrenova�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind(ctx context.Context, ec *gqlexec.Exec, v any) (factoringledger.ReserveEntryKind, error) {
+func unmarshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntryKind(ctx context.Context, ec *gqlexec.Exec, v any) (factoringledger.ReserveEntryKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoringledger.ReserveEntryKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7454,19 +7454,19 @@ func unmarshalNFactoringSubmissionPlanInput2githubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatus(ctx context.Context, ec *gqlexec.Exec, v any) (factoringsubmission.SubmissionStatus, error) {
+func unmarshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionStatus(ctx context.Context, ec *gqlexec.Exec, v any) (factoringsubmission.SubmissionStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoringsubmission.SubmissionStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransportMethod(ctx context.Context, ec *gqlexec.Exec, v any) (factoringsubmission.TransportMethod, error) {
+func unmarshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransportMethod(ctx context.Context, ec *gqlexec.Exec, v any) (factoringsubmission.TransportMethod, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoringsubmission.TransportMethod(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐVerdict(ctx context.Context, ec *gqlexec.Exec, v any) (factoringreadiness.Verdict, error) {
+func unmarshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdict(ctx context.Context, ec *gqlexec.Exec, v any) (factoringreadiness.Verdict, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := factoringreadiness.Verdict(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7574,7 +7574,7 @@ func unmarshalOFactoringRemittanceColumnInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtre
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringRemittanceColumnInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringRemittanceColumnInput)
 }
 
-func unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineKind(ctx context.Context, ec *gqlexec.Exec, v any) (*factoringremittance.RemittanceLineKind, error) {
+func unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineKind(ctx context.Context, ec *gqlexec.Exec, v any) (*factoringremittance.RemittanceLineKind, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7583,28 +7583,28 @@ func unmarshalOFactoringRemittanceLineKind2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFactoringRemittanceMatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringremittance.RemittanceMatchStatus, error) {
+func unmarshalOFactoringRemittanceMatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringremittance.RemittanceMatchStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchStatus)
 }
 
-func unmarshalOFactoringRemittanceStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringremittance.RemittanceStatus, error) {
+func unmarshalOFactoringRemittanceStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringremittance.RemittanceStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceStatus)
 }
 
-func unmarshalOFactoringReserveEntryKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKindᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringledger.ReserveEntryKind, error) {
+func unmarshalOFactoringReserveEntryKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntryKindᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringledger.ReserveEntryKind, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntryKind)
 }
 
-func unmarshalOFactoringSftpAuthMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSftpAuthMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*factoringsubmission.SftpAuthMethod, error) {
+func unmarshalOFactoringSftpAuthMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSftpAuthMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*factoringsubmission.SftpAuthMethod, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7613,18 +7613,18 @@ func unmarshalOFactoringSftpAuthMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOFactoringSubmissionStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringsubmission.SubmissionStatus, error) {
+func unmarshalOFactoringSubmissionStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringsubmission.SubmissionStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionStatus)
 }
 
-func unmarshalOFactoringVerdict2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐVerdictᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringreadiness.Verdict, error) {
+func unmarshalOFactoringVerdict2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdictᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]factoringreadiness.Verdict, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐVerdict)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdict)
 }
 
 func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
@@ -7737,19 +7737,19 @@ func marshalNFactoringAgreementStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNFactoringCheck2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐCheck(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.Check) graphql.Marshaler {
+func marshalNFactoringCheck2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheck(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.Check) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FactoringCheck", &v)
 }
 
-func marshalNFactoringCheck2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐCheckᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []factoringreadiness.Check) graphql.Marshaler {
+func marshalNFactoringCheck2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []factoringreadiness.Check) graphql.Marshaler {
 	return gqlexec.List[factoringreadiness.Check]{
-		Elem:        marshalNFactoringCheck2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐCheck,
+		Elem:        marshalNFactoringCheck2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheck,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFactoringCheckCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐCheckCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.CheckCode) graphql.Marshaler {
+func marshalNFactoringCheckCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.CheckCode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7785,7 +7785,7 @@ func marshalNFactoringFunding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return ec.MarshalType(ctx, sel, "FactoringFunding", &v)
 }
 
-func marshalNFactoringFundingPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐFundingPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.FundingPlan) graphql.Marshaler {
+func marshalNFactoringFundingPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐFundingPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.FundingPlan) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7797,7 +7797,7 @@ func marshalNFactoringInvoiceEffect2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return v
 }
 
-func marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐInvoiceState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringreadiness.InvoiceState) graphql.Marshaler {
+func marshalNFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐInvoiceState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringreadiness.InvoiceState) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7829,7 +7829,7 @@ func marshalNFactoringInvoiceStateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "FactoringInvoiceStateEdge", v)
 }
 
-func marshalNFactoringMovement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringledger.Movement) graphql.Marshaler {
+func marshalNFactoringMovement2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringledger.Movement) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FactoringMovement", &v)
 }
 
@@ -7873,27 +7873,27 @@ func marshalNFactoringNoaStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return res
 }
 
-func marshalNFactoringPlannedLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringledgerports.PlannedLine) graphql.Marshaler {
+func marshalNFactoringPlannedLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringledgerports.PlannedLine) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FactoringPlannedLine", &v)
 }
 
-func marshalNFactoringPlannedLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []factoringledgerports.PlannedLine) graphql.Marshaler {
+func marshalNFactoringPlannedLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []factoringledgerports.PlannedLine) graphql.Marshaler {
 	return gqlexec.List[factoringledgerports.PlannedLine]{
-		Elem:        marshalNFactoringPlannedLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedLine,
+		Elem:        marshalNFactoringPlannedLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFactoringPlannedMovement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringledgerports.PlannedMovement) graphql.Marshaler {
+func marshalNFactoringPlannedMovement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedMovementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringledgerports.PlannedMovement) graphql.Marshaler {
 	return gqlexec.List[*factoringledgerports.PlannedMovement]{
-		Elem:        marshalNFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement,
+		Elem:        marshalNFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedMovement,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.PlannedMovement) graphql.Marshaler {
+func marshalNFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.PlannedMovement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7909,7 +7909,7 @@ func marshalNFactoringRecourse2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.Remittance) graphql.Marshaler {
+func marshalNFactoringRemittance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.Remittance) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7961,15 +7961,15 @@ func marshalNFactoringRemittanceField2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return v
 }
 
-func marshalNFactoringRemittanceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringremittance.RemittanceLine) graphql.Marshaler {
+func marshalNFactoringRemittanceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringremittance.RemittanceLine) graphql.Marshaler {
 	return gqlexec.List[*factoringremittance.RemittanceLine]{
-		Elem:        marshalNFactoringRemittanceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLine,
+		Elem:        marshalNFactoringRemittanceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFactoringRemittanceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceLine) graphql.Marshaler {
+func marshalNFactoringRemittanceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceLine) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8001,7 +8001,7 @@ func marshalNFactoringRemittanceLineEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "FactoringRemittanceLineEdge", v)
 }
 
-func marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceLineKind) graphql.Marshaler {
+func marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceLineKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceLineKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8009,7 +8009,7 @@ func marshalNFactoringRemittanceLineKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalNFactoringRemittanceMatchReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceMatchReason) graphql.Marshaler {
+func marshalNFactoringRemittanceMatchReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceMatchReason) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8017,7 +8017,7 @@ func marshalNFactoringRemittanceMatchReason2githubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return res
 }
 
-func marshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceMatchStatus) graphql.Marshaler {
+func marshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceMatchStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8025,7 +8025,7 @@ func marshalNFactoringRemittanceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return res
 }
 
-func marshalNFactoringRemittancePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐRemittancePlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittanceports.RemittancePlan) graphql.Marshaler {
+func marshalNFactoringRemittancePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringremittanceportsᚐRemittancePlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittanceports.RemittancePlan) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8033,15 +8033,15 @@ func marshalNFactoringRemittancePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "FactoringRemittancePlan", v)
 }
 
-func marshalNFactoringRemittancePlanLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedRemittanceLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringremittanceports.PlannedRemittanceLine) graphql.Marshaler {
+func marshalNFactoringRemittancePlanLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringremittanceportsᚐPlannedRemittanceLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringremittanceports.PlannedRemittanceLine) graphql.Marshaler {
 	return gqlexec.List[*factoringremittanceports.PlannedRemittanceLine]{
-		Elem:        marshalNFactoringRemittancePlanLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedRemittanceLine,
+		Elem:        marshalNFactoringRemittancePlanLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringremittanceportsᚐPlannedRemittanceLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFactoringRemittancePlanLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedRemittanceLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittanceports.PlannedRemittanceLine) graphql.Marshaler {
+func marshalNFactoringRemittancePlanLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringremittanceportsᚐPlannedRemittanceLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittanceports.PlannedRemittanceLine) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8049,7 +8049,7 @@ func marshalNFactoringRemittancePlanLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "FactoringRemittancePlanLine", v)
 }
 
-func marshalNFactoringRemittanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceSource) graphql.Marshaler {
+func marshalNFactoringRemittanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8057,7 +8057,7 @@ func marshalNFactoringRemittanceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceStatus) graphql.Marshaler {
+func marshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringremittance.RemittanceStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8065,15 +8065,15 @@ func marshalNFactoringRemittanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNFactoringRemittanceSuggestion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceSuggestionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringremittance.RemittanceSuggestion) graphql.Marshaler {
+func marshalNFactoringRemittanceSuggestion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceSuggestionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringremittance.RemittanceSuggestion) graphql.Marshaler {
 	return gqlexec.List[*factoringremittance.RemittanceSuggestion]{
-		Elem:        marshalNFactoringRemittanceSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceSuggestion,
+		Elem:        marshalNFactoringRemittanceSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceSuggestion,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFactoringRemittanceSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceSuggestion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceSuggestion) graphql.Marshaler {
+func marshalNFactoringRemittanceSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceSuggestion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceSuggestion) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8081,7 +8081,7 @@ func marshalNFactoringRemittanceSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "FactoringRemittanceSuggestion", v)
 }
 
-func marshalNFactoringReserveBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveBalance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.ReserveBalance) graphql.Marshaler {
+func marshalNFactoringReserveBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐReserveBalance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.ReserveBalance) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8089,7 +8089,7 @@ func marshalNFactoringReserveBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "FactoringReserveBalance", v)
 }
 
-func marshalNFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledger.ReserveEntry) graphql.Marshaler {
+func marshalNFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledger.ReserveEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8121,7 +8121,7 @@ func marshalNFactoringReserveEntryEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "FactoringReserveEntryEdge", v)
 }
 
-func marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntryKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringledger.ReserveEntryKind) graphql.Marshaler {
+func marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntryKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringledger.ReserveEntryKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8129,7 +8129,7 @@ func marshalNFactoringReserveEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐReserveMovementPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.ReserveMovementPlan) graphql.Marshaler {
+func marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐReserveMovementPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.ReserveMovementPlan) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8137,7 +8137,7 @@ func marshalNFactoringReserveMovementPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "FactoringReserveMovementPlan", v)
 }
 
-func marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.Submission) graphql.Marshaler {
+func marshalNFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.Submission) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8169,15 +8169,15 @@ func marshalNFactoringSubmissionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "FactoringSubmissionEdge", v)
 }
 
-func marshalNFactoringSubmissionItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringsubmission.SubmissionItem) graphql.Marshaler {
+func marshalNFactoringSubmissionItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringsubmission.SubmissionItem) graphql.Marshaler {
 	return gqlexec.List[*factoringsubmission.SubmissionItem]{
-		Elem:        marshalNFactoringSubmissionItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItem,
+		Elem:        marshalNFactoringSubmissionItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFactoringSubmissionItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.SubmissionItem) graphql.Marshaler {
+func marshalNFactoringSubmissionItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.SubmissionItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8185,7 +8185,7 @@ func marshalNFactoringSubmissionItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "FactoringSubmissionItem", v)
 }
 
-func marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringsubmission.SubmissionItemStatus) graphql.Marshaler {
+func marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringsubmission.SubmissionItemStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8193,7 +8193,7 @@ func marshalNFactoringSubmissionItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res
 }
 
-func marshalNFactoringSubmissionPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐSubmissionPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmissionports.SubmissionPlan) graphql.Marshaler {
+func marshalNFactoringSubmissionPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐSubmissionPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmissionports.SubmissionPlan) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8201,15 +8201,15 @@ func marshalNFactoringSubmissionPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "FactoringSubmissionPlan", v)
 }
 
-func marshalNFactoringSubmissionPlanItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐSubmissionPlanItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringsubmissionports.SubmissionPlanItem) graphql.Marshaler {
+func marshalNFactoringSubmissionPlanItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐSubmissionPlanItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoringsubmissionports.SubmissionPlanItem) graphql.Marshaler {
 	return gqlexec.List[*factoringsubmissionports.SubmissionPlanItem]{
-		Elem:        marshalNFactoringSubmissionPlanItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐSubmissionPlanItem,
+		Elem:        marshalNFactoringSubmissionPlanItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐSubmissionPlanItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFactoringSubmissionPlanItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐSubmissionPlanItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmissionports.SubmissionPlanItem) graphql.Marshaler {
+func marshalNFactoringSubmissionPlanItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐSubmissionPlanItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmissionports.SubmissionPlanItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8217,7 +8217,7 @@ func marshalNFactoringSubmissionPlanItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "FactoringSubmissionPlanItem", v)
 }
 
-func marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmissionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringsubmission.SubmissionStatus) graphql.Marshaler {
+func marshalNFactoringSubmissionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmissionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringsubmission.SubmissionStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8233,7 +8233,7 @@ func marshalNFactoringSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "FactoringSummary", v)
 }
 
-func marshalNFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.Transport) graphql.Marshaler {
+func marshalNFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.Transport) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8241,7 +8241,7 @@ func marshalNFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "FactoringTransport", v)
 }
 
-func marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransportMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringsubmission.TransportMethod) graphql.Marshaler {
+func marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransportMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringsubmission.TransportMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8249,7 +8249,7 @@ func marshalNFactoringTransportMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNFactoringTransportTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐTransportTestResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmissionports.TransportTestResult) graphql.Marshaler {
+func marshalNFactoringTransportTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐTransportTestResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmissionports.TransportTestResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -8257,7 +8257,7 @@ func marshalNFactoringTransportTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "FactoringTransportTestResult", v)
 }
 
-func marshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.Verdict) graphql.Marshaler {
+func marshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.Verdict) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -8365,7 +8365,7 @@ func marshalOFactoringCompany2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "FactoringCompany", v)
 }
 
-func marshalOFactoringFixAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐFixAction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringreadiness.FixAction) graphql.Marshaler {
+func marshalOFactoringFixAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐFixAction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringreadiness.FixAction) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -8373,28 +8373,28 @@ func marshalOFactoringFixAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalOFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐInvoiceState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringreadiness.InvoiceState) graphql.Marshaler {
+func marshalOFactoringInvoiceState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐInvoiceState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringreadiness.InvoiceState) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FactoringInvoiceState", v)
 }
 
-func marshalOFactoringLiveSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐLiveItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmissionports.LiveItem) graphql.Marshaler {
+func marshalOFactoringLiveSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringsubmissionportsᚐLiveItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmissionports.LiveItem) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FactoringLiveSubmission", v)
 }
 
-func marshalOFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐPlannedMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.PlannedMovement) graphql.Marshaler {
+func marshalOFactoringPlannedMovement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringledgerportsᚐPlannedMovement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledgerports.PlannedMovement) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FactoringPlannedMovement", v)
 }
 
-func marshalOFactoringRemittanceFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceFormat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceFormat) graphql.Marshaler {
+func marshalOFactoringRemittanceFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceFormat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceFormat) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -8402,7 +8402,7 @@ func marshalOFactoringRemittanceFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res
 }
 
-func marshalOFactoringRemittanceMatchReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceMatchReason) graphql.Marshaler {
+func marshalOFactoringRemittanceMatchReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceMatchReason) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -8410,7 +8410,7 @@ func marshalOFactoringRemittanceMatchReason2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return res
 }
 
-func marshalOFactoringRemittanceMatchedBy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchedBy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceMatchedBy) graphql.Marshaler {
+func marshalOFactoringRemittanceMatchedBy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringremittanceᚐRemittanceMatchedBy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringremittance.RemittanceMatchedBy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -8418,26 +8418,26 @@ func marshalOFactoringRemittanceMatchedBy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return res
 }
 
-func marshalOFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐReserveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledger.ReserveEntry) graphql.Marshaler {
+func marshalOFactoringReserveEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringledgerᚐReserveEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringledger.ReserveEntry) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FactoringReserveEntry", v)
 }
 
-func marshalOFactoringSftpAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSftpAuthMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringsubmission.SftpAuthMethod) graphql.Marshaler {
+func marshalOFactoringSftpAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSftpAuthMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringsubmission.SftpAuthMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func marshalOFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐSubmission(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.Submission) graphql.Marshaler {
+func marshalOFactoringSubmission2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐSubmission(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.Submission) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FactoringSubmission", v)
 }
 
-func marshalOFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐTransport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.Transport) graphql.Marshaler {
+func marshalOFactoringTransport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringsubmissionᚐTransport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringsubmission.Transport) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

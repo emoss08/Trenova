@@ -3,7 +3,7 @@
 package pageaccessresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	pageaccessservice "github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 )
 

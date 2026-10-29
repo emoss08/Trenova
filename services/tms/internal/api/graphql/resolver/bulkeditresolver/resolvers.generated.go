@@ -3,7 +3,7 @@
 package bulkeditresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	bulkeditservice "github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 )
 

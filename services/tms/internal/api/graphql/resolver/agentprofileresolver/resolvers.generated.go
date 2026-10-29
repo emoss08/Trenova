@@ -3,7 +3,7 @@
 package agentprofileresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	agentprofileports "github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 )
 

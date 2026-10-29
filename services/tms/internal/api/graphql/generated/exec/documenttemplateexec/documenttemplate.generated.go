@@ -3,7 +3,6 @@
 package documenttemplateexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"context"
 	"errors"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -714,7 +714,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTemplateVariable)
 					return obj.Type, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐVariableType),
+				Marshal: gqlexec.Marshal(marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtemplatecatalogᚐVariableType),
 			},
 			{
 				Name:     "description",
@@ -2312,7 +2312,7 @@ func marshalNDocumentTemplateVariable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "DocumentTemplateVariable", v)
 }
 
-func marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumenttemplateᚐVariableType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v templatecatalog.VariableType) graphql.Marshaler {
+func marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋtemplatecatalogᚐVariableType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v templatecatalog.VariableType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

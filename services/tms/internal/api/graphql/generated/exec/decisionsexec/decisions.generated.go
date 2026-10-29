@@ -3,8 +3,6 @@
 package decisionsexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"context"
 	"errors"
 	"fmt"
@@ -13,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -101,7 +101,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentProposalDecisionResult)
 					return obj.Decision, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentDecision),
+				Marshal: gqlexec.Marshal(marshalOAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐAgentDecision),
 			},
 			{
 				Name:     "error",
@@ -441,7 +441,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.RecentDecision)
 					return obj.Decision, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType),
+				Marshal: gqlexec.Marshal(marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType),
 			},
 			{
 				Name:     "reasonCode",
@@ -660,7 +660,7 @@ func unmarshalInputDecideAgentProposalsInput(ctx context.Context, ec *gqlexec.Ex
 		switch k {
 		case "decision":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("decision"))
-			data, err := unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx, ec, v)
+			data, err := unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -749,7 +749,7 @@ func unmarshalInputAgentProposalPreviewDigestInput(ctx context.Context, ec *gqle
 	return gqlexec.UnmarshalInput[gqlmodel.AgentProposalPreviewDigestInput](ctx, ec, "AgentProposalPreviewDigestInput", obj)
 }
 
-func unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, v any) (agentdecision.DecisionType, error) {
+func unmarshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, v any) (agentdecision.DecisionType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := agentdecision.DecisionType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -815,7 +815,7 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdecision.DecisionType) graphql.Marshaler {
+func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentdecision.DecisionType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -987,7 +987,7 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdecision.AgentDecision) graphql.Marshaler {
+func marshalOAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdecisionᚐAgentDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdecision.AgentDecision) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

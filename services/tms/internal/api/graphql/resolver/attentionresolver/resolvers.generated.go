@@ -3,8 +3,8 @@
 package attentionresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentdecisionqueueports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	billingqueueports "github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	edioverview "github.com/emoss08/trenova/internal/modules/edi/app/edioverview"

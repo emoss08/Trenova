@@ -3,8 +3,6 @@
 package rateexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"context"
 	"errors"
 
@@ -13,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -125,7 +125,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrixVersions(ctx, fc.Args["rateMatrixId"].(string), fc.Args["first"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNRateMatrixVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixVersionᚄ),
+				Marshal: gqlexec.Marshal(marshalNRateMatrixVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixversionᚐRateMatrixVersionᚄ),
 			},
 			{
 				Name:       "rateMatrixVersion",
@@ -138,7 +138,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrixVersion(ctx, fc.Args["rateMatrixId"].(string), fc.Args["versionNumber"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalORateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixVersion),
+				Marshal: gqlexec.Marshal(marshalORateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixversionᚐRateMatrixVersion),
 			},
 			{
 				Name:       "rateMatrixReviews",
@@ -152,7 +152,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrixReviews(ctx, fc.Args["rateMatrixId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNRateMatrixReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixReviewᚄ),
+				Marshal: gqlexec.Marshal(marshalNRateMatrixReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixreviewᚐRateMatrixReviewᚄ),
 			},
 			{
 				Name:       "rateMatrixUsages",
@@ -2869,15 +2869,15 @@ func marshalNRateMatrixEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "RateMatrixEdge", v)
 }
 
-func marshalNRateMatrixReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixReviewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ratematrixreview.RateMatrixReview) graphql.Marshaler {
+func marshalNRateMatrixReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixreviewᚐRateMatrixReviewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ratematrixreview.RateMatrixReview) graphql.Marshaler {
 	return gqlexec.List[*ratematrixreview.RateMatrixReview]{
-		Elem:        marshalNRateMatrixReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixReview,
+		Elem:        marshalNRateMatrixReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixreviewᚐRateMatrixReview,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNRateMatrixReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ratematrixreview.RateMatrixReview) graphql.Marshaler {
+func marshalNRateMatrixReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixreviewᚐRateMatrixReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ratematrixreview.RateMatrixReview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2901,15 +2901,15 @@ func marshalNRateMatrixUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return ec.MarshalType(ctx, sel, "RateMatrixUsage", v)
 }
 
-func marshalNRateMatrixVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ratematrixversion.RateMatrixVersion) graphql.Marshaler {
+func marshalNRateMatrixVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixversionᚐRateMatrixVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ratematrixversion.RateMatrixVersion) graphql.Marshaler {
 	return gqlexec.List[*ratematrixversion.RateMatrixVersion]{
-		Elem:        marshalNRateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixVersion,
+		Elem:        marshalNRateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixversionᚐRateMatrixVersion,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNRateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ratematrixversion.RateMatrixVersion) graphql.Marshaler {
+func marshalNRateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixversionᚐRateMatrixVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ratematrixversion.RateMatrixVersion) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3087,7 +3087,7 @@ func marshalORateMatrixDimension2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalORateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixᚐRateMatrixVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ratematrixversion.RateMatrixVersion) graphql.Marshaler {
+func marshalORateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋratematrixversionᚐRateMatrixVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ratematrixversion.RateMatrixVersion) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

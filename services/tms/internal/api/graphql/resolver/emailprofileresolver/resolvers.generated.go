@@ -3,7 +3,7 @@
 package emailprofileresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 )
 

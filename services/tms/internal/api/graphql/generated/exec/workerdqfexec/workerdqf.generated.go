@@ -3,9 +3,6 @@
 package workerdqfexec
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
 	"context"
 	"errors"
 
@@ -13,7 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -57,7 +57,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workercompliance.DQFFile)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDQFItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNDQFItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFItemᚄ),
 			},
 			{
 				Name:     "missingRequired",
@@ -172,7 +172,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workercompliance.DQFFile)
 					return gqlexec.Resolver[resolverDQFFile](ec, "DQFFile").Verifications(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerificationᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerificationᚄ),
 			},
 		}},
 		{Object: "DQFItem", Fields: []*gqlexec.Field{
@@ -184,7 +184,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workercompliance.DQFItem)
 					return obj.Section, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDQFSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFSection),
+				Marshal: gqlexec.Marshal(marshalNDQFSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFSection),
 			},
 			{
 				Name:     "code",
@@ -214,7 +214,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workercompliance.DQFItem)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDQFItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFItemStatus),
+				Marshal: gqlexec.Marshal(marshalNDQFItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFItemStatus),
 			},
 			{
 				Name:     "detail",
@@ -303,7 +303,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordEmploymentVerification(ctx, fc.Args["input"].(gqlmodel.RecordEmploymentVerificationInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerification),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification),
 			},
 			{
 				Name:       "updateEmploymentVerification",
@@ -316,7 +316,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateEmploymentVerification(ctx, fc.Args["input"].(gqlmodel.UpdateEmploymentVerificationInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerification),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification),
 			},
 			{
 				Name:       "markEmploymentVerificationRequested",
@@ -329,7 +329,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkEmploymentVerificationRequested(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerification),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification),
 			},
 			{
 				Name:       "recordEmploymentVerificationFollowUp",
@@ -342,7 +342,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordEmploymentVerificationFollowUp(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerification),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification),
 			},
 			{
 				Name:       "deleteEmploymentVerification",
@@ -370,7 +370,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").DriverQualificationFile(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNDQFFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFFile),
+				Marshal: gqlexec.Marshal(marshalNDQFFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFFile),
 			},
 			{
 				Name:       "workerEmploymentVerifications",
@@ -384,7 +384,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEmploymentVerifications(ctx, fc.Args["workerId"].(*string), fc.Args["outstandingOnly"].(*bool), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerificationᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerificationᚄ),
 			},
 			{
 				Name:       "outstandingEmploymentVerifications",
@@ -396,7 +396,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").OutstandingEmploymentVerifications(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerificationᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerificationᚄ),
 			},
 			{
 				Name:       "dqfRetentionCandidates",
@@ -408,7 +408,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").DqfRetentionCandidates(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNDQFRetentionCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidateᚄ),
+				Marshal: gqlexec.Marshal(marshalNDQFRetentionCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerdqfportsᚐDQFRetentionCandidateᚄ),
 			},
 		}},
 		{Object: "WorkerEmploymentVerification", Fields: []*gqlexec.Field{
@@ -557,7 +557,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*employment.WorkerEmploymentVerification)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEmploymentVerificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationStatus),
+				Marshal: gqlexec.Marshal(marshalNEmploymentVerificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationStatus),
 			},
 			{
 				Name:     "method",
@@ -567,7 +567,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*employment.WorkerEmploymentVerification)
 					return obj.Method, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEmploymentVerificationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationMethod),
+				Marshal: gqlexec.Marshal(marshalNEmploymentVerificationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationMethod),
 			},
 			{
 				Name:       "requestedAt",
@@ -982,14 +982,14 @@ func unmarshalInputRecordEmploymentVerificationInput(ctx context.Context, ec *gq
 			it.WasDOTRegulated = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalOEmploymentVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationStatus(ctx, ec, v)
+			data, err := unmarshalOEmploymentVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Status = data
 		case "method":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("method"))
-			data, err := unmarshalOEmploymentVerificationMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationMethod(ctx, ec, v)
+			data, err := unmarshalOEmploymentVerificationMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1103,14 +1103,14 @@ func unmarshalInputUpdateEmploymentVerificationInput(ctx context.Context, ec *gq
 			it.WasDOTRegulated = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalOEmploymentVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationStatus(ctx, ec, v)
+			data, err := unmarshalOEmploymentVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Status = data
 		case "method":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("method"))
-			data, err := unmarshalOEmploymentVerificationMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationMethod(ctx, ec, v)
+			data, err := unmarshalOEmploymentVerificationMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationMethod(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1211,7 +1211,7 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOEmploymentVerificationMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*employment.EmploymentVerificationMethod, error) {
+func unmarshalOEmploymentVerificationMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationMethod(ctx context.Context, ec *gqlexec.Exec, v any) (*employment.EmploymentVerificationMethod, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1220,7 +1220,7 @@ func unmarshalOEmploymentVerificationMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOEmploymentVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*employment.EmploymentVerificationStatus, error) {
+func unmarshalOEmploymentVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*employment.EmploymentVerificationStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1269,7 +1269,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNDQFFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFFile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercompliance.DQFFile) graphql.Marshaler {
+func marshalNDQFFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFFile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercompliance.DQFFile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1277,19 +1277,19 @@ func marshalNDQFFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 	return ec.MarshalType(ctx, sel, "DQFFile", v)
 }
 
-func marshalNDQFItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.DQFItem) graphql.Marshaler {
+func marshalNDQFItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.DQFItem) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "DQFItem", &v)
 }
 
-func marshalNDQFItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workercompliance.DQFItem) graphql.Marshaler {
+func marshalNDQFItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workercompliance.DQFItem) graphql.Marshaler {
 	return gqlexec.List[workercompliance.DQFItem]{
-		Elem:        marshalNDQFItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFItem,
+		Elem:        marshalNDQFItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNDQFItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.DQFItemStatus) graphql.Marshaler {
+func marshalNDQFItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.DQFItemStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1297,15 +1297,15 @@ func marshalNDQFItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return res
 }
 
-func marshalNDQFRetentionCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerdqfports.DQFRetentionCandidate) graphql.Marshaler {
+func marshalNDQFRetentionCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerdqfportsᚐDQFRetentionCandidateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerdqfports.DQFRetentionCandidate) graphql.Marshaler {
 	return gqlexec.List[*workerdqfports.DQFRetentionCandidate]{
-		Elem:        marshalNDQFRetentionCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidate,
+		Elem:        marshalNDQFRetentionCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerdqfportsᚐDQFRetentionCandidate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNDQFRetentionCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐDQFRetentionCandidate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerdqfports.DQFRetentionCandidate) graphql.Marshaler {
+func marshalNDQFRetentionCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerdqfportsᚐDQFRetentionCandidate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerdqfports.DQFRetentionCandidate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1313,7 +1313,7 @@ func marshalNDQFRetentionCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "DQFRetentionCandidate", v)
 }
 
-func marshalNDQFSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDQFSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.DQFSection) graphql.Marshaler {
+func marshalNDQFSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercomplianceᚐDQFSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercompliance.DQFSection) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1321,7 +1321,7 @@ func marshalNDQFSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 	return res
 }
 
-func marshalNEmploymentVerificationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v employment.EmploymentVerificationMethod) graphql.Marshaler {
+func marshalNEmploymentVerificationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v employment.EmploymentVerificationMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1329,7 +1329,7 @@ func marshalNEmploymentVerificationMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res
 }
 
-func marshalNEmploymentVerificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐEmploymentVerificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v employment.EmploymentVerificationStatus) graphql.Marshaler {
+func marshalNEmploymentVerificationStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐEmploymentVerificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v employment.EmploymentVerificationStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1385,15 +1385,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerificationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*employment.WorkerEmploymentVerification) graphql.Marshaler {
+func marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerificationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*employment.WorkerEmploymentVerification) graphql.Marshaler {
 	return gqlexec.List[*employment.WorkerEmploymentVerification]{
-		Elem:        marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerification,
+		Elem:        marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *employment.WorkerEmploymentVerification) graphql.Marshaler {
+func marshalNWorkerEmploymentVerification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋemploymentᚐWorkerEmploymentVerification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *employment.WorkerEmploymentVerification) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

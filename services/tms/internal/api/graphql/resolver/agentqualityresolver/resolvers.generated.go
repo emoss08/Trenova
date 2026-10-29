@@ -3,8 +3,8 @@
 package agentqualityresolver
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentevaluationports "github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	agentqualityports "github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 )
 

@@ -3,8 +3,8 @@
 package deskmemoryresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentmemoryports "github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 )
 
 type Deps struct {

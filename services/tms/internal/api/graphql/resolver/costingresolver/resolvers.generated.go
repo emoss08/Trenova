@@ -3,7 +3,7 @@
 package costingresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	costingservice "github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 )
 

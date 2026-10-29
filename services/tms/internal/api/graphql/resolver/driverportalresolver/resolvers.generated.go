@@ -3,7 +3,7 @@
 package driverportalresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	dashcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
 	driversettlementreviewservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
 	driverportalinvitationservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
