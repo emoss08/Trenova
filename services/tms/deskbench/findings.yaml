@@ -577,7 +577,7 @@ findings:
       period is worked out from today's date and proposed. To verify in a run.
     files:
       [
-        services/tms/internal/modules/agent/app/agenttools/settlementtools/settlement_generation_tools.go,
+        services/tms/internal/modules/agent/app/agenttools/settlementgenerationtools/settlement_generation_tools.go,
       ]
     fixedIn: .deskbench/runs/20261009-175153-run
 

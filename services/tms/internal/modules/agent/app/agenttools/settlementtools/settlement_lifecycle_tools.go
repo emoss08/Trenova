@@ -30,8 +30,6 @@ const paramLineID = "lineId"
 
 const settlementNamespace = "settlement"
 
-const toolListDriverSettlements = "settlement_list_driver"
-
 const fieldSubmittedAt = "submittedAt"
 
 const fieldApprovedAt = "approvedAt"
@@ -406,7 +404,7 @@ func driverLifecycle() *lifecycleText {
 		noun:       settlementpreview.NounDriverSettlement,
 		qualifier:  "driver",
 		payee:      "driver",
-		listTool:   toolListDriverSettlements,
+		listTool:   settlementpreview.ToolListDriverSettlements,
 		getTool:    "settlement_get_driver",
 		adjustFrom: "settlement_list_pay_codes",
 		methods:    settlementpreview.DriverPaymentMethods,
@@ -430,13 +428,13 @@ func driverLifecycle() *lifecycleText {
 
 func carrierLifecycle() *lifecycleText {
 	return &lifecycleText{
-		noun:       nounCarrierSettlement,
+		noun:       settlementpreview.NounCarrierSettlement,
 		qualifier:  "carrier",
 		payee:      "carrier",
 		listTool:   "settlement_list_carrier",
 		getTool:    "settlement_get_carrier",
 		adjustFrom: "ledger_list_accounts",
-		methods:    carrierPaymentMethods,
+		methods:    settlementpreview.CarrierPaymentMethods,
 		postEgress: []agent.EgressClass{agent.EgressMoney},
 		paidEgress: []agent.EgressClass{agent.EgressMoney},
 		postMeaning: "Posting books purchased transportation against accounts payable, " +
@@ -473,7 +471,7 @@ func carrierDecisionTool(
 	book SettlementBook[carriersettlement.CarrierSettlement],
 ) agenttoolports.AgentTool {
 	return newSettlementDecisionTool(
-		carrierSettlementLedger(),
+		settlementpreview.CarrierSettlementLedger(),
 		decision(carrierLifecycle()),
 		book,
 	)

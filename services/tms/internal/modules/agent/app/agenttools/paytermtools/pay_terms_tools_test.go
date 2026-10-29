@@ -1,4 +1,4 @@
-package settlementtools
+package paytermtools
 
 import (
 	"context"
@@ -144,7 +144,7 @@ func TestEndWorkerPayAssignment_EndsAfterItStarts(t *testing.T) {
 
 	ender := &fakeAssignmentEnder{assignment: &payassignment.WorkerPayAssignment{
 		ID:            pulid.MustNew("wpa_"),
-		EffectiveFrom: periodStartUnix,
+		EffectiveFrom: agenttoolstest.PeriodStartUnix,
 		PayProfile:    &driverpay.PayProfile{Name: "Company solo"},
 	}}
 	tool := &paytools.EndPayAssignmentTool{Assignments: ender}

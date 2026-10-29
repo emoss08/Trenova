@@ -2,7 +2,9 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/paytermtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/paytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementgenerationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementtools"
 )
 
@@ -15,22 +17,22 @@ func settlementToolProviders() []any {
 		paytools.ProvideReleaseDriverPayEventTool,
 		paytools.ProvideAttachPayEventsTool,
 		paytools.ProvideDetachPayEventTool,
-		settlementtools.ProvideGenerateDriverSettlementTool,
-		settlementtools.ProvideGenerateDriverSettlementBatchTool,
-		settlementtools.ProvideGenerateCarrierSettlementBatchTool,
+		settlementgenerationtools.ProvideGenerateDriverSettlementTool,
+		settlementgenerationtools.ProvideGenerateDriverSettlementBatchTool,
+		settlementgenerationtools.ProvideGenerateCarrierSettlementBatchTool,
 		paytools.ProvidePayWorkerNowTool,
 		paytools.ProvideIssuePayAdvanceTool,
 		paytools.ProvideWriteOffPayAdvanceTool,
-		settlementtools.ProvideOpenEscrowAccountTool,
-		settlementtools.ProvideUpdateEscrowAccountTool,
-		settlementtools.ProvideAdjustEscrowAccountTool,
-		settlementtools.ProvideCloseEscrowAccountTool,
+		paytermtools.ProvideOpenEscrowAccountTool,
+		paytermtools.ProvideUpdateEscrowAccountTool,
+		paytermtools.ProvideAdjustEscrowAccountTool,
+		paytermtools.ProvideCloseEscrowAccountTool,
 		paytools.ProvideAssignPayProfileTool,
 		paytools.ProvideEndPayAssignmentTool,
-		settlementtools.ProvideCreateRecurringDeductionTool,
-		settlementtools.ProvideUpdateRecurringDeductionTool,
-		settlementtools.ProvideCreateRecurringEarningTool,
-		settlementtools.ProvideUpdateRecurringEarningTool,
+		paytermtools.ProvideCreateRecurringDeductionTool,
+		paytermtools.ProvideUpdateRecurringDeductionTool,
+		paytermtools.ProvideCreateRecurringEarningTool,
+		paytermtools.ProvideUpdateRecurringEarningTool,
 		carriertools.ProvideCreateCarrierInvoiceMatchTool,
 		carriertools.ProvideAcceptCarrierInvoiceMatchTool,
 		carriertools.ProvideAcceptCarrierInvoiceMatchWithVarianceTool,

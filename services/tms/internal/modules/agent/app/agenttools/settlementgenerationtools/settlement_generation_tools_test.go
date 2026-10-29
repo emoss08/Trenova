@@ -1,4 +1,4 @@
-package settlementtools
+package settlementgenerationtools
 
 import (
 	"context"
@@ -25,15 +25,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const periodStartUnix = int64(1_788_220_800)
-
-const periodEndUnix = periodStartUnix + 7*toolparams.SecondsPerDay
+const periodEndUnix = agenttoolstest.PeriodStartUnix + 7*toolparams.SecondsPerDay
 
 const payDateUnix = periodEndUnix + 3*toolparams.SecondsPerDay
 
 func currentBounds() driversettlementservice.PeriodBounds {
 	return driversettlementservice.PeriodBounds{
-		PeriodStart: periodStartUnix,
+		PeriodStart: agenttoolstest.PeriodStartUnix,
 		PeriodEnd:   periodEndUnix,
 		PayDate:     payDateUnix,
 	}
@@ -91,7 +89,7 @@ func TestGenerateDriverSettlement_DefaultsToTheCurrentPeriod(t *testing.T) {
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
-	assert.Equal(t, periodStartUnix, generator.planned.PeriodStart)
+	assert.Equal(t, agenttoolstest.PeriodStartUnix, generator.planned.PeriodStart)
 	assert.Equal(t, periodEndUnix, generator.planned.PeriodEnd)
 	assert.Equal(t, payDateUnix, generator.planned.PayDate)
 	assert.Contains(t, preview.Summary, "It raises 1 exception for review.")

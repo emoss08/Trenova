@@ -463,7 +463,7 @@ func TestPostCarrierSettlements_PostsEachAsPostCarrierSettlementWould(t *testing
 	}
 	book.settlements[ids[1]].Status = carriersettlement.StatusPaid
 	tool, ok := newSettlementBulkTool(settlementBulkSpec[carriersettlement.CarrierSettlement]{
-		ledger: carrierSettlementLedger(),
+		ledger: settlementpreview.CarrierSettlementLedger(),
 		text:   carrierLifecycle(),
 		book:   book,
 		get: func(

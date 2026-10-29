@@ -1,4 +1,4 @@
-package settlementtools
+package settlementgenerationtools
 
 import (
 	"context"
@@ -415,7 +415,7 @@ func driverBatchText() batchText {
 		recipe: []string{
 			"settlement_list_pay_events",
 			"settlement_generate_driver_batch",
-			toolListDriverSettlements,
+			settlementpreview.ToolListDriverSettlements,
 		},
 		resource: permission.ResourceDriverSettlement,
 		rationale: "Drafts the period's settlements from pay already accrued inside Trenova; " +
@@ -753,9 +753,9 @@ func (t *GenerateCarrierBatchTool) Preview(
 			change,
 			settlementpreview.SettlementMoney(
 				&settlementpreview.SettlementFacts{},
-				carrierSettlementFacts(settlement),
+				settlementpreview.CarrierSettlementFacts(settlement),
 			),
-			toolpreview.SensitiveAs(carrierSettlementLedger().Sensitive...),
+			toolpreview.SensitiveAs(settlementpreview.CarrierSettlementLedger().Sensitive...),
 		)
 		changes = append(changes, change)
 	}

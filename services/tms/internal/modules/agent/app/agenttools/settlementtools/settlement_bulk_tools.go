@@ -84,12 +84,12 @@ var postSettlements = settlementBulk{
 // payments as well.
 var settlementBulkRecipes = map[string][]string{
 	"settlement_approve_driver": {
-		toolListDriverSettlements,
+		settlementpreview.ToolListDriverSettlements,
 		"settlement_get_driver",
 		"settlement_approve_driver",
 	},
 	"settlement_post_driver": {
-		toolListDriverSettlements,
+		settlementpreview.ToolListDriverSettlements,
 		"settlement_post_driver",
 	},
 	"settlement_approve_carrier": {
@@ -251,7 +251,7 @@ func carrierBulkSpec(
 	s *carriersettlementservice.Service,
 ) settlementBulkSpec[carriersettlement.CarrierSettlement] {
 	spec := settlementBulkSpec[carriersettlement.CarrierSettlement]{
-		ledger: carrierSettlementLedger(),
+		ledger: settlementpreview.CarrierSettlementLedger(),
 		text:   carrierLifecycle(),
 		book:   s,
 	}
