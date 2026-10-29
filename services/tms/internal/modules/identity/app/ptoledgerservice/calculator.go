@@ -298,7 +298,7 @@ func Schedule(in CalcInput) []PlannedEntry {
 func ProjectedAccrual(
 	plan []PlannedEntry,
 	balance, carried decimal.Decimal,
-	rule pto.PTOPolicyRule,
+	rule *pto.PTOPolicyRule,
 ) decimal.Decimal {
 	running := balance
 	for _, entry := range plan {

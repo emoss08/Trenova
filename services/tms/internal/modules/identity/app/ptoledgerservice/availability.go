@@ -148,7 +148,7 @@ func (s *Service) CheckAvailability(
 			LastAccrualKey:  lastAccrual,
 			LastRolloverKey: lastRollover,
 		})
-		result.ProjectedAccrualDays = ProjectedAccrual(plan, result.BalanceDays, carried, *rule)
+		result.ProjectedAccrualDays = ProjectedAccrual(plan, result.BalanceDays, carried, rule)
 	}
 
 	result.ProjectedAvailableDays = result.BalanceDays.Sub(pending).Add(result.ProjectedAccrualDays)

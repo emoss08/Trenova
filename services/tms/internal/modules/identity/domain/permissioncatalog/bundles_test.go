@@ -57,7 +57,7 @@ func TestTemplateGrants_MergeBundlesAndKeepTheWidestScope(t *testing.T) {
 
 	reg := NewRegistry()
 	grants := reg.TemplateGrants(
-		permissionspec.JobTemplate{Bundles: []string{"hr.team", "hr.workers"}},
+		&permissionspec.JobTemplate{Bundles: []string{"hr.team", "hr.workers"}},
 	)
 
 	idx := slices.IndexFunc(grants, func(rp *rbac.ResourcePermission) bool {
@@ -79,7 +79,7 @@ func TestTemplateGrants_MergeBundlesAndKeepTheWidestScope(t *testing.T) {
 		worker.Operations,
 	)
 
-	teamOnly := reg.TemplateGrants(permissionspec.JobTemplate{Bundles: []string{"hr.team"}})
+	teamOnly := reg.TemplateGrants(&permissionspec.JobTemplate{Bundles: []string{"hr.team"}})
 	idx = slices.IndexFunc(teamOnly, func(rp *rbac.ResourcePermission) bool {
 		return rp.Resource == permission.ResourceWorker.String()
 	})
@@ -128,7 +128,7 @@ func TestJobTemplates_OnlyHumanResourcesReachLeave(t *testing.T) {
 	for _, template := range templates {
 		want, listed := expected[template.ID]
 		require.True(t, listed, "template %q is missing from this table", template.ID)
-		assert.Equal(t, want, leaveOperations(reg.TemplateGrants(template)),
+		assert.Equal(t, want, leaveOperations(reg.TemplateGrants(&template)),
 			"template %q", template.ID)
 	}
 }
@@ -161,7 +161,7 @@ func TestTemplateGrants_ReadEverythingSkipsWhatTheTemplateExcepts(t *testing.T) 
 	t.Parallel()
 
 	reg := NewRegistry()
-	grants := reg.TemplateGrants(permissionspec.JobTemplate{
+	grants := reg.TemplateGrants(&permissionspec.JobTemplate{
 		ReadEverything: true,
 		ReadExcept:     []permission.Resource{permission.ResourceWorkerLeave},
 	})
@@ -170,7 +170,7 @@ func TestTemplateGrants_ReadEverythingSkipsWhatTheTemplateExcepts(t *testing.T) 
 	assert.Len(
 		t,
 		grants,
-		len(reg.TemplateGrants(permissionspec.JobTemplate{ReadEverything: true}))-1,
+		len(reg.TemplateGrants(&permissionspec.JobTemplate{ReadEverything: true}))-1,
 	)
 }
 
@@ -178,7 +178,7 @@ func TestTemplateGrants_ReadEverythingReadsEveryReadableKind(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry()
-	grants := reg.TemplateGrants(permissionspec.JobTemplate{ReadEverything: true})
+	grants := reg.TemplateGrants(&permissionspec.JobTemplate{ReadEverything: true})
 
 	readable := 0
 	for _, def := range reg.All() {

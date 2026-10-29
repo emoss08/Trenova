@@ -329,7 +329,7 @@ func (h *Handler) getBundles(c *gin.Context) {
 		})
 	}
 	for _, template := range templates {
-		composed := h.registry.TemplateGrants(template)
+		composed := h.registry.TemplateGrants(&template)
 		grants := make([]bundleGrantResponse, 0, len(composed))
 		for _, rp := range composed {
 			grants = append(grants, h.bundleGrant(ctx, rp.Resource, rp.Operations, rp.DataScope))

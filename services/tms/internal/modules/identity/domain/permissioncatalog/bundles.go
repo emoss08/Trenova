@@ -39,7 +39,7 @@ func BundleByID(id string) (permissionspec.Bundle, bool) {
 }
 
 func (r *Registry) TemplateGrants(
-	template permissionspec.JobTemplate,
+	template *permissionspec.JobTemplate,
 ) []*rbac.ResourcePermission {
 	byResource := make(map[string]*rbac.ResourcePermission)
 	order := make([]string, 0, 32)

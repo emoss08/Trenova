@@ -127,7 +127,7 @@ func TestSchedule_TenureTiersRaiseAccrualAndCap(t *testing.T) {
 	assert.True(t, after.NominalDays.Equal(decimal.NewFromInt(2)), "twelve months in: tier amount")
 	assert.True(t, after.MaxBalanceDays.Decimal.Equal(decimal.NewFromInt(20)))
 
-	projected := ProjectedAccrual(plan, decimal.NewFromInt(9), decimal.Zero, rule)
+	projected := ProjectedAccrual(plan, decimal.NewFromInt(9), decimal.Zero, &rule)
 	assert.True(t, projected.GreaterThan(decimal.NewFromInt(1)),
 		"the raised cap lets the projection grow past the base cap")
 }

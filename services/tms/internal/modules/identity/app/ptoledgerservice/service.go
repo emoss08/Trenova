@@ -274,7 +274,7 @@ func (s *Service) post(
 		return nil, err
 	}
 
-	s.publish(ctx, p.key, p.actor)
+	s.publish(ctx, &p.key, p.actor)
 	return posted, nil
 }
 
@@ -292,7 +292,7 @@ func (s *Service) skipEntry(
 	return ErrCapped
 }
 
-func (s *Service) publish(ctx context.Context, key ptoledgerports.PTOBalanceKey, actor Actor) {
+func (s *Service) publish(ctx context.Context, key *ptoledgerports.PTOBalanceKey, actor Actor) {
 	if s.realtime == nil {
 		return
 	}

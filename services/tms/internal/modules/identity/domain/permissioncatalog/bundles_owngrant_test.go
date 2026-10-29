@@ -91,7 +91,7 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 	for _, template := range templates {
 		want, listed := expected[template.ID]
 		require.True(t, listed, "template %q is missing from this table", template.ID)
-		grants := reg.TemplateGrants(template)
+		grants := reg.TemplateGrants(&template)
 		for _, kind := range kinds {
 			assert.Equal(t, want[kind], effectiveGrant(reg, grants, kind),
 				"template %q on %s", template.ID, kind)
@@ -105,7 +105,7 @@ func TestJobTemplates_OnlyDOTComplianceReadsDrugAndAlcoholResults(t *testing.T) 
 	reg := NewRegistry()
 	var readers []string
 	for _, template := range JobTemplates() {
-		grants := reg.TemplateGrants(template)
+		grants := reg.TemplateGrants(&template)
 		if strings.Contains(effectiveGrant(reg, grants, permission.ResourceWorkerDOTTest), "read") {
 			readers = append(readers, template.ID)
 		}
@@ -133,7 +133,7 @@ func TestTemplateGrants_ReadOnlyReadsNoKindGrantedOnItsOwn(t *testing.T) {
 		return template.ID == "read_only"
 	})
 	require.GreaterOrEqual(t, idx, 0)
-	grants := reg.TemplateGrants(JobTemplates()[idx])
+	grants := reg.TemplateGrants(&JobTemplates()[idx])
 
 	for _, kind := range ownGrantKinds {
 		assert.Empty(t, effectiveGrant(reg, grants, kind), "read_only on %s", kind)

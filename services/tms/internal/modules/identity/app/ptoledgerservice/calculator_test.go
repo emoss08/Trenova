@@ -258,7 +258,7 @@ func TestProjectedAccrualRespectsCapAndCarryover(t *testing.T) {
 		},
 	}
 
-	delta := ProjectedAccrual(plan, decimal.NewFromInt(4), decimal.Zero, rule)
+	delta := ProjectedAccrual(plan, decimal.NewFromInt(4), decimal.Zero, &rule)
 	assert.True(t, delta.Equal(decimal.NewFromInt(1)),
 		"4 → 6 (capped) → 6 (capped) → 3 (carryover cap) → 5; delta %s", delta)
 }
@@ -291,14 +291,14 @@ func TestRolloversPostedWithTheGrantLeaveNothingForAProjectionToReplay(t *testin
 					AmountDays: amount,
 				})
 			}
-			AdvanceCursor(bal, planned, &rule)
+			AdvanceCursor(bal, &planned, &rule)
 			continue
 		}
 		bal.Apply(&pto.WorkerPTOLedgerEntry{
 			EntryType:  planned.EntryType,
 			AmountDays: planned.NominalDays,
 		})
-		AdvanceCursor(bal, planned, &rule)
+		AdvanceCursor(bal, &planned, &rule)
 	}
 
 	require.Equal(t, "C:2026", bal.LastRolloverKey, "this year's rollover is on the balance")
@@ -318,7 +318,7 @@ func TestRolloversPostedWithTheGrantLeaveNothingForAProjectionToReplay(t *testin
 		LastRolloverKey: bal.LastRolloverKey,
 	})
 	assert.Empty(t, ahead, "nothing falls between now and the request")
-	assert.True(t, ProjectedAccrual(ahead, bal.BalanceDays, bal.CarriedDays, rule).IsZero())
+	assert.True(t, ProjectedAccrual(ahead, bal.BalanceDays, bal.CarriedDays, &rule).IsZero())
 }
 
 func TestRolloverDue_OrdersByYearThenCarryoverBeforeExpiry(t *testing.T) {

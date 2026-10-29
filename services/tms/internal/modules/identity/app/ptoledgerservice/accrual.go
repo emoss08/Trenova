@@ -162,7 +162,7 @@ func (s *Service) RunAccrualForWorker(
 		for _, planned := range plan {
 			if postErr := s.postPlanned(
 				ctx,
-				key,
+				&key,
 				resolved,
 				rule,
 				planned,
@@ -198,7 +198,7 @@ func (s *Service) RunAccrualForWorker(
 
 func (s *Service) postPlanned(
 	ctx context.Context,
-	key ptoledgerports.PTOBalanceKey,
+	key *ptoledgerports.PTOBalanceKey,
 	resolved *ResolvedPolicy,
 	rule *pto.PTOPolicyRule,
 	planned PlannedEntry,
@@ -219,12 +219,12 @@ func (s *Service) postPlanned(
 		capRule.MaxBalanceDays = planned.MaxBalanceDays
 	}
 	params := postParams{
-		key:   key,
+		key:   *key,
 		entry: entry,
 		actor: actor,
 		rule:  &capRule,
 		onApplied: func(bal *pto.WorkerPTOBalance) {
-			AdvanceCursor(bal, planned, rule)
+			AdvanceCursor(bal, &planned, rule)
 		},
 	}
 
@@ -290,11 +290,12 @@ func ResolveExpiry(
 	}
 }
 
-func AdvanceCursor(bal *pto.WorkerPTOBalance, planned PlannedEntry, rule *pto.PTOPolicyRule) {
+func AdvanceCursor(bal *pto.WorkerPTOBalance, planned *PlannedEntry, rule *pto.PTOPolicyRule) {
 	switch {
 	case strings.HasPrefix(planned.PeriodKey, periodKeyCarryover):
 		bal.LastRolloverKey = planned.PeriodKey
-		bal.YearStartedAt = &planned.EffectiveAt
+		yearStartedAt := planned.EffectiveAt
+		bal.YearStartedAt = &yearStartedAt
 		carried := bal.BalanceDays
 		if rule.CarryoverCapDays.Valid && carried.GreaterThan(rule.CarryoverCapDays.Decimal) {
 			carried = rule.CarryoverCapDays.Decimal
@@ -319,19 +320,19 @@ func AdvanceCursor(bal *pto.WorkerPTOBalance, planned PlannedEntry, rule *pto.PT
 
 func (s *Service) advanceCursorOnly(
 	ctx context.Context,
-	key ptoledgerports.PTOBalanceKey,
+	key *ptoledgerports.PTOBalanceKey,
 	planned PlannedEntry,
 	rule *pto.PTOPolicyRule,
 ) error {
 	_, err := s.post(ctx, postParams{
-		key:   key,
+		key:   *key,
 		entry: &pto.WorkerPTOLedgerEntry{EntryType: planned.EntryType},
 		actor: SystemActor(),
 		resolve: func(_ *pto.WorkerPTOBalance) (decimal.Decimal, bool) {
 			return decimal.Zero, false
 		},
 		onApplied: func(bal *pto.WorkerPTOBalance) {
-			AdvanceCursor(bal, planned, rule)
+			AdvanceCursor(bal, &planned, rule)
 		},
 	})
 	if errors.Is(err, ErrCapped) {

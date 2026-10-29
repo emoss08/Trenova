@@ -340,7 +340,7 @@ func (s *PTOPolicySeed) enrolWorker(
 					bal.Apply(entry)
 					entries = append(entries, entry)
 				}
-				ptoledgerservice.AdvanceCursor(bal, planned, rule)
+				ptoledgerservice.AdvanceCursor(bal, &planned, rule)
 				continue
 			}
 			if planned.EntryType != pto.PTOLedgerEntryAccrual {
