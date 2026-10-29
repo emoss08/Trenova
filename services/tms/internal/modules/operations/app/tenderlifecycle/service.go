@@ -55,6 +55,7 @@ type Params struct {
 	Negotiator            *tendernegotiation.Service
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		l:                     p.Logger.Named("service.tender"),
@@ -240,6 +241,83 @@ func (s *Service) DeclineOffer(
 	return nil
 }
 
+func (s *Service) commitAcceptance(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offer *tender.TenderOffer,
+	source tender.ResponseSource,
+	now int64,
+) (bool, error) {
+	countered := offer.Status == tender.OfferStatusCountered
+	accepted := false
+	err := s.db.Transact(
+		ctx,
+		kernelports.TxOptions{},
+		func(txCtx context.Context) error {
+			tenderMoved, txErr := s.repo.UpdateTenderStatus(
+				txCtx,
+				&tenderports.UpdateTenderStatusRequest{
+					TenantInfo: tenantInfo,
+					TenderID:   offer.TenderID,
+					FromStatus: []tender.Status{tender.StatusActive},
+					ToStatus:   tender.StatusAccepted,
+				},
+			)
+			if txErr != nil {
+				return txErr
+			}
+			if !tenderMoved {
+				return nil
+			}
+
+			acceptReq := &tenderports.UpdateOfferStatusRequest{
+				TenantInfo:     tenantInfo,
+				OfferID:        offer.ID,
+				FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
+				ToStatus:       tender.OfferStatusAccepted,
+				RespondedAt:    &now,
+				ResponseSource: source,
+			}
+			if countered {
+				acceptReq.FromStatus = []tender.OfferStatus{tender.OfferStatusCountered}
+				acceptReq.RespondedAt = nil
+				acceptReq.ResponseSource = ""
+				acceptReq.CounterDecided = tendernegotiation.DecisionStamp(tenantInfo, now)
+			}
+			offerMoved, txErr := s.repo.UpdateOfferStatus(txCtx, acceptReq)
+			if txErr != nil {
+				return txErr
+			}
+			if !offerMoved {
+				return errRollbackAccept
+			}
+
+			offerIDCopy := offer.ID
+			if _, txErr = s.repo.UpdateTenderStatus(
+				txCtx,
+				&tenderports.UpdateTenderStatusRequest{
+					TenantInfo:      tenantInfo,
+					TenderID:        offer.TenderID,
+					FromStatus:      []tender.Status{tender.StatusAccepted},
+					ToStatus:        tender.StatusAccepted,
+					AcceptedOfferID: &offerIDCopy,
+					AcceptedAt:      &now,
+				},
+			); txErr != nil {
+				return txErr
+			}
+
+			accepted = true
+			return nil
+		},
+	)
+	if err != nil && !errors.Is(err, errRollbackAccept) {
+		return false, err
+	}
+
+	return accepted, nil
+}
+
 // AcceptOffer lands a carrier's acceptance. The tender-terminal and
 // offer-accepted transitions commit in ONE transaction — the tender goes
 // terminal before the assignment is created so the out-of-tender coverage
@@ -274,70 +352,9 @@ func (s *Service) AcceptOffer(
 		offer.Status == tender.OfferStatusAccepted
 
 	if !resuming {
-		accepted := false
-		err = s.db.Transact(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context) error {
-				tenderMoved, txErr := s.repo.UpdateTenderStatus(
-					txCtx,
-					&tenderports.UpdateTenderStatusRequest{
-						TenantInfo: tenantInfo,
-						TenderID:   offer.TenderID,
-						FromStatus: []tender.Status{tender.StatusActive},
-						ToStatus:   tender.StatusAccepted,
-					},
-				)
-				if txErr != nil {
-					return txErr
-				}
-				if !tenderMoved {
-					return nil
-				}
-
-				acceptReq := &tenderports.UpdateOfferStatusRequest{
-					TenantInfo:     tenantInfo,
-					OfferID:        offerID,
-					FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
-					ToStatus:       tender.OfferStatusAccepted,
-					RespondedAt:    &now,
-					ResponseSource: source,
-				}
-				if countered {
-					acceptReq.FromStatus = []tender.OfferStatus{tender.OfferStatusCountered}
-					acceptReq.RespondedAt = nil
-					acceptReq.ResponseSource = ""
-					acceptReq.CounterDecided = tendernegotiation.DecisionStamp(tenantInfo, now)
-				}
-				offerMoved, txErr := s.repo.UpdateOfferStatus(txCtx, acceptReq)
-				if txErr != nil {
-					return txErr
-				}
-				if !offerMoved {
-					return errRollbackAccept
-				}
-
-				offerIDCopy := offer.ID
-				if _, txErr = s.repo.UpdateTenderStatus(
-					txCtx,
-					&tenderports.UpdateTenderStatusRequest{
-						TenantInfo:      tenantInfo,
-						TenderID:        offer.TenderID,
-						FromStatus:      []tender.Status{tender.StatusAccepted},
-						ToStatus:        tender.StatusAccepted,
-						AcceptedOfferID: &offerIDCopy,
-						AcceptedAt:      &now,
-					},
-				); txErr != nil {
-					return txErr
-				}
-
-				accepted = true
-				return nil
-			},
-		)
-		if err != nil && !errors.Is(err, errRollbackAccept) {
-			return nil, err
+		accepted, acceptErr := s.commitAcceptance(ctx, tenantInfo, offer, source, now)
+		if acceptErr != nil {
+			return nil, acceptErr
 		}
 		if !accepted {
 			s.recordLateAccept(ctx, tenantInfo, offer, source, now)

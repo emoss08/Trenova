@@ -27,6 +27,18 @@ import (
 	"go.uber.org/zap"
 )
 
+type Effects struct {
+	l                *zap.Logger
+	repo             tenderports.TenderRepository
+	eventService     shipmenteventports.ShipmentEventService
+	auditService     auditports.AuditService
+	invalidator      shipmentinvalidationports.ShipmentInvalidator
+	notifications    *notificationservice.Service
+	dispatchControls dispatchcontrolports.DispatchControlRepository
+	intelGate        carrierintelports.CarrierIntelGate
+	lifecycle        carrierintelports.CarrierLifecycleObserver
+}
+
 func (s *Effects) LogAudit(p *AuditParams) {
 	if s.auditService == nil {
 		return
@@ -81,18 +93,6 @@ func (s *Effects) PublishShipmentInvalidation(
 	)
 }
 
-type Effects struct {
-	l                *zap.Logger
-	repo             tenderports.TenderRepository
-	eventService     shipmenteventports.ShipmentEventService
-	auditService     auditports.AuditService
-	invalidator      shipmentinvalidationports.ShipmentInvalidator
-	notifications    *notificationservice.Service
-	dispatchControls dispatchcontrolports.DispatchControlRepository
-	intelGate        carrierintelports.CarrierIntelGate
-	lifecycle        carrierintelports.CarrierLifecycleObserver
-}
-
 type Params struct {
 	fx.In
 
@@ -105,6 +105,7 @@ type Params struct {
 	DispatchControls dispatchcontrolports.DispatchControlRepository `optional:"true"`
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Effects {
 	return &Effects{
 		l:                p.Logger.Named("service.tender"),

@@ -25,6 +25,16 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l              *zap.Logger
+	repo           tenderports.TenderRepository
+	assignmentRepo assignmentports.AssignmentRepository
+	shipmentRepo   shipmentports.ShipmentRepository
+	workflows      kernelports.WorkflowStarter
+	permissions    permissionports.PermissionEngine
+	effects        *tendereffects.Effects
+}
+
 // RecordCounter lands a carrier's counter-offer. The offer moves to
 // Countered and holds until the decision deadline; the verdict against the
 // margin floor says whether the policy takes it at once, or who has to decide
@@ -465,16 +475,6 @@ func (s *Service) CounterDecisionFor(
 	}, nil
 }
 
-type Service struct {
-	l              *zap.Logger
-	repo           tenderports.TenderRepository
-	assignmentRepo assignmentports.AssignmentRepository
-	shipmentRepo   shipmentports.ShipmentRepository
-	workflows      kernelports.WorkflowStarter
-	permissions    permissionports.PermissionEngine
-	effects        *tendereffects.Effects
-}
-
 type Params struct {
 	fx.In
 
@@ -487,6 +487,7 @@ type Params struct {
 	Effects        *tendereffects.Effects
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		l:              p.Logger.Named("service.tender"),

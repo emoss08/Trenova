@@ -16,6 +16,12 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l       *zap.Logger
+	creator *tendercreate.Service
+	effects *tendereffects.Effects
+}
+
 // Escalate follows an exhausted tender with the next round the
 // organization's policy asks for: the same carriers again, all at once or in
 // rank order, at the escalation rate and expiry. It stops at the policy's
@@ -155,12 +161,6 @@ func (s *Service) notifyEscalationStopped(
 		CorrelationID: exhausted.ID.String(),
 		Link:          tendereffects.DispatchConsoleMoveLink(exhausted.ShipmentMoveID),
 	})
-}
-
-type Service struct {
-	l       *zap.Logger
-	creator *tendercreate.Service
-	effects *tendereffects.Effects
 }
 
 type Params struct {

@@ -2,6 +2,7 @@ package tenderdispatch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -31,6 +32,21 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+type Service struct {
+	l               *zap.Logger
+	repo            tenderports.TenderRepository
+	carrierRepo     carrierports.CarrierRepository
+	shipmentRepo    shipmentports.ShipmentRepository
+	orgRepo         tenantports.OrganizationRepository
+	appConfig       *appconfig.Config
+	tenderingConfig *tenderingconfig.Config
+	templates       documenttemplateports.DocumentTemplateResolver
+	emailService    emailports.EmailService
+	ediChannel      tenderports.EDITenderChannel
+	intelGate       carrierintelports.CarrierIntelGate
+	effects         *tendereffects.Effects
+}
 
 // DispatchOffer moves one offer Pending→Sent and delivers it on its channel.
 // A channel failure is a business outcome (the offer is marked
@@ -76,8 +92,8 @@ func (s *Service) DispatchOffer(
 		}, nil
 	}
 
-	if skipped, skipErr := s.skipIneligibleOffer(ctx, tenantInfo, offer); skipErr != nil ||
-		skipped != nil {
+	skipped, skipErr := s.skipIneligibleOffer(ctx, tenantInfo, offer)
+	if !errors.Is(skipErr, errOfferNotSkipped) {
 		return skipped, skipErr
 	}
 
@@ -420,21 +436,6 @@ func (s *Service) offerResponseURL(token, action string) string {
 	return base + path
 }
 
-type Service struct {
-	l               *zap.Logger
-	repo            tenderports.TenderRepository
-	carrierRepo     carrierports.CarrierRepository
-	shipmentRepo    shipmentports.ShipmentRepository
-	orgRepo         tenantports.OrganizationRepository
-	appConfig       *appconfig.Config
-	tenderingConfig *tenderingconfig.Config
-	templates       documenttemplateports.DocumentTemplateResolver
-	emailService    emailports.EmailService
-	ediChannel      tenderports.EDITenderChannel
-	intelGate       carrierintelports.CarrierIntelGate
-	effects         *tendereffects.Effects
-}
-
 type Params struct {
 	fx.In
 
@@ -451,6 +452,7 @@ type Params struct {
 	Effects         *tendereffects.Effects
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		l:               p.Logger.Named("service.tender"),
@@ -475,13 +477,15 @@ func (s *Service) SetEDITenderChannel(value tenderports.EDITenderChannel) {
 	s.ediChannel = value
 }
 
+var errOfferNotSkipped = errors.New("tender offer was not skipped")
+
 func (s *Service) skipIneligibleOffer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
 ) (*tenderports.TenderDispatchResult, error) {
 	if s.intelGate == nil {
-		return nil, nil
+		return nil, errOfferNotSkipped
 	}
 
 	carriers, err := s.carrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
@@ -495,7 +499,7 @@ func (s *Service) skipIneligibleOffer(
 		return nil, err
 	}
 	if len(carriers) == 0 {
-		return nil, nil
+		return nil, errOfferNotSkipped
 	}
 
 	gates := s.effects.IntelGates(ctx, tenantInfo, []pulid.ID{offer.CarrierID}, true)
@@ -505,7 +509,7 @@ func (s *Service) skipIneligibleOffer(
 		Intel:   gates[offer.CarrierID],
 	})
 	if !eligibility.IsBlocked() {
-		return nil, nil
+		return nil, errOfferNotSkipped
 	}
 
 	reason := "Carrier became ineligible before the offer was sent: " +

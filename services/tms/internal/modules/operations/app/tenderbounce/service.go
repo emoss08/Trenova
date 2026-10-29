@@ -20,6 +20,16 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l                     *zap.Logger
+	repo                  tenderports.TenderRepository
+	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	invalidator           shipmentinvalidationports.ShipmentInvalidator
+	assigner              tenderports.CarrierMoveAssigner
+	creator               *tendercreate.Service
+	effects               *tendereffects.Effects
+}
+
 // planBounce is every check Bounce makes before it acts, so a preview refuses
 // exactly what the write would.
 func (s *Service) planBounce(ctx context.Context, req *BounceTenderRequest) (*bouncePlan, error) {
@@ -288,16 +298,6 @@ func (s *Service) BounceOnCarrierDecline(
 		Source:     tender.ResponseSourceEDI,
 	})
 	return true, err
-}
-
-type Service struct {
-	l                     *zap.Logger
-	repo                  tenderports.TenderRepository
-	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
-	invalidator           shipmentinvalidationports.ShipmentInvalidator
-	assigner              tenderports.CarrierMoveAssigner
-	creator               *tendercreate.Service
-	effects               *tendereffects.Effects
 }
 
 type Params struct {

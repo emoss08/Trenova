@@ -19,6 +19,14 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l           *zap.Logger
+	repo        tenderports.TenderRepository
+	workflows   kernelports.WorkflowStarter
+	invalidator shipmentinvalidationports.ShipmentInvalidator
+	effects     *tendereffects.Effects
+}
+
 // Cancel withdraws a live tender. An Active tender is canceled through its
 // workflow so an in-flight response cannot race the withdrawal; a NeedsReview
 // tender no longer has a workflow and is canceled directly. The direct path
@@ -50,11 +58,17 @@ func (s *Service) Cancel(ctx context.Context, req *CancelTenderRequest) error {
 		return s.CancelDirect(ctx, req.TenantInfo, entity, req.Reason)
 	case tender.StatusNeedsReview:
 		return s.CancelDirect(ctx, req.TenantInfo, entity, req.Reason)
+	case tender.StatusAccepted, tender.StatusExhausted, tender.StatusCanceled:
+		return finishedTenderError(entity)
 	default:
-		return errortypes.NewBusinessError("Tender has already finished").
-			WithParam("tenderId", entity.ID.String()).
-			WithParam("status", entity.Status.String())
+		return finishedTenderError(entity)
 	}
+}
+
+func finishedTenderError(entity *tender.Tender) error {
+	return errortypes.NewBusinessError("Tender has already finished").
+		WithParam("tenderId", entity.ID.String()).
+		WithParam("status", entity.Status.String())
 }
 
 // CancelLiveTenderForMove implements the TenderGuard hook: when a move gets
@@ -195,14 +209,6 @@ func (s *Service) CancelDirect(
 	)
 
 	return nil
-}
-
-type Service struct {
-	l           *zap.Logger
-	repo        tenderports.TenderRepository
-	workflows   kernelports.WorkflowStarter
-	invalidator shipmentinvalidationports.ShipmentInvalidator
-	effects     *tendereffects.Effects
 }
 
 type Params struct {

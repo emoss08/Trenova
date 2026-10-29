@@ -37,6 +37,22 @@ import (
 	"go.uber.org/zap"
 )
 
+type Service struct {
+	l                     *zap.Logger
+	db                    kernelports.Transactor
+	repo                  tenderports.TenderRepository
+	guideRepo             tenderports.RoutingGuideRepository
+	carrierRepo           carrierports.CarrierRepository
+	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
+	assignmentRepo        assignmentports.AssignmentRepository
+	shipmentRepo          shipmentports.ShipmentRepository
+	holdRepo              shipmentholdports.ShipmentHoldRepository
+	workflows             kernelports.WorkflowStarter
+	invalidator           shipmentinvalidationports.ShipmentInvalidator
+	rateEngine            ratequoteports.RateEngine
+	effects               *tendereffects.Effects
+}
+
 // priceGuideEntry decides what to offer, reading the carrier's contract when
 // the entry asks for it.
 //
@@ -377,107 +393,33 @@ func (s *Service) buildGuideOffers(
 		}
 		carrierIDs = append(carrierIDs, entry.CarrierID)
 	}
-	carriers, err := s.carrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
-		TenantInfo: tenantInfo,
-		CarrierIDs: carrierIDs,
-		CarrierFilterOptions: carrierports.CarrierFilterOptions{
-			IncludeInsurancePolicies: true,
-		},
-	})
+	carriers, carrierByID, err := s.loadTenderCarriers(ctx, tenantInfo, carrierIDs)
 	if err != nil {
 		return nil, err
 	}
-	carrierByID := make(map[pulid.ID]*carrier.Carrier, len(carriers))
-	for _, c := range carriers {
-		carrierByID[c.ID] = c
-	}
 
-	now := timeutils.NowUnix()
-	gates := s.effects.IntelGates(ctx, tenantInfo, carrierIDs, refreshIntel)
+	screen := &offerScreen{
+		tenantInfo:  tenantInfo,
+		carrierByID: carrierByID,
+		now:         timeutils.NowUnix(),
+		gates:       s.effects.IntelGates(ctx, tenantInfo, carrierIDs, refreshIntel),
+		move:        move,
+		// The shipment is read once, and only when some entry actually asks for
+		// contract pricing. Reading it for every guide would put a query on a path
+		// that has never needed one.
+		pricing: s.shipmentForContractPricing(ctx, tenantInfo, guide, move),
+	}
 	plan := &guideOfferPlan{
 		offers:   make([]*tender.TenderOffer, 0, len(guide.Entries)),
 		carriers: carrierNames(carriers),
 	}
 	multiErr := errortypes.NewMultiError()
 
-	// The shipment is read once, and only when some entry actually asks for
-	// contract pricing. Reading it for every guide would put a query on a path
-	// that has never needed one.
-	entity := s.shipmentForContractPricing(ctx, tenantInfo, guide, move)
-
 	for idx, entry := range guide.Entries {
 		if entry == nil {
 			continue
 		}
-		entryErr := multiErr.WithIndex("entries", idx)
-
-		carrierEntity, ok := carrierByID[entry.CarrierID]
-		if !ok {
-			plan.skipped = append(plan.skipped, guideEntryScreening{
-				carrierName: guideEntryCarrierName(entry),
-				rank:        entry.Rank,
-				reasons:     []string{"Carrier does not exist within your organization"},
-			})
-			continue
-		}
-
-		eligibility := carrier.EvaluateEligibility(carrier.EligibilityInput{
-			Carrier: carrierEntity,
-			Now:     now,
-			Intel:   gates[carrierEntity.ID],
-		})
-		if eligibility.IsBlocked() {
-			plan.skipped = append(plan.skipped, guideEntryScreening{
-				carrierName: carrierEntity.Name,
-				rank:        entry.Rank,
-				reasons:     eligibility.Blockers,
-			})
-			continue
-		}
-
-		price := s.priceGuideEntry(ctx, tenantInfo, entry, entity)
-		if price.reason != "" {
-			plan.skipped = append(plan.skipped, guideEntryScreening{
-				carrierName: carrierEntity.Name,
-				rank:        entry.Rank,
-				reasons:     []string{price.reason},
-			})
-			continue
-		}
-
-		if price.method == shipmentvocab.CarrierRateMethodPerMile &&
-			(move.Distance == nil || *move.Distance <= 0) {
-			entryErr.Add(
-				"rateMethod",
-				errortypes.ErrInvalid,
-				"Per-mile entries require a move with a computed distance",
-			)
-			continue
-		}
-
-		offer := &tender.TenderOffer{
-			OrganizationID:  tenantInfo.OrgID,
-			BusinessUnitID:  tenantInfo.BuID,
-			CarrierID:       entry.CarrierID,
-			Rank:            entry.Rank,
-			RateMethod:      price.method,
-			Rate:            price.rate,
-			OfferTTLSeconds: entry.OfferTTLSeconds,
-			Channel:         entry.Channel,
-			Status:          tender.OfferStatusPending,
-		}
-		if err = s.resolveOfferChannel(ctx, tenantInfo, offer, carrierEntity, ""); err != nil {
-			entryErr.Add("channel", errortypes.ErrInvalid, err.Error())
-			continue
-		}
-		if eligibility.HasWarnings() {
-			plan.warned = append(plan.warned, guideEntryScreening{
-				carrierName: carrierEntity.Name,
-				rank:        entry.Rank,
-				reasons:     eligibility.Warnings,
-			})
-		}
-		plan.offers = append(plan.offers, offer)
+		s.screenGuideEntry(ctx, screen, plan, entry, multiErr.WithIndex("entries", idx))
 	}
 
 	if multiErr.HasErrors() {
@@ -489,6 +431,115 @@ func (s *Service) buildGuideOffers(
 		).WithParam("routingGuideId", guide.ID.String())
 	}
 	return plan, nil
+}
+
+type offerScreen struct {
+	tenantInfo  pagination.TenantInfo
+	carrierByID map[pulid.ID]*carrier.Carrier
+	gates       map[pulid.ID]*carrier.IntelGate
+	now         int64
+	move        *shipment.ShipmentMove
+	pricing     *shipment.Shipment
+}
+
+func (s *Service) loadTenderCarriers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	carrierIDs []pulid.ID,
+) ([]*carrier.Carrier, map[pulid.ID]*carrier.Carrier, error) {
+	carriers, err := s.carrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
+		TenantInfo: tenantInfo,
+		CarrierIDs: carrierIDs,
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
+			IncludeInsurancePolicies: true,
+		},
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	carrierByID := make(map[pulid.ID]*carrier.Carrier, len(carriers))
+	for _, c := range carriers {
+		carrierByID[c.ID] = c
+	}
+	return carriers, carrierByID, nil
+}
+
+func (s *Service) screenGuideEntry(
+	ctx context.Context,
+	screen *offerScreen,
+	plan *guideOfferPlan,
+	entry *tender.RoutingGuideEntry,
+	entryErr *errortypes.MultiError,
+) {
+	carrierEntity, ok := screen.carrierByID[entry.CarrierID]
+	if !ok {
+		plan.skipped = append(plan.skipped, guideEntryScreening{
+			carrierName: guideEntryCarrierName(entry),
+			rank:        entry.Rank,
+			reasons:     []string{"Carrier does not exist within your organization"},
+		})
+		return
+	}
+
+	eligibility := carrier.EvaluateEligibility(carrier.EligibilityInput{
+		Carrier: carrierEntity,
+		Now:     screen.now,
+		Intel:   screen.gates[carrierEntity.ID],
+	})
+	if eligibility.IsBlocked() {
+		plan.skipped = append(plan.skipped, guideEntryScreening{
+			carrierName: carrierEntity.Name,
+			rank:        entry.Rank,
+			reasons:     eligibility.Blockers,
+		})
+		return
+	}
+
+	price := s.priceGuideEntry(ctx, screen.tenantInfo, entry, screen.pricing)
+	if price.reason != "" {
+		plan.skipped = append(plan.skipped, guideEntryScreening{
+			carrierName: carrierEntity.Name,
+			rank:        entry.Rank,
+			reasons:     []string{price.reason},
+		})
+		return
+	}
+
+	if price.method == shipmentvocab.CarrierRateMethodPerMile &&
+		(screen.move.Distance == nil || *screen.move.Distance <= 0) {
+		entryErr.Add(
+			"rateMethod",
+			errortypes.ErrInvalid,
+			"Per-mile entries require a move with a computed distance",
+		)
+		return
+	}
+
+	offer := &tender.TenderOffer{
+		OrganizationID:  screen.tenantInfo.OrgID,
+		BusinessUnitID:  screen.tenantInfo.BuID,
+		CarrierID:       entry.CarrierID,
+		Rank:            entry.Rank,
+		RateMethod:      price.method,
+		Rate:            price.rate,
+		OfferTTLSeconds: entry.OfferTTLSeconds,
+		Channel:         entry.Channel,
+		Status:          tender.OfferStatusPending,
+	}
+	if err := s.resolveOfferChannel(
+		ctx, screen.tenantInfo, offer, carrierEntity, "",
+	); err != nil {
+		entryErr.Add("channel", errortypes.ErrInvalid, err.Error())
+		return
+	}
+	if eligibility.HasWarnings() {
+		plan.warned = append(plan.warned, guideEntryScreening{
+			carrierName: carrierEntity.Name,
+			rank:        entry.Rank,
+			reasons:     eligibility.Warnings,
+		})
+	}
+	plan.offers = append(plan.offers, offer)
 }
 
 // auditGuideScreening writes the skip-with-audit trail after the tender row
@@ -557,111 +608,114 @@ func (s *Service) buildSpotOffers(
 	for _, line := range req.Lines {
 		carrierIDs = append(carrierIDs, line.CarrierID)
 	}
-	carriers, err := s.carrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
-		TenantInfo: req.TenantInfo,
-		CarrierIDs: carrierIDs,
-		CarrierFilterOptions: carrierports.CarrierFilterOptions{
-			IncludeInsurancePolicies: true,
-		},
-	})
+	carriers, carrierByID, err := s.loadTenderCarriers(ctx, req.TenantInfo, carrierIDs)
 	if err != nil {
 		return nil, err
 	}
-	carrierByID := make(map[pulid.ID]*carrier.Carrier, len(carriers))
-	for _, c := range carriers {
-		carrierByID[c.ID] = c
-	}
 
-	now := timeutils.NowUnix()
-	gates := s.effects.IntelGates(ctx, req.TenantInfo, carrierIDs, refreshIntel)
-	offers := make([]*tender.TenderOffer, 0, len(req.Lines))
-	warnings := make([]string, 0, len(req.Lines))
+	screen := &offerScreen{
+		tenantInfo:  req.TenantInfo,
+		carrierByID: carrierByID,
+		now:         timeutils.NowUnix(),
+		gates:       s.effects.IntelGates(ctx, req.TenantInfo, carrierIDs, refreshIntel),
+		move:        move,
+	}
+	plan := &spotOfferPlan{
+		offers:   make([]*tender.TenderOffer, 0, len(req.Lines)),
+		warnings: make([]string, 0, len(req.Lines)),
+		carriers: carrierNames(carriers),
+	}
 	multiErr := errortypes.NewMultiError()
 
-	for idx, line := range req.Lines {
-		lineErr := multiErr.WithIndex("lines", idx)
-
-		carrierEntity, ok := carrierByID[line.CarrierID]
-		if !ok {
-			lineErr.Add(
-				"carrierId",
-				errortypes.ErrInvalid,
-				"Carrier does not exist within your organization",
-			)
-			continue
-		}
-
-		eligibility := carrier.EvaluateEligibility(carrier.EligibilityInput{
-			Carrier: carrierEntity,
-			Now:     now,
-			Intel:   gates[carrierEntity.ID],
-		})
-		if eligibility.IsBlocked() {
-			lineErr.Add(
-				"carrierId",
-				errortypes.ErrInvalid,
-				"Carrier is not eligible for tendering: {0}",
-				strings.Join(eligibility.Blockers, "; "),
-			)
-			continue
-		}
-		if eligibility.HasWarnings() {
-			for _, warning := range eligibility.Warnings {
-				warnings = append(warnings, carrierEntity.Name+" — "+warning)
-			}
-		}
-
-		rateMethod := line.RateMethod
-		if rateMethod == "" {
-			rateMethod = shipmentvocab.CarrierRateMethodFlat
-		}
-		if rateMethod == shipmentvocab.CarrierRateMethodPerMile &&
-			(move.Distance == nil || *move.Distance <= 0) {
-			lineErr.Add(
-				"rateMethod",
-				errortypes.ErrInvalid,
-				"Per-mile lines require a move with a computed distance",
-			)
-			continue
-		}
-
-		channel := line.Channel
-		if channel == "" {
-			channel = tender.ChannelEmail
-		}
-		ttl := line.OfferTTLSeconds
-		if ttl == 0 {
-			ttl = tender.DefaultOfferTTLSeconds
-		}
-
-		offer := &tender.TenderOffer{
-			OrganizationID:  req.TenantInfo.OrgID,
-			BusinessUnitID:  req.TenantInfo.BuID,
-			CarrierID:       line.CarrierID,
-			Rank:            int16(idx + 1),
-			RateMethod:      rateMethod,
-			Rate:            line.Rate,
-			OfferTTLSeconds: ttl,
-			Channel:         channel,
-			Status:          tender.OfferStatusPending,
-		}
-		if err = s.resolveOfferChannel(
-			ctx, req.TenantInfo, offer, carrierEntity, line.Email,
-		); err != nil {
-			lineErr.Add("channel", errortypes.ErrInvalid, err.Error())
-			continue
-		}
-		offers = append(offers, offer)
+	for idx := range req.Lines {
+		s.screenSpotLine(ctx, screen, plan, idx, &req.Lines[idx], multiErr.WithIndex("lines", idx))
 	}
 
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	return &spotOfferPlan{
-		offers:   offers,
-		warnings: warnings,
-		carriers: carrierNames(carriers),
-	}, nil
+	return plan, nil
+}
+
+func (s *Service) screenSpotLine(
+	ctx context.Context,
+	screen *offerScreen,
+	plan *spotOfferPlan,
+	idx int,
+	line *SpotTenderLine,
+	lineErr *errortypes.MultiError,
+) {
+	carrierEntity, ok := screen.carrierByID[line.CarrierID]
+	if !ok {
+		lineErr.Add(
+			"carrierId",
+			errortypes.ErrInvalid,
+			"Carrier does not exist within your organization",
+		)
+		return
+	}
+
+	eligibility := carrier.EvaluateEligibility(carrier.EligibilityInput{
+		Carrier: carrierEntity,
+		Now:     screen.now,
+		Intel:   screen.gates[carrierEntity.ID],
+	})
+	if eligibility.IsBlocked() {
+		lineErr.Add(
+			"carrierId",
+			errortypes.ErrInvalid,
+			"Carrier is not eligible for tendering: {0}",
+			strings.Join(eligibility.Blockers, "; "),
+		)
+		return
+	}
+	if eligibility.HasWarnings() {
+		for _, warning := range eligibility.Warnings {
+			plan.warnings = append(plan.warnings, carrierEntity.Name+" — "+warning)
+		}
+	}
+
+	rateMethod := line.RateMethod
+	if rateMethod == "" {
+		rateMethod = shipmentvocab.CarrierRateMethodFlat
+	}
+	if rateMethod == shipmentvocab.CarrierRateMethodPerMile &&
+		(screen.move.Distance == nil || *screen.move.Distance <= 0) {
+		lineErr.Add(
+			"rateMethod",
+			errortypes.ErrInvalid,
+			"Per-mile lines require a move with a computed distance",
+		)
+		return
+	}
+
+	channel := line.Channel
+	if channel == "" {
+		channel = tender.ChannelEmail
+	}
+	ttl := line.OfferTTLSeconds
+	if ttl == 0 {
+		ttl = tender.DefaultOfferTTLSeconds
+	}
+
+	offer := &tender.TenderOffer{
+		OrganizationID:  screen.tenantInfo.OrgID,
+		BusinessUnitID:  screen.tenantInfo.BuID,
+		CarrierID:       line.CarrierID,
+		Rank:            int16(idx + 1),
+		RateMethod:      rateMethod,
+		Rate:            line.Rate,
+		OfferTTLSeconds: ttl,
+		Channel:         channel,
+		Status:          tender.OfferStatusPending,
+	}
+	if err := s.resolveOfferChannel(
+		ctx, screen.tenantInfo, offer, carrierEntity, line.Email,
+	); err != nil {
+		lineErr.Add("channel", errortypes.ErrInvalid, err.Error())
+		return
+	}
+	plan.offers = append(plan.offers, offer)
 }
 
 // resolveOfferChannel fills the channel-specific delivery fields: the
@@ -816,22 +870,6 @@ func (s *Service) cancelAfterStartFailure(
 	}
 }
 
-type Service struct {
-	l                     *zap.Logger
-	db                    kernelports.Transactor
-	repo                  tenderports.TenderRepository
-	guideRepo             tenderports.RoutingGuideRepository
-	carrierRepo           carrierports.CarrierRepository
-	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
-	assignmentRepo        assignmentports.AssignmentRepository
-	shipmentRepo          shipmentports.ShipmentRepository
-	holdRepo              shipmentholdports.ShipmentHoldRepository
-	workflows             kernelports.WorkflowStarter
-	invalidator           shipmentinvalidationports.ShipmentInvalidator
-	rateEngine            ratequoteports.RateEngine
-	effects               *tendereffects.Effects
-}
-
 type Params struct {
 	fx.In
 
@@ -850,6 +888,7 @@ type Params struct {
 	Effects               *tendereffects.Effects
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		l:                     p.Logger.Named("service.tender"),
