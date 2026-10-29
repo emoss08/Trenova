@@ -19,6 +19,7 @@ on:
       - "go.work.sum"
       - ".golangci.yml"
       - "services/tms/.go-arch-lint.yml"
+      - "services/tms/.go-pkgsize.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
@@ -43,6 +44,7 @@ on:
       - "go.work.sum"
       - ".golangci.yml"
       - "services/tms/.go-arch-lint.yml"
+      - "services/tms/.go-pkgsize.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
@@ -356,6 +358,10 @@ jobs:
       - name: Run go-arch-lint
         working-directory: ./services/tms
         run: go run ./scripts/archlint
+
+      - name: Run pkgsizelint
+        working-directory: ./services/tms
+        run: go run ./scripts/pkgsizelint
 
   codegen-checks:
     name: Codegen Checks

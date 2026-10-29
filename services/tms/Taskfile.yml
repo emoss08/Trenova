@@ -300,6 +300,7 @@ tasks:
     cmds:
       - golangci-lint run{{if .GO_JOBS}} --concurrency={{.GO_JOBS}}{{end}} ./...
       - go run ./scripts/archlint
+      - go run ./scripts/pkgsizelint
 
   fmt:
     desc: Format code

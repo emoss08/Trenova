@@ -99,6 +99,9 @@ and still break production or the build.
 - **Generics.** No exported type or signature mentions a concrete generic type that has methods,
   and no widely reachable type holds a `sync.Map`; see "Generics and build time" in
   [module-architecture.md](docs/engineering/module-architecture.md).
+- **Small packages.** One abstraction per package, within 1,500 lines (domain, ports, contract,
+  `pkg`, `shared`) or 3,000 (everything else); `pkgsizelint` enforces it. See "Small packages" in
+  [go.md](docs/engineering/backend/go.md#small-packages).
 - **Go style.** [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md);
   no comments, except a reportable keel model's doc comments, which are its catalog
   descriptions; `sonic`, never `encoding/json`; `errortypes` for errors the caller sees; a params
