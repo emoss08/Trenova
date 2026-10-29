@@ -95,7 +95,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 		Repo:   repo,
 	})
 	queries, actions := memoryTools(t, memories)
-	kit := agentevalgate.FromTools(queries, actions, runtimetools.RuntimePolicies())
+	kit := agentevalgate.FromTools(queries, actions, runtimetools.Policies())
 
 	c := &Case{
 		Name:  "cross-tenant-memory-ids",

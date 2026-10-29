@@ -2,6 +2,7 @@ package agenttoolpolicy_test
 
 import (
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
@@ -15,10 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var registeredTools = sync.OnceValues(registered.Build)
+
 func buildRegistered(t *testing.T) registered.Tools {
 	t.Helper()
 
-	tools, err := registered.Build()
+	tools, err := registeredTools()
 	require.NoError(t, err)
 
 	return tools

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -21,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -366,7 +368,7 @@ func TestGetShipment_SaysWhenCommentsAndHoldsAreLeftOutForAccess(t *testing.T) {
 		Comment: "Chicago DC closed the dock for an inventory count",
 	}}}
 	_, holds := heldShipments()
-	newTool := func(permissions *querytooltest.FakePermissions) agenttoolports.AgentQueryTool {
+	newTool := func(permissions permissionports.PermissionEngine) agenttoolports.AgentQueryTool {
 		return newGetShipmentTool(
 			&fakeShipmentGetter{entity: fixture.entity},
 			comments,
@@ -393,7 +395,10 @@ func TestGetShipment_SaysWhenCommentsAndHoldsAreLeftOutForAccess(t *testing.T) {
 	assert.Contains(t, note, "the person you are working for")
 	assert.Empty(t, document["recentComments"])
 
-	result, err = newTool(&querytooltest.FakePermissions{Allowed: true}).
+	result, err = newTool(&mocks.DenyResourcesPermissionEngine{Denied: []string{
+		permission.ResourceShipmentComment.String(),
+		permission.ResourceShipmentHold.String(),
+	}}).
 		Query(t.Context(), querytooltest.AgentParams(shipmentArgs(fixture, "full"),
 			permission.SensitivityInternal))
 	require.NoError(t, err)

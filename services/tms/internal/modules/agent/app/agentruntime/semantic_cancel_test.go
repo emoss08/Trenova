@@ -45,7 +45,7 @@ func observedRuntime(t *testing.T, err error) (*Service, *observer.ObservedLogs)
 
 	service, _ := wideRuntime(t)
 	core, logs := observer.New(zap.WarnLevel)
-	service.logger = zap.New(core)
+	rewire(service, func(p *Params) { p.Logger = zap.New(core) })
 	rewire(service, func(p *Params) { p.Vectorizer = failingVectorizer{err: err} })
 	rewire(service, func(p *Params) { p.CatalogVectors = failingSimilarities{err: err} })
 

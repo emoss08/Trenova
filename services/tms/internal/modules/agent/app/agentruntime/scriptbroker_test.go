@@ -240,7 +240,9 @@ func newScriptHarness(
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{Tools: tools},
 		&stubActionRegistry{Tools: actions}, permissions)
 	rewire(rt, func(p *Params) { p.Extensions = noExtensions{} })
-	rt.codeMode = codemode.Gate{}
+	retune(rt, func(_ *toolaccess.AccessParams, d *tooldispatch.DispatcherParams) {
+		d.CodeMode = codemode.Gate{}
+	})
 	rewire(rt, func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true}) })
 
 	names := make([]string, 0, len(reads)+len(actions))
@@ -640,7 +642,9 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 		"without the providers' settings no script runs")
 
 	forced := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
-	forced.rt.codeMode = codemode.Gate{Forced: true}
+	retune(forced.rt, func(_ *toolaccess.AccessParams, d *tooldispatch.DispatcherParams) {
+		d.CodeMode = codemode.Gate{Forced: true}
+	})
 	forced.req.CodeMode = codemode.OverrideOn
 	assert.False(t, forced.run(t.Context(), read(1, "shipment_list", nil)).Failed,
 		"the bench forces it on in development")

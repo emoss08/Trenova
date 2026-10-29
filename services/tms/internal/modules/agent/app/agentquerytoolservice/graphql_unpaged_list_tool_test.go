@@ -423,6 +423,15 @@ func TestUnpagedList_ReadsTheFleetsOpenEventsByDefaultAndOneWorkersWhole(t *test
 	}
 }
 
+func offsetPageRecord(t *testing.T, data any) map[string]any {
+	t.Helper()
+
+	page, ok := data.(*graphqllisttool.OffsetPage)
+	require.True(t, ok, "a list that pages by cursor answers with its page")
+
+	return page.Record
+}
+
 func credentialAnswers() map[string]*graphqlreadports.GraphQLReadResult {
 	return map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkerCredentialList": {Data: map[string]any{"workerCredentials": []any{
@@ -447,10 +456,10 @@ func TestUnpagedList_ReadsTheCredentialTypesBesideOneWorkersCredentialsOnly(t *t
 		sent   map[string]any
 	}{
 		"one worker's credentials come with the types the organization tracks": {
-			params: map[string]any{querytool.ParamWorkerID: workerID},
+			params: map[string]any{"workerIds": []any{workerID}},
 			types:  true,
 			sent: map[string]any{
-				"workerId": workerID, "includeArchived": false,
+				"workerIds": []any{workerID}, "includeArchived": false,
 				"limit": querytool.GraphQLListLimit + 1, "offset": 0,
 			},
 		},
@@ -480,7 +489,7 @@ func TestUnpagedList_ReadsTheCredentialTypesBesideOneWorkersCredentialsOnly(t *t
 			sent := reader.Sent("DeskWorkerCredentialList")
 			require.NotNil(t, sent)
 			assert.Equal(t, tc.sent, sent.Variables)
-			outcome, _ := data.(map[string]any)
+			outcome := offsetPageRecord(t, data)
 			if tc.types {
 				types, _ := outcome["credentialTypes"].([]map[string]any)
 				require.Len(t, types, 1)
@@ -539,7 +548,7 @@ func TestUnpagedList_PagesWhatFallsDueByCursor(t *testing.T) {
 	args := map[string]any{"expiringWithinDays": float64(30), querytool.ParamLimit: float64(2)}
 	data, err := tool.Query(t.Context(), querytooltest.KeyedCall(args))
 	require.NoError(t, err)
-	first, _ := data.(map[string]any)
+	first := offsetPageRecord(t, data)
 	items, _ := first["items"].([]map[string]any)
 	require.Len(t, items, 2, "the row past the page only says there is more")
 	assert.Equal(t, true, first["hasMore"])
@@ -567,7 +576,7 @@ func TestUnpagedList_PagesWhatFallsDueByCursor(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, 2, next.Sent("DeskWorkerCredentialList").Variables["offset"])
-	last, _ := data.(map[string]any)
+	last := offsetPageRecord(t, data)
 	assert.NotContains(t, last, "hasMore")
 	assert.NotContains(t, last, "nextCursor")
 

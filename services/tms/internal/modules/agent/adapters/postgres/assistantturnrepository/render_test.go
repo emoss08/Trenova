@@ -63,6 +63,6 @@ func TestLiveThreadTitlesReadAnUnnamedConversationAsEmpty(t *testing.T) {
 			UserID: pulid.ID("usr_1"),
 		}),
 	)
-	assert.Contains(t, titles, `COALESCE(`)
+	assert.Contains(t, titles, `coalesce(`)
 	assert.Contains(t, titles, `"title"`)
 }

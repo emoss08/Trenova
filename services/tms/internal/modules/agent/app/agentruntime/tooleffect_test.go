@@ -93,7 +93,7 @@ func TestMarkToolEffects_LabelsCallsAndResultsWithoutTouchingTheStoredCalls(t *t
 	assert.Empty(t, stored[0].Effect, "the slice the messages were read with is not rewritten")
 
 	var nilRuntime *Service
-	assert.NotPanics(t, func() { nilRuntime.access.MarkToolEffects(messages) })
+	assert.NotPanics(t, func() { nilRuntime.MarkToolEffects(messages) })
 }
 
 func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *testing.T) {

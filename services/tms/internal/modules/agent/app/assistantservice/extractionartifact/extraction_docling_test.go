@@ -17,7 +17,7 @@ func doclingStoredPages(t *testing.T, name string) []ExtractionPage {
 	t.Helper()
 
 	data, err := os.ReadFile(
-		filepath.Join("..", "..", "..", "..", "infrastructure", "docling", "testdata", name),
+		filepath.Join("..", "..", "..", "..", "..", "infrastructure", "docling", "testdata", name),
 	)
 	require.NoError(t, err)
 

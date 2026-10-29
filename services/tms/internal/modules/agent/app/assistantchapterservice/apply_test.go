@@ -408,7 +408,7 @@ func TestApply_RenamesAnAnsweredChapterWithTheModelsTitle(t *testing.T) {
 	}
 	plan, err := f.svc.Plan(
 		t.Context(),
-		f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseRequested),
 	)
 	require.NoError(t, err)
 

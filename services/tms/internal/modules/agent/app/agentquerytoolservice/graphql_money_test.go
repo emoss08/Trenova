@@ -156,8 +156,9 @@ func TestWithBeside_KeepsThePagesMarks(t *testing.T) {
 		map[string]any{"tolerance": "5.00"},
 	)
 	require.NoError(t, err)
-	_, marked := plain.(agent.TaintCarrier)
-	assert.False(t, marked)
+	if carrier, marked := plain.(agent.TaintCarrier); marked {
+		assert.Empty(t, carrier.TaintedRecords(), "a page read with no marks carries none")
+	}
 }
 
 func TestDriverEarnings_AreReadByTheWorkersID(t *testing.T) {

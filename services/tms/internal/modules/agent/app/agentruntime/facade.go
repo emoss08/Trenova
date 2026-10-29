@@ -48,6 +48,10 @@ func (s *Service) Fingerprint(
 }
 
 func (s *Service) MarkToolEffects(messages []conversation.Message) {
+	if s == nil {
+		return
+	}
+
 	s.access.MarkToolEffects(messages)
 }
 
