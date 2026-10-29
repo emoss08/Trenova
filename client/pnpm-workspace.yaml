@@ -94,3 +94,5 @@ minimumReleaseAgeExclude:
   - "@tiptap/starter-kit@3.31.2"
   - "@tiptap/suggestion@3.31.2"
   - "@types/react-dom@19.2.7"
+patchedDependencies:
+  '@uiw/react-codemirror@4.25.12': patches/@uiw__react-codemirror@4.25.12.patch

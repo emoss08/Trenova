@@ -207,6 +207,18 @@ The dev server bundles with `build.rolldownOptions`, so two of them are split by
 - **The chunk groups are build only.** The startup groups pull the shell's modules into chunks
   ahead of the entry, which only moves more components in front of the preamble.
 
+## Patched dependencies
+
+A bug in a dependency we can't wait on is fixed with `pnpm patch`, which writes the diff to
+`client/patches/` and lists it under `patchedDependencies` in `pnpm-workspace.yaml`. Each patch
+has a test that fails without it, and goes away when a release carries the fix.
+
+- **`@uiw/react-codemirror`**: while someone types, the controlled `value` is held back and
+  applied when typing pauses. A value that rendered one keystroke behind the editor stayed
+  queued after a newer render caught up, so the pause rolled the text back to it and dropped
+  what was typed since. The patch drops the queued value on every render. Its test is "keeps
+  what was typed after a value that rendered behind the editor" in `tariff-editor.test.tsx`.
+
 ## Evaluated and not adopted
 
 - **`build.chunkImportMap`** stops one changed chunk from changing the hash of every chunk that

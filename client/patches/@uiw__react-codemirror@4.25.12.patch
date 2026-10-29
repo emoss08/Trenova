@@ -1,0 +1,42 @@
+diff --git a/cjs/useCodeMirror.js b/cjs/useCodeMirror.js
+index abc58c676f388485ad6e3e42ef24138045e7b64c..ebe459eecad5984a61736562ac5719ef71945b99 100644
+--- a/cjs/useCodeMirror.js
++++ b/cjs/useCodeMirror.js
+@@ -177,6 +177,9 @@ function useCodeMirror(props) {
+     if (value === undefined) {
+       return;
+     }
++    // The latest value supersedes one held back while typing: applying the older one
++    // when typing pauses would undo the keystrokes typed since it rendered.
++    pendingUpdate.current = null;
+     var currentValue = view ? view.state.doc.toString() : '';
+     if (view && value !== currentValue) {
+       var isTyping = typingLatch.current && !typingLatch.current.isDone;
+diff --git a/esm/useCodeMirror.js b/esm/useCodeMirror.js
+index 03c1b1d08aa47d7bcbc5d0ce893f814530179be2..731c0f480de053d766ff119281ec3aa65ee2b682 100644
+--- a/esm/useCodeMirror.js
++++ b/esm/useCodeMirror.js
+@@ -156,6 +156,9 @@ export function useCodeMirror(props) {
+     if (value === undefined) {
+       return;
+     }
++    // The latest value supersedes one held back while typing: applying the older one
++    // when typing pauses would undo the keystrokes typed since it rendered.
++    pendingUpdate.current = null;
+     var currentValue = view ? view.state.doc.toString() : '';
+     if (view && value !== currentValue) {
+       var isTyping = typingLatch.current && !typingLatch.current.isDone;
+diff --git a/src/useCodeMirror.ts b/src/useCodeMirror.ts
+index 9c7933c1f43a0990e93dfac2c708fa49896fa068..e47443dd2a88d5c0c7ab40f1a13a3902515d2dec 100644
+--- a/src/useCodeMirror.ts
++++ b/src/useCodeMirror.ts
+@@ -179,6 +179,9 @@ export function useCodeMirror(props: UseCodeMirror) {
+     if (value === undefined) {
+       return;
+     }
++    // The latest value supersedes one held back while typing: applying the older one
++    // when typing pauses would undo the keystrokes typed since it rendered.
++    pendingUpdate.current = null;
+     const currentValue = view ? view.state.doc.toString() : '';
+     if (view && value !== currentValue) {
+       const isTyping = typingLatch.current && !typingLatch.current.isDone;
