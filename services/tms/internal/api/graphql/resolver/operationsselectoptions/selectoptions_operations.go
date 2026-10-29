@@ -55,16 +55,12 @@ func (r *Sources) ShipmentType(
 			return nil, err
 		}
 
-		items, err := selectoption.RequiredItems(
+		items := selectoption.OrderedItems(
 			req.IDs,
 			entities,
 			(*shipmenttype.ShipmentType).GetID,
 			shipmentTypeSelectOptionItem,
-			"ShipmentType",
 		)
-		if err != nil {
-			return nil, err
-		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -101,16 +97,12 @@ func (r *Sources) ServiceType(
 			return nil, err
 		}
 
-		items, err := selectoption.RequiredItems(
+		items := selectoption.OrderedItems(
 			req.IDs,
 			entities,
 			(*servicetype.ServiceType).GetID,
 			serviceTypeSelectOptionItem,
-			"ServiceType",
 		)
-		if err != nil {
-			return nil, err
-		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -147,16 +139,12 @@ func (r *Sources) Commodity(
 			return nil, err
 		}
 
-		items, err := selectoption.RequiredItems(
+		items := selectoption.OrderedItems(
 			req.IDs,
 			entities,
 			(*commodity.Commodity).GetID,
 			commoditySelectOptionItem,
-			"Commodity",
 		)
-		if err != nil {
-			return nil, err
-		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -193,16 +181,12 @@ func (r *Sources) HazardousMaterial(
 			return nil, err
 		}
 
-		items, err := selectoption.RequiredItems(
+		items := selectoption.OrderedItems(
 			req.IDs,
 			entities,
 			(*hazardousmaterial.HazardousMaterial).GetID,
 			hazardousMaterialSelectOptionItem,
-			"HazardousMaterial",
 		)
-		if err != nil {
-			return nil, err
-		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -446,16 +430,12 @@ func (r *Sources) ServiceFailureReasonCode(
 			return nil, err
 		}
 
-		items, err := selectoption.RequiredItems(
+		items := selectoption.OrderedItems(
 			req.IDs,
 			entities,
 			(*servicefailure.ReasonCode).GetID,
 			serviceFailureReasonCodeSelectOptionItem,
-			"Service failure reason code",
 		)
-		if err != nil {
-			return nil, err
-		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 

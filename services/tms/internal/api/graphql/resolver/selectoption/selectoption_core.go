@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -171,7 +170,7 @@ func OrderedItems[T any](
 ) []Item {
 	byID := indexByID(entities, id)
 
-	items := make([]Item, 0, len(entities))
+	items := make([]Item, 0, len(ids))
 	for _, requestedID := range ids {
 		entity, ok := byID[requestedID]
 		if ok {
@@ -180,30 +179,6 @@ func OrderedItems[T any](
 	}
 
 	return items
-}
-
-func RequiredItems[T any](
-	ids []pulid.ID,
-	entities []T,
-	id func(T) pulid.ID,
-	mapper func(T) Item,
-	entityName string,
-) ([]Item, error) {
-	byID := indexByID(entities, id)
-
-	items := make([]Item, 0, len(ids))
-	for _, requestedID := range ids {
-		entity, ok := byID[requestedID]
-		if !ok {
-			return nil, errortypes.NewNotFoundError(
-				"{0} not found within your organization",
-				entityName,
-			)
-		}
-		items = append(items, mapper(entity))
-	}
-
-	return items, nil
 }
 
 func indexByID[T any](entities []T, id func(T) pulid.ID) map[pulid.ID]T {

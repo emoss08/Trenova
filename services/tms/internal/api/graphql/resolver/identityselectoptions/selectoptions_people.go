@@ -81,16 +81,12 @@ func (r *Sources) User(
 			return nil, err
 		}
 
-		items, err := selectoption.RequiredItems(
+		items := selectoption.OrderedItems(
 			req.IDs,
 			entities,
 			(*tenant.User).GetID,
 			userSelectOptionItem,
-			"User",
 		)
-		if err != nil {
-			return nil, err
-		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -122,16 +118,12 @@ func (r *Sources) Role(
 			return nil, err
 		}
 
-		items, err := selectoption.RequiredItems(
+		items := selectoption.OrderedItems(
 			req.IDs,
 			entities,
 			(*rbac.Role).GetID,
 			roleSelectOptionItem,
-			"Role",
 		)
-		if err != nil {
-			return nil, err
-		}
 		return selectoption.Connection(items, len(items), 0)
 	}
 

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -123,16 +122,16 @@ func TestSelectOptionInt16Filter(t *testing.T) {
 	assert.Equal(t, int16(0), Int16Filter(map[string]any{}, "planYear"))
 }
 
-type requiredItemsEntity struct {
+type orderedItemsEntity struct {
 	id    pulid.ID
 	label string
 }
 
-func requiredItemsEntityID(entity *requiredItemsEntity) pulid.ID {
+func orderedItemsEntityID(entity *orderedItemsEntity) pulid.ID {
 	return entity.id
 }
 
-func requiredItemsEntityItem(entity *requiredItemsEntity) Item {
+func orderedItemsEntityItem(entity *orderedItemsEntity) Item {
 	return ItemFor(
 		&gqlmodel.SelectOption{ID: entity.id.String(), Label: entity.label},
 		0,
@@ -140,41 +139,56 @@ func requiredItemsEntityItem(entity *requiredItemsEntity) Item {
 	)
 }
 
-func TestRequiredItems_KeepsTheRequestedOrder(t *testing.T) {
-	t.Parallel()
-
-	first := &requiredItemsEntity{id: pulid.MustNew("st_"), label: "first"}
-	second := &requiredItemsEntity{id: pulid.MustNew("st_"), label: "second"}
-
-	items, err := RequiredItems(
-		[]pulid.ID{second.id, first.id, second.id},
-		[]*requiredItemsEntity{first, second},
-		requiredItemsEntityID,
-		requiredItemsEntityItem,
-		"ShipmentType",
-	)
-	require.NoError(t, err)
-
+func orderedItemLabels(items []Item) []string {
 	labels := make([]string, 0, len(items))
 	for _, item := range items {
 		labels = append(labels, item.Option.Label)
 	}
-	assert.Equal(t, []string{"second", "first", "second"}, labels)
+
+	return labels
 }
 
-func TestRequiredItems_AMissingIDIsNotFound(t *testing.T) {
+func TestOrderedItems_KeepsTheRequestedOrderAndDuplicates(t *testing.T) {
 	t.Parallel()
 
-	found := &requiredItemsEntity{id: pulid.MustNew("st_"), label: "found"}
+	first := &orderedItemsEntity{id: pulid.MustNew("st_"), label: "first"}
+	second := &orderedItemsEntity{id: pulid.MustNew("st_"), label: "second"}
 
-	items, err := RequiredItems(
-		[]pulid.ID{found.id, pulid.MustNew("st_")},
-		[]*requiredItemsEntity{found},
-		requiredItemsEntityID,
-		requiredItemsEntityItem,
-		"ShipmentType",
+	items := OrderedItems(
+		[]pulid.ID{second.id, first.id, second.id},
+		[]*orderedItemsEntity{first, second},
+		orderedItemsEntityID,
+		orderedItemsEntityItem,
 	)
-	require.Error(t, err)
-	assert.Nil(t, items)
-	assert.True(t, errortypes.IsNotFoundError(err))
+
+	assert.Equal(t, []string{"second", "first", "second"}, orderedItemLabels(items))
+}
+
+func TestOrderedItems_DropsAMissingID(t *testing.T) {
+	t.Parallel()
+
+	first := &orderedItemsEntity{id: pulid.MustNew("st_"), label: "first"}
+	second := &orderedItemsEntity{id: pulid.MustNew("st_"), label: "second"}
+
+	items := OrderedItems(
+		[]pulid.ID{second.id, pulid.MustNew("st_"), first.id},
+		[]*orderedItemsEntity{first, second},
+		orderedItemsEntityID,
+		orderedItemsEntityItem,
+	)
+
+	assert.Equal(t, []string{"second", "first"}, orderedItemLabels(items))
+}
+
+func TestOrderedItems_NothingFoundIsEmpty(t *testing.T) {
+	t.Parallel()
+
+	items := OrderedItems(
+		[]pulid.ID{pulid.MustNew("st_")},
+		nil,
+		orderedItemsEntityID,
+		orderedItemsEntityItem,
+	)
+
+	assert.Empty(t, items)
 }
