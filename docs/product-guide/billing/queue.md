@@ -15,12 +15,13 @@ The page has two views, switched in the header. **Shipments** lists queue items 
 ## Tasks
 
 ### Review and approve a shipment
-Keywords: approve billing, start review, billing check, ready to invoice
+Keywords: approve billing, start review, billing check, ready to invoice, flagged check, settle the flagged check first
 1. Open [Billing queue](/billing/queue) and choose the **Shipments** view.
 2. Select an item in the list (the j and k keys move down and up the list).
 3. Select **Start review** to take the item yourself, or **Assign biller** to give it to someone else.
-4. Check the **Charges** and **Documents** tabs.
-5. Select **Approve**. If required documents are missing, or a detention charge on the shipment still needs approval, **Approve** stays disabled and its tooltip says why. After approval the next open item is selected automatically.
+4. Starting the review runs five checks: biller, charges against the rate con, proof of delivery, bill-to and terms, and not a duplicate. A check that needs you shows above the tabs with what was found and why; pick one of the choices under it (a charge that isn't on the rate con can be kept and billed, or removed). When every check clears, the notice reads **All five checks clear**, and **Undo** puts back a choice you made.
+5. Check the **Charges** and **Documents** tabs.
+6. Select **Approve**. While a check is flagged, required documents are missing, or a detention charge on the shipment still needs approval, **Approve** stays disabled and its tooltip says why. After approval the next open item is selected automatically.
 
 ### Clear a detention charge that is holding an item
 Keywords: held detention, detention needs approval, detention blocking approval, approve detention charge

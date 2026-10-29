@@ -45,8 +45,12 @@ export function BillingQueueActionBar({
   });
 
   const heldCount = item.detentionHolds.length;
+  const flaggedCheck = item.review?.blocker === "issue";
   const canApprove =
-    billingReadiness?.canMarkReadyToInvoice !== false && heldCount === 0 && !item.ratingReviewHold;
+    billingReadiness?.canMarkReadyToInvoice !== false &&
+    heldCount === 0 &&
+    !item.ratingReviewHold &&
+    !flaggedCheck;
   const missingCount = billingReadiness?.missingRequirements?.length ?? 0;
 
   const { mutate: updateStatus, isPending: isStatusPending } = useApiMutation({
@@ -118,19 +122,21 @@ export function BillingQueueActionBar({
             />
             {!canApprove && (
               <TooltipContent side="bottom" sideOffset={8}>
-                {heldCount > 0
-                  ? t(
-                      "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}} before this can be approved",
-                      heldCount,
-                    )
-                  : item.ratingReviewHold
-                    ? t("The tariff held this rating for review; approve the rating first")
-                    : missingCount > 0
-                      ? t(
-                          "{0, plural, one {# required document} other {# required documents}} missing",
-                          missingCount,
-                        )
-                      : t("Billing requirements not met")}
+                {flaggedCheck
+                  ? t("Settle the flagged check first")
+                  : heldCount > 0
+                    ? t(
+                        "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}} before this can be approved",
+                        heldCount,
+                      )
+                    : item.ratingReviewHold
+                      ? t("The tariff held this rating for review; approve the rating first")
+                      : missingCount > 0
+                        ? t(
+                            "{0, plural, one {# required document} other {# required documents}} missing",
+                            missingCount,
+                          )
+                        : t("Billing requirements not met")}
               </TooltipContent>
             )}
           </Tooltip>

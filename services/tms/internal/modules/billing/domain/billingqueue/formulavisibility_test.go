@@ -19,7 +19,7 @@ func TestBillingQueueItem_WithoutFormulaContent(t *testing.T) {
 		ID: pulid.MustNew("bqi_"),
 		Shipment: &shipment.Shipment{
 			RatingDetail: &shipment.RatingDetail{
-				Trace: rules.RawJSON(`{"statements":["miles * rate"]}`),
+				Trace: &shipment.RatingTrace{Statements: rules.RawJSON(`["miles * rate"]`)},
 				Bill:  &tarifftypes.Bill{Total: decimal.NewFromInt(10)},
 			},
 		},

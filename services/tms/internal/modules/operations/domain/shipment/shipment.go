@@ -36,6 +36,11 @@ type RatingSkip struct {
 	Source string `json:"source"`
 }
 
+type RatingTrace struct {
+	Statements rules.RawJSON `json:"statements"`
+	Lookups    rules.RawJSON `json:"lookups,omitempty"`
+}
+
 type RatingDetail struct {
 	Bill                *tarifftypes.Bill     `json:"bill,omitempty"`
 	Refusal             string                `json:"refusal,omitempty"`
@@ -53,7 +58,7 @@ type RatingDetail struct {
 	Inputs              tarifftypes.Inputs    `json:"inputs,omitempty"`
 	Skipped             []RatingSkip          `json:"skipped,omitempty"`
 	Explanation         string                `json:"explanation,omitempty"`
-	Trace               rules.RawJSON         `json:"trace,omitempty"`
+	Trace               *RatingTrace          `json:"trace,omitempty"`
 	ReviewApproval      *RatingReviewApproval `json:"reviewApproval,omitempty"`
 }
 

@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -38,6 +40,34 @@ func TestRatingDetailFromQuote_KeepsTheTariffsChoices(t *testing.T) {
 	require.NotNil(t, detail)
 	assert.Equal(t, choices, detail.Choices)
 	assert.EqualValues(t, 1_700_000_000, detail.RatedAt)
+}
+
+func TestRatingDetailFromQuote_KeepsTheTraceStatementsAndLookupsTogether(t *testing.T) {
+	t.Parallel()
+
+	statements := rules.RawJSON(`[{"kind":"charge","label":"Flat Rate","display":"$2450.00"}]`)
+	lookups := rules.RawJSON(`[{"table":"fuel","row":3}]`)
+	detail := ratingDetailFromQuote(&ratequoteports.RatedShipment{
+		Outcome: ratequote.OutcomeRated,
+		Quote: &ratequote.RateQuote{
+			RatedAt: 1_700_000_000,
+			Trace:   &ratetypes.Trace{Statements: statements, Lookups: lookups},
+		},
+	})
+
+	require.NotNil(t, detail.Trace)
+	assert.Equal(t, &shipment.RatingTrace{Statements: statements, Lookups: lookups}, detail.Trace)
+}
+
+func TestRatingDetailFromQuote_LeavesTheTraceOutWhenNoStatementRan(t *testing.T) {
+	t.Parallel()
+
+	detail := ratingDetailFromQuote(&ratequoteports.RatedShipment{
+		Outcome: ratequote.OutcomeRated,
+		Quote:   &ratequote.RateQuote{RatedAt: 1_700_000_000, Trace: &ratetypes.Trace{}},
+	})
+
+	assert.Nil(t, detail.Trace)
 }
 
 func reviewedRating(reviews ...string) *ratequoteports.RatedShipment {

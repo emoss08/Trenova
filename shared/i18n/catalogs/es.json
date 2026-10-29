@@ -7998,7 +7998,7 @@
   "Read the load a tender in Triage describes into a draft on the message: customer, stops, dates, equipment, weight, rate and references. It is read from the attached tender's document when that has one, else from the message body. Nothing is booked; check the draft inbox_get_inbound_message shows, then create it with inbox_create_load.": "Lee la carga que describe una oferta de carga en Triaje y la convierte en un borrador en el mensaje: cliente, paradas, fechas, equipo, peso, tarifa y referencias. Se lee del documento de la oferta de carga adjunta cuando lo hay; si no, del cuerpo del mensaje. No se reserva nada; revise el borrador que muestra inbox_get_inbound_message y luego créelo con inbox_create_load.",
   "Read the question": "Leer la pregunta",
   "Read the work to look back over": "Leer el trabajo por revisar",
-  "Read what a turn means for the conversation's chapters": "Leer qué significa un turno para los capítulos de la conversación",
+  "Read what a turn means for the conversation's chapters": "Interpretar qué significa un turno para los capítulos de la conversación",
   "Read what changed in every syncing accounting system and bring payments in": "Leer lo que cambió en cada sistema contable que sincroniza y traer los pagos",
   "Read what changed in one connection's accounting system and bring payments in": "Leer lo que cambió en el sistema contable de una conexión y traer los pagos",
   "Read with the {0} guide, since none is for version {1}": "Se leyó con la guía {0}, ya que ninguna es para la versión {1}",

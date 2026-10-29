@@ -412,7 +412,7 @@ func ratingDetailFromQuote(rated *ratequoteports.RatedShipment) *shipment.Rating
 	}
 
 	if trace := quote.Trace; trace != nil {
-		detail.Trace = traceStatements(trace)
+		detail.Trace = ratingTrace(trace)
 		if winner := trace.Winner(); winner != nil {
 			detail.AgreementName = winner.AgreementName
 			detail.RuleLabel = winner.RuleLabel
@@ -422,11 +422,11 @@ func ratingDetailFromQuote(rated *ratequoteports.RatedShipment) *shipment.Rating
 	return detail
 }
 
-func traceStatements(trace *ratetypes.Trace) []byte {
-	if len(trace.Statements) == 0 {
+func ratingTrace(trace *ratetypes.Trace) *shipment.RatingTrace {
+	if trace.Statements.IsNone() {
 		return nil
 	}
-	return trace.Statements
+	return &shipment.RatingTrace{Statements: trace.Statements, Lookups: trace.Lookups}
 }
 
 func (c *Calculator) billingControl(
