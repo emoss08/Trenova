@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -19,14 +20,13 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*glaccount.GLAccount]
+	validator tenantedvalidation.EntityValidator[*glaccount.GLAccount]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, glaccountdb.GLAccountsSchema())
+	checker := keelcheck.NewChecker(p.DB, glaccountdb.GLAccountsSchema())
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*glaccount.GLAccount]().
+		validator: tenantedvalidation.NewBuilder[*glaccount.GLAccount]().
 			WithModelName("GLAccount").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,16 +19,15 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*permission.Role]
+	validator tenantedvalidation.EntityValidator[*permission.Role]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*permission.Role]().
+		validator: tenantedvalidation.NewBuilder[*permission.Role]().
 			WithModelName("Role").
 			WithUniquenessChecker(
-				validationframework.NewKeelChecker(p.DB, permissiondb.RolesSchema()),
+				keelcheck.NewChecker(p.DB, permissiondb.RolesSchema()),
 			).
 			WithUniqueField(
 				"name",

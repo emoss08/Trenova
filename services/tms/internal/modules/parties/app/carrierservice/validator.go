@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -20,16 +21,15 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*carrier.Carrier]
+	validator tenantedvalidation.EntityValidator[*carrier.Carrier]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, carrierdb.CarriersSchema())
-	states := validationframework.KeelReferenceCheck(p.DB, usstatedb.UsStatesSchema())
+	checker := keelcheck.NewChecker(p.DB, carrierdb.CarriersSchema())
+	states := keelcheck.ReferenceCheck(p.DB, usstatedb.UsStatesSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*carrier.Carrier]().
+		validator: tenantedvalidation.NewBuilder[*carrier.Carrier]().
 			WithModelName("Carrier").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

@@ -1,6 +1,6 @@
 //go:build integration
 
-package validationframework_test
+package keelcheck_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	vf "github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -87,16 +88,22 @@ func setupCheckDB(t *testing.T) (checkConn, checkTenant, checkTenant) {
 func insertCheckItem(t *testing.T, conn checkConn, tenant checkTenant, id pulid.ID, code string) {
 	t.Helper()
 
-	_, err := keel.Exec(t.Context(), conn.db,
+	_, err := keel.Exec(
+		t.Context(),
+		conn.db,
 		"INSERT INTO check_items (id, organization_id, business_unit_id, code) VALUES ($1, $2, $3, $4)",
-		id.String(), tenant.orgID.String(), tenant.buID.String(), code)
+		id.String(),
+		tenant.orgID.String(),
+		tenant.buID.String(),
+		code,
+	)
 	require.NoError(t, err)
 }
 
 func TestKeelChecker_CheckUniqueness_Integration(t *testing.T) {
 	conn, a, b := setupCheckDB(t)
 	items, _, _ := integrationTables()
-	checker := vf.NewKeelChecker(conn, items)
+	checker := keelcheck.NewChecker(conn, items)
 
 	existing := pulid.MustNew("ci_")
 	insertCheckItem(t, conn, a, existing, "CODE001")
@@ -111,10 +118,28 @@ func TestKeelChecker_CheckUniqueness_Integration(t *testing.T) {
 		return exists
 	}
 
-	assert.False(t, unique(a, &vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE002"}}}))
-	assert.True(t, unique(a, &vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE001"}}}))
-	assert.True(t, unique(a, &vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "code001"}}}),
-		"a case-insensitive check matches another case")
+	assert.False(
+		t,
+		unique(
+			a,
+			&vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE002"}}},
+		),
+	)
+	assert.True(
+		t,
+		unique(
+			a,
+			&vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE001"}}},
+		),
+	)
+	assert.True(
+		t,
+		unique(
+			a,
+			&vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "code001"}}},
+		),
+		"a case-insensitive check matches another case",
+	)
 	assert.False(t, unique(a, &vf.UniquenessRequest{
 		Fields: []vf.FieldCheck{{Column: "code", Value: "code001", CaseSensitive: true}},
 	}))
@@ -129,8 +154,14 @@ func TestKeelChecker_CheckUniqueness_Integration(t *testing.T) {
 		ExcludeID: pulid.MustNew("ci_"),
 		Fields:    []vf.FieldCheck{{Column: "code", Value: "CODE001"}},
 	}))
-	assert.False(t, unique(b, &vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE001"}}}),
-		"another tenant's row is not a conflict")
+	assert.False(
+		t,
+		unique(
+			b,
+			&vf.UniquenessRequest{Fields: []vf.FieldCheck{{Column: "code", Value: "CODE001"}}},
+		),
+		"another tenant's row is not a conflict",
+	)
 	assert.False(t, unique(a, &vf.UniquenessRequest{
 		Fields:      []vf.FieldCheck{{Column: "code", Value: "CODE001"}},
 		ScopeFields: []vf.FieldCheck{{Column: "id", Value: "ci_other", CaseSensitive: true}},
@@ -150,7 +181,7 @@ func TestKeelChecker_CheckUniqueness_Integration(t *testing.T) {
 func TestKeelChecker_CheckReference_Integration(t *testing.T) {
 	conn, a, b := setupCheckDB(t)
 	items, _, states := integrationTables()
-	checker := vf.NewKeelChecker(conn, items)
+	checker := keelcheck.NewChecker(conn, items)
 
 	kind := pulid.MustNew("ck_")
 	_, err := keel.Exec(t.Context(), conn.db,
@@ -180,10 +211,15 @@ func TestKeelChecker_CheckReference_Integration(t *testing.T) {
 	require.Error(t, err)
 
 	state := pulid.MustNew("st_")
-	_, err = keel.Exec(t.Context(), conn.db, "INSERT INTO check_states (id) VALUES ($1)", state.String())
+	_, err = keel.Exec(
+		t.Context(),
+		conn.db,
+		"INSERT INTO check_states (id) VALUES ($1)",
+		state.String(),
+	)
 	require.NoError(t, err)
 
-	exists, err := vf.KeelReferenceCheck(conn, states)(b.ctx, b.orgID, b.buID, state)
+	exists, err := keelcheck.ReferenceCheck(conn, states)(b.ctx, b.orgID, b.buID, state)
 	require.NoError(t, err)
 	assert.True(t, exists, "a global table answers every tenant")
 }
@@ -221,7 +257,13 @@ func integrationTables() (*schema.Table, *schema.Table, *schema.Table) {
 		Quoted: schema.Quote("check_states"),
 		Alias:  "cs",
 		Columns: []schema.Column{
-			{Name: "id", Quoted: schema.Quote("id"), Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK},
+			{
+				Name:   "id",
+				Quoted: schema.Quote("id"),
+				Field:  "ID",
+				Kind:   schema.KindString,
+				Flags:  schema.FlagPK,
+			},
 		},
 	}
 	schema.Derive(states)

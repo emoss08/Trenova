@@ -4,23 +4,23 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func NewTestValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*fiscalperiod.FiscalPeriod]().
+		validator: tenantedvalidation.NewBuilder[*fiscalperiod.FiscalPeriod]().
 			WithModelName("FiscalPeriod").
 			Build(),
 	}
 }
 
 func NewTestValidatorWithDB(conn *postgres.Connection) *Validator {
-	checker := validationframework.NewKeelChecker(conn, fiscalperioddb.FiscalPeriodsSchema())
+	checker := keelcheck.NewChecker(conn, fiscalperioddb.FiscalPeriodsSchema())
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*fiscalperiod.FiscalPeriod]().
+		validator: tenantedvalidation.NewBuilder[*fiscalperiod.FiscalPeriod]().
 			WithModelName("FiscalPeriod").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

@@ -1,4 +1,4 @@
-package validationframework
+package scopedvalidation
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -48,7 +49,7 @@ func (m *mockScopedEntity) Validate(multiErr *errortypes.MultiError) {
 func TestNewScopedValidatorBuilder(t *testing.T) {
 	t.Parallel()
 
-	validator := NewScopedValidatorBuilder[*mockScopedEntity]().Build()
+	validator := NewBuilder[*mockScopedEntity]().Build()
 	require.NotNil(t, validator)
 	assert.Equal(t, "Entity", validator.modelName)
 	assert.NotNil(t, validator.engineConfig)
@@ -60,7 +61,7 @@ func TestScopedValidator_ValidateCreate_IDMustBeNil(t *testing.T) {
 	entity := newMockScopedEntity()
 	entity.id = pulid.MustNew("org_")
 
-	validator := NewScopedValidatorBuilder[*mockScopedEntity]().Build()
+	validator := NewBuilder[*mockScopedEntity]().Build()
 
 	result := validator.ValidateCreate(t.Context(), entity)
 	require.NotNil(t, result)
@@ -81,7 +82,7 @@ func TestScopedValidator_ValidateCreate_UniqueConflict(t *testing.T) {
 	checker := newMockUniquenessChecker()
 	checker.On("CheckUniqueness", mock.Anything, mock.Anything).Return(true, nil)
 
-	validator := NewScopedValidatorBuilder[*mockScopedEntity]().
+	validator := NewBuilder[*mockScopedEntity]().
 		WithModelName("Organization").
 		WithUniquenessChecker(checker).
 		WithScopeField("businessUnitId", "business_unit_id", func(e *mockScopedEntity) any {
@@ -112,7 +113,7 @@ func TestScopedValidator_ValidateUpdate_SendsExcludeIDAndScope(t *testing.T) {
 	entity.id = pulid.MustNew("org_")
 
 	checker := newMockUniquenessChecker()
-	checker.On("CheckUniqueness", mock.Anything, mock.MatchedBy(func(req *UniquenessRequest) bool {
+	checker.On("CheckUniqueness", mock.Anything, mock.MatchedBy(func(req *validationframework.UniquenessRequest) bool {
 		if req.ExcludeID != entity.id {
 			return false
 		}
@@ -120,9 +121,10 @@ func TestScopedValidator_ValidateUpdate_SendsExcludeIDAndScope(t *testing.T) {
 			return false
 		}
 		return req.ScopeFields[0].Column == "business_unit_id"
-	})).Return(false, nil)
+	})).
+		Return(false, nil)
 
-	validator := NewScopedValidatorBuilder[*mockScopedEntity]().
+	validator := NewBuilder[*mockScopedEntity]().
 		WithUniquenessChecker(checker).
 		WithScopeField("businessUnitId", "business_unit_id", func(e *mockScopedEntity) any {
 			return e.businessUnit
@@ -145,7 +147,7 @@ func TestScopedValidator_ValidateCreate_UniquenessErrorAsSystemError(t *testing.
 	checker.On("CheckUniqueness", mock.Anything, mock.Anything).
 		Return(false, errors.New("db failure"))
 
-	validator := NewScopedValidatorBuilder[*mockScopedEntity]().
+	validator := NewBuilder[*mockScopedEntity]().
 		WithUniquenessChecker(checker).
 		WithUniqueField("name", "name", "", func(e *mockScopedEntity) any {
 			return e.name
@@ -172,19 +174,19 @@ func TestScopedValidator_CustomRule_OnUpdateOnly(t *testing.T) {
 	entity.id = pulid.MustNew("org_")
 
 	executed := false
-	rule := NewScopedRule[*mockScopedEntity]("custom_update_only").
+	rule := NewRule[*mockScopedEntity]("custom_update_only").
 		OnUpdate().
 		WithValidation(func(
 			_ context.Context,
 			_ *mockScopedEntity,
-			_ *ScopedValidationContext,
+			_ *ValidationContext,
 			_ *errortypes.MultiError,
 		) error {
 			executed = true
 			return nil
 		})
 
-	validator := NewScopedValidatorBuilder[*mockScopedEntity]().
+	validator := NewBuilder[*mockScopedEntity]().
 		WithCustomRule(rule).
 		Build()
 

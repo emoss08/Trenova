@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,16 +19,15 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*recurringshipment.RecurringShipment]
+	validator tenantedvalidation.EntityValidator[*recurringshipment.RecurringShipment]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*recurringshipment.RecurringShipment]().
+		validator: tenantedvalidation.NewBuilder[*recurringshipment.RecurringShipment]().
 			WithModelName("RecurringShipment").
 			WithUniquenessChecker(
-				validationframework.NewKeelChecker(p.DB, recurringshipmentdb.RecurringShipmentsSchema()),
+				keelcheck.NewChecker(p.DB, recurringshipmentdb.RecurringShipmentsSchema()),
 			).
 			WithUniqueField(
 				"name",

@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,16 +19,15 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*locationcategory.LocationCategory]
+	validator tenantedvalidation.EntityValidator[*locationcategory.LocationCategory]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*locationcategory.LocationCategory]().
+		validator: tenantedvalidation.NewBuilder[*locationcategory.LocationCategory]().
 			WithModelName("Location Category").
 			WithUniquenessChecker(
-				validationframework.NewKeelChecker(p.DB, locationcategorydb.LocationCategoriesSchema()),
+				keelcheck.NewChecker(p.DB, locationcategorydb.LocationCategoriesSchema()),
 			).
 			WithUniqueField(
 				"name",

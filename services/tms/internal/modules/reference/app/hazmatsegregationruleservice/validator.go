@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule/hazmatsegregationruledb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,18 +19,17 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*hazmatsegregationrule.HazmatSegregationRule]
+	validator tenantedvalidation.EntityValidator[*hazmatsegregationrule.HazmatSegregationRule]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(
+	checker := keelcheck.NewChecker(
 		p.DB,
 		hazmatsegregationruledb.HazmatSegregationRulesSchema(),
 	)
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*hazmatsegregationrule.HazmatSegregationRule]().
+		validator: tenantedvalidation.NewBuilder[*hazmatsegregationrule.HazmatSegregationRule]().
 			WithModelName("HazmatSegregationRule").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

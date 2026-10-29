@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -23,14 +25,13 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*customer.Customer]
+	validator tenantedvalidation.EntityValidator[*customer.Customer]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, customerdb.CustomersSchema())
+	checker := keelcheck.NewChecker(p.DB, customerdb.CustomersSchema())
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*customer.Customer]().
+		validator: tenantedvalidation.NewBuilder[*customer.Customer]().
 			WithModelName("Customer").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).
@@ -44,7 +45,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				"stateId",
 				"State does not exist",
 				func(c *customer.Customer) pulid.ID { return c.StateID },
-				validationframework.KeelReferenceCheck(p.DB, usstatedb.UsStatesSchema()),
+				keelcheck.ReferenceCheck(p.DB, usstatedb.UsStatesSchema()),
 			).
 			WithCustomRule(
 				validationframework.

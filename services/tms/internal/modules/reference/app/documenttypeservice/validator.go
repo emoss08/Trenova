@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,15 +19,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*documenttype.DocumentType]
+	validator tenantedvalidation.EntityValidator[*documenttype.DocumentType]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, documenttypedb.DocumentTypesSchema())
+	checker := keelcheck.NewChecker(p.DB, documenttypedb.DocumentTypesSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*documenttype.DocumentType]().
+		validator: tenantedvalidation.NewBuilder[*documenttype.DocumentType]().
 			WithModelName("Document Type").
 			WithUniquenessChecker(checker).
 			WithUniqueField(

@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,15 +19,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*order.Order]
+	validator tenantedvalidation.EntityValidator[*order.Order]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, orderdb.OrdersSchema())
+	checker := keelcheck.NewChecker(p.DB, orderdb.OrdersSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*order.Order]().
+		validator: tenantedvalidation.NewBuilder[*order.Order]().
 			WithModelName("Order").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

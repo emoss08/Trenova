@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,15 +19,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*dispatchcontrol.DispatchControl]
+	validator tenantedvalidation.EntityValidator[*dispatchcontrol.DispatchControl]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, dispatchcontroldb.DispatchControlsSchema())
+	checker := keelcheck.NewChecker(p.DB, dispatchcontroldb.DispatchControlsSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*dispatchcontrol.DispatchControl]().
+		validator: tenantedvalidation.NewBuilder[*dispatchcontrol.DispatchControl]().
 			WithModelName("DispatchControl").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

@@ -1,4 +1,4 @@
-package validationframework
+package keelcheck
 
 import (
 	"testing"
@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,16 +78,18 @@ func TestKeelChecker_UniquenessQuery(t *testing.T) {
 	t.Parallel()
 
 	items, _, _ := checkTables()
-	checker := NewKeelChecker(nil, items)
+	checker := NewChecker(nil, items)
 
 	ctx := keeltest.TenantContext(t)
-	q, err := checker.uniquenessQuery(ctx, &UniquenessRequest{
+	q, err := checker.uniquenessQuery(ctx, &validationframework.UniquenessRequest{
 		TableName:      "check_items",
 		OrganizationID: pulid.ID("org_1"),
 		BusinessUnitID: pulid.ID("bu_1"),
 		ExcludeID:      pulid.ID("ci_1"),
-		Fields:         []FieldCheck{{Column: "code", Value: "ABC"}},
-		ScopeFields:    []FieldCheck{{Column: "kind_id", Value: "ck_1", CaseSensitive: true}},
+		Fields:         []validationframework.FieldCheck{{Column: "code", Value: "ABC"}},
+		ScopeFields: []validationframework.FieldCheck{
+			{Column: "kind_id", Value: "ck_1", CaseSensitive: true},
+		},
 	})
 	require.NoError(t, err)
 
@@ -97,10 +100,10 @@ func TestKeelChecker_ReferenceQueryReachesRelatedTables(t *testing.T) {
 	t.Parallel()
 
 	items, _, _ := checkTables()
-	checker := NewKeelChecker(nil, items)
+	checker := NewChecker(nil, items)
 
 	ctx := keeltest.TenantContext(t)
-	q, err := checker.referenceQuery(ctx, &ReferenceRequest{
+	q, err := checker.referenceQuery(ctx, &validationframework.ReferenceRequest{
 		TableName:      "check_kinds",
 		OrganizationID: pulid.ID("org_1"),
 		BusinessUnitID: pulid.ID("bu_1"),
@@ -115,29 +118,35 @@ func TestKeelChecker_RefusesWhatItDoesNotKnow(t *testing.T) {
 	t.Parallel()
 
 	items, _, _ := checkTables()
-	checker := NewKeelChecker(nil, items)
+	checker := NewChecker(nil, items)
 
 	ctx := keeltest.TenantContext(t)
 	_, err := checker.referenceQuery(
 		ctx,
-		&ReferenceRequest{TableName: "elsewhere", ID: pulid.ID("x_1")},
+		&validationframework.ReferenceRequest{TableName: "elsewhere", ID: pulid.ID("x_1")},
 	)
 	require.Error(t, err)
 
-	_, err = checker.referenceQuery(ctx, &ReferenceRequest{TableName: "check_kinds"})
+	_, err = checker.referenceQuery(
+		ctx,
+		&validationframework.ReferenceRequest{TableName: "check_kinds"},
+	)
 	require.Error(t, err)
 
-	_, err = checker.uniquenessQuery(ctx, &UniquenessRequest{TableName: "check_items"})
+	_, err = checker.uniquenessQuery(
+		ctx,
+		&validationframework.UniquenessRequest{TableName: "check_items"},
+	)
 	require.Error(t, err)
 
-	_, err = checker.uniquenessQuery(ctx, &UniquenessRequest{
+	_, err = checker.uniquenessQuery(ctx, &validationframework.UniquenessRequest{
 		TableName: "check_items",
-		Fields:    []FieldCheck{{Column: "code; DROP TABLE x", Value: "A"}},
+		Fields:    []validationframework.FieldCheck{{Column: "code; DROP TABLE x", Value: "A"}},
 	})
 	require.Error(t, err)
 
-	_, err = checker.uniquenessQuery(ctx, &UniquenessRequest{
-		Fields: []FieldCheck{{Column: "code", Value: "A"}},
+	_, err = checker.uniquenessQuery(ctx, &validationframework.UniquenessRequest{
+		Fields: []validationframework.FieldCheck{{Column: "code", Value: "A"}},
 	})
 	require.Error(t, err)
 }
@@ -147,7 +156,7 @@ func TestKeelChecker_ASystemScopeReadsEveryTenant(t *testing.T) {
 
 	items, _, _ := checkTables()
 	ctx := dbscope.WithSystem(t.Context(), "reference check test")
-	q, err := NewKeelChecker(nil, items).referenceQuery(ctx, &ReferenceRequest{
+	q, err := NewChecker(nil, items).referenceQuery(ctx, &validationframework.ReferenceRequest{
 		TableName:      "check_items",
 		OrganizationID: pulid.ID("org_1"),
 		BusinessUnitID: pulid.ID("bu_1"),
@@ -172,7 +181,7 @@ func TestKeelReferenceCheck_AGlobalTableNeedsNoTenant(t *testing.T) {
 
 	keeltest.SnapshotIn(t, t.Context(), q)
 
-	exists, err := KeelReferenceCheck(nil, states)(t.Context(), pulid.Nil, pulid.Nil, pulid.Nil)
+	exists, err := ReferenceCheck(nil, states)(t.Context(), pulid.Nil, pulid.Nil, pulid.Nil)
 	require.NoError(t, err)
 	assert.True(t, exists)
 }

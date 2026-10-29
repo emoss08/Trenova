@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -25,19 +27,18 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*distanceoverride.DistanceOverride]
+	validator tenantedvalidation.EntityValidator[*distanceoverride.DistanceOverride]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(
+	checker := keelcheck.NewChecker(
 		p.DB,
 		distanceoverridedb.DistanceOverridesSchema(),
 	)
-	locationCheck := validationframework.KeelReferenceCheck(p.DB, locationdb.LocationsSchema())
+	locationCheck := keelcheck.ReferenceCheck(p.DB, locationdb.LocationsSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*distanceoverride.DistanceOverride]().
+		validator: tenantedvalidation.NewBuilder[*distanceoverride.DistanceOverride]().
 			WithModelName("DistanceOverride").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).
@@ -57,7 +58,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				"customerId",
 				"Customer does not exist in your organization",
 				func(d *distanceoverride.DistanceOverride) pulid.ID { return d.CustomerID },
-				validationframework.KeelReferenceCheck(p.DB, keelcatalog.MustNamed("customers")),
+				keelcheck.ReferenceCheck(p.DB, keelcatalog.MustNamed("customers")),
 			).
 			WithCustomRule(
 				validationframework.

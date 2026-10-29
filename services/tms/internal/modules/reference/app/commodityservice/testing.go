@@ -2,12 +2,12 @@ package commodityservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 )
 
 func NewTestValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*commodity.Commodity]().
+		validator: tenantedvalidation.NewBuilder[*commodity.Commodity]().
 			WithModelName("Commodity").
 			Build(),
 	}

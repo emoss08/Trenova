@@ -389,7 +389,7 @@ These designs did this at scale before they were changed:
 |---|---|---|
 | `twilio-go` | about 15,000 functions per package that reached its client | replaced with a direct call to Twilio's Messages API (`internal/infrastructure/sms`) |
 | `loaders.Loaders` | about 1,000 functions in each of 40 resolver packages | loaders reached through typed accessors; the set and its builders are unexported (`loaders/access.go`) |
-| service `Validator` structs | the generic validator of every entity a package could see: 1,400 to 1,700 functions in each GraphQL and bootstrap package | fields typed `validationframework.TenantedEntityValidator[T]` / `ScopedEntityValidator[T]` |
+| service `Validator` structs | the generic validator of every entity a package could see: 1,400 to 1,700 functions in each GraphQL and bootstrap package | fields typed `tenantedvalidation.EntityValidator[T]` / `scopedvalidation.EntityValidator[T]` |
 | `pagination.EncodeCursorFromEntity*`, `ExtractCursorValues` | four generic encoders, called by `CursorListResult[T].NextCursor`, in each of the 707 packages that mention a `CursorListResult` | the encoders take `any`; they only ever used reflection and type assertions on the item |
 | `auditservice.SensitiveDataManager`, the RLS scope reporter behind `postgres.Connection` | `sync.Map`'s generic internals in every package that reaches a service or a repository | mutex-guarded maps |
 | `*lru.Cache` / `*expirable.LRU` fields in the template engine, the rate table cache and six other packages | golang-lru's cache, list and entry methods, about 17 KB in each of 30 packages | fields typed `lrucache.Cache[K, V]` from `shared/lrucache`, built with `lrucache.New` or `lrucache.NewExpirable` |

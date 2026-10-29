@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -265,7 +266,7 @@ func TestFleetCodeRepository(t *testing.T) {
 	})
 
 	t.Run("the keel checker answers uniqueness and references", func(t *testing.T) {
-		checker := validationframework.NewKeelChecker(f.db.Conn, fleetcodedb.FleetCodesSchema())
+		checker := keelcheck.NewChecker(f.db.Conn, fleetcodedb.FleetCodesSchema())
 
 		taken, err := checker.CheckUniqueness(a.Ctx, &validationframework.UniquenessRequest{
 			TableName:      "fleet_codes",

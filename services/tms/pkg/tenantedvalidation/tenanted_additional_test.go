@@ -1,4 +1,4 @@
-package validationframework
+package tenantedvalidation
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,7 +21,7 @@ func TestTenantedValidator_CustomReferenceCheck_Exists(t *testing.T) {
 
 	checker := newMockReferenceChecker()
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithReferenceChecker(checker).
 		WithCustomReferenceCheck("parentId", "Custom parent not found",
 			func(e *mockTenantedEntity) pulid.ID { return e.ParentID },
@@ -44,7 +45,7 @@ func TestTenantedValidator_CustomReferenceCheck_NotFound(t *testing.T) {
 
 	checker := newMockReferenceChecker()
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithReferenceChecker(checker).
 		WithCustomReferenceCheck("parentId", "Custom parent not found",
 			func(e *mockTenantedEntity) pulid.ID { return e.ParentID },
@@ -77,7 +78,7 @@ func TestTenantedValidator_CustomReferenceCheck_Error(t *testing.T) {
 
 	checker := newMockReferenceChecker()
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithReferenceChecker(checker).
 		WithCustomReferenceCheck("parentId", "",
 			func(e *mockTenantedEntity) pulid.ID { return e.ParentID },
@@ -101,7 +102,7 @@ func TestTenantedValidator_OptionalCustomReferenceCheck_SkipsNil(t *testing.T) {
 	checker := newMockReferenceChecker()
 
 	customCalled := false
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithReferenceChecker(checker).
 		WithOptionalCustomReferenceCheck("parentId", "",
 			func(e *mockTenantedEntity) pulid.ID { return e.ParentID },
@@ -126,7 +127,7 @@ func TestTenantedValidator_OptionalCustomReferenceCheck_ValidatesWhenSet(t *test
 
 	checker := newMockReferenceChecker()
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithReferenceChecker(checker).
 		WithOptionalCustomReferenceCheck("parentId", "",
 			func(e *mockTenantedEntity) pulid.ID { return e.ParentID },
@@ -152,7 +153,7 @@ func TestTenantedValidator_CompositeUniqueness_Error(t *testing.T) {
 	checker.On("CheckUniqueness", mock.Anything, mock.Anything).
 		Return(false, errors.New("db error"))
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithUniquenessChecker(checker).
 		WithCompositeUniqueFields(
 			"name_code",
@@ -183,7 +184,7 @@ func TestTenantedValidator_DateAfterOrEqual_Invalid(t *testing.T) {
 	entity.StartDate = new(int64(3000))
 	entity.EndDate = new(int64(1000))
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithDateAfterOrEqual("endDate", "End must be on or after start",
 			func(e *mockTenantedEntity) *int64 { return e.StartDate },
 			func(e *mockTenantedEntity) *int64 { return e.EndDate },
@@ -211,7 +212,7 @@ func TestTenantedValidator_DateAfterOrEqual_DefaultMessage(t *testing.T) {
 	entity.StartDate = new(int64(3000))
 	entity.EndDate = new(int64(1000))
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithDateAfterOrEqual("endDate", "",
 			func(e *mockTenantedEntity) *int64 { return e.StartDate },
 			func(e *mockTenantedEntity) *int64 { return e.EndDate },
@@ -236,7 +237,7 @@ func TestTenantedValidator_RequiredReferenceCheck_DefaultMessage(t *testing.T) {
 
 	checker := newMockReferenceChecker()
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithReferenceChecker(checker).
 		WithReferenceCheck("parentId", "parents", "", func(e *mockTenantedEntity) pulid.ID {
 			return e.ParentID
@@ -260,7 +261,7 @@ func TestTenantedValidator_UniquenessCheck_NilValue(t *testing.T) {
 	entity := newMockTenantedEntity()
 	checker := newMockUniquenessChecker()
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithUniquenessChecker(checker).
 		WithUniqueField("parentId", "parent_id", "", func(e *mockTenantedEntity) any {
 			return nil
@@ -279,7 +280,7 @@ func TestTenantedValidator_CompositeUniqueness_NilFieldValue(t *testing.T) {
 	entity := newMockTenantedEntity()
 	checker := newMockUniquenessChecker()
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithUniquenessChecker(checker).
 		WithCompositeUniqueFields(
 			"name_parent",
@@ -306,19 +307,18 @@ func TestTenantedValidator_CompositeUniqueness_NilFieldValue(t *testing.T) {
 func TestTenantedValidator_CustomRule_ReturnsError(t *testing.T) {
 	t.Parallel()
 
-	rule := NewTenantedRule[*mockTenantedEntity]("error_rule").
+	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("error_rule").
 		OnCreate().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity,
-			_ *TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
 			_ *errortypes.MultiError,
 		) error {
 			return errors.New("custom rule system error")
 		})
 
 	entity := newMockTenantedEntity()
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithCustomRule(rule).
 		Build()
 
@@ -332,12 +332,11 @@ func TestTenantedValidator_CustomRule_OnBoth(t *testing.T) {
 	t.Parallel()
 
 	callCount := 0
-	rule := NewTenantedRule[*mockTenantedEntity]("both_rule").
+	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("both_rule").
 		OnBoth().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity,
-			_ *TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
 			_ *errortypes.MultiError,
 		) error {
 			callCount++
@@ -345,7 +344,7 @@ func TestTenantedValidator_CustomRule_OnBoth(t *testing.T) {
 		})
 
 	entity := newMockTenantedEntity()
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithCustomRule(rule).
 		Build()
 
@@ -369,7 +368,7 @@ func TestTenantedValidator_ImmutableField_NilValues(t *testing.T) {
 	entity.businessUnitID = original.businessUnitID
 	entity.Weight = nil
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithImmutableField("weight", "", func(e *mockTenantedEntity) any {
 			return e.Weight
 		}).
@@ -393,7 +392,7 @@ func TestTenantedValidator_ImmutableField_NilToNonNil(t *testing.T) {
 	entity.businessUnitID = original.businessUnitID
 	entity.Weight = new(100.0)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithImmutableField("weight", "", func(e *mockTenantedEntity) any {
 			return e.Weight
 		}).
@@ -414,11 +413,12 @@ func TestTenantedValidator_CompositeUniqueness_UpdateExcludesID(t *testing.T) {
 	entity.Code = "CODE1"
 
 	checker := newMockUniquenessChecker()
-	checker.On("CheckUniqueness", mock.Anything, mock.MatchedBy(func(req *UniquenessRequest) bool {
+	checker.On("CheckUniqueness", mock.Anything, mock.MatchedBy(func(req *validationframework.UniquenessRequest) bool {
 		return req.ExcludeID == entity.id
-	})).Return(false, nil)
+	})).
+		Return(false, nil)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithUniquenessChecker(checker).
 		WithCompositeUniqueFields(
 			"name_code",
@@ -448,7 +448,7 @@ func TestTenantedValidator_NumericRange_CustomMessage_AboveMax(t *testing.T) {
 	entity := newMockTenantedEntity()
 	entity.Weight = new(99999.0)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithNumericRange("weight", "Weight exceeds maximum",
 			func(e *mockTenantedEntity) *float64 { return e.Weight },
 			new(0.0),
@@ -474,7 +474,7 @@ func TestTenantedValidator_DateAfter_ValidEndAfterStart(t *testing.T) {
 	entity.StartDate = new(int64(1000))
 	entity.EndDate = new(int64(3000))
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithDateAfter("endDate", "",
 			func(e *mockTenantedEntity) *int64 { return e.StartDate },
 			func(e *mockTenantedEntity) *int64 { return e.EndDate },
@@ -493,7 +493,7 @@ func TestTenantedValidator_DateAfter_EqualNotAllowed(t *testing.T) {
 	entity.StartDate = new(int64(1000))
 	entity.EndDate = new(int64(1000))
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithDateAfter("endDate", "End must be after start",
 			func(e *mockTenantedEntity) *int64 { return e.StartDate },
 			func(e *mockTenantedEntity) *int64 { return e.EndDate },
@@ -521,7 +521,7 @@ func TestTenantedValidator_DateAfter_UsesDefaultMessage(t *testing.T) {
 	entity.StartDate = new(int64(2000))
 	entity.EndDate = new(int64(1000))
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithDateAfter("endDate", "",
 			func(e *mockTenantedEntity) *int64 { return e.StartDate },
 			func(e *mockTenantedEntity) *int64 { return e.EndDate },
@@ -546,7 +546,7 @@ func TestTenantedValidator_DateAfterOrEqual_EqualIsAllowed(t *testing.T) {
 	entity.StartDate = new(int64(1000))
 	entity.EndDate = new(int64(1000))
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithDateAfterOrEqual("endDate", "",
 			func(e *mockTenantedEntity) *int64 { return e.StartDate },
 			func(e *mockTenantedEntity) *int64 { return e.EndDate },
@@ -565,7 +565,7 @@ func TestTenantedValidator_DateComparison_NilStartDate(t *testing.T) {
 	entity.StartDate = nil
 	entity.EndDate = new(int64(1000))
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithDateAfter("endDate", "",
 			func(e *mockTenantedEntity) *int64 { return e.StartDate },
 			func(e *mockTenantedEntity) *int64 { return e.EndDate },
@@ -584,7 +584,7 @@ func TestTenantedValidator_DateComparison_NilEndDate(t *testing.T) {
 	entity.StartDate = new(int64(1000))
 	entity.EndDate = nil
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithDateAfter("endDate", "",
 			func(e *mockTenantedEntity) *int64 { return e.StartDate },
 			func(e *mockTenantedEntity) *int64 { return e.EndDate },
@@ -602,7 +602,7 @@ func TestTenantedValidator_NumericRange_BelowMinimum(t *testing.T) {
 	entity := newMockTenantedEntity()
 	entity.Weight = new(-5.0)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithNumericRange("weight", "",
 			func(e *mockTenantedEntity) *float64 { return e.Weight },
 			new(0.0),
@@ -627,7 +627,7 @@ func TestTenantedValidator_NumericRange_AboveMaxDefaultMessage(t *testing.T) {
 	entity := newMockTenantedEntity()
 	entity.Weight = new(200.0)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithNumericRange("weight", "",
 			func(e *mockTenantedEntity) *float64 { return e.Weight },
 			new(0.0),
@@ -652,7 +652,7 @@ func TestTenantedValidator_NumericRange_NilValueSkipped(t *testing.T) {
 	entity := newMockTenantedEntity()
 	entity.Weight = nil
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithNumericRange("weight", "",
 			func(e *mockTenantedEntity) *float64 { return e.Weight },
 			new(0.0),
@@ -671,7 +671,7 @@ func TestTenantedValidator_NumericRange_InRange(t *testing.T) {
 	entity := newMockTenantedEntity()
 	entity.Weight = new(50.0)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithNumericRange("weight", "",
 			func(e *mockTenantedEntity) *float64 { return e.Weight },
 			new(0.0),
@@ -690,7 +690,7 @@ func TestTenantedValidator_NumericRange_MinOnlyNoBound(t *testing.T) {
 	entity := newMockTenantedEntity()
 	entity.Weight = new(1000.0)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithNumericRange("weight", "",
 			func(e *mockTenantedEntity) *float64 { return e.Weight },
 			new(0.0),
@@ -709,7 +709,7 @@ func TestTenantedValidator_NumericRange_MaxOnlyNoBound(t *testing.T) {
 	entity := newMockTenantedEntity()
 	entity.Weight = new(-100.0)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithNumericRange("weight", "",
 			func(e *mockTenantedEntity) *float64 { return e.Weight },
 			nil,
@@ -731,7 +731,7 @@ func TestTenantedValidator_UniquenessCheck_UsesDefaultMessage(t *testing.T) {
 	checker := newMockUniquenessChecker()
 	checker.On("CheckUniqueness", mock.Anything, mock.Anything).Return(true, nil)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithModelName("Widget").
 		WithUniquenessChecker(checker).
 		WithUniqueField("name", "name", "", func(e *mockTenantedEntity) any {
@@ -760,7 +760,7 @@ func TestTenantedValidator_CompositeUniqueness_UsesDefaultMessage(t *testing.T) 
 	checker := newMockUniquenessChecker()
 	checker.On("CheckUniqueness", mock.Anything, mock.Anything).Return(true, nil)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithModelName("Widget").
 		WithUniquenessChecker(checker).
 		WithCompositeUniqueFields(
@@ -799,7 +799,7 @@ func TestTenantedValidator_ReferenceCheck_NotFoundDefaultMessage(t *testing.T) {
 	checker := newMockReferenceChecker()
 	checker.On("CheckReference", mock.Anything, mock.Anything).Return(false, nil)
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithReferenceChecker(checker).
 		WithReferenceCheck("parentId", "parents", "", func(e *mockTenantedEntity) pulid.ID {
 			return e.ParentID
@@ -820,12 +820,11 @@ func TestTenantedValidator_ReferenceCheck_NotFoundDefaultMessage(t *testing.T) {
 func TestTenantedValidator_CustomRule_SkippedOnWrongMode(t *testing.T) {
 	t.Parallel()
 
-	rule := NewTenantedRule[*mockTenantedEntity]("update_only_rule").
+	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("update_only_rule").
 		OnUpdate().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity,
-			_ *TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
 			multiErr.Add("x", errortypes.ErrInvalid, "should not appear")
@@ -833,7 +832,7 @@ func TestTenantedValidator_CustomRule_SkippedOnWrongMode(t *testing.T) {
 		})
 
 	entity := newMockTenantedEntity()
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithCustomRule(rule).
 		Build()
 
@@ -850,7 +849,7 @@ func TestTenantedValidator_UniquenessCheck_SkipsEmptyString(t *testing.T) {
 
 	checker := newMockUniquenessChecker()
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithUniquenessChecker(checker).
 		WithUniqueField("name", "name", "", func(e *mockTenantedEntity) any {
 			return e.Name
@@ -876,7 +875,7 @@ func TestTenantedValidator_ImmutableField_UsesDefaultMessage(t *testing.T) {
 	entity.businessUnitID = original.businessUnitID
 	entity.Name = "Changed"
 
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithImmutableField("name", "", func(e *mockTenantedEntity) any {
 			return e.Name
 		}).
@@ -936,7 +935,7 @@ func TestTenantedValidator_WithReferenceCheckerSet(t *testing.T) {
 	t.Parallel()
 
 	checker := newMockReferenceChecker()
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithReferenceChecker(checker).
 		Build()
 
@@ -946,8 +945,8 @@ func TestTenantedValidator_WithReferenceCheckerSet(t *testing.T) {
 func TestTenantedValidator_WithCustomEngineConfig(t *testing.T) {
 	t.Parallel()
 
-	cfg := &EngineConfig{FailFast: true, MaxParallel: 3}
-	validator := NewTenantedValidatorBuilder[*mockTenantedEntity]().
+	cfg := &validationframework.EngineConfig{FailFast: true, MaxParallel: 3}
+	validator := NewBuilder[*mockTenantedEntity]().
 		WithEngineConfig(cfg).
 		Build()
 

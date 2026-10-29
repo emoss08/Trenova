@@ -124,7 +124,7 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
   aborts the transaction and the read after it fails too.
 - Work that must commit on its own regardless of the caller's transaction
   (sequence allocation) uses `Connection.RunDetached`.
-- Validators use `validationframework.NewKeelChecker(conn, xdb.XsSchema())`, which
+- Validators use `keelcheck.NewChecker(conn, xdb.XsSchema())`, which
   runs its checks through `Keel(ctx)` in the caller's transaction.
 - A keel query under a system scope must say
   `AllTenants()`, and keel fills and checks the tenant columns of every write from

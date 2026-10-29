@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -21,15 +23,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*fleetcode.FleetCode]
+	validator tenantedvalidation.EntityValidator[*fleetcode.FleetCode]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, fleetcodedb.FleetCodesSchema())
+	checker := keelcheck.NewChecker(p.DB, fleetcodedb.FleetCodesSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*fleetcode.FleetCode]().
+		validator: tenantedvalidation.NewBuilder[*fleetcode.FleetCode]().
 			WithModelName("FleetCode").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

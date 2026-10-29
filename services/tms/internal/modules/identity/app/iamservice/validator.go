@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
@@ -23,13 +25,13 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*iam.AccessPolicy]
+	validator tenantedvalidation.EntityValidator[*iam.AccessPolicy]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return newValidator(
 		p.Repo,
-		validationframework.NewKeelChecker(p.DB, iamdb.AccessPoliciesSchema()),
+		keelcheck.NewChecker(p.DB, iamdb.AccessPoliciesSchema()),
 	)
 }
 
@@ -38,8 +40,7 @@ func newValidator(
 	uniquenessChecker validationframework.UniquenessChecker,
 ) *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*iam.AccessPolicy]().
+		validator: tenantedvalidation.NewBuilder[*iam.AccessPolicy]().
 			WithModelName("Access Policy").
 			WithUniquenessChecker(uniquenessChecker).
 			WithUniqueField(

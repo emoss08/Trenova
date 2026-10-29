@@ -74,7 +74,7 @@ reason is recorded in `services/tms/.go-pkgsize.yml`:
   import cycles. An aggregate whose models hold relations in both directions
   (`shipment.Shipment`, its moves, stops and assignments) is one package. Keep only the
   aggregate there; everything that merely uses it moves out.
-- **A large foundational library** whose surface is one abstraction (`pkg/validationframework`).
+- **A large foundational library** whose surface is one abstraction.
 
 **Don't over-split.** Go has no re-exports: don't alias types from another package to keep an
 old import path working; change the callers. Don't split so that one half must export its
@@ -142,8 +142,8 @@ that the file does. Name a file after its primary type or concern (`timesheet.go
 
 A generic type's methods are compiled again in every package that can see the type. So no
 exported type, and no signature of an exported function or method, mentions a concrete generic
-type that has methods (`*validationframework.TenantedValidator[*X]`, `*dataloadgen.Loader[K,V]`):
-hold it behind a generic interface (`validationframework.TenantedEntityValidator[*X]`) or in an
+type that has methods (`*tenantedvalidation.Validator[*X]`, `*dataloadgen.Loader[K,V]`):
+hold it behind a generic interface (`tenantedvalidation.EntityValidator[*X]`) or in an
 unexported type reached only through package-level functions. An unexported field of an exported
 type still spreads it. `sync.Map` is a generic hash trie underneath; a widely reachable type uses
 a plain map behind a mutex. The measurements and the fixes already made are in "Generics and

@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,8 +24,7 @@ import (
 
 func newStubValidator() *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*permission.Role]().
+		validator: tenantedvalidation.NewBuilder[*permission.Role]().
 			WithModelName("Role").
 			Build(),
 	}

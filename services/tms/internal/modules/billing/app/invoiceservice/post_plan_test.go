@@ -27,7 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -178,7 +178,7 @@ func newPostFixture(t *testing.T) *postFixture {
 		realtime:          &mocks.NoopRealtimeService{},
 		validator: &Validator{
 			l:                zap.NewNop(),
-			validator:        validationframework.NewTenantedValidatorBuilder[*invoice.Invoice]().Build(),
+			validator:        tenantedvalidation.NewBuilder[*invoice.Invoice]().Build(),
 			accountingRepo:   f.accounting,
 			fiscalPeriodRepo: periods,
 		},
@@ -344,7 +344,7 @@ func TestPreviewApprovalInvoice_PlansTheDraftApprovalWouldSave(t *testing.T) {
 		customerRepo:     customers,
 		billingRepo:      billing,
 		validator: &Validator{
-			validator: validationframework.NewTenantedValidatorBuilder[*invoice.Invoice]().Build(),
+			validator: tenantedvalidation.NewBuilder[*invoice.Invoice]().Build(),
 		},
 	}
 

@@ -4,14 +4,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ import (
 
 func newTestValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*accessorialcharge.AccessorialCharge]().
+		validator: tenantedvalidation.NewBuilder[*accessorialcharge.AccessorialCharge]().
 			WithModelName("AccessorialCharge").
 			Build(),
 	}

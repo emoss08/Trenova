@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -332,8 +332,7 @@ func setupIntegrationService(t *testing.T) *integrationFixture {
 		notifier:   &permchangetest.Recorder{},
 		permEngine: permEngine,
 		validator: &Validator{
-			validator: validationframework.
-				NewTenantedValidatorBuilder[*permission.Role]().
+			validator: tenantedvalidation.NewBuilder[*permission.Role]().
 				WithModelName("Role").
 				Build(),
 		},

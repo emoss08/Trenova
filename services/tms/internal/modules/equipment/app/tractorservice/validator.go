@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -19,15 +20,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*tractor.Tractor]
+	validator tenantedvalidation.EntityValidator[*tractor.Tractor]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, tractordb.TractorsSchema())
+	checker := keelcheck.NewChecker(p.DB, tractordb.TractorsSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*tractor.Tractor]().
+		validator: tenantedvalidation.NewBuilder[*tractor.Tractor]().
 			WithModelName("Tractor").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -19,15 +20,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*shipmentcontrol.ShipmentControl]
+	validator tenantedvalidation.EntityValidator[*shipmentcontrol.ShipmentControl]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, tenantdb.ShipmentControlsSchema())
+	checker := keelcheck.NewChecker(p.DB, tenantdb.ShipmentControlsSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*shipmentcontrol.ShipmentControl]().
+		validator: tenantedvalidation.NewBuilder[*shipmentcontrol.ShipmentControl]().
 			WithModelName("ShipmentControl").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).
@@ -41,7 +41,7 @@ func NewValidator(p ValidatorParams) *Validator {
 
 					return *sc.DetentionChargeID
 				},
-				validationframework.KeelTableReferenceCheck(p.DB, "accessorial_charges"),
+				keelcheck.TableReferenceCheck(p.DB, "accessorial_charges"),
 			).
 			Build(),
 	}

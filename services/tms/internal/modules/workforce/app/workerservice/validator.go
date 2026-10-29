@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -24,15 +26,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*worker.Worker]
+	validator tenantedvalidation.EntityValidator[*worker.Worker]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, workerdb.WorkersSchema())
+	checker := keelcheck.NewChecker(p.DB, workerdb.WorkersSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*worker.Worker]().
+		validator: tenantedvalidation.NewBuilder[*worker.Worker]().
 			WithModelName("Worker").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

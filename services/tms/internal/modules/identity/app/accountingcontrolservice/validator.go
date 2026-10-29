@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -29,20 +31,20 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*accountingcontrol.AccountingControl]
+	validator tenantedvalidation.EntityValidator[*accountingcontrol.AccountingControl]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	builder := newValidatorBuilderWithIntegrationRepo(p.IntegrationRepo)
 
 	if p.DB != nil {
-		checker := validationframework.NewKeelChecker(p.DB, tenantdb.AccountingControlsSchema())
+		checker := keelcheck.NewChecker(p.DB, tenantdb.AccountingControlsSchema())
 		builder.
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker)
 		addGLAccountReferenceChecks(
 			builder,
-			validationframework.KeelTableReferenceCheck(p.DB, "gl_accounts"),
+			keelcheck.TableReferenceCheck(p.DB, "gl_accounts"),
 		)
 	}
 
@@ -51,15 +53,14 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func newValidatorBuilder() *validationframework.TenantedValidatorBuilder[*accountingcontrol.AccountingControl] {
+func newValidatorBuilder() *tenantedvalidation.Builder[*accountingcontrol.AccountingControl] {
 	return newValidatorBuilderWithIntegrationRepo(nil)
 }
 
 func newValidatorBuilderWithIntegrationRepo(
 	integrationRepo integrationports.IntegrationRepository,
-) *validationframework.TenantedValidatorBuilder[*accountingcontrol.AccountingControl] {
-	return validationframework.
-		NewTenantedValidatorBuilder[*accountingcontrol.AccountingControl]().
+) *tenantedvalidation.Builder[*accountingcontrol.AccountingControl] {
+	return tenantedvalidation.NewBuilder[*accountingcontrol.AccountingControl]().
 		WithModelName("AccountingControl").
 		WithCustomRule(createAccountingBasisRule()).
 		WithCustomRule(createJournalPostingRule()).
@@ -70,7 +71,7 @@ func newValidatorBuilderWithIntegrationRepo(
 }
 
 func addGLAccountReferenceChecks(
-	builder *validationframework.TenantedValidatorBuilder[*accountingcontrol.AccountingControl],
+	builder *tenantedvalidation.Builder[*accountingcontrol.AccountingControl],
 	glAccountExists validationframework.CustomReferenceCheckFunc,
 ) {
 	builder.

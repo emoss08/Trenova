@@ -14,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/money"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -33,7 +34,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator        validationframework.TenantedEntityValidator[*invoice.Invoice]
+	validator        tenantedvalidation.EntityValidator[*invoice.Invoice]
 	l                *zap.Logger
 	accountingRepo   tenantports.AccountingControlRepository
 	fiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
@@ -44,9 +45,9 @@ type Validator struct {
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		l: p.Logger.Named("validator.invoice"),
-		validator: validationframework.NewTenantedValidatorBuilder[*invoice.Invoice]().
+		validator: tenantedvalidation.NewBuilder[*invoice.Invoice]().
 			WithModelName("Invoice").
-			WithUniquenessChecker(validationframework.NewKeelChecker(p.DB, invoicedb.InvoicesSchema())).
+			WithUniquenessChecker(keelcheck.NewChecker(p.DB, invoicedb.InvoicesSchema())).
 			Build(),
 		accountingRepo:   p.AccountingRepo,
 		fiscalPeriodRepo: p.FiscalPeriodRepo,

@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -22,15 +23,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*location.Location]
+	validator tenantedvalidation.EntityValidator[*location.Location]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, locationdb.LocationsSchema())
+	checker := keelcheck.NewChecker(p.DB, locationdb.LocationsSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*location.Location]().
+		validator: tenantedvalidation.NewBuilder[*location.Location]().
 			WithModelName("Location").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).
@@ -44,13 +44,13 @@ func NewValidator(p ValidatorParams) *Validator {
 				"stateId",
 				"State does not exist",
 				func(l *location.Location) pulid.ID { return l.StateID },
-				validationframework.KeelReferenceCheck(p.DB, usstatedb.UsStatesSchema()),
+				keelcheck.ReferenceCheck(p.DB, usstatedb.UsStatesSchema()),
 			).
 			WithCustomReferenceCheck(
 				"locationCategoryId",
 				"Location category does not exist",
 				func(l *location.Location) pulid.ID { return l.LocationCategoryID },
-				validationframework.KeelReferenceCheck(
+				keelcheck.ReferenceCheck(
 					p.DB,
 					locationcategorydb.LocationCategoriesSchema(),
 				),

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -17,13 +17,12 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*fiscalyear.FiscalYear]
+	validator tenantedvalidation.EntityValidator[*fiscalyear.FiscalYear]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*fiscalyear.FiscalYear]().
+		validator: tenantedvalidation.NewBuilder[*fiscalyear.FiscalYear]().
 			WithModelName("FiscalYear").
 			WithCustomRule(createDateValidationRule()).
 			WithCustomRule(createStatusConsistencyRule()).

@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -20,15 +22,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*billingcontrol.BillingControl]
+	validator tenantedvalidation.EntityValidator[*billingcontrol.BillingControl]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, tenantdb.BillingControlsSchema())
+	checker := keelcheck.NewChecker(p.DB, tenantdb.BillingControlsSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*billingcontrol.BillingControl]().
+		validator: tenantedvalidation.NewBuilder[*billingcontrol.BillingControl]().
 			WithModelName("BillingControl").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

@@ -1,4 +1,4 @@
-package validationframework
+package keelcheck
 
 import (
 	"context"
@@ -6,12 +6,13 @@ import (
 	"regexp"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var tableNamePattern = regexp.MustCompile(`^[a-z_][a-z0-9_]*$`)
 
-func KeelTableReferenceCheck(conn KeelDB, table string) CustomReferenceCheckFunc {
+func TableReferenceCheck(conn DB, table string) validationframework.CustomReferenceCheckFunc {
 	if !tableNamePattern.MatchString(table) {
 		panic(fmt.Sprintf("validationframework: invalid reference table name %q", table))
 	}

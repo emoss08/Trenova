@@ -23,16 +23,6 @@ type mockTenantedEntity struct {
 	validationErr  bool
 }
 
-func newMockTenantedEntity() *mockTenantedEntity {
-	return &mockTenantedEntity{
-		id:             pulid.Nil,
-		organizationID: pulid.MustNew("org_"),
-		businessUnitID: pulid.MustNew("bu_"),
-		tableName:      "mock_entities",
-		Name:           "Test Entity",
-	}
-}
-
 func (m *mockTenantedEntity) GetID() pulid.ID {
 	return m.id
 }
@@ -66,22 +56,6 @@ func newMockUniquenessChecker() *mockUniquenessChecker {
 func (m *mockUniquenessChecker) CheckUniqueness(
 	ctx context.Context,
 	req *UniquenessRequest,
-) (bool, error) {
-	args := m.Called(ctx, req)
-	return args.Bool(0), args.Error(1)
-}
-
-type mockReferenceChecker struct {
-	mock.Mock
-}
-
-func newMockReferenceChecker() *mockReferenceChecker {
-	return &mockReferenceChecker{}
-}
-
-func (m *mockReferenceChecker) CheckReference(
-	ctx context.Context,
-	req *ReferenceRequest,
 ) (bool, error) {
 	args := m.Called(ctx, req)
 	return args.Bool(0), args.Error(1)

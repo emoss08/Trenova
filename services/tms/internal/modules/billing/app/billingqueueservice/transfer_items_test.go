@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -91,7 +91,7 @@ func transferFixture(t *testing.T) (*shipment.Shipment, pulid.ID, pagination.Ten
 
 func testValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*billingqueue.BillingQueueItem]().
+		validator: tenantedvalidation.NewBuilder[*billingqueue.BillingQueueItem]().
 			WithModelName("Billing Queue Item").
 			WithCustomRule(createStatusConstraintsRule()).
 			Build(),

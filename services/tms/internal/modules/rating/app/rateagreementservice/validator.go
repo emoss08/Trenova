@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -25,7 +27,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*rateagreement.RateAgreement]
+	validator tenantedvalidation.EntityValidator[*rateagreement.RateAgreement]
 	tariffs   *tariffInputs
 }
 
@@ -40,9 +42,8 @@ func NewValidator(p ValidatorParams) *Validator {
 func newBuilder(
 	db *postgres.Connection,
 	tariffs *tariffInputs,
-) *validationframework.TenantedValidatorBuilder[*rateagreement.RateAgreement] {
-	builder := validationframework.
-		NewTenantedValidatorBuilder[*rateagreement.RateAgreement]().
+) *tenantedvalidation.Builder[*rateagreement.RateAgreement] {
+	builder := tenantedvalidation.NewBuilder[*rateagreement.RateAgreement]().
 		WithModelName("Rate Agreement").
 		WithCustomRule(activationReadinessRule()).
 		WithCustomRule(tariffInputsRule(tariffs))
@@ -51,7 +52,7 @@ func newBuilder(
 		return builder
 	}
 
-	checker := validationframework.NewKeelChecker(db, rateagreementdb.RateAgreementsSchema())
+	checker := keelcheck.NewChecker(db, rateagreementdb.RateAgreementsSchema())
 
 	return builder.
 		WithUniquenessChecker(checker).

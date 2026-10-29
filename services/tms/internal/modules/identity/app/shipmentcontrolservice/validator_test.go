@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -27,8 +28,7 @@ func TestValidateUpdate_AllowsValidDetentionChargeReference(t *testing.T) {
 	t.Parallel()
 
 	v := &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*shipmentcontrol.ShipmentControl]().
+		validator: tenantedvalidation.NewBuilder[*shipmentcontrol.ShipmentControl]().
 			WithModelName("ShipmentControl").
 			WithReferenceChecker(&testReferenceChecker{valid: true}).
 			WithOptionalReferenceCheck(
@@ -63,8 +63,7 @@ func TestValidateUpdate_RejectsUnknownDetentionChargeReference(t *testing.T) {
 	t.Parallel()
 
 	v := &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*shipmentcontrol.ShipmentControl]().
+		validator: tenantedvalidation.NewBuilder[*shipmentcontrol.ShipmentControl]().
 			WithModelName("ShipmentControl").
 			WithReferenceChecker(&testReferenceChecker{valid: false}).
 			WithOptionalReferenceCheck(

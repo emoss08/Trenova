@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -138,7 +138,7 @@ func newApprovalHarness(
 		customerRepo:     customerRepo,
 		billingRepo:      billingRepo,
 		validator: &Validator{
-			validator: validationframework.NewTenantedValidatorBuilder[*invoice.Invoice]().Build(),
+			validator: tenantedvalidation.NewBuilder[*invoice.Invoice]().Build(),
 		},
 		auditService: &mocks.NoopAuditService{},
 		realtime:     &mocks.NoopRealtimeService{},

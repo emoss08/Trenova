@@ -8,19 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/zap"
 )
 
 func NewTestValidator() *Validator {
 	return &Validator{
-		controlValidator: validationframework.
-			NewTenantedValidatorBuilder[*costingcontrol.CostingControl]().
+		controlValidator: tenantedvalidation.NewBuilder[*costingcontrol.CostingControl]().
 			WithModelName("CostingControl").
 			WithCustomRule(createGLActualsRule()).
 			Build(),
-		categoryValidator: validationframework.
-			NewTenantedValidatorBuilder[*costingcontrol.CostCategory]().
+		categoryValidator: tenantedvalidation.NewBuilder[*costingcontrol.CostCategory]().
 			WithModelName("CostCategory").
 			Build(),
 	}

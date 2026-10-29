@@ -1,14 +1,15 @@
-package validationframework
+package tenantedvalidation
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type UniqueFieldConfig[T TenantedEntity] struct {
+type UniqueFieldConfig[T validationframework.TenantedEntity] struct {
 	FieldName     string
 	Column        string
 	Message       string
@@ -16,26 +17,26 @@ type UniqueFieldConfig[T TenantedEntity] struct {
 	GetValue      func(T) any
 }
 
-type CompositeUniqueFieldConfig[T TenantedEntity] struct {
+type CompositeUniqueFieldConfig[T validationframework.TenantedEntity] struct {
 	Name    string
 	Message string
 	Fields  []CompositeField[T]
 }
 
-type CompositeField[T TenantedEntity] struct {
+type CompositeField[T validationframework.TenantedEntity] struct {
 	FieldName     string
 	Column        string
 	CaseSensitive bool
 	GetValue      func(T) any
 }
 
-type ImmutableFieldConfig[T TenantedEntity] struct {
+type ImmutableFieldConfig[T validationframework.TenantedEntity] struct {
 	FieldName string
 	Message   string
 	GetValue  func(T) any
 }
 
-type DateComparisonConfig[T TenantedEntity] struct {
+type DateComparisonConfig[T validationframework.TenantedEntity] struct {
 	FieldName    string
 	Message      string
 	GetStartDate func(T) *int64
@@ -43,7 +44,7 @@ type DateComparisonConfig[T TenantedEntity] struct {
 	AllowEqual   bool
 }
 
-type NumericRangeConfig[T TenantedEntity] struct {
+type NumericRangeConfig[T validationframework.TenantedEntity] struct {
 	FieldName string
 	Message   string
 	GetValue  func(T) *float64
@@ -51,69 +52,69 @@ type NumericRangeConfig[T TenantedEntity] struct {
 	Max       *float64
 }
 
-type TenantedEntityValidator[T TenantedEntity] interface {
+type EntityValidator[T validationframework.TenantedEntity] interface {
 	ValidateCreate(ctx context.Context, entity T) *errortypes.MultiError
 	ValidateUpdate(ctx context.Context, entity T) *errortypes.MultiError
 	ValidateUpdateWithOriginal(ctx context.Context, entity, original T) *errortypes.MultiError
 }
 
-type TenantedValidator[T TenantedEntity] struct {
+type Validator[T validationframework.TenantedEntity] struct {
 	modelName             string
-	uniquenessChecker     UniquenessChecker
-	referenceChecker      ReferenceChecker
+	uniquenessChecker     validationframework.UniquenessChecker
+	referenceChecker      validationframework.ReferenceChecker
 	uniqueFields          []UniqueFieldConfig[T]
 	compositeUniqueFields []CompositeUniqueFieldConfig[T]
-	referenceFields       []ReferenceFieldConfig[T]
+	referenceFields       []validationframework.ReferenceFieldConfig[T]
 	immutableFields       []ImmutableFieldConfig[T]
 	dateComparisons       []DateComparisonConfig[T]
 	numericRanges         []NumericRangeConfig[T]
-	customRules           []TenantedRule[T]
-	engineConfig          *EngineConfig
+	customRules           []validationframework.TenantedRule[T]
+	engineConfig          *validationframework.EngineConfig
 }
 
-type TenantedValidatorBuilder[T TenantedEntity] struct {
-	validator *TenantedValidator[T]
+type Builder[T validationframework.TenantedEntity] struct {
+	validator *Validator[T]
 }
 
-func NewTenantedValidatorBuilder[T TenantedEntity]() *TenantedValidatorBuilder[T] {
-	return &TenantedValidatorBuilder[T]{
-		validator: &TenantedValidator[T]{
+func NewBuilder[T validationframework.TenantedEntity]() *Builder[T] {
+	return &Builder[T]{
+		validator: &Validator[T]{
 			modelName:             "Entity",
 			uniqueFields:          make([]UniqueFieldConfig[T], 0),
 			compositeUniqueFields: make([]CompositeUniqueFieldConfig[T], 0),
-			referenceFields:       make([]ReferenceFieldConfig[T], 0),
+			referenceFields:       make([]validationframework.ReferenceFieldConfig[T], 0),
 			immutableFields:       make([]ImmutableFieldConfig[T], 0),
 			dateComparisons:       make([]DateComparisonConfig[T], 0),
 			numericRanges:         make([]NumericRangeConfig[T], 0),
-			customRules:           make([]TenantedRule[T], 0),
-			engineConfig:          DefaultEngineConfig(),
+			customRules:           make([]validationframework.TenantedRule[T], 0),
+			engineConfig:          validationframework.DefaultEngineConfig(),
 		},
 	}
 }
 
-func (b *TenantedValidatorBuilder[T]) WithModelName(name string) *TenantedValidatorBuilder[T] {
+func (b *Builder[T]) WithModelName(name string) *Builder[T] {
 	b.validator.modelName = name
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithUniquenessChecker(
-	checker UniquenessChecker,
-) *TenantedValidatorBuilder[T] {
+func (b *Builder[T]) WithUniquenessChecker(
+	checker validationframework.UniquenessChecker,
+) *Builder[T] {
 	b.validator.uniquenessChecker = checker
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithReferenceChecker(
-	checker ReferenceChecker,
-) *TenantedValidatorBuilder[T] {
+func (b *Builder[T]) WithReferenceChecker(
+	checker validationframework.ReferenceChecker,
+) *Builder[T] {
 	b.validator.referenceChecker = checker
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithUniqueField(
+func (b *Builder[T]) WithUniqueField(
 	fieldName, column, message string,
 	getter func(T) any,
-) *TenantedValidatorBuilder[T] {
+) *Builder[T] {
 	b.validator.uniqueFields = append(b.validator.uniqueFields, UniqueFieldConfig[T]{
 		FieldName:     fieldName,
 		Column:        column,
@@ -124,10 +125,10 @@ func (b *TenantedValidatorBuilder[T]) WithUniqueField(
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithCaseSensitiveUniqueField(
+func (b *Builder[T]) WithCaseSensitiveUniqueField(
 	fieldName, column, message string,
 	getter func(T) any,
-) *TenantedValidatorBuilder[T] {
+) *Builder[T] {
 	b.validator.uniqueFields = append(b.validator.uniqueFields, UniqueFieldConfig[T]{
 		FieldName:     fieldName,
 		Column:        column,
@@ -138,10 +139,10 @@ func (b *TenantedValidatorBuilder[T]) WithCaseSensitiveUniqueField(
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithCompositeUniqueFields(
+func (b *Builder[T]) WithCompositeUniqueFields(
 	name, message string,
 	fields ...CompositeField[T],
-) *TenantedValidatorBuilder[T] {
+) *Builder[T] {
 	b.validator.compositeUniqueFields = append(
 		b.validator.compositeUniqueFields,
 		CompositeUniqueFieldConfig[T]{
@@ -153,10 +154,10 @@ func (b *TenantedValidatorBuilder[T]) WithCompositeUniqueFields(
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithImmutableField(
+func (b *Builder[T]) WithImmutableField(
 	fieldName, message string,
 	getter func(T) any,
-) *TenantedValidatorBuilder[T] {
+) *Builder[T] {
 	b.validator.immutableFields = append(b.validator.immutableFields, ImmutableFieldConfig[T]{
 		FieldName: fieldName,
 		Message:   message,
@@ -165,10 +166,10 @@ func (b *TenantedValidatorBuilder[T]) WithImmutableField(
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithDateAfter(
+func (b *Builder[T]) WithDateAfter(
 	fieldName, message string,
 	getStart, getEnd func(T) *int64,
-) *TenantedValidatorBuilder[T] {
+) *Builder[T] {
 	b.validator.dateComparisons = append(b.validator.dateComparisons, DateComparisonConfig[T]{
 		FieldName:    fieldName,
 		Message:      message,
@@ -179,10 +180,10 @@ func (b *TenantedValidatorBuilder[T]) WithDateAfter(
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithDateAfterOrEqual(
+func (b *Builder[T]) WithDateAfterOrEqual(
 	fieldName, message string,
 	getStart, getEnd func(T) *int64,
-) *TenantedValidatorBuilder[T] {
+) *Builder[T] {
 	b.validator.dateComparisons = append(b.validator.dateComparisons, DateComparisonConfig[T]{
 		FieldName:    fieldName,
 		Message:      message,
@@ -193,11 +194,11 @@ func (b *TenantedValidatorBuilder[T]) WithDateAfterOrEqual(
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithNumericRange(
+func (b *Builder[T]) WithNumericRange(
 	fieldName, message string,
 	getValue func(T) *float64,
 	minValue, maxValue *float64,
-) *TenantedValidatorBuilder[T] {
+) *Builder[T] {
 	b.validator.numericRanges = append(b.validator.numericRanges, NumericRangeConfig[T]{
 		FieldName: fieldName,
 		Message:   message,
@@ -208,100 +209,112 @@ func (b *TenantedValidatorBuilder[T]) WithNumericRange(
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithReferenceCheck(
+func (b *Builder[T]) WithReferenceCheck(
 	fieldName, tableName, message string,
 	getter func(T) pulid.ID,
-) *TenantedValidatorBuilder[T] {
-	b.validator.referenceFields = append(b.validator.referenceFields, ReferenceFieldConfig[T]{
-		FieldName: fieldName,
-		TableName: tableName,
-		Message:   message,
-		Optional:  false,
-		GetID:     getter,
-	})
+) *Builder[T] {
+	b.validator.referenceFields = append(
+		b.validator.referenceFields,
+		validationframework.ReferenceFieldConfig[T]{
+			FieldName: fieldName,
+			TableName: tableName,
+			Message:   message,
+			Optional:  false,
+			GetID:     getter,
+		},
+	)
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithOptionalReferenceCheck(
+func (b *Builder[T]) WithOptionalReferenceCheck(
 	fieldName, tableName, message string,
 	getter func(T) pulid.ID,
-) *TenantedValidatorBuilder[T] {
-	b.validator.referenceFields = append(b.validator.referenceFields, ReferenceFieldConfig[T]{
-		FieldName: fieldName,
-		TableName: tableName,
-		Message:   message,
-		Optional:  true,
-		GetID:     getter,
-	})
+) *Builder[T] {
+	b.validator.referenceFields = append(
+		b.validator.referenceFields,
+		validationframework.ReferenceFieldConfig[T]{
+			FieldName: fieldName,
+			TableName: tableName,
+			Message:   message,
+			Optional:  true,
+			GetID:     getter,
+		},
+	)
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithCustomReferenceCheck(
+func (b *Builder[T]) WithCustomReferenceCheck(
 	fieldName, message string,
 	getter func(T) pulid.ID,
-	customCheck CustomReferenceCheckFunc,
-) *TenantedValidatorBuilder[T] {
-	b.validator.referenceFields = append(b.validator.referenceFields, ReferenceFieldConfig[T]{
-		FieldName:   fieldName,
-		Message:     message,
-		Optional:    false,
-		GetID:       getter,
-		CustomCheck: customCheck,
-	})
+	customCheck validationframework.CustomReferenceCheckFunc,
+) *Builder[T] {
+	b.validator.referenceFields = append(
+		b.validator.referenceFields,
+		validationframework.ReferenceFieldConfig[T]{
+			FieldName:   fieldName,
+			Message:     message,
+			Optional:    false,
+			GetID:       getter,
+			CustomCheck: customCheck,
+		},
+	)
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithOptionalCustomReferenceCheck(
+func (b *Builder[T]) WithOptionalCustomReferenceCheck(
 	fieldName, message string,
 	getter func(T) pulid.ID,
-	customCheck CustomReferenceCheckFunc,
-) *TenantedValidatorBuilder[T] {
-	b.validator.referenceFields = append(b.validator.referenceFields, ReferenceFieldConfig[T]{
-		FieldName:   fieldName,
-		Message:     message,
-		Optional:    true,
-		GetID:       getter,
-		CustomCheck: customCheck,
-	})
+	customCheck validationframework.CustomReferenceCheckFunc,
+) *Builder[T] {
+	b.validator.referenceFields = append(
+		b.validator.referenceFields,
+		validationframework.ReferenceFieldConfig[T]{
+			FieldName:   fieldName,
+			Message:     message,
+			Optional:    true,
+			GetID:       getter,
+			CustomCheck: customCheck,
+		},
+	)
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithCustomRule(
-	rule TenantedRule[T],
-) *TenantedValidatorBuilder[T] {
+func (b *Builder[T]) WithCustomRule(
+	rule validationframework.TenantedRule[T],
+) *Builder[T] {
 	b.validator.customRules = append(b.validator.customRules, rule)
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) WithEngineConfig(
-	config *EngineConfig,
-) *TenantedValidatorBuilder[T] {
+func (b *Builder[T]) WithEngineConfig(
+	config *validationframework.EngineConfig,
+) *Builder[T] {
 	b.validator.engineConfig = config
 	return b
 }
 
-func (b *TenantedValidatorBuilder[T]) Build() *TenantedValidator[T] {
+func (b *Builder[T]) Build() *Validator[T] {
 	return b.validator
 }
 
-func (v *TenantedValidator[T]) ValidateCreate(
+func (v *Validator[T]) ValidateCreate(
 	ctx context.Context,
 	entity T,
 ) *errortypes.MultiError {
-	valCtx := &TenantedValidationContext{
-		Mode:           ModeCreate,
+	valCtx := &validationframework.TenantedValidationContext{
+		Mode:           validationframework.ModeCreate,
 		OrganizationID: entity.GetOrganizationID(),
 		BusinessUnitID: entity.GetBusinessUnitID(),
 	}
 	return v.validate(ctx, entity, nil, valCtx)
 }
 
-func (v *TenantedValidator[T]) ValidateUpdate(
+func (v *Validator[T]) ValidateUpdate(
 	ctx context.Context,
 	entity T,
 ) *errortypes.MultiError {
-	valCtx := &TenantedValidationContext{
-		Mode:           ModeUpdate,
+	valCtx := &validationframework.TenantedValidationContext{
+		Mode:           validationframework.ModeUpdate,
 		OrganizationID: entity.GetOrganizationID(),
 		BusinessUnitID: entity.GetBusinessUnitID(),
 		EntityID:       entity.GetID(),
@@ -309,13 +322,13 @@ func (v *TenantedValidator[T]) ValidateUpdate(
 	return v.validate(ctx, entity, nil, valCtx)
 }
 
-func (v *TenantedValidator[T]) ValidateUpdateWithOriginal(
+func (v *Validator[T]) ValidateUpdateWithOriginal(
 	ctx context.Context,
 	entity T,
 	original T,
 ) *errortypes.MultiError {
-	valCtx := &TenantedValidationContext{
-		Mode:           ModeUpdate,
+	valCtx := &validationframework.TenantedValidationContext{
+		Mode:           validationframework.ModeUpdate,
 		OrganizationID: entity.GetOrganizationID(),
 		BusinessUnitID: entity.GetBusinessUnitID(),
 		EntityID:       entity.GetID(),
@@ -323,13 +336,13 @@ func (v *TenantedValidator[T]) ValidateUpdateWithOriginal(
 	return v.validate(ctx, entity, &original, valCtx)
 }
 
-func (v *TenantedValidator[T]) validate(
+func (v *Validator[T]) validate(
 	ctx context.Context,
 	entity T,
 	original *T,
-	valCtx *TenantedValidationContext,
+	valCtx *validationframework.TenantedValidationContext,
 ) *errortypes.MultiError {
-	engine := NewEngine(v.engineConfig)
+	engine := validationframework.NewEngine(v.engineConfig)
 
 	engine.AddRule(v.createDomainValidationRule(entity))
 
@@ -370,10 +383,10 @@ func (v *TenantedValidator[T]) validate(
 	return engine.Validate(ctx)
 }
 
-func (v *TenantedValidator[T]) createDomainValidationRule(entity T) ValidationRule {
-	return NewConcreteRule("domain_validation").
-		WithStage(ValidationStageBasic).
-		WithPriority(ValidationPriorityHigh).
+func (v *Validator[T]) createDomainValidationRule(entity T) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule("domain_validation").
+		WithStage(validationframework.ValidationStageBasic).
+		WithPriority(validationframework.ValidationPriorityHigh).
 		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			entity.Validate(multiErr)
@@ -381,10 +394,10 @@ func (v *TenantedValidator[T]) createDomainValidationRule(entity T) ValidationRu
 		})
 }
 
-func (v *TenantedValidator[T]) createIDValidationRule(entity T) ValidationRule {
-	return NewConcreteRule("id_validation").
-		WithStage(ValidationStageBasic).
-		WithPriority(ValidationPriorityHigh).
+func (v *Validator[T]) createIDValidationRule(entity T) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule("id_validation").
+		WithStage(validationframework.ValidationStageBasic).
+		WithPriority(validationframework.ValidationPriorityHigh).
 		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			if entity.GetID().IsNotNil() {
@@ -394,13 +407,13 @@ func (v *TenantedValidator[T]) createIDValidationRule(entity T) ValidationRule {
 		})
 }
 
-func (v *TenantedValidator[T]) createUniquenessRule(
+func (v *Validator[T]) createUniquenessRule(
 	entity T,
-	valCtx *TenantedValidationContext,
-) ValidationRule {
-	return NewConcreteRule("uniqueness_validation").
-		WithStage(ValidationStageDataIntegrity).
-		WithPriority(ValidationPriorityHigh).
+	valCtx *validationframework.TenantedValidationContext,
+) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule("uniqueness_validation").
+		WithStage(validationframework.ValidationStageDataIntegrity).
+		WithPriority(validationframework.ValidationPriorityHigh).
 		WithValidation(func(ctx context.Context, multiErr *errortypes.MultiError) error {
 			for _, field := range v.uniqueFields {
 				value := field.GetValue(entity)
@@ -408,12 +421,12 @@ func (v *TenantedValidator[T]) createUniquenessRule(
 					continue
 				}
 
-				req := &UniquenessRequest{
+				req := &validationframework.UniquenessRequest{
 					TableName:      entity.GetTableName(),
 					OrganizationID: valCtx.OrganizationID,
 					BusinessUnitID: valCtx.BusinessUnitID,
 					ExcludeID:      valCtx.EntityID,
-					Fields: []FieldCheck{
+					Fields: []validationframework.FieldCheck{
 						{
 							Column:        field.Column,
 							Value:         value,
@@ -447,13 +460,13 @@ func (v *TenantedValidator[T]) createUniquenessRule(
 		})
 }
 
-func (v *TenantedValidator[T]) createReferenceRule(
+func (v *Validator[T]) createReferenceRule(
 	entity T,
-	valCtx *TenantedValidationContext,
-) ValidationRule {
-	return NewConcreteRule("reference_validation").
-		WithStage(ValidationStageDataIntegrity).
-		WithPriority(ValidationPriorityHigh).
+	valCtx *validationframework.TenantedValidationContext,
+) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule("reference_validation").
+		WithStage(validationframework.ValidationStageDataIntegrity).
+		WithPriority(validationframework.ValidationPriorityHigh).
 		WithValidation(func(ctx context.Context, multiErr *errortypes.MultiError) error {
 			for _, field := range v.referenceFields {
 				refID := field.GetID(entity)
@@ -481,7 +494,7 @@ func (v *TenantedValidator[T]) createReferenceRule(
 						refID,
 					)
 				} else {
-					req := &ReferenceRequest{
+					req := &validationframework.ReferenceRequest{
 						TableName:      field.TableName,
 						OrganizationID: valCtx.OrganizationID,
 						BusinessUnitID: valCtx.BusinessUnitID,
@@ -513,16 +526,16 @@ func (v *TenantedValidator[T]) createReferenceRule(
 		})
 }
 
-func (v *TenantedValidator[T]) createCompositeUniquenessRule(
+func (v *Validator[T]) createCompositeUniquenessRule(
 	entity T,
-	valCtx *TenantedValidationContext,
-) ValidationRule {
-	return NewConcreteRule("composite_uniqueness_validation").
-		WithStage(ValidationStageDataIntegrity).
-		WithPriority(ValidationPriorityHigh).
+	valCtx *validationframework.TenantedValidationContext,
+) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule("composite_uniqueness_validation").
+		WithStage(validationframework.ValidationStageDataIntegrity).
+		WithPriority(validationframework.ValidationPriorityHigh).
 		WithValidation(func(ctx context.Context, multiErr *errortypes.MultiError) error {
 			for _, composite := range v.compositeUniqueFields {
-				fieldChecks := make([]FieldCheck, 0, len(composite.Fields))
+				fieldChecks := make([]validationframework.FieldCheck, 0, len(composite.Fields))
 				allFieldsHaveValues := true
 
 				for _, field := range composite.Fields {
@@ -531,7 +544,7 @@ func (v *TenantedValidator[T]) createCompositeUniquenessRule(
 						allFieldsHaveValues = false
 						break
 					}
-					fieldChecks = append(fieldChecks, FieldCheck{
+					fieldChecks = append(fieldChecks, validationframework.FieldCheck{
 						Column:        field.Column,
 						Value:         value,
 						CaseSensitive: field.CaseSensitive,
@@ -542,7 +555,7 @@ func (v *TenantedValidator[T]) createCompositeUniquenessRule(
 					continue
 				}
 
-				req := &UniquenessRequest{
+				req := &validationframework.UniquenessRequest{
 					TableName:      entity.GetTableName(),
 					OrganizationID: valCtx.OrganizationID,
 					BusinessUnitID: valCtx.BusinessUnitID,
@@ -574,10 +587,12 @@ func (v *TenantedValidator[T]) createCompositeUniquenessRule(
 		})
 }
 
-func (v *TenantedValidator[T]) createImmutableFieldRule(entity, original T) ValidationRule {
-	return NewConcreteRule("immutable_field_validation").
-		WithStage(ValidationStageBasic).
-		WithPriority(ValidationPriorityHigh).
+func (v *Validator[T]) createImmutableFieldRule(
+	entity, original T,
+) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule("immutable_field_validation").
+		WithStage(validationframework.ValidationStageBasic).
+		WithPriority(validationframework.ValidationPriorityHigh).
 		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			for _, field := range v.immutableFields {
@@ -609,10 +624,10 @@ func valuesEqual(a, b any) bool {
 	return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b)
 }
 
-func (v *TenantedValidator[T]) createDateComparisonRule(entity T) ValidationRule {
-	return NewConcreteRule("date_comparison_validation").
-		WithStage(ValidationStageBasic).
-		WithPriority(ValidationPriorityHigh).
+func (v *Validator[T]) createDateComparisonRule(entity T) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule("date_comparison_validation").
+		WithStage(validationframework.ValidationStageBasic).
+		WithPriority(validationframework.ValidationPriorityHigh).
 		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			for _, config := range v.dateComparisons {
@@ -645,10 +660,10 @@ func (v *TenantedValidator[T]) createDateComparisonRule(entity T) ValidationRule
 		})
 }
 
-func (v *TenantedValidator[T]) createNumericRangeRule(entity T) ValidationRule {
-	return NewConcreteRule("numeric_range_validation").
-		WithStage(ValidationStageBasic).
-		WithPriority(ValidationPriorityHigh).
+func (v *Validator[T]) createNumericRangeRule(entity T) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule("numeric_range_validation").
+		WithStage(validationframework.ValidationStageBasic).
+		WithPriority(validationframework.ValidationPriorityHigh).
 		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			for _, config := range v.numericRanges {
@@ -686,12 +701,12 @@ func (v *TenantedValidator[T]) createNumericRangeRule(entity T) ValidationRule {
 		})
 }
 
-func (v *TenantedValidator[T]) wrapTenantedRule(
-	rule TenantedRule[T],
+func (v *Validator[T]) wrapTenantedRule(
+	rule validationframework.TenantedRule[T],
 	entity T,
-	valCtx *TenantedValidationContext,
-) ValidationRule {
-	return NewConcreteRule(rule.Name()).
+	valCtx *validationframework.TenantedValidationContext,
+) validationframework.ValidationRule {
+	return validationframework.NewConcreteRule(rule.Name()).
 		WithStage(rule.Stage()).
 		WithPriority(rule.Priority()).
 		WithExecutionMode(rule.ExecutionMode()).

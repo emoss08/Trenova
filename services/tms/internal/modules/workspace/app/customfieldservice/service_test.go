@@ -4,14 +4,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,8 +20,7 @@ import (
 
 func newNoOpValidator() *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*customfield.CustomFieldDefinition]().
+		validator: tenantedvalidation.NewBuilder[*customfield.CustomFieldDefinition]().
 			WithModelName("Custom Field Definition").
 			Build(),
 	}

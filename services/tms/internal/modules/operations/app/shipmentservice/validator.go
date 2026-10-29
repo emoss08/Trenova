@@ -19,7 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -42,7 +44,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator      validationframework.TenantedEntityValidator[*shipment.Shipment]
+	validator      tenantedvalidation.EntityValidator[*shipment.Shipment]
 	assignmentRepo assignmentports.AssignmentRepository
 	coverage       rateCoverage
 }
@@ -83,10 +85,9 @@ type validatorDeps struct {
 
 func newValidatorBuilder(
 	deps validatorDeps,
-) *validationframework.TenantedValidatorBuilder[*shipment.Shipment] {
+) *tenantedvalidation.Builder[*shipment.Shipment] {
 	db := deps.DB
-	builder := validationframework.
-		NewTenantedValidatorBuilder[*shipment.Shipment]().
+	builder := tenantedvalidation.NewBuilder[*shipment.Shipment]().
 		WithModelName("Shipment").
 		WithCustomRule(createMoveValidationRule()).
 		WithCustomRule(createStopValidationRule()).
@@ -110,7 +111,7 @@ func newValidatorBuilder(
 		return builder
 	}
 
-	checker := validationframework.NewKeelChecker(db, shipmentdb.ShipmentsSchema())
+	checker := keelcheck.NewChecker(db, shipmentdb.ShipmentsSchema())
 
 	return builder.
 		WithUniquenessChecker(checker).

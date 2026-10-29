@@ -3,11 +3,12 @@ package billingqueueservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
@@ -19,14 +20,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*billingqueue.BillingQueueItem]
+	validator tenantedvalidation.EntityValidator[*billingqueue.BillingQueueItem]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*billingqueue.BillingQueueItem]().
+		validator: tenantedvalidation.NewBuilder[*billingqueue.BillingQueueItem]().
 			WithModelName("Billing Queue Item").
-			WithUniquenessChecker(validationframework.NewKeelChecker(p.DB, billingqueuedb.BillingQueueItemsSchema())).
+			WithUniquenessChecker(keelcheck.NewChecker(p.DB, billingqueuedb.BillingQueueItemsSchema())).
 			WithCustomRule(createStatusConstraintsRule()).
 			Build(),
 	}

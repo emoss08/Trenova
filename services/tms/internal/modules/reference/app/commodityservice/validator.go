@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -19,15 +20,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*commodity.Commodity]
+	validator tenantedvalidation.EntityValidator[*commodity.Commodity]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, commoditydb.CommoditiesSchema())
+	checker := keelcheck.NewChecker(p.DB, commoditydb.CommoditiesSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*commodity.Commodity]().
+		validator: tenantedvalidation.NewBuilder[*commodity.Commodity]().
 			WithModelName("Commodity").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

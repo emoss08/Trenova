@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -19,15 +20,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*trailer.Trailer]
+	validator tenantedvalidation.EntityValidator[*trailer.Trailer]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, trailerdb.TrailersSchema())
+	checker := keelcheck.NewChecker(p.DB, trailerdb.TrailersSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*trailer.Trailer]().
+		validator: tenantedvalidation.NewBuilder[*trailer.Trailer]().
 			WithModelName("Trailer").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

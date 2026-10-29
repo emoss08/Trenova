@@ -1,4 +1,4 @@
-package validationframework
+package keelcheck
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -19,22 +20,22 @@ const (
 	businessUnitIDColumn = "business_unit_id"
 )
 
-type KeelDB interface {
+type DB interface {
 	Keel(ctx context.Context) *keel.DB
 	RunScoped(ctx context.Context, readOnly bool, fn func(context.Context) error) error
 }
 
-type KeelChecker struct {
-	conn   KeelDB
+type Checker struct {
+	conn   DB
 	tables map[string]*schema.Table
 }
 
 var (
-	_ UniquenessChecker = (*KeelChecker)(nil)
-	_ ReferenceChecker  = (*KeelChecker)(nil)
+	_ validationframework.UniquenessChecker = (*Checker)(nil)
+	_ validationframework.ReferenceChecker  = (*Checker)(nil)
 )
 
-func NewKeelChecker(conn KeelDB, table *schema.Table) *KeelChecker {
+func NewChecker(conn DB, table *schema.Table) *Checker {
 	tables := make(map[string]*schema.Table, len(table.Relations)+1)
 	tables[table.Name] = table
 	for i := range table.Relations {
@@ -43,10 +44,13 @@ func NewKeelChecker(conn KeelDB, table *schema.Table) *KeelChecker {
 		}
 	}
 
-	return &KeelChecker{conn: conn, tables: tables}
+	return &Checker{conn: conn, tables: tables}
 }
 
-func (c *KeelChecker) CheckUniqueness(ctx context.Context, req *UniquenessRequest) (bool, error) {
+func (c *Checker) CheckUniqueness(
+	ctx context.Context,
+	req *validationframework.UniquenessRequest,
+) (bool, error) {
 	q, err := c.uniquenessQuery(ctx, req)
 	if err != nil {
 		return false, err
@@ -55,7 +59,10 @@ func (c *KeelChecker) CheckUniqueness(ctx context.Context, req *UniquenessReques
 	return existsIn(ctx, c.conn, q)
 }
 
-func (c *KeelChecker) CheckReference(ctx context.Context, req *ReferenceRequest) (bool, error) {
+func (c *Checker) CheckReference(
+	ctx context.Context,
+	req *validationframework.ReferenceRequest,
+) (bool, error) {
 	q, err := c.referenceQuery(ctx, req)
 	if err != nil {
 		return false, err
@@ -64,9 +71,9 @@ func (c *KeelChecker) CheckReference(ctx context.Context, req *ReferenceRequest)
 	return existsIn(ctx, c.conn, q)
 }
 
-func (c *KeelChecker) uniquenessQuery(
+func (c *Checker) uniquenessQuery(
 	ctx context.Context,
-	req *UniquenessRequest,
+	req *validationframework.UniquenessRequest,
 ) (*keel.DynQuery, error) {
 	if len(req.Fields) == 0 {
 		return nil, errors.New("at least one field is required")
@@ -79,7 +86,7 @@ func (c *KeelChecker) uniquenessQuery(
 
 	q := keel.DynFrom(table)
 	preds := tenantPredicates(ctx, q, req.OrganizationID, req.BusinessUnitID)
-	for _, fields := range [][]FieldCheck{req.Fields, req.ScopeFields} {
+	for _, fields := range [][]validationframework.FieldCheck{req.Fields, req.ScopeFields} {
 		for _, field := range fields {
 			pred, fieldErr := fieldPredicate(q, field)
 			if fieldErr != nil {
@@ -95,9 +102,9 @@ func (c *KeelChecker) uniquenessQuery(
 	return existsQuery(ctx, q.Where(preds...)), nil
 }
 
-func (c *KeelChecker) referenceQuery(
+func (c *Checker) referenceQuery(
 	ctx context.Context,
-	req *ReferenceRequest,
+	req *validationframework.ReferenceRequest,
 ) (*keel.DynQuery, error) {
 	if req.ID.IsNil() {
 		return nil, errors.New("reference ID is required")
@@ -111,7 +118,7 @@ func (c *KeelChecker) referenceQuery(
 	return keelReferenceQuery(ctx, table, req.OrganizationID, req.BusinessUnitID, req.ID), nil
 }
 
-func (c *KeelChecker) table(name string) (*schema.Table, error) {
+func (c *Checker) table(name string) (*schema.Table, error) {
 	if name == "" {
 		return nil, errors.New("table name is required")
 	}
@@ -124,7 +131,7 @@ func (c *KeelChecker) table(name string) (*schema.Table, error) {
 	return table, nil
 }
 
-func KeelReferenceCheck(conn KeelDB, table *schema.Table) CustomReferenceCheckFunc {
+func ReferenceCheck(conn DB, table *schema.Table) validationframework.CustomReferenceCheckFunc {
 	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
 		if refID.IsNil() {
 			return true, nil
@@ -154,7 +161,7 @@ func existsQuery(ctx context.Context, q *keel.DynQuery) *keel.DynQuery {
 	return q.Select(q.Path(idColumn)).Limit(1)
 }
 
-func existsIn(ctx context.Context, conn KeelDB, q *keel.DynQuery) (bool, error) {
+func existsIn(ctx context.Context, conn DB, q *keel.DynQuery) (bool, error) {
 	if conn == nil {
 		return false, errDBNotInitialized
 	}
@@ -186,7 +193,7 @@ func tenantPredicates(ctx context.Context, q *keel.DynQuery, orgID, buID pulid.I
 	return preds
 }
 
-func fieldPredicate(q *keel.DynQuery, field FieldCheck) (keel.Pred, error) {
+func fieldPredicate(q *keel.DynQuery, field validationframework.FieldCheck) (keel.Pred, error) {
 	table := q.Table()
 	if table.Column(field.Column) < 0 {
 		return nil, fmt.Errorf("table %s has no column %q", table.Name, field.Column)

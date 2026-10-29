@@ -7,21 +7,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -31,7 +30,7 @@ import (
 
 func newTestValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*tenant.User]().
+		validator: tenantedvalidation.NewBuilder[*tenant.User]().
 			WithModelName("User").
 			Build(),
 	}
@@ -519,11 +518,13 @@ func TestUpdateMySettings_Success(t *testing.T) {
 			updated.EmailAddress == user.EmailAddress &&
 			updated.Timezone == "America/Chicago" &&
 			updated.TimeFormat == domaintypes.TimeFormat24Hour
-	})).Return(func(_ context.Context, req tenantports.UpdateUserColumnsRequest) *tenant.User {
-		return req.Entity
-	}, func(context.Context, tenantports.UpdateUserColumnsRequest) error {
-		return nil
-	}).Once()
+	})).
+		Return(func(_ context.Context, req tenantports.UpdateUserColumnsRequest) *tenant.User {
+			return req.Entity
+		}, func(context.Context, tenantports.UpdateUserColumnsRequest) error {
+			return nil
+		}).
+		Once()
 
 	result, err := deps.svc.UpdateMySettings(ctx, tenantInfo, UpdateMySettingsRequest{
 		Timezone:   "America/Chicago",
@@ -696,11 +697,15 @@ func TestChangeMyPassword_RefusesAPasswordThePolicyRejects(t *testing.T) {
 				TenantInfo: tenantInfo,
 			}).Return(user, nil).Once()
 
-			result, err := deps.svc.ChangeMyPassword(t.Context(), tenantInfo, ChangeMyPasswordRequest{
-				CurrentPassword: "current-password",
-				NewPassword:     newPassword,
-				ConfirmPassword: newPassword,
-			})
+			result, err := deps.svc.ChangeMyPassword(
+				t.Context(),
+				tenantInfo,
+				ChangeMyPasswordRequest{
+					CurrentPassword: "current-password",
+					NewPassword:     newPassword,
+					ConfirmPassword: newPassword,
+				},
+			)
 
 			require.Nil(t, result)
 			var multiErr *errortypes.MultiError

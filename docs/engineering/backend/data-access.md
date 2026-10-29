@@ -287,16 +287,16 @@ where keel has no typed form: `DynCase`, `DynRow`, arithmetic, text `||`, array 
 Validators build one checker over the entity's table:
 
 ```go
-checker := validationframework.NewKeelChecker(p.DB, tractordb.TractorsSchema())
-validationframework.NewTenantedValidatorBuilder[*tractor.Tractor]().
+checker := keelcheck.NewChecker(p.DB, tractordb.TractorsSchema())
+tenantedvalidation.NewBuilder[*tractor.Tractor]().
 	WithUniquenessChecker(checker).
 	WithReferenceChecker(checker)
 ```
 
 The checker answers references to the entity's table and every table it relates to; a table it
-does not relate to gets a `WithCustomReferenceCheck` with `validationframework.KeelReferenceCheck`,
+does not relate to gets a `WithCustomReferenceCheck` with `keelcheck.ReferenceCheck`,
 or, when the table belongs to a module this one may not import,
-`validationframework.KeelTableReferenceCheck(p.DB, "gl_accounts")` (one constant `EXISTS` over the
+`keelcheck.TableReferenceCheck(p.DB, "gl_accounts")` (one constant `EXISTS` over the
 table's `id`, `organization_id` and `business_unit_id`). A uniqueness check that must see rows
 row-level security hides (other organizations of the business unit) wraps the checker in a
 `UniquenessChecker` that puts `dbscope.WithSystem` on the context and pins the request's
