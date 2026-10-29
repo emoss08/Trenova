@@ -39,7 +39,7 @@ func portalTaskArtifact(callID string, result map[string]any) *assistantartifact
 	if artifactpayload.PayloadSize(payload) > assistantartifact.MaxPayloadBytes {
 		delete(payload, portalKeyPages)
 		payload[portalKeyAnswer] = ""
-		payload["truncated"] = true
+		payload[artifactpayload.PayloadTruncated] = true
 	}
 
 	title := typeutils.StringOfTrimmed(result[portalKeyQuestion])

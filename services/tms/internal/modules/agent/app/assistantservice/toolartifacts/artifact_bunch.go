@@ -96,15 +96,15 @@ func BunchTable(
 	}
 
 	payload := map[string]any{
-		payloadDisplay:                  assistantartifact.DisplayVersion,
-		artifactpayload.PayloadTool:     tool,
-		artifactpayload.PayloadEntity:   entity,
-		artifactpayload.PayloadColumns:  columns,
-		artifactpayload.PayloadRows:     rows,
-		artifactpayload.PayloadRowCount: len(rows),
-		"searchedFor":                   []string{},
-		PayloadBunched:                  true,
-		PayloadCalls:                    calls,
+		payloadDisplay:                     assistantartifact.DisplayVersion,
+		artifactpayload.PayloadTool:        tool,
+		artifactpayload.PayloadEntity:      entity,
+		artifactpayload.PayloadColumns:     columns,
+		artifactpayload.PayloadRows:        rows,
+		artifactpayload.PayloadRowCount:    len(rows),
+		artifactpayload.PayloadSearchedFor: []string{},
+		PayloadBunched:                     true,
+		PayloadCalls:                       calls,
 	}
 	if recordEntity != "" {
 		payload["recordEntity"] = recordEntity

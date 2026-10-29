@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -24,11 +25,11 @@ func tableLabels(artifact *assistantartifact.Artifact) []string {
 	if !tabularKind(artifact.Kind) {
 		return nil
 	}
-	rows, _ := artifact.Payload["rows"].([]any)
+	rows, _ := artifact.Payload[artifactpayload.PayloadRows].([]any)
 	if len(rows) == 0 {
 		return nil
 	}
-	key := firstColumnKey(artifact.Payload["columns"])
+	key := firstColumnKey(artifact.Payload[artifactpayload.PayloadColumns])
 
 	labels := make([]string, 0, min(len(rows), maxTableLabels))
 	for _, row := range rows {

@@ -6,12 +6,15 @@ import (
 )
 
 const (
-	PayloadTool     = "tool"
-	PayloadEntity   = "entity"
-	PayloadColumns  = "columns"
-	PayloadRows     = "rows"
-	PayloadRowCount = "rowCount"
-	PayloadReadWith = "readWith"
+	PayloadTool        = "tool"
+	PayloadEntity      = "entity"
+	PayloadColumns     = "columns"
+	PayloadRows        = "rows"
+	PayloadRowCount    = "rowCount"
+	PayloadReadWith    = "readWith"
+	PayloadSearchedFor = "searchedFor"
+	PayloadTotals      = "totals"
+	PayloadName        = "name"
 )
 
 func ColumnsFrom(value any) []assistantartifact.DisplayColumn {

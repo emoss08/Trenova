@@ -67,7 +67,7 @@ func analysisArtifact(
 			break
 		}
 		payload[analysisKeyOutput] = string(runes[len(runes)/2:])
-		payload["truncated"] = true
+		payload[artifactpayload.PayloadTruncated] = true
 	}
 
 	title := typeutils.StringOfTrimmed(result[analysisKeyTitle])

@@ -34,7 +34,7 @@ func connectionDraftArtifact(callID string, result map[string]any) *assistantart
 	payload["samples"] = sampleSummaries(result["samples"])
 	mappings, _ := result["mappings"].([]any)
 	payload["mappingCount"] = len(mappings)
-	payload["truncated"] = false
+	payload[artifactpayload.PayloadTruncated] = false
 	for _, key := range connectionDraftTrimmed {
 		if artifactpayload.PayloadSize(payload) <= assistantartifact.MaxPayloadBytes {
 			break

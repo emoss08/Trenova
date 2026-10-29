@@ -1,6 +1,7 @@
 package toolartifacts
 
 import (
+	"bytes"
 	"cmp"
 	"errors"
 	"fmt"
@@ -21,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/inflect"
@@ -131,7 +133,7 @@ func SameView(previous, next *assistantartifact.Artifact) bool {
 		return false
 	}
 
-	return string(before) == string(after)
+	return bytes.Equal(before, after)
 }
 
 // ShownArtifact is how the model is told what the person now sees.
@@ -141,7 +143,7 @@ func ShownArtifact(artifact *assistantartifact.Artifact) *agentruntimeports.Show
 		Kind:         string(artifact.Kind),
 		Title:        artifact.Title,
 		Labels:       tableLabels(artifact),
-		Rows:         int(recordviews.NumberOf(artifact.Payload, "rowCount")),
+		Rows:         int(recordviews.NumberOf(artifact.Payload, artifactpayload.PayloadRowCount)),
 		Actionable:   actionableTable(artifact),
 		Opens:        opensView(artifact),
 		OpensRecords: opensRecords(artifact),
@@ -448,6 +450,8 @@ func DocumentArtifact(
 
 // ArtifactFromObservation turns a finished query tool into what the pane
 // shows for it, or nil when the result is one to read rather than see.
+//
+//nolint:gocritic // the recorder hands on the observation its ToolObserver received by value
 func ArtifactFromObservation(
 	observation agentruntimeports.ToolObservation,
 ) *assistantartifact.Artifact {
@@ -460,50 +464,82 @@ func ArtifactFromObservation(
 		return nil
 	}
 	result := document.Fields
+	call := &observation.Call
 
-	name := observation.Call.Name
-	switch {
-	case name == toolPreviewReport:
-		return previewArtifact(observation.Call.ID, result, observation.Call.Arguments)
-	case name == toolRankCandidates:
-		return candidateRankingArtifact(observation.Call.ID, result)
-	case name == ToolRunReport || name == toolGetReportRun:
-		return RunArtifact(observation.Call.ID, result)
-	case strings.HasPrefix(agenttoolports.ReadingOrder(name), getToolPrefix) && isRowSet(result):
-		return tableArtifact(observation.Call.ID, name, result)
-	case strings.HasPrefix(agenttoolports.ReadingOrder(name), getToolPrefix):
-		return EntityCardArtifact(observation.Call.ID, name, document)
-	case name == toolExplainRate:
-		return rateArtifact(observation.Call.ID, result)
-	case name == toolCompareRuns:
-		return runDiffArtifact(observation.Call.ID, result)
-	case name == toolOpenPage:
-		return navigationArtifact(observation.Call.ID, result)
-	case name == toolComposeView:
-		return composedViewArtifact(observation.Call.ID, result)
-	case pagedraft.IsEditTool(name):
-		return draftEditArtifact(observation.Call.ID, result)
-	case name == toolDraftEDIConnection:
-		return connectionDraftArtifact(observation.Call.ID, result)
-	case name == codemode.ToolRunScript:
-		return analysisArtifact(observation.Call.ID, result, observation.Call.Arguments)
-	case name == agentextension.ToolReadPortal:
-		return portalTaskArtifact(observation.Call.ID, result)
-	case strings.HasPrefix(agenttoolports.ReadingOrder(name), listToolPrefix),
-		strings.HasPrefix(agenttoolports.ReadingOrder(name), searchToolPrefix):
-		if card := soleRecordCard(observation.Call.ID, name, result); card != nil {
+	if artifact, matched := reportArtifact(call, result); matched {
+		return artifact
+	}
+
+	order := agenttoolports.ReadingOrder(call.Name)
+	if strings.HasPrefix(order, getToolPrefix) {
+		if isRowSet(result) {
+			return tableArtifact(call.ID, call.Name, result)
+		}
+
+		return EntityCardArtifact(call.ID, call.Name, document)
+	}
+
+	if artifact, matched := namedToolArtifact(call, result); matched {
+		return artifact
+	}
+
+	if strings.HasPrefix(order, listToolPrefix) || strings.HasPrefix(order, searchToolPrefix) {
+		if card := soleRecordCard(call.ID, call.Name, result); card != nil {
 			return card
 		}
-		return tableArtifact(observation.Call.ID, name, result)
+
+		return tableArtifact(call.ID, call.Name, result)
+	}
+
+	return nil
+}
+
+func reportArtifact(
+	call *llmports.ToolCall,
+	result map[string]any,
+) (artifact *assistantartifact.Artifact, matched bool) {
+	switch call.Name {
+	case toolPreviewReport:
+		return previewArtifact(call.ID, result, call.Arguments), true
+	case toolRankCandidates:
+		return candidateRankingArtifact(call.ID, result), true
+	case ToolRunReport, toolGetReportRun:
+		return RunArtifact(call.ID, result), true
 	default:
-		return nil
+		return nil, false
+	}
+}
+
+func namedToolArtifact(
+	call *llmports.ToolCall,
+	result map[string]any,
+) (artifact *assistantartifact.Artifact, matched bool) {
+	switch {
+	case call.Name == toolExplainRate:
+		return rateArtifact(call.ID, result), true
+	case call.Name == toolCompareRuns:
+		return runDiffArtifact(call.ID, result), true
+	case call.Name == toolOpenPage:
+		return navigationArtifact(call.ID, result), true
+	case call.Name == toolComposeView:
+		return composedViewArtifact(call.ID, result), true
+	case pagedraft.IsEditTool(call.Name):
+		return draftEditArtifact(call.ID, result), true
+	case call.Name == toolDraftEDIConnection:
+		return connectionDraftArtifact(call.ID, result), true
+	case call.Name == codemode.ToolRunScript:
+		return analysisArtifact(call.ID, result, call.Arguments), true
+	case call.Name == agentextension.ToolReadPortal:
+		return portalTaskArtifact(call.ID, result), true
+	default:
+		return nil, false
 	}
 }
 
 func isRowSet(result map[string]any) bool {
 	_, rows := result["items"].([]any)
 
-	return rows && len(artifactpayload.StringsOf(result["columns"])) > 0
+	return rows && len(artifactpayload.StringsOf(result[artifactpayload.PayloadColumns])) > 0
 }
 
 // tableArtifact views a list or search result as the table it already is.
@@ -527,7 +563,7 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 	if !ok || len(rows) == 0 {
 		return nil
 	}
-	declared := artifactpayload.StringsOf(result["columns"])
+	declared := artifactpayload.StringsOf(result[artifactpayload.PayloadColumns])
 	if len(declared) == 0 {
 		return nil
 	}
@@ -539,18 +575,20 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 	}
 
 	payload := map[string]any{
-		"display":     assistantartifact.DisplayVersion,
-		"tool":        toolName,
-		"entity":      entity,
-		"columns":     projection.Columns,
-		"rows":        projection.Rows,
-		"rowCount":    result["count"],
-		"searchedFor": artifactpayload.StringsOf(result["searchedFor"]),
+		payloadDisplay:                  assistantartifact.DisplayVersion,
+		artifactpayload.PayloadTool:     toolName,
+		artifactpayload.PayloadEntity:   entity,
+		artifactpayload.PayloadColumns:  projection.Columns,
+		artifactpayload.PayloadRows:     projection.Rows,
+		artifactpayload.PayloadRowCount: result["count"],
+		artifactpayload.PayloadSearchedFor: artifactpayload.StringsOf(
+			result[artifactpayload.PayloadSearchedFor],
+		),
 	}
 	if projection.RecordEntity != "" {
 		payload["recordEntity"] = projection.RecordEntity
 	}
-	fitRows(payload, "rows")
+	fitRows(payload, artifactpayload.PayloadRows)
 	artifactpayload.NotePaging(payload, result)
 
 	return &assistantartifact.Artifact{
@@ -602,7 +640,10 @@ func soleRecordCard(callID, toolName string, result map[string]any) *assistantar
 		ToolName: toolName,
 		Entity:   entity,
 		Record:   record,
-		Order:    declaredOrder(artifactpayload.StringsOf(result["columns"]), record),
+		Order: declaredOrder(
+			artifactpayload.StringsOf(result[artifactpayload.PayloadColumns]),
+			record,
+		),
 	})
 }
 
@@ -688,19 +729,19 @@ func candidateRankingArtifact(callID string, result map[string]any) *assistantar
 	}
 
 	payload := map[string]any{
-		"display":     assistantartifact.DisplayVersion,
-		"tool":        toolRankCandidates,
-		"entity":      "workers",
-		"columns":     projection.Columns,
-		"rows":        projection.Rows,
-		"rowCount":    float64(len(projection.Rows)),
-		"searchedFor": []string{},
-		payloadRanked: true,
+		payloadDisplay:                     assistantartifact.DisplayVersion,
+		artifactpayload.PayloadTool:        toolRankCandidates,
+		artifactpayload.PayloadEntity:      "workers",
+		artifactpayload.PayloadColumns:     projection.Columns,
+		artifactpayload.PayloadRows:        projection.Rows,
+		artifactpayload.PayloadRowCount:    float64(len(projection.Rows)),
+		artifactpayload.PayloadSearchedFor: []string{},
+		payloadRanked:                      true,
 	}
 	if projection.RecordEntity != "" {
 		payload["recordEntity"] = projection.RecordEntity
 	}
-	fitRows(payload, "rows")
+	fitRows(payload, artifactpayload.PayloadRows)
 	artifactpayload.NotePaging(payload, result)
 
 	return &assistantartifact.Artifact{
@@ -741,33 +782,33 @@ func composedViewArtifact(callID string, result map[string]any) *assistantartifa
 		return nil
 	}
 
-	entity := typeutils.StringOfTrimmed(result["entity"])
+	entity := typeutils.StringOfTrimmed(result[artifactpayload.PayloadEntity])
 	payload := map[string]any{
-		"display":     assistantartifact.DisplayVersion,
-		"entity":      entity,
-		"path":        path,
-		"explanation": typeutils.StringOfTrimmed(result["explanation"]),
-		"terms":       artifactpayload.StringsOf(result["terms"]),
-		"filterCount": result["filterCount"],
-		"unresolved":  result["unresolved"],
+		payloadDisplay:                assistantartifact.DisplayVersion,
+		artifactpayload.PayloadEntity: entity,
+		"path":                        path,
+		"explanation":                 typeutils.StringOfTrimmed(result["explanation"]),
+		"terms":                       artifactpayload.StringsOf(result["terms"]),
+		"filterCount":                 result["filterCount"],
+		"unresolved":                  result["unresolved"],
 	}
 	if count, counted := result["count"]; counted {
-		payload["rowCount"] = count
+		payload[artifactpayload.PayloadRowCount] = count
 		payload["countCapped"] = typeutils.BoolOf(result["countCapped"])
 	}
 	if rows, ok := result["items"].([]any); ok && len(rows) > 0 {
 		projection := artifactpayload.ProjectTable(
 			entity,
-			artifactpayload.StringsOf(result["columns"]),
+			artifactpayload.StringsOf(result[artifactpayload.PayloadColumns]),
 			rows,
 		)
 		if len(projection.Columns) > 0 {
-			payload["columns"] = projection.Columns
-			payload["rows"] = projection.Rows
+			payload[artifactpayload.PayloadColumns] = projection.Columns
+			payload[artifactpayload.PayloadRows] = projection.Rows
 			if projection.RecordEntity != "" {
 				payload["recordEntity"] = projection.RecordEntity
 			}
-			fitRows(payload, "rows")
+			fitRows(payload, artifactpayload.PayloadRows)
 		}
 	}
 
@@ -804,16 +845,16 @@ func rateArtifact(callID string, result map[string]any) *assistantartifact.Artif
 	}
 
 	payload := map[string]any{
-		"shipmentId": typeutils.StringOfTrimmed(result["shipmentId"]),
-		"side":       typeutils.StringOfTrimmed(result["side"]),
-		"currency":   typeutils.StringOfTrimmed(result["currency"]),
-		"winner":     result["winner"],
-		"tieBreak":   typeutils.StringOfTrimmed(result["tieBreak"]),
-		"rejected":   result["rejected"],
-		"components": components,
-		"guardrails": result["guardrails"],
-		"totals":     result["totals"],
-		"warnings":   artifactpayload.StringsOf(result["warnings"]),
+		"shipmentId":                  typeutils.StringOfTrimmed(result["shipmentId"]),
+		"side":                        typeutils.StringOfTrimmed(result["side"]),
+		"currency":                    typeutils.StringOfTrimmed(result["currency"]),
+		"winner":                      result["winner"],
+		"tieBreak":                    typeutils.StringOfTrimmed(result["tieBreak"]),
+		"rejected":                    result["rejected"],
+		"components":                  components,
+		"guardrails":                  result["guardrails"],
+		artifactpayload.PayloadTotals: result[artifactpayload.PayloadTotals],
+		"warnings":                    artifactpayload.StringsOf(result["warnings"]),
 	}
 	if pricedBy != nil {
 		payload["pricedBy"] = pricedBy
@@ -837,7 +878,7 @@ func rateArtifact(callID string, result map[string]any) *assistantartifact.Artif
 // totals underneath, it is the answer to "what changed since last week".
 func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
 	changes, _ := result["changes"].([]any)
-	totals, _ := result["totals"].([]any)
+	totals, _ := result[artifactpayload.PayloadTotals].([]any)
 
 	// A comparison with nothing on either side is a sentence: "nothing moved".
 	if len(changes) == 0 && len(totals) == 0 {
@@ -845,15 +886,15 @@ func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Ar
 	}
 
 	payload := map[string]any{
-		"before":    result["before"],
-		"after":     result["after"],
-		"keys":      artifactpayload.StringsOf(result["keys"]),
-		"measures":  artifactpayload.StringsOf(result["measures"]),
-		"summary":   result["summary"],
-		"changes":   changes,
-		"totals":    totals,
-		"truncated": result["truncated"],
-		"note":      typeutils.StringOfTrimmed(result["note"]),
+		"before":                         result["before"],
+		"after":                          result["after"],
+		"keys":                           artifactpayload.StringsOf(result["keys"]),
+		"measures":                       artifactpayload.StringsOf(result["measures"]),
+		"summary":                        result["summary"],
+		"changes":                        changes,
+		artifactpayload.PayloadTotals:    totals,
+		artifactpayload.PayloadTruncated: result[artifactpayload.PayloadTruncated],
+		"note":                           typeutils.StringOfTrimmed(result["note"]),
 	}
 	// The changes are already sorted by risk and then by size, so halving the
 	// list drops the smallest movements rather than an arbitrary tail.
@@ -880,17 +921,17 @@ func navigationArtifact(callID string, result map[string]any) *assistantartifact
 		return nil
 	}
 
-	name := typeutils.StringOfTrimmed(result["name"])
+	name := typeutils.StringOfTrimmed(result[artifactpayload.PayloadName])
 
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindNavigation,
 		Status: assistantartifact.StatusReady,
 		Title:  assistantartifact.NormalizeTitle(name),
 		Payload: map[string]any{
-			"path":     path,
-			"name":     name,
-			"location": typeutils.StringOfTrimmed(result["location"]),
-			"page":     typeutils.StringOfTrimmed(result["page"]),
+			"path":                      path,
+			artifactpayload.PayloadName: name,
+			"location":                  typeutils.StringOfTrimmed(result["location"]),
+			"page":                      typeutils.StringOfTrimmed(result["page"]),
 		},
 		SourceToolCallID: callID,
 	}
@@ -968,16 +1009,20 @@ func previewArtifact(
 	result map[string]any,
 	arguments map[string]any,
 ) *assistantartifact.Artifact {
-	rows, _ := result["rows"].([]any)
+	rows, _ := result[artifactpayload.PayloadRows].([]any)
 	payload := map[string]any{
-		"name":      typeutils.StringOfTrimmed(result["name"]),
-		"dataset":   typeutils.StringOfTrimmed(result["dataset"]),
-		"columns":   result["columns"],
-		"rowCount":  result["rowCount"],
-		"rows":      rows,
-		"totals":    result["totals"],
-		"truncated": typeutils.BoolOf(result["truncated"]),
-		"tool":      toolPreviewReport,
+		artifactpayload.PayloadName: typeutils.StringOfTrimmed(
+			result[artifactpayload.PayloadName],
+		),
+		"dataset":                       typeutils.StringOfTrimmed(result["dataset"]),
+		artifactpayload.PayloadColumns:  result[artifactpayload.PayloadColumns],
+		artifactpayload.PayloadRowCount: result[artifactpayload.PayloadRowCount],
+		artifactpayload.PayloadRows:     rows,
+		artifactpayload.PayloadTotals:   result[artifactpayload.PayloadTotals],
+		artifactpayload.PayloadTruncated: typeutils.BoolOf(
+			result[artifactpayload.PayloadTruncated],
+		),
+		artifactpayload.PayloadTool: toolPreviewReport,
 	}
 	// A saved or built-in report can be opened whole where reports live; an
 	// inline definition has nowhere but its own page.
@@ -987,9 +1032,9 @@ func previewArtifact(
 	if key := typeutils.StringOfTrimmed(arguments["reportKey"]); key != "" {
 		payload["reportKey"] = key
 	}
-	fitRows(payload, "rows")
+	fitRows(payload, artifactpayload.PayloadRows)
 
-	title := typeutils.StringOfTrimmed(result["name"])
+	title := typeutils.StringOfTrimmed(result[artifactpayload.PayloadName])
 	if title == "" {
 		title = "Preview of " +
 			textcase.HumanizeSnakeCasePhrase(typeutils.StringOfTrimmed(result["dataset"]))
@@ -1011,15 +1056,17 @@ func RunArtifact(callID string, result map[string]any) *assistantartifact.Artifa
 	}
 
 	payload := map[string]any{
-		"runId":        runID,
-		"reportKey":    typeutils.StringOfTrimmed(result["reportKey"]),
-		"definitionId": typeutils.StringOfTrimmed(result["definitionId"]),
-		"reportName":   typeutils.StringOfTrimmed(result["reportName"]),
-		"status":       typeutils.StringOfTrimmed(result["status"]),
-		"finished":     typeutils.BoolOf(result["finished"]),
-		"format":       typeutils.StringOfTrimmed(result["format"]),
-		"rowCount":     result["rowCount"],
-		"truncated":    typeutils.BoolOf(result["truncated"]),
+		"runId":                         runID,
+		"reportKey":                     typeutils.StringOfTrimmed(result["reportKey"]),
+		"definitionId":                  typeutils.StringOfTrimmed(result["definitionId"]),
+		"reportName":                    typeutils.StringOfTrimmed(result["reportName"]),
+		"status":                        typeutils.StringOfTrimmed(result["status"]),
+		"finished":                      typeutils.BoolOf(result["finished"]),
+		"format":                        typeutils.StringOfTrimmed(result["format"]),
+		artifactpayload.PayloadRowCount: result[artifactpayload.PayloadRowCount],
+		artifactpayload.PayloadTruncated: typeutils.BoolOf(
+			result[artifactpayload.PayloadTruncated],
+		),
 	}
 
 	title := typeutils.StringOfTrimmed(result["reportName"])
@@ -1093,7 +1140,7 @@ func RecordCardArtifact(card *RecordCard) *assistantartifact.Artifact {
 	}
 
 	payload := map[string]any{
-		"display":                     assistantartifact.DisplayVersion,
+		payloadDisplay:                assistantartifact.DisplayVersion,
 		artifactpayload.PayloadEntity: entity,
 		payloadFields:                 artifactpayload.ProjectRecord(result, card.Order),
 		artifactpayload.PayloadTool:   toolName,
@@ -1158,9 +1205,9 @@ func DraftArtifact(proposal *agent.AgentProposal) *assistantartifact.Artifact {
 	}
 
 	payload := map[string]any{
-		"tool":           proposal.ToolName,
-		"arguments":      proposal.ToolParams,
-		payloadRationale: proposal.Rationale,
+		artifactpayload.PayloadTool: proposal.ToolName,
+		"arguments":                 proposal.ToolParams,
+		payloadRationale:            proposal.Rationale,
 	}
 	subject := ""
 	if spec.subjectKey != "" {
@@ -1242,11 +1289,11 @@ func fitRows(payload map[string]any, key string) {
 	for artifactpayload.PayloadSize(payload) > assistantartifact.MaxPayloadBytes && len(rows) > minPreviewRows {
 		rows = rows[:len(rows)/2]
 		payload[key] = rows
-		payload["truncated"] = true
+		payload[artifactpayload.PayloadTruncated] = true
 	}
 	if len(rows) <= minPreviewRows &&
 		artifactpayload.PayloadSize(payload) > assistantartifact.MaxPayloadBytes {
 		payload[key] = []any{}
-		payload["truncated"] = true
+		payload[artifactpayload.PayloadTruncated] = true
 	}
 }
