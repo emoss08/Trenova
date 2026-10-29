@@ -410,6 +410,19 @@ is rewritten as a range on the column itself.
 - **A sort of an aggregate** (a top-N card) ranks the aggregated rows with `rankquery.Top`
   (`row_number()` over the groups in a CTE, filtered by rank) instead of `ORDER BY … LIMIT`: the
   guard counts every relation under a sort, and no index can order an aggregate.
+- **A cap over an OR of conditions** no one index serves (open, or changed, delivered or
+  documented since a time) finds its candidates with a `UNION` of branches, one index range per
+  condition, and ranks them with `rankquery.Top`: the rank sorts only the candidates, which the
+  ranges bound (`customertrackingrepository.candidateShipmentsQuery`).
+- **A window open above** (`updated_at >= $1`) reads as a third of the table to a generic plan,
+  which then scans the heap rather than the index. Close it at `math.MaxInt64` (`<= $2`): a
+  generic plan reads a range closed on both sides as 0.5% of the table, and a custom plan reads
+  the real bound, so the rows are the same.
+- **A full-text match ordered by another column** (newest first) has no index that gives both.
+  Read the match through the GIN index with a cap and no `ORDER BY`, order it in Go when it fits
+  under the cap, and read newest first only when the match is broader, with `CustomPlan` so the
+  planner weighs that term: a common one walks the recency index, a rare one sorts its matches
+  (`shipmentlistreadrepository.MatchOrderReferences`).
 - **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
   page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
   guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.
