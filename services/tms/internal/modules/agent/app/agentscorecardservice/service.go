@@ -67,7 +67,7 @@ func AsService(s *Service) agentevaluationports.AgentScorecardService { return s
 // it is a summary of rows the same person could already list one by one.
 func (s *Service) Get(
 	ctx context.Context,
-	req agentevaluationports.AgentScorecardRequest,
+	req *agentevaluationports.AgentScorecardRequest,
 	actor *permissionports.RequestActor,
 ) (*agentevaluationports.AgentScorecardResult, error) {
 	window := req.Window

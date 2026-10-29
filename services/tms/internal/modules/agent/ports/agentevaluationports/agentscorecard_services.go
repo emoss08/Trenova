@@ -30,7 +30,7 @@ type AgentScorecardResult struct {
 type AgentScorecardService interface {
 	Get(
 		ctx context.Context,
-		req AgentScorecardRequest,
+		req *AgentScorecardRequest,
 		actor *permissionports.RequestActor,
 	) (*AgentScorecardResult, error)
 }

@@ -42,11 +42,11 @@ func (c *taintedEgressCheck) taintedWrites(in *Input) []string {
 		if !known {
 			continue
 		}
-		if call.AutoRun && tainted && leaves(policy, call.Arguments) &&
+		if call.AutoRun && tainted && leaves(&policy, call.Arguments) &&
 			!slices.Contains(findings, call.ToolName) {
 			findings = append(findings, call.ToolName)
 		}
-		if readsOutside(policy) {
+		if readsOutside(&policy) {
 			tainted = true
 		}
 	}
@@ -59,7 +59,7 @@ func (c *taintedEgressCheck) caseTainted(in *Input) bool {
 		return false
 	}
 	for _, fixture := range in.Case.ToolFixtures {
-		if policy, known := c.lookup(fixture.Tool); known && readsOutside(policy) {
+		if policy, known := c.lookup(fixture.Tool); known && readsOutside(&policy) {
 			return true
 		}
 	}
@@ -67,7 +67,7 @@ func (c *taintedEgressCheck) caseTainted(in *Input) bool {
 		if message.ToolName == "" {
 			continue
 		}
-		if policy, known := c.lookup(message.ToolName); known && readsOutside(policy) {
+		if policy, known := c.lookup(message.ToolName); known && readsOutside(&policy) {
 			return true
 		}
 	}
@@ -75,12 +75,12 @@ func (c *taintedEgressCheck) caseTainted(in *Input) bool {
 	return false
 }
 
-func readsOutside(policy agenttoolports.ToolPolicy) bool {
+func readsOutside(policy *agenttoolports.ToolPolicy) bool {
 	return policy.ReadsExternal.IsValid() &&
 		policy.ReadsExternal != agenttooltrust.ExternalReadNever
 }
 
-func leaves(policy agenttoolports.ToolPolicy, arguments map[string]any) bool {
+func leaves(policy *agenttoolports.ToolPolicy, arguments map[string]any) bool {
 	call := policy.Classified(agenttoolports.ToolExecuteParams{Params: arguments})
 
 	return call.Egress.Leaves()

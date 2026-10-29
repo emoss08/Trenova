@@ -100,8 +100,8 @@ func actor() *permissionports.RequestActor {
 	}
 }
 
-func request(window agentevaluation.ScorecardWindow) agentevaluationports.AgentScorecardRequest {
-	return agentevaluationports.AgentScorecardRequest{
+func request(window agentevaluation.ScorecardWindow) *agentevaluationports.AgentScorecardRequest {
+	return &agentevaluationports.AgentScorecardRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),

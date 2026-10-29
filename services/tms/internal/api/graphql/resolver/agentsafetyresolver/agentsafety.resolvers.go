@@ -201,7 +201,7 @@ func (r *MutationResolver) SaveAgentToolRule(ctx context.Context, name string, v
 		return nil, err
 	}
 
-	view := agentsafetyservice.OverriddenView(declared.Policy, result.Override)
+	view := agentsafetyservice.OverriddenView(&declared.Policy, result.Override)
 
 	return &gqlmodel.AgentToolRuleSaved{
 		Tool:     ToolPolicyViewToModel(&view),

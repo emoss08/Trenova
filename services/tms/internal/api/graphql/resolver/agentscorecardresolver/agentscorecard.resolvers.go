@@ -34,7 +34,7 @@ func (r *QueryResolver) AgentScorecard(ctx context.Context, input gqlmodel.Agent
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	result, err := r.AgentScorecardService.Get(ctx, agentevaluationports.AgentScorecardRequest{
+	result, err := r.AgentScorecardService.Get(ctx, &agentevaluationports.AgentScorecardRequest{
 		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 		Window:            window,

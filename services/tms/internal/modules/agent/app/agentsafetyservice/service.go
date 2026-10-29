@@ -109,24 +109,24 @@ func newService(deps serviceDeps) *Service {
 func PolicyViews(policies []agenttoolports.ToolPolicy) []agenttoolports.AgentToolPolicyView {
 	views := make([]agenttoolports.AgentToolPolicyView, 0, len(policies))
 	for idx := range policies {
-		views = append(views, PolicyView(policies[idx]))
+		views = append(views, PolicyView(&policies[idx]))
 	}
 
 	return views
 }
 
-func PolicyView(policy agenttoolports.ToolPolicy) agenttoolports.AgentToolPolicyView {
+func PolicyView(policy *agenttoolports.ToolPolicy) agenttoolports.AgentToolPolicyView {
 	view := agenttoolports.AgentToolPolicyView{
-		Policy: policy,
+		Policy: *policy,
 		Title: textcase.HumanizeCamelCaseSentence(
 			agenttoolports.ReadingOrder(policy.Name),
 		),
-		Promotable:  agenttoolpolicy.Promotable(policy),
+		Promotable:  agenttoolpolicy.Promotable(*policy),
 		Leaves:      slices.ContainsFunc(policy.Egress, agent.EgressClass.Leaves),
-		Explanation: agenttoolpolicy.ExplainTier(policy),
+		Explanation: agenttoolpolicy.ExplainTier(*policy),
 	}
 
-	held := agentaccessservice.HeldToolOf(policy)
+	held := agentaccessservice.HeldToolOf(*policy)
 	if held.Resource != "" {
 		view.Needs = &agenttoolports.ToolGrant{Resource: held.Resource, Operation: held.Operation}
 	}
@@ -135,12 +135,13 @@ func PolicyView(policy agenttoolports.ToolPolicy) agenttoolports.AgentToolPolicy
 }
 
 func OverriddenView(
-	declared agenttoolports.ToolPolicy,
+	declared *agenttoolports.ToolPolicy,
 	override *agenttooltrust.ToolRuleOverride,
 ) agenttoolports.AgentToolPolicyView {
-	view := PolicyView(agenttoolpolicy.ApplyOverride(declared, override))
+	applied := agenttoolpolicy.ApplyOverride(*declared, override)
+	view := PolicyView(&applied)
 	if override != nil {
-		original := declared
+		original := *declared
 		view.Declared = &original
 		view.Override = override
 	}
@@ -231,7 +232,7 @@ func (s *Service) Assess(
 	held := s.heldPolicies(req.Subject.Agent)
 	out := make([]agenttoolports.AgentToolSafety, 0, len(held))
 	for idx := range held {
-		view := OverriddenView(held[idx], rules[held[idx].Name])
+		view := OverriddenView(&held[idx], rules[held[idx].Name])
 		policy := view.Policy
 		input := agenttoolpolicy.AssessInput{
 			Policy:     policy,

@@ -217,7 +217,7 @@ func proposals(in *Input) softResult {
 	passed := 0
 	findings := make([]string, 0)
 	for i, proposal := range expected {
-		match := comparison.Matches[i]
+		match := &comparison.Matches[i]
 		if proposalPasses(proposal, match) {
 			passed++
 			continue
@@ -233,7 +233,10 @@ func proposals(in *Input) softResult {
 	}
 }
 
-func proposalPasses(proposal agentquality.ExpectedProposal, match agentreplay.ReplayMatch) bool {
+func proposalPasses(
+	proposal agentquality.ExpectedProposal,
+	match *agentreplay.ReplayMatch,
+) bool {
 	switch match.Verdict {
 	case agentreplay.VerdictAgreed, agentreplay.VerdictImproved:
 		return true

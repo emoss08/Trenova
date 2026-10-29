@@ -116,9 +116,9 @@ func (r *Resolver) ForRuns(
 		return verdicts, nil
 	}
 
-	orgShadow, err := r.Organization(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
+	orgShadow, orgErr := r.Organization(ctx, tenantInfo)
+	if orgErr != nil {
+		return nil, orgErr
 	}
 	if orgShadow {
 		for _, id := range runIDs {

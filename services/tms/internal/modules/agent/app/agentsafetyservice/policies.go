@@ -83,7 +83,7 @@ func (s *Service) ListToolPolicies(
 		rows[idx].entry = &s.entries[idx]
 		if override, ok := rules[s.entries[idx].view.Policy.Name]; ok {
 			overridden := s.entries[idx]
-			overridden.view = OverriddenView(overridden.view.Policy, override)
+			overridden.view = OverriddenView(&overridden.view.Policy, override)
 			rows[idx].entry = &overridden
 		}
 	}
