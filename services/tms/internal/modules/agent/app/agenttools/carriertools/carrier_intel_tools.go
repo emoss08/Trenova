@@ -297,7 +297,7 @@ func NewVetCarrierTool(intel carrierVetter) agenttoolports.AgentTool {
 			}
 
 			return &carrierintelvetservice.VetCarrierRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				CarrierID:  carrierID,
 				Depth:      depth,
 				Force:      force != nil && *force,
@@ -405,7 +405,7 @@ func NewVetCustomerBrokerTool(intel carrierVetter) agenttoolports.AgentTool {
 			}
 
 			return &brokerVet{
-				tenant:     toolparams.TenantFrom(*params),
+				tenant:     toolparams.TenantFrom(params),
 				customerID: customerID,
 				force:      force != nil && *force,
 			}, nil
@@ -489,7 +489,7 @@ func NewSetCarrierMonitoringTool(intel carrierMonitoringEnroller) agenttoolports
 			}
 
 			return &carrierintelenrollmentservice.EnrollSubjectsRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				CarrierIDs: ids,
 				Enroll:     *enabled,
 			}, nil
@@ -606,7 +606,7 @@ func NewMarkCarrierIntelReviewedTool(intel carrierIntelReviewer) agenttoolports.
 			}
 
 			return &carrierintelreviewservice.MarkReviewedRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				CarrierID:  carrierID,
 				Note:       note,
 			}, nil
@@ -796,7 +796,7 @@ func readSuggestionChoice(params *agenttoolports.ToolExecuteParams) (*suggestion
 		return nil, err
 	}
 	req := &carrierintelvetservice.ApplySuggestionsRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		CarrierID:  carrierID,
 	}
 	if _, given := params.Params[paramSuggestionFields]; given {
@@ -1098,7 +1098,7 @@ func verifyEquipmentRequest(
 		return nil, err
 	}
 	req := &carrierintelverifyservice.VerifyEquipmentRequest{
-		TenantInfo:          toolparams.TenantFrom(*params),
+		TenantInfo:          toolparams.TenantFrom(params),
 		CarrierAssignmentID: assignmentID,
 		UnitType:            unitType,
 	}
@@ -1142,7 +1142,7 @@ func importProspectRequest(
 	}
 
 	return &carrierintelsourcingservice.ImportProspectRequest{
-		TenantInfo:       toolparams.TenantFrom(*params),
+		TenantInfo:       toolparams.TenantFrom(params),
 		DOTNumber:        dot,
 		Code:             code,
 		EnrollMonitoring: enroll != nil && *enroll,

@@ -155,7 +155,7 @@ func newReleaseBillingQueueItemTool(
 				}
 				return &billingqueueports.BillingQueueItemRequest{
 					ItemID:     itemID,
-					TenantInfo: toolparams.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(params),
 				}, nil
 			},
 			Plan: func(
@@ -492,7 +492,7 @@ func resolveIssueRequest(
 		ItemID:     itemID,
 		IssueID:    issueID,
 		OptionKey:  optionKey,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -623,7 +623,7 @@ func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool
 				return &billingqueueports.UndoBillingQueueIssueRequest{
 					ItemID:     itemID,
 					IssueID:    issueID,
-					TenantInfo: toolparams.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(params),
 				}, nil
 			},
 			Plan: func(

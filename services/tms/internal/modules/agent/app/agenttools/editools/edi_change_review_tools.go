@@ -192,7 +192,7 @@ func (t *EdiChangeReviewTool) call(
 		changeID: changeID,
 		apply:    decision == reviewApply,
 		reason:   reason,
-		tenant:   toolparams.TenantFrom(*params),
+		tenant:   toolparams.TenantFrom(params),
 		actor:    params.Actor,
 	}, nil
 }
@@ -225,7 +225,7 @@ func (t *EdiChangeReviewTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {

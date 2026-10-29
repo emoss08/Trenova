@@ -308,7 +308,7 @@ func (t *RecurringPayTool[E]) planned(
 		frequencies: t.kind.frequencies.Values,
 		statuses:    t.kind.statuses.Values,
 	}
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	if !t.update {
 		workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 		if err != nil {
@@ -377,7 +377,7 @@ func (t *RecurringPayTool[E]) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {

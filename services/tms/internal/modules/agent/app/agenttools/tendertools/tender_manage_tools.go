@@ -181,7 +181,7 @@ func (t *CancelTenderTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -210,7 +210,7 @@ func (t *CancelTenderTool) request(
 	}
 
 	return &tendercancel.CancelTenderRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		TenderID:   tenderID,
 		Reason:     strings.TrimSpace(reason),
 	}, nil
@@ -364,7 +364,7 @@ func (t *RecordTenderResponseTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -417,7 +417,7 @@ func (t *RecordTenderResponseTool) request(
 	}
 
 	return &tenderports.TenderResponseRequest{
-		TenantInfo:    toolparams.TenantFrom(*params),
+		TenantInfo:    toolparams.TenantFrom(params),
 		OfferID:       offerID,
 		Action:        tender.ResponseAction(answer),
 		Source:        tender.ResponseSourceManual,
@@ -453,7 +453,7 @@ func (t *RecordTenderResponseTool) bounceRequest(
 		return nil, err
 	}
 	return &tenderbounce.BounceTenderRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		OfferID:    offerID,
 		Reason:     reason,
 		Source:     tender.ResponseSourceManual,

@@ -145,7 +145,7 @@ func captureFilingFrom(params *agenttoolports.ToolExecuteParams) (*captureFiling
 				idx)
 		}
 		seen[input.ItemID] = true
-		input.TenantInfo = toolparams.TenantFrom(*params)
+		input.TenantInfo = toolparams.TenantFrom(params)
 		filing.entries = append(filing.entries, *input)
 	}
 
@@ -273,7 +273,7 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 				}, nil
 			}
 			result, err := captures.FileItems(ctx, &capturefiling.FileItemsInput{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				Items:      entries,
 			})
 			if err != nil {
@@ -383,13 +383,13 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 		params *agenttoolports.ToolExecuteParams,
 		id pulid.ID,
 	) (*capturefiling.DiscardItemInput, error) {
-		item, err := captures.GetItem(ctx, toolparams.TenantFrom(*params), id)
+		item, err := captures.GetItem(ctx, toolparams.TenantFrom(params), id)
 		if err != nil {
 			return nil, err
 		}
 
 		return &capturefiling.DiscardItemInput{
-			TenantInfo: toolparams.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(params),
 			ItemID:     id,
 			Version:    item.Version,
 		}, nil
@@ -484,13 +484,13 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 		params *agenttoolports.ToolExecuteParams,
 		id pulid.ID,
 	) (*capturefiling.DiscardBatchInput, error) {
-		batch, err := captures.GetBatch(ctx, toolparams.TenantFrom(*params), id)
+		batch, err := captures.GetBatch(ctx, toolparams.TenantFrom(params), id)
 		if err != nil {
 			return nil, err
 		}
 
 		return &capturefiling.DiscardBatchInput{
-			TenantInfo: toolparams.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(params),
 			BatchID:    id,
 			Version:    batch.Version,
 		}, nil

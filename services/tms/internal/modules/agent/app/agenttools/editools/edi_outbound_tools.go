@@ -134,7 +134,7 @@ func (t *SendEDILoadTenderTool) request(
 	}
 
 	return &editenderservice.SubmitLoadTenderRequest{
-		TenantInfo:       toolparams.TenantFrom(*params),
+		TenantInfo:       toolparams.TenantFrom(params),
 		SourceShipmentID: shipmentID,
 		EDIPartnerID:     partnerID,
 	}, nil
@@ -158,7 +158,7 @@ func (t *SendEDILoadTenderTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -226,7 +226,7 @@ func (t *SendEDIStatusUpdateTool) request(
 		return nil, err
 	}
 	req := &edioutbound.GenerateEDIDocumentRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		EDIPartnerID:   partnerID,
 		TransactionSet: edidocument.TransactionSet214,
 		Direction:      edidocument.DocumentDirectionOutbound,
@@ -272,7 +272,7 @@ func (t *SendEDIStatusUpdateTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {

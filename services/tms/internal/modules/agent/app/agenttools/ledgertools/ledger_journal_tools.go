@@ -395,7 +395,7 @@ func draftManualJournalRequest(
 		AccountingDate: accountingDate,
 		CurrencyCode:   currency,
 		Lines:          lines,
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -448,7 +448,7 @@ func revisedDraft(
 ) (*manualjournalports.UpdateManualJournalDraftRequest, error) {
 	current, err := journals.Get(ctx, &manualjournalports.GetManualJournalRequest{
 		RequestID:  revision.ID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 	if err != nil {
 		return nil, err
@@ -467,7 +467,7 @@ func manualJournalRequestFrom(
 
 	return &manualjournalports.GetManualJournalRequest{
 		RequestID:  id,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -509,7 +509,7 @@ func labelledJournal(
 	return journalpreview.PlanManualJournalChange(
 		ctx,
 		accounts,
-		toolparams.TenantFrom(*params),
+		toolparams.TenantFrom(params),
 		change,
 	)
 }
@@ -525,7 +525,7 @@ func labelledReversal(
 		return nil, err
 	}
 
-	return journalpreview.PlanReversal(ctx, accounts, toolparams.TenantFrom(*params), change)
+	return journalpreview.PlanReversal(ctx, accounts, toolparams.TenantFrom(params), change)
 }
 
 func newDraftManualJournalTool(
@@ -726,7 +726,7 @@ func cancelManualJournalRequest(
 	return &manualjournalports.CancelManualJournalRequest{
 		RequestID:  id,
 		Reason:     reason,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -863,7 +863,7 @@ func journalReversalRequestFrom(
 		RequestedAccountingDate: accountingDate,
 		ReasonCode:              code,
 		ReasonText:              text,
-		TenantInfo:              toolparams.TenantFrom(*params),
+		TenantInfo:              toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -966,7 +966,7 @@ func cancelJournalReversalRequest(
 	return &journalreversalports.CancelJournalReversalRequest{
 		ReversalID: id,
 		Reason:     reason,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -1060,7 +1060,7 @@ func newPostJournalReversalTool(
 
 			return &journalreversalports.GetJournalReversalRequest{
 				ReversalID: id,
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 			}, nil
 		},
 		Plan: func(

@@ -372,7 +372,7 @@ func (b *RecordBatch) Execute(
 	tool agenttoolports.AgentTool,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(tool, *params); err != nil {
+	if err := toolguard.GuardExecute(tool, params); err != nil {
 		return nil, err
 	}
 	if b.NeedsPerson != nil && !params.ApprovedFromProposal() {
@@ -497,7 +497,7 @@ func (b *RecordBatch) failedLabels(
 	for _, failure := range failures {
 		ids = append(ids, failure.id)
 	}
-	labels := b.Labels(ctx, toolparams.TenantFrom(*params), ids)
+	labels := b.Labels(ctx, toolparams.TenantFrom(params), ids)
 	if labels == nil {
 		return map[pulid.ID]string{}
 	}

@@ -124,14 +124,14 @@ func (t *DismissInsightTool) request(
 		ID:         id,
 		UserID:     params.Actor.UserID,
 		Reason:     reason,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
 func (t *DismissInsightTool) arguments(
 	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return "", "", err
 	}
 

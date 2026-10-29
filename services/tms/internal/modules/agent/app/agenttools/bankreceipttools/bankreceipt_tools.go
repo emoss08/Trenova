@@ -202,14 +202,14 @@ func (t *MatchBankReceiptTool) request(
 	return &bankreceiptports.MatchBankReceiptRequest{
 		ReceiptID:  receiptID,
 		PaymentID:  paymentID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
 func (t *MatchBankReceiptTool) arguments(
 	params *agenttoolports.ToolExecuteParams,
 ) (receiptID, paymentID pulid.ID, err error) {
-	if err = toolguard.GuardExecute(t, *params); err != nil {
+	if err = toolguard.GuardExecute(t, params); err != nil {
 		return "", "", err
 	}
 
@@ -455,7 +455,7 @@ func (t *PostCustomerPaymentTool) arguments(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (postPaymentArgs, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return postPaymentArgs{}, err
 	}
 
@@ -489,7 +489,7 @@ func (t *PostCustomerPaymentTool) arguments(
 		return postPaymentArgs{}, err
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	args := postPaymentArgs{request: &customerpaymentports.PostCustomerPaymentRequest{
 		CustomerID:     customerID,
 		PaymentDate:    paymentDate,
@@ -711,7 +711,7 @@ func (t *ResolveBankReceiptWorkItemTool) Execute(
 		return err
 	}
 
-	tenant := toolparams.TenantFrom(params)
+	tenant := toolparams.TenantFrom(&params)
 	if args.dismisses() {
 		_, err = t.items.Dismiss(ctx, args.dismissal(tenant), params.Actor)
 
@@ -751,7 +751,7 @@ func (a resolveWorkItemArgs) resolved(
 func (t *ResolveBankReceiptWorkItemTool) arguments(
 	params *agenttoolports.ToolExecuteParams,
 ) (resolveWorkItemArgs, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return resolveWorkItemArgs{}, err
 	}
 

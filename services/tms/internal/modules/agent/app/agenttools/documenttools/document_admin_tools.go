@@ -101,7 +101,7 @@ func deleteDocumentsRequest(
 
 	return &documentservice.BulkDeleteRequest{
 		IDs:        ids,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }
@@ -281,7 +281,7 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 			req *documentRestore,
 			params *agenttoolports.ToolExecuteParams,
 		) (*restoreDocumentPlan, error) {
-			tenant := toolparams.TenantFrom(*params)
+			tenant := toolparams.TenantFrom(params)
 			targetID, err := restoreTarget(ctx, documents, req, tenant)
 			if err != nil {
 				return nil, err
@@ -323,7 +323,7 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 			req *documentRestore,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			tenant := toolparams.TenantFrom(*params)
+			tenant := toolparams.TenantFrom(params)
 			targetID, err := restoreTarget(ctx, documents, req, tenant)
 			if err != nil {
 				return nil, err

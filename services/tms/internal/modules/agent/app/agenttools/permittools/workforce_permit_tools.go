@@ -250,7 +250,7 @@ func (e *permitEdit) entity(
 	ctx context.Context,
 	permits permitports.PermitService,
 ) (*permit.Permit, error) {
-	recorded, err := permits.ListPermits(ctx, e.shipmentID, toolparams.TenantFrom(*e.params))
+	recorded, err := permits.ListPermits(ctx, e.shipmentID, toolparams.TenantFrom(e.params))
 	if err != nil {
 		return nil, err
 	}

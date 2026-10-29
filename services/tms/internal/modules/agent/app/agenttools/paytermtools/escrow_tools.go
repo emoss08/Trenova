@@ -131,7 +131,7 @@ func loadEscrow(
 
 	return book.GetEscrowAccount(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID:         accountID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 }
 
@@ -256,7 +256,7 @@ func (t *OpenEscrowAccountTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
@@ -419,7 +419,7 @@ func (t *UpdateEscrowAccountTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
@@ -553,7 +553,7 @@ func (t *AdjustEscrowAccountTool) request(
 	}
 
 	return &driverpayservice.EscrowAdjustmentRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		AccountID:    accountID,
 		AmountMinor:  amount,
 		Description:  description,
@@ -616,7 +616,7 @@ func (t *AdjustEscrowAccountTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
@@ -738,7 +738,7 @@ func (t *CloseEscrowAccountTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
@@ -750,7 +750,7 @@ func (t *CloseEscrowAccountTool) Execute(
 	}
 	_, err = t.escrow.CloseEscrowAccount(
 		ctx,
-		toolparams.TenantFrom(params),
+		toolparams.TenantFrom(&params),
 		accountID,
 		params.Actor,
 	)

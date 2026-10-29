@@ -470,7 +470,7 @@ func submissionRequest(params *agenttoolports.ToolExecuteParams) (*adjustmentSub
 			toolparams.ParamAdjustments, len(entries), maxAdjustmentsPerSubmission)
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	submission.items = make([]*invoiceadjustmentports.InvoiceAdjustmentRequest, 0, len(entries))
 	for idx, entry := range entries {
 		item, itemErr := readAdjustmentRequest(entry)
@@ -568,7 +568,7 @@ func planDraftSubmission(
 ) (*submissionPlan, error) {
 	detail := &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: req.draftID,
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 	}
 	draft, err := adjustments.GetDetail(ctx, detail)
 	if err != nil {
@@ -604,7 +604,7 @@ func planBulkSubmission(
 		&invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
 			IdempotencyKey: req.key,
 			Items:          req.items,
-			TenantInfo:     toolparams.TenantFrom(*params),
+			TenantInfo:     toolparams.TenantFrom(params),
 		},
 		params.Actor,
 	)
@@ -628,7 +628,7 @@ func runSubmission(
 			ctx,
 			&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 				AdjustmentID: req.draftID,
-				TenantInfo:   toolparams.TenantFrom(*params),
+				TenantInfo:   toolparams.TenantFrom(params),
 			},
 			params.Actor,
 		)
@@ -648,7 +648,7 @@ func runSubmission(
 			&invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
 				IdempotencyKey: req.key,
 				Items:          req.items,
-				TenantInfo:     toolparams.TenantFrom(*params),
+				TenantInfo:     toolparams.TenantFrom(params),
 			},
 			params.Actor,
 		)
@@ -807,7 +807,7 @@ func draftRequest(
 		Reason:                reason,
 		ReferencedDocumentIDs: documents,
 		Lines:                 lines,
-		TenantInfo:            toolparams.TenantFrom(*params),
+		TenantInfo:            toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -937,7 +937,7 @@ func newDecisionTool(
 					&invoiceadjustmentports.InvoiceAdjustmentDecisionRequest{
 						AdjustmentID: req.adjustmentID,
 						Approve:      req.approve,
-						TenantInfo:   toolparams.TenantFrom(*params),
+						TenantInfo:   toolparams.TenantFrom(params),
 					},
 				)
 				if err != nil {
@@ -972,7 +972,7 @@ func newDecisionTool(
 						ctx,
 						&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
 							AdjustmentID: req.adjustmentID,
-							TenantInfo:   toolparams.TenantFrom(*params),
+							TenantInfo:   toolparams.TenantFrom(params),
 						},
 						params.Actor,
 					)
@@ -982,7 +982,7 @@ func newDecisionTool(
 						&invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
 							AdjustmentID: req.adjustmentID,
 							Reason:       req.reason,
-							TenantInfo:   toolparams.TenantFrom(*params),
+							TenantInfo:   toolparams.TenantFrom(params),
 						},
 						params.Actor,
 					)

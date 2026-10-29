@@ -185,7 +185,7 @@ func (t *GenerateDriverSettlementTool) request(
 		return nil, err
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	req := &driversettlementservice.GenerateForWorkerRequest{
 		TenantInfo:  tenant,
 		WorkerID:    workerID,
@@ -260,7 +260,7 @@ func (t *GenerateDriverSettlementTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	req, err := t.request(ctx, &params)
@@ -455,7 +455,7 @@ func (t *GenerateDriverBatchTool) request(
 	}
 
 	return &driversettlementservice.GenerateBatchRequest{
-		TenantInfo:  toolparams.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(params),
 		PeriodStart: input.period.start,
 		PeriodEnd:   input.period.end,
 		Name:        input.name,
@@ -483,7 +483,7 @@ func (t *GenerateDriverBatchTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)
@@ -655,7 +655,7 @@ func (t *GenerateCarrierBatchTool) request(
 	}
 
 	return &carriersettlementservice.GenerateBatchRequest{
-		TenantInfo:  toolparams.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(params),
 		PeriodStart: input.period.start,
 		PeriodEnd:   input.period.end,
 		Name:        input.name,
@@ -694,7 +694,7 @@ func (t *GenerateCarrierBatchTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)

@@ -387,7 +387,7 @@ func leaveCaseUpdateFrom(
 		return nil, err
 	}
 	req := &workerleaveservice.UpdateCaseRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		CaseID:     id,
 		UserID:     params.Actor.UserID,
 	}
@@ -628,7 +628,7 @@ func newRequestLeaveCertificationTool(
 				return nil, err
 			}
 			return &workerleaveservice.RequestCertificationRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				CaseID:     id,
 				DueAt:      due,
 				UserID:     params.Actor.UserID,
@@ -727,7 +727,7 @@ func recordLeaveDayRequest(
 		return nil, err
 	}
 	return &workerleaveservice.RecordDayRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		CaseID:     caseID,
 		UsedOn:     usedOn,
 		Hours:      hours,
@@ -844,7 +844,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 				return nil, err
 			}
 			req := &workerleaveservice.UpdateDayRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				EntryID:    id,
 				UserID:     params.Actor.UserID,
 			}

@@ -219,7 +219,7 @@ func (t *RememberTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentmemoryports.RememberRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -250,7 +250,7 @@ func (t *RememberTool) request(
 	}
 
 	request := &agentmemoryports.RememberRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		Kind:         kind,
 		Content:      content,
 		SubjectType:  subjectType,
@@ -393,7 +393,7 @@ func (t *ForgetMemoryTool) Execute(
 func (t *ForgetMemoryTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (agentmemoryports.SetAgentMemoryStatusRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return agentmemoryports.SetAgentMemoryStatusRequest{}, err
 	}
 
@@ -404,7 +404,7 @@ func (t *ForgetMemoryTool) request(
 
 	return agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         memoryID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Status:     agentmemory.MemoryStatusRetired,
 	}, nil
 }

@@ -118,7 +118,7 @@ func (t *TenderToRoutingGuideTool) Execute(
 func (t *TenderToRoutingGuideTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*tendercreate.CreateWaterfallTenderRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +128,7 @@ func (t *TenderToRoutingGuideTool) request(
 	}
 
 	req := &tendercreate.CreateWaterfallTenderRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		ShipmentMoveID: moveID,
 	}
 	if guideID, ok, pErr := toolparams.OptionalPulid(params.Params, "routingGuideId"); pErr != nil {
@@ -270,7 +270,7 @@ func (t *TenderToCarriersTool) Execute(
 func (t *TenderToCarriersTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*tendercreate.CreateSpotTenderRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -309,7 +309,7 @@ func (t *TenderToCarriersTool) request(
 	}
 
 	return &tendercreate.CreateSpotTenderRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		ShipmentMoveID: moveID,
 		Mode:           mode,
 		Lines:          lines,

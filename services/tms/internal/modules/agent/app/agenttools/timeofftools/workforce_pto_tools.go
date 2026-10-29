@@ -251,7 +251,7 @@ type ptoEdit struct {
 func (e *ptoEdit) entity(ctx context.Context, requests ptoRequester) (*worker.WorkerPTO, error) {
 	current, err := requests.Get(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         e.id,
-		TenantInfo: toolparams.TenantFrom(*e.params),
+		TenantInfo: toolparams.TenantFrom(e.params),
 	})
 	if err != nil {
 		return nil, err
@@ -376,7 +376,7 @@ func ptoAdjustmentFrom(
 		return nil, err
 	}
 	req := &ptoledgerservice.AdjustRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		WorkerID:   workerID,
 		PTOType:    kind,
 		AmountDays: amount,

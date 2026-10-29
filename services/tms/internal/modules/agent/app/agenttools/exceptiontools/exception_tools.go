@@ -83,7 +83,7 @@ func exceptionTargetFrom(
 		return watchtowerports.ExceptionTarget{}, err
 	}
 	return watchtowerports.ExceptionTarget{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ItemID:     id,
 	}, nil
 }

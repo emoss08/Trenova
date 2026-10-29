@@ -176,7 +176,7 @@ func (t *IssuePayAdvanceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
@@ -328,7 +328,7 @@ func (t *WriteOffPayAdvanceTool) plan(
 	}
 	advance, err := t.Advances.GetAdvance(ctx, driverpayports.GetPayAdvanceByIDRequest{
 		ID:         advanceID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 	if err != nil {
 		return nil, err
@@ -360,7 +360,7 @@ func (t *WriteOffPayAdvanceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
@@ -372,7 +372,7 @@ func (t *WriteOffPayAdvanceTool) Execute(
 	}
 	_, err = t.Advances.WriteOffAdvance(
 		ctx,
-		toolparams.TenantFrom(params),
+		toolparams.TenantFrom(&params),
 		plan.before.ID,
 		plan.reason,
 		params.Actor,

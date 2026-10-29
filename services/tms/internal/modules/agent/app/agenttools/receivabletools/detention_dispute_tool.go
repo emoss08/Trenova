@@ -73,7 +73,7 @@ func NewDisputeDetentionTool(
 
 			return &detentionreview.DisputeParams{
 				OccurrenceID: occurrenceID,
-				TenantInfo:   toolparams.TenantFrom(*params),
+				TenantInfo:   toolparams.TenantFrom(params),
 				Note:         note,
 				UserID:       params.Actor.UserID,
 			}, nil

@@ -70,7 +70,7 @@ func rateImportRequestFrom(
 	}
 
 	return &rateimportservice.CommitRequest{
-		TenantInfo:        toolparams.TenantFrom(*params),
+		TenantInfo:        toolparams.TenantFrom(params),
 		RateImportBatchID: id,
 	}, nil
 }

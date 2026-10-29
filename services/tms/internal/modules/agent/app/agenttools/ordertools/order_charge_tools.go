@@ -241,7 +241,7 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			tenant := toolparams.TenantFrom(*params)
+			tenant := toolparams.TenantFrom(params)
 			allocations, err := allocationparams.ReadAllocations(
 				params.Params,
 				tenant,
@@ -306,7 +306,7 @@ func readChargeRef(params *agenttoolports.ToolExecuteParams) (*chargeRef, error)
 	}
 
 	return &chargeRef{
-		tenant:   toolparams.TenantFrom(*params),
+		tenant:   toolparams.TenantFrom(params),
 		orderID:  orderID,
 		chargeID: chargeID,
 		params:   params.Params,

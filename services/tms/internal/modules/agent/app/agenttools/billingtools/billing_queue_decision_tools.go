@@ -139,7 +139,7 @@ func (t *BillingQueueDecisionTool) request(
 	req := &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     itemID,
 		NewStatus:  t.decision.status,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}
 	if t.decision.fill != nil {
 		if err = t.decision.fill(params.Params, req); err != nil {
@@ -276,7 +276,7 @@ func (t *BillingQueueDecisionTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {
@@ -563,7 +563,7 @@ func billerOf(
 		)
 	}
 	if ok {
-		if err = billing.CheckBiller(ctx, toolparams.TenantFrom(*params), named); err != nil {
+		if err = billing.CheckBiller(ctx, toolparams.TenantFrom(params), named); err != nil {
 			if errortypes.IsError(err) {
 				return pulid.Nil, false, errortypes.NewValidationError(paramBillerID,
 					errortypes.ErrInvalid, "billerId is not a user in this organization. "+
@@ -644,7 +644,7 @@ func (t *AssignBillerTool) request(
 	return &billingqueueports.AssignBillerRequest{
 		ItemID:     itemID,
 		BillerID:   billerID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, asker, nil
 }
 
@@ -679,7 +679,7 @@ func (t *AssignBillerTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 

@@ -109,7 +109,7 @@ func (t *AssignMoveTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -140,7 +140,7 @@ func (t *AssignMoveTool) request(
 	}
 
 	req := &assignmentports.AssignShipmentMoveRequest{
-		TenantInfo:      toolparams.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(params),
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: workerID,
 		TractorID:       tractorID,

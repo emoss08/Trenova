@@ -156,7 +156,7 @@ func sendPaymentReminderRequest(
 		return nil, err
 	}
 	return &paymentreminderports.SendNowRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		CustomerID: customerID,
 		Note:       note,
 	}, nil
@@ -306,7 +306,7 @@ func statementRequest(
 	zone := timeutils.LoadLocation(params.Timezone)
 	req := &customerstatementports.SendRequest{
 		StatementRequest: customerstatementports.StatementRequest{
-			TenantInfo: toolparams.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(params),
 			CustomerID: customerID,
 		},
 		Note: note,

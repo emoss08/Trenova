@@ -110,7 +110,7 @@ func (t *SetInvoiceFactoringOverrideTool) Target(
 func (t *SetInvoiceFactoringOverrideTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SetOverrideRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	invoiceID, err := toolparams.RequirePulid(params.Params, paramInvoiceID)
@@ -122,7 +122,7 @@ func (t *SetInvoiceFactoringOverrideTool) request(
 		return nil, err
 	}
 	return &factoringports.SetOverrideRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		InvoiceID:  invoiceID,
 		Override:   invoice.FactoringOverride(raw),
 		Reason:     toolparams.OptionalString(params.Params, factoringkit.ParamReason),
@@ -279,7 +279,7 @@ func (t *RequestMissingFactoringDocumentTool) Target(
 func (t *RequestMissingFactoringDocumentTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.RequestMissingDocumentsRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	invoiceID, err := toolparams.RequirePulid(params.Params, paramInvoiceID)
@@ -298,7 +298,7 @@ func (t *RequestMissingFactoringDocumentTool) request(
 		typeIDs = nil
 	}
 	return &factoringports.RequestMissingDocumentsRequest{
-		TenantInfo:      toolparams.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(params),
 		InvoiceID:       invoiceID,
 		DocumentTypeIDs: typeIDs,
 		Recipient:       toolparams.OptionalString(params.Params, paramRecipient),

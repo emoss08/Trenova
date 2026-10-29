@@ -90,7 +90,7 @@ func submissionActionRequest(
 		return nil, err
 	}
 	return &factoringsubmissionports.SubmissionActionRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		SubmissionID: id,
 		Version:      int64(version),
 	}, nil
@@ -163,7 +163,7 @@ func (t *SubmitInvoicesToFactorTool) Target(
 func (t *SubmitInvoicesToFactorTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringsubmissionports.PlanSubmissionRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	factorID, err := toolparams.RequirePulid(params.Params, factoringkit.ParamFactorID)
@@ -179,7 +179,7 @@ func (t *SubmitInvoicesToFactorTool) request(
 		return nil, err
 	}
 	return &factoringsubmissionports.PlanSubmissionRequest{
-		TenantInfo:         toolparams.TenantFrom(*params),
+		TenantInfo:         toolparams.TenantFrom(params),
 		FactoringCompanyID: factorID,
 		InvoiceIDs:         invoiceIDs,
 		AgentRunID:         params.RunID,
@@ -366,7 +366,7 @@ func (t *RetryFactoringSubmissionTool) Target(
 func (t *RetryFactoringSubmissionTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringsubmissionports.SubmissionActionRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	return submissionActionRequest(params)
@@ -481,7 +481,7 @@ func (t *CancelFactoringSubmissionTool) Target(
 func (t *CancelFactoringSubmissionTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringsubmissionports.SubmissionActionRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	req, err := submissionActionRequest(params)

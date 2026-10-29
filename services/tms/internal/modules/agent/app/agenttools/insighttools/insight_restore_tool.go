@@ -43,7 +43,7 @@ func restoreInsightRequest(
 
 	return &insightports.RestoreInsightRequest{
 		ID:         id,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 

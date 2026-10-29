@@ -192,7 +192,7 @@ func (t *CreateDashboardTool) Validate(
 	return checkTileTargets(
 		ctx,
 		t.dashboards,
-		toolparams.TenantFrom(params),
+		toolparams.TenantFrom(&params),
 		tileParams(params.Params),
 		"tiles",
 	)
@@ -264,7 +264,7 @@ func (t *CreateDashboardTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -292,7 +292,7 @@ func (t *CreateDashboardTool) request(
 	}
 
 	return &reportdashboardservice.SaveDashboardRequest{
-		Request:     reporting.Request{TenantInfo: toolparams.TenantFrom(*params)},
+		Request:     reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 		Name:        toolparams.OptionalString(params.Params, "name"),
 		Description: toolparams.OptionalString(params.Params, "description"),
 		Category:    toolparams.OptionalString(params.Params, "category"),
@@ -378,7 +378,7 @@ func (t *AddDashboardTileTool) Validate(
 		return err
 	}
 
-	tenant := toolparams.TenantFrom(params)
+	tenant := toolparams.TenantFrom(&params)
 	dashboardID, err := pulid.Parse(toolparams.OptionalString(params.Params, "dashboardId"))
 	if err == nil {
 		_, err = t.dashboards.GetDashboard(ctx, &reportdashboardservice.GetDashboardRequest{
@@ -424,7 +424,7 @@ func (t *AddDashboardTileTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -447,7 +447,7 @@ func (t *AddDashboardTileTool) request(
 		return nil, nil, err
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	existing, err := t.dashboards.GetDashboard(ctx, &reportdashboardservice.GetDashboardRequest{
 		Request:     reporting.Request{TenantInfo: tenant},
 		DashboardID: dashboardID,

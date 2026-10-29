@@ -141,7 +141,7 @@ func (t *ActOnPortalTool) request(
 	}
 
 	return &agentextensionports.PortalActionRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		SiteID:         siteID,
 		Instruction:    instruction,
 		Details:        details,
@@ -231,7 +231,7 @@ func (t *ActOnPortalTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {

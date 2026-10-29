@@ -200,7 +200,7 @@ func buildRunRequest(
 	}
 
 	req := &invoicerunports.PreviewInvoiceRunRequest{
-		TenantInfo:  toolparams.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(params),
 		CustomerIDs: customerIDs,
 		PeriodStart: start.Unix(),
 		PeriodEnd:   end.AddDate(0, 0, 1).Unix(),
@@ -320,7 +320,7 @@ func membershipRequest(
 		return nil, err
 	}
 	req := &invoicerunports.AdjustInvoiceRunMembershipRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		RunID:      runID,
 	}
 
@@ -406,7 +406,7 @@ func commitRunRequest(
 	}
 
 	return &invoicerunports.CommitInvoiceRunRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		RunID:      runID,
 	}, nil
 }
@@ -490,7 +490,7 @@ func NewCancelInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 				return nil, err
 			}
 			return &invoicerunports.CancelInvoiceRunRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				RunID:      runID,
 				Reason:     reason,
 			}, nil
@@ -635,7 +635,7 @@ func billStatementRequest(
 	}
 
 	return &invoicerunports.BillStatementNowRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		CustomerID: customerID,
 		Reason:     reason,
 		Exclude:    exclusions,

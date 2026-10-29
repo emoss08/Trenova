@@ -133,7 +133,7 @@ func (t *EscalateDetentionTool) Policy() agenttoolports.ToolPolicy {
 func (t *EscalateDetentionTool) arguments(
 	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return "", "", err
 	}
 
@@ -175,7 +175,7 @@ func (t *EscalateDetentionTool) occurrence(
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
-			TenantInfo:   toolparams.TenantFrom(*params),
+			TenantInfo:   toolparams.TenantFrom(params),
 		},
 	)
 	if err != nil {
@@ -196,7 +196,7 @@ func (t *EscalateDetentionTool) Execute(
 
 	_, err = t.detention.Escalate(ctx, detentionreview.EscalateParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   toolparams.TenantFrom(params),
+		TenantInfo:   toolparams.TenantFrom(&params),
 		Reason:       reason,
 		UserID:       params.Actor.UserID,
 	})
@@ -297,7 +297,7 @@ func (t *ApproveDetentionTool) Policy() agenttoolports.ToolPolicy {
 func (t *ApproveDetentionTool) arguments(
 	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return "", "", err
 	}
 
@@ -322,7 +322,7 @@ func (t *ApproveDetentionTool) pending(
 		ctx,
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
-			TenantInfo:   toolparams.TenantFrom(*params),
+			TenantInfo:   toolparams.TenantFrom(params),
 		},
 	)
 	if err != nil {
@@ -372,7 +372,7 @@ func (t *ApproveDetentionTool) request(
 
 	return detentionreview.ApproveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		UserID:       params.Actor.UserID,
 		Note:         evidence,
 	}, detail, nil
@@ -491,7 +491,7 @@ func (t *RequestCredentialRenewalTool) arguments(
 	params *agenttoolports.ToolExecuteParams,
 ) (workercredentialservice.RenewalRequest, error) {
 	var out workercredentialservice.RenewalRequest
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return out, err
 	}
 
@@ -531,7 +531,7 @@ func (t *RequestCredentialRenewalTool) arguments(
 		WorkerID:      workerID,
 		CredentialIDs: credentialIDs,
 		Note:          strings.TrimSpace(note),
-		TenantInfo:    toolparams.TenantFrom(*params),
+		TenantInfo:    toolparams.TenantFrom(params),
 		RequestedByID: params.Actor.UserID,
 		CorrelationID: params.IdempotencyKey,
 	}, nil
@@ -640,7 +640,7 @@ func (t *PlaceWorkerDispatchHoldTool) arguments(
 	params *agenttoolports.ToolExecuteParams,
 ) (workerservice.DispatchHoldRequest, error) {
 	var out workerservice.DispatchHoldRequest
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return out, err
 	}
 
@@ -657,7 +657,7 @@ func (t *PlaceWorkerDispatchHoldTool) arguments(
 		WorkerID:   workerID,
 		Held:       true,
 		Reason:     strings.TrimSpace(reason),
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Actor:      params.Actor,
 	}, nil
 }
@@ -854,7 +854,7 @@ func (t *carrierIntelEventTool) required() []string {
 func (t *carrierIntelEventTool) arguments(
 	params *agenttoolports.ToolExecuteParams,
 ) (*carrierintelreviewservice.ResolveEventRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -869,7 +869,7 @@ func (t *carrierIntelEventTool) arguments(
 
 	request := &carrierintelreviewservice.ResolveEventRequest{
 		EventID:    eventID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Note:       strings.TrimSpace(note),
 	}
 	if !t.resolves {

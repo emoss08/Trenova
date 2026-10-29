@@ -204,7 +204,7 @@ func (t *AssignPayProfileTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
@@ -378,7 +378,7 @@ func (t *EndPayAssignmentTool) planned(
 	if err != nil {
 		return nil, err
 	}
-	before, err := t.Assignments.GetAssignment(ctx, toolparams.TenantFrom(*params), assignmentID)
+	before, err := t.Assignments.GetAssignment(ctx, toolparams.TenantFrom(params), assignmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -405,7 +405,7 @@ func (t *EndPayAssignmentTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
@@ -417,7 +417,7 @@ func (t *EndPayAssignmentTool) Execute(
 	}
 	_, err = t.Assignments.EndAssignment(
 		ctx,
-		toolparams.TenantFrom(params),
+		toolparams.TenantFrom(&params),
 		plan.before.ID,
 		plan.endDate,
 		params.Actor,

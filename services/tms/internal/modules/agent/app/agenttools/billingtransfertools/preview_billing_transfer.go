@@ -89,7 +89,7 @@ func (t *TransferToBillingTool) previewPlan(
 	}
 
 	return t.shipments.PlanBillingTransfers(ctx, &shipmentbillingports.PlanBillingTransfersRequest{
-		TenantInfo:                  toolparams.TenantFrom(*params),
+		TenantInfo:                  toolparams.TenantFrom(params),
 		ShipmentIDs:                 checked,
 		MarkCompletedReadyToInvoice: request.markReady,
 	})

@@ -104,7 +104,7 @@ func mappingRequestFrom(
 		return nil, err
 	}
 	req := &accountingmappingports.SetAccountingMappingRequest{
-		TenantInfo:      toolparams.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
 		MappingID:       mappingID,
@@ -127,7 +127,7 @@ func findMapping(
 	reads accountingmappingports.AccountingMappingReader,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmappingports.SetAccountingMappingRequest, *accountingmapping.AccountingMapping, error) {
-	if err := toolguard.GuardExecute(tool, *params); err != nil {
+	if err := toolguard.GuardExecute(tool, params); err != nil {
 		return nil, nil, err
 	}
 	req, err := mappingRequestFrom(params)
@@ -379,7 +379,7 @@ func (t *ClearAccountingMappingTool) Execute(
 		return err
 	}
 	_, err = t.decisions.Clear(ctx, &accountingmappingports.AccountingMappingActionRequest{
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(&params),
 		UserID:     params.Actor.UserID,
 		ID:         row.ID,
 		Source:     accountingmapping.MappingSourceAgent,
@@ -487,7 +487,7 @@ func (t *CreateAccountingReferenceRecordTool) Execute(
 	_, err = t.creator.CreateReferenceRecord(
 		ctx,
 		&accountingmappingports.CreateAccountingReferenceRecordRequest{
-			TenantInfo: toolparams.TenantFrom(params),
+			TenantInfo: toolparams.TenantFrom(&params),
 			UserID:     params.Actor.UserID,
 			MappingID:  row.ID,
 			Name:       strings.TrimSpace(toolparams.OptionalString(params.Params, "name")),
@@ -565,7 +565,7 @@ func (t *RefreshAccountingReferenceDataTool) setup(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmappingports.AccountingSetupRequest, *accountingmappingports.AccountingMappingSummary, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, nil, err
 	}
 	system, err := SystemFrom(params.Params)
@@ -573,7 +573,7 @@ func (t *RefreshAccountingReferenceDataTool) setup(
 		return nil, nil, err
 	}
 	req := &accountingmappingports.AccountingSetupRequest{
-		TenantInfo:      toolparams.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
 	}

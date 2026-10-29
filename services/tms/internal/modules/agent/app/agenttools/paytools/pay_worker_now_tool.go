@@ -124,7 +124,7 @@ func (t *PayWorkerNowTool) request(
 		return nil, err
 	}
 	req := &driversettlementservice.PayWorkerNowRequest{
-		TenantInfo:       toolparams.TenantFrom(*params),
+		TenantInfo:       toolparams.TenantFrom(params),
 		WorkerID:         workerID,
 		ApplyRecurring:   toolparams.OptionalBool(params.Params, ParamApplyRecurring),
 		PaymentMethod:    payment.PaymentMethod,
@@ -171,7 +171,7 @@ func (t *PayWorkerNowTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {

@@ -164,7 +164,7 @@ func reassignRequest(
 		return nil, fmt.Errorf("parameter %q is required for an accessorial charge",
 			paramAdditionalChargeID)
 	}
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	allocations, err := allocationparams.ReadAllocations(params.Params, tenant, kind, nil)
 	if err != nil {
 		return nil, err

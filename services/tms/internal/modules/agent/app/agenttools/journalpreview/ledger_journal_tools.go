@@ -42,7 +42,7 @@ func (r *JournalRevision) Over(
 		AccountingDate: current.AccountingDate,
 		CurrencyCode:   current.CurrencyCode,
 		Lines:          linesOf(current),
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 	}
 	if r.Description != "" {
 		req.Description = r.Description

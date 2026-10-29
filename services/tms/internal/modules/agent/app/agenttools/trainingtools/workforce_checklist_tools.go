@@ -230,7 +230,7 @@ func startChecklistRequest(
 		return nil, err
 	}
 	req := &workerchecklistservice.StartRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		WorkerID:   workerID,
 		TemplateID: templateID,
 		UserID:     params.Actor.UserID,
@@ -277,13 +277,13 @@ func checklistItemChangeFrom(
 		}
 		return &checklistItemChange{move: move, reopen: &workerchecklistservice.ReopenItemRequest{
 			ID:         id,
-			TenantInfo: toolparams.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(params),
 			UserID:     params.Actor.UserID,
 		}}, nil
 	}
 	return &checklistItemChange{move: move, item: &workerchecklistservice.ItemRequest{
 		ID:                 id,
-		TenantInfo:         toolparams.TenantFrom(*params),
+		TenantInfo:         toolparams.TenantFrom(params),
 		Note:               note,
 		EvidenceDocumentID: evidence,
 		UserID:             params.Actor.UserID,
@@ -493,7 +493,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 			}
 			return &workerchecklistservice.CancelRequest{
 				ID:         id,
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				Reason:     reason,
 				UserID:     params.Actor.UserID,
 			}, nil

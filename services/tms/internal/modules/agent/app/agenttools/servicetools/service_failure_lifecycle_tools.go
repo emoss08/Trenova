@@ -151,7 +151,7 @@ func readServiceFailureEdit(params *agenttoolports.ToolExecuteParams) (*serviceF
 	}
 	edit := &serviceFailureEdit{
 		id:          id,
-		tenant:      toolparams.TenantFrom(*params),
+		tenant:      toolparams.TenantFrom(params),
 		clearReason: toolparams.OptionalBool(params.Params, paramClearReasonCode),
 	}
 	if edit.reasonCodeID, _, err = toolparams.OptionalPulid(
@@ -367,7 +367,7 @@ func readServiceFailureTransition(
 	if err != nil {
 		return nil, err
 	}
-	transition := &serviceFailureTransition{id: id, tenant: toolparams.TenantFrom(*params)}
+	transition := &serviceFailureTransition{id: id, tenant: toolparams.TenantFrom(params)}
 	if transition.reasonCodeID, _, err = toolparams.OptionalPulid(
 		params.Params,
 		changepreview.FieldReasonCodeID,

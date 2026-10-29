@@ -451,7 +451,7 @@ func newFuelPurchaseDraft(
 	}
 
 	return &fuelpurchaseservice.CreatePurchaseRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Purchase:   purchase,
 		UserID:     params.Actor.UserID,
 	}, nil
@@ -678,7 +678,7 @@ func (c *fuelPurchaseCorrection) request(
 	purchases FuelPurchaseKeeper,
 	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchaseservice.UpdatePurchaseRequest, error) {
-	stored, err := purchases.GetPurchase(ctx, toolparams.TenantFrom(*params), c.id)
+	stored, err := purchases.GetPurchase(ctx, toolparams.TenantFrom(params), c.id)
 	if err != nil {
 		return nil, err
 	}
@@ -696,7 +696,7 @@ func (c *fuelPurchaseCorrection) request(
 	}
 
 	return &fuelpurchaseservice.UpdatePurchaseRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Purchase:   &corrected,
 		UserID:     params.Actor.UserID,
 	}, nil
@@ -811,13 +811,13 @@ func deleteFuelPurchaseRequest(
 	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (*fuelpurchaseservice.DeletePurchaseRequest, error) {
-	stored, err := purchases.GetPurchase(ctx, toolparams.TenantFrom(*params), id)
+	stored, err := purchases.GetPurchase(ctx, toolparams.TenantFrom(params), id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &fuelpurchaseservice.DeletePurchaseRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         stored.ID,
 		Version:    stored.Version,
 		UserID:     params.Actor.UserID,
@@ -939,13 +939,13 @@ func (a *fuelCardAssignment) request(
 	cards FuelCardKeeper,
 	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchaseservice.AssignCardRequest, error) {
-	stored, err := cards.GetCard(ctx, toolparams.TenantFrom(*params), a.id)
+	stored, err := cards.GetCard(ctx, toolparams.TenantFrom(params), a.id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &fuelpurchaseservice.AssignCardRequest{
-		TenantInfo:        toolparams.TenantFrom(*params),
+		TenantInfo:        toolparams.TenantFrom(params),
 		ID:                stored.ID,
 		Version:           stored.Version,
 		AssignedTractorID: a.tractor,
@@ -1117,7 +1117,7 @@ func loadFuelImport(
 		return nil, err
 	}
 
-	return imports.GetImport(ctx, toolparams.TenantFrom(*params), id)
+	return imports.GetImport(ctx, toolparams.TenantFrom(params), id)
 }
 
 func fuelImportIDFrom(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
@@ -1155,7 +1155,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 			}
 
 			return imports.PlanCommit(ctx, &fuelpurchaseservice.CommitRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				BatchID:    batch.ID,
 				Version:    batch.Version,
 				UserID:     params.Actor.UserID,
@@ -1202,7 +1202,7 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 				return nil, err
 			}
 			_, err = imports.Commit(ctx, &fuelpurchaseservice.CommitRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				BatchID:    batch.ID,
 				Version:    batch.Version,
 				UserID:     params.Actor.UserID,
@@ -1244,7 +1244,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 			}
 
 			return imports.PlanResolveRows(ctx, &fuelpurchaseservice.ResolveRowsRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				BatchID:    batch.ID,
 				Version:    batch.Version,
 				UserID:     params.Actor.UserID,
@@ -1281,7 +1281,7 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 				return nil, err
 			}
 			_, err = imports.ResolveRows(ctx, &fuelpurchaseservice.ResolveRowsRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				BatchID:    batch.ID,
 				Version:    batch.Version,
 				UserID:     params.Actor.UserID,
@@ -1303,13 +1303,13 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.A
 		discard *fuelImportDiscard,
 		params *agenttoolports.ToolExecuteParams,
 	) (*fuelpurchaseservice.DiscardRequest, error) {
-		batch, err := imports.GetImport(ctx, toolparams.TenantFrom(*params), discard.id)
+		batch, err := imports.GetImport(ctx, toolparams.TenantFrom(params), discard.id)
 		if err != nil {
 			return nil, err
 		}
 
 		return &fuelpurchaseservice.DiscardRequest{
-			TenantInfo: toolparams.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(params),
 			BatchID:    batch.ID,
 			Version:    batch.Version,
 			Reason:     discard.reason,

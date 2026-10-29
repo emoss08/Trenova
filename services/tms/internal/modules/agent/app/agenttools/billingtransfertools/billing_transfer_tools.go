@@ -305,7 +305,7 @@ func (t *TransferToBillingTool) transferable(
 	params *agenttoolports.ToolExecuteParams,
 	request *transferRequest,
 ) ([]pulid.ID, *shipmentbillingports.BillingTransferPlan, error) {
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	candidates, err := t.shipments.ListBillingTransferCandidateIDs(
 		ctx,
 		&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
@@ -402,7 +402,7 @@ func (t *TransferToBillingTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	request, err := t.request(&params)
@@ -443,7 +443,7 @@ func (t *TransferToBillingTool) startRun(
 	request *transferRequest,
 ) (*agentrecord.ToolExecutionResult, error) {
 	run, err := t.runs.Start(ctx, &billingtransferservice.StartRunRequest{
-		TenantInfo:                  toolparams.TenantFrom(*params),
+		TenantInfo:                  toolparams.TenantFrom(params),
 		Scope:                       billingtransfer.RunScopeSelected,
 		ShipmentIDs:                 request.shipmentIDs,
 		BillType:                    request.billType,

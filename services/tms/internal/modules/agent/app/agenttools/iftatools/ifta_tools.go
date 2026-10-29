@@ -249,7 +249,7 @@ func NewGenerateIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentToo
 			}
 
 			return &iftaservice.GenerateReturnRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				Period:     period,
 				UserID:     params.Actor.UserID,
 			}, nil
@@ -299,13 +299,13 @@ func returnActionRequest(
 	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (*iftaservice.ReturnActionRequest, error) {
-	stored, err := returns.Get(ctx, toolparams.TenantFrom(*params), id)
+	stored, err := returns.Get(ctx, toolparams.TenantFrom(params), id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &iftaservice.ReturnActionRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         stored.ID,
 		Version:    stored.Version,
 		UserID:     params.Actor.UserID,
@@ -425,7 +425,7 @@ func NewAmendIFTAReturnTool(returns IftaReturnKeeper) agenttoolports.AgentTool {
 			}
 
 			return &iftaservice.AmendReturnRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				ID:         id,
 				Reason:     reason,
 				UserID:     params.Actor.UserID,
@@ -783,7 +783,7 @@ func (c *mileageCorrection) entry(
 	entries IftaMileageKeeper,
 	params *agenttoolports.ToolExecuteParams,
 ) (*ifta.JurisdictionMileageEntry, error) {
-	stored, err := entries.GetMileageEntry(ctx, toolparams.TenantFrom(*params), c.id)
+	stored, err := entries.GetMileageEntry(ctx, toolparams.TenantFrom(params), c.id)
 	if err != nil {
 		return nil, err
 	}
@@ -904,13 +904,13 @@ func deleteMileageRequest(
 	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (*iftaservice.DeleteMileageEntryRequest, error) {
-	stored, err := entries.GetMileageEntry(ctx, toolparams.TenantFrom(*params), id)
+	stored, err := entries.GetMileageEntry(ctx, toolparams.TenantFrom(params), id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &iftaservice.DeleteMileageEntryRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         stored.ID,
 		Version:    stored.Version,
 		UserID:     params.Actor.UserID,
@@ -1000,7 +1000,7 @@ func moveJurisdictionRequest(
 	}
 
 	return shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		ShipmentMoveID: moveID,
 		UserID:         params.Actor.UserID,
 	}, nil
@@ -1084,7 +1084,7 @@ func (b *backfillRequest) service(
 ) (shipmentdistanceports.BackfillJurisdictionMilesRequest, error) {
 	info, err := returns.PeriodInfo(
 		ctx,
-		toolparams.TenantFrom(*params),
+		toolparams.TenantFrom(params),
 		b.period.Year,
 		b.period.Quarter,
 	)
@@ -1093,7 +1093,7 @@ func (b *backfillRequest) service(
 	}
 
 	return shipmentdistanceports.BackfillJurisdictionMilesRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Start:      info.Start,
 		End:        info.End,
 		MaxMoves:   b.moves,

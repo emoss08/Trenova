@@ -724,7 +724,7 @@ func (s *CreateSpec[T]) Build(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*T, error) {
-	entity := s.Fresh(toolparams.TenantFrom(*params))
+	entity := s.Fresh(toolparams.TenantFrom(params))
 	for _, key := range s.Required {
 		if _, given := params.Params[key]; !given {
 			return nil, errortypes.NewValidationError(key, errortypes.ErrRequired,
@@ -857,7 +857,7 @@ func (s *UpdateSpec[T]) Build(
 	edit *masterEdit,
 	params *agenttoolports.ToolExecuteParams,
 ) (*T, error) {
-	stored, err := s.Get(ctx, toolparams.TenantFrom(*params), edit.ID)
+	stored, err := s.Get(ctx, toolparams.TenantFrom(params), edit.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -1028,7 +1028,7 @@ func NewStatusTool[T any, S ~string](spec *StatusSpec[T, S]) agenttoolports.Agen
 		) (*masterStatusPlanned[T], error) {
 			changes, err := spec.Plan(
 				ctx,
-				toolparams.TenantFrom(*params),
+				toolparams.TenantFrom(params),
 				change.ids,
 				change.status,
 			)
@@ -1075,7 +1075,7 @@ func NewStatusTool[T any, S ~string](spec *StatusSpec[T, S]) agenttoolports.Agen
 			change *masterStatusChange[S],
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			updated, err := spec.Run(ctx, toolparams.TenantFrom(*params), change.ids, change.status)
+			updated, err := spec.Run(ctx, toolparams.TenantFrom(params), change.ids, change.status)
 			if err != nil {
 				return nil, err
 			}

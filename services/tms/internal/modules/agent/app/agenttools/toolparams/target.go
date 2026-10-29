@@ -13,7 +13,7 @@ import (
 // authenticated actor, never from the model's arguments. guardExecute has
 // already asserted that the actor and the params agree, so there is one place
 // a tool could get this wrong and it is not here.
-func TenantFrom(params agenttoolports.ToolExecuteParams) pagination.TenantInfo {
+func TenantFrom(params *agenttoolports.ToolExecuteParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,

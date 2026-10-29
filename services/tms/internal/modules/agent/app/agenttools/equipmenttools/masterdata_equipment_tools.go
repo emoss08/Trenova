@@ -612,7 +612,7 @@ func locateProperties(
 func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 	build := func(req *locateRequest, params *agenttoolports.ToolExecuteParams) *tractorports.LocateTractorRequest {
 		return &tractorports.LocateTractorRequest{
-			TenantInfo:    toolparams.TenantFrom(*params),
+			TenantInfo:    toolparams.TenantFrom(params),
 			TractorID:     req.unitID,
 			NewLocationID: req.locationID,
 		}
@@ -693,7 +693,7 @@ func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 func NewLocateTrailerTool(trailers TrailerKeeper) agenttoolports.AgentTool {
 	build := func(req *locateRequest, params *agenttoolports.ToolExecuteParams) *trailerports.LocateTrailerRequest {
 		return &trailerports.LocateTrailerRequest{
-			TenantInfo:    toolparams.TenantFrom(*params),
+			TenantInfo:    toolparams.TenantFrom(params),
 			TrailerID:     req.unitID,
 			NewLocationID: req.locationID,
 		}

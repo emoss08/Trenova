@@ -129,7 +129,7 @@ func (t *RecordStopActualTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -188,7 +188,7 @@ func (t *RecordStopActualTool) request(
 	}
 
 	request := &shipmentmoveports.RecordStopActualRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		MoveID:     moveID,
 		StopID:     stopID,
 		Action:     action,

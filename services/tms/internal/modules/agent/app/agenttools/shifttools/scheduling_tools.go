@@ -144,7 +144,7 @@ func (s teamScope) require(
 ) error {
 	return s.guard.Require(ctx, &teamscope.Request{
 		Actor:      params.Actor,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Resource:   permission.ResourceWorkerSchedule,
 		Operation:  operation,
 		WorkerID:   workerID,
@@ -415,7 +415,7 @@ func NewEndWorkerShiftAssignmentTool(
 			return &assignmentEnd{req: &schedulingservice.EndAssignmentRequest{
 				ID:          id,
 				EffectiveTo: to,
-				TenantInfo:  toolparams.TenantFrom(*params),
+				TenantInfo:  toolparams.TenantFrom(params),
 				UserID:      params.Actor.UserID,
 			}}, nil
 		},
@@ -753,7 +753,7 @@ func proposeSwapRequest(
 			CounterpartyShiftDate: counterDate,
 			Reason:                reason,
 		},
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }
@@ -791,7 +791,7 @@ func (spec *swapDecisionSpec) request(
 		ID:         id,
 		Status:     spec.status,
 		Note:       note,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }
@@ -975,7 +975,7 @@ func assignShiftRequest(
 			CycleOffsetWeeks: int16(offset),
 			Notes:            notes,
 		},
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }
@@ -1008,7 +1008,7 @@ func preferenceRequest(
 			Preference: preference,
 			Note:       note,
 		},
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 	}, nil
 }

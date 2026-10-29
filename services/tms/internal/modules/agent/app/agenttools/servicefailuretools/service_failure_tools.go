@@ -158,7 +158,7 @@ func (t *EvaluateServiceFailuresTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -221,7 +221,7 @@ func (t *EvaluateServiceFailuresTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*evaluationScope, error) {
 	scope := &evaluationScope{
-		tenant: toolparams.TenantFrom(*params),
+		tenant: toolparams.TenantFrom(params),
 		force:  toolparams.OptionalBool(params.Params, "force"),
 	}
 
@@ -401,7 +401,7 @@ func (t *ResolveServiceFailureTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*servicefailureports.ServiceFailureLifecycleRequest, *servicefailure.ServiceFailure, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, nil, err
 	}
 
@@ -414,7 +414,7 @@ func (t *ResolveServiceFailureTool) request(
 		return nil, nil, err
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	existing, err := t.failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 		ID:         failureID,
 		TenantInfo: tenant,

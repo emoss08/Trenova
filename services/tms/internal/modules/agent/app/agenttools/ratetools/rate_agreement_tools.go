@@ -1059,7 +1059,7 @@ func (r agreementRevision) Build(
 	lanes laneReader,
 	params *agenttoolports.ToolExecuteParams,
 ) (*rateagreement.RateAgreement, error) {
-	stored, err := loadAgreement(ctx, agreements, toolparams.TenantFrom(*params), r.id)
+	stored, err := loadAgreement(ctx, agreements, toolparams.TenantFrom(params), r.id)
 	if err != nil {
 		return nil, err
 	}
@@ -1225,7 +1225,7 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolport
 			}
 
 			return &rateagreementservice.DuplicateRateAgreementRequest{
-				TenantInfo:      toolparams.TenantFrom(*params),
+				TenantInfo:      toolparams.TenantFrom(params),
 				RateAgreementID: id,
 				Code:            code,
 				Name:            name,
@@ -1337,7 +1337,7 @@ func (s *AgreementReviewStep) request(
 	}
 
 	return &rateagreementservice.ApprovalActionRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		EntityID:   id,
 		Comment:    comment,
 	}, nil
@@ -1488,7 +1488,7 @@ func (a *ruleAmendment) request(
 	lanes laneReader,
 	params *agenttoolports.ToolExecuteParams,
 ) (*rateagreementports.AmendRateAgreementRulesRequest, error) {
-	agreement, err := loadAgreement(ctx, agreements, toolparams.TenantFrom(*params), a.id)
+	agreement, err := loadAgreement(ctx, agreements, toolparams.TenantFrom(params), a.id)
 	if err != nil {
 		return nil, err
 	}
@@ -1507,7 +1507,7 @@ func (a *ruleAmendment) request(
 	}
 
 	return &rateagreementports.AmendRateAgreementRulesRequest{
-		TenantInfo:      toolparams.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(params),
 		RateAgreementID: agreement.ID,
 		EffectiveFrom:   a.from,
 		SupersededIDs:   a.superseded,
@@ -1640,7 +1640,7 @@ func renderRuleAmendment(
 func rateIncreaseRequestFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*rateagreementservice.RateIncreaseRequest, error) {
-	req := &rateagreementservice.RateIncreaseRequest{TenantInfo: toolparams.TenantFrom(*params)}
+	req := &rateagreementservice.RateIncreaseRequest{TenantInfo: toolparams.TenantFrom(params)}
 	var err error
 	if req.EffectiveFrom, err = toolparams.RequireDay(
 		params.Params,

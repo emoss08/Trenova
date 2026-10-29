@@ -174,7 +174,7 @@ func toggleCommentRequest(
 	}
 
 	return &shipmentcommentports.ToggleShipmentCommentRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
 	}, nil
@@ -376,7 +376,7 @@ func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, er
 	edit := &commentEdit{get: shipmentcommentports.GetShipmentCommentByIDRequest{
 		CommentID:  commentID,
 		ShipmentID: shipmentID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}}
 	if _, given := params.Params[ParamCommentText]; given {
 		text, textErr := toolparams.RequireBoundedText(

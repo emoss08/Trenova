@@ -53,7 +53,7 @@ func (s LeaveScope) worker(
 ) error {
 	return s.guard.Require(ctx, &teamscope.Request{
 		Actor:         params.Actor,
-		TenantInfo:    toolparams.TenantFrom(*params),
+		TenantInfo:    toolparams.TenantFrom(params),
 		Resource:      permission.ResourceWorkerLeave,
 		Operation:     operation,
 		WorkerID:      workerID,
@@ -70,7 +70,7 @@ func (s LeaveScope) leaveCase(
 	if s.workers == nil {
 		return teamscope.ErrUnchecked
 	}
-	workerID, err := s.workers.CaseWorker(ctx, toolparams.TenantFrom(*params), caseID)
+	workerID, err := s.workers.CaseWorker(ctx, toolparams.TenantFrom(params), caseID)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (s LeaveScope) entry(
 	if s.workers == nil {
 		return teamscope.ErrUnchecked
 	}
-	workerID, err := s.workers.EntryWorker(ctx, toolparams.TenantFrom(*params), entryID)
+	workerID, err := s.workers.EntryWorker(ctx, toolparams.TenantFrom(params), entryID)
 	if err != nil {
 		return err
 	}

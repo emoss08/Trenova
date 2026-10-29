@@ -154,7 +154,7 @@ func (t *ScheduleReportTool) Validate(
 	definitionID, err := pulid.Parse(raw)
 	if err == nil {
 		_, err = t.reports.GetDefinition(ctx, &reporting.GetDefinitionRequest{
-			Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
+			Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(&params)},
 			DefinitionID: definitionID,
 		})
 	}
@@ -179,7 +179,7 @@ func (t *ScheduleReportTool) refuseRepeat(
 	definitionID pulid.ID,
 ) error {
 	existing, err := t.schedules.ListSchedules(ctx, &reportscheduleservice.ListSchedulesRequest{
-		Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(*params)},
+		Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 		DefinitionID: definitionID,
 		EnabledOnly:  true,
 		Limit:        maxSchedulesCompared,
@@ -279,7 +279,7 @@ func (t *ScheduleReportTool) Execute(
 func (t *ScheduleReportTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*reportscheduleservice.SaveScheduleRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -294,7 +294,7 @@ func (t *ScheduleReportTool) request(
 	}
 
 	return &reportscheduleservice.SaveScheduleRequest{
-		Request:         reporting.Request{TenantInfo: toolparams.TenantFrom(*params)},
+		Request:         reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 		DefinitionID:    definitionID,
 		CronExpression:  toolparams.OptionalString(params.Params, "cronExpression"),
 		Timezone:        toolparams.OptionalString(params.Params, "timezone"),
@@ -519,7 +519,7 @@ func (t *CreateTableChangeAlertTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 

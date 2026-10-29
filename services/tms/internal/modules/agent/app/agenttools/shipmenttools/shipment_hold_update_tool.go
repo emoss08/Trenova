@@ -133,7 +133,7 @@ func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error)
 	patch := &holdPatch{get: shipmentholdports.GetShipmentHoldByIDRequest{
 		HoldID:     holdID,
 		ShipmentID: shipmentID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}}
 	severity, given, err := toolparams.OptionalEnum(
 		params.Params,

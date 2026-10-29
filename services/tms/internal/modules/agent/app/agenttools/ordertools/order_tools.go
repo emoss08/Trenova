@@ -432,7 +432,7 @@ func NewUpdateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 			return &orderEdit{
 				get: orderports.GetOrderByIDRequest{
 					ID:         orderID,
-					TenantInfo: toolparams.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(params),
 				},
 				params: params.Params,
 			}, nil
@@ -546,7 +546,7 @@ func NewAttachOrderShipmentsTool(orders orderKeeper) agenttoolports.AgentTool {
 			}
 
 			return &orderMembership{
-				tenant:      toolparams.TenantFrom(*params),
+				tenant:      toolparams.TenantFrom(params),
 				orderID:     orderID,
 				shipmentIDs: shipmentIDs,
 			}, nil
@@ -662,7 +662,7 @@ func NewDetachOrderShipmentTool(orders orderKeeper) agenttoolports.AgentTool {
 				return nil, err
 			}
 
-			return &orderLeg{tenant: toolparams.TenantFrom(*params), orderID: orderID,
+			return &orderLeg{tenant: toolparams.TenantFrom(params), orderID: orderID,
 				shipmentID: shipmentID}, nil
 		},
 		Plan: func(
@@ -724,7 +724,7 @@ func readOrderOnly(
 	if err != nil {
 		return nil, err
 	}
-	req := &orderOnly{tenant: toolparams.TenantFrom(*params), orderID: orderID}
+	req := &orderOnly{tenant: toolparams.TenantFrom(params), orderID: orderID}
 	if reasonRequired {
 		if req.reason, err = toolparams.RequireBoundedText(params.Params, toolparams.ParamReason,
 			toolparams.MaxOperationNoteChars); err != nil {

@@ -436,7 +436,7 @@ func (e scheduleEdit) request(
 	schedules ScheduleAdministrator,
 	params *agenttoolports.ToolExecuteParams,
 ) (*reportscheduleservice.SaveScheduleRequest, error) {
-	base := reporting.Request{TenantInfo: toolparams.TenantFrom(*params)}
+	base := reporting.Request{TenantInfo: toolparams.TenantFrom(params)}
 	stored, err := schedules.GetSchedule(ctx, &reportscheduleservice.GetScheduleRequest{
 		Request:    base,
 		ScheduleID: e.id,
@@ -673,7 +673,7 @@ func NewDeleteReportScheduleTool(schedules ScheduleAdministrator) agenttoolports
 			}
 
 			return &reportscheduleservice.GetScheduleRequest{
-				Request:    reporting.Request{TenantInfo: toolparams.TenantFrom(*params)},
+				Request:    reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 				ScheduleID: id,
 			}, nil
 		},

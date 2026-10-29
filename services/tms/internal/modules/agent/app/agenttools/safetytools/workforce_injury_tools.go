@@ -468,7 +468,7 @@ func newUpdateWorkerInjuryTool(injuries InjuryKeeper) agenttoolports.AgentTool {
 				return nil, err
 			}
 			req := &workerinjuryservice.UpdateInjuryRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				InjuryID:   id,
 				UserID:     params.Actor.UserID,
 			}

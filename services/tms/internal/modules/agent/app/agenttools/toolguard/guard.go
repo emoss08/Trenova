@@ -16,8 +16,8 @@ var ErrTenantMismatch = errors.New("tool parameters do not match the actor tenan
 
 var ErrMissingIdempotencyKey = errors.New("idempotency key is required for this tool")
 
-func GuardExecute(tool agenttoolports.AgentTool, params agenttoolports.ToolExecuteParams) error {
-	if err := GuardPreview(tool, &params); err != nil {
+func GuardExecute(tool agenttoolports.AgentTool, params *agenttoolports.ToolExecuteParams) error {
+	if err := GuardPreview(tool, params); err != nil {
 		return err
 	}
 

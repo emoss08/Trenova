@@ -125,7 +125,7 @@ func NewUncancelShipmentTool(shipments shipmentLifecycleOperator) agenttoolports
 			}
 
 			return &shipmentports.UncancelShipmentRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				ShipmentID: shipmentID,
 			}, nil
 		},
@@ -198,7 +198,7 @@ func NewTransferShipmentOwnershipTool(
 			}
 
 			return &ownershipRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				ShipmentID: shipmentID,
 				OwnerID:    ownerID,
 			}, nil
@@ -263,7 +263,7 @@ func NewRerateShipmentTool(shipments shipmentRerater) agenttoolports.AgentTool {
 			}
 
 			return &shipmentserviceports.AutoRateShipmentRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				ShipmentID: shipmentID,
 			}, nil
 		},
@@ -352,7 +352,7 @@ func NewRecalculateShipmentDistanceTool(
 
 			return &distanceRequest{
 				shipmentID: shipmentID,
-				tenant:     toolparams.TenantFrom(*params),
+				tenant:     toolparams.TenantFrom(params),
 			}, nil
 		},
 		Plan: func(
@@ -500,7 +500,7 @@ func duplicateRequest(
 	}
 
 	return &shipmentports.BulkDuplicateShipmentRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ShipmentID: shipmentID,
 		Count:      count,
 	}, nil

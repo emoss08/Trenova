@@ -152,7 +152,7 @@ func (t *UnassignMovesTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -194,7 +194,7 @@ func (t *UnassignMovesTool) requests(
 	requests := make([]*assignmentports.UnassignShipmentMoveRequest, 0, len(moveIDs))
 	for _, moveID := range moveIDs {
 		requests = append(requests, &assignmentports.UnassignShipmentMoveRequest{
-			TenantInfo:     toolparams.TenantFrom(*params),
+			TenantInfo:     toolparams.TenantFrom(params),
 			ShipmentMoveID: moveID,
 		})
 	}
@@ -303,7 +303,7 @@ func (t *UpdateMoveStatusTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -344,7 +344,7 @@ func (t *UpdateMoveStatusTool) request(
 	}
 
 	return &shipmentmoveports.BulkUpdateMoveStatusRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		MoveIDs:    moveIDs,
 		Status:     status,
 	}, nil

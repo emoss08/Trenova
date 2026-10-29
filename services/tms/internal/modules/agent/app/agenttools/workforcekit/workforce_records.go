@@ -31,7 +31,7 @@ func ReasonedRecordFrom(
 		return &ReasonedRecord{
 			ID:     id,
 			Reason: reason,
-			Tenant: toolparams.TenantFrom(*params),
+			Tenant: toolparams.TenantFrom(params),
 			UserID: params.Actor.UserID,
 		}, nil
 	}
@@ -55,7 +55,7 @@ func RecordDeleteFrom(key string) func(*agenttoolports.ToolExecuteParams) (*Reco
 		}
 		return &RecordDelete{
 			ID:     id,
-			Tenant: toolparams.TenantFrom(*params),
+			Tenant: toolparams.TenantFrom(params),
 			UserID: params.Actor.UserID,
 		}, nil
 	}

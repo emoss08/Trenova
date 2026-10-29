@@ -366,7 +366,7 @@ func logActivityRequest(
 	}
 
 	req := &collectionports.LogActivityRequest{
-		TenantInfo:  toolparams.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(params),
 		CustomerID:  customerID,
 		Kind:        kind,
 		Summary:     summary,
@@ -510,7 +510,7 @@ func assignCollectorRequest(
 		return nil, err
 	}
 	req := &collectionports.AssignCollectorRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		CustomerID: customerID,
 	}
 	collector, err := toolparams.OptionalPulidParam(params.Params, paramCollectorID)
@@ -623,7 +623,7 @@ func scheduleFollowUpRequest(
 		return nil, err
 	}
 	return &collectionports.ScheduleFollowUpRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		CustomerID: customerID,
 		FollowUpOn: followUpOn,
 		Note:       note,

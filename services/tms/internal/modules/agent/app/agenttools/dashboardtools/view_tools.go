@@ -147,7 +147,7 @@ func (t *SaveTableViewTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -157,7 +157,7 @@ func (t *SaveTableViewTool) Execute(
 	}
 
 	composed, err := t.composer.Compose(ctx, &tablequeryservice.ComposeRequest{
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(&params),
 		Actor:      params.Actor,
 		Resource:   draft.resource.Resource,
 		Prompt:     draft.prompt,

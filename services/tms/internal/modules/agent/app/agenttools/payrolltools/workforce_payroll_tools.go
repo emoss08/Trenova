@@ -146,7 +146,7 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 				PeriodStart: first,
 				PeriodEnd:   last + toolparams.SecondsPerDay,
 				Note:        note,
-				TenantInfo:  toolparams.TenantFrom(*params),
+				TenantInfo:  toolparams.TenantFrom(params),
 				UserID:      params.Actor.UserID,
 			}, nil
 		},
@@ -233,7 +233,7 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 			return &timesheetservice.VoidExportRequest{
 				ID:         id,
 				Reason:     reason,
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				UserID:     params.Actor.UserID,
 			}, nil
 		},

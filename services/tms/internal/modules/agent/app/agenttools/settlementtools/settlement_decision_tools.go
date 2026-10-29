@@ -167,7 +167,7 @@ func (t *SettlementDecisionTool[E]) request(
 	}
 
 	req := &settlementshared.ActionRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		SettlementID: settlementID,
 		Action:       t.decision.action,
 	}
@@ -261,7 +261,7 @@ func (t *SettlementDecisionTool[E]) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {

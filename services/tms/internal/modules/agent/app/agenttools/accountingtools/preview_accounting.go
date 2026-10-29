@@ -192,7 +192,12 @@ func (t *ClearAccountingMappingTool) Preview(
 		MappedLabel(row),
 		MappedLabel(row),
 	)
-	if _, err = t.history.GuardHistory(ctx, toolparams.TenantFrom(params), row, false); err != nil {
+	if _, err = t.history.GuardHistory(
+		ctx,
+		toolparams.TenantFrom(&params),
+		row,
+		false,
+	); err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}

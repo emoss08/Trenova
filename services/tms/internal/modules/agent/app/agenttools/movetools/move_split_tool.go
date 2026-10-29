@@ -162,7 +162,7 @@ func splitMoveRequest(
 	}
 
 	req := &shipmentmoveports.SplitMoveRequest{
-		TenantInfo:            toolparams.TenantFrom(*params),
+		TenantInfo:            toolparams.TenantFrom(params),
 		MoveID:                moveID,
 		NewDeliveryLocationID: locationID,
 		SplitPickupTimes: shipmentmoveports.SplitStopTimes{

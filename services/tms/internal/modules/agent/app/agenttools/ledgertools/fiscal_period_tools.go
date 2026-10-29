@@ -180,7 +180,7 @@ func (m *fiscalPeriodMove) request(
 	req := &fiscalperiodservice.TransitionRequest{
 		Transition: m.transition,
 		ID:         id,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}
 	if m.needsReason {
 		if req.Reason, err = toolparams.RequireBoundedText(

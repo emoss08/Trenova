@@ -86,7 +86,7 @@ func (t *ApproveWorkerPTOTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -257,7 +257,7 @@ func ptoDecisionRequest(
 	tool agenttoolports.AgentTool,
 	params *agenttoolports.ToolExecuteParams,
 ) (*workerptoports.UpdatePTOStatusRequest, error) {
-	if err := toolguard.GuardExecute(tool, *params); err != nil {
+	if err := toolguard.GuardExecute(tool, params); err != nil {
 		return nil, err
 	}
 
@@ -289,7 +289,7 @@ func ptoStatusRequest(
 
 	return &workerptoports.UpdatePTOStatusRequest{
 		ID:         id,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 		Reason:     toolparams.OptionalString(params.Params, toolparams.ParamReason),
 	}, nil

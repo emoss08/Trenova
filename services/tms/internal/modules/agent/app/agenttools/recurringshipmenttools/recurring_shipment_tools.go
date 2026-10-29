@@ -598,7 +598,7 @@ func NewUpdateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 			return &seriesEdit{
 				get: recurringshipmentports.GetRecurringShipmentByIDRequest{
 					ID:         id,
-					TenantInfo: toolparams.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(params),
 				},
 				params: params.Params,
 			}, nil
@@ -701,7 +701,7 @@ func NewSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agenttool
 			return &seriesStatusChange{
 				get: recurringshipmentports.GetRecurringShipmentByIDRequest{
 					ID:         id,
-					TenantInfo: toolparams.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(params),
 				},
 				status: status,
 			}, nil
@@ -783,7 +783,7 @@ func NewGenerateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolp
 			}
 
 			return &recurringshipmentports.GenerateRecurringShipmentRequest{
-				TenantInfo:          toolparams.TenantFrom(*params),
+				TenantInfo:          toolparams.TenantFrom(params),
 				RecurringShipmentID: id,
 				OccurrenceAt:        occurrence,
 				Trigger:             recurringshipment.RunTriggerManual,

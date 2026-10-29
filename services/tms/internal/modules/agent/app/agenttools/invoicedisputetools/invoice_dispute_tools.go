@@ -183,7 +183,7 @@ func openDisputeRequest(
 
 	return &invoiceports.OpenInvoiceDisputeRequest{
 		InvoiceID:      invoiceID,
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		ReasonCode:     reason,
 		DisputedAmount: amount,
 		Notes:          notes,
@@ -279,7 +279,7 @@ func resolveDisputeRequest(
 
 	return &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:              disputeID,
-		TenantInfo:             toolparams.TenantFrom(*params),
+		TenantInfo:             toolparams.TenantFrom(params),
 		Resolution:             resolution,
 		ResolutionAdjustmentID: adjustmentID,
 		ResolutionNotes:        notes,
@@ -353,7 +353,7 @@ func withdrawDisputeRequest(
 
 	return &invoiceports.WithdrawInvoiceDisputeRequest{
 		DisputeID:  disputeID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Notes:      notes,
 	}, nil
 }

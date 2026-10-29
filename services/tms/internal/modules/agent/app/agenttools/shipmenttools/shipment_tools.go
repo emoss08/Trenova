@@ -82,7 +82,7 @@ func (t *PlaceShipmentHoldTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -113,7 +113,7 @@ func (t *PlaceShipmentHoldTool) request(
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
 	return &shipmentholdports.CreateShipmentHoldRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
 		Notes:        toolparams.OptionalString(params.Params, toolparams.ParamNote),
@@ -175,7 +175,7 @@ func (t *ReleaseShipmentHoldTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -203,7 +203,7 @@ func (t *ReleaseShipmentHoldTool) request(
 	}
 
 	return &shipmentholdports.ReleaseShipmentHoldRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ShipmentID: shipmentID,
 		HoldID:     holdID,
 	}, nil
@@ -286,7 +286,7 @@ func (t *CancelShipmentTool) Execute(
 func (t *CancelShipmentTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentports.CancelShipmentRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -301,7 +301,7 @@ func (t *CancelShipmentTool) request(
 	}
 
 	return &shipmentports.CancelShipmentRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		ShipmentID:   shipmentID,
 		CanceledByID: params.Actor.UserID,
 		CanceledAt:   timeutils.NowUnix(),

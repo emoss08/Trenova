@@ -191,7 +191,7 @@ func trainingAssignmentFrom(params *agenttoolports.ToolExecuteParams) (*training
 	}
 	if len(workers) == 1 && len(courses) == 1 {
 		return &trainingAssignment{single: &workertrainingservice.AssignRequest{
-			TenantInfo: toolparams.TenantFrom(*params),
+			TenantInfo: toolparams.TenantFrom(params),
 			WorkerID:   workers[0],
 			CourseID:   courses[0],
 			DueAt:      due,
@@ -200,7 +200,7 @@ func trainingAssignmentFrom(params *agenttoolports.ToolExecuteParams) (*training
 		}}, nil
 	}
 	return &trainingAssignment{bulk: &workertrainingservice.BulkAssignRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		WorkerIDs:  workers,
 		CourseIDs:  courses,
 		DueAt:      due,
@@ -345,7 +345,7 @@ func newAssignRequiredWorkerTrainingTool(training TrainingKeeper) agenttoolports
 				if err != nil {
 					return nil, err
 				}
-				return &requiredTraining{workerID: workerID, tenant: toolparams.TenantFrom(*params),
+				return &requiredTraining{workerID: workerID, tenant: toolparams.TenantFrom(params),
 					userID: params.Actor.UserID}, nil
 			},
 			Plan: func(
@@ -415,7 +415,7 @@ func completionFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*workertrainingservice.CompleteRequest, error) {
 	req := &workertrainingservice.CompleteRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 	}
 	var err error
@@ -627,7 +627,7 @@ func newAttachWorkerTrainingDocumentTool(training TrainingKeeper) agenttoolports
 			return &workertrainingservice.AttachDocumentRequest{
 				ID:         id,
 				DocumentID: documentID,
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				UserID:     params.Actor.UserID,
 			}, nil
 		},
@@ -791,7 +791,7 @@ func trainingClosingRequest(
 	}
 	return &trainingClosing{close: action, req: &workertrainingservice.StatusRequest{
 		ID:         id,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Reason:     reason,
 		UserID:     params.Actor.UserID,
 	}}, nil

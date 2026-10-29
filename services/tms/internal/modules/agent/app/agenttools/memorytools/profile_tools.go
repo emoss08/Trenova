@@ -175,7 +175,7 @@ func (t *GuideProfileTool) request(
 			agentprofile.MaxGuidanceChars)
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	var ref agentprofileports.SubjectRef
 	switch toolparams.OptionalString(params.Params, fieldProfileAbout) {
 	case profileAboutOrg:

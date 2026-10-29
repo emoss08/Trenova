@@ -56,7 +56,7 @@ func TestGuardExecute_AgentCannotApprove(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	err := toolguard.GuardExecute(approveOnlyTool{}, agenttoolports.ToolExecuteParams{
+	err := toolguard.GuardExecute(approveOnlyTool{}, &agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor: &permissionports.RequestActor{

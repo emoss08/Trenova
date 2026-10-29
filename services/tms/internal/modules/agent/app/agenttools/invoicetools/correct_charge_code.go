@@ -166,7 +166,7 @@ func (t *CorrectChargeCodeTool) Validate(
 func (t *CorrectChargeCodeTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*billingqueueports.UpdateChargesRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 

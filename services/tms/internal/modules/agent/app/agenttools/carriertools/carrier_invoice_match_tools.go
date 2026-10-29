@@ -153,7 +153,7 @@ func (t *CarrierInvoiceMatchTool) request(
 	}
 
 	return &carriersettlementcostservice.MatchDecisionRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		MatchID:    matchID,
 		Decision:   t.decision.decision,
 		Note:       note,
@@ -188,7 +188,7 @@ func (t *CarrierInvoiceMatchTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {
@@ -449,7 +449,7 @@ func (t *CreateCarrierInvoiceMatchTool) request(
 		return nil, err
 	}
 	req := &carriersettlementcostservice.CreateMatchRequest{
-		TenantInfo:          toolparams.TenantFrom(*params),
+		TenantInfo:          toolparams.TenantFrom(params),
 		EDICarrierInvoiceID: &invoiceID,
 		ProNumber:           proNumber,
 	}
@@ -488,7 +488,7 @@ func (t *CreateCarrierInvoiceMatchTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)
@@ -629,7 +629,7 @@ func (t *LinkEDICarrierInvoiceTool) request(
 	}
 
 	return &linkRequest{
-			tenant:    toolparams.TenantFrom(*params),
+			tenant:    toolparams.TenantFrom(params),
 			invoiceID: invoiceID,
 			carrierID: carrierID,
 		},
@@ -653,7 +653,7 @@ func (t *LinkEDICarrierInvoiceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)

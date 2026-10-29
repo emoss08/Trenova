@@ -29,7 +29,7 @@ func (t *GenerateRateConfirmationTool) Preview(
 	summary := "Would generate a rate confirmation for this move."
 	plan, err := t.rateCons.PreviewGenerate(
 		ctx,
-		toolparams.TenantFrom(params),
+		toolparams.TenantFrom(&params),
 		moveID,
 		params.Actor,
 	)
@@ -111,7 +111,7 @@ func (t *SendRateConfirmationTool) Preview(
 	}
 
 	summary := "Would email this rate confirmation to the carrier."
-	plan, err := t.rateCons.PreviewSend(ctx, toolparams.TenantFrom(params), id)
+	plan, err := t.rateCons.PreviewSend(ctx, toolparams.TenantFrom(&params), id)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
@@ -161,7 +161,7 @@ func (t *VoidRateConfirmationTool) Preview(
 	}
 
 	summary := "Would void this rate confirmation. Reason: " + reason
-	plan, err := t.rateCons.PreviewVoid(ctx, toolparams.TenantFrom(params), id, reason)
+	plan, err := t.rateCons.PreviewVoid(ctx, toolparams.TenantFrom(&params), id, reason)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
@@ -213,7 +213,7 @@ func (t *RecordRateConfirmationConfirmedTool) Preview(
 	}
 
 	summary := "Would record that " + name + " confirmed this rate confirmation for the carrier."
-	plan, err := t.rateCons.PreviewMarkConfirmed(ctx, toolparams.TenantFrom(params), id, name)
+	plan, err := t.rateCons.PreviewMarkConfirmed(ctx, toolparams.TenantFrom(&params), id, name)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil

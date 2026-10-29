@@ -168,7 +168,7 @@ func (t *NotifyDriverTool) Execute(
 func (t *NotifyDriverTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*drivernotificationservice.DriverNotification, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -202,7 +202,7 @@ func (t *NotifyDriverTool) request(
 	}
 
 	request := &drivernotificationservice.DriverNotification{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		WorkerID:   workerID,
 		EventType:  DispatchMessageEvent,
 		Priority:   priority,
@@ -481,7 +481,7 @@ func (t *SendDetentionNoticeTool) Execute(
 func (t *SendDetentionNoticeTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (detentionnoticeservice.SendOccurrenceNoticeParams, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return detentionnoticeservice.SendOccurrenceNoticeParams{}, err
 	}
 
@@ -492,7 +492,7 @@ func (t *SendDetentionNoticeTool) request(
 
 	return detentionnoticeservice.SendOccurrenceNoticeParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		UserID:       params.Actor.UserID,
 	}, nil
 }
@@ -565,7 +565,7 @@ func (t *WaiveDetentionTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -585,7 +585,7 @@ func (t *WaiveDetentionTool) Execute(
 func (t *WaiveDetentionTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (detentionreview.WaiveParams, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return detentionreview.WaiveParams{}, err
 	}
 
@@ -610,7 +610,7 @@ func (t *WaiveDetentionTool) request(
 
 	return detentionreview.WaiveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		Reason:       reason,
 		Note:         strings.TrimSpace(note),
 		UserID:       params.Actor.UserID,

@@ -187,7 +187,7 @@ func (t *AddShipmentCommentTool) Execute(
 func (t *AddShipmentCommentTool) comment(
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipment.ShipmentComment, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 

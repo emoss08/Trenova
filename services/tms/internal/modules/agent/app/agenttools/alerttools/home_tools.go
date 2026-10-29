@@ -76,7 +76,7 @@ type homeEditor struct {
 
 func homeRequestFor(params *agenttoolports.ToolExecuteParams) *homelayoutservice.Request {
 	return &homelayoutservice.Request{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Principal: kernelports.PrincipalInfo{
 			Type:     params.Actor.PrincipalType,
 			ID:       params.Actor.PrincipalID,
@@ -397,7 +397,7 @@ func (t *AddHomeWidgetTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -510,7 +510,7 @@ func (e homeEditor) checkWidgetTargets(
 	config homelayout.WidgetConfig,
 	multiErr *errortypes.MultiError,
 ) {
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	switch kind {
 	case homelayout.ConfigKindReport:
 		if config.DefinitionID.IsNil() && config.CannedKey == "" {
@@ -634,7 +634,7 @@ func (t *RemoveHomeWidgetTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -753,7 +753,7 @@ func (t *ArrangeHomeLayoutTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 

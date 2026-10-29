@@ -144,7 +144,7 @@ func lateChargeRequest(
 		return nil, err
 	}
 	req := &latechargeports.LateChargeAssessmentRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		AsOfDate:   asOf.Unix(),
 	}
 	if _, ok := params.Params[toolparams.ParamCustomerIDs]; ok {
@@ -310,7 +310,7 @@ func shareRequest(
 	}
 
 	return &invoiceports.ShareInvoiceRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		InvoiceID:  invoiceID,
 		UserIDs:    userIDs,
 		Note:       note,

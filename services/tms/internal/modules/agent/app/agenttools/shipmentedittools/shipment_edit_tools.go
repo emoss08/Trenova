@@ -163,7 +163,7 @@ func (t *rescheduleStopTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*stopSchedulePlan, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -178,7 +178,7 @@ func (t *rescheduleStopTool) plan(
 
 	before, err := t.reads.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              shipmentID,
-		TenantInfo:      toolparams.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(params),
 		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	if err != nil {
@@ -430,7 +430,7 @@ func (t *addShipmentChargeTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*shipmentChargePlan, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -455,7 +455,7 @@ func (t *addShipmentChargeTool) plan(
 		units = *given
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	accessorial, err := t.accessorials.GetByID(
 		ctx,
 		accessorialchargeports.GetAccessorialChargeByIDRequest{

@@ -432,7 +432,7 @@ func (t *CreateShipmentTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -450,7 +450,7 @@ func (t *CreateShipmentTool) ExecuteWithResult(
 		if completeErr := t.imports.CompleteHistory(
 			ctx,
 			entity.SourceDocumentID,
-			toolparams.TenantFrom(params),
+			toolparams.TenantFrom(&params),
 		); completeErr != nil {
 			t.logger.Warn("shipment created but the import conversation could not be closed",
 				zap.String("sourceDocumentId", entity.SourceDocumentID),
@@ -482,7 +482,7 @@ func (t *CreateShipmentTool) Draft(
 		return nil, err
 	}
 
-	tenantInfo := toolparams.TenantFrom(*params)
+	tenantInfo := toolparams.TenantFrom(params)
 	zones, err := shipmentpreview.ReadLocationZones(
 		ctx, t.locations, tenantInfo, params.Timezone, draft.LocationIDs(),
 	)
@@ -712,7 +712,7 @@ func (t *UpdateShipmentTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (before, after *shipment.Shipment, err error) {
-	if err = toolguard.GuardExecute(t, *params); err != nil {
+	if err = toolguard.GuardExecute(t, params); err != nil {
 		return nil, nil, err
 	}
 
@@ -735,7 +735,7 @@ func (t *UpdateShipmentTool) plan(
 
 	entity, err := t.reads.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},

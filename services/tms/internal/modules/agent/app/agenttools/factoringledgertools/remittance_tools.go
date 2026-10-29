@@ -117,7 +117,7 @@ func remittanceVersionRequest(
 		return nil, err
 	}
 	return &factoringremittanceports.RemittanceVersionRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         id,
 		Version:    int64(version),
 	}, nil
@@ -200,7 +200,7 @@ func (t *ResolveFactoringRemittanceLineTool) Target(
 func (t *ResolveFactoringRemittanceLineTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringremittanceports.UpdateRemittanceLineRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	base, err := remittanceVersionRequest(params, paramRemittanceID)
@@ -366,7 +366,7 @@ func (t *RematchFactoringRemittanceTool) Target(
 func (t *RematchFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringremittanceports.RemittanceVersionRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	return remittanceVersionRequest(params, paramRemittanceID2)
@@ -475,7 +475,7 @@ func (t *ApplyFactoringRemittanceTool) Target(
 func (t *ApplyFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringremittanceports.RemittanceVersionRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	return remittanceVersionRequest(params, paramRemittanceID2)
@@ -610,7 +610,7 @@ func (t *DiscardFactoringRemittanceTool) Target(
 func (t *DiscardFactoringRemittanceTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringremittanceports.DiscardRemittanceRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	base, err := remittanceVersionRequest(params, paramRemittanceID2)

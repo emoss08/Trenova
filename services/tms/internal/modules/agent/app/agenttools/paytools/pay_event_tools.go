@@ -171,7 +171,7 @@ func (t *PayEventHoldTool) request(
 	if err != nil {
 		return nil, err
 	}
-	req := &payEventHoldRequest{tenant: toolparams.TenantFrom(*params), eventID: eventID}
+	req := &payEventHoldRequest{tenant: toolparams.TenantFrom(params), eventID: eventID}
 	if t.hold {
 		if req.reason, err = toolparams.BoundedString(
 			params.Params,
@@ -214,7 +214,7 @@ func (t *PayEventHoldTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)
@@ -439,7 +439,7 @@ func (t *PayEventTransferTool) request(
 		return nil, err
 	}
 	req := &driversettlementtransferservice.EventTransferRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		SettlementID: settlementID,
 		Detach:       t.detach,
 	}
@@ -483,7 +483,7 @@ func (t *PayEventTransferTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	req, err := t.request(&params)

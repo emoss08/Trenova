@@ -120,7 +120,7 @@ func (t *UpdateTractorStatusTool) Preview(
 	}
 
 	units, err := t.tractors.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(&params),
 		TractorIDs: ids,
 	})
 	if err != nil {
@@ -144,7 +144,7 @@ func (t *UpdateTrailerStatusTool) Preview(
 	}
 
 	units, err := t.trailers.GetByIDs(ctx, trailerports.GetTrailersByIDsRequest{
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(&params),
 		TrailerIDs: ids,
 	})
 	if err != nil {

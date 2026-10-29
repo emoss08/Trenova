@@ -77,7 +77,7 @@ func inboundRequest(
 		return nil, err
 	}
 	return &accountinginboundports.GetAccountingInboundChangeRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         id,
 	}, nil
 }
@@ -160,7 +160,7 @@ func (t *ApplyAccountingInboundChangeTool) PlanPreview(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountinginboundports.AccountingInboundApplyPreview, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	req, err := inboundRequest(params)
@@ -273,7 +273,7 @@ func (t *IgnoreAccountingInboundChangeTool) request(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountinginboundports.DecideAccountingInboundChangeRequest, *accountinginbound.AccountingInboundChange, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, nil, err
 	}
 	req, err := inboundRequest(params)

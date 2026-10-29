@@ -239,7 +239,7 @@ func createReviewRequest(
 		return nil, err
 	}
 	return &performancereviewservice.CreateReviewRequest{
-		TenantInfo:  toolparams.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(params),
 		WorkerID:    workerID,
 		TemplateID:  templateID,
 		Title:       title,
@@ -270,12 +270,12 @@ func (d *reviewDraft) request(
 	ctx context.Context,
 	reviews ReviewKeeper,
 ) (*performancereviewservice.UpdateReviewRequest, error) {
-	current, err := reviews.GetReview(ctx, toolparams.TenantFrom(*d.params), d.id)
+	current, err := reviews.GetReview(ctx, toolparams.TenantFrom(d.params), d.id)
 	if err != nil {
 		return nil, err
 	}
 	req := &performancereviewservice.UpdateReviewRequest{
-		TenantInfo:   toolparams.TenantFrom(*d.params),
+		TenantInfo:   toolparams.TenantFrom(d.params),
 		ID:           d.id,
 		Ratings:      append([]workerreview.ReviewRating(nil), current.Ratings...),
 		Summary:      current.Summary,

@@ -489,7 +489,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 				return nil, err
 			}
 			req := &workerdqfservice.UpdateVerificationRequest{
-				TenantInfo:     toolparams.TenantFrom(*params),
+				TenantInfo:     toolparams.TenantFrom(params),
 				VerificationID: id,
 				UserID:         params.Actor.UserID,
 			}
@@ -579,7 +579,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolpo
 			return &verificationRequestLog{
 				move:   move,
 				id:     id,
-				tenant: toolparams.TenantFrom(*params),
+				tenant: toolparams.TenantFrom(params),
 				userID: params.Actor.UserID,
 			}, nil
 		},

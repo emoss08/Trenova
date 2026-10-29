@@ -93,7 +93,7 @@ func invoiceRequest(
 
 	return &invoiceports.PostInvoiceRequest{
 		InvoiceID:  invoiceID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -176,7 +176,7 @@ func (t *PostInvoiceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -200,7 +200,7 @@ func (t *PostInvoiceTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
@@ -349,7 +349,7 @@ func (t *SendInvoiceTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -366,7 +366,7 @@ func (t *SendInvoiceTool) Execute(
 
 	_, err = t.invoices.Send(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  send.plan.InvoiceID,
-		TenantInfo: toolparams.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(&params),
 	}, params.Actor)
 
 	return err

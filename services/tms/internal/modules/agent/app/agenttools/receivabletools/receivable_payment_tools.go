@@ -212,7 +212,7 @@ func applyPaymentRequest(
 		PaymentID:      paymentID,
 		AccountingDate: accountingDate,
 		Applications:   applications,
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -287,7 +287,7 @@ func reversePaymentRequest(
 		PaymentID:      paymentID,
 		AccountingDate: accountingDate,
 		Reason:         reason,
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -380,7 +380,7 @@ func applyCreditRequest(
 		CreditMemoID:   memoID,
 		AccountingDate: accountingDate,
 		Applications:   applications,
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -452,6 +452,6 @@ func unapplyCreditRequest(
 	return &customerpaymentports.UnapplyCreditMemoApplicationRequest{
 		ApplicationID: applicationID,
 		Reason:        reason,
-		TenantInfo:    toolparams.TenantFrom(*params),
+		TenantInfo:    toolparams.TenantFrom(params),
 	}, nil
 }

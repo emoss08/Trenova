@@ -106,7 +106,7 @@ func (r *workItemRoute) plan(
 	ctx context.Context,
 	items WorkItemRouter,
 ) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
-	tenant := toolparams.TenantFrom(*r.params)
+	tenant := toolparams.TenantFrom(r.params)
 	if r.move == workItemAssign {
 		return items.PlanAssign(ctx, &bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 			WorkItemID:       r.id,
@@ -122,7 +122,7 @@ func (r *workItemRoute) plan(
 }
 
 func (r *workItemRoute) run(ctx context.Context, items WorkItemRouter) error {
-	tenant := toolparams.TenantFrom(*r.params)
+	tenant := toolparams.TenantFrom(r.params)
 	if r.move == workItemAssign {
 		_, err := items.Assign(ctx, &bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 			WorkItemID:       r.id,

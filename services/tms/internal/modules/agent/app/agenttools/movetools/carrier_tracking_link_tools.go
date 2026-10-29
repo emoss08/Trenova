@@ -229,7 +229,7 @@ func issueTrackingLinkRequest(
 	if err != nil {
 		return nil, err
 	}
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	return &checkcallports.IssueTrackingLinkRequest{
 		TenantInfo:     tenant,
 		MoveID:         moveID,
@@ -343,7 +343,7 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolport
 					return nil, err
 				}
 				return &checkcallports.RevokeTrackingLinkRequest{
-					TenantInfo: toolparams.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(params),
 					MoveID:     moveID,
 				}, nil
 			},

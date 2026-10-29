@@ -182,7 +182,7 @@ func confirmMappingsRequest(
 	}
 
 	return &accountingmappingports.ConfirmAccountingMappingsRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 		Items:      items,
 		Source:     accountingmapping.MappingSourceAgent,
@@ -266,7 +266,7 @@ func NewRejectAccountingMappingProposalTool(
 			}
 
 			return &accountingmappingports.AccountingMappingActionRequest{
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				UserID:     params.Actor.UserID,
 				ID:         id,
 				Source:     accountingmapping.MappingSourceAgent,
@@ -312,7 +312,7 @@ func releaseRequest(
 	}
 
 	return &accountingsyncports.ReleaseAccountingSyncRequest{
-		TenantInfo:      toolparams.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
 		IDs:             sliceutils.Dedupe(ids),
@@ -436,7 +436,7 @@ func backfillChangeRequest(
 	}
 
 	return &accountingsyncports.ChangeAccountingBackfillRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		UserID:     params.Actor.UserID,
 		Action:     action,
 	}, nil

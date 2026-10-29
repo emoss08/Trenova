@@ -47,7 +47,7 @@ func (t *ResolveBankReceiptWorkItemTool) Preview(
 		return nil, err
 	}
 
-	tenant := toolparams.TenantFrom(params)
+	tenant := toolparams.TenantFrom(&params)
 	item, err := t.items.Get(ctx, &bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 		WorkItemID: args.id,
 		TenantInfo: tenant,

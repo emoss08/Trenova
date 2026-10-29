@@ -96,7 +96,7 @@ func loadInboundMessage(
 
 	return desk.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         messageID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 }
 
@@ -223,7 +223,7 @@ func (t *LinkInboundMessageTool) request(
 
 	req := &inboundqueue.LinkRequest{
 		MessageID:  messageID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ReviewerID: params.Actor.UserID,
 		Reason:     toolparams.OptionalString(params.Params, "reason"),
 	}
@@ -262,7 +262,7 @@ func (t *LinkInboundMessageTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -401,7 +401,7 @@ func (t *MarkInboundMessageTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -423,7 +423,7 @@ func reviewRequest(
 ) *inboundqueue.ReviewRequest {
 	return &inboundqueue.ReviewRequest{
 		MessageID:  message.ID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ReviewerID: params.Actor.UserID,
 		Status:     status,
 		Note:       note,

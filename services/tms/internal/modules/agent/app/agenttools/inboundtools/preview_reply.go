@@ -37,7 +37,7 @@ func (t *ReplyToInboundMessageTool) compose(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*composedReply, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -46,7 +46,7 @@ func (t *ReplyToInboundMessageTool) compose(
 		return nil, err
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	data := portaltemplate.AgentEmailContext{
 		AgentSubject: reply.subject,
 		AgentBody:    reply.body,

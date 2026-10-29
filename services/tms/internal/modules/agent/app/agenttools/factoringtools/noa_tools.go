@@ -98,7 +98,7 @@ func loadNoa(
 	}
 	noa, err := noas.Get(ctx, factoringports.GetNoaRequest{
 		ID:         id,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 	if err != nil {
 		return nil, 0, err
@@ -157,7 +157,7 @@ func (t *DraftFactoringNoaTool) Policy() agenttoolports.ToolPolicy {
 func (t *DraftFactoringNoaTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.DraftNoaRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	customerID, err := toolparams.RequirePulid(params.Params, paramCustomerID)
@@ -169,7 +169,7 @@ func (t *DraftFactoringNoaTool) request(
 		return nil, err
 	}
 	return &factoringports.DraftNoaRequest{
-		TenantInfo:         toolparams.TenantFrom(*params),
+		TenantInfo:         toolparams.TenantFrom(params),
 		CustomerID:         customerID,
 		FactoringCompanyID: factorID,
 		Notes:              toolparams.OptionalString(params.Params, paramNote),
@@ -287,7 +287,7 @@ func (t *SendFactoringNoaTool) Target(params map[string]any) (agenttoolports.Too
 func (t *SendFactoringNoaTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SendNoaRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	id, err := toolparams.RequirePulid(params.Params, paramNoaID)
@@ -304,7 +304,7 @@ func (t *SendFactoringNoaTool) request(
 		return nil, err
 	}
 	return &factoringports.SendNoaRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         id,
 		Version:    int64(version),
 		Recipient:  toolparams.OptionalString(params.Params, paramRecipient),
@@ -460,7 +460,7 @@ func (t *RecordFactoringNoaAcknowledgementTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*acknowledgement, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	noa, version, err := loadNoa(ctx, t.noas, params)
@@ -480,7 +480,7 @@ func (t *RecordFactoringNoaAcknowledgementTool) plan(
 		return nil, err
 	}
 	return &acknowledgement{noa: noa, req: &factoringports.AcknowledgeNoaRequest{
-		TenantInfo:       toolparams.TenantFrom(*params),
+		TenantInfo:       toolparams.TenantFrom(params),
 		ID:               noa.ID,
 		Version:          version,
 		AcknowledgedAt:   acknowledgedAt,
@@ -600,7 +600,7 @@ func (t *ReleaseFactoringNoaTool) plan(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*release, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	noa, version, err := loadNoa(ctx, t.noas, params)
@@ -612,7 +612,7 @@ func (t *ReleaseFactoringNoaTool) plan(
 		return nil, err
 	}
 	return &release{noa: noa, req: &factoringports.ReleaseNoaRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         noa.ID,
 		Version:    version,
 		Reason:     reason,

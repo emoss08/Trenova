@@ -300,7 +300,7 @@ func (e *credentialEdit) entity(
 	ctx context.Context,
 	credentials CredentialKeeper,
 ) (*workercredential.WorkerCredential, error) {
-	current, err := credentials.Get(ctx, toolparams.TenantFrom(*e.params), e.id)
+	current, err := credentials.Get(ctx, toolparams.TenantFrom(e.params), e.id)
 	if err != nil {
 		return nil, err
 	}
@@ -413,7 +413,7 @@ func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentto
 			return &workercredentialservice.AttachDocumentRequest{
 				ID:         id,
 				DocumentID: documentID,
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				UserID:     params.Actor.UserID,
 			}, nil
 		},

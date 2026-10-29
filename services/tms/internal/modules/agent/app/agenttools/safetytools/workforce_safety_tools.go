@@ -588,7 +588,7 @@ func (e *safetyEventEdit) entity(
 	ctx context.Context,
 	events SafetyKeeper,
 ) (*workersafety.WorkerSafetyEvent, error) {
-	current, err := events.GetEvent(ctx, toolparams.TenantFrom(*e.params), e.id)
+	current, err := events.GetEvent(ctx, toolparams.TenantFrom(e.params), e.id)
 	if err != nil {
 		return nil, err
 	}
@@ -775,7 +775,7 @@ func newChangeWorkerSafetyEventStatusTool(events SafetyKeeper) agenttoolports.Ag
 					move: move,
 					req: &workersafetyservice.EventStatusRequest{
 						ID:         id,
-						TenantInfo: toolparams.TenantFrom(*params),
+						TenantInfo: toolparams.TenantFrom(params),
 						Resolution: resolution,
 						UserID:     params.Actor.UserID,
 					},
@@ -1241,7 +1241,7 @@ func recordViolationRequest(
 		return nil, err
 	}
 	return &workersafetyservice.RecordViolationRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		SafetyEventID:  eventID,
 		Basic:          basic,
 		Code:           code,
@@ -1261,7 +1261,7 @@ func (e *violationEdit) request(
 	ctx context.Context,
 	events SafetyKeeper,
 ) (*workersafetyservice.UpdateViolationRequest, error) {
-	tenant := toolparams.TenantFrom(*e.params)
+	tenant := toolparams.TenantFrom(e.params)
 	current, err := events.GetViolation(ctx, tenant, e.id)
 	if err != nil {
 		return nil, err

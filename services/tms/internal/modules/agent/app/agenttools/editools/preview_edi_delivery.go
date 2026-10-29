@@ -159,7 +159,7 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 			ctx,
 			&edidelivery.RetryMessageDeliveryRequest{
 				MessageID:  id,
-				TenantInfo: toolparams.TenantFrom(params),
+				TenantInfo: toolparams.TenantFrom(&params),
 			},
 		)
 		if planErr != nil {
@@ -259,7 +259,7 @@ func (t *ReprocessEDIInboundFilesTool) planFile(
 ) (plannedEDIRecord, error) {
 	file, err := t.files.GetInboundFile(ctx, edimessageports.GetEDIInboundFileByIDRequest{
 		ID:         id,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 	if err != nil {
 		if !errortypes.IsNotFoundError(err) {

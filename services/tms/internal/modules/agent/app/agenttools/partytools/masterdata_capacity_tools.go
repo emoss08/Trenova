@@ -345,7 +345,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 		) (*carriercapacity.Posting, error) {
 			return keeper.PlanDelete(ctx, &carriercapacityports.DeleteCarrierCapacityPostingRequest{
 				ID:         id,
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 			})
 		},
 		Refused: func(pulid.ID) string { return "Would remove a carrier capacity posting." },
@@ -364,7 +364,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			tenant := toolparams.TenantFrom(*params)
+			tenant := toolparams.TenantFrom(params)
 			current, err := keeper.Get(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 				ID:         id,
 				TenantInfo: tenant,

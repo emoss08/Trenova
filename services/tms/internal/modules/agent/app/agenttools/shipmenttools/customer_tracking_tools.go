@@ -110,7 +110,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttool
 				if err != nil {
 					return nil, err
 				}
-				tenant := toolparams.TenantFrom(*params)
+				tenant := toolparams.TenantFrom(params)
 				return &customertrackingports.IssueLinkRequest{
 					TenantInfo:     tenant,
 					ShipmentID:     shipmentID,
@@ -238,7 +238,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoo
 				if err != nil {
 					return nil, err
 				}
-				tenant := toolparams.TenantFrom(*params)
+				tenant := toolparams.TenantFrom(params)
 				return &customertrackingports.RevokeLinkRequest{
 					TenantInfo:  tenant,
 					ShipmentID:  shipmentID,

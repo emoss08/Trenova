@@ -96,7 +96,7 @@ func (t *CheckAccountingConnectionTool) Execute(
 		return err
 	}
 
-	_, err = t.health.CheckHealth(ctx, toolparams.TenantFrom(params), conn.ID)
+	_, err = t.health.CheckHealth(ctx, toolparams.TenantFrom(&params), conn.ID)
 	return err
 }
 
@@ -104,7 +104,7 @@ func (t *CheckAccountingConnectionTool) connection(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingconnection.AccountingConnection, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -117,7 +117,7 @@ func (t *CheckAccountingConnectionTool) connection(
 		return nil, agenttoolschema.ErrAccountingSystem()
 	}
 
-	status, err := t.status.Status(ctx, toolparams.TenantFrom(*params), typ)
+	status, err := t.status.Status(ctx, toolparams.TenantFrom(params), typ)
 	if err != nil {
 		return nil, err
 	}

@@ -182,7 +182,7 @@ func (t *RaiseExceptionTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -263,7 +263,7 @@ func (t *RaiseExceptionTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -332,7 +332,7 @@ func (t *RaiseExceptionTool) subject(
 		return "", pulid.Nil, ErrSubjectUncheckable
 	}
 	exists, err := t.subjects.Exists(ctx, agentsubjectports.AgentSubjectExistsRequest{
-		TenantInfo:  toolparams.TenantFrom(params),
+		TenantInfo:  toolparams.TenantFrom(&params),
 		SubjectType: subjectType,
 		SubjectID:   subjectID,
 	})

@@ -297,7 +297,7 @@ func draftUpdateRequest(
 	}
 	req := &invoiceports.UpdateInvoiceDraftRequest{
 		InvoiceID:  invoiceID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}
 
 	texts := []struct {
@@ -469,7 +469,7 @@ func NewGenerateInvoicePDFTool(invoices invoicePDFGenerator) agenttoolports.Agen
 			}
 			return &invoiceports.InvoicePreviewRequest{
 				InvoiceID:  invoiceID,
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 			}, nil
 		},
 		Plan: plan,
@@ -589,7 +589,7 @@ func createInvoicesRequestFrom(
 	}
 	req := &invoiceports.PlanCreateInvoicesRequest{
 		OrderID:    orderID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}
 	if _, ok := params.Params[toolparams.ParamShipmentIDs]; ok {
 		if req.ShipmentIDs, err = toolparams.RequirePulidSlice(
@@ -767,7 +767,7 @@ func memoRequest(
 	}
 
 	req := &invoiceports.CreateMemoRequest{
-		TenantInfo:         toolparams.TenantFrom(*params),
+		TenantInfo:         toolparams.TenantFrom(params),
 		CustomerID:         customerID,
 		BillType:           billType,
 		Lines:              lines,
@@ -930,7 +930,7 @@ func voidRequest(
 
 	return &invoiceports.VoidInvoiceRequest{
 		InvoiceID:   invoiceID,
-		TenantInfo:  toolparams.TenantFrom(*params),
+		TenantInfo:  toolparams.TenantFrom(params),
 		Reason:      reason,
 		Disposition: disposition,
 	}, nil
@@ -967,7 +967,7 @@ func NewSendInvoiceEDITool(invoices invoiceEDISender) agenttoolports.AgentTool {
 			}
 			return &invoiceports.SendInvoiceEDIRequest{
 				InvoiceID:  invoiceID,
-				TenantInfo: toolparams.TenantFrom(*params),
+				TenantInfo: toolparams.TenantFrom(params),
 				Force:      toolparams.OptionalBool(params.Params, toolparams.ParamForceResend),
 			}, nil
 		},

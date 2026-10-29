@@ -126,7 +126,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
-			dismissed, err := items.Dismiss(ctx, toolparams.TenantFrom(*params), id, params.Actor)
+			dismissed, err := items.Dismiss(ctx, toolparams.TenantFrom(params), id, params.Actor)
 			if err != nil {
 				return nil, err
 			}
@@ -147,7 +147,7 @@ func plannedDismissal(
 	id pulid.ID,
 	params *agenttoolports.ToolExecuteParams,
 ) (*kernelports.RecordChange[watchtower.Item], error) {
-	change, err := items.PlanDismiss(ctx, toolparams.TenantFrom(*params), id, params.Actor)
+	change, err := items.PlanDismiss(ctx, toolparams.TenantFrom(params), id, params.Actor)
 	if err != nil {
 		return nil, err
 	}

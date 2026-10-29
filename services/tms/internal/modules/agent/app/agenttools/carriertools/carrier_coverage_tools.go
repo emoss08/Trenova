@@ -214,7 +214,7 @@ func (t *AssignMoveToCarrierTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -274,7 +274,7 @@ func (t *AssignMoveToCarrierTool) request(
 	}
 
 	return &carrierassignmentports.AssignMoveToCarrierRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		ShipmentMoveID: moveID,
 		CarrierID:      carrierID,
 		RateMethod:     rateMethod,
@@ -408,7 +408,7 @@ func (t *CancelCarrierAssignmentTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -437,7 +437,7 @@ func (t *CancelCarrierAssignmentTool) request(
 	}
 
 	return &carrierassignmentports.CancelCarrierAssignmentRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		ShipmentMoveID: moveID,
 		Reason:         strings.TrimSpace(reason),
 	}, nil

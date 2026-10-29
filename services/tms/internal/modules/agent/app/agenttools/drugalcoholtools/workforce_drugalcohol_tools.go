@@ -424,7 +424,7 @@ func drawRequestFrom(
 		return nil, err
 	}
 	req := &workerdrugalcoholservice.RunDrawRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		PoolID:     poolID,
 		Notes:      notes,
 		UserID:     params.Actor.UserID,
@@ -574,7 +574,7 @@ func newFinalizeDOTRandomDrawTool(draws DrugAlcoholKeeper) agenttoolports.AgentT
 				if err != nil {
 					return nil, err
 				}
-				return &drawDecision{id: id, tenant: toolparams.TenantFrom(*params),
+				return &drawDecision{id: id, tenant: toolparams.TenantFrom(params),
 					userID: params.Actor.UserID}, nil
 			},
 			Plan: func(
@@ -697,7 +697,7 @@ func newUpdateDOTRandomSelectionTool(draws DrugAlcoholKeeper) agenttoolports.Age
 				return nil, err
 			}
 			return &workerdrugalcoholservice.UpdateEntryRequest{
-				TenantInfo:   toolparams.TenantFrom(*params),
+				TenantInfo:   toolparams.TenantFrom(params),
 				EntryID:      id,
 				Status:       status,
 				ExcuseReason: excuse,

@@ -29,7 +29,7 @@ func (t *EmailCustomerTool) compose(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*outboundpreview.CustomerEmail, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
@@ -50,7 +50,7 @@ func (t *EmailCustomerTool) compose(
 		return nil, err
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	sp, err := t.Deps.Shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              shipmentID,
 		TenantInfo:      tenant,

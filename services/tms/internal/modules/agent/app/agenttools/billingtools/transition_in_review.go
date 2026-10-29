@@ -105,7 +105,7 @@ func (t *TransitionToInReviewTool) tierLimit(
 		return agent.TierPropose
 	}
 
-	return t.tierFor(ctx, toolparams.TenantFrom(params), itemID)
+	return t.tierFor(ctx, toolparams.TenantFrom(&params), itemID)
 }
 
 // tierFor is the reach one item allows: a held item waits for a person, and
@@ -191,7 +191,7 @@ func (t *TransitionToInReviewTool) move(
 	if err != nil {
 		return nil, err
 	}
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	item, err := t.billing.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     itemID,
 		TenantInfo: tenant,
@@ -235,7 +235,7 @@ func (t *TransitionToInReviewTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 

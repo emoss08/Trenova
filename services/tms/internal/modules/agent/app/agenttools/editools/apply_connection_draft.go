@@ -117,7 +117,7 @@ func (t *ApplyConnectionDraftTool) input(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*edispec.Input, error) {
-	input, err := edispec.Parse(params.Params, toolparams.TenantFrom(*params))
+	input, err := edispec.Parse(params.Params, toolparams.TenantFrom(params))
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (t *ApplyConnectionDraftTool) input(
 		return nil, fmt.Errorf("parameter %q is required", edispec.ParamDocumentDigest)
 	}
 	document, err := t.documents.Read(ctx, &edispec.ReadRequest{
-		Tenant:     toolparams.TenantFrom(*params),
+		Tenant:     toolparams.TenantFrom(params),
 		DocumentID: input.DocumentID,
 		ThreadID:   params.ThreadID,
 	})
@@ -194,7 +194,7 @@ func (t *ApplyConnectionDraftTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {

@@ -230,7 +230,7 @@ func (t *TransitionItemsToInReviewTool) tierLimit(
 	if err != nil {
 		return agent.TierPropose
 	}
-	tenant := toolparams.TenantFrom(params)
+	tenant := toolparams.TenantFrom(&params)
 	for _, id := range ids {
 		if t.single.tierFor(ctx, tenant, id) == agent.TierPropose {
 			return agent.TierPropose

@@ -205,7 +205,7 @@ func (t *CreateLocationTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -246,7 +246,7 @@ func (t *CreateLocationTool) plan(
 		return nil, err
 	}
 
-	return t.Build(ctx, draft, toolparams.TenantFrom(*params))
+	return t.Build(ctx, draft, toolparams.TenantFrom(params))
 }
 
 func (t *CreateLocationTool) Build(

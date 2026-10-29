@@ -196,7 +196,7 @@ func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolpo
 			if err != nil {
 				return nil, err
 			}
-			return &disputeStart{tenant: toolparams.TenantFrom(*params), disputeID: id}, nil
+			return &disputeStart{tenant: toolparams.TenantFrom(params), disputeID: id}, nil
 		},
 		Plan: func(
 			ctx context.Context,
@@ -259,7 +259,7 @@ func resolvePayDisputeRequest(
 		return nil, err
 	}
 	req := &driversettlementreviewservice.ResolveDisputeRequest{
-		TenantInfo:     toolparams.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		DisputeID:      id,
 		Approve:        decision == decisionApprove,
 		ResolutionNote: note,
@@ -441,7 +441,7 @@ func reviewExpenseFrom(
 		return nil, err
 	}
 	return &driversettlementreviewservice.ReviewExpenseRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ExpenseID:  id,
 		Approve:    decision == decisionApprove,
 		Note:       note,

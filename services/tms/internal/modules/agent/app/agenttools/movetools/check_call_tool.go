@@ -167,7 +167,7 @@ func (t *LogCheckCallTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 
@@ -221,7 +221,7 @@ func (t *LogCheckCallTool) request(
 		stopID = pulid.Nil
 	}
 
-	tenant := toolparams.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	request := &checkcallports.LogCheckCallRequest{
 		TenantInfo:   tenant,
 		MoveID:       moveID,

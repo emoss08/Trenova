@@ -269,7 +269,7 @@ func (t *RecordFactoringFundingTool) Target(
 func (t *RecordFactoringFundingTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringledgerports.RecordFundingRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	submissionID, err := toolparams.RequirePulid(params.Params, paramSubmissionID)
@@ -298,7 +298,7 @@ func (t *RecordFactoringFundingTool) request(
 		return nil, err
 	}
 	req := &factoringledgerports.RecordFundingRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		SubmissionID: submissionID,
 		Version:      int64(version),
 		FundedOn:     fundedOn,
@@ -509,7 +509,7 @@ func (t *ReserveMovementTool) Target(params map[string]any) (agenttoolports.Tool
 func (t *ReserveMovementTool) request(
 	params *agenttoolports.ToolExecuteParams,
 ) (*factoringledgerports.ReserveMovementRequest, error) {
-	if err := toolguard.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	submissionID, err := toolparams.RequirePulid(params.Params, paramSubmissionID)
@@ -534,7 +534,7 @@ func (t *ReserveMovementTool) request(
 		return nil, err
 	}
 	req := &factoringledgerports.ReserveMovementRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		SubmissionID: submissionID,
 		ItemID:       itemID,
 		Version:      int64(version),

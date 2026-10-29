@@ -188,7 +188,7 @@ func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
@@ -203,7 +203,7 @@ func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 	result, err := t.deliveries.BulkRetryMessageDelivery(
 		ctx,
 		&edidelivery.BulkRetryMessageDeliveryRequest{
-			TenantInfo: toolparams.TenantFrom(params),
+			TenantInfo: toolparams.TenantFrom(&params),
 			MessageIDs: ids,
 		},
 	)
@@ -266,7 +266,7 @@ func (t *ReplayEDIMessageTool) request(
 
 	return &edidelivery.RetryMessageDeliveryRequest{
 		MessageID:  messageID,
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	}, nil
 }
 
@@ -288,7 +288,7 @@ func (t *ReplayEDIMessageTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
@@ -371,7 +371,7 @@ func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
@@ -386,7 +386,7 @@ func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 	result, err := t.files.BulkReprocessInboundFiles(
 		ctx,
 		&ediinboundservice.BulkReprocessInboundFilesRequest{
-			TenantInfo: toolparams.TenantFrom(params),
+			TenantInfo: toolparams.TenantFrom(&params),
 			FileIDs:    ids,
 		},
 	)

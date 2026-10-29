@@ -172,7 +172,7 @@ func (t *WatchWebTool) request(
 	}
 
 	return &agentextensionports.WebWatchRequest{
-		TenantInfo: toolparams.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Query:      query,
 		Purpose:    purpose,
 		Sites:      toolparams.StringSliceParam(params.Params, paramSites),
@@ -192,7 +192,7 @@ func (t *WatchWebTool) Validate(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if params.Delegated {
@@ -269,7 +269,7 @@ func (t *WatchWebTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	if params.Delegated {
@@ -378,7 +378,7 @@ func (t *StopWebWatchTool) request(
 	}
 
 	return &agentextensionports.StopWebWatchRequest{
-		TenantInfo:   toolparams.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		WatchID:      watchID,
 		StoppedBy:    params.Actor.PersonUserID(),
 		DefinitionID: params.DefinitionID,
@@ -389,7 +389,7 @@ func (t *StopWebWatchTool) Validate(
 	_ context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	_, err := t.request(&params)
@@ -425,7 +425,7 @@ func (t *StopWebWatchTool) ExecuteWithResult(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return nil, err
 	}
 	req, err := t.request(&params)

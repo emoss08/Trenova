@@ -163,7 +163,7 @@ func (e *alertEdit) Build(
 		ctx,
 		tablechangealertports.GetTCASubscriptionByIDRequest{
 			SubscriptionID: e.id,
-			TenantInfo:     toolparams.TenantFrom(*params),
+			TenantInfo:     toolparams.TenantFrom(params),
 		},
 	)
 	if err != nil {
@@ -311,7 +311,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 			change *alertStatusChange,
 			params *agenttoolports.ToolExecuteParams,
 		) (*kernelports.RecordChange[tablechangealert.TCASubscription], error) {
-			return alerts.PlanSetSubscriptionStatus(ctx, change.id, toolparams.TenantFrom(*params),
+			return alerts.PlanSetSubscriptionStatus(ctx, change.id, toolparams.TenantFrom(params),
 				change.status)
 		},
 		Refused: func(change *alertStatusChange) string {
@@ -340,7 +340,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 			if change.status == tablechangealert.SubscriptionStatusPaused {
 				set = alerts.PauseSubscription
 			}
-			updated, err := set(ctx, change.id, toolparams.TenantFrom(*params))
+			updated, err := set(ctx, change.id, toolparams.TenantFrom(params))
 			if err != nil {
 				return nil, err
 			}
@@ -379,7 +379,7 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			id pulid.ID,
 			params *agenttoolports.ToolExecuteParams,
 		) (*tablechangealert.TCASubscription, error) {
-			return alerts.PlanDeleteSubscription(ctx, id, toolparams.TenantFrom(*params))
+			return alerts.PlanDeleteSubscription(ctx, id, toolparams.TenantFrom(params))
 		},
 		Refused: func(pulid.ID) string { return "Would delete a change alert." },
 		Render: func(
@@ -403,7 +403,7 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			if err := alerts.DeleteSubscription(
 				ctx,
 				id,
-				toolparams.TenantFrom(*params),
+				toolparams.TenantFrom(params),
 			); err != nil {
 				return nil, err
 			}

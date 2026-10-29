@@ -167,7 +167,7 @@ func (t *EdiTransferDecisionTool) call(
 
 	call := &tenderCall{
 		transferID: transferID,
-		tenant:     toolparams.TenantFrom(*params),
+		tenant:     toolparams.TenantFrom(params),
 		actor:      params.Actor,
 	}
 	if !t.decision.needsReason {
@@ -223,7 +223,7 @@ func (t *EdiTransferDecisionTool) Execute(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	if err := toolguard.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, &params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
