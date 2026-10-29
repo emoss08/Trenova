@@ -1,5 +1,5 @@
 //nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
-package accountingsyncrepository
+package accountingconnectionrepository
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/keelassign"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
@@ -52,7 +53,7 @@ func withoutTokens() *keel.Query[*accountingconnection.AccountingConnection] {
 	return ac.Omit(ac.AccessTokenCiphertext, ac.RefreshTokenCiphertext, ac.ClientKeyCiphertext)
 }
 
-func activeStatuses() []accountingconnection.ConnectionStatus {
+func ActiveStatuses() []accountingconnection.ConnectionStatus {
 	return []accountingconnection.ConnectionStatus{
 		accountingconnection.ConnectionStatusConnected,
 		accountingconnection.ConnectionStatusDegraded,
@@ -164,7 +165,7 @@ func (r *connectionRepository) ListDueForHealthCheck(
 			return withoutTokens().
 				AllTenants().
 				Where(
-					ac.Status.In(activeStatuses()...),
+					ac.Status.In(ActiveStatuses()...),
 					keel.Or(ac.LastCheckedAt.IsNull(), ac.LastCheckedAt.Lt(req.CheckedBefore)),
 				).
 				Order(ac.LastCheckedAt.Asc().NullsFirst(), ac.ID.Asc()).
@@ -278,9 +279,9 @@ func (r *connectionRepository) StoreTokens(
 			ac.RefreshTokenExpiresAt.To(req.RefreshTokenExpiresAt),
 			listquery.OptionalInt64(ac.LastRefreshedAt, req.RefreshedAt),
 			ac.UpdatedAt.To(req.At),
-			stringOrNull(ac.AccessTokenCiphertext, req.AccessTokenCiphertext),
-			stringOrNull(ac.RefreshTokenCiphertext, req.RefreshTokenCiphertext),
-			stringOrNull(ac.ClientKeyCiphertext, req.ClientKeyCiphertext),
+			keelassign.StringOrNull(ac.AccessTokenCiphertext, req.AccessTokenCiphertext),
+			keelassign.StringOrNull(ac.RefreshTokenCiphertext, req.RefreshTokenCiphertext),
+			keelassign.StringOrNull(ac.ClientKeyCiphertext, req.ClientKeyCiphertext),
 			keepConnectionVersion(),
 		)
 		if err != nil {
@@ -340,7 +341,7 @@ func (r *connectionRepository) MarkReferenceRefresh(
 		default:
 			sets = append(sets,
 				ac.ReferenceRefreshStartedAt.ToNull(),
-				stringOrNull(ac.ReferenceRefreshError, req.Error),
+				keelassign.StringOrNull(ac.ReferenceRefreshError, req.Error),
 			)
 			if req.RefreshedAt != nil {
 				sets = append(sets, ac.ReferenceRefreshedAt.To(*req.RefreshedAt))
@@ -364,8 +365,8 @@ func (r *connectionRepository) SaveChangeFeed(
 		ac := accountingconnectiondb.AccountingConnections
 		sets := []keel.Assignment{
 			keepConnectionVersion(),
-			stringOrNull(ac.ChangesErrorCategory.StringCol, string(req.ErrorCategory)),
-			stringOrNull(ac.ChangesErrorMessage, req.ErrorMessage),
+			keelassign.StringOrNull(ac.ChangesErrorCategory.StringCol, string(req.ErrorCategory)),
+			keelassign.StringOrNull(ac.ChangesErrorMessage, req.ErrorMessage),
 		}
 		if req.Cursor != "" {
 			sets = append(sets, ac.ChangeCursor.To(req.Cursor))
@@ -394,8 +395,8 @@ func (r *connectionRepository) SaveDriftCheck(
 		ac := accountingconnectiondb.AccountingConnections
 		sets := []keel.Assignment{
 			keepConnectionVersion(),
-			stringOrNull(ac.DriftErrorCategory.StringCol, string(req.ErrorCategory)),
-			stringOrNull(ac.DriftErrorMessage, req.ErrorMessage),
+			keelassign.StringOrNull(ac.DriftErrorCategory.StringCol, string(req.ErrorCategory)),
+			keelassign.StringOrNull(ac.DriftErrorMessage, req.ErrorMessage),
 		}
 		if req.CheckedAt != nil {
 			sets = append(sets, ac.DriftCheckedAt.To(*req.CheckedAt))
@@ -425,7 +426,7 @@ func (r *connectionRepository) ListActive(
 			return withoutTokens().
 				AllTenants().
 				Where(
-					ac.Status.In(activeStatuses()...),
+					ac.Status.In(ActiveStatuses()...),
 					keel.When(!req.AfterID.IsNil(), ac.ID.Gt(req.AfterID)),
 				).
 				Order(ac.ID.Asc()).
@@ -438,11 +439,4 @@ func (r *connectionRepository) ListActive(
 func keepConnectionVersion() keel.Assignment {
 	ac := accountingconnectiondb.AccountingConnections
 	return ac.Version.ToExpr(ac.Version)
-}
-
-func stringOrNull(col keel.StringCol, value string) keel.Assignment {
-	if value == "" {
-		return col.ToNull()
-	}
-	return col.To(value)
 }

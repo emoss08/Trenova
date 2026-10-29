@@ -1,4 +1,4 @@
-package accountingsyncrepository
+package accountinginboundrepository
 
 import (
 	"context"

@@ -1,12 +1,13 @@
 //go:build integration
 
-package accountingsyncrepository
+package accountingconnectionrepository
 
 import (
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
@@ -24,32 +25,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const realm = "9341452431742015"
-
-func newConnection(
-	tenant pagination.TenantInfo,
-	userID pulid.ID,
-	realmID string,
-	now int64,
-) *accountingconnection.AccountingConnection {
-	conn := &accountingconnection.AccountingConnection{
-		OrganizationID:  tenant.OrgID,
-		BusinessUnitID:  tenant.BuID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		ExternalRealmID: realmID,
-	}
-	conn.Connect(userID, accountingconnection.TokenGrant{
-		AccessTokenCiphertext:  "cipher-access",
-		AccessTokenExpiresAt:   now + 3600,
-		RefreshTokenCiphertext: "cipher-refresh",
-		RefreshTokenExpiresAt:  now + 8_640_000,
-	}, now)
-	conn.ApplyCompanyFacts(
-		&accountingconnection.CompanyFacts{CompanyName: "Acme", HomeCurrency: "USD"},
-	)
-	return conn
-}
-
 func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpdate(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
@@ -61,7 +36,10 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
-	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
+	created, err := repo.Create(
+		ctx,
+		accountingtest.NewConnection(tenant, data.User.ID, accountingtest.Realm, now),
+	)
 	require.NoError(t, err)
 
 	read, err := repo.GetByType(ctx, accountingconnectionports.GetAccountingConnectionRequest{
@@ -159,14 +137,17 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	}
 	now := timeutils.NowUnix()
 
-	held, err := repo.Create(ctx, newConnection(firstTenant, first.User.ID, realm, now))
+	held, err := repo.Create(
+		ctx,
+		accountingtest.NewConnection(firstTenant, first.User.ID, accountingtest.Realm, now),
+	)
 	require.NoError(t, err)
 
 	holders, err := repo.ListHoldingRealm(
 		ctx,
 		accountingconnectionports.ListAccountingConnectionsByRealmRequest{
 			IntegrationType: integration.TypeQuickBooksOnline,
-			RealmIDs:        []string{realm},
+			RealmIDs:        []string{accountingtest.Realm},
 		},
 	)
 	require.NoError(t, err)
@@ -174,7 +155,10 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	assert.Equal(t, firstTenant.OrgID, holders[0].OrganizationID)
 	assert.Empty(t, holders[0].AccessTokenCiphertext)
 
-	_, err = repo.Create(second.Ctx(ctx), newConnection(secondTenant, second.User.ID, realm, now))
+	_, err = repo.Create(
+		second.Ctx(ctx),
+		accountingtest.NewConnection(secondTenant, second.User.ID, accountingtest.Realm, now),
+	)
 	require.Error(t, err)
 	assert.True(t, dberror.IsUniqueConstraintViolation(err))
 
@@ -182,7 +166,10 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	_, err = repo.Update(ctx, held)
 	require.NoError(t, err)
 
-	_, err = repo.Create(second.Ctx(ctx), newConnection(secondTenant, second.User.ID, realm, now+6))
+	_, err = repo.Create(
+		second.Ctx(ctx),
+		accountingtest.NewConnection(secondTenant, second.User.ID, accountingtest.Realm, now+6),
+	)
 	require.NoError(t, err, "a disconnected connection releases its company")
 
 	_, err = repo.GetByID(
@@ -213,7 +200,10 @@ func TestConnectionRepository_HealthQueueWebhooksAndVersioning(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
-	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
+	created, err := repo.Create(
+		ctx,
+		accountingtest.NewConnection(tenant, data.User.ID, accountingtest.Realm, now),
+	)
 	require.NoError(t, err)
 
 	due, err := repo.ListDueForHealthCheck(
@@ -241,7 +231,7 @@ func TestConnectionRepository_HealthQueueWebhooksAndVersioning(t *testing.T) {
 		ctx,
 		accountingconnectionports.MarkAccountingWebhookRequest{
 			IntegrationType: integration.TypeQuickBooksOnline,
-			RealmIDs:        []string{realm, "someone-else"},
+			RealmIDs:        []string{accountingtest.Realm, "someone-else"},
 			ReceivedAt:      now + 3,
 		},
 	)
@@ -291,7 +281,10 @@ func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *te
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
-	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
+	created, err := repo.Create(
+		ctx,
+		accountingtest.NewConnection(tenant, data.User.ID, accountingtest.Realm, now),
+	)
 	require.NoError(t, err)
 	get := func() *accountingconnection.AccountingConnection {
 		conn, getErr := repo.GetByID(
@@ -355,7 +348,10 @@ func TestConnectionRepository_DriftCheckKeepsItsLastSuccessThroughAFailure(t *te
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
-	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
+	created, err := repo.Create(
+		ctx,
+		accountingtest.NewConnection(tenant, data.User.ID, accountingtest.Realm, now),
+	)
 	require.NoError(t, err)
 	get := func() *accountingconnection.AccountingConnection {
 		conn, getErr := repo.GetByID(

@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -111,7 +114,9 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		})
 	require.NoError(t, err)
 	period := ledgerFixturePeriod{ID: fiscalPeriod.ID, FiscalYearID: year.ID}
-	source := NewLedgerSource(LedgerSourceParams{DB: conn, Logger: zap.NewNop()})
+	source := accountingledgerrepository.NewLedgerSource(
+		accountingledgerrepository.LedgerSourceParams{DB: conn, Logger: zap.NewNop()},
+	)
 
 	carrierSettlement := &carriersettlement.CarrierSettlement{
 		ID:               pulid.MustNew("carstl_"),
@@ -439,10 +444,10 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 
 	t.Run("posted journals without a record are candidates", func(t *testing.T) {
 		records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: zap.NewNop()})
-		connection, connErr := NewConnectionRepository(
-			ConnectionParams{DB: conn, Logger: zap.NewNop()},
+		connection, connErr := accountingconnectionrepository.NewConnectionRepository(
+			accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
 		).
-			Create(ctx, newConnection(tenant, userID, realm, 1_000))
+			Create(ctx, accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000))
 		require.NoError(t, connErr)
 		list := func(objectType accountingsync.SyncObjectType) []pulid.ID {
 			t.Helper()
@@ -609,7 +614,9 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500, acctC: 0}, net(true, 2),
 				"undoing the carried-forward entry is left out with it")
 
-			connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
+			connections := accountingconnectionrepository.NewConnectionRepository(
+				accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+			)
 			connection, connErr := connections.GetByType(
 				ctx,
 				accountingconnectionports.GetAccountingConnectionRequest{
@@ -620,7 +627,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			if errortypes.IsNotFoundError(connErr) {
 				connection, connErr = connections.Create(
 					ctx,
-					newConnection(tenant, userID, realm, 1_000),
+					accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000),
 				)
 			}
 			require.NoError(t, connErr)

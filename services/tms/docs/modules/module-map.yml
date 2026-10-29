@@ -813,6 +813,12 @@ modules:
       - accountingsyncjobs
       - fiscaljobs
     repository:
+      - accountingconnectionrepository
+      - accountingdriftrepository
+      - accountinginboundrepository
+      - accountingledgerrepository
+      - accountingmappingrepository
+      - accountingpayablesrepository
       - accountingsyncrepository
       - accounttyperepository
       - fiscalperiodrepository

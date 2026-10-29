@@ -1,6 +1,12 @@
 package accounting
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingdriftrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountinginboundrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingmappingrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingpayablesrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accounttyperepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -48,19 +54,19 @@ func SharedOptions() fx.Option {
 			accountinginboundservice.New,
 			func(s *accountinginboundservice.Service) accountinginboundports.AccountingInboundService { return s },
 			glbalancerepository.New,
-			accountingsyncrepository.NewConnectionRepository,
-			accountingsyncrepository.NewAppCredentialRepository,
-			accountingsyncrepository.NewSubscriptionRepository,
-			accountingsyncrepository.NewPendingCertificateRepository,
-			accountingsyncrepository.NewReferenceRepository,
-			accountingsyncrepository.NewMappingRepository,
+			accountingconnectionrepository.NewConnectionRepository,
+			accountingconnectionrepository.NewAppCredentialRepository,
+			accountingconnectionrepository.NewSubscriptionRepository,
+			accountingconnectionrepository.NewPendingCertificateRepository,
+			accountingmappingrepository.NewReferenceRepository,
+			accountingmappingrepository.NewMappingRepository,
 			accountingsyncrepository.NewSyncRecordRepository,
-			accountingsyncrepository.NewInboundChangeRepository,
+			accountinginboundrepository.NewInboundChangeRepository,
 			accountingsyncrepository.NewBackfillRepository,
-			accountingsyncrepository.NewPayablesRepository,
-			accountingsyncrepository.NewDriftFindingRepository,
-			accountingsyncrepository.NewDriftSource,
-			accountingsyncrepository.NewLedgerSource,
+			accountingpayablesrepository.NewPayablesRepository,
+			accountingdriftrepository.NewDriftFindingRepository,
+			accountingdriftrepository.NewDriftSource,
+			accountingledgerrepository.NewLedgerSource,
 			accounttyperepository.New,
 			glaccountrepository.New,
 			fiscalyearrepository.New,

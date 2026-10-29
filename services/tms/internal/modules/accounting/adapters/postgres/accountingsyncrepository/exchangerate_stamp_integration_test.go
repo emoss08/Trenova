@@ -5,6 +5,7 @@ package accountingsyncrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingpayablesrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
@@ -44,7 +45,9 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 	payments := customerpaymentrepository.New(
 		customerpaymentrepository.Params{DB: conn, Logger: logger},
 	)
-	payables := NewPayablesRepository(PayablesParams{DB: conn, Logger: logger})
+	payables := accountingpayablesrepository.NewPayablesRepository(
+		accountingpayablesrepository.PayablesParams{DB: conn, Logger: logger},
+	)
 
 	const dated = int64(1_790_000_000)
 	rate := decimal.RequireFromString("0.731200000000")

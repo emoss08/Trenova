@@ -5,6 +5,10 @@ package accountingsyncrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingdriftrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountinginboundrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -48,7 +52,9 @@ func (f *syncFixture) driftFinding(
 
 func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 	f := setupSyncFixture(t)
-	repo := NewDriftFindingRepository(DriftFindingParams{DB: f.conn, Logger: zap.NewNop()})
+	repo := accountingdriftrepository.NewDriftFindingRepository(
+		accountingdriftrepository.DriftFindingParams{DB: f.conn, Logger: zap.NewNop()},
+	)
 	invoiceID := pulid.MustNew("inv_")
 
 	first, err := repo.Create(
@@ -117,7 +123,9 @@ func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 
 func TestDriftFindingRepository_SummaryAttentionAndTable(t *testing.T) {
 	f := setupSyncFixture(t)
-	repo := NewDriftFindingRepository(DriftFindingParams{DB: f.conn, Logger: zap.NewNop()})
+	repo := accountingdriftrepository.NewDriftFindingRepository(
+		accountingdriftrepository.DriftFindingParams{DB: f.conn, Logger: zap.NewNop()},
+	)
 
 	day := int64(86_400)
 	amountOld, err := repo.Create(
@@ -200,9 +208,11 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: logger})
-	source := NewDriftSource(DriftSourceParams{DB: conn, Logger: logger})
-	connection, err := NewConnectionRepository(ConnectionParams{DB: conn, Logger: logger}).
-		Create(ctx, newConnection(tenant, userID, realm, 1_000))
+	source := accountingdriftrepository.NewDriftSource(
+		accountingdriftrepository.DriftSourceParams{DB: conn, Logger: logger},
+	)
+	connection, err := accountingconnectionrepository.NewConnectionRepository(accountingconnectionrepository.ConnectionParams{DB: conn, Logger: logger}).
+		Create(ctx, accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000))
 	require.NoError(t, err)
 
 	const dated = int64(1_790_000_000)
@@ -591,8 +601,8 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 		At:           posted,
 	})
 	change.PartyObjectID = shipments[0].CustomerID
-	_, err = NewInboundChangeRepository(
-		InboundChangeParams{DB: conn, Logger: logger},
+	_, err = accountinginboundrepository.NewInboundChangeRepository(
+		accountinginboundrepository.InboundChangeParams{DB: conn, Logger: logger},
 	).Create(ctx, change)
 	require.NoError(t, err)
 	pending, err = source.ListPendingCustomers(

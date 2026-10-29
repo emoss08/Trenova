@@ -1,6 +1,6 @@
 //go:build integration
 
-package accountingsyncrepository
+package accountingconnectionrepository
 
 import (
 	"testing"

@@ -1,6 +1,6 @@
 //go:build integration
 
-package accountingsyncrepository
+package accountingmappingrepository
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -43,10 +45,17 @@ func setupMappingFixture(t *testing.T) *mappingFixture {
 	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
+	connections := accountingconnectionrepository.NewConnectionRepository(
+		accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+	)
 	created, err := connections.Create(
 		ctx,
-		newConnection(tenant, data.User.ID, realm, timeutils.NowUnix()),
+		accountingtest.NewConnection(
+			tenant,
+			data.User.ID,
+			accountingtest.Realm,
+			timeutils.NowUnix(),
+		),
 	)
 	require.NoError(t, err)
 

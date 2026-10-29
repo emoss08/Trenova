@@ -11,6 +11,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -50,8 +52,13 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	conn := postgres.NewTestConnection(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
-	connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
-	created, err := connections.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
+	connections := accountingconnectionrepository.NewConnectionRepository(
+		accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+	)
+	created, err := connections.Create(
+		ctx,
+		accountingtest.NewConnection(tenant, data.User.ID, accountingtest.Realm, now),
+	)
 	require.NoError(t, err)
 
 	return &syncFixture{
@@ -102,7 +109,9 @@ func (f *syncFixture) updateConnection(
 	change func(*accountingconnection.AccountingConnection),
 ) {
 	t.Helper()
-	connections := NewConnectionRepository(ConnectionParams{DB: f.conn, Logger: zap.NewNop()})
+	connections := accountingconnectionrepository.NewConnectionRepository(
+		accountingconnectionrepository.ConnectionParams{DB: f.conn, Logger: zap.NewNop()},
+	)
 	change(f.connection)
 	updated, err := connections.Update(f.ctx, f.connection)
 	require.NoError(t, err)
@@ -689,7 +698,9 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 
 func TestConnectionRepository_SyncSettingsAndPauseRoundTrip(t *testing.T) {
 	f := setupSyncFixture(t)
-	connections := NewConnectionRepository(ConnectionParams{DB: f.conn, Logger: zap.NewNop()})
+	connections := accountingconnectionrepository.NewConnectionRepository(
+		accountingconnectionrepository.ConnectionParams{DB: f.conn, Logger: zap.NewNop()},
+	)
 
 	f.connection.SetupStep = accountingconnection.SetupStepStartDate
 	f.connection.EnableSync(accountingconnection.SyncSettings{StartDate: f.now - 86_400}, f.now)

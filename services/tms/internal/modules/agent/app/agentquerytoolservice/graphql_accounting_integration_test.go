@@ -8,6 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingdriftrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingmappingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
@@ -177,17 +180,17 @@ func TestConvertedLists_AccountingReadsUnderRowLevelSecurity(t *testing.T) {
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
 	repos := &accountingRepos{
-		connections: accountingsyncrepository.NewConnectionRepository(
-			accountingsyncrepository.ConnectionParams{DB: conn, Logger: logger}),
+		connections: accountingconnectionrepository.NewConnectionRepository(
+			accountingconnectionrepository.ConnectionParams{DB: conn, Logger: logger}),
 		records: accountingsyncrepository.NewSyncRecordRepository(
 			accountingsyncrepository.SyncRecordParams{DB: conn, Logger: logger}),
-		findings: accountingsyncrepository.NewDriftFindingRepository(
-			accountingsyncrepository.DriftFindingParams{DB: conn, Logger: logger}),
-		mappings: accountingsyncrepository.NewMappingRepository(
-			accountingsyncrepository.MappingParams{DB: conn, Logger: logger}),
+		findings: accountingdriftrepository.NewDriftFindingRepository(
+			accountingdriftrepository.DriftFindingParams{DB: conn, Logger: logger}),
+		mappings: accountingmappingrepository.NewMappingRepository(
+			accountingmappingrepository.MappingParams{DB: conn, Logger: logger}),
 	}
-	references := accountingsyncrepository.NewReferenceRepository(
-		accountingsyncrepository.ReferenceParams{DB: conn, Logger: logger})
+	references := accountingmappingrepository.NewReferenceRepository(
+		accountingmappingrepository.ReferenceParams{DB: conn, Logger: logger})
 	resolvers := agentread.ResolverParams{
 		AccountingDriftService: accountingdriftservice.New(accountingdriftservice.Params{
 			Logger: logger, Connections: repos.connections, Findings: repos.findings,

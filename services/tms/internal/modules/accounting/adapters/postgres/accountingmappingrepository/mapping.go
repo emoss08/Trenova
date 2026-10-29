@@ -1,4 +1,4 @@
-package accountingsyncrepository
+package accountingmappingrepository
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/keelassign"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping/accountingmappingdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -244,12 +245,12 @@ func (r *mappingRepository) ApplyScoring(
 				db,
 				am.TargetLabel.To(entity.TargetLabel),
 				am.SearchLabel.To(entity.SearchLabel),
-				stringOrNull(am.ExternalID, entity.ExternalID),
-				stringOrNull(am.ExternalName, entity.ExternalName),
+				keelassign.StringOrNull(am.ExternalID, entity.ExternalID),
+				keelassign.StringOrNull(am.ExternalName, entity.ExternalName),
 				am.State.To(entity.State),
-				stringOrNull(am.Source.StringCol, string(entity.Source)),
+				keelassign.StringOrNull(am.Source.StringCol, string(entity.Source)),
 				float64OrNull(am.Confidence, entity.Confidence),
-				stringOrNull(am.Reason, entity.Reason),
+				keelassign.StringOrNull(am.Reason, entity.Reason),
 				am.Signals.To(entity.Signals),
 			)
 			if err != nil {

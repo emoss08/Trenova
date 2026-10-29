@@ -1,4 +1,4 @@
-package accountingsyncrepository
+package accountingledgerrepository
 
 import (
 	"cmp"
@@ -97,6 +97,10 @@ func carriedEntryTypes() []journalentry.EntryType {
 	return []journalentry.EntryType{journalentry.EntryTypeOpening}
 }
 
+func SendableJournals(je *journalentrydb.JournalEntriesTable) keel.Pred {
+	return withoutEntryTypes(je, unsentEntryTypes())
+}
+
 func withoutEntryTypes(
 	je *journalentrydb.JournalEntriesTable,
 	excluded []journalentry.EntryType,
@@ -156,7 +160,7 @@ func (s *ledgerSource) ListJournals(
 			je := journalentrydb.JournalEntries
 			entries, err := je.Where(
 				je.IsPosted.IsTrue(),
-				withoutEntryTypes(je, unsentEntryTypes()),
+				SendableJournals(je),
 				je.AccountingDate.Gte(req.From),
 				je.AccountingDate.Lt(req.Before),
 			).
