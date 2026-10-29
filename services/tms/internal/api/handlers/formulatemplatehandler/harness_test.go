@@ -11,7 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -173,24 +176,51 @@ func newFixture(t *testing.T, opts fixtureOptions) *fixture {
 		Versions:        f.versions,
 		LibraryVersions: f.libraryVersions,
 	})
+	checker := tariff.NewChecker(
+		tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}},
+	)
 	service := formulatemplateservice.New(formulatemplateservice.Params{
-		Logger:          logger,
-		DB:              dbtest.NopConnection{},
-		Repo:            f.repo,
-		VersionRepo:     f.versions,
-		ReviewRepo:      formulatemplateportsmock.NewMockFormulaTemplateReviewRepository(t),
-		LibraryVersions: f.libraryVersions,
-		Checker: tariff.NewChecker(
-			tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}},
-		),
+		Logger:       logger,
+		DB:           dbtest.NopConnection{},
+		Repo:         f.repo,
+		VersionRepo:  f.versions,
+		Checker:      checker,
 		Resolver:     resolver,
-		Rater:        f.rater,
-		Dependents:   noDependents{},
-		Records:      f.records,
 		AuditService: &mocks.NoopAuditService{},
+	})
+	reviews := formulatemplatereviewservice.New(formulatemplatereviewservice.Params{
+		Logger:      logger,
+		DB:          dbtest.NopConnection{},
+		Templates:   service,
+		Repo:        f.repo,
+		VersionRepo: f.versions,
+		ReviewRepo:  formulatemplateportsmock.NewMockFormulaTemplateReviewRepository(t),
+		Checker:     checker,
+		Resolver:    resolver,
+		Dependents:  noDependents{},
+	})
+	studio := formulatemplatestudioservice.New(formulatemplatestudioservice.Params{
+		Logger:          logger,
+		Templates:       service,
+		VersionRepo:     f.versions,
+		LibraryVersions: f.libraryVersions,
+		Checker:         checker,
+		Resolver:        resolver,
+		Rater:           f.rater,
+		Records:         f.records,
+	})
+	imports := formulatemplateimportservice.New(formulatemplateimportservice.Params{
+		Logger:      logger,
+		DB:          dbtest.NopConnection{},
+		Templates:   service,
+		Repo:        f.repo,
+		VersionRepo: f.versions,
 	})
 	f.handler = formulatemplatehandler.New(formulatemplatehandler.Params{
 		Service:       service,
+		Reviews:       reviews,
+		StudioService: studio,
+		Imports:       imports,
 		PageAssistant: opts.assistant,
 		StudioAssist:  opts.studio,
 		ErrorHandler:  errorHandler,

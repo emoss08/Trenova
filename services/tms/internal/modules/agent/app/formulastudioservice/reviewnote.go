@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -42,7 +43,7 @@ func (s *Service) DraftReviewNote(
 		return nil, err
 	}
 
-	template, err := s.engine.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
+	template, err := s.templates.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -50,7 +51,7 @@ func (s *Service) DraftReviewNote(
 		return nil, err
 	}
 
-	diff, err := s.engine.ReviewDiff(ctx, &formulatemplateservice.ReviewDiffRequest{
+	diff, err := s.reviews.ReviewDiff(ctx, &formulatemplatereviewservice.ReviewDiffRequest{
 		TenantInfo: req.TenantInfo,
 		TemplateID: req.TemplateID,
 	})
@@ -97,7 +98,7 @@ func (s *Service) backtestSaved(
 	req *formulastudioports.DraftFormulaReviewNoteRequest,
 	template *formulatemplate.FormulaTemplate,
 ) *formulatemplateports.BacktestSummary {
-	result, err := s.engine.Backtest(ctx, &formulatemplateservice.BacktestRequest{
+	result, err := s.studio.Backtest(ctx, &formulatemplatestudioservice.BacktestRequest{
 		TenantInfo: req.TenantInfo,
 		TemplateID: req.TemplateID,
 		Source:     template.Source,
@@ -131,7 +132,7 @@ func reviewTemplateText(template *formulatemplate.FormulaTemplate) string {
 	)
 }
 
-func diffText(diff *formulatemplateservice.ReviewDiffResponse) string {
+func diffText(diff *formulatemplatereviewservice.ReviewDiffResponse) string {
 	if !diff.HasApprovedBase {
 		return "This is the template's first version; nothing has been approved before, so " +
 			"all of it is new.\nSource:\n" + diff.CurrentSource

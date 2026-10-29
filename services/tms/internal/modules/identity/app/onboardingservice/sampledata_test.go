@@ -5,23 +5,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +36,11 @@ type recordingCreator[T any] struct {
 	err     error
 }
 
-func (r *recordingCreator[T]) Create(_ context.Context, entity T, _ *permissionports.RequestActor) (T, error) {
+func (r *recordingCreator[T]) Create(
+	_ context.Context,
+	entity T,
+	_ *permissionports.RequestActor,
+) (T, error) {
 	if r.err != nil && len(r.created) == r.failAt {
 		var zero T
 		return zero, r.err
@@ -55,8 +59,8 @@ type fakeTemplates struct {
 func (f *fakeTemplates) InstallStandards(
 	context.Context,
 	pagination.TenantInfo,
-) (*formulatemplateservice.InstallStandardsResponse, error) {
-	return &formulatemplateservice.InstallStandardsResponse{Installed: f.installed}, nil
+) (*formulatemplateimportservice.InstallStandardsResponse, error) {
+	return &formulatemplateimportservice.InstallStandardsResponse{Installed: f.installed}, nil
 }
 
 type fakeTemplateFinder struct {
@@ -98,19 +102,35 @@ type sampleHarness struct {
 
 func newSampleHarness() *sampleHarness {
 	h := &sampleHarness{
-		customers:      &recordingCreator[*customer.Customer]{setID: func(e *customer.Customer) { e.ID = pulid.MustNew("cus_") }},
-		locations:      &recordingCreator[*location.Location]{setID: func(e *location.Location) { e.ID = pulid.MustNew("loc_") }},
-		locationTypes:  &recordingCreator[*locationcategory.LocationCategory]{setID: func(e *locationcategory.LocationCategory) { e.ID = pulid.MustNew("lc_") }},
-		workers:        &recordingCreator[*worker.Worker]{setID: func(e *worker.Worker) { e.ID = pulid.MustNew("wrk_") }},
-		tractors:       &recordingCreator[*tractor.Tractor]{},
-		trailers:       &recordingCreator[*trailer.Trailer]{},
-		equipmentTypes: &recordingCreator[*equipmenttype.EquipmentType]{setID: func(e *equipmenttype.EquipmentType) { e.ID = pulid.MustNew("et_") }},
-		manufacturers:  &recordingCreator[*equipmentmanufacturer.EquipmentManufacturer]{setID: func(e *equipmentmanufacturer.EquipmentManufacturer) { e.ID = pulid.MustNew("em_") }},
-		serviceTypes:   &recordingCreator[*servicetype.ServiceType]{setID: func(e *servicetype.ServiceType) { e.ID = pulid.MustNew("st_") }},
-		shipmentTypes:  &recordingCreator[*shipmenttype.ShipmentType]{setID: func(e *shipmenttype.ShipmentType) { e.ID = pulid.MustNew("sht_") }},
-		shipments:      &recordingCreator[*shipment.Shipment]{},
-		templates:      &fakeTemplates{},
-		finder:         &fakeTemplateFinder{},
+		customers: &recordingCreator[*customer.Customer]{
+			setID: func(e *customer.Customer) { e.ID = pulid.MustNew("cus_") },
+		},
+		locations: &recordingCreator[*location.Location]{
+			setID: func(e *location.Location) { e.ID = pulid.MustNew("loc_") },
+		},
+		locationTypes: &recordingCreator[*locationcategory.LocationCategory]{
+			setID: func(e *locationcategory.LocationCategory) { e.ID = pulid.MustNew("lc_") },
+		},
+		workers: &recordingCreator[*worker.Worker]{
+			setID: func(e *worker.Worker) { e.ID = pulid.MustNew("wrk_") },
+		},
+		tractors: &recordingCreator[*tractor.Tractor]{},
+		trailers: &recordingCreator[*trailer.Trailer]{},
+		equipmentTypes: &recordingCreator[*equipmenttype.EquipmentType]{
+			setID: func(e *equipmenttype.EquipmentType) { e.ID = pulid.MustNew("et_") },
+		},
+		manufacturers: &recordingCreator[*equipmentmanufacturer.EquipmentManufacturer]{
+			setID: func(e *equipmentmanufacturer.EquipmentManufacturer) { e.ID = pulid.MustNew("em_") },
+		},
+		serviceTypes: &recordingCreator[*servicetype.ServiceType]{
+			setID: func(e *servicetype.ServiceType) { e.ID = pulid.MustNew("st_") },
+		},
+		shipmentTypes: &recordingCreator[*shipmenttype.ShipmentType]{
+			setID: func(e *shipmenttype.ShipmentType) { e.ID = pulid.MustNew("sht_") },
+		},
+		shipments: &recordingCreator[*shipment.Shipment]{},
+		templates: &fakeTemplates{},
+		finder:    &fakeTemplateFinder{},
 	}
 	h.loader = &SampleData{
 		customers:      h.customers,
@@ -126,7 +146,9 @@ func newSampleHarness() *sampleHarness {
 		shipments:      h.shipments,
 		templates:      h.templates,
 		templateFinder: h.finder,
-		states:         &fakeStates{state: &usstate.UsState{ID: pulid.MustNew("us_"), Abbreviation: "TX"}},
+		states: &fakeStates{
+			state: &usstate.UsState{ID: pulid.MustNew("us_"), Abbreviation: "TX"},
+		},
 		now: func() time.Time {
 			return time.Date(2026, time.October, 4, 15, 0, 0, 0, time.UTC)
 		},
@@ -238,7 +260,9 @@ func TestSampleDataFindsAnAlreadyInstalledFlatRate(t *testing.T) {
 
 	h := newSampleHarness()
 	templateID := pulid.MustNew("ft_")
-	h.finder.found = []*formulatemplate.FormulaTemplate{{ID: templateID, Name: flatRateTemplateName}}
+	h.finder.found = []*formulatemplate.FormulaTemplate{
+		{ID: templateID, Name: flatRateTemplateName},
+	}
 
 	require.NoError(t, h.loader.Load(t.Context(), sampleRequest()))
 	assert.Equal(t, templateID, h.shipments.created[0].FormulaTemplateID)
@@ -257,7 +281,9 @@ func TestSampleDataStopsAtTheFirstQuotaRefusal(t *testing.T) {
 	t.Parallel()
 
 	h := newSampleHarness()
-	h.finder.found = []*formulatemplate.FormulaTemplate{{ID: pulid.MustNew("ft_"), Name: flatRateTemplateName}}
+	h.finder.found = []*formulatemplate.FormulaTemplate{
+		{ID: pulid.MustNew("ft_"), Name: flatRateTemplateName},
+	}
 	h.shipments.err = errortypes.NewQuotaExceededError("shipments.total", 1, 1, "free_demo")
 	h.shipments.failAt = 1
 

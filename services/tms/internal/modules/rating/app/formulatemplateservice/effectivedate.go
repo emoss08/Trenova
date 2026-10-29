@@ -15,11 +15,9 @@ import (
 	"go.uber.org/zap"
 )
 
-const versionNumberField = "versionNumber"
-
 const effectiveFromGraceSeconds int64 = 3600
 
-func validateEffectiveFrom(effectiveFrom int64) error {
+func ValidateEffectiveFrom(effectiveFrom int64) error {
 	if effectiveFrom <= timeutils.NowUnix()-effectiveFromGraceSeconds {
 		return errortypes.NewValidationError(
 			"effectiveFrom",
@@ -37,7 +35,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 	log := s.l.With(
 		zap.String("operation", "UpdateVersionEffectiveDate"),
 		zap.String("templateID", req.TemplateID.String()),
-		zap.Int64(versionNumberField, req.VersionNumber),
+		zap.Int64(VersionNumberField, req.VersionNumber),
 	)
 
 	version, err := s.versionRepo.GetByTemplateAndVersion(
@@ -53,7 +51,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 		return nil, err
 	}
 
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	template, err := s.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get formula template", zap.Error(err))
 		return nil, err
@@ -69,7 +67,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 
 	if version.Status != formulatemplate.StatusActive {
 		return nil, errortypes.NewValidationError(
-			versionNumberField,
+			VersionNumberField,
 			errortypes.ErrInvalid,
 			"Only approved snapshots can be scheduled; this version was captured while the template was {0}",
 			version.Status.String(),
@@ -91,7 +89,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 	case req.EffectiveFrom == nil:
 		req.EffectiveFrom = &now
 	default:
-		if err = validateEffectiveFrom(*req.EffectiveFrom); err != nil {
+		if err = ValidateEffectiveFrom(*req.EffectiveFrom); err != nil {
 			return nil, err
 		}
 	}
@@ -106,7 +104,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 		return nil, err
 	}
 
-	s.logAuditAction(
+	s.LogAuditAction(
 		ctx,
 		log,
 		template,
@@ -115,7 +113,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 		nil,
 		"Formula template version effective date updated",
 		auditservice.WithMetadata(map[string]any{
-			versionNumberField:      req.VersionNumber,
+			VersionNumberField:      req.VersionNumber,
 			"previousEffectiveFrom": previousStart,
 			"effectiveFrom":         *req.EffectiveFrom,
 		}),
@@ -135,22 +133,22 @@ func (s *Service) rescheduleBilledContent(
 	resolved := template.ApplyVersionFull(version)
 	resolved.CurrentVersionNumber = template.CurrentVersionNumber + 1
 
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: templateTenant(resolved),
-		source: resolved.Source,
-		mode:   tariff.LibrariesPinned,
-		pins:   version.Imports,
-		tables: version.Tables,
+	content, err := s.CheckContent(ctx, &ContentRequest{
+		Tenant: TemplateTenant(resolved),
+		Source: resolved.Source,
+		Mode:   tariff.LibrariesPinned,
+		Pins:   version.Imports,
+		Tables: version.Tables,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if refusal := content.refusal(); refusal != nil {
+	if refusal := content.Refusal(); refusal != nil {
 		return nil, refusal
 	}
-	if !content.testsPass() {
+	if !content.TestsPass() {
 		return nil, errortypes.NewValidationError(
-			versionNumberField,
+			VersionNumberField,
 			errortypes.ErrInvalid,
 			"Version {0}'s tests no longer pass with the libraries it pinned, so it cannot bill again",
 			version.VersionNumber,
@@ -189,7 +187,7 @@ func (s *Service) rescheduleBilledContent(
 		return nil, err
 	}
 
-	s.logAuditAction(
+	s.LogAuditAction(
 		ctx,
 		log,
 		resolved,
@@ -199,7 +197,7 @@ func (s *Service) rescheduleBilledContent(
 		changeMessage,
 		auditservice.WithMetadata(map[string]any{
 			"sourceVersionNumber": version.VersionNumber,
-			versionNumberField:    scheduled.VersionNumber,
+			VersionNumberField:    scheduled.VersionNumber,
 			"effectiveFrom":       *req.EffectiveFrom,
 		}),
 		auditservice.WithCritical(),

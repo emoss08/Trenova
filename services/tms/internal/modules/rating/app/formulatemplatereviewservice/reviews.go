@@ -1,4 +1,4 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func (s *Service) ListReviews(
 	ctx context.Context,
 	req *ListReviewsRequest,
 ) ([]*formulatemplate.Review, error) {
-	if _, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo); err != nil {
+	if _, err := s.templates.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo); err != nil {
 		return nil, err
 	}
 
@@ -219,8 +219,7 @@ func (s *Service) expireSubmission(
 	if err != nil {
 		return err
 	}
-
-	s.logAuditAction(
+	s.templates.LogAuditAction(
 		ctx,
 		s.l.With(zap.String("operation", "ExpireSubmission")),
 		updated,

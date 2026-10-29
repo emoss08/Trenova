@@ -1,9 +1,10 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -71,7 +72,7 @@ type submissionGate struct {
 	details ReadinessCheck
 	source  ReadinessCheck
 	tests   ReadinessCheck
-	content *contentCheck
+	content *formulatemplateservice.ContentCheck
 }
 
 func (g *submissionGate) checks() []ReadinessCheck {
@@ -104,7 +105,7 @@ func (s *Service) Readiness(
 		zap.String("templateID", req.TemplateID.String()),
 	)
 
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	template, err := s.templates.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get formula template", zap.Error(err))
 		return nil, err
@@ -121,8 +122,8 @@ func (s *Service) Readiness(
 		return nil, err
 	}
 	resp.TestTotal = len(gate.content.tests.Tests)
-	resp.TestPassed = gate.content.passedTests()
-	resp.TestFailing = gate.content.failingTests()
+	resp.TestPassed = gate.content.PassedTests()
+	resp.TestFailing = gate.content.FailingTests()
 	resp.Coverage = tariff.SummarizeCoverage(template.Source, gate.content.tests.Coverage)
 	locale := i18n.FromContext(ctx)
 
@@ -136,7 +137,7 @@ func (s *Service) Readiness(
 		Key:   ReadinessCheckDependents,
 		Label: i18n.Translate(locale, "Contracts still fit"),
 	}
-	if gate.content.checks() {
+	if gate.content.Checks() {
 		result, gateErr := s.checkDependents(ctx, template, gate.content)
 		if gateErr != nil {
 			log.Error("failed to check the template's dependents", zap.Error(gateErr))
@@ -189,10 +190,10 @@ func (s *Service) evaluateSubmissionGate(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 ) (*submissionGate, error) {
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: templateTenant(template),
-		source: template.Source,
-		mode:   tariff.LibrariesLatest,
+	content, err := s.templates.CheckContent(ctx, &formulatemplateservice.ContentRequest{
+		Tenant: formulatemplateservice.TemplateTenant(template),
+		Source: template.Source,
+		Mode:   tariff.LibrariesLatest,
 	})
 	if err != nil {
 		return nil, err
@@ -204,7 +205,7 @@ func (s *Service) evaluateSubmissionGate(
 func newSubmissionGate(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
-	content *contentCheck,
+	content *formulatemplateservice.ContentCheck,
 ) *submissionGate {
 	locale := i18n.FromContext(ctx)
 	return &submissionGate{
@@ -297,12 +298,15 @@ func detailsReadiness(
 	return check
 }
 
-func sourceReadiness(locale i18n.Locale, content *contentCheck) ReadinessCheck {
+func sourceReadiness(
+	locale i18n.Locale,
+	content *formulatemplateservice.ContentCheck,
+) ReadinessCheck {
 	check := ReadinessCheck{
 		Key:   ReadinessCheckSource,
 		Label: i18n.Translate(locale, "Source checks clean"),
 	}
-	if content.checks() {
+	if content.Checks() {
 		check.Status = ReadinessPass
 		check.Detail = i18n.Translate(
 			locale,
@@ -313,7 +317,7 @@ func sourceReadiness(locale i18n.Locale, content *contentCheck) ReadinessCheck {
 
 	check.Status = ReadinessFail
 	check.Detail = i18n.Translate(locale, "The source does not check")
-	if first := content.checked.Check.FirstError(); first != nil {
+	if first := content.Checked.Check.FirstError(); first != nil {
 		check.Detail = first.Message.Localize(locale)
 	}
 	check.refusal = i18n.Translate(
@@ -324,7 +328,10 @@ func sourceReadiness(locale i18n.Locale, content *contentCheck) ReadinessCheck {
 	return check
 }
 
-func testsReadiness(locale i18n.Locale, content *contentCheck) ReadinessCheck {
+func testsReadiness(
+	locale i18n.Locale,
+	content *formulatemplateservice.ContentCheck,
+) ReadinessCheck {
 	check := ReadinessCheck{
 		Key:   ReadinessCheckTests,
 		Label: i18n.Translate(locale, "Tests pass"),
@@ -333,10 +340,10 @@ func testsReadiness(locale i18n.Locale, content *contentCheck) ReadinessCheck {
 	if content.tests != nil {
 		total = len(content.tests.Tests)
 	}
-	passed := content.passedTests()
+	passed := content.PassedTests()
 
 	switch {
-	case !content.checks():
+	case !content.Checks():
 		check.Status = ReadinessFail
 		check.Detail = i18n.Translate(locale, "The tests run once the source checks")
 	case total == 0:
@@ -366,10 +373,10 @@ func testsReadiness(locale i18n.Locale, content *contentCheck) ReadinessCheck {
 
 func coverageReadiness(
 	locale i18n.Locale,
-	content *contentCheck,
+	content *formulatemplateservice.ContentCheck,
 	coverage *tariff.CoverageSummary,
 ) ReadinessCheck {
-	verdict := tariff.CoverageCheck(locale, content.checks(), coverage)
+	verdict := tariff.CoverageCheck(locale, content.Checks(), coverage)
 	return ReadinessCheck{
 		Key:    ReadinessCheckCoverage,
 		Label:  verdict.Label,
@@ -393,7 +400,11 @@ func (s *Service) libraryReadiness(
 		return check, nil
 	}
 
-	latest, err := s.resolver.LatestLibraries(ctx, templateTenant(template), template.Source)
+	latest, err := s.resolver.LatestLibraries(
+		ctx,
+		formulatemplateservice.TemplateTenant(template),
+		template.Source,
+	)
 	if err != nil {
 		return check, err
 	}
@@ -437,7 +448,7 @@ func (s *Service) libraryReadiness(
 func tableReadiness(
 	locale i18n.Locale,
 	template *formulatemplate.FormulaTemplate,
-	content *contentCheck,
+	content *formulatemplateservice.ContentCheck,
 ) ReadinessCheck {
 	check := ReadinessCheck{
 		Key:    ReadinessCheckTables,
@@ -445,8 +456,8 @@ func tableReadiness(
 		Status: ReadinessPass,
 	}
 	latest := []tarifftypes.TablePin{}
-	if content != nil && content.checked != nil {
-		latest = content.checked.Tables
+	if content != nil && content.Checked != nil {
+		latest = content.Checked.Tables
 	}
 	if len(latest) == 0 {
 		check.Detail = i18n.Translate(locale, "Reads no rate table")

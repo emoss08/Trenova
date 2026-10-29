@@ -1,10 +1,11 @@
-package formulatemplateservice
+package formulatemplatestudioservice
 
 import (
 	"context"
 	"sort"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -84,7 +85,7 @@ func (s *Service) Backtest(ctx context.Context, req *BacktestRequest) (*Backtest
 	}
 	ctx = effectiveversioncache.With(ctx)
 
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	template, err := s.templates.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get formula template", zap.Error(err))
 		return nil, err
@@ -107,13 +108,33 @@ func validateBacktestRequest(req *BacktestRequest) error {
 
 	switch {
 	case req.Source == "" && req.VersionNumber == nil:
-		multiErr.Add(fieldSource, errortypes.ErrRequired, "Either a source or a version number is required")
-		multiErr.Add(versionNumberField, errortypes.ErrRequired, "Either a source or a version number is required")
+		multiErr.Add(
+			formulatemplateservice.FieldSource,
+			errortypes.ErrRequired,
+			"Either a source or a version number is required",
+		)
+		multiErr.Add(
+			formulatemplateservice.VersionNumberField,
+			errortypes.ErrRequired,
+			"Either a source or a version number is required",
+		)
 	case req.Source != "" && req.VersionNumber != nil:
-		multiErr.Add(fieldSource, errortypes.ErrInvalid, "Provide either a source or a version number, not both")
-		multiErr.Add(versionNumberField, errortypes.ErrInvalid, "Provide either a source or a version number, not both")
+		multiErr.Add(
+			formulatemplateservice.FieldSource,
+			errortypes.ErrInvalid,
+			"Provide either a source or a version number, not both",
+		)
+		multiErr.Add(
+			formulatemplateservice.VersionNumberField,
+			errortypes.ErrInvalid,
+			"Provide either a source or a version number, not both",
+		)
 	case len(req.Source) > tarifftypes.MaxSourceLength:
-		multiErr.Add(fieldSource, errortypes.ErrInvalid, "Source cannot exceed 64 KiB")
+		multiErr.Add(
+			formulatemplateservice.FieldSource,
+			errortypes.ErrInvalid,
+			"Source cannot exceed 64 KiB",
+		)
 	}
 
 	if req.Limit > backtestMaxLimit {
@@ -132,18 +153,21 @@ func (s *Service) backtestCandidate(
 	template *formulatemplate.FormulaTemplate,
 ) (*ratedContent, error) {
 	if req.VersionNumber != nil {
-		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
-			TenantInfo:    req.TenantInfo,
-			TemplateID:    req.TemplateID,
-			VersionNumber: *req.VersionNumber,
-		})
+		version, err := s.versionRepo.GetByTemplateAndVersion(
+			ctx,
+			&formulatemplateports.GetVersionRequest{
+				TenantInfo:    req.TenantInfo,
+				TemplateID:    req.TemplateID,
+				VersionNumber: *req.VersionNumber,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
 		return s.pinnedContent(ctx, req.TenantInfo, version.Source, version.Imports, version.Tables)
 	}
 
-	return s.latestContent(ctx, templateTenant(template), req.Source)
+	return s.latestContent(ctx, formulatemplateservice.TemplateTenant(template), req.Source)
 }
 
 func (s *Service) latestContent(
@@ -151,18 +175,18 @@ func (s *Service) latestContent(
 	tenant pagination.TenantInfo,
 	source string,
 ) (*ratedContent, error) {
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: tenant,
-		source: source,
-		mode:   tariff.LibrariesLatest,
+	content, err := s.templates.CheckContent(ctx, &formulatemplateservice.ContentRequest{
+		Tenant: tenant,
+		Source: source,
+		Mode:   tariff.LibrariesLatest,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if refusal := content.refusal(); refusal != nil {
+	if refusal := content.Refusal(); refusal != nil {
 		return nil, refusal
 	}
-	return &ratedContent{source: source, libraries: content.checked.Context.Libraries}, nil
+	return &ratedContent{source: source, libraries: content.Checked.Context.Libraries}, nil
 }
 
 func (s *Service) pinnedContent(
@@ -190,16 +214,24 @@ func (s *Service) ApprovalImpact(
 	req *ApprovalImpactRequest,
 ) (*BacktestResponse, error) {
 	if req.Limit > backtestMaxLimit {
-		return nil, errortypes.NewValidationError("limit", errortypes.ErrInvalid, "Limit cannot exceed 500")
+		return nil, errortypes.NewValidationError(
+			"limit",
+			errortypes.ErrInvalid,
+			"Limit cannot exceed 500",
+		)
 	}
 	ctx = effectiveversioncache.With(ctx)
 
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	template, err := s.templates.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	candidate, err := s.latestContent(ctx, templateTenant(template), template.Source)
+	candidate, err := s.latestContent(
+		ctx,
+		formulatemplateservice.TemplateTenant(template),
+		template.Source,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +260,7 @@ func (s *Service) rateRecorded(
 		)
 	}
 
-	tenant := templateTenant(template)
+	tenant := formulatemplateservice.TemplateTenant(template)
 	records, err := s.rated.RatedByTemplate(ctx, &tariffports.RatedByTemplateRequest{
 		TenantInfo: tenant,
 		TemplateID: template.ID,
@@ -260,7 +292,7 @@ func (s *Service) backtestShipment(
 	record *tariffports.RatedShipment,
 ) *BacktestResult {
 	result := &BacktestResult{ShipmentID: record.ShipmentID, ProNumber: record.ProNumber}
-	tenant := templateTenant(template)
+	tenant := formulatemplateservice.TemplateTenant(template)
 
 	if record.Billed.Valid {
 		result.CurrentSource = BacktestCurrentBilled
@@ -300,7 +332,8 @@ func (s *Service) backtestShipment(
 
 func adjusted(bill *tarifftypes.Bill) bool {
 	for i := range bill.Lines {
-		if bill.Lines[i].Kind == tarifftypes.LineMinimum || bill.Lines[i].Kind == tarifftypes.LineMaximum {
+		if bill.Lines[i].Kind == tarifftypes.LineMinimum ||
+			bill.Lines[i].Kind == tarifftypes.LineMaximum {
 			return true
 		}
 	}
@@ -320,7 +353,7 @@ func (s *Service) recomputeCurrent(
 	}
 
 	rated, err := s.rateSource(ctx, &sourceRating{
-		tenant:    templateTenant(template),
+		tenant:    formulatemplateservice.TemplateTenant(template),
 		name:      template.Name,
 		source:    current.source,
 		libraries: current.libraries,
@@ -343,7 +376,7 @@ func (s *Service) recordedContent(
 	template *formulatemplate.FormulaTemplate,
 	record *tariffports.RatedShipment,
 ) (*ratedContent, error) {
-	tenant := templateTenant(template)
+	tenant := formulatemplateservice.TemplateTenant(template)
 	if record.VersionNumber > 0 {
 		version, err := effectiveversioncache.GetVersion(
 			ctx,
@@ -382,11 +415,14 @@ func (s *Service) lookupVersion(
 	versionNumber int64,
 	tenantInfo pagination.TenantInfo,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
-	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
-		TenantInfo:    tenantInfo,
-		TemplateID:    templateID,
-		VersionNumber: versionNumber,
-	})
+	version, err := s.versionRepo.GetByTemplateAndVersion(
+		ctx,
+		&formulatemplateports.GetVersionRequest{
+			TenantInfo:    tenantInfo,
+			TemplateID:    templateID,
+			VersionNumber: versionNumber,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) || dberror.IsNotFoundError(err) {
 			return nil, nil //nolint:nilnil // a stamp that points at nothing falls back to billing

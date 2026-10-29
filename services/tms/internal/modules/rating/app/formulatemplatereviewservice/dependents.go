@@ -1,9 +1,10 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	tarifferrors "github.com/emoss08/trenova/internal/modules/rating/app/tariff/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -23,7 +24,6 @@ const (
 
 	maxDependentSets      = 2_000
 	maxReportedDependents = 20
-	fieldInputs           = "inputs"
 	usageBillingFallback  = "billing_control_fallback"
 )
 
@@ -50,10 +50,10 @@ func (g *dependentsGate) blocking() bool {
 func (s *Service) checkDependents(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
-	content *contentCheck,
+	content *formulatemplateservice.ContentCheck,
 ) (*dependentsGate, error) {
 	gate := &dependentsGate{Failures: []DependentFailure{}}
-	tenant := templateTenant(template)
+	tenant := formulatemplateservice.TemplateTenant(template)
 
 	base, err := s.versionRepo.GetLatestByStatus(
 		ctx,
@@ -66,7 +66,7 @@ func (s *Service) checkDependents(
 	if err != nil {
 		return nil, err
 	}
-	declared := tarifftypes.InputDeclsFrom(content.checked.Check.Inputs)
+	declared := tarifftypes.InputDeclsFrom(content.Checked.Check.Inputs)
 	if base != nil && tarifftypes.DeclsEqual(base.Inputs, declared) {
 		gate.Skipped = "The inputs are declared as in the approved version, so every contract still fits"
 		return gate, nil
@@ -106,7 +106,7 @@ func (s *Service) checkDependents(
 		check, checkErr := s.checker.CheckWithContext(ctx, &tariff.ContextCheckRequest{
 			Source:  template.Source,
 			Kind:    rules.TariffKindTariff,
-			Context: content.checked.Context,
+			Context: content.Checked.Context,
 			Values: &rules.TariffInputValues{
 				Rule:      map[string]rules.RawJSON(set.Rule),
 				Agreement: map[string]rules.RawJSON(set.Agreement),
@@ -174,7 +174,7 @@ func dependentsRefusal(locale i18n.Locale, gate *dependentsGate) error {
 	}
 
 	return errortypes.NewValidationError(
-		fieldInputs,
+		formulatemplateservice.FieldInputs,
 		errortypes.ErrInvalid,
 		"This version's inputs no longer accept what {0, plural, one {# contract or shipment} other {# contracts and shipments}} already set: {1}. Keep the inputs those contracts use, or change the contracts first",
 		total,

@@ -20,7 +20,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratezonerepository"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
@@ -92,6 +95,11 @@ func SharedOptions() fx.Option {
 		),
 		tariff.AuthoringModule,
 		formulatemplateservice.Module,
+		fx.Provide(
+			formulatemplatereviewservice.New,
+			formulatemplatestudioservice.New,
+			formulatemplateimportservice.New,
+		),
 		formulalibraryservice.Module,
 		rateengine.Module,
 	)

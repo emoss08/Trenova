@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -33,7 +33,7 @@ func (s *Service) DescribeInputs(
 		return nil, err
 	}
 
-	tested, err := s.engine.TestSource(ctx, &formulatemplateservice.TestSourceRequest{
+	tested, err := s.studio.TestSource(ctx, &formulatemplatestudioservice.TestSourceRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Draft.Source,
 	})

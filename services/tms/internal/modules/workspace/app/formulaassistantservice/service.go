@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
@@ -40,14 +40,14 @@ type templateEngine interface {
 	StudioContext(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*formulatemplateservice.StudioContext, error)
+	) (*formulatemplatestudioservice.StudioContext, error)
 	TestSource(
 		ctx context.Context,
-		req *formulatemplateservice.TestSourceRequest,
-	) (*formulatemplateservice.TestSourceResult, error)
+		req *formulatemplatestudioservice.TestSourceRequest,
+	) (*formulatemplatestudioservice.TestSourceResult, error)
 	Preview(
 		ctx context.Context,
-		req *formulatemplateservice.PreviewRequest,
+		req *formulatemplatestudioservice.PreviewRequest,
 	) (*formulatemplateports.PreviewResult, error)
 }
 
@@ -65,7 +65,7 @@ type catalogReader interface {
 type Params struct {
 	fx.In
 
-	Templates *formulatemplateservice.Service
+	Templates *formulatemplatestudioservice.Service
 	Libraries *formulalibraryservice.Service
 	Checker   *tariff.Checker
 }
@@ -84,7 +84,7 @@ type Language struct {
 	ModuleVersion string
 	Catalog       rules.RawJSON
 	Context       *rules.TariffContext
-	Libraries     []formulatemplateservice.StudioLibrary
+	Libraries     []formulatemplatestudioservice.StudioLibrary
 }
 
 func (s *Service) Language(
@@ -165,7 +165,7 @@ func (s *Service) Check(ctx context.Context, req *CheckRequest) (*Checked, error
 		return checkedOf(ctx, req.Source, result.Check, result.Imports, result.Tests), nil
 	}
 
-	result, err := s.templates.TestSource(ctx, &formulatemplateservice.TestSourceRequest{
+	result, err := s.templates.TestSource(ctx, &formulatemplatestudioservice.TestSourceRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Source,
 	})
@@ -251,7 +251,7 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Preview, e
 		)
 	}
 
-	previewReq := &formulatemplateservice.PreviewRequest{
+	previewReq := &formulatemplatestudioservice.PreviewRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Source,
 		Inputs:     req.Inputs,

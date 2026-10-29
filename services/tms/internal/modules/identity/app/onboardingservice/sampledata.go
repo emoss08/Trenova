@@ -26,7 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
@@ -73,7 +73,7 @@ type formulaTemplates interface {
 	InstallStandards(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*formulatemplateservice.InstallStandardsResponse, error)
+	) (*formulatemplateimportservice.InstallStandardsResponse, error)
 }
 
 type stateFinder interface {
@@ -100,7 +100,7 @@ type SampleDataParams struct {
 	Manufacturers    *equipmentmanufacturerservice.Service
 	ServiceTypes     *servicetypeservice.Service
 	ShipmentTypes    *shipmenttypeservice.Service
-	FormulaTemplates *formulatemplateservice.Service
+	FormulaTemplates *formulatemplateimportservice.Service
 	TemplateFinder   formulatemplateports.FormulaTemplateRepository
 	States           usstateports.UsStateRepository
 	Shipments        shipmentserviceports.ShipmentService

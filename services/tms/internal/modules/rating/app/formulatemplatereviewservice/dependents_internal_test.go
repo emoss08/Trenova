@@ -1,8 +1,9 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func TestTheDependentsRefusalCountsEveryDependentAndNamesTheFirstFew(t *testing.
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, fieldInputs, validation.Field)
+	assert.Equal(t, formulatemplateservice.FieldInputs, validation.Field)
 	assert.Equal(t,
 		"This version's inputs no longer accept what 4 contracts and shipments already set: "+
 			"Acme 2026 and 2 more (rules[0].inputs.rate: `rate` must be from $0.50/mi to $15.00/mi; "+

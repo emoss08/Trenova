@@ -5,10 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/wasmmodule"
-
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
@@ -16,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -26,35 +25,39 @@ const perMileSource = "tariff \"Per Mile\"\n\ninput rate: Money/mi\n\n" +
 	"charge \"Per Mile\" (quantity: shipment.distance, rate: rate)\n"
 
 type fakeTemplates struct {
-	result   *formulatemplateservice.TestSourceResult
+	result   *formulatemplatestudioservice.TestSourceResult
 	preview  *formulatemplateports.PreviewResult
-	tested   []*formulatemplateservice.TestSourceRequest
-	previews []*formulatemplateservice.PreviewRequest
+	tested   []*formulatemplatestudioservice.TestSourceRequest
+	previews []*formulatemplatestudioservice.PreviewRequest
 }
 
 func (f *fakeTemplates) StudioContext(
 	context.Context,
 	pagination.TenantInfo,
-) (*formulatemplateservice.StudioContext, error) {
-	return &formulatemplateservice.StudioContext{
+) (*formulatemplatestudioservice.StudioContext, error) {
+	return &formulatemplatestudioservice.StudioContext{
 		Context: &rules.TariffContext{
-			Libraries: []rules.TariffLibrary{{Path: "org.accessorials", Source: "library \"org.accessorials\"\n"}},
+			Libraries: []rules.TariffLibrary{
+				{Path: "org.accessorials", Source: "library \"org.accessorials\"\n"},
+			},
 		},
-		Libraries: []formulatemplateservice.StudioLibrary{{Path: "org.accessorials", Name: "accessorials"}},
+		Libraries: []formulatemplatestudioservice.StudioLibrary{
+			{Path: "org.accessorials", Name: "accessorials"},
+		},
 	}, nil
 }
 
 func (f *fakeTemplates) TestSource(
 	_ context.Context,
-	req *formulatemplateservice.TestSourceRequest,
-) (*formulatemplateservice.TestSourceResult, error) {
+	req *formulatemplatestudioservice.TestSourceRequest,
+) (*formulatemplatestudioservice.TestSourceResult, error) {
 	f.tested = append(f.tested, req)
 	return f.result, nil
 }
 
 func (f *fakeTemplates) Preview(
 	_ context.Context,
-	req *formulatemplateservice.PreviewRequest,
+	req *formulatemplatestudioservice.PreviewRequest,
 ) (*formulatemplateports.PreviewResult, error) {
 	f.previews = append(f.previews, req)
 	return f.preview, nil
@@ -114,7 +117,7 @@ type fixture struct {
 }
 
 func newFixture() *fixture {
-	templates := &fakeTemplates{result: &formulatemplateservice.TestSourceResult{
+	templates := &fakeTemplates{result: &formulatemplatestudioservice.TestSourceResult{
 		Check:   cleanCheck(),
 		Imports: []tarifftypes.Import{{Path: "org.accessorials", VersionNumber: 2}},
 		Tests:   passing("a short haul"),

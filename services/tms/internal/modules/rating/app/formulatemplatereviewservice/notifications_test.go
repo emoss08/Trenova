@@ -1,14 +1,14 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
-
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatetest"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	notificationdomain "github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -48,8 +48,8 @@ func TestSubmit_NotifiesReviewers(t *testing.T) {
 	deps := setupTest(t)
 	captured := withNotifications(t, deps)
 
-	tenant := newTenantInfo()
-	template := newTestTemplate()
+	tenant := formulatemplatetest.NewTenantInfo()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -81,11 +81,11 @@ func TestApprove_NotifiesSubmitter(t *testing.T) {
 	deps := setupTest(t)
 	captured := withNotifications(t, deps)
 
-	tenant := newTenantInfo()
+	tenant := formulatemplatetest.NewTenantInfo()
 	submitterID := pulid.MustNew("usr_")
 	submittedAt := timeutils.NowUnix() - 3600
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
@@ -123,7 +123,7 @@ func TestReject_NotifiesSubmitterWithComment(t *testing.T) {
 	submitterID := pulid.MustNew("usr_")
 	submittedAt := timeutils.NowUnix() - 3600
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
@@ -136,7 +136,7 @@ func TestReject_NotifiesSubmitterWithComment(t *testing.T) {
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	_, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		EntityID:   template.ID,
 		Comment:    "the fuel step is wrong",
 	})
@@ -158,11 +158,11 @@ func TestReject_SkipsNotificationWhenRejectorIsSubmitter(t *testing.T) {
 	deps := setupTest(t)
 	captured := withNotifications(t, deps)
 
-	tenant := newTenantInfo()
+	tenant := formulatemplatetest.NewTenantInfo()
 	submitterID := tenant.UserID
 	submittedAt := timeutils.NowUnix() - 3600
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
@@ -194,7 +194,7 @@ func TestReject_ARevisionReturnsToDraftAndTheApprovedVersionKeepsBilling(t *test
 
 	submitterID := pulid.MustNew("usr_")
 	submittedAt := timeutils.NowUnix() - 3600
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusInReview
 	template.CurrentVersionNumber = 4
 	template.SubmittedByID = &submitterID
@@ -211,7 +211,7 @@ func TestReject_ARevisionReturnsToDraftAndTheApprovedVersionKeepsBilling(t *test
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		EntityID:   template.ID,
 		Comment:    "the fuel step is wrong",
 	})

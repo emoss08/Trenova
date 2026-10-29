@@ -8,15 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-var versionDiffIgnoreFields = []string{
-	"id",
-	"createdAt",
-	"createdById",
-	"versionNumber",
-	"changeMessage",
-	"changeSummary",
-}
-
 func expressionErrorMessage(ctx context.Context, err error) string {
 	var multiErr *errortypes.MultiError
 	if goErrors.As(err, &multiErr) && len(multiErr.Errors) > 0 {

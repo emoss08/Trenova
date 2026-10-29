@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -48,7 +48,7 @@ func (s *Service) SuggestTests(
 		return nil, err
 	}
 
-	current, err := s.engine.TestSource(ctx, &formulatemplateservice.TestSourceRequest{
+	current, err := s.studio.TestSource(ctx, &formulatemplatestudioservice.TestSourceRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Draft.Source,
 	})
@@ -100,7 +100,7 @@ func (s *Service) SuggestTests(
 	}
 	source.WriteString("\n")
 
-	run, err := s.engine.TestSource(ctx, &formulatemplateservice.TestSourceRequest{
+	run, err := s.studio.TestSource(ctx, &formulatemplatestudioservice.TestSourceRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     source.String(),
 	})
@@ -218,7 +218,7 @@ func (s *Service) ExplainTest(
 		return nil, err
 	}
 
-	run, err := s.engine.TestSource(ctx, &formulatemplateservice.TestSourceRequest{
+	run, err := s.studio.TestSource(ctx, &formulatemplatestudioservice.TestSourceRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Draft.Source,
 	})

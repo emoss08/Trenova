@@ -1,4 +1,4 @@
-package formulatemplateservice
+package formulatemplatestudioservice
 
 import (
 	"context"
@@ -7,8 +7,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/pkg/wasmmodule"
-
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	tarifferrors "github.com/emoss08/trenova/internal/modules/rating/app/tariff/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
@@ -19,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -43,13 +43,21 @@ func previewBounds(source string, inputs tarifftypes.Inputs) error {
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case strings.TrimSpace(source) == "":
-		multiErr.Add(fieldSource, errortypes.ErrRequired, "Source is required")
+		multiErr.Add(
+			formulatemplateservice.FieldSource,
+			errortypes.ErrRequired,
+			"Source is required",
+		)
 	case len(source) > tarifftypes.MaxSourceLength:
-		multiErr.Add(fieldSource, errortypes.ErrInvalid, "Source cannot exceed 64 KiB")
+		multiErr.Add(
+			formulatemplateservice.FieldSource,
+			errortypes.ErrInvalid,
+			"Source cannot exceed 64 KiB",
+		)
 	}
 	if len(inputs) > MaxPreviewInputs {
 		multiErr.Add(
-			fieldInputs,
+			formulatemplateservice.FieldInputs,
 			errortypes.ErrInvalid,
 			"A preview takes at most {0} inputs",
 			MaxPreviewInputs,
@@ -76,17 +84,17 @@ func (s *Service) Preview(
 		return nil, err
 	}
 
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: req.TenantInfo,
-		source: req.Source,
-		mode:   tariff.LibrariesLatest,
+	content, err := s.templates.CheckContent(ctx, &formulatemplateservice.ContentRequest{
+		Tenant: req.TenantInfo,
+		Source: req.Source,
+		Mode:   tariff.LibrariesLatest,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	result := previewOf(content)
-	if !content.checks() {
+	if !content.Checks() {
 		return result, nil
 	}
 
@@ -98,7 +106,7 @@ func (s *Service) Preview(
 	rated, err := s.rateSource(ctx, &sourceRating{
 		tenant:    req.TenantInfo,
 		source:    req.Source,
-		libraries: content.checked.Context.Libraries,
+		libraries: content.Checked.Context.Libraries,
 		inputs:    req.Inputs,
 		shipment:  shipment,
 		trace:     true,
@@ -123,14 +131,14 @@ func (s *Service) Preview(
 	return result, nil
 }
 
-func previewOf(content *contentCheck) *formulatemplateports.PreviewResult {
-	check := content.checked.Check
+func previewOf(content *formulatemplateservice.ContentCheck) *formulatemplateports.PreviewResult {
+	check := content.Checked.Check
 	result := &formulatemplateports.PreviewResult{
-		Valid:       content.checks(),
+		Valid:       content.Checks(),
 		Diagnostics: check.Diagnostics,
 		Inputs:      tarifftypes.InputDeclsFrom(check.Inputs),
-		Imports:     content.checked.Imports,
-		Tables:      content.checked.Tables,
+		Imports:     content.Checked.Imports,
+		Tables:      content.Checked.Tables,
 		Charges:     check.Charges,
 		Tests:       content.tests.Tests,
 		Choices:     []rules.TariffChoice{},
@@ -234,7 +242,7 @@ func (s *Service) rateSource(
 
 	result, err := s.rater.Rate(leashed, rate)
 	if err != nil && ctx.Err() == nil && errors.Is(leashed.Err(), context.DeadlineExceeded) {
-		return nil, timeoutMessage().ValidationError(fieldSource, errortypes.ErrInvalid).
+		return nil, timeoutMessage().ValidationError(formulatemplateservice.FieldSource, errortypes.ErrInvalid).
 			WithInternal(context.DeadlineExceeded)
 	}
 	return result, err
@@ -423,15 +431,15 @@ func (s *Service) ScaffoldTest(
 		)
 	}
 
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: req.TenantInfo,
-		source: req.Source,
-		mode:   tariff.LibrariesLatest,
+	content, err := s.templates.CheckContent(ctx, &formulatemplateservice.ContentRequest{
+		Tenant: req.TenantInfo,
+		Source: req.Source,
+		Mode:   tariff.LibrariesLatest,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if refusal := content.refusal(); refusal != nil {
+	if refusal := content.Refusal(); refusal != nil {
 		return nil, refusal
 	}
 
@@ -447,7 +455,7 @@ func (s *Service) ScaffoldTest(
 	scaffold, err := s.checker.ScaffoldTest(ctx, &tariff.ScaffoldRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Source,
-		Context:    content.checked.Context,
+		Context:    content.Checked.Context,
 		Record:     shipment.Record,
 		Inputs:     map[string]rules.RawJSON(inputs),
 		Name:       name,
@@ -456,11 +464,11 @@ func (s *Service) ScaffoldTest(
 		return nil, err
 	}
 	if scaffold.Error != nil {
-		return nil, tarifferrors.Evaluation(fieldSource, scaffold.Error)
+		return nil, tarifferrors.Evaluation(formulatemplateservice.FieldSource, scaffold.Error)
 	}
 	if scaffold.Test == nil {
 		return nil, errortypes.NewValidationError(
-			fieldSource,
+			formulatemplateservice.FieldSource,
 			errortypes.ErrInvalid,
 			"The formula did not rate this shipment, so no test could be written from it",
 		)
@@ -490,20 +498,20 @@ func (s *Service) TestSource(
 		return nil, err
 	}
 
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: req.TenantInfo,
-		source: req.Source,
-		mode:   tariff.LibrariesLatest,
+	content, err := s.templates.CheckContent(ctx, &formulatemplateservice.ContentRequest{
+		Tenant: req.TenantInfo,
+		Source: req.Source,
+		Mode:   tariff.LibrariesLatest,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &TestSourceResult{
-		Check:   content.checked.Check,
-		Inputs:  tarifftypes.InputDeclsFrom(content.checked.Check.Inputs),
-		Imports: content.checked.Imports,
-		Tables:  content.checked.Tables,
+		Check:   content.Checked.Check,
+		Inputs:  tarifftypes.InputDeclsFrom(content.Checked.Check.Inputs),
+		Imports: content.Checked.Imports,
+		Tables:  content.Checked.Tables,
 		Tests:   content.tests,
 	}, nil
 }

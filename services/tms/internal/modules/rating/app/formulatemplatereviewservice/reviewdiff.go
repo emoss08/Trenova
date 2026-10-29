@@ -1,8 +1,9 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,7 +45,7 @@ func (s *Service) ReviewDiff(
 		zap.String("templateID", req.TemplateID.String()),
 	)
 
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	template, err := s.templates.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get formula template", zap.Error(err))
 		return nil, err
@@ -88,7 +89,7 @@ func (s *Service) ReviewDiff(
 	}
 
 	changes, err := jsonutils.JSONDiff(base, current, &jsonutils.DiffOptions{
-		IgnoreFields: versionDiffIgnoreFields,
+		IgnoreFields: formulatemplateservice.VersionDiffIgnoreFields,
 	})
 	if err != nil {
 		log.Error("failed to compute review diff", zap.Error(err))

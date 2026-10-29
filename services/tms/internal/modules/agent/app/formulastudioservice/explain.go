@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -81,7 +81,7 @@ func (s *Service) ExplainFormula(
 		return nil, err
 	}
 
-	previewReq := &formulatemplateservice.PreviewRequest{
+	previewReq := &formulatemplatestudioservice.PreviewRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Draft.Source,
 		Inputs:     req.Inputs,
@@ -90,7 +90,7 @@ func (s *Service) ExplainFormula(
 		shipmentID := req.ShipmentID
 		previewReq.ShipmentID = &shipmentID
 	}
-	preview, err := s.engine.Preview(ctx, previewReq)
+	preview, err := s.studio.Preview(ctx, previewReq)
 	if err != nil {
 		return nil, err
 	}

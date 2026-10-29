@@ -1,4 +1,4 @@
-package formulatemplateservice
+package formulatemplateimportservice
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -77,7 +78,7 @@ func (s *Service) Import(
 				return txErr
 			}
 
-			if txErr = s.createVersionSnapshot(
+			if txErr = s.templates.CreateVersionSnapshot(
 				txCtx, createdEntity, 1, req.TenantInfo.UserID, "Imported", nil,
 			); txErr != nil {
 				log.Error("failed to create version snapshot", zap.Error(txErr))
@@ -94,7 +95,7 @@ func (s *Service) Import(
 	}
 
 	for _, entity := range created {
-		s.logAuditAction(
+		s.templates.LogAuditAction(
 			ctx,
 			log,
 			entity,
@@ -262,7 +263,7 @@ func (s *Service) buildImportEntities(
 
 	entities := make([]*formulatemplate.FormulaTemplate, 0, len(payloads))
 	for index, payload := range payloads {
-		source, err := s.renamed(ctx, payload.Source, payload.Name)
+		source, err := s.templates.Renamed(ctx, payload.Source, payload.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -290,7 +291,7 @@ func (s *Service) buildImportEntities(
 		}
 
 		indexed := multiErr.WithIndex("templates", index)
-		if vErr := s.prepareContent(ctx, entity); vErr != nil {
+		if vErr := s.templates.PrepareContent(ctx, entity); vErr != nil {
 			if !errortypes.IsError(vErr) {
 				return nil, vErr
 			}
@@ -320,5 +321,5 @@ func addIndexedValidationError(indexed *errortypes.MultiError, err error) {
 		indexed.AddError(fieldErr)
 		return
 	}
-	indexed.Add(fieldSource, errortypes.ErrInvalid, err.Error())
+	indexed.Add(formulatemplateservice.FieldSource, errortypes.ErrInvalid, err.Error())
 }

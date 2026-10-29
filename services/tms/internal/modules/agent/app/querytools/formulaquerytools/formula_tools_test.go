@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
@@ -63,7 +63,7 @@ func (f *fakeWorkbench) Language(
 			},
 			Settings: rules.TariffSettings{DistanceUnit: "mi"},
 		},
-		Libraries: []formulatemplateservice.StudioLibrary{{
+		Libraries: []formulatemplatestudioservice.StudioLibrary{{
 			Path:          "org.accessorials",
 			Name:          "accessorials",
 			Description:   "Hazmat and residential fees",

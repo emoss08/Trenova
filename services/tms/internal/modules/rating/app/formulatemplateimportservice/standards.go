@@ -1,10 +1,11 @@
-package formulatemplateservice
+package formulatemplateimportservice
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice/standardcatalog"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -125,7 +126,7 @@ func (s *Service) InstallStandards(
 	}
 
 	for _, entity := range installed {
-		s.logAuditAction(
+		s.templates.LogAuditAction(
 			ctx,
 			log,
 			entity,
@@ -153,25 +154,25 @@ func (s *Service) standardTemplate(
 		Status:         formulatemplate.StatusActive,
 	}.Build()
 
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: tenantInfo,
-		source: entity.Source,
-		mode:   tariff.LibrariesLatest,
+	content, err := s.templates.CheckContent(ctx, &formulatemplateservice.ContentRequest{
+		Tenant: tenantInfo,
+		Source: entity.Source,
+		Mode:   tariff.LibrariesLatest,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if refusal := content.refusal(); refusal != nil {
+	if refusal := content.Refusal(); refusal != nil {
 		return nil, refusal
 	}
-	if !content.testsPass() {
+	if !content.TestsPass() {
 		return nil, errortypes.NewBusinessError(
 			"The standard template {0} does not pass its own tests on this server",
 			entry.Name,
 		)
 	}
 
-	applyContent(entity, content)
+	formulatemplateservice.ApplyContent(entity, content)
 	now := timeutils.NowUnix()
 	if tenantInfo.UserID.IsNotNil() {
 		approver := tenantInfo.UserID

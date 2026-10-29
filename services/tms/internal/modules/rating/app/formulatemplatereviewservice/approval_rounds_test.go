@@ -1,14 +1,15 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
-	"github.com/emoss08/trenova/shared/i18n"
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatetest"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	notificationdomain "github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -65,7 +66,7 @@ func TestSubmit_OpensARoundAgainstTheApprovedBase(t *testing.T) {
 	deps := setupTest(t)
 	reviews := primeReviews(deps, nil)
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -77,7 +78,7 @@ func TestSubmit_OpensARoundAgainstTheApprovedBase(t *testing.T) {
 	_, err := deps.svc.Submit(
 		t.Context(),
 		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
-			TenantInfo: newTenantInfo(),
+			TenantInfo: formulatemplatetest.NewTenantInfo(),
 			EntityID:   template.ID,
 			Comment:    "please review",
 		}},
@@ -100,7 +101,7 @@ func TestSubmit_AfterChangesRequestedStaysInTheSameRound(t *testing.T) {
 		Round: 2, Decision: formulatemplate.ReviewDecisionChangesRequested,
 	})
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -111,7 +112,7 @@ func TestSubmit_AfterChangesRequestedStaysInTheSameRound(t *testing.T) {
 	_, err := deps.svc.Submit(
 		t.Context(),
 		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
-			TenantInfo: newTenantInfo(),
+			TenantInfo: formulatemplatetest.NewTenantInfo(),
 			EntityID:   template.ID,
 		}},
 	)
@@ -132,7 +133,7 @@ func TestRequestChanges_KeepsTheSubmitterAndRecordsTheRound(t *testing.T) {
 
 	submitterID := pulid.MustNew("usr_")
 	submittedAt := timeutils.NowUnix() - 3600
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
@@ -142,7 +143,7 @@ func TestRequestChanges_KeepsTheSubmitterAndRecordsTheRound(t *testing.T) {
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.RequestChanges(t.Context(), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		EntityID:   template.ID,
 		Comment:    "guard the weight",
 	})
@@ -171,7 +172,7 @@ func TestRequestChanges_RequiresAComment(t *testing.T) {
 	primeReviews(deps, nil)
 
 	_, err := deps.svc.RequestChanges(t.Context(), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		EntityID:   pulid.MustNew("ft_"),
 	})
 	require.Error(t, err)
@@ -184,7 +185,7 @@ func TestApprove_RefusesAStaleSubmission(t *testing.T) {
 
 	submitterID := pulid.MustNew("usr_")
 	submittedAt := timeutils.NowUnix() - formulatemplate.SubmissionExpiry - 60
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
@@ -193,7 +194,7 @@ func TestApprove_RefusesAStaleSubmission(t *testing.T) {
 
 	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		EntityID:   template.ID,
 	})
 
@@ -210,13 +211,13 @@ func TestExpireStaleSubmissions_ReturnsTemplatesToDraftAndRecordsIt(t *testing.T
 	now := timeutils.NowUnix()
 	submitterID := pulid.MustNew("usr_")
 	oldSubmission := now - formulatemplate.SubmissionExpiry - 3600
-	stale := newTestTemplate()
+	stale := formulatemplatetest.NewTemplate()
 	stale.Status = formulatemplate.StatusInReview
 	stale.SubmittedByID = &submitterID
 	stale.SubmittedAt = &oldSubmission
 
 	freshSubmission := now - 60
-	fresh := newTestTemplate()
+	fresh := formulatemplatetest.NewTemplate()
 	fresh.Status = formulatemplate.StatusInReview
 	fresh.SubmittedAt = &freshSubmission
 
@@ -269,7 +270,7 @@ func TestSubmissionAgeCheck(t *testing.T) {
 	stale := now - formulatemplate.SubmissionExpiry - 1
 
 	inReview := func(at *int64) *formulatemplate.FormulaTemplate {
-		template := newTestTemplate()
+		template := formulatemplatetest.NewTemplate()
 		template.Status = formulatemplate.StatusInReview
 		template.SubmittedAt = at
 		return template
@@ -279,7 +280,7 @@ func TestSubmissionAgeCheck(t *testing.T) {
 	assert.Equal(t, ReadinessWarn, submissionAgeCheck(i18n.Default, inReview(&aging), now).Status)
 	assert.Equal(t, ReadinessFail, submissionAgeCheck(i18n.Default, inReview(&stale), now).Status)
 
-	draft := newTestTemplate()
+	draft := formulatemplatetest.NewTemplate()
 	draft.Status = formulatemplate.StatusDraft
 	assert.Equal(t, ReadinessPass, submissionAgeCheck(i18n.Default, draft, now).Status,
 		"age only matters while a decision is pending")
@@ -288,7 +289,7 @@ func TestSubmissionAgeCheck(t *testing.T) {
 func approvableTemplate(deps *testDeps) *formulatemplate.FormulaTemplate {
 	submitterID := pulid.MustNew("usr_")
 	submittedAt := timeutils.NowUnix() - 3600
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
@@ -322,7 +323,7 @@ func TestApprove_TheApprovedSnapshotTakesEffectWhenApproved(t *testing.T) {
 	before := timeutils.NowUnix()
 	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		EntityID:   template.ID,
 	})
 	require.NoError(t, err)
@@ -353,7 +354,7 @@ func TestApproveFrom_AChosenDateStartsTheWindowThen(t *testing.T) {
 	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	_, err := deps.svc.ApproveFrom(t.Context(), &ApproveRequest{
 		ApprovalActionRequest: ApprovalActionRequest{
-			TenantInfo: newTenantInfo(),
+			TenantInfo: formulatemplatetest.NewTenantInfo(),
 			EntityID:   template.ID,
 		},
 		EffectiveFrom: &firstOfNextMonth,
@@ -373,7 +374,7 @@ func TestApproveFrom_RefusesADateInThePast(t *testing.T) {
 	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	_, err := deps.svc.ApproveFrom(t.Context(), &ApproveRequest{
 		ApprovalActionRequest: ApprovalActionRequest{
-			TenantInfo: newTenantInfo(),
+			TenantInfo: formulatemplatetest.NewTenantInfo(),
 			EntityID:   pulid.MustNew("ft_"),
 		},
 		EffectiveFrom: &lastWeek,
@@ -390,7 +391,7 @@ func TestApprove_RefusesAnyoneWhoAuthoredTheRevision(t *testing.T) {
 		Round: 2, Decision: formulatemplate.ReviewDecisionSubmitted, BaseVersionNumber: 4,
 	})
 	template := approvableTemplate(deps)
-	approver := newTenantInfo()
+	approver := formulatemplatetest.NewTenantInfo()
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.MatchedBy(
@@ -414,9 +415,9 @@ func TestApprove_ApproveOwnLetsTheSubmitterWhoAuthoredItApproveAndTheAuditSaysSo
 	primeReviews(deps, &formulatemplate.Review{
 		Round: 2, Decision: formulatemplate.ReviewDecisionSubmitted, BaseVersionNumber: 4,
 	})
-	logged := captureAudit(deps)
+	logged := formulatemplatetest.CaptureAudit(deps.auditSvc)
 	template := approvableTemplate(deps)
-	author := newTenantInfo()
+	author := formulatemplatetest.NewTenantInfo()
 	template.SubmittedByID = &author.UserID
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -432,7 +433,7 @@ func TestApprove_ApproveOwnLetsTheSubmitterWhoAuthoredItApproveAndTheAuditSaysSo
 	assert.Equal(t, formulatemplate.StatusActive, approved.Status)
 	assert.Equal(t,
 		"Formula template approved by its author, without a second reviewer",
-		logged.last(t).Comment,
+		logged.Last(t).Comment,
 	)
 }
 
@@ -441,7 +442,7 @@ func TestApprove_WithoutApproveOwnTheSubmitterIsStillRefused(t *testing.T) {
 	deps := setupTest(t)
 	primeReviews(deps, nil)
 	template := approvableTemplate(deps)
-	author := newTenantInfo()
+	author := formulatemplatetest.NewTenantInfo()
 	template.SubmittedByID = &author.UserID
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)

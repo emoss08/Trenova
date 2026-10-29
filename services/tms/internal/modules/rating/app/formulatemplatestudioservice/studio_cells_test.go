@@ -1,16 +1,15 @@
-package formulatemplateservice
+package formulatemplatestudioservice
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatetest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-const testTablesStamp = "2:4:1767225600"
 
 func TestStudioCells_RefusesNeedsItWillNotServe(t *testing.T) {
 	t.Parallel()
@@ -41,7 +40,7 @@ func TestStudioCells_RefusesNeedsItWillNotServe(t *testing.T) {
 
 			deps := setupTest(t)
 			_, err := deps.svc.StudioCells(t.Context(), &StudioCellsRequest{
-				TenantInfo: newTenantInfo(),
+				TenantInfo: formulatemplatetest.NewTenantInfo(),
 				Needs:      tt.needs,
 			})
 			var validation *errortypes.Error
@@ -56,11 +55,11 @@ func TestStudioCells_AnswersTheTablesStampAndLeavesOutUnknownTables(t *testing.T
 
 	deps := setupTest(t)
 	cells, err := deps.svc.StudioCells(t.Context(), &StudioCellsRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		Needs:      []rules.TariffNeed{{Table: "Missing", Keys: []string{"A"}}},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, testTablesStamp, cells.Stamp)
+	assert.Equal(t, formulatemplatetest.TablesStamp, cells.Stamp)
 	assert.Empty(t, cells.Tables)
 }
 
@@ -68,8 +67,8 @@ func TestStudioContext_CarriesTheTablesStamp(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTest(t)
-	studio, err := deps.svc.StudioContext(t.Context(), newTenantInfo())
+	studio, err := deps.svc.StudioContext(t.Context(), formulatemplatetest.NewTenantInfo())
 	require.NoError(t, err)
-	assert.Equal(t, testTablesStamp, studio.TablesStamp)
+	assert.Equal(t, formulatemplatetest.TablesStamp, studio.TablesStamp)
 	require.NotNil(t, studio.Context)
 }

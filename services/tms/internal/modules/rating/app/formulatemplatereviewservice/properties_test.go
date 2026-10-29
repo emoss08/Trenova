@@ -1,9 +1,10 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
 	"strconv"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatetest"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -68,7 +69,7 @@ property "the rate bounds keep the bill positive" {
 `
 
 func draftWith(deps *testDeps, source string) *formulatemplate.FormulaTemplate {
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.Status = formulatemplate.StatusDraft
 	template.Source = source
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -81,13 +82,16 @@ func TestSubmit_AFailingPropertyIsRefusedNamingItsCounterexample(t *testing.T) {
 	primeReviews(deps, nil)
 	template := draftWith(deps, heavierBillsLessSource)
 
-	_, err := deps.svc.Submit(t.Context(), &SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
-		EntityID:   template.ID,
-	}})
+	_, err := deps.svc.Submit(
+		t.Context(),
+		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: formulatemplatetest.NewTenantInfo(),
+			EntityID:   template.ID,
+		}},
+	)
 
 	require.Error(t, err)
-	fields := validationFields(t, err)
+	fields := formulatemplatetest.ValidationFields(t, err)
 	require.Contains(t, fields, ReadinessCheckTests)
 	assert.Equal(t,
 		"Only 1 of 2 tests pass (heavier never bills less (total is $200.00 at shipment.weight = "+
@@ -108,7 +112,7 @@ func TestReadiness_AFailingPropertyBlocksSubmitAndCoverageOnlyWarns(t *testing.T
 		Return(&formulatemplateports.GetTemplateUsageResponse{}, nil)
 
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		TemplateID: template.ID,
 	})
 
@@ -137,7 +141,7 @@ func TestReadiness_PassingPropertiesSubmitAndUnreachedRegionsWarn(t *testing.T) 
 		Return(&formulatemplateports.GetTemplateUsageResponse{}, nil)
 
 	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
-		TenantInfo: newTenantInfo(),
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
 		TemplateID: template.ID,
 	})
 
@@ -171,10 +175,13 @@ func TestSubmit_PassingPropertiesAreSubmitted(t *testing.T) {
 		Return(&formulatemplate.FormulaTemplateVersion{VersionNumber: 1}, nil)
 	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	_, err := deps.svc.Submit(t.Context(), &SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
-		EntityID:   template.ID,
-	}})
+	_, err := deps.svc.Submit(
+		t.Context(),
+		&SubmitRequest{ApprovalActionRequest: ApprovalActionRequest{
+			TenantInfo: formulatemplatetest.NewTenantInfo(),
+			EntityID:   template.ID,
+		}},
+	)
 
 	require.NoError(t, err)
 }

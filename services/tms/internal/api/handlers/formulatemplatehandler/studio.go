@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -134,7 +135,7 @@ func (h *Handler) explainFormula(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if len(req.Inputs) > formulatemplateservice.MaxPreviewInputs {
+	if len(req.Inputs) > formulatemplatestudioservice.MaxPreviewInputs {
 		h.eh.HandleError(c, errortypes.NewValidationError(
 			"inputs",
 			errortypes.ErrInvalid,
@@ -301,7 +302,7 @@ func (h *Handler) explainTest(c *gin.Context) {
 		return
 	}
 	name := strings.TrimSpace(req.TestName)
-	if name == "" || utf8.RuneCountInString(name) > formulatemplateservice.MaxTestNameLength {
+	if name == "" || utf8.RuneCountInString(name) > formulatemplatestudioservice.MaxTestNameLength {
 		h.eh.HandleError(c, errortypes.NewValidationError(
 			"testName",
 			errortypes.ErrInvalid,
@@ -377,7 +378,7 @@ func (h *Handler) reviewNote(c *gin.Context) {
 // @Tags Formula Templates
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Success 200 {array} formulatemplateservice.Reviewer
+// @Success 200 {array} formulatemplatereviewservice.Reviewer
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
@@ -393,9 +394,9 @@ func (h *Handler) listReviewers(c *gin.Context) {
 		return
 	}
 
-	reviewers, err := h.service.ListReviewers(
+	reviewers, err := h.reviews.ListReviewers(
 		c.Request.Context(),
-		&formulatemplateservice.ListReviewersRequest{
+		&formulatemplatereviewservice.ListReviewersRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			TemplateID: templateID,
 		},

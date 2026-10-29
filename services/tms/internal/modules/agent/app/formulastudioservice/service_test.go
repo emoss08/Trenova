@@ -13,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -94,9 +95,9 @@ func (s stubAccess) MayUseAgent(
 
 type stubEngine struct {
 	preview  *formulatemplateports.PreviewResult
-	tests    func(source string) *formulatemplateservice.TestSourceResult
-	diff     *formulatemplateservice.ReviewDiffResponse
-	previews []*formulatemplateservice.PreviewRequest
+	tests    func(source string) *formulatemplatestudioservice.TestSourceResult
+	diff     *formulatemplatereviewservice.ReviewDiffResponse
+	previews []*formulatemplatestudioservice.PreviewRequest
 	tested   []string
 }
 
@@ -114,7 +115,7 @@ func (s *stubEngine) GetByID(
 
 func (s *stubEngine) Preview(
 	_ context.Context,
-	req *formulatemplateservice.PreviewRequest,
+	req *formulatemplatestudioservice.PreviewRequest,
 ) (*formulatemplateports.PreviewResult, error) {
 	s.previews = append(s.previews, req)
 	return s.preview, nil
@@ -122,24 +123,24 @@ func (s *stubEngine) Preview(
 
 func (s *stubEngine) TestSource(
 	_ context.Context,
-	req *formulatemplateservice.TestSourceRequest,
-) (*formulatemplateservice.TestSourceResult, error) {
+	req *formulatemplatestudioservice.TestSourceRequest,
+) (*formulatemplatestudioservice.TestSourceResult, error) {
 	s.tested = append(s.tested, req.Source)
 	return s.tests(req.Source), nil
 }
 
 func (s *stubEngine) ReviewDiff(
 	context.Context,
-	*formulatemplateservice.ReviewDiffRequest,
-) (*formulatemplateservice.ReviewDiffResponse, error) {
+	*formulatemplatereviewservice.ReviewDiffRequest,
+) (*formulatemplatereviewservice.ReviewDiffResponse, error) {
 	return s.diff, nil
 }
 
 func (s *stubEngine) Backtest(
 	context.Context,
-	*formulatemplateservice.BacktestRequest,
-) (*formulatemplateservice.BacktestResponse, error) {
-	return &formulatemplateservice.BacktestResponse{}, nil
+	*formulatemplatestudioservice.BacktestRequest,
+) (*formulatemplatestudioservice.BacktestResponse, error) {
+	return &formulatemplatestudioservice.BacktestResponse{}, nil
 }
 
 type fixture struct {
@@ -205,20 +206,22 @@ func newFixture(t *testing.T, reply any) *fixture {
 				{"kind":"note","text":"Minimum not reached"}
 			]`),
 		},
-		tests: func(string) *formulatemplateservice.TestSourceResult {
-			return &formulatemplateservice.TestSourceResult{
+		tests: func(string) *formulatemplatestudioservice.TestSourceResult {
+			return &formulatemplatestudioservice.TestSourceResult{
 				Check:  &rules.TariffCheck{OK: true},
 				Inputs: declaredInputs(),
 				Tests:  passingRun("a short haul bills its miles"),
 			}
 		},
-		diff: &formulatemplateservice.ReviewDiffResponse{CurrentSource: perMileSource},
+		diff: &formulatemplatereviewservice.ReviewDiffResponse{CurrentSource: perMileSource},
 	}
 
 	return &fixture{
 		svc: &Service{
 			l:            zap.NewNop(),
-			engine:       engine,
+			templates:    engine,
+			studio:       engine,
+			reviews:      engine,
 			access:       stubAccess{allowed: true},
 			systemAgents: &stubProvisioner{definition: definition},
 			completion:   completer,
@@ -384,8 +387,8 @@ func TestDescribeInputs_NothingBlankAsksNothing(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, nil)
-	f.engine.tests = func(string) *formulatemplateservice.TestSourceResult {
-		return &formulatemplateservice.TestSourceResult{
+	f.engine.tests = func(string) *formulatemplatestudioservice.TestSourceResult {
+		return &formulatemplatestudioservice.TestSourceResult{
 			Check:  &rules.TariffCheck{OK: true},
 			Inputs: declaredInputs()[1:2],
 			Tests:  passingRun(),
@@ -421,7 +424,7 @@ func TestSuggestTests_WritesRunnableBlocksAndRunsThem(t *testing.T) {
 			"expect total == $1",
 		}},
 	}})
-	f.engine.tests = func(source string) *formulatemplateservice.TestSourceResult {
+	f.engine.tests = func(source string) *formulatemplatestudioservice.TestSourceResult {
 		run := passingRun("a short haul bills its miles")
 		if strings.Contains(source, "Minimum reached") {
 			run.Tests = append(run.Tests, passingRun("Minimum reached").Tests...)
@@ -435,7 +438,7 @@ func TestSuggestTests_WritesRunnableBlocksAndRunsThem(t *testing.T) {
 				}},
 			})
 		}
-		return &formulatemplateservice.TestSourceResult{
+		return &formulatemplatestudioservice.TestSourceResult{
 			Check:  &rules.TariffCheck{OK: true},
 			Inputs: declaredInputs(),
 			Tests:  run,
@@ -467,8 +470,8 @@ func TestSuggestTests_RefusesSourceThatDoesNotCheck(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, nil)
-	f.engine.tests = func(string) *formulatemplateservice.TestSourceResult {
-		return &formulatemplateservice.TestSourceResult{
+	f.engine.tests = func(string) *formulatemplatestudioservice.TestSourceResult {
+		return &formulatemplatestudioservice.TestSourceResult{
 			Check: &rules.TariffCheck{
 				OK: false,
 				Diagnostics: []rules.TariffDiagnostic{{
@@ -513,8 +516,8 @@ func TestExplainTest_APassingTestNeedsNoModel(t *testing.T) {
 	assert.True(t, errortypes.IsError(err))
 }
 
-func failingTests(string) *formulatemplateservice.TestSourceResult {
-	return &formulatemplateservice.TestSourceResult{
+func failingTests(string) *formulatemplatestudioservice.TestSourceResult {
+	return &formulatemplatestudioservice.TestSourceResult{
 		Check:  &rules.TariffCheck{OK: true},
 		Inputs: declaredInputs(),
 		Tests: &rules.TariffTestRun{Tests: []rules.TariffTestResult{{
@@ -612,7 +615,7 @@ func TestDraftReviewNote_BacktestsAgainstTheApprovedVersion(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, map[string]any{"note": "The rate rose."})
-	f.engine.diff = &formulatemplateservice.ReviewDiffResponse{
+	f.engine.diff = &formulatemplatereviewservice.ReviewDiffResponse{
 		HasApprovedBase: true,
 		BaseVersion:     1,
 		CurrentVersion:  2,

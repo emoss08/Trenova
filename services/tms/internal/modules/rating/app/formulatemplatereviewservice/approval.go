@@ -1,4 +1,4 @@
-package formulatemplateservice
+package formulatemplatereviewservice
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -112,14 +113,14 @@ func (s *Service) ApproveFrom(
 	req := &approveReq.ApprovalActionRequest
 	effectiveFrom := timeutils.NowUnix()
 	if approveReq.EffectiveFrom != nil {
-		if err := validateEffectiveFrom(*approveReq.EffectiveFrom); err != nil {
+		if err := formulatemplateservice.ValidateEffectiveFrom(*approveReq.EffectiveFrom); err != nil {
 			return nil, err
 		}
 		effectiveFrom = max(*approveReq.EffectiveFrom, effectiveFrom)
 	}
 
 	var approved *formulatemplate.FormulaTemplate
-	var pinned *contentCheck
+	var pinned *formulatemplateservice.ContentCheck
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
 			Operation:    "Approve",
@@ -170,7 +171,7 @@ func (s *Service) ApproveFrom(
 				template.ApprovedByID = &userID
 				template.ApprovedAt = &now
 				template.ReviewComment = r.Comment
-				applyContent(template, pinned)
+				formulatemplateservice.ApplyContent(template, pinned)
 				template.CurrentVersionNumber++
 			},
 			AfterSave: func(
@@ -178,7 +179,7 @@ func (s *Service) ApproveFrom(
 				updated *formulatemplate.FormulaTemplate,
 				r *ApprovalActionRequest,
 			) error {
-				if err := s.createApprovedSnapshot(
+				if err := s.templates.CreateApprovedSnapshot(
 					aCtx,
 					updated,
 					r.TenantInfo.UserID,
@@ -216,16 +217,16 @@ func (s *Service) ApproveFrom(
 func (s *Service) approvalContent(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
-) (*contentCheck, error) {
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: templateTenant(template),
-		source: template.Source,
-		mode:   tariff.LibrariesLatest,
+) (*formulatemplateservice.ContentCheck, error) {
+	content, err := s.templates.CheckContent(ctx, &formulatemplateservice.ContentRequest{
+		Tenant: formulatemplateservice.TemplateTenant(template),
+		Source: template.Source,
+		Mode:   tariff.LibrariesLatest,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if refusal := content.refusal(); refusal != nil {
+	if refusal := content.Refusal(); refusal != nil {
 		return nil, refusal
 	}
 
@@ -325,7 +326,7 @@ func (s *Service) Reject(
 				updated *formulatemplate.FormulaTemplate,
 				r *ApprovalActionRequest,
 			) error {
-				cleared, clearErr := s.clearScheduledVersions(aCtx, updated)
+				cleared, clearErr := s.templates.ClearScheduledVersions(aCtx, updated)
 				if clearErr != nil {
 					return clearErr
 				}
@@ -373,7 +374,7 @@ func (s *Service) approvals(
 			id pulid.ID,
 			tenant pagination.TenantInfo,
 		) (*formulatemplate.FormulaTemplate, error) {
-			return s.getTemplateByIDWithTenant(ctx, id, tenant)
+			return s.templates.GetTemplateByIDWithTenant(ctx, id, tenant)
 		},
 		Save:     s.repo.Update,
 		StatusOf: func(t *formulatemplate.FormulaTemplate) formulatemplate.Status { return t.Status },
@@ -395,7 +396,7 @@ func (s *Service) approvals(
 			if operation == permission.OpApprove || operation == permission.OpReject {
 				opts = append(opts, auditservice.WithCritical())
 			}
-			s.logAuditAction(
+			s.templates.LogAuditAction(
 				ctx,
 				s.l.With(zap.String("operation", string(operation))),
 				updated,

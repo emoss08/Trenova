@@ -1,9 +1,10 @@
-package formulatemplateservice
+package formulatemplatestudioservice
 
 import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatetest"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/shopspring/decimal"
@@ -15,7 +16,7 @@ func TestPreview_SendsEveryChoiceAndARefusalInTheModulesShape(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	chosen := "Flat"
-	deps.rater.result = &tariffports.RateResult{
+	deps.rater.Result = &tariffports.RateResult{
 		Refusal: &rules.TariffRefusal{
 			Text:  "This rate needs the trip's miles",
 			Range: &rules.TariffRange{From: 4, To: 20},
@@ -43,8 +44,8 @@ func TestPreview_SendsEveryChoiceAndARefusalInTheModulesShape(t *testing.T) {
 	}
 
 	result, err := deps.svc.Preview(t.Context(), &PreviewRequest{
-		TenantInfo: newTenantInfo(),
-		Source:     perMileSource,
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
+		Source:     formulatemplatetest.PerMileSource,
 	})
 	require.NoError(t, err)
 	require.Len(t, result.Choices, 1)
@@ -77,8 +78,8 @@ func TestPreview_ASourceThatDoesNotCheckSendsNoChoices(t *testing.T) {
 	deps := setupTest(t)
 
 	result, err := deps.svc.Preview(t.Context(), &PreviewRequest{
-		TenantInfo: newTenantInfo(),
-		Source:     brokenSource,
+		TenantInfo: formulatemplatetest.NewTenantInfo(),
+		Source:     formulatemplatetest.BrokenSource,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, result.Choices)
