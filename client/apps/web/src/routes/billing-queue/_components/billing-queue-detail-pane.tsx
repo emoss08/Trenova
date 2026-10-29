@@ -28,6 +28,7 @@ import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
 import { BillingQueueDetentionHolds } from "./billing-queue-detention-holds";
 import { BillingQueueRatingReviewHold } from "./billing-queue-rating-review-hold";
+import { BillingQueueReviewChecks } from "./billing-queue-review-checks";
 import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
 import {
   BillingQueueDetailSkeleton,
@@ -167,6 +168,7 @@ export default function BillingQueueDetailPane({
           </Alert>
         </div>
       )}
+      <BillingQueueReviewChecks item={item} />
       <BillingQueueDetentionHolds holds={item.detentionHolds} />
       <BillingQueueRatingReviewHold hold={item.ratingReviewHold} />
       {item.isAdjustmentOrigin ? (

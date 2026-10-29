@@ -1,5 +1,5 @@
 {
-  "version": "sha256:00a8cbd39e62bd25f82cb3ba2a46f639ba2310c0e1957e409231e8f92f1c5ba3",
+  "version": "sha256:a0382914037736a8657348b4c5b8e5ec7cc02ed3aa626e819c473f09a2773e13",
   "modules": [
     {
       "id": "home",
@@ -8536,14 +8536,17 @@
             "approve billing",
             "start review",
             "billing check",
-            "ready to invoice"
+            "ready to invoice",
+            "flagged check",
+            "settle the flagged check first"
           ],
           "steps": [
             "Open [Billing queue](/billing/queue) and choose the **Shipments** view.",
             "Select an item in the list (the j and k keys move down and up the list).",
             "Select **Start review** to take the item yourself, or **Assign biller** to give it to someone else.",
+            "Starting the review runs five checks: biller, charges against the rate con, proof of delivery, bill-to and terms, and not a duplicate. A check that needs you shows above the tabs with what was found and why; pick one of the choices under it (a charge that isn't on the rate con can be kept and billed, or removed). When every check clears, the notice reads **All five checks clear**, and **Undo** puts back a choice you made.",
             "Check the **Charges** and **Documents** tabs.",
-            "Select **Approve**. If required documents are missing, or a detention charge on the shipment still needs approval, **Approve** stays disabled and its tooltip says why. After approval the next open item is selected automatically."
+            "Select **Approve**. While a check is flagged, required documents are missing, or a detention charge on the shipment still needs approval, **Approve** stays disabled and its tooltip says why. After approval the next open item is selected automatically."
           ]
         },
         {

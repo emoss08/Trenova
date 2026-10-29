@@ -24187,6 +24187,15 @@
       "routes/inbox"
     ]
   },
+  "All five checks clear": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "All fleets": {
     "sites": 1,
     "scope": [
@@ -34058,12 +34067,13 @@
     ]
   },
   "Asked {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/billing-queue",
       "routes/desk",
       "routes/worker"
     ]
@@ -41590,7 +41600,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/lib"
     ]
   },
   "Bill-to customer": {
@@ -41769,8 +41779,8 @@
       "ts"
     ],
     "areas": [
-      "go/other",
-      "routes/desk"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Billed by hand": {
@@ -41959,6 +41969,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/billing-queue",
       "routes/desk"
     ]
@@ -52563,7 +52574,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/lib"
     ]
   },
   "Charges other than linehaul": {
@@ -87521,8 +87532,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "routes/desk"
+      "apps/web/lib"
     ]
   },
   "Due or expiring inside the reminder window.": {
@@ -98502,8 +98512,8 @@
       "ts"
     ],
     "areas": [
-      "go/other",
-      "routes/desk"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Every line of the {0} journal needs an account and one positive side": {
@@ -157553,6 +157563,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk"
     ]
   },
@@ -164906,7 +164917,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/lib"
     ]
   },
   "No other record shows {0} records, so without {1} on {0} they see none of them.": {
@@ -168285,8 +168296,8 @@
       "ts"
     ],
     "areas": [
-      "go/other",
-      "routes/desk"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Nobody is carrying points.": {
@@ -169067,7 +169078,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/lib"
     ]
   },
   "Not a field a load has": {
@@ -170306,6 +170317,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
       "routes/desk"
     ]
@@ -176352,6 +176364,7 @@
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "go/other",
       "packages/shared/lib",
       "routes/desk",
@@ -201369,7 +201382,6 @@
     "areas": [
       "apps/web/lib",
       "routes/agent-control",
-      "routes/desk",
       "routes/inbox",
       "routes/shipment-tracking-public",
       "template/customertracking.status.email"
@@ -241073,13 +241085,14 @@
     ]
   },
   "Settle the flagged check first": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -241108,11 +241121,12 @@
     ]
   },
   "Settled · {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/billing-queue",
       "routes/desk"
     ]
   },
@@ -246339,7 +246353,6 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/agent-control",
-      "routes/desk",
       "routes/policies",
       "routes/tractor"
     ]
@@ -246530,7 +246543,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/lib"
     ]
   },
   "Signed “{0}” on {1}.": {
@@ -250720,6 +250733,15 @@
       "routes/billing-queue",
       "routes/settlement-dispute",
       "routes/worker"
+    ]
+  },
+  "Start review or assign a biller to clear it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Start reviews": {
@@ -298861,7 +298883,7 @@
     ]
   },
   "Undo": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -336650,6 +336672,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0, plural, one {# check needs you before this can be approved} other {# checks need you before this can be approved}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "{0, plural, one {# check passed} other {# checks passed}}": {
