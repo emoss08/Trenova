@@ -3,6 +3,8 @@
 package generated
 
 import (
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
@@ -338,7 +340,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -3296,9 +3297,9 @@ type QueryResolver interface {
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
 	RateMatrices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateMatrixConnection, error)
 	RateMatrix(ctx context.Context, id string) (*gqlmodel.RateMatrix, error)
-	RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrix.RateMatrixVersion, error)
-	RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrix.RateMatrixVersion, error)
-	RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrix.RateMatrixReview, error)
+	RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrixversion.RateMatrixVersion, error)
+	RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrixversion.RateMatrixVersion, error)
+	RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrixreview.RateMatrixReview, error)
 	RateMatrixUsages(ctx context.Context, rateMatrixID string, versionNumber *int) ([]*formulatemplateports.MatrixUsage, error)
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
@@ -3502,8 +3503,8 @@ type RateMatrixResolver interface {
 }
 
 type RateMatrixVersionResolver interface {
-	Dimensions(ctx context.Context, obj *ratematrix.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error)
-	Cells(ctx context.Context, obj *ratematrix.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
+	Dimensions(ctx context.Context, obj *ratematrixversion.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error)
+	Cells(ctx context.Context, obj *ratematrixversion.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
 }
 
 type ReportScheduleResolver interface {

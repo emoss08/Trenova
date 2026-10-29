@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -243,9 +244,9 @@ func seedRateMatrix(
 			}),
 		)
 	}
-	cells := make([]*ratematrix.RateMatrixCell, 0, seededMatrixCells)
+	cells := make([]*ratematrixcell.RateMatrixCell, 0, seededMatrixCells)
 	for idx := range seededMatrixCells {
-		cells = append(cells, &ratematrix.RateMatrixCell{
+		cells = append(cells, &ratematrixcell.RateMatrixCell{
 			ID: pulid.MustNew("rmc_"), OrganizationID: org, BusinessUnitID: bu,
 			RateMatrixID: matrix.ID, D0Key: fmt.Sprintf("Z%03d", idx),
 			D1Min: decimal.NewNullDecimal(decimal.Zero),

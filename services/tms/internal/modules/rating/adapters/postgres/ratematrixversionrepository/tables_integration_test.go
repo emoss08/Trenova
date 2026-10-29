@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -59,9 +61,9 @@ func publishGrid(
 			MatchMode:      ratematrix.MatchModeExact,
 		})
 	}
-	draftCells := make([]*ratematrix.RateMatrixCell, 0, len(cells))
+	draftCells := make([]*ratematrixcell.RateMatrixCell, 0, len(cells))
 	for _, cell := range cells {
-		draftCells = append(draftCells, &ratematrix.RateMatrixCell{
+		draftCells = append(draftCells, &ratematrixcell.RateMatrixCell{
 			ID:             pulid.MustNew("rmc_"),
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
@@ -78,7 +80,7 @@ func publishGrid(
 		require.NoError(t, ratematrixdb.RateMatrixCells.CreateMany(ctx, db, draftCells))
 	}
 
-	published := ratematrix.CopyPublished(matrix, draftCells, 1, pulid.Nil)
+	published := ratematrixversion.CopyPublished(matrix, draftCells, 1, pulid.Nil)
 	require.NoError(t, ratematrixdb.RateMatrixVersions.Create(ctx, db, published.Version))
 	require.NoError(t, ratematrixdb.RateMatrixDimensions.CreateMany(ctx, db, published.Dimensions))
 	if len(published.Cells) > 0 {
@@ -128,7 +130,7 @@ func TestTableReadsServeTheTariffHostByVersion(t *testing.T) {
 		Update(ctx, db, rc.Value.To(decimal.RequireFromString("7.77")))
 	require.NoError(t, err)
 
-	v1 := ratematrix.VersionKey{RateMatrixID: grid.ID, VersionNumber: 1}
+	v1 := ratematrixversion.VersionKey{RateMatrixID: grid.ID, VersionNumber: 1}
 	cells, err := versions.LoadTableCells(ctx, &ratematrixports.LoadTableCellsRequest{
 		TenantInfo: tenantInfo,
 		Key:        v1,
@@ -152,14 +154,17 @@ func TestTableReadsServeTheTariffHostByVersion(t *testing.T) {
 
 	whole, err := versions.ListTableCells(ctx, &ratematrixports.ListTableCellsRequest{
 		TenantInfo: tenantInfo,
-		Keys:       []ratematrix.VersionKey{v1},
+		Keys:       []ratematrixversion.VersionKey{v1},
 	})
 	require.NoError(t, err)
 	assert.Len(t, whole, 3)
 
 	pinned, err := versions.GetByKeys(ctx, &ratematrixports.GetVersionsByKeysRequest{
 		TenantInfo: tenantInfo,
-		Keys:       []ratematrix.VersionKey{v1, {RateMatrixID: retired.ID, VersionNumber: 1}},
+		Keys: []ratematrixversion.VersionKey{
+			v1,
+			{RateMatrixID: retired.ID, VersionNumber: 1},
+		},
 	})
 	require.NoError(t, err)
 	assert.Len(t, pinned, 2, "a pinned version reads even when its matrix is archived")
@@ -202,7 +207,7 @@ func TestPostalRangesListOncePerAxis(t *testing.T) {
 	ctx, db, tenantInfo := rdb.A.Ctx, rdb.Admin, rdb.A.Info
 	grid := publishGrid(t, ctx, db, tenantInfo, "LANES", formulatemplate.StatusActive)
 
-	cells := []*ratematrix.RateMatrixCell{
+	cells := []*ratematrixcell.RateMatrixCell{
 		{D0Key: "30000", D0KeyTo: "31999", D1Key: "A"},
 		{D0Key: "30000", D0KeyTo: "31999", D1Key: "B"},
 		{D0Key: "32000", D0KeyTo: "34999", D1Key: "A"},
@@ -223,11 +228,11 @@ func TestPostalRangesListOncePerAxis(t *testing.T) {
 	})
 	ranges, err := versions.ListAxisRanges(ctx, &ratematrixports.ListAxisKeysRequest{
 		TenantInfo: tenantInfo,
-		Key:        ratematrix.VersionKey{RateMatrixID: grid.ID, VersionNumber: 1},
+		Key:        ratematrixversion.VersionKey{RateMatrixID: grid.ID, VersionNumber: 1},
 		Position:   0,
 	})
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []ratematrix.PostalRange{
+	assert.ElementsMatch(t, []ratematrixcell.PostalRange{
 		{From: "30000", To: "31999"},
 		{From: "32000", To: "34999"},
 	}, ranges)

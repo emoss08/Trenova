@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +17,7 @@ import (
 
 func cellsQuery(
 	req *ratematrixports.ListRateMatrixCellsRequest,
-) *keel.Query[*ratematrix.RateMatrixCell] {
+) *keel.Query[*ratematrixcell.RateMatrixCell] {
 	c := ratematrixdb.RateMatrixCells
 
 	return c.Where(c.RateMatrixID.Eq(req.RateMatrixID), c.VersionNumber.Eq(req.VersionNumber))
@@ -25,11 +26,11 @@ func cellsQuery(
 func (r *repository) ListCells(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixCellsRequest,
-) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
+) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
+		func(ctx context.Context) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error) {
 			c := ratematrixdb.RateMatrixCells
 			page := req.Filter.Pagination
 			rows := cellsQuery(req).
@@ -41,7 +42,7 @@ func (r *repository) ListCells(
 				Limit(page.SafeLimit()).
 				Offset(page.SafeOffset())
 
-			var items []*ratematrix.RateMatrixCell
+			var items []*ratematrixcell.RateMatrixCell
 			var total keel.RowCount
 			err := keel.Batch(
 				ctx,
@@ -85,8 +86,10 @@ func (r *repository) ReplaceCells(
 	})
 }
 
-func draftCells(req *ratematrixports.ReplaceRateMatrixCellsRequest) []*ratematrix.RateMatrixCell {
-	kept := make([]*ratematrix.RateMatrixCell, 0, len(req.Cells))
+func draftCells(
+	req *ratematrixports.ReplaceRateMatrixCellsRequest,
+) []*ratematrixcell.RateMatrixCell {
+	kept := make([]*ratematrixcell.RateMatrixCell, 0, len(req.Cells))
 	for _, cell := range req.Cells {
 		if cell == nil {
 			continue
@@ -247,7 +250,7 @@ func misfitAt(position int16, dimension *ratematrix.RateMatrixDimension) keel.Pr
 
 func misfitQuery(
 	req *ratematrixports.CountMisfitCellsRequest,
-) *keel.Query[*ratematrix.RateMatrixCell] {
+) *keel.Query[*ratematrixcell.RateMatrixCell] {
 	byPosition := make(map[int16]*ratematrix.RateMatrixDimension, len(req.Dimensions))
 	for _, dimension := range req.Dimensions {
 		if dimension != nil {

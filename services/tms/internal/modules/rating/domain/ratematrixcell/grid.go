@@ -1,9 +1,10 @@
-package ratematrix
+package ratematrixcell
 
 import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -13,7 +14,7 @@ type postalSighting struct {
 }
 
 func ValidatePostalAxes(
-	dimensions []*RateMatrixDimension,
+	dimensions []*ratematrix.RateMatrixDimension,
 	cells []*RateMatrixCell,
 	multiErr *errortypes.MultiError,
 ) {
@@ -26,7 +27,7 @@ func ValidatePostalAxes(
 }
 
 func validatePostalAxis(
-	dimension *RateMatrixDimension,
+	dimension *ratematrix.RateMatrixDimension,
 	cells []*RateMatrixCell,
 	multiErr *errortypes.MultiError,
 ) {

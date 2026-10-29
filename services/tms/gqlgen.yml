@@ -3972,7 +3972,7 @@ models:
         resolver: true
   RateMatrixVersion:
     model:
-      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixVersion
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion.RateMatrixVersion
     fields:
       dimensions:
         resolver: true
@@ -3980,7 +3980,7 @@ models:
         resolver: true
   RateMatrixReview:
     model:
-      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixReview
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview.RateMatrixReview
   RateMatrixUsage:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports.MatrixUsage

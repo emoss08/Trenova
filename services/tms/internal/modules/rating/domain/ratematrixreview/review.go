@@ -1,4 +1,4 @@
-package ratematrix
+package ratematrixreview
 
 import (
 	"unicode/utf8"

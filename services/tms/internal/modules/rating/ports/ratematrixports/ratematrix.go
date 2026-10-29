@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -38,9 +41,9 @@ type ListRateMatrixCellsRequest struct {
 }
 
 type ReplaceRateMatrixCellsRequest struct {
-	TenantInfo   pagination.TenantInfo        `json:"-"`
-	RateMatrixID pulid.ID                     `json:"rateMatrixId"`
-	Cells        []*ratematrix.RateMatrixCell `json:"cells"`
+	TenantInfo   pagination.TenantInfo            `json:"-"`
+	RateMatrixID pulid.ID                         `json:"rateMatrixId"`
+	Cells        []*ratematrixcell.RateMatrixCell `json:"cells"`
 }
 
 type CopyVersionRequest struct {
@@ -79,7 +82,7 @@ type RateMatrixRepository interface {
 	ListCells(
 		ctx context.Context,
 		req *ListRateMatrixCellsRequest,
-	) (*pagination.ListResult[*ratematrix.RateMatrixCell], error)
+	) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error)
 	ReplaceCells(ctx context.Context, req *ReplaceRateMatrixCellsRequest) error
 	CopyVersion(ctx context.Context, req *CopyVersionRequest) (int64, error)
 	CountMisfitCells(ctx context.Context, req *CountMisfitCellsRequest) (int64, error)
@@ -106,56 +109,59 @@ type ListVersionsRequest struct {
 
 type GetVersionsByKeysRequest struct {
 	TenantInfo pagination.TenantInfo
-	Keys       []ratematrix.VersionKey
+	Keys       []ratematrixversion.VersionKey
 }
 
 type LoadTableCellsRequest struct {
 	TenantInfo pagination.TenantInfo
-	Key        ratematrix.VersionKey
+	Key        ratematrixversion.VersionKey
 	Keys       map[int16][]string
 }
 
 type ListAxisKeysRequest struct {
 	TenantInfo pagination.TenantInfo
-	Key        ratematrix.VersionKey
+	Key        ratematrixversion.VersionKey
 	Position   int16
 }
 
 type ListTableCellsRequest struct {
 	TenantInfo pagination.TenantInfo
-	Keys       []ratematrix.VersionKey
+	Keys       []ratematrixversion.VersionKey
 }
 
 type RateMatrixVersionRepository interface {
 	Create(
 		ctx context.Context,
-		version *ratematrix.RateMatrixVersion,
-	) (*ratematrix.RateMatrixVersion, error)
-	Get(ctx context.Context, req *GetVersionRequest) (*ratematrix.RateMatrixVersion, error)
-	List(ctx context.Context, req *ListVersionsRequest) ([]*ratematrix.RateMatrixVersion, error)
+		version *ratematrixversion.RateMatrixVersion,
+	) (*ratematrixversion.RateMatrixVersion, error)
+	Get(ctx context.Context, req *GetVersionRequest) (*ratematrixversion.RateMatrixVersion, error)
+	List(
+		ctx context.Context,
+		req *ListVersionsRequest,
+	) ([]*ratematrixversion.RateMatrixVersion, error)
 	GetByKeys(
 		ctx context.Context,
 		req *GetVersionsByKeysRequest,
-	) ([]*ratematrix.RateMatrixVersion, error)
+	) ([]*ratematrixversion.RateMatrixVersion, error)
 	ListServed(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) ([]*ratematrix.RateMatrixVersion, error)
+	) ([]*ratematrixversion.RateMatrixVersion, error)
 	ServedStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
 
 	LoadTableCells(
 		ctx context.Context,
 		req *LoadTableCellsRequest,
-	) ([]*ratematrix.RateMatrixCell, error)
+	) ([]*ratematrixcell.RateMatrixCell, error)
 	ListTableCells(
 		ctx context.Context,
 		req *ListTableCellsRequest,
-	) ([]*ratematrix.RateMatrixCell, error)
+	) ([]*ratematrixcell.RateMatrixCell, error)
 	ListAxisKeys(ctx context.Context, req *ListAxisKeysRequest) ([]string, error)
 	ListAxisRanges(
 		ctx context.Context,
 		req *ListAxisKeysRequest,
-	) ([]ratematrix.PostalRange, error)
+	) ([]ratematrixcell.PostalRange, error)
 }
 
 type ListReviewsRequest struct {
@@ -172,17 +178,17 @@ type ListStaleSubmissionsRequest struct {
 type RateMatrixReviewRepository interface {
 	Create(
 		ctx context.Context,
-		entity *ratematrix.RateMatrixReview,
-	) (*ratematrix.RateMatrixReview, error)
+		entity *ratematrixreview.RateMatrixReview,
+	) (*ratematrixreview.RateMatrixReview, error)
 	ListByMatrix(
 		ctx context.Context,
 		req *ListReviewsRequest,
-	) ([]*ratematrix.RateMatrixReview, error)
+	) ([]*ratematrixreview.RateMatrixReview, error)
 	Latest(
 		ctx context.Context,
 		rateMatrixID pulid.ID,
 		tenantInfo pagination.TenantInfo,
-	) (*ratematrix.RateMatrixReview, error)
+	) (*ratematrixreview.RateMatrixReview, error)
 	ListStaleSubmissions(
 		ctx context.Context,
 		req *ListStaleSubmissionsRequest,

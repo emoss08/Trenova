@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
@@ -195,7 +197,7 @@ func (r *RateMatrixResolver) Cells(ctx context.Context, obj *gqlmodel.RateMatrix
 	}
 
 	return r.matrixCellPage(ctx, &cellPageRequest{
-		key:    ratematrix.VersionKey{RateMatrixID: matrixID, VersionNumber: ratematrix.DraftVersion},
+		key:    ratematrixversion.VersionKey{RateMatrixID: matrixID, VersionNumber: ratematrix.DraftVersion},
 		offset: offset,
 		limit:  limit,
 	})
@@ -245,7 +247,7 @@ func (r *RateAgreementResolver) LaneCountExact(ctx context.Context, obj *gqlmode
 	return count.Exact, nil
 }
 
-func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrix.RateMatrixVersion, error) {
+func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrixversion.RateMatrixVersion, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -268,7 +270,7 @@ func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID str
 	})
 }
 
-func (r *QueryResolver) RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrix.RateMatrixVersion, error) {
+func (r *QueryResolver) RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrixversion.RateMatrixVersion, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -286,7 +288,7 @@ func (r *QueryResolver) RateMatrixVersion(ctx context.Context, rateMatrixID stri
 	})
 }
 
-func (r *QueryResolver) RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrix.RateMatrixReview, error) {
+func (r *QueryResolver) RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrixreview.RateMatrixReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -327,11 +329,11 @@ func (r *QueryResolver) RateMatrixUsages(ctx context.Context, rateMatrixID strin
 	})
 }
 
-func (r *RateMatrixVersionResolver) Dimensions(ctx context.Context, obj *ratematrix.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error) {
+func (r *RateMatrixVersionResolver) Dimensions(ctx context.Context, obj *ratematrixversion.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error) {
 	return rateMatrixDimensionsToModel(obj.OrderedDimensions()), nil
 }
 
-func (r *RateMatrixVersionResolver) Cells(ctx context.Context, obj *ratematrix.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error) {
+func (r *RateMatrixVersionResolver) Cells(ctx context.Context, obj *ratematrixversion.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error) {
 	return r.matrixCellPage(ctx, &cellPageRequest{
 		key:    obj.Key(),
 		offset: offset,

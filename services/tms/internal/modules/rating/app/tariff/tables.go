@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -169,9 +171,9 @@ func (t *Tables) versionEntries(
 		tenant.BuID,
 		keys,
 		func(ctx context.Context, missing []ratetablecache.VersionKey) ([]*ratetablecache.Version, error) {
-			domainKeys := make([]ratematrix.VersionKey, 0, len(missing))
+			domainKeys := make([]ratematrixversion.VersionKey, 0, len(missing))
 			for _, key := range missing {
-				domainKeys = append(domainKeys, ratematrix.VersionKey{
+				domainKeys = append(domainKeys, ratematrixversion.VersionKey{
 					RateMatrixID:  key.MatrixID,
 					VersionNumber: key.Version,
 				})
@@ -237,7 +239,7 @@ func (t *Tables) buildServed(
 		return nil, err
 	}
 	keys := make([]ratetablecache.VersionKey, 0, len(served))
-	byKey := make(map[ratetablecache.VersionKey]*ratematrix.RateMatrixVersion, len(served))
+	byKey := make(map[ratetablecache.VersionKey]*ratematrixversion.RateMatrixVersion, len(served))
 	for _, version := range served {
 		key := cacheKey(version.Key())
 		keys = append(keys, key)
@@ -249,7 +251,7 @@ func (t *Tables) buildServed(
 		tenant.BuID,
 		keys,
 		func(ctx context.Context, missing []ratetablecache.VersionKey) ([]*ratetablecache.Version, error) {
-			versions := make([]*ratematrix.RateMatrixVersion, 0, len(missing))
+			versions := make([]*ratematrixversion.RateMatrixVersion, 0, len(missing))
 			for _, key := range missing {
 				versions = append(versions, byKey[key])
 			}
@@ -268,22 +270,22 @@ func (t *Tables) buildServed(
 	return out, nil
 }
 
-func cacheKey(key ratematrix.VersionKey) ratetablecache.VersionKey {
+func cacheKey(key ratematrixversion.VersionKey) ratetablecache.VersionKey {
 	return ratetablecache.VersionKey{MatrixID: key.RateMatrixID, Version: key.VersionNumber}
 }
 
-func domainKey(key ratetablecache.VersionKey) ratematrix.VersionKey {
-	return ratematrix.VersionKey{RateMatrixID: key.MatrixID, VersionNumber: key.Version}
+func domainKey(key ratetablecache.VersionKey) ratematrixversion.VersionKey {
+	return ratematrixversion.VersionKey{RateMatrixID: key.MatrixID, VersionNumber: key.Version}
 }
 
 func (t *Tables) buildVersions(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	versions []*ratematrix.RateMatrixVersion,
+	versions []*ratematrixversion.RateMatrixVersion,
 ) ([]*ratetablecache.Version, error) {
 	out := make([]*ratetablecache.Version, 0, len(versions))
-	whole := make([]ratematrix.VersionKey, 0, len(versions))
-	wholeAt := make(map[ratematrix.VersionKey]int, len(versions))
+	whole := make([]ratematrixversion.VersionKey, 0, len(versions))
+	wholeAt := make(map[ratematrixversion.VersionKey]int, len(versions))
 
 	for _, version := range versions {
 		if version == nil {
@@ -339,7 +341,7 @@ func (t *Tables) buildVersions(
 		return nil, err
 	}
 	for _, cell := range cells {
-		at, ok := wholeAt[ratematrix.VersionKey{
+		at, ok := wholeAt[ratematrixversion.VersionKey{
 			RateMatrixID:  cell.RateMatrixID,
 			VersionNumber: cell.VersionNumber,
 		}]
@@ -377,7 +379,7 @@ func axisShape(dimension *ratematrix.RateMatrixDimension) rules.TariffAxis {
 func (t *Tables) axisIndex(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	key ratematrix.VersionKey,
+	key ratematrixversion.VersionKey,
 	dimension *ratematrix.RateMatrixDimension,
 ) (ratetablecache.Axis, error) {
 	axis := ratetablecache.Axis{
@@ -424,7 +426,7 @@ func (t *Tables) axisIndex(
 func (t *Tables) postalIndex(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	key ratematrix.VersionKey,
+	key ratematrixversion.VersionKey,
 	axis ratetablecache.Axis,
 ) (ratetablecache.Axis, error) {
 	ranges, err := t.versions.ListAxisRanges(ctx, &ratematrixports.ListAxisKeysRequest{
@@ -435,7 +437,7 @@ func (t *Tables) postalIndex(
 	if err != nil {
 		return axis, err
 	}
-	index := ratematrix.NewPostalIndex(ranges)
+	index := ratematrixcell.NewPostalIndex(ranges)
 	axis.Ranges = func(lookup string) []string {
 		found := index.Find(lookup)
 		starts := make([]string, 0, len(found))
@@ -529,7 +531,7 @@ func (t *Tables) referenceNames(
 
 func normalize(axis *ratetablecache.Axis, key string) string {
 	if axis.Postal {
-		return ratematrix.NormalizePostal(key)
+		return ratematrixcell.NormalizePostal(key)
 	}
 	if axis.Kind == string(ratematrix.DimensionKindFreightClass) {
 		if class, ok := commodity.ParseFreightClass(key); ok {
@@ -587,7 +589,7 @@ func reverse(axis *ratetablecache.Axis, key string) []string {
 	return []string{key}
 }
 
-func encodeCell(index *ratetablecache.Table, cell *ratematrix.RateMatrixCell) rules.TariffCell {
+func encodeCell(index *ratetablecache.Table, cell *ratematrixcell.RateMatrixCell) rules.TariffCell {
 	out := rules.TariffCell{
 		At:      make([]rules.TariffCellPosition, 0, len(index.Axes)),
 		Value:   cell.Value,
@@ -758,8 +760,8 @@ func (t *Tables) LoadWhole(
 	if err != nil {
 		return err
 	}
-	keys := make([]ratematrix.VersionKey, 0, len(indexes))
-	byKey := make(map[ratematrix.VersionKey]*ratetablecache.Table, len(indexes))
+	keys := make([]ratematrixversion.VersionKey, 0, len(indexes))
+	byKey := make(map[ratematrixversion.VersionKey]*ratetablecache.Table, len(indexes))
 	for _, index := range indexes {
 		key := domainKey(index.Key)
 		keys = append(keys, key)
@@ -777,7 +779,7 @@ func (t *Tables) LoadWhole(
 	}
 	byTable := make(map[string][]rules.TariffCell, len(keys))
 	for _, cell := range cells {
-		index, ok := byKey[ratematrix.VersionKey{
+		index, ok := byKey[ratematrixversion.VersionKey{
 			RateMatrixID:  cell.RateMatrixID,
 			VersionNumber: cell.VersionNumber,
 		}]

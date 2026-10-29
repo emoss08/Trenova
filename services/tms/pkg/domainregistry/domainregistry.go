@@ -38,6 +38,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
@@ -128,9 +131,9 @@ func RegisterEntities() []any {
 		&ratezone.RateZoneMember{},
 		&ratematrix.RateMatrix{},
 		&ratematrix.RateMatrixDimension{},
-		&ratematrix.RateMatrixCell{},
-		&ratematrix.RateMatrixVersion{},
-		&ratematrix.RateMatrixReview{},
+		&ratematrixcell.RateMatrixCell{},
+		&ratematrixversion.RateMatrixVersion{},
+		&ratematrixreview.RateMatrixReview{},
 		&ratesimulation.RateSimulation{},
 		&ratesimulation.RateSimulationResult{},
 		&rateimport.RateImportBatch{},

@@ -5,18 +5,19 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type seededMatrix struct {
 	matrix     *ratematrix.RateMatrix
 	dimensions []*ratematrix.RateMatrixDimension
-	cells      []*ratematrix.RateMatrixCell
+	cells      []*ratematrixcell.RateMatrixCell
 }
 
 func insertPublishedMatrix(ctx context.Context, db *keel.DB, seeded *seededMatrix) error {
@@ -36,7 +37,7 @@ func insertPublishedMatrix(ctx context.Context, db *keel.DB, seeded *seededMatri
 		return fmt.Errorf("insert rate matrix %s: %w", matrix.Code, err)
 	}
 
-	published := ratematrix.CopyPublished(matrix, seeded.cells, 1, pulid.Nil)
+	published := ratematrixversion.CopyPublished(matrix, seeded.cells, 1, pulid.Nil)
 	if err := ratematrixdb.RateMatrixVersions.Create(ctx, db, published.Version); err != nil {
 		return fmt.Errorf("insert rate matrix version %s: %w", matrix.Code, err)
 	}

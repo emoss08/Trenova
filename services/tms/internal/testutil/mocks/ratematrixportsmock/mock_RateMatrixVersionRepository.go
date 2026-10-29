@@ -5,9 +5,10 @@
 package ratematrixportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
@@ -41,26 +42,26 @@ func (_m *MockRateMatrixVersionRepository) EXPECT() *MockRateMatrixVersionReposi
 }
 
 // Create provides a mock function for the type MockRateMatrixVersionRepository
-func (_mock *MockRateMatrixVersionRepository) Create(ctx context.Context, version *ratematrix.RateMatrixVersion) (*ratematrix.RateMatrixVersion, error) {
+func (_mock *MockRateMatrixVersionRepository) Create(ctx context.Context, version *ratematrixversion.RateMatrixVersion) (*ratematrixversion.RateMatrixVersion, error) {
 	ret := _mock.Called(ctx, version)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *ratematrix.RateMatrixVersion
+	var r0 *ratematrixversion.RateMatrixVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrix.RateMatrixVersion) (*ratematrix.RateMatrixVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixversion.RateMatrixVersion) (*ratematrixversion.RateMatrixVersion, error)); ok {
 		return returnFunc(ctx, version)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrix.RateMatrixVersion) *ratematrix.RateMatrixVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixversion.RateMatrixVersion) *ratematrixversion.RateMatrixVersion); ok {
 		r0 = returnFunc(ctx, version)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ratematrix.RateMatrixVersion)
+			r0 = ret.Get(0).(*ratematrixversion.RateMatrixVersion)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrix.RateMatrixVersion) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixversion.RateMatrixVersion) error); ok {
 		r1 = returnFunc(ctx, version)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +76,20 @@ type MockRateMatrixVersionRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - version *ratematrix.RateMatrixVersion
+//   - version *ratematrixversion.RateMatrixVersion
 func (_e *MockRateMatrixVersionRepository_Expecter) Create(ctx interface{}, version interface{}) *MockRateMatrixVersionRepository_Create_Call {
 	return &MockRateMatrixVersionRepository_Create_Call{Call: _e.mock.On("Create", ctx, version)}
 }
 
-func (_c *MockRateMatrixVersionRepository_Create_Call) Run(run func(ctx context.Context, version *ratematrix.RateMatrixVersion)) *MockRateMatrixVersionRepository_Create_Call {
+func (_c *MockRateMatrixVersionRepository_Create_Call) Run(run func(ctx context.Context, version *ratematrixversion.RateMatrixVersion)) *MockRateMatrixVersionRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *ratematrix.RateMatrixVersion
+		var arg1 *ratematrixversion.RateMatrixVersion
 		if args[1] != nil {
-			arg1 = args[1].(*ratematrix.RateMatrixVersion)
+			arg1 = args[1].(*ratematrixversion.RateMatrixVersion)
 		}
 		run(
 			arg0,
@@ -98,34 +99,34 @@ func (_c *MockRateMatrixVersionRepository_Create_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_Create_Call) Return(rateMatrixVersion *ratematrix.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_Create_Call {
+func (_c *MockRateMatrixVersionRepository_Create_Call) Return(rateMatrixVersion *ratematrixversion.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_Create_Call {
 	_c.Call.Return(rateMatrixVersion, err)
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_Create_Call) RunAndReturn(run func(ctx context.Context, version *ratematrix.RateMatrixVersion) (*ratematrix.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_Create_Call {
+func (_c *MockRateMatrixVersionRepository_Create_Call) RunAndReturn(run func(ctx context.Context, version *ratematrixversion.RateMatrixVersion) (*ratematrixversion.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Get provides a mock function for the type MockRateMatrixVersionRepository
-func (_mock *MockRateMatrixVersionRepository) Get(ctx context.Context, req *ratematrixports.GetVersionRequest) (*ratematrix.RateMatrixVersion, error) {
+func (_mock *MockRateMatrixVersionRepository) Get(ctx context.Context, req *ratematrixports.GetVersionRequest) (*ratematrixversion.RateMatrixVersion, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 *ratematrix.RateMatrixVersion
+	var r0 *ratematrixversion.RateMatrixVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetVersionRequest) (*ratematrix.RateMatrixVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetVersionRequest) (*ratematrixversion.RateMatrixVersion, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetVersionRequest) *ratematrix.RateMatrixVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetVersionRequest) *ratematrixversion.RateMatrixVersion); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ratematrix.RateMatrixVersion)
+			r0 = ret.Get(0).(*ratematrixversion.RateMatrixVersion)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.GetVersionRequest) error); ok {
@@ -166,34 +167,34 @@ func (_c *MockRateMatrixVersionRepository_Get_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_Get_Call) Return(rateMatrixVersion *ratematrix.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_Get_Call {
+func (_c *MockRateMatrixVersionRepository_Get_Call) Return(rateMatrixVersion *ratematrixversion.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_Get_Call {
 	_c.Call.Return(rateMatrixVersion, err)
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_Get_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetVersionRequest) (*ratematrix.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_Get_Call {
+func (_c *MockRateMatrixVersionRepository_Get_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetVersionRequest) (*ratematrixversion.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByKeys provides a mock function for the type MockRateMatrixVersionRepository
-func (_mock *MockRateMatrixVersionRepository) GetByKeys(ctx context.Context, req *ratematrixports.GetVersionsByKeysRequest) ([]*ratematrix.RateMatrixVersion, error) {
+func (_mock *MockRateMatrixVersionRepository) GetByKeys(ctx context.Context, req *ratematrixports.GetVersionsByKeysRequest) ([]*ratematrixversion.RateMatrixVersion, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByKeys")
 	}
 
-	var r0 []*ratematrix.RateMatrixVersion
+	var r0 []*ratematrixversion.RateMatrixVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetVersionsByKeysRequest) ([]*ratematrix.RateMatrixVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetVersionsByKeysRequest) ([]*ratematrixversion.RateMatrixVersion, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetVersionsByKeysRequest) []*ratematrix.RateMatrixVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetVersionsByKeysRequest) []*ratematrixversion.RateMatrixVersion); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ratematrix.RateMatrixVersion)
+			r0 = ret.Get(0).([]*ratematrixversion.RateMatrixVersion)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.GetVersionsByKeysRequest) error); ok {
@@ -234,34 +235,34 @@ func (_c *MockRateMatrixVersionRepository_GetByKeys_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_GetByKeys_Call) Return(rateMatrixVersions []*ratematrix.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_GetByKeys_Call {
+func (_c *MockRateMatrixVersionRepository_GetByKeys_Call) Return(rateMatrixVersions []*ratematrixversion.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_GetByKeys_Call {
 	_c.Call.Return(rateMatrixVersions, err)
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_GetByKeys_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetVersionsByKeysRequest) ([]*ratematrix.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_GetByKeys_Call {
+func (_c *MockRateMatrixVersionRepository_GetByKeys_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetVersionsByKeysRequest) ([]*ratematrixversion.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_GetByKeys_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // List provides a mock function for the type MockRateMatrixVersionRepository
-func (_mock *MockRateMatrixVersionRepository) List(ctx context.Context, req *ratematrixports.ListVersionsRequest) ([]*ratematrix.RateMatrixVersion, error) {
+func (_mock *MockRateMatrixVersionRepository) List(ctx context.Context, req *ratematrixports.ListVersionsRequest) ([]*ratematrixversion.RateMatrixVersion, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 []*ratematrix.RateMatrixVersion
+	var r0 []*ratematrixversion.RateMatrixVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListVersionsRequest) ([]*ratematrix.RateMatrixVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListVersionsRequest) ([]*ratematrixversion.RateMatrixVersion, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListVersionsRequest) []*ratematrix.RateMatrixVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListVersionsRequest) []*ratematrixversion.RateMatrixVersion); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ratematrix.RateMatrixVersion)
+			r0 = ret.Get(0).([]*ratematrixversion.RateMatrixVersion)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.ListVersionsRequest) error); ok {
@@ -302,12 +303,12 @@ func (_c *MockRateMatrixVersionRepository_List_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_List_Call) Return(rateMatrixVersions []*ratematrix.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_List_Call {
+func (_c *MockRateMatrixVersionRepository_List_Call) Return(rateMatrixVersions []*ratematrixversion.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_List_Call {
 	_c.Call.Return(rateMatrixVersions, err)
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListVersionsRequest) ([]*ratematrix.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_List_Call {
+func (_c *MockRateMatrixVersionRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListVersionsRequest) ([]*ratematrixversion.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -381,23 +382,23 @@ func (_c *MockRateMatrixVersionRepository_ListAxisKeys_Call) RunAndReturn(run fu
 }
 
 // ListAxisRanges provides a mock function for the type MockRateMatrixVersionRepository
-func (_mock *MockRateMatrixVersionRepository) ListAxisRanges(ctx context.Context, req *ratematrixports.ListAxisKeysRequest) ([]ratematrix.PostalRange, error) {
+func (_mock *MockRateMatrixVersionRepository) ListAxisRanges(ctx context.Context, req *ratematrixports.ListAxisKeysRequest) ([]ratematrixcell.PostalRange, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListAxisRanges")
 	}
 
-	var r0 []ratematrix.PostalRange
+	var r0 []ratematrixcell.PostalRange
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListAxisKeysRequest) ([]ratematrix.PostalRange, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListAxisKeysRequest) ([]ratematrixcell.PostalRange, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListAxisKeysRequest) []ratematrix.PostalRange); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListAxisKeysRequest) []ratematrixcell.PostalRange); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]ratematrix.PostalRange)
+			r0 = ret.Get(0).([]ratematrixcell.PostalRange)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.ListAxisKeysRequest) error); ok {
@@ -438,34 +439,34 @@ func (_c *MockRateMatrixVersionRepository_ListAxisRanges_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_ListAxisRanges_Call) Return(postalRanges []ratematrix.PostalRange, err error) *MockRateMatrixVersionRepository_ListAxisRanges_Call {
+func (_c *MockRateMatrixVersionRepository_ListAxisRanges_Call) Return(postalRanges []ratematrixcell.PostalRange, err error) *MockRateMatrixVersionRepository_ListAxisRanges_Call {
 	_c.Call.Return(postalRanges, err)
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_ListAxisRanges_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListAxisKeysRequest) ([]ratematrix.PostalRange, error)) *MockRateMatrixVersionRepository_ListAxisRanges_Call {
+func (_c *MockRateMatrixVersionRepository_ListAxisRanges_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListAxisKeysRequest) ([]ratematrixcell.PostalRange, error)) *MockRateMatrixVersionRepository_ListAxisRanges_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListServed provides a mock function for the type MockRateMatrixVersionRepository
-func (_mock *MockRateMatrixVersionRepository) ListServed(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*ratematrix.RateMatrixVersion, error) {
+func (_mock *MockRateMatrixVersionRepository) ListServed(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*ratematrixversion.RateMatrixVersion, error) {
 	ret := _mock.Called(ctx, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListServed")
 	}
 
-	var r0 []*ratematrix.RateMatrixVersion
+	var r0 []*ratematrixversion.RateMatrixVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]*ratematrix.RateMatrixVersion, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]*ratematrixversion.RateMatrixVersion, error)); ok {
 		return returnFunc(ctx, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []*ratematrix.RateMatrixVersion); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []*ratematrixversion.RateMatrixVersion); ok {
 		r0 = returnFunc(ctx, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ratematrix.RateMatrixVersion)
+			r0 = ret.Get(0).([]*ratematrixversion.RateMatrixVersion)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
@@ -506,34 +507,34 @@ func (_c *MockRateMatrixVersionRepository_ListServed_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_ListServed_Call) Return(rateMatrixVersions []*ratematrix.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_ListServed_Call {
+func (_c *MockRateMatrixVersionRepository_ListServed_Call) Return(rateMatrixVersions []*ratematrixversion.RateMatrixVersion, err error) *MockRateMatrixVersionRepository_ListServed_Call {
 	_c.Call.Return(rateMatrixVersions, err)
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_ListServed_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*ratematrix.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_ListServed_Call {
+func (_c *MockRateMatrixVersionRepository_ListServed_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*ratematrixversion.RateMatrixVersion, error)) *MockRateMatrixVersionRepository_ListServed_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListTableCells provides a mock function for the type MockRateMatrixVersionRepository
-func (_mock *MockRateMatrixVersionRepository) ListTableCells(ctx context.Context, req *ratematrixports.ListTableCellsRequest) ([]*ratematrix.RateMatrixCell, error) {
+func (_mock *MockRateMatrixVersionRepository) ListTableCells(ctx context.Context, req *ratematrixports.ListTableCellsRequest) ([]*ratematrixcell.RateMatrixCell, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListTableCells")
 	}
 
-	var r0 []*ratematrix.RateMatrixCell
+	var r0 []*ratematrixcell.RateMatrixCell
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListTableCellsRequest) ([]*ratematrix.RateMatrixCell, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListTableCellsRequest) ([]*ratematrixcell.RateMatrixCell, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListTableCellsRequest) []*ratematrix.RateMatrixCell); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListTableCellsRequest) []*ratematrixcell.RateMatrixCell); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ratematrix.RateMatrixCell)
+			r0 = ret.Get(0).([]*ratematrixcell.RateMatrixCell)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.ListTableCellsRequest) error); ok {
@@ -574,34 +575,34 @@ func (_c *MockRateMatrixVersionRepository_ListTableCells_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_ListTableCells_Call) Return(rateMatrixCells []*ratematrix.RateMatrixCell, err error) *MockRateMatrixVersionRepository_ListTableCells_Call {
+func (_c *MockRateMatrixVersionRepository_ListTableCells_Call) Return(rateMatrixCells []*ratematrixcell.RateMatrixCell, err error) *MockRateMatrixVersionRepository_ListTableCells_Call {
 	_c.Call.Return(rateMatrixCells, err)
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_ListTableCells_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListTableCellsRequest) ([]*ratematrix.RateMatrixCell, error)) *MockRateMatrixVersionRepository_ListTableCells_Call {
+func (_c *MockRateMatrixVersionRepository_ListTableCells_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListTableCellsRequest) ([]*ratematrixcell.RateMatrixCell, error)) *MockRateMatrixVersionRepository_ListTableCells_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // LoadTableCells provides a mock function for the type MockRateMatrixVersionRepository
-func (_mock *MockRateMatrixVersionRepository) LoadTableCells(ctx context.Context, req *ratematrixports.LoadTableCellsRequest) ([]*ratematrix.RateMatrixCell, error) {
+func (_mock *MockRateMatrixVersionRepository) LoadTableCells(ctx context.Context, req *ratematrixports.LoadTableCellsRequest) ([]*ratematrixcell.RateMatrixCell, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for LoadTableCells")
 	}
 
-	var r0 []*ratematrix.RateMatrixCell
+	var r0 []*ratematrixcell.RateMatrixCell
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.LoadTableCellsRequest) ([]*ratematrix.RateMatrixCell, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.LoadTableCellsRequest) ([]*ratematrixcell.RateMatrixCell, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.LoadTableCellsRequest) []*ratematrix.RateMatrixCell); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.LoadTableCellsRequest) []*ratematrixcell.RateMatrixCell); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ratematrix.RateMatrixCell)
+			r0 = ret.Get(0).([]*ratematrixcell.RateMatrixCell)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.LoadTableCellsRequest) error); ok {
@@ -642,12 +643,12 @@ func (_c *MockRateMatrixVersionRepository_LoadTableCells_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_LoadTableCells_Call) Return(rateMatrixCells []*ratematrix.RateMatrixCell, err error) *MockRateMatrixVersionRepository_LoadTableCells_Call {
+func (_c *MockRateMatrixVersionRepository_LoadTableCells_Call) Return(rateMatrixCells []*ratematrixcell.RateMatrixCell, err error) *MockRateMatrixVersionRepository_LoadTableCells_Call {
 	_c.Call.Return(rateMatrixCells, err)
 	return _c
 }
 
-func (_c *MockRateMatrixVersionRepository_LoadTableCells_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.LoadTableCellsRequest) ([]*ratematrix.RateMatrixCell, error)) *MockRateMatrixVersionRepository_LoadTableCells_Call {
+func (_c *MockRateMatrixVersionRepository_LoadTableCells_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.LoadTableCellsRequest) ([]*ratematrixcell.RateMatrixCell, error)) *MockRateMatrixVersionRepository_LoadTableCells_Call {
 	_c.Call.Return(run)
 	return _c
 }

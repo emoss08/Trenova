@@ -1,9 +1,10 @@
-package ratematrix_test
+package ratematrixcell_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,13 +13,13 @@ import (
 func TestPostalRangeMatchesByLeadingCharacters(t *testing.T) {
 	t.Parallel()
 
-	zip5 := ratematrix.NewPostalRange(" 30000", "31999 ")
-	zip3 := ratematrix.NewPostalRange("300", "319")
-	canada := ratematrix.NewPostalRange("k1a", "K1Z")
+	zip5 := ratematrixcell.NewPostalRange(" 30000", "31999 ")
+	zip3 := ratematrixcell.NewPostalRange("300", "319")
+	canada := ratematrixcell.NewPostalRange("k1a", "K1Z")
 
 	cases := []struct {
 		name   string
-		postal ratematrix.PostalRange
+		postal ratematrixcell.PostalRange
 		key    string
 		want   bool
 	}{
@@ -45,23 +46,23 @@ func TestPostalRangeMatchesByLeadingCharacters(t *testing.T) {
 func TestPostalRangeShape(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, ratematrix.NewPostalRange("30000", "31999").IsWellFormed())
-	assert.True(t, ratematrix.NewPostalRange("30000", "30000").IsWellFormed())
-	assert.False(t, ratematrix.NewPostalRange("300", "31999").IsWellFormed())
-	assert.False(t, ratematrix.NewPostalRange("31999", "30000").IsWellFormed())
-	assert.False(t, ratematrix.NewPostalRange("", "").IsWellFormed())
+	assert.True(t, ratematrixcell.NewPostalRange("30000", "31999").IsWellFormed())
+	assert.True(t, ratematrixcell.NewPostalRange("30000", "30000").IsWellFormed())
+	assert.False(t, ratematrixcell.NewPostalRange("300", "31999").IsWellFormed())
+	assert.False(t, ratematrixcell.NewPostalRange("31999", "30000").IsWellFormed())
+	assert.False(t, ratematrixcell.NewPostalRange("", "").IsWellFormed())
 
-	a := ratematrix.NewPostalRange("30000", "31999")
-	assert.True(t, a.Overlaps(ratematrix.NewPostalRange("31999", "32999")))
-	assert.False(t, a.Overlaps(ratematrix.NewPostalRange("32000", "32999")))
-	assert.False(t, a.Overlaps(ratematrix.NewPostalRange("300", "319")),
+	a := ratematrixcell.NewPostalRange("30000", "31999")
+	assert.True(t, a.Overlaps(ratematrixcell.NewPostalRange("31999", "32999")))
+	assert.False(t, a.Overlaps(ratematrixcell.NewPostalRange("32000", "32999")))
+	assert.False(t, a.Overlaps(ratematrixcell.NewPostalRange("300", "319")),
 		"ranges of different lengths are refused elsewhere, not compared")
 }
 
 func TestPostalIndexFindsTheRangeHoldingAKey(t *testing.T) {
 	t.Parallel()
 
-	index := ratematrix.NewPostalIndex([]ratematrix.PostalRange{
+	index := ratematrixcell.NewPostalIndex([]ratematrixcell.PostalRange{
 		{From: "32000", To: "34999"},
 		{From: "30000", To: "31999"},
 		{From: "40000", To: "41999"},
@@ -79,7 +80,7 @@ func TestPostalIndexFindsTheRangeHoldingAKey(t *testing.T) {
 	assert.Empty(t, index.Find("35000"), "a gap between ranges holds nothing")
 	assert.Empty(t, index.Find("29999"))
 	assert.Empty(t, index.Find("3"))
-	assert.Empty(t, (*ratematrix.PostalIndex)(nil).Find("30000"))
+	assert.Empty(t, (*ratematrixcell.PostalIndex)(nil).Find("30000"))
 }
 
 func postalDimension(position int16) *ratematrix.RateMatrixDimension {
@@ -125,16 +126,16 @@ func TestAPostalCellIsNormalisedAndChecked(t *testing.T) {
 
 	dimensions := []*ratematrix.RateMatrixDimension{postalDimension(0)}
 
-	cell := &ratematrix.RateMatrixCell{D0Key: " k1a ", D0KeyTo: "k1z"}
+	cell := &ratematrixcell.RateMatrixCell{D0Key: " k1a ", D0KeyTo: "k1z"}
 	multiErr := errortypes.NewMultiError()
 	cell.ValidateAgainst(dimensions, multiErr)
 	assert.False(t, multiErr.HasErrors(), multiErr.Error())
 	assert.Equal(t, "K1A", cell.D0Key)
 	assert.Equal(t, "K1Z", cell.D0KeyTo)
 
-	for name, bad := range map[string]*ratematrix.RateMatrixCell{
-		"no last code":        {D0Key: "30000"},
-		"different lengths":   {D0Key: "300", D0KeyTo: "31999"},
+	for name, bad := range map[string]*ratematrixcell.RateMatrixCell{
+		"no last code":          {D0Key: "30000"},
+		"different lengths":     {D0Key: "300", D0KeyTo: "31999"},
 		"ends before it starts": {D0Key: "31999", D0KeyTo: "30000"},
 	} {
 		multiErr = errortypes.NewMultiError()
@@ -147,7 +148,7 @@ func TestAPostalCellIsNormalisedAndChecked(t *testing.T) {
 		Kind:      ratematrix.DimensionKindZone,
 		MatchMode: ratematrix.MatchModeExact,
 	}}
-	stray := &ratematrix.RateMatrixCell{D0Key: "SE", D0KeyTo: "NE"}
+	stray := &ratematrixcell.RateMatrixCell{D0Key: "SE", D0KeyTo: "NE"}
 	multiErr = errortypes.NewMultiError()
 	stray.ValidateAgainst(exact, multiErr)
 	assert.False(t, multiErr.HasErrors())
@@ -159,33 +160,37 @@ func TestPostalAxesRefuseOverlapsAndMixedLengths(t *testing.T) {
 
 	dimensions := []*ratematrix.RateMatrixDimension{
 		postalDimension(0),
-		{Position: 1, Kind: ratematrix.DimensionKindWeightBreak, MatchMode: ratematrix.MatchModeRange},
+		{
+			Position:  1,
+			Kind:      ratematrix.DimensionKindWeightBreak,
+			MatchMode: ratematrix.MatchModeRange,
+		},
 	}
 
-	clean := []*ratematrix.RateMatrixCell{
+	clean := []*ratematrixcell.RateMatrixCell{
 		{D0Key: "30000", D0KeyTo: "31999"},
 		{D0Key: "30000", D0KeyTo: "31999"},
 		{D0Key: "32000", D0KeyTo: "34999"},
 	}
 	multiErr := errortypes.NewMultiError()
-	ratematrix.ValidatePostalAxes(dimensions, clean, multiErr)
+	ratematrixcell.ValidatePostalAxes(dimensions, clean, multiErr)
 	assert.False(t, multiErr.HasErrors(), "the same range on many cells is one range")
 
-	overlapping := []*ratematrix.RateMatrixCell{
+	overlapping := []*ratematrixcell.RateMatrixCell{
 		{D0Key: "30000", D0KeyTo: "39999"},
 		{D0Key: "31000", D0KeyTo: "31999"},
 		{D0Key: "35000", D0KeyTo: "36999"},
 	}
 	multiErr = errortypes.NewMultiError()
-	ratematrix.ValidatePostalAxes(dimensions, overlapping, multiErr)
+	ratematrixcell.ValidatePostalAxes(dimensions, overlapping, multiErr)
 	require.True(t, multiErr.HasErrors())
 	assert.Len(t, multiErr.Errors, 2, "both ranges inside the wide one overlap it")
 
-	mixed := []*ratematrix.RateMatrixCell{
+	mixed := []*ratematrixcell.RateMatrixCell{
 		{D0Key: "30000", D0KeyTo: "31999"},
 		{D0Key: "320", D0KeyTo: "349"},
 	}
 	multiErr = errortypes.NewMultiError()
-	ratematrix.ValidatePostalAxes(dimensions, mixed, multiErr)
+	ratematrixcell.ValidatePostalAxes(dimensions, mixed, multiErr)
 	assert.True(t, multiErr.HasErrors())
 }

@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"go.uber.org/zap"
 )
@@ -35,7 +36,7 @@ func columnsForAxis(position int16) (axisColumns, bool) {
 	}
 }
 
-func versionCells(key ratematrix.VersionKey) *keel.Query[*ratematrix.RateMatrixCell] {
+func versionCells(key ratematrixversion.VersionKey) *keel.Query[*ratematrixcell.RateMatrixCell] {
 	c := ratematrixdb.RateMatrixCells
 
 	return c.Where(c.RateMatrixID.Eq(key.RateMatrixID), c.VersionNumber.Eq(key.VersionNumber))
@@ -43,7 +44,7 @@ func versionCells(key ratematrix.VersionKey) *keel.Query[*ratematrix.RateMatrixC
 
 func tableCellsQuery(
 	req *ratematrixports.LoadTableCellsRequest,
-) *keel.Query[*ratematrix.RateMatrixCell] {
+) *keel.Query[*ratematrixcell.RateMatrixCell] {
 	q := versionCells(req.Key)
 	for position, keys := range req.Keys {
 		if columns, ok := columnsForAxis(position); ok {
@@ -57,45 +58,53 @@ func tableCellsQuery(
 func (r *repository) LoadTableCells(
 	ctx context.Context,
 	req *ratematrixports.LoadTableCellsRequest,
-) ([]*ratematrix.RateMatrixCell, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrix.RateMatrixCell, error) {
-		entities, err := tableCellsQuery(req).All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to load rate table cells",
-				zap.String("matrixId", req.Key.RateMatrixID.String()),
-				zap.Int64("versionNumber", req.Key.VersionNumber),
-				zap.Error(err),
-			)
-			return nil, err
-		}
+) ([]*ratematrixcell.RateMatrixCell, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ratematrixcell.RateMatrixCell, error) {
+			entities, err := tableCellsQuery(req).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to load rate table cells",
+					zap.String("matrixId", req.Key.RateMatrixID.String()),
+					zap.Int64("versionNumber", req.Key.VersionNumber),
+					zap.Error(err),
+				)
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ListTableCells(
 	ctx context.Context,
 	req *ratematrixports.ListTableCellsRequest,
-) ([]*ratematrix.RateMatrixCell, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrix.RateMatrixCell, error) {
-		keys := uniqueKeys(req.Keys)
-		if len(keys) == 0 {
-			return nil, nil
-		}
+) ([]*ratematrixcell.RateMatrixCell, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ratematrixcell.RateMatrixCell, error) {
+			keys := uniqueKeys(req.Keys)
+			if len(keys) == 0 {
+				return nil, nil
+			}
 
-		c := ratematrixdb.RateMatrixCells
-		wanted := versionKeys(keys)
-		cells, err := c.With(wanted).
-			Join(wanted, matchesKey(wanted, c.RateMatrixID.Col, c.VersionNumber.Col)...).
-			Order(c.RateMatrixID.Asc(), c.VersionNumber.Asc(), c.ID.Asc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list rate table cells", zap.Error(err))
-			return nil, err
-		}
+			c := ratematrixdb.RateMatrixCells
+			wanted := versionKeys(keys)
+			cells, err := c.With(wanted).
+				Join(wanted, matchesKey(wanted, c.RateMatrixID.Col, c.VersionNumber.Col)...).
+				Order(c.RateMatrixID.Asc(), c.VersionNumber.Asc(), c.ID.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list rate table cells", zap.Error(err))
+				return nil, err
+			}
 
-		return cells, nil
-	})
+			return cells, nil
+		},
+	)
 }
 
 func (r *repository) ListAxisKeys(
@@ -127,8 +136,8 @@ type rangeRow struct {
 func (r *repository) ListAxisRanges(
 	ctx context.Context,
 	req *ratematrixports.ListAxisKeysRequest,
-) ([]ratematrix.PostalRange, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]ratematrix.PostalRange, error) {
+) ([]ratematrixcell.PostalRange, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]ratematrixcell.PostalRange, error) {
 		columns, ok := columnsForAxis(req.Position)
 		if !ok {
 			return nil, nil
@@ -143,9 +152,9 @@ func (r *repository) ListAxisRanges(
 			return nil, err
 		}
 
-		ranges := make([]ratematrix.PostalRange, 0, len(rows))
+		ranges := make([]ratematrixcell.PostalRange, 0, len(rows))
 		for _, row := range rows {
-			ranges = append(ranges, ratematrix.PostalRange{From: row.From, To: row.To})
+			ranges = append(ranges, ratematrixcell.PostalRange{From: row.From, To: row.To})
 		}
 
 		return ranges, nil

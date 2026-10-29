@@ -505,6 +505,9 @@ modules:
       - rateconfirmation
       - rateimport
       - ratematrix
+      - ratematrixcell
+      - ratematrixreview
+      - ratematrixversion
       - ratequote
       - ratesimulation
       - ratezone

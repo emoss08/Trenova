@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -298,7 +300,11 @@ func (s *Service) publish(
 	matrix *ratematrix.RateMatrix,
 	publisherID pulid.ID,
 ) error {
-	version := ratematrix.NewVersionFromMatrix(matrix, matrix.PublishedVersionNumber, publisherID)
+	version := ratematrixversion.NewVersionFromMatrix(
+		matrix,
+		matrix.PublishedVersionNumber,
+		publisherID,
+	)
 	if _, err := s.versionRepo.Create(ctx, version); err != nil {
 		return err
 	}
@@ -601,7 +607,7 @@ func (s *Service) recordReview(
 		round = nextRound(latest)
 	}
 
-	review := &ratematrix.RateMatrixReview{
+	review := &ratematrixreview.RateMatrixReview{
 		RateMatrixID:      matrix.ID,
 		OrganizationID:    matrix.OrganizationID,
 		BusinessUnitID:    matrix.BusinessUnitID,
@@ -633,7 +639,7 @@ func (s *Service) recordReview(
 	return err
 }
 
-func nextRound(latest *ratematrix.RateMatrixReview) int32 {
+func nextRound(latest *ratematrixreview.RateMatrixReview) int32 {
 	if latest == nil {
 		return 1
 	}

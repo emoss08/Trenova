@@ -1,8 +1,10 @@
-package ratematrix
+package ratematrixversion
 
 import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -34,12 +36,12 @@ type RateMatrixVersion struct {
 	PublishedByID  *pulid.ID `json:"publishedById"  keel:"published_by_id"`
 	CreatedAt      int64     `json:"createdAt"      keel:"created_at,autocreate"`
 
-	PublishedBy *tenant.User           `json:"publishedBy,omitempty" keel:"belongs:published_by_id"`
-	Dimensions  []*RateMatrixDimension `json:"dimensions,omitempty"`
+	PublishedBy *tenant.User                      `json:"publishedBy,omitempty" keel:"belongs:published_by_id"`
+	Dimensions  []*ratematrix.RateMatrixDimension `json:"dimensions,omitempty"`
 }
 
 func NewVersionFromMatrix(
-	matrix *RateMatrix,
+	matrix *ratematrix.RateMatrix,
 	versionNumber int64,
 	publishedByID pulid.ID,
 ) *RateMatrixVersion {
@@ -62,13 +64,13 @@ func NewVersionFromMatrix(
 
 type PublishedCopy struct {
 	Version    *RateMatrixVersion
-	Dimensions []*RateMatrixDimension
-	Cells      []*RateMatrixCell
+	Dimensions []*ratematrix.RateMatrixDimension
+	Cells      []*ratematrixcell.RateMatrixCell
 }
 
 func CopyPublished(
-	matrix *RateMatrix,
-	cells []*RateMatrixCell,
+	matrix *ratematrix.RateMatrix,
+	cells []*ratematrixcell.RateMatrixCell,
 	versionNumber int64,
 	publishedByID pulid.ID,
 ) PublishedCopy {
@@ -79,7 +81,7 @@ func CopyPublished(
 		version.PublishedByID = nil
 	}
 
-	dimensions := make([]*RateMatrixDimension, 0, len(matrix.Dimensions))
+	dimensions := make([]*ratematrix.RateMatrixDimension, 0, len(matrix.Dimensions))
 	for _, dimension := range matrix.Dimensions {
 		if dimension == nil {
 			continue
@@ -91,7 +93,7 @@ func CopyPublished(
 		dimensions = append(dimensions, &copied)
 	}
 
-	copiedCells := make([]*RateMatrixCell, 0, len(cells))
+	copiedCells := make([]*ratematrixcell.RateMatrixCell, 0, len(cells))
 	for _, cell := range cells {
 		if cell == nil {
 			continue
@@ -115,8 +117,8 @@ func (v *RateMatrixVersion) Pin() tarifftypes.TablePin {
 	}
 }
 
-func (v *RateMatrixVersion) OrderedDimensions() []*RateMatrixDimension {
-	matrix := RateMatrix{Dimensions: v.Dimensions}
+func (v *RateMatrixVersion) OrderedDimensions() []*ratematrix.RateMatrixDimension {
+	matrix := ratematrix.RateMatrix{Dimensions: v.Dimensions}
 	return matrix.OrderedDimensions()
 }
 

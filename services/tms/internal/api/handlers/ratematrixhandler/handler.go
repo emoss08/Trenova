@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -553,7 +554,7 @@ func (h *Handler) delete(c *gin.Context) {
 // @Param versionNumber query int false "A published version; 0 or absent reads the draft"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]ratematrix.RateMatrixCell]
+// @Success 200 {object} pagination.Response[[]ratematrixcell.RateMatrixCell]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -587,7 +588,7 @@ func (h *Handler) listCells(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
+		func() (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error) {
 			return h.service.ListCells(
 				c.Request.Context(),
 				&ratematrixports.ListRateMatrixCellsRequest{
@@ -602,7 +603,7 @@ func (h *Handler) listCells(c *gin.Context) {
 }
 
 type replaceCellsRequest struct {
-	Cells []*ratematrix.RateMatrixCell `json:"cells"`
+	Cells []*ratematrixcell.RateMatrixCell `json:"cells"`
 }
 
 // @Summary Replace a rate matrix's cells

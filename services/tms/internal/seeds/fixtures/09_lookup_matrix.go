@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -139,9 +140,9 @@ func (s *LookupMatrixSeed) createMatrix(
 		RangeOverflow:    ratematrix.RangeOverflowError,
 	}
 
-	cells := make([]*ratematrix.RateMatrixCell, 0, len(def.cells))
+	cells := make([]*ratematrixcell.RateMatrixCell, 0, len(def.cells))
 	for _, cellDef := range def.cells {
-		cells = append(cells, &ratematrix.RateMatrixCell{
+		cells = append(cells, &ratematrixcell.RateMatrixCell{
 			ID:              pulid.MustNew("rmc_"),
 			OrganizationID:  orgID,
 			BusinessUnitID:  buID,

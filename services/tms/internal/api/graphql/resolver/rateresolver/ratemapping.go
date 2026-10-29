@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/tariffmapping"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -370,7 +371,7 @@ func rateMatrixCardToModel(entity *ratematrix.RateMatrix) *gqlmodel.RateMatrix {
 	return model
 }
 
-func rateMatrixCellToModel(entity *ratematrix.RateMatrixCell) *gqlmodel.RateMatrixCell {
+func rateMatrixCellToModel(entity *ratematrixcell.RateMatrixCell) *gqlmodel.RateMatrixCell {
 	return &gqlmodel.RateMatrixCell{
 		ID:              entity.ID.String(),
 		D0Key:           entity.D0Key,

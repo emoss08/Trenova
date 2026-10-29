@@ -1,4 +1,4 @@
-package ratematrix
+package ratematrixcell
 
 import (
 	"slices"

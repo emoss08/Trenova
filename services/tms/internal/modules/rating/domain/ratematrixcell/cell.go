@@ -1,7 +1,8 @@
-package ratematrix
+package ratematrixcell
 
 import (
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -50,7 +51,7 @@ type RateMatrixCell struct {
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	RateMatrix *RateMatrix `json:"-" keel:"belongs:rate_matrix_id"`
+	RateMatrix *ratematrix.RateMatrix `json:"-" keel:"belongs:rate_matrix_id"`
 }
 
 // KeyAt reads the exact key stored for the given axis.
@@ -184,10 +185,10 @@ func (rmc *RateMatrixCell) Validate(multiErr *errortypes.MultiError) {
 	rmc.validateBounds(multiErr)
 }
 
-var boundFieldNames = [MaxDimensions]string{"d0Max", "d1Max", "d2Max", "d3Max"}
+var boundFieldNames = [ratematrix.MaxDimensions]string{"d0Max", "d1Max", "d2Max", "d3Max"}
 
 func (rmc *RateMatrixCell) validateBounds(multiErr *errortypes.MultiError) {
-	for position := int16(0); position < MaxDimensions; position++ {
+	for position := int16(0); position < ratematrix.MaxDimensions; position++ {
 		minimum, maximum := rmc.BoundsAt(position)
 		if !minimum.Valid || !maximum.Valid {
 			continue
@@ -207,7 +208,7 @@ func (rmc *RateMatrixCell) validateBounds(multiErr *errortypes.MultiError) {
 // is the only place the two can be compared. A cell with a key on a range axis,
 // or a band on an exact one, would be stored and never looked up.
 func (rmc *RateMatrixCell) ValidateAgainst(
-	dimensions []*RateMatrixDimension,
+	dimensions []*ratematrix.RateMatrixDimension,
 	multiErr *errortypes.MultiError,
 ) {
 	rmc.Validate(multiErr)
@@ -227,7 +228,7 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 		rmc.SetKeyToAt(position, "")
 
 		switch dimension.MatchMode {
-		case MatchModeExact:
+		case ratematrix.MatchModeExact:
 			if rmc.KeyAt(position) == "" {
 				multiErr.Add(
 					keyFieldName(position),
@@ -235,7 +236,7 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 					"{0} requires a value", dimension.DisplayLabel(),
 				)
 			}
-		case MatchModeRange:
+		case ratematrix.MatchModeRange:
 			if !minimum.Valid {
 				multiErr.Add(
 					minFieldName(position),
@@ -248,7 +249,7 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 }
 
 func (rmc *RateMatrixCell) validatePostalRange(
-	dimension *RateMatrixDimension,
+	dimension *ratematrix.RateMatrixDimension,
 	multiErr *errortypes.MultiError,
 ) {
 	position := dimension.Position

@@ -5,25 +5,24 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
-
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone/ratezonedb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone/ratezonedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -184,11 +183,14 @@ func (s *RateAgreementSeed) loadRefs(
 		refs.states[state.Abbreviation] = state.ID
 	}
 
-	templates, err := formulatemplatedb.FormulaTemplates.AllTenants().Pick(formulatemplatedb.FormulaTemplates.ID, formulatemplatedb.FormulaTemplates.Name).Where(
-		formulatemplatedb.FormulaTemplates.OrganizationID.Eq(org.ID),
-		formulatemplatedb.FormulaTemplates.BusinessUnitID.Eq(org.BusinessUnitID),
-		formulatemplatedb.FormulaTemplates.Status.Eq(formulatemplate.StatusActive),
-	).All(ctx, db)
+	templates, err := formulatemplatedb.FormulaTemplates.AllTenants().
+		Pick(formulatemplatedb.FormulaTemplates.ID, formulatemplatedb.FormulaTemplates.Name).
+		Where(
+			formulatemplatedb.FormulaTemplates.OrganizationID.Eq(org.ID),
+			formulatemplatedb.FormulaTemplates.BusinessUnitID.Eq(org.BusinessUnitID),
+			formulatemplatedb.FormulaTemplates.Status.Eq(formulatemplate.StatusActive),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("load formula templates: %w", err)
 	}
@@ -206,10 +208,13 @@ func (s *RateAgreementSeed) loadRefs(
 	}
 	refs.customer = cust
 
-	charges, err := accessorialchargedb.AccessorialCharges.AllTenants().Pick(accessorialchargedb.AccessorialCharges.ID, accessorialchargedb.AccessorialCharges.Code).Where(
-		accessorialchargedb.AccessorialCharges.OrganizationID.Eq(org.ID),
-		accessorialchargedb.AccessorialCharges.BusinessUnitID.Eq(org.BusinessUnitID),
-	).All(ctx, db)
+	charges, err := accessorialchargedb.AccessorialCharges.AllTenants().
+		Pick(accessorialchargedb.AccessorialCharges.ID, accessorialchargedb.AccessorialCharges.Code).
+		Where(
+			accessorialchargedb.AccessorialCharges.OrganizationID.Eq(org.ID),
+			accessorialchargedb.AccessorialCharges.BusinessUnitID.Eq(org.BusinessUnitID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("load accessorial charges: %w", err)
 	}
@@ -384,7 +389,7 @@ func (s *RateAgreementSeed) createMatrix(
 	}
 
 	defs := zoneMatrixCells()
-	cells := make([]*ratematrix.RateMatrixCell, 0, len(defs))
+	cells := make([]*ratematrixcell.RateMatrixCell, 0, len(defs))
 
 	for _, def := range defs {
 		originID, originOK := refs.zones[def.origin]
@@ -393,7 +398,7 @@ func (s *RateAgreementSeed) createMatrix(
 			continue
 		}
 
-		cells = append(cells, &ratematrix.RateMatrixCell{
+		cells = append(cells, &ratematrixcell.RateMatrixCell{
 			ID:              pulid.MustNew("rmc_"),
 			OrganizationID:  refs.orgID,
 			BusinessUnitID:  refs.buID,

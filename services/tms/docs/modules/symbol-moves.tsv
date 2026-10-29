@@ -17352,3 +17352,16 @@ github.com/emoss08/trenova/internal/modules/agent/domain/agentextension.WebWatch
 github.com/emoss08/trenova/internal/modules/agent/domain/agentextension.WebWatchStatusStopped	github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch.WebWatchStatusStopped
 github.com/emoss08/trenova/internal/modules/agent/domain/agentextension.WebWatchWebhookPath	github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch.WebWatchWebhookPath
 github.com/emoss08/trenova/internal/modules/agent/domain/agentextension.WebWatchWebhookPrefix	github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch.WebWatchWebhookPrefix
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.NewPostalIndex	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell.NewPostalIndex
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.NewPostalRange	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell.NewPostalRange
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.NormalizePostal	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell.NormalizePostal
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.PostalIndex	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell.PostalIndex
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.PostalRange	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell.PostalRange
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixCell	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell.RateMatrixCell
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.ValidatePostalAxes	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell.ValidatePostalAxes
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.CopyPublished	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion.CopyPublished
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.NewVersionFromMatrix	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion.NewVersionFromMatrix
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.PublishedCopy	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion.PublishedCopy
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixVersion	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion.RateMatrixVersion
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.VersionKey	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion.VersionKey
+github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixReview	github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview.RateMatrixReview

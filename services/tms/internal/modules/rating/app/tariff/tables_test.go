@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
@@ -21,24 +23,24 @@ import (
 
 type fakeVersions struct {
 	mu       sync.Mutex
-	versions []*ratematrix.RateMatrixVersion
+	versions []*ratematrixversion.RateMatrixVersion
 	served   map[pulid.ID]int64
-	cells    []*ratematrix.RateMatrixCell
+	cells    []*ratematrixcell.RateMatrixCell
 	loads    int
 	lookups  []*ratematrixports.LoadTableCellsRequest
 }
 
 func (f *fakeVersions) Create(
 	_ context.Context,
-	version *ratematrix.RateMatrixVersion,
-) (*ratematrix.RateMatrixVersion, error) {
+	version *ratematrixversion.RateMatrixVersion,
+) (*ratematrixversion.RateMatrixVersion, error) {
 	return version, nil
 }
 
 func (f *fakeVersions) Get(
 	_ context.Context,
 	req *ratematrixports.GetVersionRequest,
-) (*ratematrix.RateMatrixVersion, error) {
+) (*ratematrixversion.RateMatrixVersion, error) {
 	for _, version := range f.versions {
 		if version.RateMatrixID == req.RateMatrixID && version.VersionNumber == req.VersionNumber {
 			return version, nil
@@ -50,18 +52,18 @@ func (f *fakeVersions) Get(
 func (f *fakeVersions) List(
 	context.Context,
 	*ratematrixports.ListVersionsRequest,
-) ([]*ratematrix.RateMatrixVersion, error) {
+) ([]*ratematrixversion.RateMatrixVersion, error) {
 	return f.versions, nil
 }
 
 func (f *fakeVersions) GetByKeys(
 	_ context.Context,
 	req *ratematrixports.GetVersionsByKeysRequest,
-) ([]*ratematrix.RateMatrixVersion, error) {
+) ([]*ratematrixversion.RateMatrixVersion, error) {
 	f.mu.Lock()
 	f.loads++
 	f.mu.Unlock()
-	out := make([]*ratematrix.RateMatrixVersion, 0, len(req.Keys))
+	out := make([]*ratematrixversion.RateMatrixVersion, 0, len(req.Keys))
 	for _, version := range f.versions {
 		if slices.Contains(req.Keys, version.Key()) {
 			out = append(out, version)
@@ -73,8 +75,8 @@ func (f *fakeVersions) GetByKeys(
 func (f *fakeVersions) ListServed(
 	context.Context,
 	pagination.TenantInfo,
-) ([]*ratematrix.RateMatrixVersion, error) {
-	out := make([]*ratematrix.RateMatrixVersion, 0, len(f.served))
+) ([]*ratematrixversion.RateMatrixVersion, error) {
+	out := make([]*ratematrixversion.RateMatrixVersion, 0, len(f.served))
 	for _, version := range f.versions {
 		if f.served[version.RateMatrixID] == version.VersionNumber {
 			out = append(out, version)
@@ -95,13 +97,14 @@ func (f *fakeVersions) ServedStamp(context.Context, pagination.TenantInfo) (stri
 func (f *fakeVersions) LoadTableCells(
 	_ context.Context,
 	req *ratematrixports.LoadTableCellsRequest,
-) ([]*ratematrix.RateMatrixCell, error) {
+) ([]*ratematrixcell.RateMatrixCell, error) {
 	f.mu.Lock()
 	f.lookups = append(f.lookups, req)
 	f.mu.Unlock()
-	out := make([]*ratematrix.RateMatrixCell, 0, len(f.cells))
+	out := make([]*ratematrixcell.RateMatrixCell, 0, len(f.cells))
 	for _, cell := range f.cells {
-		if cell.RateMatrixID != req.Key.RateMatrixID || cell.VersionNumber != req.Key.VersionNumber {
+		if cell.RateMatrixID != req.Key.RateMatrixID ||
+			cell.VersionNumber != req.Key.VersionNumber {
 			continue
 		}
 		matches := true
@@ -120,10 +123,13 @@ func (f *fakeVersions) LoadTableCells(
 func (f *fakeVersions) ListTableCells(
 	_ context.Context,
 	req *ratematrixports.ListTableCellsRequest,
-) ([]*ratematrix.RateMatrixCell, error) {
-	out := make([]*ratematrix.RateMatrixCell, 0, len(f.cells))
+) ([]*ratematrixcell.RateMatrixCell, error) {
+	out := make([]*ratematrixcell.RateMatrixCell, 0, len(f.cells))
 	for _, cell := range f.cells {
-		key := ratematrix.VersionKey{RateMatrixID: cell.RateMatrixID, VersionNumber: cell.VersionNumber}
+		key := ratematrixversion.VersionKey{
+			RateMatrixID:  cell.RateMatrixID,
+			VersionNumber: cell.VersionNumber,
+		}
 		if slices.Contains(req.Keys, key) {
 			out = append(out, cell)
 		}
@@ -141,11 +147,12 @@ func (f *fakeVersions) ListAxisKeys(
 func (f *fakeVersions) ListAxisRanges(
 	_ context.Context,
 	req *ratematrixports.ListAxisKeysRequest,
-) ([]ratematrix.PostalRange, error) {
-	seen := make(map[ratematrix.PostalRange]struct{}, len(f.cells))
-	out := make([]ratematrix.PostalRange, 0, len(f.cells))
+) ([]ratematrixcell.PostalRange, error) {
+	seen := make(map[ratematrixcell.PostalRange]struct{}, len(f.cells))
+	out := make([]ratematrixcell.PostalRange, 0, len(f.cells))
 	for _, cell := range f.cells {
-		if cell.RateMatrixID != req.Key.RateMatrixID || cell.VersionNumber != req.Key.VersionNumber {
+		if cell.RateMatrixID != req.Key.RateMatrixID ||
+			cell.VersionNumber != req.Key.VersionNumber {
 			continue
 		}
 		postal := cell.PostalRangeAt(req.Position)
@@ -160,8 +167,12 @@ func (f *fakeVersions) ListAxisRanges(
 
 var _ ratematrixports.RateMatrixVersionRepository = (*fakeVersions)(nil)
 
-func zoneVersion(matrixID pulid.ID, number int64, valueType string) *ratematrix.RateMatrixVersion {
-	return &ratematrix.RateMatrixVersion{
+func zoneVersion(
+	matrixID pulid.ID,
+	number int64,
+	valueType string,
+) *ratematrixversion.RateMatrixVersion {
+	return &ratematrixversion.RateMatrixVersion{
 		RateMatrixID:  matrixID,
 		VersionNumber: number,
 		Code:          "ZONES",
@@ -177,8 +188,8 @@ func zoneVersion(matrixID pulid.ID, number int64, valueType string) *ratematrix.
 	}
 }
 
-func zoneCell(matrixID pulid.ID, number int64, key, value string) *ratematrix.RateMatrixCell {
-	return &ratematrix.RateMatrixCell{
+func zoneCell(matrixID pulid.ID, number int64, key, value string) *ratematrixcell.RateMatrixCell {
+	return &ratematrixcell.RateMatrixCell{
 		RateMatrixID:  matrixID,
 		VersionNumber: number,
 		D0Key:         key,
@@ -195,7 +206,7 @@ func TestShapesServeTheLatestVersionAndPinsOverrideIt(t *testing.T) {
 
 	matrixID := pulid.MustNew("rmx_")
 	repo := &fakeVersions{
-		versions: []*ratematrix.RateMatrixVersion{
+		versions: []*ratematrixversion.RateMatrixVersion{
 			zoneVersion(matrixID, 1, ratematrix.ValueTypeMoney),
 			zoneVersion(matrixID, 2, ratematrix.ValueTypeNumber),
 		},
@@ -229,12 +240,12 @@ func TestLoadCellsReadsThePinnedVersionOncePerCombination(t *testing.T) {
 
 	matrixID := pulid.MustNew("rmx_")
 	repo := &fakeVersions{
-		versions: []*ratematrix.RateMatrixVersion{
+		versions: []*ratematrixversion.RateMatrixVersion{
 			zoneVersion(matrixID, 1, ratematrix.ValueTypeMoney),
 			zoneVersion(matrixID, 2, ratematrix.ValueTypeMoney),
 		},
 		served: map[pulid.ID]int64{matrixID: 2},
-		cells: []*ratematrix.RateMatrixCell{
+		cells: []*ratematrixcell.RateMatrixCell{
 			zoneCell(matrixID, 1, "SE", "10"),
 			zoneCell(matrixID, 2, "SE", "99"),
 		},
@@ -265,7 +276,7 @@ func TestPostalRangeAxesLoadByTheRangeHoldingTheKey(t *testing.T) {
 	t.Parallel()
 
 	matrixID := pulid.MustNew("rmx_")
-	version := &ratematrix.RateMatrixVersion{
+	version := &ratematrixversion.RateMatrixVersion{
 		RateMatrixID:  matrixID,
 		VersionNumber: 1,
 		Code:          "LANES",
@@ -287,8 +298,8 @@ func TestPostalRangeAxesLoadByTheRangeHoldingTheKey(t *testing.T) {
 			},
 		},
 	}
-	band := func(from, to, minimum, value string) *ratematrix.RateMatrixCell {
-		cell := &ratematrix.RateMatrixCell{
+	band := func(from, to, minimum, value string) *ratematrixcell.RateMatrixCell {
+		cell := &ratematrixcell.RateMatrixCell{
 			RateMatrixID:  matrixID,
 			VersionNumber: 1,
 			D0Key:         from,
@@ -299,9 +310,9 @@ func TestPostalRangeAxesLoadByTheRangeHoldingTheKey(t *testing.T) {
 		return cell
 	}
 	repo := &fakeVersions{
-		versions: []*ratematrix.RateMatrixVersion{version},
+		versions: []*ratematrixversion.RateMatrixVersion{version},
 		served:   map[pulid.ID]int64{matrixID: 1},
-		cells: []*ratematrix.RateMatrixCell{
+		cells: []*ratematrixcell.RateMatrixCell{
 			band("30000", "31999", "0", "20"),
 			band("30000", "31999", "1000", "15"),
 			band("32000", "34999", "0", "25"),
