@@ -78,9 +78,9 @@ func TestCreateIntegration_RollsBackEverythingWhenALaterStepFails(t *testing.T) 
 	assert.Zero(t, shipmentCount, "the shipment row is rolled back with the rest")
 
 	orphanOrders, err := keel.QueryValue[int64](ctx, db,
-		"SELECT count(*) FROM orders AS o WHERE o.organization_id = $1 "+
+		"SELECT count(*) FROM orders AS o WHERE o.organization_id = $1 AND o.customer_id = $2 "+
 			"AND NOT EXISTS (SELECT 1 FROM shipments AS s WHERE s.order_id = o.id)",
-		tenantInfo.OrgID.String())
+		tenantInfo.OrgID.String(), entity.CustomerID.String())
 	require.NoError(t, err)
 	assert.Zero(t, orphanOrders, "the auto-created order is rolled back too")
 }

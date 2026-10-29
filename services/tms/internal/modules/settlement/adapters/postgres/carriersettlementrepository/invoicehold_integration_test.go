@@ -67,7 +67,8 @@ func setupHoldFixture(t *testing.T) *holdFixture {
 		ctx,
 		db,
 		pgx.RowToStructByPos[tenantRow],
-		"SELECT organization_id, business_unit_id FROM shipment_moves LIMIT 1",
+		"SELECT organization_id, business_unit_id FROM shipment_moves "+
+			"ORDER BY organization_id, business_unit_id LIMIT 1",
 	)
 	require.NoError(t, err)
 	require.Len(t, rows, 1)

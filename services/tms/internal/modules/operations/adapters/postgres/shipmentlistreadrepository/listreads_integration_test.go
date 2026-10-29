@@ -34,7 +34,7 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 		SELECT s.id, s.customer_id, s.organization_id, s.business_unit_id
 		FROM shipments AS s
 		WHERE s.status <> 'Canceled'
-		ORDER BY s.organization_id, s.business_unit_id, s.id
+		ORDER BY s.organization_id, s.business_unit_id, s.created_at, s.id
 		LIMIT 2`)
 	require.NoError(t, err)
 	require.Len(t, shipments, 2)

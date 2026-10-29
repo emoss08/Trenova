@@ -250,14 +250,19 @@ func searchBatches(term string) keel.Pred {
 			page.BatchID.EqCol(b.ID),
 			keel.StringOf(codes.Col("code")).ILike(pattern),
 		)),
-		keel.Exists(sp.Pick(sp.ID).Where(
-			keel.Or(sp.ProNumber.ContainsFold(term), sp.BOL.ContainsFold(term)),
-			keel.Or(
-				keel.And(b.TargetType.Eq(shipmentType), sp.ID.EqCol(b.TargetID)),
-				sp.ID.InQuery(routed),
-			),
-		)),
+		keel.And(
+			b.TargetType.Eq(shipmentType),
+			keel.Exists(sp.Pick(sp.ID).Where(
+				sp.ID.EqCol(b.TargetID),
+				shipmentNumberMatches(sp, term),
+			)),
+		),
+		keel.Exists(sp.Pick(sp.ID).Where(sp.ID.InQuery(routed), shipmentNumberMatches(sp, term))),
 	)
+}
+
+func shipmentNumberMatches(sp *shipmentdb.ShipmentsTable, term string) keel.Pred {
+	return keel.Or(sp.ProNumber.ContainsFold(term), sp.BOL.ContainsFold(term))
 }
 
 func (r *batchRepository) ListStale(
