@@ -169,6 +169,7 @@ type fileScope struct {
 	pkg       string
 	elided    map[*ast.CompositeLit]string
 	nonFields map[*ast.KeyValueExpr]struct{}
+	labelMaps map[string]*ast.CompositeLit
 }
 
 func (e *extractor) walkDir(root string) error {
@@ -249,6 +250,7 @@ func (e *extractor) parseFile(path string) error {
 		pkg:       file.Name.Name,
 		elided:    map[*ast.CompositeLit]string{},
 		nonFields: map[*ast.KeyValueExpr]struct{}{},
+		labelMaps: stringMaps(file),
 	}
 
 	rel, err := filepath.Rel(e.repoRoot, path)
@@ -258,7 +260,7 @@ func (e *extractor) parseFile(path string) error {
 
 	ast.Inspect(file, func(n ast.Node) bool {
 		if fn, isFn := n.(*ast.FuncDecl); isFn {
-			e.recordLabelMethod(fn, rel)
+			e.recordLabelMethod(fn, scope, rel)
 			return true
 		}
 
@@ -419,7 +421,7 @@ func (s *fileScope) typeKey(expr ast.Expr) string {
 	return ""
 }
 
-func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {
+func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, scope *fileScope, rel string) {
 	if fn.Recv == nil || fn.Body == nil || fn.Name == nil {
 		return
 	}
@@ -433,25 +435,74 @@ func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {
 		return
 	}
 
+	callee := "label:" + fn.Name.Name
+	read := map[string]struct{}{}
 	ast.Inspect(fn.Body, func(n ast.Node) bool {
-		ret, ok := n.(*ast.ReturnStmt)
-		if !ok || len(ret.Results) != 1 {
-			return true
+		switch node := n.(type) {
+		case *ast.ReturnStmt:
+			if len(node.Results) == 1 {
+				e.recordLiteral(node.Results[0], node.Pos(), rel, callee)
+			}
+		case *ast.IndexExpr:
+			name, isIdent := node.X.(*ast.Ident)
+			if !isIdent {
+				return true
+			}
+			lit, isMap := scope.labelMaps[name.Name]
+			if _, seen := read[name.Name]; !isMap || seen {
+				return true
+			}
+			read[name.Name] = struct{}{}
+			for _, elt := range lit.Elts {
+				if kv, isKV := elt.(*ast.KeyValueExpr); isKV {
+					e.recordLiteral(kv.Value, kv.Pos(), rel, callee)
+				}
+			}
 		}
-
-		msg, ok := stringLiteral(ret.Results[0])
-		if !ok || strings.TrimSpace(msg) == "" {
-			return true
-		}
-
-		e.entries = append(e.entries, entry{
-			Message: msg,
-			File:    filepath.ToSlash(rel),
-			Line:    e.fset.Position(ret.Pos()).Line,
-			Callee:  "label:" + fn.Name.Name,
-		})
 		return true
 	})
+}
+
+func (e *extractor) recordLiteral(expr ast.Expr, pos token.Pos, rel, callee string) {
+	msg, ok := stringLiteral(expr)
+	if !ok || strings.TrimSpace(msg) == "" {
+		return
+	}
+
+	e.entries = append(e.entries, entry{
+		Message: msg,
+		File:    filepath.ToSlash(rel),
+		Line:    e.fset.Position(pos).Line,
+		Callee:  callee,
+	})
+}
+
+func stringMaps(file *ast.File) map[string]*ast.CompositeLit {
+	maps := map[string]*ast.CompositeLit{}
+	for _, decl := range file.Decls {
+		gen, isGen := decl.(*ast.GenDecl)
+		if !isGen || gen.Tok != token.VAR {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			value, isValue := spec.(*ast.ValueSpec)
+			if !isValue || len(value.Names) != 1 || len(value.Values) != 1 {
+				continue
+			}
+			lit, isLit := value.Values[0].(*ast.CompositeLit)
+			if !isLit {
+				continue
+			}
+			mapType, isMap := lit.Type.(*ast.MapType)
+			if !isMap {
+				continue
+			}
+			if elem, isIdent := mapType.Value.(*ast.Ident); isIdent && elem.Name == "string" {
+				maps[value.Names[0].Name] = lit
+			}
+		}
+	}
+	return maps
 }
 
 func (e *extractor) recordStructField(kv *ast.KeyValueExpr, rel string) {
