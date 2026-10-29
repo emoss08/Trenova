@@ -276,7 +276,7 @@ type getBillingQueueItemTool struct {
 
 func NewGetBillingQueueItemTool(
 	items billingqueueports.BillingQueueService,
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentBillingReadinessReader,
 	invoices invoiceports.InvoiceRepository,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {

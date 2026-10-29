@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -45,7 +45,7 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 		Return([]*shipment.Shipment{{ID: pulid.MustNew("shp_")}}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
@@ -76,7 +76,7 @@ func TestServiceAutoCancelShipments_SkipsWhenDisabled(t *testing.T) {
 		Return(&shipmentcontrol.ShipmentControl{AutoCancelShipments: false}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:           zap.NewNop(),
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
@@ -139,7 +139,7 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,

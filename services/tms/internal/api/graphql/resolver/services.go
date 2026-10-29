@@ -240,7 +240,13 @@ type Params struct {
 	Logger                            *zap.Logger
 	AnalyticsService                  kernelports.AnalyticsService
 	OrganizationService               tenantports.OrganizationService
-	ShipmentService                   shipmentserviceports.ShipmentService
+	ShipmentReader                    shipmentserviceports.ShipmentReader
+	ShipmentWriter                    shipmentserviceports.ShipmentWriter
+	ShipmentLifecycle                 shipmentserviceports.ShipmentLifecycleService
+	ShipmentReadiness                 shipmentserviceports.ShipmentBillingReadinessReader
+	ShipmentBillingTransfer           shipmentserviceports.ShipmentBillingTransferService
+	ShipmentAutoRater                 shipmentserviceports.ShipmentAutoRater
+	ShipmentLoadingPlanner            shipmentserviceports.ShipmentLoadingPlanner
 	ShipmentCommentService            shipmentcommentports.ShipmentCommentService
 	ShipmentRatingReviewService       ratingreviewports.RatingReviewService
 	ShipmentEventService              shipmenteventports.ShipmentEventService
@@ -522,7 +528,13 @@ type Services struct {
 	*resolvercore.Core
 	AnalyticsService                  kernelports.AnalyticsService
 	OrganizationService               tenantports.OrganizationService
-	ShipmentService                   shipmentserviceports.ShipmentService
+	ShipmentReader                    shipmentserviceports.ShipmentReader
+	ShipmentWriter                    shipmentserviceports.ShipmentWriter
+	ShipmentLifecycle                 shipmentserviceports.ShipmentLifecycleService
+	ShipmentReadiness                 shipmentserviceports.ShipmentBillingReadinessReader
+	ShipmentBillingTransfer           shipmentserviceports.ShipmentBillingTransferService
+	ShipmentAutoRater                 shipmentserviceports.ShipmentAutoRater
+	ShipmentLoadingPlanner            shipmentserviceports.ShipmentLoadingPlanner
 	ShipmentCommentService            shipmentcommentports.ShipmentCommentService
 	ShipmentRatingReviewService       ratingreviewports.RatingReviewService
 	ShipmentEventService              shipmenteventports.ShipmentEventService
@@ -808,7 +820,13 @@ func newServices(p *Params) *Services {
 		},
 		AnalyticsService:                  p.AnalyticsService,
 		OrganizationService:               p.OrganizationService,
-		ShipmentService:                   p.ShipmentService,
+		ShipmentReader:                    p.ShipmentReader,
+		ShipmentWriter:                    p.ShipmentWriter,
+		ShipmentLifecycle:                 p.ShipmentLifecycle,
+		ShipmentReadiness:                 p.ShipmentReadiness,
+		ShipmentBillingTransfer:           p.ShipmentBillingTransfer,
+		ShipmentAutoRater:                 p.ShipmentAutoRater,
+		ShipmentLoadingPlanner:            p.ShipmentLoadingPlanner,
 		ShipmentCommentService:            p.ShipmentCommentService,
 		ShipmentRatingReviewService:       p.ShipmentRatingReviewService,
 		ShipmentEventService:              p.ShipmentEventService,

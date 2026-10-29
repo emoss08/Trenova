@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"context"
@@ -47,7 +47,7 @@ type bulkTransferFixture struct {
 	billingQueue *billingqueueportsmock.MockBillingQueueService
 	audit        *auditportsmock.MockAuditService
 	realtime     *realtimeportsmock.MockRealtimeService
-	svc          *service
+	svc          *rig
 
 	// billingControlExpected keeps the org-level read registered once, which is
 	// how many times a run makes it.
@@ -69,7 +69,7 @@ func newBulkTransferFixture(t *testing.T) *bulkTransferFixture {
 		audit:        auditportsmock.NewMockAuditService(t),
 		realtime:     realtimeportsmock.NewMockRealtimeService(t),
 	}
-	f.svc = assembled(&service{
+	f.svc = assembled(&rig{
 		l:                   zap.NewNop(),
 		repo:                f.repo,
 		customerRepo:        f.customerRepo,
@@ -536,7 +536,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 			Return(&shipmentports.BillingTransferCandidateIDsResult{IDs: ids, TotalCount: 9000}, nil).
 			Once()
 
-		svc := assembled(&service{l: zap.NewNop(), repo: repo})
+		svc := assembled(&rig{l: zap.NewNop(), repo: repo})
 		response, err := svc.transfer.ListBillingTransferCandidateIDs(
 			t.Context(),
 			&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
@@ -563,7 +563,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 			Return(&shipmentports.BillingTransferCandidateIDsResult{IDs: ids, TotalCount: 2}, nil).
 			Once()
 
-		svc := assembled(&service{l: zap.NewNop(), repo: repo})
+		svc := assembled(&rig{l: zap.NewNop(), repo: repo})
 		response, err := svc.transfer.ListBillingTransferCandidateIDs(
 			t.Context(),
 			&shipmentbillingports.ListBillingTransferCandidateIDsRequest{
@@ -582,7 +582,7 @@ func TestListBillingTransferCandidateIDs(t *testing.T) {
 		t.Parallel()
 
 		svc := assembled(
-			&service{l: zap.NewNop(), repo: shipmentportsmock.NewMockShipmentRepository(t)},
+			&rig{l: zap.NewNop(), repo: shipmentportsmock.NewMockShipmentRepository(t)},
 		)
 		response, err := svc.transfer.ListBillingTransferCandidateIDs(
 			t.Context(),

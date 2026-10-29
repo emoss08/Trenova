@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -92,7 +92,7 @@ func TestServiceCancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:              zap.NewNop(),
 		db:             dbtest.NopConnection{},
 		repo:           repo,
@@ -132,7 +132,7 @@ func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 		Return(&shipment.Shipment{Status: shipment.StatusCanceled}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		validator:    newServiceValidator(t),
@@ -210,7 +210,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
@@ -248,7 +248,7 @@ func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
 		Return(&shipment.Shipment{Status: shipment.StatusAssigned}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		validator:    newServiceValidator(t),
@@ -301,7 +301,7 @@ func TestServiceCancel_RefusesLockedShipments(t *testing.T) {
 			repo := shipmentportsmock.NewMockShipmentRepository(t)
 			repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(tt.original, nil).Once()
 
-			svc := assembled(&service{
+			svc := assembled(&rig{
 				l:            zap.NewNop(),
 				db:           dbtest.NopConnection{},
 				repo:         repo,
@@ -381,7 +381,7 @@ func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,

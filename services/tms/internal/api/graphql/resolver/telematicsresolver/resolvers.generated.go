@@ -10,7 +10,7 @@ import (
 
 type Deps struct {
 	*resolvercore.Core
-	ShipmentService   shipmentserviceports.ShipmentService
+	ShipmentReader    shipmentserviceports.ShipmentReader
 	TelematicsService *telematicsservice.Service
 }
 

@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -29,7 +29,7 @@ func previewCreateService(
 	t *testing.T,
 	entity *shipment.Shipment,
 	control *shipmentcontrol.ShipmentControl,
-) (*service, *shipmentportsmock.MockShipmentRepository) {
+) (*rig, *shipmentportsmock.MockShipmentRepository) {
 	t.Helper()
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
@@ -42,7 +42,7 @@ func previewCreateService(
 	}).Return(control, nil).Once()
 	freight := decimal.NewFromInt(1_250)
 
-	return assembled(&service{
+	return assembled(&rig{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
@@ -115,7 +115,7 @@ func TestPreviewCreate_RefusesADuplicateBOLTheWayCreateDoes(t *testing.T) {
 func TestPreviewCreate_RequiresAShipment(t *testing.T) {
 	t.Parallel()
 
-	svc := assembled(&service{l: zap.NewNop()})
+	svc := assembled(&rig{l: zap.NewNop()})
 
 	_, err := svc.writer.PreviewCreate(t.Context(), nil, nil)
 
@@ -127,7 +127,7 @@ func unpricedCreateService(
 	t *testing.T,
 	entity *shipment.Shipment,
 	disposition billingcontrol.UnratedShipmentDisposition,
-) *service {
+) *rig {
 	t.Helper()
 
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
@@ -135,7 +135,7 @@ func unpricedCreateService(
 		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 
-	return assembled(&service{
+	return assembled(&rig{
 		l:           zap.NewNop(),
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,

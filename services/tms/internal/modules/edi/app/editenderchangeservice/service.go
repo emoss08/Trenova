@@ -23,7 +23,8 @@ type Params struct {
 	PartnerRepo         edipartnerports.EDIPartnerRepository
 	Recipient           *editenderrecipient.Service
 	ShipmentLinkRepo    editenderports.EDIShipmentLinkRepository
-	ShipmentSvc         shipmentserviceports.ShipmentService
+	ShipmentSvc         shipmentserviceports.ShipmentReader
+	ShipmentWriter      shipmentserviceports.ShipmentWriter
 	TenderChangeRepo    editenderports.EDITenderChangeRepository
 	TenderRecipientRepo editenderports.EDITenderRecipientRepository
 	TenderMapping       *editendermapping.Service
@@ -35,7 +36,8 @@ type Service struct {
 	l                   *zap.Logger
 	partnerRepo         edipartnerports.EDIPartnerRepository
 	shipmentLinkRepo    editenderports.EDIShipmentLinkRepository
-	shipmentSvc         shipmentserviceports.ShipmentService
+	shipmentSvc         shipmentserviceports.ShipmentReader
+	shipmentWriter      shipmentserviceports.ShipmentWriter
 	tenderChangeRepo    editenderports.EDITenderChangeRepository
 	tenderRecipientRepo editenderports.EDITenderRecipientRepository
 	transferRepo        editenderports.EDILoadTenderTransferRepository
@@ -52,6 +54,7 @@ func New(p Params) *Service {
 		partnerRepo:         p.PartnerRepo,
 		shipmentLinkRepo:    p.ShipmentLinkRepo,
 		shipmentSvc:         p.ShipmentSvc,
+		shipmentWriter:      p.ShipmentWriter,
 		tenderChangeRepo:    p.TenderChangeRepo,
 		tenderRecipientRepo: p.TenderRecipientRepo,
 		transferRepo:        p.TransferRepo,

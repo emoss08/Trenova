@@ -21,7 +21,7 @@ import (
 )
 
 type fakeShipments struct {
-	shipmentserviceports.ShipmentService
+	shipmentserviceports.ShipmentReader
 
 	entity *shipment.Shipment
 }

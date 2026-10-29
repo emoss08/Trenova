@@ -103,7 +103,7 @@ type SampleDataParams struct {
 	FormulaTemplates *formulatemplateimportservice.Service
 	TemplateFinder   formulatemplateports.FormulaTemplateRepository
 	States           usstateports.UsStateRepository
-	Shipments        shipmentserviceports.ShipmentService
+	Shipments        shipmentserviceports.ShipmentWriter
 }
 
 type SampleData struct {

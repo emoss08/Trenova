@@ -43,7 +43,7 @@ type Params struct {
 	Recipient         *editenderrecipient.Service
 	Replayer          *edilading.Replayer
 	ShipmentEventRepo shipmenteventports.ShipmentEventRepository
-	ShipmentSvc       shipmentserviceports.ShipmentService
+	ShipmentSvc       shipmentserviceports.ShipmentReader
 	TransferRepo      editenderports.EDILoadTenderTransferRepository
 }
 
@@ -62,7 +62,7 @@ type Service struct {
 	partnerRepo       edipartnerports.EDIPartnerRepository
 	replayer          *edilading.Replayer
 	shipmentEventRepo shipmenteventports.ShipmentEventRepository
-	shipmentSvc       shipmentserviceports.ShipmentService
+	shipmentSvc       shipmentserviceports.ShipmentReader
 	transferRepo      editenderports.EDILoadTenderTransferRepository
 	alert             *edialert.Service
 	delivery          *edidelivery.Service

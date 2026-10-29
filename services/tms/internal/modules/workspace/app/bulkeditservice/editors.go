@@ -290,12 +290,12 @@ type ShipmentEditorParams struct {
 	fx.In
 
 	Repo    shipmentports.ShipmentRepository
-	Service shipmentserviceports.ShipmentService
+	Service shipmentserviceports.ShipmentLifecycleService
 }
 
 type shipmentEditor struct {
 	repo    shipmentports.ShipmentRepository
-	service shipmentserviceports.ShipmentService
+	service shipmentserviceports.ShipmentLifecycleService
 }
 
 func NewShipmentEditor(p ShipmentEditorParams) EditorResult {

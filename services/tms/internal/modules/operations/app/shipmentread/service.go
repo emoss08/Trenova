@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -29,27 +30,29 @@ type Service struct {
 	effects             *shipmenteffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger              *zap.Logger
 	Repo                shipmentports.ShipmentRepository
 	CacheRepo           customerports.ShipmentCacheRepository
 	ModeProfileService  modeprofileports.ModeProfileService
 	QuickFilters        shipmentports.ShipmentQuickFilterBasisResolver
 	Commercial          *shipmentcommercial.Calculator
-	DistanceCalculation shipmentdistanceports.DistanceCalculationService
+	DistanceCalculation shipmentdistanceports.DistanceCalculationService `optional:"true"`
 	Effects             *shipmenteffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:                   d.Logger,
-		repo:                d.Repo,
-		cacheRepo:           d.CacheRepo,
-		modeProfileService:  d.ModeProfileService,
-		quickFilters:        d.QuickFilters,
-		commercial:          d.Commercial,
-		distanceCalculation: d.DistanceCalculation,
-		effects:             d.Effects,
+		l:                   p.Logger.Named("service.shipment"),
+		repo:                p.Repo,
+		cacheRepo:           p.CacheRepo,
+		modeProfileService:  p.ModeProfileService,
+		quickFilters:        p.QuickFilters,
+		commercial:          p.Commercial,
+		distanceCalculation: p.DistanceCalculation,
+		effects:             p.Effects,
 	}
 }
 
@@ -248,3 +251,5 @@ func (s *Service) RecalculateDistance(
 	}
 	return s.distanceCalculation.RecalculateShipment(ctx, shipmentID, tenantInfo)
 }
+
+var _ shipmentserviceports.ShipmentReader = (*Service)(nil)

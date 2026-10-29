@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -84,7 +84,7 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		userRepo:     userRepo,
@@ -164,7 +164,7 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		userRepo:     userRepo,
@@ -199,7 +199,7 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 func TestServiceTransferOwnership_RejectsAPIKeyActor(t *testing.T) {
 	t.Parallel()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
 		userRepo:     tenantportsmock.NewMockUserRepository(t),
@@ -236,7 +236,7 @@ func TestServiceTransferOwnership_RejectsAPIKeyActor(t *testing.T) {
 func TestServiceTransferOwnership_RejectsAnAgentCarryingTheSystemUser(t *testing.T) {
 	t.Parallel()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
 		userRepo:     tenantportsmock.NewMockUserRepository(t),
@@ -296,7 +296,7 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 		Once()
 	freight := decimal.Zero
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,

@@ -599,7 +599,7 @@ findings:
       wait. claude-haiku-5-5 noticed the figure was stale and refused to approve it; gpt-6-luna
       could not narrow the desk to one load and tried each urgency in turn, repeating them.
     fix: >
-      detentionservice prices every running clock as of now, shipment by shipment in clock order
+      detentionreview prices every running clock as of now, shipment by shipment in clock order
       with frozen charges counted against the caps, exactly as SyncShipment would
       (priceOpenClocks); the desk entry carries billableMinutes and pricedAt, and
       PriceOpenClock adds currentlyBillable to get_detention_occurrence. list_detention_desk takes

@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -22,7 +21,7 @@ import (
 func TestShipmentHandler_ListHolds_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentserviceportsmock.NewMockShipmentService(t)
+	service := newShipmentServiceMocks(t)
 	commentService := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 	holdService := shipmentholdportsmock.NewMockShipmentHoldService(t)
 	shipmentID := pulid.MustNew("shp_")
@@ -58,7 +57,7 @@ func TestShipmentHandler_ListHolds_Success(t *testing.T) {
 func TestShipmentHandler_CreateHold_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentserviceportsmock.NewMockShipmentService(t)
+	service := newShipmentServiceMocks(t)
 	commentService := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 	holdService := shipmentholdportsmock.NewMockShipmentHoldService(t)
 	shipmentID := pulid.MustNew("shp_")
@@ -108,7 +107,7 @@ func TestShipmentHandler_CreateHold_Success(t *testing.T) {
 func TestShipmentHandler_ReleaseHold_InvalidHoldID(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentserviceportsmock.NewMockShipmentService(t)
+	service := newShipmentServiceMocks(t)
 	commentService := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 	holdService := shipmentholdportsmock.NewMockShipmentHoldService(t)
 	shipmentID := pulid.MustNew("shp_")

@@ -87,7 +87,7 @@ request without replay. It still puts the scoped key in the request context, so 
 write with its own backstop stays exactly-once. Shipment create is one: the
 GraphQL `createShipment` resolver and `POST /api/v1/shipments/` copy the key onto
 `Shipment.IdempotencyKey` (`json:"-"`, never accepted from the body).
-`shipmentservice.Create` then:
+`shipmentwrite.Create` then:
 
 1. looks up a shipment already booked under that key and returns it, with its
    details, instead of creating another;

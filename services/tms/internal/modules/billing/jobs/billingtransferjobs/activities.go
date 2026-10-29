@@ -41,7 +41,7 @@ type ActivitiesParams struct {
 	BillingControls     tenantports.BillingControlRepository
 	Users               tenantports.UserRepository
 	Transfers           *billingtransferservice.Service
-	ShipmentService     shipmentserviceports.ShipmentService
+	ShipmentService     shipmentserviceports.ShipmentBillingTransferService
 	NotificationService *notificationservice.Service
 	RealtimeService     realtimeports.RealtimeService `optional:"true"`
 	Logger              *zap.Logger
@@ -52,7 +52,7 @@ type Activities struct {
 	controls     tenantports.BillingControlRepository
 	users        tenantports.UserRepository
 	transfers    *billingtransferservice.Service
-	shipments    shipmentserviceports.ShipmentService
+	shipments    shipmentserviceports.ShipmentBillingTransferService
 	notification *notificationservice.Service
 	realtime     realtimeports.RealtimeService
 	l            *zap.Logger

@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledistatussync"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderdispatch"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
@@ -157,10 +157,10 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	},
 	fx.Annotate(
 		func(
-			setter shipmentservice.MutationObserverSetter,
+			writer *shipmentwrite.Service,
 			observers []shipmentserviceports.ShipmentMutationObserver,
 		) {
-			setter.SetShipmentMutationObservers(observers)
+			writer.SetShipmentMutationObservers(observers)
 		},
 		fx.ParamTags(``, `group:"shipment_mutation_observers"`),
 	),

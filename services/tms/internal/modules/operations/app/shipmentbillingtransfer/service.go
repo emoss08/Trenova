@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -25,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -778,28 +780,32 @@ type Service struct {
 	readiness           *shipmentbillingreadiness.Service
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger              *zap.Logger
 	Repo                shipmentports.ShipmentRepository
 	CustomerRepo        customerports.CustomerRepository
 	DocumentRepo        documentports.DocumentRepository
 	BillingRepo         tenantports.BillingControlRepository
-	BillingQueueService billingqueueports.BillingQueueService
+	BillingQueueService billingqueueports.BillingQueueService `optional:"true"`
 	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	Effects             *shipmenteffects.Effects
 	Readiness           *shipmentbillingreadiness.Service
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:                   d.Logger,
-		repo:                d.Repo,
-		customerRepo:        d.CustomerRepo,
-		documentRepo:        d.DocumentRepo,
-		billingRepo:         d.BillingRepo,
-		billingQueueService: d.BillingQueueService,
-		invalidator:         d.Invalidator,
-		effects:             d.Effects,
-		readiness:           d.Readiness,
+		l:                   p.Logger.Named("service.shipment"),
+		repo:                p.Repo,
+		customerRepo:        p.CustomerRepo,
+		documentRepo:        p.DocumentRepo,
+		billingRepo:         p.BillingRepo,
+		billingQueueService: p.BillingQueueService,
+		invalidator:         p.Invalidator,
+		effects:             p.Effects,
+		readiness:           p.Readiness,
 	}
 }
+
+var _ shipmentserviceports.ShipmentBillingTransferService = (*Service)(nil)

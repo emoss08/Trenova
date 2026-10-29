@@ -45,15 +45,17 @@ var stopScheduleLabels = map[string]string{
 }
 
 type rescheduleStopTool struct {
-	shipments shipmentpreview.ShipmentWriter
-	partners  shipmentpreview.ShipmentPartnerNotices
+	reads    shipmentpreview.ShipmentReader
+	writes   shipmentpreview.ShipmentWriter
+	partners shipmentpreview.ShipmentPartnerNotices
 }
 
 func NewRescheduleStopTool(
-	shipments shipmentpreview.ShipmentWriter,
+	reads shipmentpreview.ShipmentReader,
+	writes shipmentpreview.ShipmentWriter,
 	partners shipmentpreview.ShipmentPartnerNotices,
 ) agenttoolports.AgentTool {
-	return &rescheduleStopTool{shipments: shipments, partners: partners}
+	return &rescheduleStopTool{reads: reads, writes: writes, partners: partners}
 }
 
 func (t *rescheduleStopTool) Name() string { return "shipment_reschedule_stop" }
@@ -138,7 +140,7 @@ func (t *rescheduleStopTool) Execute(
 		return err
 	}
 
-	_, err = t.shipments.Update(ctx, plan.after, params.Actor)
+	_, err = t.writes.Update(ctx, plan.after, params.Actor)
 
 	return err
 }
@@ -167,7 +169,7 @@ func (t *rescheduleStopTool) plan(
 		return nil, err
 	}
 
-	before, err := t.shipments.Get(ctx, &shipmentports.GetShipmentByIDRequest{
+	before, err := t.reads.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              shipmentID,
 		TenantInfo:      toolparams.TenantFrom(*params),
 		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
@@ -301,15 +303,17 @@ func (t *rescheduleStopTool) Target(params map[string]any) (agenttoolports.ToolT
 }
 
 type addShipmentChargeTool struct {
-	shipments    shipmentpreview.ShipmentWriter
+	reads        shipmentpreview.ShipmentReader
+	writes       shipmentpreview.ShipmentWriter
 	accessorials accessorialchargeports.AccessorialChargeRepository
 }
 
 func NewAddShipmentChargeTool(
-	shipments shipmentpreview.ShipmentWriter,
+	reads shipmentpreview.ShipmentReader,
+	writes shipmentpreview.ShipmentWriter,
 	accessorials accessorialchargeports.AccessorialChargeRepository,
 ) agenttoolports.AgentTool {
-	return &addShipmentChargeTool{shipments: shipments, accessorials: accessorials}
+	return &addShipmentChargeTool{reads: reads, writes: writes, accessorials: accessorials}
 }
 
 func (t *addShipmentChargeTool) Name() string { return "shipment_add_charge" }
@@ -399,7 +403,7 @@ func (t *addShipmentChargeTool) Execute(
 		return err
 	}
 
-	_, err = t.shipments.Update(ctx, plan.after, params.Actor)
+	_, err = t.writes.Update(ctx, plan.after, params.Actor)
 
 	return err
 }
@@ -473,7 +477,7 @@ func (t *addShipmentChargeTool) plan(
 			"A charge cannot be negative; a credit is made with a credit memo")
 	}
 
-	before, err := t.shipments.Get(ctx, &shipmentports.GetShipmentByIDRequest{
+	before, err := t.reads.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              shipmentID,
 		TenantInfo:      tenant,
 		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},

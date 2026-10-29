@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -32,7 +32,7 @@ func TestServiceGetUIPolicy_MapsShipmentControl(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:           zap.NewNop(),
 		controlRepo: controlRepo,
 	})

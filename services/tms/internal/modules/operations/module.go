@@ -61,21 +61,28 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentautorate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentbillingreadiness"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentbillingtransfer"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcapacityservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentetaservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentholdservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentlifecycle"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentloading"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentratingreviewservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentread"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentsuggestionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwatchlistservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
@@ -236,10 +243,41 @@ func SharedOptions() fx.Option {
 				fx.As(new(telematicsports.StopVisitRecorder)),
 				fx.As(new(driverportalports.StopReporter)),
 			),
+			shipmenteffects.New,
 			fx.Annotate(
-				shipmentservice.New,
-				fx.As(new(shipmentserviceports.ShipmentService)),
-				fx.As(new(shipmentservice.MutationObserverSetter)),
+				shipmentread.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentReader)),
+			),
+			fx.Annotate(
+				shipmentwrite.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentWriter)),
+			),
+			fx.Annotate(
+				shipmentlifecycle.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentLifecycleService)),
+			),
+			fx.Annotate(
+				shipmentbillingreadiness.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentBillingReadinessReader)),
+			),
+			fx.Annotate(
+				shipmentbillingtransfer.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentBillingTransferService)),
+			),
+			fx.Annotate(
+				shipmentautorate.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentAutoRater)),
+			),
+			fx.Annotate(
+				shipmentloading.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentLoadingPlanner)),
 			),
 			tendereffects.New,
 			tendercreate.New,

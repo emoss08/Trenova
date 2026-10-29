@@ -40,7 +40,7 @@ const actionRecalculated = "recalculated"
 
 const actionDuplicateSent = "duplication started"
 
-type shipmentOperator interface {
+type shipmentLifecycleOperator interface {
 	Uncancel(
 		ctx context.Context,
 		req *shipmentports.UncancelShipmentRequest,
@@ -60,26 +60,6 @@ type shipmentOperator interface {
 		req *shipmentports.TransferOwnershipRequest,
 		actor *permissionports.RequestActor,
 	) (*shipmentserviceports.ShipmentChangePreview, error)
-	AutoRate(
-		ctx context.Context,
-		req *shipmentserviceports.AutoRateShipmentRequest,
-		actor *permissionports.RequestActor,
-	) (*shipment.Shipment, *shipmentserviceports.ContractRateApplication, error)
-	PreviewAutoRate(
-		ctx context.Context,
-		req *shipmentserviceports.AutoRateShipmentRequest,
-		actor *permissionports.RequestActor,
-	) (*shipmentserviceports.ShipmentAutoRatePreview, error)
-	RecalculateDistance(
-		ctx context.Context,
-		shipmentID pulid.ID,
-		tenantInfo pagination.TenantInfo,
-	) (*shipmentdistanceports.DistanceCalculationResponse, error)
-	PreviewRecalculateDistance(
-		ctx context.Context,
-		shipmentID pulid.ID,
-		tenantInfo pagination.TenantInfo,
-	) (*shipmentdistanceports.ShipmentDistancePreview, error)
 	Duplicate(
 		ctx context.Context,
 		req *shipmentports.BulkDuplicateShipmentRequest,
@@ -90,7 +70,33 @@ type shipmentOperator interface {
 	) (*shipmentserviceports.ShipmentDuplicatePreview, error)
 }
 
-func NewUncancelShipmentTool(shipments shipmentOperator) agenttoolports.AgentTool {
+type shipmentRerater interface {
+	AutoRate(
+		ctx context.Context,
+		req *shipmentserviceports.AutoRateShipmentRequest,
+		actor *permissionports.RequestActor,
+	) (*shipment.Shipment, *shipmentserviceports.ContractRateApplication, error)
+	PreviewAutoRate(
+		ctx context.Context,
+		req *shipmentserviceports.AutoRateShipmentRequest,
+		actor *permissionports.RequestActor,
+	) (*shipmentserviceports.ShipmentAutoRatePreview, error)
+}
+
+type shipmentDistanceRecalculator interface {
+	RecalculateDistance(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*shipmentdistanceports.DistanceCalculationResponse, error)
+	PreviewRecalculateDistance(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*shipmentdistanceports.ShipmentDistancePreview, error)
+}
+
+func NewUncancelShipmentTool(shipments shipmentLifecycleOperator) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "shipment_uncancel",
 		Artifact: changepreview.ShipmentRecordEntity,
@@ -151,7 +157,9 @@ func NewUncancelShipmentTool(shipments shipmentOperator) agenttoolports.AgentToo
 
 type ownershipRequest = shipmentports.TransferOwnershipRequest
 
-func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agenttoolports.AgentTool {
+func NewTransferShipmentOwnershipTool(
+	shipments shipmentLifecycleOperator,
+) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "shipment_transfer_ownership",
 		Artifact: changepreview.ShipmentRecordEntity,
@@ -221,7 +229,7 @@ func NewTransferShipmentOwnershipTool(shipments shipmentOperator) agenttoolports
 	})
 }
 
-func NewRerateShipmentTool(shipments shipmentOperator) agenttoolports.AgentTool {
+func NewRerateShipmentTool(shipments shipmentRerater) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:     "shipment_rerate",
 		Artifact: changepreview.ShipmentRecordEntity,
@@ -310,7 +318,9 @@ type distanceRequest struct {
 	tenant     pagination.TenantInfo
 }
 
-func NewRecalculateShipmentDistanceTool(shipments shipmentOperator) agenttoolports.AgentTool {
+func NewRecalculateShipmentDistanceTool(
+	shipments shipmentDistanceRecalculator,
+) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "shipment_recalculate_distance",
 		SearchTerms: []string{"recalculate miles", "shipment mileage", "rerun distance"},
@@ -385,7 +395,7 @@ type shipmentSourceReader interface {
 }
 
 type DuplicateShipmentDeps struct {
-	Shipments shipmentOperator
+	Shipments shipmentLifecycleOperator
 	Sources   shipmentSourceReader
 	Locations shipmentpreview.LocationZoneReader
 }

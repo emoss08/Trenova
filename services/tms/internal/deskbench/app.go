@@ -85,7 +85,7 @@ type deps struct {
 	RunRecords       agentruntimeports.AgentRunRepository
 	PriceReference   aiproviderports.ModelPriceReference `optional:"true"`
 	ActionTools      agenttoolports.AgentToolRegistry
-	Shipments        shipmentserviceports.ShipmentService
+	Shipments        shipmentserviceports.ShipmentLifecycleService
 }
 
 type Bench struct {

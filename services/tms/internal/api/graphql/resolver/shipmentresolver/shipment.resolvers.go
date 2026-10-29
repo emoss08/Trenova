@@ -102,7 +102,7 @@ func (r *MutationResolver) CreateShipment(ctx context.Context, input gqlmodel.Sh
 
 	entity.IdempotencyKey, _ = idempotency.KeyFrom(ctx)
 
-	created, err := r.ShipmentService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+	created, err := r.ShipmentWriter.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (r *MutationResolver) UpdateShipment(ctx context.Context, id string, input 
 	if err != nil {
 		return nil, err
 	}
-	updated, err := r.ShipmentService.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
+	updated, err := r.ShipmentWriter.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (r *MutationResolver) CancelShipment(ctx context.Context, id string, input 
 	if input != nil && input.CancelReason != nil {
 		cancelReason = *input.CancelReason
 	}
-	entity, err := r.ShipmentService.Cancel(ctx, &shipmentports.CancelShipmentRequest{
+	entity, err := r.ShipmentLifecycle.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 		ShipmentID:   shipmentID,
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		CancelReason: cancelReason,
@@ -183,7 +183,7 @@ func (r *MutationResolver) UncancelShipment(ctx context.Context, id string) (*gq
 	if err != nil {
 		return nil, err
 	}
-	entity, err := r.ShipmentService.Uncancel(ctx, &shipmentports.UncancelShipmentRequest{
+	entity, err := r.ShipmentLifecycle.Uncancel(ctx, &shipmentports.UncancelShipmentRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
@@ -212,7 +212,7 @@ func (r *MutationResolver) DuplicateShipment(ctx context.Context, input gqlmodel
 	if input.OverrideDates != nil {
 		overrideDates = *input.OverrideDates
 	}
-	response, err := r.ShipmentService.Duplicate(ctx, &shipmentports.BulkDuplicateShipmentRequest{
+	response, err := r.ShipmentLifecycle.Duplicate(ctx, &shipmentports.BulkDuplicateShipmentRequest{
 		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		ShipmentID:    shipmentID,
 		Count:         count,
@@ -245,7 +245,7 @@ func (r *MutationResolver) TransferShipmentOwnership(ctx context.Context, id str
 	if err != nil {
 		return nil, err
 	}
-	entity, err := r.ShipmentService.TransferOwnership(ctx, &shipmentports.TransferOwnershipRequest{
+	entity, err := r.ShipmentLifecycle.TransferOwnership(ctx, &shipmentports.TransferOwnershipRequest{
 		ShipmentID: shipmentID,
 		OwnerID:    ownerID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
@@ -267,7 +267,7 @@ func (r *MutationResolver) TransferShipmentToBillingItems(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
-	transferred, err := r.ShipmentService.TransferToBillingItems(ctx, &shipmentbillingports.TransferShipmentToBillingRequest{
+	transferred, err := r.ShipmentBillingTransfer.TransferToBillingItems(ctx, &shipmentbillingports.TransferShipmentToBillingRequest{
 		ShipmentID: shipmentID,
 		BillType:   shipmentbillingmapping.ParseBillType(input.BillType),
 	}, actorutil.FromAuthContext(authCtx))
@@ -288,7 +288,7 @@ func (r *MutationResolver) BulkTransferShipmentsToBilling(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
-	response, err := r.ShipmentService.BulkTransferToBilling(ctx, &shipmentbillingports.BulkTransferShipmentToBillingRequest{
+	response, err := r.ShipmentBillingTransfer.BulkTransferToBilling(ctx, &shipmentbillingports.BulkTransferShipmentToBillingRequest{
 		ShipmentIDs:                 shipmentIDs,
 		BillType:                    shipmentbillingmapping.ParseBillType(input.BillType),
 		MarkCompletedReadyToInvoice: gqlscalar.BoolValue(input.MarkCompletedReadyToInvoice),
@@ -310,7 +310,7 @@ func (r *MutationResolver) CalculateShipmentTotals(ctx context.Context, input gq
 	if err != nil {
 		return nil, err
 	}
-	response, err := r.ShipmentService.CalculateTotals(ctx, entity, authCtx.UserID)
+	response, err := r.ShipmentReader.CalculateTotals(ctx, entity, authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func (r *MutationResolver) PreviewShipmentContractRate(ctx context.Context, inpu
 		return nil, err
 	}
 
-	application, err := r.ShipmentService.PreviewContractRate(
+	application, err := r.ShipmentAutoRater.PreviewContractRate(
 		ctx, entity, actorutil.FromAuthContext(authCtx),
 	)
 	if err != nil {
@@ -350,7 +350,7 @@ func (r *MutationResolver) AutoRateShipment(ctx context.Context, id string) (*gq
 		return nil, err
 	}
 
-	entity, application, err := r.ShipmentService.AutoRate(ctx, &shipmentserviceports.AutoRateShipmentRequest{
+	entity, application, err := r.ShipmentAutoRater.AutoRate(ctx, &shipmentserviceports.AutoRateShipmentRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: authCtx.OrganizationID,
@@ -386,7 +386,7 @@ func (r *MutationResolver) CalculateShipmentDistance(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	response, err := r.ShipmentService.CalculateDistance(ctx, entity)
+	response, err := r.ShipmentReader.CalculateDistance(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +404,7 @@ func (r *MutationResolver) RecalculateShipmentDistance(ctx context.Context, ship
 	if err != nil {
 		return nil, err
 	}
-	response, err := r.ShipmentService.RecalculateDistance(ctx, parsedID, resolvercore.TenantInfo(authCtx))
+	response, err := r.ShipmentReader.RecalculateDistance(ctx, parsedID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +422,7 @@ func (r *MutationResolver) CheckShipmentDuplicateBOL(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	if err = r.ShipmentService.CheckForDuplicateBOLs(ctx, &shipmentports.DuplicateBOLCheckRequest{
+	if err = r.ShipmentReader.CheckForDuplicateBOLs(ctx, &shipmentports.DuplicateBOLCheckRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		BOL:        input.BOL,
 		ShipmentID: shipmentID,
@@ -443,7 +443,7 @@ func (r *MutationResolver) CheckShipmentHazmatSegregation(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
-	if err = r.ShipmentService.CheckHazmatSegregation(ctx, &shipmentports.CheckHazmatSegregationRequest{
+	if err = r.ShipmentLoadingPlanner.CheckHazmatSegregation(ctx, &shipmentports.CheckHazmatSegregationRequest{
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		CommodityIDs: commodityIDs,
 	}); err != nil {
@@ -463,7 +463,7 @@ func (r *MutationResolver) CalculateShipmentLoadingOptimization(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	response, err := r.ShipmentService.CalculateLoadingOptimization(ctx, req)
+	response, err := r.ShipmentLoadingPlanner.CalculateLoadingOptimization(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -744,7 +744,7 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 		return emptyShipmentConnection(), nil
 	}
 
-	result, err := r.ShipmentService.List(ctx, &shipmentports.ListShipmentsRequest{
+	result, err := r.ShipmentReader.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: connection.Filter,
 		Cursor: connection.Cursor,
 		ShipmentOptions: shipmentports.ShipmentOptions{
@@ -785,7 +785,7 @@ func (r *QueryResolver) Shipment(ctx context.Context, id string, expandShipmentD
 	if expandShipmentDetails != nil {
 		expand = *expandShipmentDetails
 	}
-	entity, err := r.ShipmentService.Get(ctx, &shipmentports.GetShipmentByIDRequest{
+	entity, err := r.ShipmentReader.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ShipmentOptions: shipmentports.ShipmentOptions{
@@ -817,7 +817,7 @@ func (r *QueryResolver) UnassignedShipments(ctx context.Context, first *int, aft
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Limit:      page.Cursor.Limit,
 	})
-	result, err := r.ShipmentService.GetUnassigned(ctx, &shipmentports.GetUnassignedShipmentsRequest{
+	result, err := r.ShipmentReader.GetUnassigned(ctx, &shipmentports.GetUnassignedShipmentsRequest{
 		Filter: filter,
 		Cursor: page.Cursor,
 		ShipmentOptions: shipmentports.ShipmentOptions{
@@ -934,7 +934,7 @@ func (r *QueryResolver) ShipmentUIPolicy(ctx context.Context) (*gqlmodel.Shipmen
 		return nil, err
 	}
 
-	policy, err := r.ShipmentService.GetUIPolicy(ctx, resolvercore.TenantInfo(authCtx))
+	policy, err := r.ShipmentReader.GetUIPolicy(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -958,7 +958,7 @@ func (r *QueryResolver) ShipmentBillingReadiness(ctx context.Context, shipmentID
 	if err != nil {
 		return nil, err
 	}
-	readiness, err := r.ShipmentService.GetBillingReadiness(ctx, parsedShipmentID, resolvercore.TenantInfo(authCtx))
+	readiness, err := r.ShipmentReadiness.GetBillingReadiness(ctx, parsedShipmentID, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -977,7 +977,7 @@ func (r *QueryResolver) ShipmentBillingTransferCandidateIds(ctx context.Context,
 		status = shipmentdomain.Status(*input.Status)
 	}
 
-	response, err := r.ShipmentService.ListBillingTransferCandidateIDs(ctx, &shipmentbillingports.ListBillingTransferCandidateIDsRequest{
+	response, err := r.ShipmentBillingTransfer.ListBillingTransferCandidateIDs(ctx, &shipmentbillingports.ListBillingTransferCandidateIDsRequest{
 		Filter: gqlconnection.QueryOptionsFromGraphQL(&gqlconnection.GqlListOptions{
 			TenantInfo:   resolvercore.TenantInfo(authCtx),
 			Query:        gqlscalar.StringValue(input.Query),
@@ -1082,7 +1082,7 @@ func (r *QueryResolver) ShipmentPreviousRates(ctx context.Context, input gqlmode
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.ShipmentService.GetPreviousRates(ctx, &shipmentports.GetPreviousRatesRequest{
+	result, err := r.ShipmentReader.GetPreviousRates(ctx, &shipmentports.GetPreviousRatesRequest{
 		TenantInfo:            resolvercore.TenantInfo(authCtx),
 		OriginLocationID:      originLocationID,
 		DestinationLocationID: destinationLocationID,

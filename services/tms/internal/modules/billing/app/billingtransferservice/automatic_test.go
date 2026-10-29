@@ -58,7 +58,7 @@ func (f *fakeRunRepo) SeedItems(
 
 type automaticFixture struct {
 	repo      *fakeRunRepo
-	shipments *shipmentserviceportsmock.MockShipmentService
+	shipments *shipmentserviceportsmock.MockShipmentBillingTransferService
 	workflows *kernelportsmock.MockWorkflowStarter
 	svc       *Service
 	control   *billingcontrol.BillingControl
@@ -70,7 +70,7 @@ func newAutomaticFixture(t *testing.T) *automaticFixture {
 
 	f := &automaticFixture{
 		repo:      &fakeRunRepo{},
-		shipments: shipmentserviceportsmock.NewMockShipmentService(t),
+		shipments: shipmentserviceportsmock.NewMockShipmentBillingTransferService(t),
 		workflows: kernelportsmock.NewMockWorkflowStarter(t),
 		system:    pulid.MustNew("usr_"),
 		control: &billingcontrol.BillingControl{

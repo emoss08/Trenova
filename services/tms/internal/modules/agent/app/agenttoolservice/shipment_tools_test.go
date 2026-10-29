@@ -70,7 +70,7 @@ func (f *fakeHoldService) Release(
 }
 
 type fakeShipmentService struct {
-	shipmentserviceports.ShipmentService
+	shipmentserviceports.ShipmentLifecycleService
 
 	canceled *shipmentports.CancelShipmentRequest
 	err      error

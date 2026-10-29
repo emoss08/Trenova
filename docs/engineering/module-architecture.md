@@ -43,8 +43,8 @@ internal/modules/<module>/
 | Overlay import rewriter | `scripts/buildbench/rewrite-imports` |
 | Build benchmark | `scripts/buildbench`, `task build-bench` |
 
-Package names did not change when packages moved: `shipmentservice` is still
-`shipmentservice`, now at `internal/modules/operations/app/shipmentservice`. Domain package
+Package names did not change when packages moved: `shipmentwrite` is still
+`shipmentwrite`, now at `internal/modules/operations/app/shipmentwrite`. Domain package
 names must stay unique across modules, because `keel gen` names its output after the package's
 base name (`domain/shipment` becomes `domain/shipment/shipmentdb`).
 
@@ -430,7 +430,7 @@ to a real file, rebuilds, and restores the file byte for byte, once per scenario
 |---|---|
 | `cold` / `warm` | first build, from an empty (`--cold`) or existing benchmark cache |
 | S1 | none (no-op rebuild) |
-| S2 | unexported func added to `shipmentservice` |
+| S2 | unexported func added to `shipmentwrite` (measured on `shipmentservice` before the shipment use cases split) |
 | S3 | unexported func added to `shipmentresolver` |
 | S4 | exported func added to `domain/shipment` |
 | S5 | exported type added to the package that declares `ShipmentRepository` |

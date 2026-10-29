@@ -160,7 +160,7 @@ func (r *QueryResolver) ShipmentDriverFeasibility(ctx context.Context, shipmentI
 		return nil, err
 	}
 
-	entity, err := r.ShipmentService.Get(ctx, &shipmentports.GetShipmentByIDRequest{
+	entity, err := r.ShipmentReader.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         id,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ShipmentOptions: shipmentports.ShipmentOptions{

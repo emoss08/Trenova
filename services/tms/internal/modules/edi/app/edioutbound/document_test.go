@@ -88,7 +88,7 @@ func TestResolvePayloadShipmentEventIDResolves214Payload(t *testing.T) {
 	eventID := pulid.MustNew("se_")
 	shipmentID := pulid.MustNew("sp_")
 	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
-	shipmentSvc := shipmentserviceportsmock.NewMockShipmentService(t)
+	shipmentSvc := shipmentserviceportsmock.NewMockShipmentReader(t)
 	eventRepo.EXPECT().
 		GetByID(mock.Anything, shipmenteventports.GetShipmentEventByIDRequest{
 			ID:         eventID,

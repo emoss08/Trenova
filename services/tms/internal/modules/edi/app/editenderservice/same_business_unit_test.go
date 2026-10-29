@@ -129,7 +129,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 			return entity, nil
 		})
 
-	shipmentSvc := shipmentserviceportsmock.NewMockShipmentService(t)
+	shipmentSvc := shipmentserviceportsmock.NewMockShipmentReader(t)
 	shipmentSvc.EXPECT().
 		Get(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == sourceShipmentID &&

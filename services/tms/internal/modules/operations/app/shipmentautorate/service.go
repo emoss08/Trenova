@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -287,22 +288,26 @@ type Service struct {
 	effects             *shipmenteffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger              *zap.Logger
 	Repo                shipmentports.ShipmentRepository
 	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	Commercial          *shipmentcommercial.Calculator
-	DistanceCalculation shipmentdistanceports.DistanceCalculationService
+	DistanceCalculation shipmentdistanceports.DistanceCalculationService `optional:"true"`
 	Effects             *shipmenteffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:                   d.Logger,
-		repo:                d.Repo,
-		invalidator:         d.Invalidator,
-		commercial:          d.Commercial,
-		distanceCalculation: d.DistanceCalculation,
-		effects:             d.Effects,
+		l:                   p.Logger.Named("service.shipment"),
+		repo:                p.Repo,
+		invalidator:         p.Invalidator,
+		commercial:          p.Commercial,
+		distanceCalculation: p.DistanceCalculation,
+		effects:             p.Effects,
 	}
 }
+
+var _ shipmentserviceports.ShipmentAutoRater = (*Service)(nil)

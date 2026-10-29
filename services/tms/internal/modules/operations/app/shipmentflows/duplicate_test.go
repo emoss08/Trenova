@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"context"
@@ -89,7 +89,7 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 		Copies: []*shipment.Shipment{{FormulaTemplateID: pulid.MustNew("fmt_")}},
 	}, nil)
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		validator:    newServiceValidator(t),
@@ -168,7 +168,7 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 			repo := shipmentportsmock.NewMockShipmentRepository(t)
 			repo.EXPECT().PlanDuplicate(mock.Anything, req).Return(plan, nil)
 			started := false
-			svc := assembled(&service{
+			svc := assembled(&rig{
 				l:            zap.NewNop(),
 				repo:         repo,
 				billingRepo:  shipmentservicetest.BillingControlWith(t, tt.disposition),
@@ -213,7 +213,7 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 func TestServiceDuplicate_RejectsInvalidRequest(t *testing.T) {
 	t.Parallel()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
 		validator:    newServiceValidator(t),
@@ -234,7 +234,7 @@ func TestServiceDuplicate_RejectsInvalidRequest(t *testing.T) {
 func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
 	t.Parallel()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:               zap.NewNop(),
 		repo:            shipmentportsmock.NewMockShipmentRepository(t),
 		validator:       newServiceValidator(t),

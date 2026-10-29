@@ -138,7 +138,7 @@ type ShipmentDuplicatePreview struct {
 	Copies []*shipment.Shipment
 }
 
-type ShipmentService interface {
+type ShipmentReader interface {
 	List(
 		ctx context.Context,
 		req *shipmentports.ListShipmentsRequest,
@@ -159,29 +159,60 @@ type ShipmentService interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) (*ShipmentUIPolicy, error)
-	GetBillingReadiness(
-		ctx context.Context,
-		shipmentID pulid.ID,
-		tenantInfo pagination.TenantInfo,
-	) (*shipmentbillingports.ShipmentBillingReadiness, error)
 	GetPreviousRates(
 		ctx context.Context,
 		req *shipmentports.GetPreviousRatesRequest,
 	) (*pagination.ListResult[*shipmentports.PreviousRateSummary], error)
+	GetUnassigned(
+		ctx context.Context,
+		req *shipmentports.GetUnassignedShipmentsRequest,
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
+	CheckForDuplicateBOLs(
+		ctx context.Context,
+		req *shipmentports.DuplicateBOLCheckRequest,
+	) error
+	CalculateTotals(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		userID pulid.ID,
+	) (*shipmentports.ShipmentTotalsResponse, error)
+	CalculateDistance(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipmentdistanceports.DistanceCalculationResponse, error)
+	RecalculateDistance(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*shipmentdistanceports.DistanceCalculationResponse, error)
+	PreviewRecalculateDistance(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*shipmentdistanceports.ShipmentDistancePreview, error)
+}
+
+type ShipmentWriter interface {
 	Create(
 		ctx context.Context,
 		entity *shipment.Shipment,
 		actor *permissionports.RequestActor,
 	) (*shipment.Shipment, error)
-	GetUnassigned(
-		ctx context.Context,
-		req *shipmentports.GetUnassignedShipmentsRequest,
-	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	Update(
 		ctx context.Context,
 		entity *shipment.Shipment,
 		actor *permissionports.RequestActor,
 	) (*shipment.Shipment, error)
+	PreviewCreate(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		actor *permissionports.RequestActor,
+	) (*ShipmentCreatePlan, error)
+	// AutoRate prices a saved shipment from its contract again, overwriting its
+	// rating method, base rate and contract accessorials.
+}
+
+type ShipmentLifecycleService interface {
 	Cancel(
 		ctx context.Context,
 		req *shipmentports.CancelShipmentRequest,
@@ -197,28 +228,6 @@ type ShipmentService interface {
 	// PreviewContractRate answers what the agreements would charge for a
 	// shipment that has not been saved, which is what the billing panel offers
 	// before anyone commits to it. Nothing is written.
-	PreviewContractRate(
-		ctx context.Context,
-		entity *shipment.Shipment,
-		actor *permissionports.RequestActor,
-	) (*ContractRateApplication, error)
-	PreviewCreate(
-		ctx context.Context,
-		entity *shipment.Shipment,
-		actor *permissionports.RequestActor,
-	) (*ShipmentCreatePlan, error)
-	// AutoRate prices a saved shipment from its contract again, overwriting its
-	// rating method, base rate and contract accessorials.
-	AutoRate(
-		ctx context.Context,
-		req *AutoRateShipmentRequest,
-		actor *permissionports.RequestActor,
-	) (*shipment.Shipment, *ContractRateApplication, error)
-	PreviewAutoRate(
-		ctx context.Context,
-		req *AutoRateShipmentRequest,
-		actor *permissionports.RequestActor,
-	) (*ShipmentAutoRatePreview, error)
 	Uncancel(
 		ctx context.Context,
 		req *shipmentports.UncancelShipmentRequest,
@@ -238,18 +247,6 @@ type ShipmentService interface {
 		req *shipmentports.TransferOwnershipRequest,
 		actor *permissionports.RequestActor,
 	) (*ShipmentChangePreview, error)
-	CheckForDuplicateBOLs(
-		ctx context.Context,
-		req *shipmentports.DuplicateBOLCheckRequest,
-	) error
-	CheckHazmatSegregation(
-		ctx context.Context,
-		req *shipmentports.CheckHazmatSegregationRequest,
-	) error
-	CalculateLoadingOptimization(
-		ctx context.Context,
-		req *LoadingOptimizationRequest,
-	) (*LoadingOptimizationResult, error)
 	GetDelayedShipments(
 		ctx context.Context,
 		req *shipmentports.GetDelayedShipmentsRequest,
@@ -276,25 +273,17 @@ type ShipmentService interface {
 		ctx context.Context,
 		req *shipmentports.BulkDuplicateShipmentRequest,
 	) (*ShipmentDuplicatePreview, error)
-	CalculateTotals(
-		ctx context.Context,
-		entity *shipment.Shipment,
-		userID pulid.ID,
-	) (*shipmentports.ShipmentTotalsResponse, error)
-	CalculateDistance(
-		ctx context.Context,
-		entity *shipment.Shipment,
-	) (*shipmentdistanceports.DistanceCalculationResponse, error)
-	RecalculateDistance(
+}
+
+type ShipmentBillingReadinessReader interface {
+	GetBillingReadiness(
 		ctx context.Context,
 		shipmentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
-	) (*shipmentdistanceports.DistanceCalculationResponse, error)
-	PreviewRecalculateDistance(
-		ctx context.Context,
-		shipmentID pulid.ID,
-		tenantInfo pagination.TenantInfo,
-	) (*shipmentdistanceports.ShipmentDistancePreview, error)
+	) (*shipmentbillingports.ShipmentBillingReadiness, error)
+}
+
+type ShipmentBillingTransferService interface {
 	AutoMarkReadyToInvoiceIfEligible(
 		ctx context.Context,
 		shipmentID pulid.ID,
@@ -336,4 +325,33 @@ type ShipmentService interface {
 		ctx context.Context,
 		req *shipmentbillingports.ListBillingTransferCandidatesRequest,
 	) (*shipmentbillingports.BillingTransferCandidates, error)
+}
+
+type ShipmentAutoRater interface {
+	PreviewContractRate(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		actor *permissionports.RequestActor,
+	) (*ContractRateApplication, error)
+	AutoRate(
+		ctx context.Context,
+		req *AutoRateShipmentRequest,
+		actor *permissionports.RequestActor,
+	) (*shipment.Shipment, *ContractRateApplication, error)
+	PreviewAutoRate(
+		ctx context.Context,
+		req *AutoRateShipmentRequest,
+		actor *permissionports.RequestActor,
+	) (*ShipmentAutoRatePreview, error)
+}
+
+type ShipmentLoadingPlanner interface {
+	CheckHazmatSegregation(
+		ctx context.Context,
+		req *shipmentports.CheckHazmatSegregationRequest,
+	) error
+	CalculateLoadingOptimization(
+		ctx context.Context,
+		req *LoadingOptimizationRequest,
+	) (*LoadingOptimizationResult, error)
 }

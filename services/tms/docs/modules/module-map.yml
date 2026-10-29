@@ -671,10 +671,10 @@ modules:
       - shipmentbillingreadiness
       - shipmentbillingtransfer
       - shipmenteffects
+      - shipmentflows
       - shipmentlifecycle
       - shipmentloading
       - shipmentread
-      - shipmentservice
       - shipmentservicetest
       - shipmenttimeline
       - shipmentvalidator

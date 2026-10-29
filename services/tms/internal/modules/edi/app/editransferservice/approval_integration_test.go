@@ -43,7 +43,8 @@ import (
 )
 
 type receivingShipments struct {
-	shipmentserviceports.ShipmentService
+	shipmentserviceports.ShipmentReader
+	shipmentserviceports.ShipmentWriter
 	conn    *postgres.Connection
 	tender  *editest.InternalTender
 	created []pulid.ID

@@ -32,7 +32,7 @@ type Params struct {
 	Savepoints       kernelports.Savepointer
 	Setup            *edisetup.Service
 	ShipmentLinkRepo editenderports.EDIShipmentLinkRepository
-	ShipmentSvc      shipmentserviceports.ShipmentService
+	ShipmentSvc      shipmentserviceports.ShipmentWriter
 	Shipments        *editendershipment.Service
 	TenderMapping    *editendermapping.Service
 	TransferRepo     editenderports.EDILoadTenderTransferRepository
@@ -47,7 +47,7 @@ type Service struct {
 	partnerRepo      edipartnerports.EDIPartnerRepository
 	savepoints       kernelports.Savepointer
 	shipmentLinkRepo editenderports.EDIShipmentLinkRepository
-	shipmentSvc      shipmentserviceports.ShipmentService
+	shipmentSvc      shipmentserviceports.ShipmentWriter
 	transferRepo     editenderports.EDILoadTenderTransferRepository
 	workflowStarter  kernelports.WorkflowStarter
 	outbound         *edioutbound.Service

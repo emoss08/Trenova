@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -34,7 +34,7 @@ func newTestCommercialCalculator(
 
 // assembled wires the use-case services from the fields a test set, as New
 // does from its params.
-func assembled(s *service) *service {
+func assembled(s *rig) *rig {
 	s.assemble()
 	return s
 }

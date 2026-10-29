@@ -85,36 +85,37 @@ func operationsToolProviders() []any {
 }
 
 func provideUncancelShipmentTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentLifecycleService,
 ) agenttoolports.AgentTool {
 	return shipmentopstools.NewUncancelShipmentTool(shipments)
 }
 
 func provideTransferShipmentOwnershipTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentLifecycleService,
 ) agenttoolports.AgentTool {
 	return shipmentopstools.NewTransferShipmentOwnershipTool(shipments)
 }
 
 func provideRerateShipmentTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentAutoRater,
 ) agenttoolports.AgentTool {
 	return shipmentopstools.NewRerateShipmentTool(shipments)
 }
 
 func provideRecalculateShipmentDistanceTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentReader,
 ) agenttoolports.AgentTool {
 	return shipmentopstools.NewRecalculateShipmentDistanceTool(shipments)
 }
 
 func provideDuplicateShipmentTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentLifecycleService,
+	sources shipmentserviceports.ShipmentReader,
 	locations locationports.LocationRepository,
 ) agenttoolports.AgentTool {
 	return shipmentopstools.NewDuplicateShipmentTool(shipmentopstools.DuplicateShipmentDeps{
 		Shipments: shipments,
-		Sources:   shipments,
+		Sources:   sources,
 		Locations: locations,
 	})
 }

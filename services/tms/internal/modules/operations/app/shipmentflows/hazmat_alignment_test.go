@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -86,7 +86,7 @@ func TestHazmatSegregationValidationAndServiceStayAligned(t *testing.T) {
 		ShipmentRepo:              shipmentportsmock.NewMockShipmentRepository(t),
 	})
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:              zap.NewNop(),
 		controlRepo:    controlRepo,
 		commodityRepo:  commodityRepo,

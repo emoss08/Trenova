@@ -31,7 +31,7 @@ type Params struct {
 	PartnerRepo    edipartnerports.EDIPartnerRepository
 	ProfileRepo    edipartnerports.EDICommunicationProfileRepository
 	Recipient      *editenderrecipient.Service
-	ShipmentSvc    shipmentserviceports.ShipmentService
+	ShipmentSvc    shipmentserviceports.ShipmentReader
 	Shipments      *editendershipment.Service
 	TenderRepo     tenderports.TenderRepository `optional:"true"`
 	TenderMapping  *editendermapping.Service
@@ -46,7 +46,7 @@ type Service struct {
 	l              *zap.Logger
 	partnerRepo    edipartnerports.EDIPartnerRepository
 	profileRepo    edipartnerports.EDICommunicationProfileRepository
-	shipmentSvc    shipmentserviceports.ShipmentService
+	shipmentSvc    shipmentserviceports.ShipmentReader
 	tenderRepo     tenderports.TenderRepository
 	transferRepo   editenderports.EDILoadTenderTransferRepository
 	outbound       *edioutbound.Service

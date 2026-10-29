@@ -27,7 +27,7 @@ import (
 )
 
 type listCapturingShipmentService struct {
-	shipmentserviceports.ShipmentService
+	shipmentserviceports.ShipmentReader
 
 	requests []*shipmentports.ListShipmentsRequest
 }
@@ -56,13 +56,13 @@ func shipmentListContext(t *testing.T) context.Context {
 	})
 }
 
-func newShipmentListResolver(service shipmentserviceports.ShipmentService) *QueryResolver {
+func newShipmentListResolver(service shipmentserviceports.ShipmentReader) *QueryResolver {
 	engine := &resolvertest.GrantingPermissionEngine{Granted: map[string]bool{
 		permission.ResourceShipment.String() + "|" + string(permission.OpRead): true,
 	}}
 	return &QueryResolver{&Deps{
-		Core:            &resolvercore.Core{PermissionEngine: engine},
-		ShipmentService: service,
+		Core:           &resolvercore.Core{PermissionEngine: engine},
+		ShipmentReader: service,
 	}}
 }
 
@@ -218,7 +218,7 @@ func (s *invoicesByIDService) GetByIDs(
 }
 
 func newInvoiceShipmentsResolver(
-	service shipmentserviceports.ShipmentService,
+	service shipmentserviceports.ShipmentReader,
 	invoices invoiceports.InvoiceQueryService,
 	mayReadInvoices bool,
 ) *QueryResolver {
@@ -228,7 +228,7 @@ func newInvoiceShipmentsResolver(
 	}}
 	return &QueryResolver{&Deps{
 		Core:                &resolvercore.Core{PermissionEngine: engine},
-		ShipmentService:     service,
+		ShipmentReader:      service,
 		InvoiceQueryService: invoices,
 	}}
 }
@@ -329,7 +329,7 @@ func (s *carrierSettlementLinesRepo) GetByID(
 }
 
 func newSettlementShipmentsResolver(
-	service shipmentserviceports.ShipmentService,
+	service shipmentserviceports.ShipmentReader,
 	grants map[permission.Resource]bool,
 	deps Deps,
 ) *QueryResolver {
@@ -342,7 +342,7 @@ func newSettlementShipmentsResolver(
 	deps.Core = &resolvercore.Core{
 		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted},
 	}
-	deps.ShipmentService = service
+	deps.ShipmentReader = service
 	return &QueryResolver{&deps}
 }
 

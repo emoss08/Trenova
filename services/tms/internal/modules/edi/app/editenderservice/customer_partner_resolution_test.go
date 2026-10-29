@@ -133,7 +133,7 @@ func TestService_SubmitLoadTenderResolvesPartnerFromShipmentCustomer(t *testing.
 			return entity, nil
 		})
 
-	shipmentSvc := shipmentserviceportsmock.NewMockShipmentService(t)
+	shipmentSvc := shipmentserviceportsmock.NewMockShipmentReader(t)
 	shipmentSvc.EXPECT().
 		Get(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == sourceShipmentID &&
@@ -230,7 +230,7 @@ func TestService_SubmitLoadTenderFailsWhenCustomerHasNoPartner(t *testing.T) {
 		})).
 		Return([]*edi.EDIPartner{}, nil)
 
-	shipmentSvc := shipmentserviceportsmock.NewMockShipmentService(t)
+	shipmentSvc := shipmentserviceportsmock.NewMockShipmentReader(t)
 	shipmentSvc.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{

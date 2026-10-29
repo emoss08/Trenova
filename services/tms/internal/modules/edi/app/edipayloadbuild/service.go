@@ -10,12 +10,12 @@ type Params struct {
 	fx.In
 
 	ServiceFailureRepo servicefailureports.ServiceFailureRepository
-	ShipmentSvc        shipmentserviceports.ShipmentService
+	ShipmentSvc        shipmentserviceports.ShipmentReader
 }
 
 type Service struct {
 	serviceFailureRepo servicefailureports.ServiceFailureRepository
-	shipmentSvc        shipmentserviceports.ShipmentService
+	shipmentSvc        shipmentserviceports.ShipmentReader
 }
 
 func New(p Params) *Service {

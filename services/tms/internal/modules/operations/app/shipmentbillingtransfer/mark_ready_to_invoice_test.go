@@ -55,7 +55,7 @@ func newMarkReadyFixture(t *testing.T) *markReadyFixture {
 			nil,
 			zap.NewNop(),
 		),
-		effects: shipmenteffects.New(shipmenteffects.Deps{
+		effects: shipmenteffects.New(shipmenteffects.Params{
 			Logger:          zap.NewNop(),
 			Repo:            f.repo,
 			OrderDerivation: f.derivation,

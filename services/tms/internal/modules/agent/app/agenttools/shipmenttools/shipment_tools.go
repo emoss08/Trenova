@@ -208,13 +208,13 @@ func (t *ReleaseShipmentHoldTool) request(
 }
 
 type CancelShipmentTool struct {
-	shipments shipmentserviceports.ShipmentService
+	shipments shipmentserviceports.ShipmentLifecycleService
 	partners  shipmentpreview.ShipmentPartnerNotices
 	tenders   liveTenderReader
 }
 
 func NewCancelShipmentTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentLifecycleService,
 	partners shipmentpreview.ShipmentPartnerNotices,
 	tenders liveTenderReader,
 ) agenttoolports.AgentTool {

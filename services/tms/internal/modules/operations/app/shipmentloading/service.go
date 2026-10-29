@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
 )
 
 type Service struct {
@@ -24,19 +25,21 @@ type Service struct {
 	effects           *shipmenteffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	CommodityRepo     commodityports.CommodityRepository
 	HazmatRuleRepo    hazmatsegregationruleports.HazmatSegregationRuleRepository
 	EquipmentTypeRepo equipmenttypeports.EquipmentTypeRepository
 	Effects           *shipmenteffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		commodityRepo:     d.CommodityRepo,
-		hazmatRuleRepo:    d.HazmatRuleRepo,
-		equipmentTypeRepo: d.EquipmentTypeRepo,
-		effects:           d.Effects,
+		commodityRepo:     p.CommodityRepo,
+		hazmatRuleRepo:    p.HazmatRuleRepo,
+		equipmentTypeRepo: p.EquipmentTypeRepo,
+		effects:           p.Effects,
 	}
 }
 
@@ -170,3 +173,5 @@ func (s *Service) evaluateHazmatSegregationRequest(
 		rules,
 	), nil
 }
+
+var _ shipmentserviceports.ShipmentLoadingPlanner = (*Service)(nil)

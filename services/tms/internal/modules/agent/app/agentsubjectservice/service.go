@@ -69,7 +69,8 @@ type Params struct {
 
 	Logger            *zap.Logger
 	BillingQueue      billingqueueports.BillingQueueService
-	Shipments         shipmentserviceports.ShipmentService
+	Shipments         shipmentserviceports.ShipmentReader
+	Readiness         shipmentserviceports.ShipmentBillingReadinessReader
 	Console           dispatchboardports.DispatchConsoleRepository             `optional:"true"`
 	Content           documentports.DocumentContentService                     `optional:"true"`
 	Insights          insightports.InsightRepository                           `optional:"true"`
@@ -104,7 +105,8 @@ type Params struct {
 type Service struct {
 	content           documentports.DocumentContentService
 	billingQueue      billingqueueports.BillingQueueService
-	shipments         shipmentserviceports.ShipmentService
+	shipments         shipmentserviceports.ShipmentReader
+	readiness         shipmentserviceports.ShipmentBillingReadinessReader
 	console           dispatchboardports.DispatchConsoleRepository
 	insights          insightports.InsightRepository
 	receipts          bankreceiptports.BankReceiptService
@@ -138,6 +140,7 @@ func New(p Params) agentruntimeports.AgentSubjectDescriber {
 		content:           p.Content,
 		billingQueue:      p.BillingQueue,
 		shipments:         p.Shipments,
+		readiness:         p.Readiness,
 		console:           p.Console,
 		insights:          p.Insights,
 		receipts:          p.BankReceipts,
@@ -249,7 +252,7 @@ func (s *Service) billingQueueItem(
 
 	sections := map[string]any{"billingQueueItem": item}
 	if item.ShipmentID.IsNotNil() && s.shipments != nil {
-		readiness, rErr := s.shipments.GetBillingReadiness(ctx, item.ShipmentID, tenant)
+		readiness, rErr := s.readiness.GetBillingReadiness(ctx, item.ShipmentID, tenant)
 		if rErr != nil {
 			s.logger.Warn("agent subject: billing readiness unavailable", zap.Error(rErr))
 		} else {

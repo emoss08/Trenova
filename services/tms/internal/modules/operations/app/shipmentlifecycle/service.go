@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -51,7 +52,9 @@ type Service struct {
 	effects         *shipmenteffects.Effects
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger          *zap.Logger
 	DB              kernelports.Transactor
 	Repo            shipmentports.ShipmentRepository
@@ -62,26 +65,26 @@ type Deps struct {
 	WorkflowStarter kernelports.WorkflowStarter
 	Coordinator     *shipmentstate.Coordinator
 	Invalidator     shipmentinvalidationports.ShipmentInvalidator
-	TenderGuard     tenderports.TenderGuard
-	Quota           platformplanports.QuotaGuard
+	TenderGuard     tenderports.TenderGuard      `optional:"true"`
+	Quota           platformplanports.QuotaGuard `optional:"true"`
 	Effects         *shipmenteffects.Effects
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:               d.Logger,
-		db:              d.DB,
-		repo:            d.Repo,
-		userRepo:        d.UserRepo,
-		continuityRepo:  d.ContinuityRepo,
-		billingRepo:     d.BillingRepo,
-		permissions:     d.Permissions,
-		workflowStarter: d.WorkflowStarter,
-		coordinator:     d.Coordinator,
-		invalidator:     d.Invalidator,
-		tenderGuard:     d.TenderGuard,
-		quota:           d.Quota,
-		effects:         d.Effects,
+		l:               p.Logger.Named("service.shipment"),
+		db:              p.DB,
+		repo:            p.Repo,
+		userRepo:        p.UserRepo,
+		continuityRepo:  p.ContinuityRepo,
+		billingRepo:     p.BillingRepo,
+		permissions:     p.Permissions,
+		workflowStarter: p.WorkflowStarter,
+		coordinator:     p.Coordinator,
+		invalidator:     p.Invalidator,
+		tenderGuard:     p.TenderGuard,
+		quota:           quotaservice.OrUnlimited(p.Quota),
+		effects:         p.Effects,
 	}
 }
 
@@ -840,3 +843,5 @@ func (s *Service) validateTransferTarget(
 
 	return nil
 }
+
+var _ shipmentserviceports.ShipmentLifecycleService = (*Service)(nil)

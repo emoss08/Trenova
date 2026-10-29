@@ -328,7 +328,8 @@ type intakeToolParams struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Shipments shipmentserviceports.ShipmentService
+	Shipments shipmentserviceports.ShipmentWriter
+	Contracts shipmentserviceports.ShipmentAutoRater
 	Locations locationports.LocationRepository
 	Imports   shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
 }
@@ -336,7 +337,7 @@ type intakeToolParams struct {
 func provideCreateShipmentTool(p intakeToolParams) agenttoolports.AgentTool {
 	deps := intaketools.CreateShipmentDeps{
 		Shipments: p.Shipments,
-		Contracts: p.Shipments,
+		Contracts: p.Contracts,
 		Locations: p.Locations,
 		Logger:    p.Logger,
 	}
@@ -362,28 +363,31 @@ func provideCreateLocationTool(
 }
 
 func provideUpdateShipmentTool(
-	shipments shipmentserviceports.ShipmentService,
+	reads shipmentserviceports.ShipmentReader,
+	writes shipmentserviceports.ShipmentWriter,
 	partners *editenderchangeservice.Service,
 ) agenttoolports.AgentTool {
-	return intaketools.NewUpdateShipmentTool(shipments, partners)
+	return intaketools.NewUpdateShipmentTool(reads, writes, partners)
 }
 
 func provideRescheduleStopTool(
-	shipments shipmentserviceports.ShipmentService,
+	reads shipmentserviceports.ShipmentReader,
+	writes shipmentserviceports.ShipmentWriter,
 	partners *editenderchangeservice.Service,
 ) agenttoolports.AgentTool {
-	return shipmentedittools.NewRescheduleStopTool(shipments, partners)
+	return shipmentedittools.NewRescheduleStopTool(reads, writes, partners)
 }
 
 func provideAddShipmentChargeTool(
-	shipments shipmentserviceports.ShipmentService,
+	reads shipmentserviceports.ShipmentReader,
+	writes shipmentserviceports.ShipmentWriter,
 	accessorials accessorialchargeports.AccessorialChargeRepository,
 ) agenttoolports.AgentTool {
-	return shipmentedittools.NewAddShipmentChargeTool(shipments, accessorials)
+	return shipmentedittools.NewAddShipmentChargeTool(reads, writes, accessorials)
 }
 
 func provideCancelShipmentTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentLifecycleService,
 	partners *editenderchangeservice.Service,
 	tenders *tendercancel.Service,
 ) agenttoolports.AgentTool {
@@ -421,7 +425,7 @@ func provideResolveBankReceiptWorkItemTool(
 }
 
 func provideTransferToBillingTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentBillingTransferService,
 	runs *billingtransferservice.Service,
 ) agenttoolports.AgentTool {
 	return billingtransfertools.NewTransferToBillingTool(shipments, runs)

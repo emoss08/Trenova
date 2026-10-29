@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -47,7 +46,7 @@ func serveEta(t *testing.T, etas *etaReaderStub, shipmentID string) (int, etaRes
 	t.Helper()
 
 	handler := buildShipmentHandler(t, handlerDeps{
-		service:        shipmentserviceportsmock.NewMockShipmentService(t),
+		service:        newShipmentServiceMocks(t),
 		commentService: shipmentcommentportsmock.NewMockShipmentCommentService(t),
 		holdService:    shipmentholdportsmock.NewMockShipmentHoldService(t),
 		etas:           etas,

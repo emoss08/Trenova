@@ -1,6 +1,6 @@
 //go:build integration
 
-package shipmentservice
+package shipmentflows
 
 import (
 	"errors"
@@ -48,13 +48,13 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 	first := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	first.BOL = "BOL-IDEMPOTENT-1"
 	first.IdempotencyKey = key
-	created, err := svc.Create(ctx, first, actor)
+	created, err := svc.writer.Create(ctx, first, actor)
 	require.NoError(t, err)
 
 	retry := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	retry.BOL = "BOL-IDEMPOTENT-1"
 	retry.IdempotencyKey = key
-	replayed, err := svc.Create(ctx, retry, actor)
+	replayed, err := svc.writer.Create(ctx, retry, actor)
 	require.NoError(t, err)
 	assert.Equal(t, created.ID, replayed.ID)
 	assert.Equal(t, created.ProNumber, replayed.ProNumber)
@@ -68,7 +68,7 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 
 	created.BOL = "BOL-IDEMPOTENT-EDITED"
 	created.IdempotencyKey = ""
-	_, err = svc.Update(ctx, created, actor)
+	_, err = svc.writer.Update(ctx, created, actor)
 	require.NoError(t, err)
 	stored, err := keel.QueryValue[string](ctx, db,
 		"SELECT idempotency_key FROM shipments WHERE id = $1", created.ID.String())

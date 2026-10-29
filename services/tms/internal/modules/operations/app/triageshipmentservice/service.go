@@ -100,7 +100,7 @@ type Params struct {
 	Tracking    shipmenttrackingports.ShipmentTrackingReader
 	Shipments   shipmentports.ShipmentRepository
 	Lookup      triagelookupports.TriageLookupRepository
-	Creator     shipmentserviceports.ShipmentService
+	Creator     shipmentserviceports.ShipmentWriter
 	Holds       shipmentholdports.ShipmentHoldService
 	Comments    shipmentcommentports.ShipmentCommentService
 	Occurrences detentionports.DetentionOccurrenceRepository

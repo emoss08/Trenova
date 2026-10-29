@@ -47,7 +47,7 @@ type Runner struct {
 	proposals  agentproposalports.AgentProposalRepository
 	previews   agentruntimeports.ProposalPreviewService
 	decisions  agentdecisionports.AgentDecisionService
-	shipments  shipmentserviceports.ShipmentService
+	shipments  shipmentserviceports.ShipmentLifecycleService
 	exclusive  func(key string) func()
 	measure    func(
 		ctx context.Context,

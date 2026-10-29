@@ -61,7 +61,7 @@ import (
 type Deps struct {
 	*resolvercore.Core
 	OrganizationService          tenantports.OrganizationService
-	ShipmentService              shipmentserviceports.ShipmentService
+	ShipmentReader               shipmentserviceports.ShipmentReader
 	EdiSetupService              *edisetup.Service
 	EdiTransferService           *editransferservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service

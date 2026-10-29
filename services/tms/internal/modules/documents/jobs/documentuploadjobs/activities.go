@@ -58,8 +58,8 @@ type ActivitiesParams struct {
 	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
 	Redis                *goredis.Client                    `optional:"true"`
 	DocumentIntelligence documentports.DocumentContentService
-	ShipmentService      shipmentserviceports.ShipmentService `optional:"true"`
-	Triage               inboundmessageports.TriageEventSink  `optional:"true"`
+	ShipmentService      shipmentserviceports.ShipmentBillingTransferService `optional:"true"`
+	Triage               inboundmessageports.TriageEventSink                 `optional:"true"`
 }
 
 type Activities struct {
@@ -74,7 +74,7 @@ type Activities struct {
 	usageProvider        platformcatalogports.UsageProvider
 	redis                *goredis.Client
 	documentIntelligence documentports.DocumentContentService
-	shipmentService      shipmentserviceports.ShipmentService
+	shipmentService      shipmentserviceports.ShipmentBillingTransferService
 	triage               inboundmessageports.TriageEventSink
 }
 

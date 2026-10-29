@@ -22,7 +22,7 @@ type Params struct {
 	MappingProfileRepo  edipartnerports.EDIMappingProfileRepository
 	ShipmentEventRepo   shipmenteventports.ShipmentEventRepository
 	ShipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository `optional:"true"`
-	ShipmentSvc         shipmentserviceports.ShipmentService
+	ShipmentSvc         shipmentserviceports.ShipmentLifecycleService
 	Shipments           *editendershipment.Service
 	TenderRecipientRepo editenderports.EDITenderRecipientRepository
 	TenderMapping       *editendermapping.Service
@@ -36,7 +36,7 @@ type Service struct {
 	mappingProfileRepo  edipartnerports.EDIMappingProfileRepository
 	shipmentEventRepo   shipmenteventports.ShipmentEventRepository
 	shipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository
-	shipmentSvc         shipmentserviceports.ShipmentService
+	shipmentSvc         shipmentserviceports.ShipmentLifecycleService
 	tenderRecipientRepo editenderports.EDITenderRecipientRepository
 	trackingEvents      trackingeventports.TrackingEventService
 	transferRepo        editenderports.EDILoadTenderTransferRepository

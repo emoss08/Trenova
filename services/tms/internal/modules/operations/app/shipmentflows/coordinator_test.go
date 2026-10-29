@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"context"
@@ -324,7 +324,7 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 	userID := pulid.MustNew("usr_")
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
@@ -428,7 +428,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
@@ -560,7 +560,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:              zap.NewNop(),
 		repo:           repo,
 		controlRepo:    controlRepo,
@@ -660,7 +660,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:              zap.NewNop(),
 		repo:           repo,
 		assignmentRepo: assignmentRepo,
@@ -792,7 +792,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
@@ -912,7 +912,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		Return(nil, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:              zap.NewNop(),
 		repo:           repo,
 		assignmentRepo: assignmentRepo,
@@ -1010,7 +1010,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
@@ -1072,7 +1072,7 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 		}).
 		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,

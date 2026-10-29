@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -40,7 +40,7 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:    zap.NewNop(),
 		repo: repo,
 	})
@@ -61,7 +61,7 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 func TestServiceGetPreviousRates_ValidatesRequest(t *testing.T) {
 	t.Parallel()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:    zap.NewNop(),
 		repo: shipmentportsmock.NewMockShipmentRepository(t),
 	})

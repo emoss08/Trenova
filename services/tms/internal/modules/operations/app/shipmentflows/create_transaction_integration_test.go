@@ -1,6 +1,6 @@
 //go:build integration
 
-package shipmentservice
+package shipmentflows
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func TestCreateIntegration_RollsBackEverythingWhenALaterStepFails(t *testing.T) 
 		t,
 		ctx,
 		db,
-		func(p *Params) { p.EventService = failingShipmentEventService{} },
+		func(p *rigParams) { p.EventService = failingShipmentEventService{} },
 	)
 	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(
@@ -58,7 +58,7 @@ func TestCreateIntegration_RollsBackEverythingWhenALaterStepFails(t *testing.T) 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	entity.BOL = "BOL-ROLLBACK-ON-FAILURE"
 
-	_, err := svc.Create(
+	_, err := svc.writer.Create(
 		ctx,
 		entity,
 		internaltestutil.NewSessionActor(data.User.ID, tenantInfo.OrgID, tenantInfo.BuID),
@@ -107,14 +107,14 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 	first := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	first.BOL = "BOL-EXTREF-1"
 	first.ExternalReference = " PO-7781 "
-	created, err := svc.Create(ctx, first, actor)
+	created, err := svc.writer.Create(ctx, first, actor)
 	require.NoError(t, err)
 	assert.Equal(t, "PO-7781", created.ExternalReference)
 
 	repeat := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	repeat.BOL = "BOL-EXTREF-2"
 	repeat.ExternalReference = "po-7781"
-	_, err = svc.Create(ctx, repeat, actor)
+	_, err = svc.writer.Create(ctx, repeat, actor)
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)

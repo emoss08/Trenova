@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -35,7 +35,7 @@ func TestServiceCheckForDuplicateBOLs_SkipsLookupWhenDisabled(t *testing.T) {
 		CheckForDuplicateBOLs: false,
 	}, nil).Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
@@ -85,7 +85,7 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
@@ -119,7 +119,7 @@ func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
@@ -148,7 +148,7 @@ func TestServiceCheckDuplicateBOLsWithControl_SkipsABlankBOL(t *testing.T) {
 
 	for _, bol := range []string{"", "   "} {
 		repo := shipmentportsmock.NewMockShipmentRepository(t)
-		svc := assembled(&service{
+		svc := assembled(&rig{
 			l:            zap.NewNop(),
 			repo:         repo,
 			validator:    newServiceValidator(t),

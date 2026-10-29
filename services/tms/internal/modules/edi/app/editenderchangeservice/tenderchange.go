@@ -406,7 +406,7 @@ func (s *Service) applyLinkedShipmentTenderChange(
 		return err
 	}
 	applyTenderPayloadToShipment(targetShipment, &change.NewTenderPayload, transfer, preview.All)
-	if _, err = s.shipmentSvc.Update(ctx, targetShipment, actor); err != nil {
+	if _, err = s.shipmentWriter.Update(ctx, targetShipment, actor); err != nil {
 		return err
 	}
 	return s.recipient.AdvanceBaseline(

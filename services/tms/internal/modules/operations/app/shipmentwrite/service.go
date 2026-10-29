@@ -44,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -236,7 +237,9 @@ type Service struct {
 	transfer             *shipmentbillingtransfer.Service
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger               *zap.Logger
 	DB                   kernelports.Transactor
 	Repo                 shipmentports.ShipmentRepository
@@ -249,53 +252,51 @@ type Deps struct {
 	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	DocumentRepo         documentports.DocumentRepository
 	BillingRepo          tenantports.BillingControlRepository
-	ServiceFailures      servicefailureports.ServiceFailureEvaluator
+	ServiceFailures      servicefailureports.ServiceFailureEvaluator `optional:"true"`
 	Validator            *shipmentvalidator.Validator
 	EventService         shipmenteventports.ShipmentEventService
 	Coordinator          *shipmentstate.Coordinator
 	Invalidator          shipmentinvalidationports.ShipmentInvalidator
 	Commercial           *shipmentcommercial.Calculator
-	DistanceCalculation  shipmentdistanceports.DistanceCalculationService
-	AgentEvents          agenteventports.AgentEventPublisher
-	MutationObservers    []shipmentserviceports.ShipmentMutationObserver
+	DistanceCalculation  shipmentdistanceports.DistanceCalculationService `optional:"true"`
+	AgentEvents          agenteventports.AgentEventPublisher              `optional:"true"`
 	Effects              *shipmenteffects.Effects
 	Readiness            *shipmentbillingreadiness.Service
 	Transfer             *shipmentbillingtransfer.Service
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:                    d.Logger,
-		db:                   d.DB,
-		repo:                 d.Repo,
-		orderRepo:            d.OrderRepo,
-		assignmentRepo:       d.AssignmentRepo,
-		modeProfileService:   d.ModeProfileService,
-		permitService:        d.PermitService,
-		continuityRepo:       d.ContinuityRepo,
-		customerRepo:         d.CustomerRepo,
-		chargeAllocationRepo: d.ChargeAllocationRepo,
-		documentRepo:         d.DocumentRepo,
-		billingRepo:          d.BillingRepo,
-		serviceFailures:      d.ServiceFailures,
-		validator:            d.Validator,
-		eventService:         d.EventService,
-		coordinator:          d.Coordinator,
-		invalidator:          d.Invalidator,
-		commercial:           d.Commercial,
-		distanceCalculation:  d.DistanceCalculation,
-		agentEvents:          d.AgentEvents,
-		mutationObservers:    d.MutationObservers,
-		effects:              d.Effects,
-		readiness:            d.Readiness,
-		transfer:             d.Transfer,
+		l:                    p.Logger.Named("service.shipment"),
+		db:                   p.DB,
+		repo:                 p.Repo,
+		orderRepo:            p.OrderRepo,
+		assignmentRepo:       p.AssignmentRepo,
+		modeProfileService:   p.ModeProfileService,
+		permitService:        p.PermitService,
+		continuityRepo:       p.ContinuityRepo,
+		customerRepo:         p.CustomerRepo,
+		chargeAllocationRepo: p.ChargeAllocationRepo,
+		documentRepo:         p.DocumentRepo,
+		billingRepo:          p.BillingRepo,
+		serviceFailures:      p.ServiceFailures,
+		validator:            p.Validator,
+		eventService:         p.EventService,
+		coordinator:          p.Coordinator,
+		invalidator:          p.Invalidator,
+		commercial:           p.Commercial,
+		distanceCalculation:  p.DistanceCalculation,
+		agentEvents:          p.AgentEvents,
+		effects:              p.Effects,
+		readiness:            p.Readiness,
+		transfer:             p.Transfer,
 	}
 }
 
 func (s *Service) SetShipmentMutationObservers(
 	value []shipmentserviceports.ShipmentMutationObserver,
 ) {
-	s.mutationObservers = value
+	s.mutationObservers = append([]shipmentserviceports.ShipmentMutationObserver(nil), value...)
 }
 
 func (s *Service) Create(
@@ -1058,3 +1059,5 @@ func (s *Service) restoreAssignmentsForExistingMoves(
 		move.Assignment = originalMove.Assignment
 	}
 }
+
+var _ shipmentserviceports.ShipmentWriter = (*Service)(nil)

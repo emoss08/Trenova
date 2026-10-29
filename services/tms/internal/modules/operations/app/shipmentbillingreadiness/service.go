@@ -13,12 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -442,22 +444,26 @@ type Service struct {
 	serviceFailureRepo servicefailureports.ServiceFailureRepository
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger             *zap.Logger
 	Repo               shipmentports.ShipmentRepository
 	CustomerRepo       customerports.CustomerRepository
 	DocumentRepo       documentports.DocumentRepository
 	BillingRepo        tenantports.BillingControlRepository
-	ServiceFailureRepo servicefailureports.ServiceFailureRepository
+	ServiceFailureRepo servicefailureports.ServiceFailureRepository `optional:"true"`
 }
 
-func New(d Deps) *Service {
+func New(p Params) *Service {
 	return &Service{
-		l:                  d.Logger,
-		repo:               d.Repo,
-		customerRepo:       d.CustomerRepo,
-		documentRepo:       d.DocumentRepo,
-		billingRepo:        d.BillingRepo,
-		serviceFailureRepo: d.ServiceFailureRepo,
+		l:                  p.Logger.Named("service.shipment"),
+		repo:               p.Repo,
+		customerRepo:       p.CustomerRepo,
+		documentRepo:       p.DocumentRepo,
+		billingRepo:        p.BillingRepo,
+		serviceFailureRepo: p.ServiceFailureRepo,
 	}
 }
+
+var _ shipmentserviceports.ShipmentBillingReadinessReader = (*Service)(nil)

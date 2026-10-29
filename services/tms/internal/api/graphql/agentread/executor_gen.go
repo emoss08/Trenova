@@ -445,12 +445,18 @@ type ResolverParams struct {
 	ServiceTypeService                *servicetypeservice.Service
 	SettlementBatchRepo               driversettlementports.SettlementBatchRepository
 	SettlementControlService          *settlementcontrolservice.Service
+	ShipmentAutoRater                 shipmentserviceports.ShipmentAutoRater
+	ShipmentBillingTransfer           shipmentserviceports.ShipmentBillingTransferService
 	ShipmentCommentService            shipmentcommentports.ShipmentCommentService
 	ShipmentEventService              shipmenteventports.ShipmentEventService
 	ShipmentImportAssistant           shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
+	ShipmentLifecycle                 shipmentserviceports.ShipmentLifecycleService
+	ShipmentLoadingPlanner            shipmentserviceports.ShipmentLoadingPlanner
 	ShipmentRatingReviewService       ratingreviewports.RatingReviewService
-	ShipmentService                   shipmentserviceports.ShipmentService
+	ShipmentReader                    shipmentserviceports.ShipmentReader
+	ShipmentReadiness                 shipmentserviceports.ShipmentBillingReadinessReader
 	ShipmentTypeService               *shipmenttypeservice.Service
+	ShipmentWriter                    shipmentserviceports.ShipmentWriter
 	TableChangeAlertService           *tablechangealertservice.Service
 	TableExportService                *tableexportservice.Service
 	TelematicsService                 *telematicsservice.Service
@@ -1607,7 +1613,13 @@ func NewSchema(p ResolverParams) Schema {
 	shipmentDeps := &shipmentresolver.Deps{
 		Core:                        core,
 		AnalyticsService:            p.AnalyticsService,
-		ShipmentService:             p.ShipmentService,
+		ShipmentReader:              p.ShipmentReader,
+		ShipmentWriter:              p.ShipmentWriter,
+		ShipmentLifecycle:           p.ShipmentLifecycle,
+		ShipmentReadiness:           p.ShipmentReadiness,
+		ShipmentBillingTransfer:     p.ShipmentBillingTransfer,
+		ShipmentAutoRater:           p.ShipmentAutoRater,
+		ShipmentLoadingPlanner:      p.ShipmentLoadingPlanner,
 		ShipmentCommentService:      p.ShipmentCommentService,
 		ShipmentRatingReviewService: p.ShipmentRatingReviewService,
 		ShipmentEventService:        p.ShipmentEventService,
@@ -1627,7 +1639,7 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	telematicsDeps := &telematicsresolver.Deps{
 		Core:              core,
-		ShipmentService:   p.ShipmentService,
+		ShipmentReader:    p.ShipmentReader,
 		TelematicsService: p.TelematicsService,
 	}
 	tenantDeps := &tenantresolver.Deps{

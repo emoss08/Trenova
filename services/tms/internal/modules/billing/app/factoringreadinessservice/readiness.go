@@ -55,7 +55,7 @@ type ReadinessParams struct {
 	Attention     factoringwatchtowerports.WatchtowerReader `optional:"true"`
 	Invoices      invoiceports.InvoiceRepository
 	Documents     documentports.DocumentRepository
-	Shipments     shipmentserviceports.ShipmentService `optional:"true"`
+	Shipments     shipmentserviceports.ShipmentBillingReadinessReader `optional:"true"`
 	Customers     customerports.CustomerRepository
 	Organizations tenantports.OrganizationRepository
 	Templates     documenttemplateports.DocumentTemplateResolver
@@ -75,7 +75,7 @@ type ReadinessService struct {
 	attention     factoringwatchtowerports.WatchtowerReader
 	invoices      invoiceports.InvoiceRepository
 	documents     documentports.DocumentRepository
-	shipments     shipmentserviceports.ShipmentService
+	shipments     shipmentserviceports.ShipmentBillingReadinessReader
 	customers     customerports.CustomerRepository
 	organizations tenantports.OrganizationRepository
 	templates     documenttemplateports.DocumentTemplateResolver

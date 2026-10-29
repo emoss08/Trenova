@@ -72,7 +72,7 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Cases         deskcaseports.AssistantCaseRepository
 	Subjects      agentsubjectports.AgentSubjectRepository
-	Shipments     shipmentserviceports.ShipmentService
+	Shipments     shipmentserviceports.ShipmentBillingReadinessReader
 	Waits         agentwaitports.AgentWaitService
 	Checklists    deskcaseports.CaseChecklistRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
@@ -90,7 +90,7 @@ type Service struct {
 
 	conversations conversationports.ConversationRepository
 	subjects      agentsubjectports.AgentSubjectRepository
-	shipments     shipmentserviceports.ShipmentService
+	shipments     shipmentserviceports.ShipmentBillingReadinessReader
 	agentWaits    agentwaitports.AgentWaitService
 	checklists    deskcaseports.CaseChecklistRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository

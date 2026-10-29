@@ -256,7 +256,7 @@ func (r *Sources) Shipment(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		entities, err := r.ShipmentService.GetByIDs(
+		entities, err := r.ShipmentReader.GetByIDs(
 			ctx,
 			&shipmentports.GetShipmentsByIDsRequest{
 				TenantInfo:  req.TenantInfo,
@@ -271,7 +271,7 @@ func (r *Sources) Shipment(
 		return selectoption.Connection(items, len(items), 0)
 	}
 
-	result, err := r.ShipmentService.SelectOptions(
+	result, err := r.ShipmentReader.SelectOptions(
 		ctx,
 		&shipmentports.ShipmentSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
@@ -449,6 +449,6 @@ type Sources struct {
 	CommodityService            *commodityservice.Service
 	HazardousMaterialService    *hazardousmaterialservice.Service
 	OrderService                *orderservice.Service
-	ShipmentService             shipmentserviceports.ShipmentService
+	ShipmentReader              shipmentserviceports.ShipmentReader
 	ServiceFailureReasonCodeSvc servicefailureports.ServiceFailureReasonCodeService
 }

@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -116,10 +116,10 @@ func totalsService(
 	t *testing.T,
 	entity *shipment.Shipment,
 	calculator *shipmentcommercial.Calculator,
-) *service {
+) *rig {
 	t.Helper()
 
-	return assembled(&service{
+	return assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo:  expectShipmentControl(t, entity),
@@ -185,7 +185,7 @@ func TestServiceCalculateTotals_AShipmentWithNoTariffIsRatedByHand(t *testing.T)
 func TestServiceCalculateTotals_RejectsNilShipment(t *testing.T) {
 	t.Parallel()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
 		validator:    newServiceValidator(t),

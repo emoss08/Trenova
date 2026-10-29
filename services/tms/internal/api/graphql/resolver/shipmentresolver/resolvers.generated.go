@@ -19,7 +19,13 @@ import (
 type Deps struct {
 	*resolvercore.Core
 	AnalyticsService            kernelports.AnalyticsService
-	ShipmentService             shipmentserviceports.ShipmentService
+	ShipmentReader              shipmentserviceports.ShipmentReader
+	ShipmentWriter              shipmentserviceports.ShipmentWriter
+	ShipmentLifecycle           shipmentserviceports.ShipmentLifecycleService
+	ShipmentReadiness           shipmentserviceports.ShipmentBillingReadinessReader
+	ShipmentBillingTransfer     shipmentserviceports.ShipmentBillingTransferService
+	ShipmentAutoRater           shipmentserviceports.ShipmentAutoRater
+	ShipmentLoadingPlanner      shipmentserviceports.ShipmentLoadingPlanner
 	ShipmentCommentService      shipmentcommentports.ShipmentCommentService
 	ShipmentRatingReviewService ratingreviewports.RatingReviewService
 	ShipmentEventService        shipmenteventports.ShipmentEventService

@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -46,7 +46,7 @@ func TestServiceGetDelayedShipments_UsesThreshold(t *testing.T) {
 		Return([]*shipment.Shipment{{ID: pulid.MustNew("shp_")}}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
@@ -77,7 +77,7 @@ func TestServiceDelayShipments_SkipsWhenAutoDelayDisabled(t *testing.T) {
 		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipments: false}, nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:           zap.NewNop(),
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
@@ -135,7 +135,7 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,

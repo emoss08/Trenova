@@ -1,6 +1,6 @@
 //go:build integration
 
-package shipmentservice
+package shipmentflows
 
 import (
 	"testing"
@@ -45,7 +45,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	entity.BOL = "BOL-CANCEL-LIVE-WORK"
-	created, err := svc.Create(ctx, entity, actor)
+	created, err := svc.writer.Create(ctx, entity, actor)
 	require.NoError(t, err)
 
 	persisted := mustGetExpandedShipment(t, shipmentRepo, created.ID, tenantInfo)
@@ -70,7 +70,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 	}
 	require.NoError(t, shipmentdb.Assignments.Create(ctx, db, assignment))
 
-	_, err = svc.Cancel(ctx, &shipmentports.CancelShipmentRequest{
+	_, err = svc.lifecycle.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 		TenantInfo:   tenantInfo,
 		ShipmentID:   created.ID,
 		CancelReason: "customer request",
@@ -87,7 +87,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 	}
 	assert.Equal(t, shipment.AssignmentStatusCanceled, mustAssignmentStatus(t, db, assignment.ID))
 
-	_, err = svc.Uncancel(ctx, &shipmentports.UncancelShipmentRequest{
+	_, err = svc.lifecycle.Uncancel(ctx, &shipmentports.UncancelShipmentRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: created.ID,
 	}, actor)
@@ -129,7 +129,7 @@ func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	entity.BOL = "BOL-CANCEL-INVOICED"
-	created, err := svc.Create(ctx, entity, actor)
+	created, err := svc.writer.Create(ctx, entity, actor)
 	require.NoError(t, err)
 
 	_, err = keel.Exec(ctx, db,
@@ -137,7 +137,7 @@ func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
 		string(shipment.StatusInvoiced), created.ID.String())
 	require.NoError(t, err)
 
-	_, err = svc.Cancel(ctx, &shipmentports.CancelShipmentRequest{
+	_, err = svc.lifecycle.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: created.ID,
 	}, actor)
@@ -173,7 +173,7 @@ func TestCancelIntegration_RepositoryRefusesStaleVersion(t *testing.T) {
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	entity.BOL = "BOL-CANCEL-STALE"
-	created, err := svc.Create(ctx, entity, actor)
+	created, err := svc.writer.Create(ctx, entity, actor)
 	require.NoError(t, err)
 
 	_, err = shipmentRepo.Cancel(ctx, &shipmentports.CancelShipmentRequest{

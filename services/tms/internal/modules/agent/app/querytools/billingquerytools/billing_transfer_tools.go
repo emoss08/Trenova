@@ -35,7 +35,7 @@ type listBillingTransferCandidatesTool struct {
 }
 
 func NewListBillingTransferCandidatesTool(
-	shipments shipmentserviceports.ShipmentService,
+	shipments shipmentserviceports.ShipmentBillingTransferService,
 ) agenttoolports.AgentQueryTool {
 	return &listBillingTransferCandidatesTool{shipments: shipments}
 }

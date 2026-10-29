@@ -39,7 +39,7 @@ type Params struct {
 	AuditService         auditports.AuditService
 	Generator            seqgen.Generator
 	OrderDerivation      orderports.OrderDerivationService
-	ShipmentService      shipmentserviceports.ShipmentService
+	ShipmentService      shipmentserviceports.ShipmentLifecycleService
 	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	CustomerRepo         customerports.CustomerRepository
 }
@@ -52,7 +52,7 @@ type Service struct {
 	auditService         auditports.AuditService
 	generator            seqgen.Generator
 	orderDerivation      orderports.OrderDerivationService
-	shipmentService      shipmentserviceports.ShipmentService
+	shipmentService      shipmentserviceports.ShipmentLifecycleService
 	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	customerRepo         customerports.CustomerRepository
 }

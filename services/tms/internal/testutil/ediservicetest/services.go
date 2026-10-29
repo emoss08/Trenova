@@ -83,7 +83,9 @@ type Deps struct {
 	CarrierRepo         carrierports.CarrierRepository
 	ShipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository
 	TrackingEvents      trackingeventports.TrackingEventService
-	ShipmentSvc         shipmentserviceports.ShipmentService
+	ShipmentReader      shipmentserviceports.ShipmentReader
+	ShipmentWriter      shipmentserviceports.ShipmentWriter
+	ShipmentLifecycle   shipmentserviceports.ShipmentLifecycleService
 	WorkflowStarter     kernelports.WorkflowStarter
 	AuditService        auditports.AuditService
 	Notifications       *notificationservice.Service
@@ -142,7 +144,7 @@ func New(d Deps) *Services {
 	})
 	s.Payloads = edipayloadbuild.New(edipayloadbuild.Params{
 		ServiceFailureRepo: d.ServiceFailureRepo,
-		ShipmentSvc:        d.ShipmentSvc,
+		ShipmentSvc:        d.ShipmentReader,
 	})
 	s.TenderMapping = editendermapping.New(editendermapping.Params{
 		MappingProfileRepo: d.MappingProfileRepo,
@@ -199,7 +201,7 @@ func New(d Deps) *Services {
 		Recipient:         s.Recipients,
 		Replayer:          d.Replayer,
 		ShipmentEventRepo: d.ShipmentEventRepo,
-		ShipmentSvc:       d.ShipmentSvc,
+		ShipmentSvc:       d.ShipmentReader,
 		TransferRepo:      d.TransferRepo,
 	})
 	s.ServiceFailure = ediservicefailure.New(ediservicefailure.Params{
@@ -210,7 +212,7 @@ func New(d Deps) *Services {
 		Outbound:           s.Outbound,
 		PartnerRepo:        d.PartnerRepo,
 		ServiceFailureRepo: d.ServiceFailureRepo,
-		ShipmentSvc:        d.ShipmentSvc,
+		ShipmentSvc:        d.ShipmentReader,
 	})
 	s.Overview = edioverview.New(edioverview.Params{
 		CarrierRepo:        d.CarrierRepo,
@@ -228,7 +230,7 @@ func New(d Deps) *Services {
 		MappingProfileRepo:  d.MappingProfileRepo,
 		ShipmentEventRepo:   d.ShipmentEventRepo,
 		ShipmentMoveRepo:    d.ShipmentMoveRepo,
-		ShipmentSvc:         d.ShipmentSvc,
+		ShipmentSvc:         d.ShipmentLifecycle,
 		Shipments:           s.Shipments,
 		TenderRecipientRepo: d.TenderRecipientRepo,
 		TenderMapping:       s.TenderMapping,
@@ -257,7 +259,7 @@ func New(d Deps) *Services {
 		PartnerRepo:    d.PartnerRepo,
 		ProfileRepo:    d.ProfileRepo,
 		Recipient:      s.Recipients,
-		ShipmentSvc:    d.ShipmentSvc,
+		ShipmentSvc:    d.ShipmentReader,
 		Shipments:      s.Shipments,
 		TenderRepo:     d.TenderRepo,
 		TenderMapping:  s.TenderMapping,
@@ -271,7 +273,8 @@ func New(d Deps) *Services {
 		PartnerRepo:         d.PartnerRepo,
 		Recipient:           s.Recipients,
 		ShipmentLinkRepo:    d.ShipmentLinkRepo,
-		ShipmentSvc:         d.ShipmentSvc,
+		ShipmentSvc:         d.ShipmentReader,
+		ShipmentWriter:      d.ShipmentWriter,
 		TenderChangeRepo:    d.TenderChangeRepo,
 		TenderRecipientRepo: d.TenderRecipientRepo,
 		TenderMapping:       s.TenderMapping,
@@ -288,7 +291,7 @@ func New(d Deps) *Services {
 		Savepoints:       d.Savepoints,
 		Setup:            s.Setup,
 		ShipmentLinkRepo: d.ShipmentLinkRepo,
-		ShipmentSvc:      d.ShipmentSvc,
+		ShipmentSvc:      d.ShipmentWriter,
 		Shipments:        s.Shipments,
 		TenderMapping:    s.TenderMapping,
 		TransferRepo:     d.TransferRepo,

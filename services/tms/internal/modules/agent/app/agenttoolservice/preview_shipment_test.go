@@ -111,7 +111,7 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 		Version:   5,
 	}}
 	partners := &fakePartnerNotices{}
-	tool := intaketools.NewUpdateShipmentTool(writer, partners)
+	tool := intaketools.NewUpdateShipmentTool(writer, writer, partners)
 	customerID := pulid.MustNew("cus_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": shipmentID.String(),

@@ -1007,7 +1007,7 @@ func FromServices(s *Services) *Resolver {
 	selectoptionsDeps := &selectoptionsresolver.Deps{
 		Core:                         s.Core,
 		OrganizationService:          s.OrganizationService,
-		ShipmentService:              s.ShipmentService,
+		ShipmentReader:               s.ShipmentReader,
 		EdiSetupService:              s.EdiSetupService,
 		EdiTransferService:           s.EdiTransferService,
 		EquipmentTypeService:         s.EquipmentTypeService,
@@ -1079,7 +1079,13 @@ func FromServices(s *Services) *Resolver {
 	shipmentDeps := &shipmentresolver.Deps{
 		Core:                        s.Core,
 		AnalyticsService:            s.AnalyticsService,
-		ShipmentService:             s.ShipmentService,
+		ShipmentReader:              s.ShipmentReader,
+		ShipmentWriter:              s.ShipmentWriter,
+		ShipmentLifecycle:           s.ShipmentLifecycle,
+		ShipmentReadiness:           s.ShipmentReadiness,
+		ShipmentBillingTransfer:     s.ShipmentBillingTransfer,
+		ShipmentAutoRater:           s.ShipmentAutoRater,
+		ShipmentLoadingPlanner:      s.ShipmentLoadingPlanner,
 		ShipmentCommentService:      s.ShipmentCommentService,
 		ShipmentRatingReviewService: s.ShipmentRatingReviewService,
 		ShipmentEventService:        s.ShipmentEventService,
@@ -1130,7 +1136,7 @@ func FromServices(s *Services) *Resolver {
 	}
 	telematicsDeps := &telematicsresolver.Deps{
 		Core:              s.Core,
-		ShipmentService:   s.ShipmentService,
+		ShipmentReader:    s.ShipmentReader,
 		TelematicsService: s.TelematicsService,
 	}
 	tenantDeps := &tenantresolver.Deps{

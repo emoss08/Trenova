@@ -19,14 +19,14 @@ type Params struct {
 
 	RunRepo   billingtransferports.BillingTransferRunRepository
 	Workflows kernelports.WorkflowStarter
-	Shipments shipmentserviceports.ShipmentService `optional:"true"`
+	Shipments shipmentserviceports.ShipmentBillingTransferService `optional:"true"`
 	Logger    *zap.Logger
 }
 
 type Service struct {
 	runRepo   billingtransferports.BillingTransferRunRepository
 	workflows kernelports.WorkflowStarter
-	shipments shipmentserviceports.ShipmentService
+	shipments shipmentserviceports.ShipmentBillingTransferService
 	l         *zap.Logger
 }
 

@@ -560,15 +560,17 @@ func errNoRatingMethod(outcome string) error {
 // own tools and their own rules, and a patch that could reach them would be
 // a way around both.
 type UpdateShipmentTool struct {
-	shipments shipmentpreview.ShipmentWriter
-	partners  shipmentpreview.ShipmentPartnerNotices
+	reads    shipmentpreview.ShipmentReader
+	writes   shipmentpreview.ShipmentWriter
+	partners shipmentpreview.ShipmentPartnerNotices
 }
 
 func NewUpdateShipmentTool(
-	shipments shipmentpreview.ShipmentWriter,
+	reads shipmentpreview.ShipmentReader,
+	writes shipmentpreview.ShipmentWriter,
 	partners shipmentpreview.ShipmentPartnerNotices,
 ) agenttoolports.AgentTool {
-	return &UpdateShipmentTool{shipments: shipments, partners: partners}
+	return &UpdateShipmentTool{reads: reads, writes: writes, partners: partners}
 }
 
 func (t *UpdateShipmentTool) Name() string { return "shipment_update" }
@@ -686,7 +688,7 @@ func (t *UpdateShipmentTool) Execute(
 		return err
 	}
 
-	_, err = t.shipments.Update(ctx, entity, params.Actor)
+	_, err = t.writes.Update(ctx, entity, params.Actor)
 
 	return err
 }
@@ -718,7 +720,7 @@ func (t *UpdateShipmentTool) plan(
 		)
 	}
 
-	entity, err := t.shipments.Get(ctx, &shipmentports.GetShipmentByIDRequest{
+	entity, err := t.reads.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: toolparams.TenantFrom(*params),
 		ShipmentOptions: shipmentports.ShipmentOptions{

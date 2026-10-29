@@ -20,7 +20,7 @@ type Params struct {
 	Outbound           *edioutbound.Service
 	PartnerRepo        edipartnerports.EDIPartnerRepository
 	ServiceFailureRepo servicefailureports.ServiceFailureRepository
-	ShipmentSvc        shipmentserviceports.ShipmentService
+	ShipmentSvc        shipmentserviceports.ShipmentReader
 }
 
 type Service struct {
@@ -30,7 +30,7 @@ type Service struct {
 	messageRepo        edimessageports.EDIMessageRepository
 	partnerRepo        edipartnerports.EDIPartnerRepository
 	serviceFailureRepo servicefailureports.ServiceFailureRepository
-	shipmentSvc        shipmentserviceports.ShipmentService
+	shipmentSvc        shipmentserviceports.ShipmentReader
 	outbound           *edioutbound.Service
 }
 

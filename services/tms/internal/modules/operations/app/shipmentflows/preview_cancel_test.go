@@ -1,4 +1,4 @@
-package shipmentservice
+package shipmentflows
 
 import (
 	"context"
@@ -38,7 +38,7 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 			copied := *original
 			return &copied, nil
 		})
-	svc := assembled(&service{
+	svc := assembled(&rig{
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,

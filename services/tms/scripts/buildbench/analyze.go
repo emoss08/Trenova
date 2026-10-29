@@ -137,7 +137,7 @@ func scenarioDescription(id string) string {
 	case "S1":
 		return "no-op rebuild"
 	case "S2":
-		return "unexported func added to shipmentservice"
+		return "unexported func added to shipmentwrite"
 	case "S3":
 		return "unexported func added to shipmentresolver"
 	case "S4":

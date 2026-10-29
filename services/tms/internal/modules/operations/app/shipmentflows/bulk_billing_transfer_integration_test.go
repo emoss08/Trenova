@@ -1,6 +1,6 @@
 //go:build integration
 
-package shipmentservice
+package shipmentflows
 
 import (
 	"context"
@@ -37,7 +37,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/customerrepository"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -128,7 +127,7 @@ func (g *countingGenerator) GenerateInvoiceNumber(
 const maxStatementsPerShipment = 26
 
 type bulkTransferHarness struct {
-	svc        shipmentserviceports.ShipmentService
+	svc        *rig
 	counter    *queryCounter
 	db         *keel.DB
 	ctx        context.Context
@@ -213,7 +212,7 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		OrderDerivation: derivation,
 	})
 
-	svc := New(Params{
+	svc := newRig(&rigParams{
 		Logger:               logger,
 		DB:                   conn,
 		Repo:                 shipmentRepo,
@@ -331,7 +330,7 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 
 	actor := testutil.NewSessionActor(h.data.User.ID, h.tenantInfo.OrgID, h.tenantInfo.BuID)
 	h.counter.start()
-	resp, transferErr := h.svc.BulkTransferToBilling(
+	resp, transferErr := h.svc.transfer.BulkTransferToBilling(
 		h.ctx,
 		&shipmentbillingports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                    ids,

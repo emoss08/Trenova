@@ -71,7 +71,7 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		CommodityService:            r.CommodityService,
 		HazardousMaterialService:    r.HazardousMaterialService,
 		OrderService:                r.OrderService,
-		ShipmentService:             r.ShipmentService,
+		ShipmentReader:              r.ShipmentReader,
 		ServiceFailureReasonCodeSvc: r.ServiceFailureReasonCodeSvc,
 	}
 	workforce := &workforceselectoptions.Sources{

@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -128,7 +129,9 @@ type Effects struct {
 	orderDerivation     orderports.OrderDerivationService
 }
 
-type Deps struct {
+type Params struct {
+	fx.In
+
 	Logger              *zap.Logger
 	Repo                shipmentports.ShipmentRepository
 	ControlRepo         tenantports.ShipmentControlRepository
@@ -141,18 +144,18 @@ type Deps struct {
 	OrderDerivation     orderports.OrderDerivationService
 }
 
-func New(d Deps) *Effects {
+func New(p Params) *Effects {
 	return &Effects{
-		l:                   d.Logger,
-		repo:                d.Repo,
-		controlRepo:         d.ControlRepo,
-		commodityRepo:       d.CommodityRepo,
-		equipmentTypeRepo:   d.EquipmentTypeRepo,
-		customerRepo:        d.CustomerRepo,
-		notificationService: d.NotificationService,
-		auditService:        d.AuditService,
-		eventService:        d.EventService,
-		orderDerivation:     d.OrderDerivation,
+		l:                   p.Logger.Named("service.shipment"),
+		repo:                p.Repo,
+		controlRepo:         p.ControlRepo,
+		commodityRepo:       p.CommodityRepo,
+		equipmentTypeRepo:   p.EquipmentTypeRepo,
+		customerRepo:        p.CustomerRepo,
+		notificationService: p.NotificationService,
+		auditService:        p.AuditService,
+		eventService:        p.EventService,
+		orderDerivation:     p.OrderDerivation,
 	}
 }
 
