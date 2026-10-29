@@ -80,4 +80,38 @@ describe("TariffEditor", () => {
     const view = mount();
     expect(view().dom.querySelector(".cm-tariff-coverage-gutter")).toBeNull();
   });
+
+  it("keeps what was typed after a value that rendered behind the editor", async () => {
+    let view: EditorView | null = null;
+    const editor = (value: string) => (
+      <Suspense fallback={null}>
+        <TariffEditor
+          kind="tariff"
+          value={value}
+          onChange={() => undefined}
+          context={EMPTY_TARIFF_CONTEXT}
+          onView={(next) => {
+            view = next;
+          }}
+        />
+      </Suspense>
+    );
+    const type = (text: string) =>
+      act(() => {
+        const at = view!.state.doc.length;
+        view!.dispatch({
+          changes: { from: at, insert: text },
+          selection: { anchor: at + text.length },
+          userEvent: "input.type",
+        });
+      });
+    const { rerender } = render(editor("round to"));
+    type(" c");
+    type("e");
+    rerender(editor("round to c"));
+    type("nts");
+    rerender(editor("round to cents"));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 600)));
+    expect(view!.state.doc.toString()).toBe("round to cents");
+  });
 });
