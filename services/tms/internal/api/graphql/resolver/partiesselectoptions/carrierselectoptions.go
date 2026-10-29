@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
@@ -23,18 +25,20 @@ func (r *Sources) Carrier(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.CarrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
-				ID:         id,
-				TenantInfo: req.TenantInfo,
-			})
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, carrierSelectOptionItem(entity))
+		entities, err := r.CarrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
+			TenantInfo: req.TenantInfo,
+			CarrierIDs: req.IDs,
+		})
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*carrier.Carrier).GetID,
+			carrierSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -81,18 +85,20 @@ func (r *Sources) Customer(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.CustomerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
-				ID:         id,
-				TenantInfo: req.TenantInfo,
-			})
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, customerSelectOptionItem(entity))
+		entities, err := r.CustomerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
+			TenantInfo:  req.TenantInfo,
+			CustomerIDs: req.IDs,
+		})
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*customer.Customer).GetID,
+			customerSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -118,21 +124,23 @@ func (r *Sources) FactoringCompany(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.FactoringCompanyRepo.GetByID(
-				ctx,
-				factoringcompanyports.GetFactoringCompanyByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, factoringCompanySelectOptionItem(entity))
+		entities, err := r.FactoringCompanyRepo.GetByIDs(
+			ctx,
+			factoringcompanyports.GetFactoringCompaniesByIDsRequest{
+				TenantInfo: req.TenantInfo,
+				IDs:        req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*factoringcompany.FactoringCompany).GetID,
+			factoringCompanySelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
