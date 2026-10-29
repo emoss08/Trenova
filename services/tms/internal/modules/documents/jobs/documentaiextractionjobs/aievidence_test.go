@@ -1,10 +1,11 @@
-package documentextractionjobs
+package documentaiextractionjobs
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -148,7 +149,7 @@ func TestAnAcceptedExtractionCarriesEvidenceFromThePages(t *testing.T) {
 		},
 	}
 	payload := &ApplyDocumentAIExtractionPayload{
-		Completion: &AsyncAIExtractionCompletion{
+		Completion: &documentanalysis.AsyncAIExtractionCompletion{
 			Status:        documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 			ExtractResult: extract,
 		},
@@ -160,7 +161,7 @@ func TestAnAcceptedExtractionCarriesEvidenceFromThePages(t *testing.T) {
 		payload,
 	)
 
-	require.Equal(t, aiAcceptanceStatusAccepted, diagnostics.AcceptanceStatus,
+	require.Equal(t, documentanalysis.AIAcceptanceStatusAccepted, diagnostics.AcceptanceStatus,
 		diagnostics.RejectionReason)
 	require.Contains(t, analysis.Fields, "rate")
 	assert.Contains(t, analysis.Fields["rate"].EvidenceExcerpt, "Linehaul $2,563.12")

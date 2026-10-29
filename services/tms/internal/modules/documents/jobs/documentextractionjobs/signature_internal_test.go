@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -69,7 +70,7 @@ func TestReadSignatureLeavesALowConfidenceReadingUnknown(t *testing.T) {
 
 			finding := readSignature(&documentaiextractionports.AISignatureReading{
 				Status:     status,
-				Confidence: reviewReadyConfidenceThreshold - 0.01,
+				Confidence: documentanalysis.ReviewReadyConfidenceThreshold - 0.01,
 				SignedDate: "2026-10-14",
 			}, signatureNow())
 

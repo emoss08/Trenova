@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -56,7 +58,7 @@ func RegisterExtractionWorkflows() []temporaltype.WorkflowDefinition {
 		},
 		{
 			Name:        "ProcessDocumentAIExtractionWorkflow",
-			Fn:          ProcessDocumentAIExtractionWorkflow,
+			Fn:          documentaiextractionjobs.ProcessDocumentAIExtractionWorkflow,
 			TaskQueue:   temporaltype.DocumentExtractionTaskQueue,
 			Description: "Run asynchronous AI extraction for an indexed document",
 		},
@@ -66,8 +68,8 @@ func RegisterExtractionWorkflows() []temporaltype.WorkflowDefinition {
 func ProcessDocumentExtractionWorkflow(
 	ctx workflow.Context,
 	payload *documentextractioncontract.ProcessDocumentExtractionPayload,
-) (*ProcessDocumentIntelligenceResult, error) {
-	stepCtx := workflow.WithActivityOptions(ctx, defaultActivityOptions)
+) (*documentanalysis.ProcessDocumentIntelligenceResult, error) {
+	stepCtx := workflow.WithActivityOptions(ctx, documentaiextractionjobs.DefaultActivityOptions)
 
 	var a *Activities
 	var plan PlanDocumentExtractionResult
@@ -107,13 +109,13 @@ func ProcessDocumentExtractionWorkflow(
 		return nil, markConversionFailed(ctx, payload, err)
 	}
 	if !converted.Converted {
-		return &ProcessDocumentIntelligenceResult{
+		return &documentanalysis.ProcessDocumentIntelligenceResult{
 			DocumentID: payload.DocumentID,
 			Status:     converted.Status,
 		}, nil
 	}
 
-	var result *ProcessDocumentIntelligenceResult
+	var result *documentanalysis.ProcessDocumentIntelligenceResult
 	if err := workflow.ExecuteActivity(
 		stepCtx,
 		a.AnalyzeConvertedDocumentActivity,
@@ -170,12 +172,15 @@ func conversionFailureOf(err error) (code documentupload.FailureCode, message st
 
 func ReconcileDocumentExtractionWorkflow(
 	ctx workflow.Context,
-) (*ReconcileDocumentIntelligenceResult, error) {
-	activityCtx := workflow.WithActivityOptions(ctx, defaultActivityOptions)
+) (*documentanalysis.ReconcileDocumentIntelligenceResult, error) {
+	activityCtx := workflow.WithActivityOptions(
+		ctx,
+		documentaiextractionjobs.DefaultActivityOptions,
+	)
 	logger := workflow.GetLogger(ctx)
 
 	var a *Activities
-	payload := &ReconcileDocumentIntelligencePayload{
+	payload := &documentanalysis.ReconcileDocumentIntelligencePayload{
 		BasePayload: temporaltype.BasePayload{
 			Timestamp: workflow.Now(ctx).Unix(),
 		},
@@ -183,7 +188,7 @@ func ReconcileDocumentExtractionWorkflow(
 		Limit:            temporaljobs.DefaultTenantRecordLimit,
 	}
 
-	var tenantsResult *ListDocumentIntelligenceTenantsResult
+	var tenantsResult *documentanalysis.ListDocumentIntelligenceTenantsResult
 	if err := workflow.ExecuteActivity(
 		activityCtx,
 		a.ListDocumentIntelligenceTenantsActivity,
@@ -192,7 +197,7 @@ func ReconcileDocumentExtractionWorkflow(
 		return nil, err
 	}
 
-	result := &ReconcileDocumentIntelligenceResult{}
+	result := &documentanalysis.ReconcileDocumentIntelligenceResult{}
 	result.TenantsScanned = len(tenantsResult.Tenants)
 	for _, tenant := range tenantsResult.Tenants {
 		tenantPayload := *payload
@@ -203,7 +208,7 @@ func ReconcileDocumentExtractionWorkflow(
 			temporaljobs.DefaultTenantRecordLimit,
 		)
 
-		var tenantResult *ReconcileDocumentIntelligenceResult
+		var tenantResult *documentanalysis.ReconcileDocumentIntelligenceResult
 		if err := workflow.ExecuteActivity(
 			activityCtx,
 			a.ReconcileDocumentExtractionActivity,

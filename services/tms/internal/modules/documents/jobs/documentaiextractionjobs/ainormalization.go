@@ -1,18 +1,19 @@
-package documentextractionjobs
+package documentaiextractionjobs
 
 import (
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/shared/floatutils"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 func mergeAIAnalysis(
-	fallback *DocumentIntelligenceAnalysis,
+	fallback *documentanalysis.DocumentIntelligenceAnalysis,
 	aiExtract *documentaiextractionports.AIExtractResult,
-) (merged *DocumentIntelligenceAnalysis, accepted bool, rejectionReason string) {
+) (merged *documentanalysis.DocumentIntelligenceAnalysis, accepted bool, rejectionReason string) {
 	normalized := normalizeAIExtractResult(aiExtract)
 	rejectionReason = validateAIExtract(normalized)
 	if rejectionReason != "" {
@@ -29,35 +30,35 @@ func mergeAIAnalysis(
 
 func analysisFromAIExtract(
 	aiExtract *documentaiextractionports.AIExtractResult,
-) *DocumentIntelligenceAnalysis {
+) *documentanalysis.DocumentIntelligenceAnalysis {
 	aiExtract = normalizeAIExtractResult(aiExtract)
 	if aiExtract == nil {
-		return &DocumentIntelligenceAnalysis{
-			Kind:          kindRateConfirmation,
+		return &documentanalysis.DocumentIntelligenceAnalysis{
+			Kind:          documentanalysis.KindRateConfirmation,
 			MissingFields: []string{},
 			Signals:       []string{},
-			Fields:        map[string]*ReviewField{},
-			Stops:         []*IntelligenceStop{},
-			Conflicts:     []*ReviewConflict{},
+			Fields:        map[string]*documentanalysis.ReviewField{},
+			Stops:         []*documentanalysis.IntelligenceStop{},
+			Conflicts:     []*documentanalysis.ReviewConflict{},
 		}
 	}
 
-	analysis := &DocumentIntelligenceAnalysis{
-		Kind:              kindRateConfirmation,
-		OverallConfidence: clampConfidence(aiExtract.OverallConfidence),
-		ReviewStatus:      normalizeAIReviewStatus(aiExtract.ReviewStatus),
+	analysis := &documentanalysis.DocumentIntelligenceAnalysis{
+		Kind:              documentanalysis.KindRateConfirmation,
+		OverallConfidence: documentanalysis.ClampConfidence(aiExtract.OverallConfidence),
+		ReviewStatus:      NormalizeAIReviewStatus(aiExtract.ReviewStatus),
 		ClassifierSource:  "ai",
-		MissingFields:     dedupeStrings(aiExtract.MissingFields),
-		Signals:           dedupeStrings(aiExtract.Signals),
-		Fields:            make(map[string]*ReviewField, len(aiExtract.Fields)),
-		Stops:             make([]*IntelligenceStop, 0, len(aiExtract.Stops)),
-		Conflicts:         make([]*ReviewConflict, 0, len(aiExtract.Conflicts)),
+		MissingFields:     sliceutils.DedupeStrings(aiExtract.MissingFields),
+		Signals:           sliceutils.DedupeStrings(aiExtract.Signals),
+		Fields:            make(map[string]*documentanalysis.ReviewField, len(aiExtract.Fields)),
+		Stops:             make([]*documentanalysis.IntelligenceStop, 0, len(aiExtract.Stops)),
+		Conflicts:         make([]*documentanalysis.ReviewConflict, 0, len(aiExtract.Conflicts)),
 	}
 	for key, field := range aiExtract.Fields {
-		analysis.Fields[key] = &ReviewField{
+		analysis.Fields[key] = &documentanalysis.ReviewField{
 			Label:           field.Label,
 			Value:           field.Value,
-			Confidence:      clampConfidence(field.Confidence),
+			Confidence:      documentanalysis.ClampConfidence(field.Confidence),
 			Excerpt:         field.EvidenceExcerpt,
 			EvidenceExcerpt: field.EvidenceExcerpt,
 			PageNumber:      field.PageNumber,
@@ -68,7 +69,7 @@ func analysisFromAIExtract(
 	}
 
 	for _, stop := range aiExtract.Stops {
-		analysis.Stops = append(analysis.Stops, &IntelligenceStop{
+		analysis.Stops = append(analysis.Stops, &documentanalysis.IntelligenceStop{
 			Sequence:            stop.Sequence,
 			Role:                stop.Role,
 			Name:                stop.Name,
@@ -82,14 +83,14 @@ func analysisFromAIExtract(
 			AppointmentRequired: stop.AppointmentRequired,
 			PageNumber:          stop.PageNumber,
 			EvidenceExcerpt:     stop.EvidenceExcerpt,
-			Confidence:          clampConfidence(stop.Confidence),
+			Confidence:          documentanalysis.ClampConfidence(stop.Confidence),
 			ReviewRequired:      stop.ReviewRequired,
 			Source:              normalizeAISource(stop.Source),
 		})
 	}
 
 	for _, conflict := range aiExtract.Conflicts {
-		analysis.Conflicts = append(analysis.Conflicts, &ReviewConflict{
+		analysis.Conflicts = append(analysis.Conflicts, &documentanalysis.ReviewConflict{
 			Key:             conflict.Key,
 			Label:           conflict.Label,
 			Values:          conflict.Values,
@@ -110,9 +111,9 @@ func normalizeAIExtractResult(
 	}
 
 	normalized := &documentaiextractionports.AIExtractResult{
-		DocumentKind:      normalizeRoutedKind(result.DocumentKind),
+		DocumentKind:      NormalizeRoutedKind(result.DocumentKind),
 		OverallConfidence: result.OverallConfidence,
-		ReviewStatus:      normalizeAIReviewStatus(result.ReviewStatus),
+		ReviewStatus:      NormalizeAIReviewStatus(result.ReviewStatus),
 		MissingFields:     append([]string{}, result.MissingFields...),
 		Signals:           append([]string{}, result.Signals...),
 		Fields: make(
@@ -170,8 +171,18 @@ func normalizeAIExtractResult(
 			"amountdue",
 		},
 	)
-	ensureCanonicalAIFieldFromStop(normalized, stopRoleShipper, "Shipper", stopRolePickup)
-	ensureCanonicalAIFieldFromStop(normalized, stopRoleConsignee, "Consignee", stopRoleDelivery)
+	ensureCanonicalAIFieldFromStop(
+		normalized,
+		documentanalysis.StopRoleShipper,
+		"Shipper",
+		documentanalysis.StopRolePickup,
+	)
+	ensureCanonicalAIFieldFromStop(
+		normalized,
+		documentanalysis.StopRoleConsignee,
+		"Consignee",
+		documentanalysis.StopRoleDelivery,
+	)
 
 	return normalized
 }
@@ -183,9 +194,9 @@ func normalizeAIFieldKey(value string) string {
 	case "rate", "totalrate", "linehaul", "linehaulrate", "freightcharge", "total", "amountdue":
 		return "rate"
 	case "shipper", "shippername", "shipfrom", "originname":
-		return stopRoleShipper
+		return documentanalysis.StopRoleShipper
 	case "consignee", "receiver", "receivername", "deliveryto", "shipto", "destinationname":
-		return stopRoleConsignee
+		return documentanalysis.StopRoleConsignee
 	default:
 		return normalized
 	}
@@ -194,9 +205,9 @@ func normalizeAIFieldKey(value string) string {
 func normalizeAIStopRole(role string) string {
 	switch strings.TrimSpace(strings.ToLower(role)) {
 	case "pickup", "origin", "shipper":
-		return stopRolePickup
+		return documentanalysis.StopRolePickup
 	case "delivery", "destination", "receiver", "consignee", "drop":
-		return stopRoleDelivery
+		return documentanalysis.StopRoleDelivery
 	default:
 		return strings.TrimSpace(strings.ToLower(role))
 	}
@@ -249,7 +260,7 @@ func ensureCanonicalAIFieldFromStop(
 		result.Fields[key] = documentaiextractionports.AIDocumentField{
 			Label:           label,
 			Value:           stop.Name,
-			Confidence:      clampConfidence(stop.Confidence),
+			Confidence:      documentanalysis.ClampConfidence(stop.Confidence),
 			EvidenceExcerpt: stop.EvidenceExcerpt,
 			PageNumber:      stop.PageNumber,
 			ReviewRequired:  stop.ReviewRequired,
@@ -261,10 +272,15 @@ func ensureCanonicalAIFieldFromStop(
 }
 
 func validateAIExtract(result *documentaiextractionports.AIExtractResult) string {
-	if result == nil || !strings.EqualFold(result.DocumentKind, kindRateConfirmation) {
+	if result == nil ||
+		!strings.EqualFold(result.DocumentKind, documentanalysis.KindRateConfirmation) {
 		return "ai_candidate_invalid_document_kind"
 	}
-	requiredFields := []string{stopRoleShipper, stopRoleConsignee, "rate"}
+	requiredFields := []string{
+		documentanalysis.StopRoleShipper,
+		documentanalysis.StopRoleConsignee,
+		"rate",
+	}
 	for _, key := range requiredFields {
 		field, ok := result.Fields[key]
 		if !ok || strings.TrimSpace(field.Value) == "" || field.PageNumber <= 0 {
@@ -279,9 +295,9 @@ func validateAIExtract(result *documentaiextractionports.AIExtractResult) string
 			return "ai_candidate_invalid_stop_metadata"
 		}
 		switch strings.ToLower(strings.TrimSpace(stop.Role)) {
-		case stopRolePickup:
+		case documentanalysis.StopRolePickup:
 			hasPickup = true
-		case stopRoleDelivery:
+		case documentanalysis.StopRoleDelivery:
 			hasDelivery = true
 		}
 	}
@@ -301,7 +317,7 @@ func normalizeAISource(source string) string {
 	return source
 }
 
-func normalizeClassifierSource(source string) string {
+func NormalizeClassifierSource(source string) string {
 	switch strings.TrimSpace(strings.ToLower(source)) {
 	case "ai", "template", "hybrid", "deterministic":
 		return strings.TrimSpace(strings.ToLower(source))
@@ -310,32 +326,32 @@ func normalizeClassifierSource(source string) string {
 	}
 }
 
-func normalizeAIReviewStatus(status string) string {
+func NormalizeAIReviewStatus(status string) string {
 	switch strings.TrimSpace(strings.ToLower(status)) {
 	case "ready":
-		return reviewStatusReady
+		return documentanalysis.ReviewStatusReady
 	case "unavailable":
-		return reviewStatusUnavailable
+		return documentanalysis.ReviewStatusUnavailable
 	default:
-		return reviewStatusNeedsReview
+		return documentanalysis.ReviewStatusNeedsReview
 	}
 }
 
-func normalizeRoutedKind(kind string) string {
+func NormalizeRoutedKind(kind string) string {
 	switch strings.TrimSpace(strings.ToLower(kind)) {
 	case "rateconfirmation", "rate_confirmation":
-		return kindRateConfirmation
+		return documentanalysis.KindRateConfirmation
 	case "billoflading", "bill_of_lading":
-		return kindBillOfLading
+		return documentanalysis.KindBillOfLading
 	case "proofofdelivery", "proof_of_delivery":
-		return kindProofOfDelivery
+		return documentanalysis.KindProofOfDelivery
 	default:
-		return kindOther
+		return documentanalysis.KindOther
 	}
 }
 
-func toAIFingerprintHint(
-	fingerprint *ProviderFingerprint,
+func ToAIFingerprintHint(
+	fingerprint *documentanalysis.ProviderFingerprint,
 ) *documentaiextractionports.AIDocumentFingerprintHint {
 	if fingerprint == nil {
 		return nil
@@ -348,58 +364,34 @@ func toAIFingerprintHint(
 	}
 }
 
-func clampConfidence(value float64) float64 {
-	return floatutils.Clamp(value, 0, maxConfidence)
-}
-
-func dedupeStrings(items []string) []string {
-	if len(items) == 0 {
-		return []string{}
-	}
-	seen := make(map[string]struct{}, len(items))
-	out := make([]string, 0, len(items))
-	for _, item := range items {
-		trimmed := strings.TrimSpace(item)
-		if trimmed == "" {
-			continue
-		}
-		if _, ok := seen[trimmed]; ok {
-			continue
-		}
-		seen[trimmed] = struct{}{}
-		out = append(out, trimmed)
-	}
-	return out
-}
-
-func inferDocumentType(kind string) (*InferredDocumentType, bool) {
+func InferDocumentType(kind string) (*documentanalysis.InferredDocumentType, bool) {
 	switch kind {
-	case kindRateConfirmation:
-		return &InferredDocumentType{
+	case documentanalysis.KindRateConfirmation:
+		return &documentanalysis.InferredDocumentType{
 			Code:           "RATECONF",
 			Name:           "Rate Confirmation",
 			Category:       documenttype.CategoryShipment,
 			Classification: documenttype.ClassificationPublic,
 			Color:          "#0f766e",
 		}, true
-	case kindBillOfLading:
-		return &InferredDocumentType{
+	case documentanalysis.KindBillOfLading:
+		return &documentanalysis.InferredDocumentType{
 			Code:           "BOL",
 			Name:           "Bill of Lading",
 			Category:       documenttype.CategoryShipment,
 			Classification: documenttype.ClassificationPublic,
 			Color:          "#f59e0b",
 		}, true
-	case kindProofOfDelivery:
-		return &InferredDocumentType{
+	case documentanalysis.KindProofOfDelivery:
+		return &documentanalysis.InferredDocumentType{
 			Code:           "POD",
 			Name:           "Proof of Delivery",
 			Category:       documenttype.CategoryShipment,
 			Classification: documenttype.ClassificationPublic,
 			Color:          "#8b5cf6",
 		}, true
-	case kindInvoice:
-		return &InferredDocumentType{
+	case documentanalysis.KindInvoice:
+		return &documentanalysis.InferredDocumentType{
 			Code:           "INVOICE",
 			Name:           "Invoice",
 			Category:       documenttype.CategoryInvoice,
@@ -411,41 +403,47 @@ func inferDocumentType(kind string) (*InferredDocumentType, bool) {
 	}
 }
 
-func canApplyKindToResource(resourceType, kind string) bool {
+func CanApplyKindToResource(resourceType, kind string) bool {
 	switch kind {
-	case kindRateConfirmation, kindBillOfLading, kindProofOfDelivery, kindInvoice:
+	case documentanalysis.KindRateConfirmation,
+		documentanalysis.KindBillOfLading,
+		documentanalysis.KindProofOfDelivery,
+		documentanalysis.KindInvoice:
 		return strings.EqualFold(resourceType, "shipment")
 	default:
 		return true
 	}
 }
 
-func canGenerateShipmentDraft(
+func CanGenerateShipmentDraft(
 	control *documentcontrol.DocumentControl,
 	resourceType, kind string,
 ) bool {
 	return control != nil &&
 		control.EnableShipmentDraftExtraction &&
 		control.AllowsShipmentDraftResource(resourceType) &&
-		kind == kindRateConfirmation
+		kind == documentanalysis.KindRateConfirmation
 }
 
-func hasUsableShipmentDraft(intelligence *DocumentIntelligenceAnalysis) bool {
-	if strings.EqualFold(strings.TrimSpace(intelligence.ReviewStatus), reviewStatusReady) {
+func HasUsableShipmentDraft(intelligence *documentanalysis.DocumentIntelligenceAnalysis) bool {
+	if strings.EqualFold(
+		strings.TrimSpace(intelligence.ReviewStatus),
+		documentanalysis.ReviewStatusReady,
+	) {
 		return true
 	}
 
-	if hasMeaningfulStopForRole(intelligence.Stops, stopRolePickup) &&
-		hasMeaningfulStopForRole(intelligence.Stops, stopRoleDelivery) {
+	if hasMeaningfulStopForRole(intelligence.Stops, documentanalysis.StopRolePickup) &&
+		hasMeaningfulStopForRole(intelligence.Stops, documentanalysis.StopRoleDelivery) {
 		return true
 	}
 
-	return hasMeaningfulField(intelligence.Fields, stopRoleShipper) &&
-		hasMeaningfulField(intelligence.Fields, stopRoleConsignee) &&
+	return hasMeaningfulField(intelligence.Fields, documentanalysis.StopRoleShipper) &&
+		hasMeaningfulField(intelligence.Fields, documentanalysis.StopRoleConsignee) &&
 		hasMeaningfulField(intelligence.Fields, "rate")
 }
 
-func hasMeaningfulStopForRole(stops []*IntelligenceStop, role string) bool {
+func hasMeaningfulStopForRole(stops []*documentanalysis.IntelligenceStop, role string) bool {
 	for _, i := range stops {
 		if !strings.EqualFold(strings.TrimSpace(i.Role), role) {
 			continue
@@ -457,7 +455,7 @@ func hasMeaningfulStopForRole(stops []*IntelligenceStop, role string) bool {
 	return false
 }
 
-func hasReviewableStopData(stop *IntelligenceStop) bool {
+func hasReviewableStopData(stop *documentanalysis.IntelligenceStop) bool {
 	return strings.TrimSpace(stop.Name) != "" ||
 		strings.TrimSpace(stop.AddressLine1) != "" ||
 		strings.TrimSpace(stop.AddressLine2) != "" ||
@@ -468,7 +466,7 @@ func hasReviewableStopData(stop *IntelligenceStop) bool {
 		strings.TrimSpace(stop.TimeWindow) != ""
 }
 
-func hasMeaningfulField(fields map[string]*ReviewField, key string) bool {
+func hasMeaningfulField(fields map[string]*documentanalysis.ReviewField, key string) bool {
 	field, ok := fields[key]
 	if !ok {
 		return false

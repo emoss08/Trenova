@@ -1,15 +1,16 @@
-package documentextractionjobs
+package documentaiextractionjobs
 
 import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
-var defaultRetryPolicy = &temporal.RetryPolicy{
+var DefaultRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    2 * time.Second,
 	BackoffCoefficient: 2.0,
 	MaximumAttempts:    4,
@@ -19,15 +20,15 @@ var defaultRetryPolicy = &temporal.RetryPolicy{
 	},
 }
 
-var defaultActivityOptions = workflow.ActivityOptions{
+var DefaultActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 5 * time.Minute,
 	HeartbeatTimeout:    30 * time.Second,
-	RetryPolicy:         defaultRetryPolicy,
+	RetryPolicy:         DefaultRetryPolicy,
 }
 
 var asyncAIExtractionActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 20 * time.Minute,
-	RetryPolicy:         defaultRetryPolicy,
+	RetryPolicy:         DefaultRetryPolicy,
 }
 
 var considerShadowActivityOptions = workflow.ActivityOptions{
@@ -49,14 +50,14 @@ var considerShadowActivityOptions = workflow.ActivityOptions{
 var submitAIExtractionActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 20 * time.Minute,
 	HeartbeatTimeout:    modelcall.HeartbeatTimeout,
-	RetryPolicy:         defaultRetryPolicy,
+	RetryPolicy:         DefaultRetryPolicy,
 }
 
 // pollAIExtractionActivityOptions bound one poll: a record read, one call to
 // the provider, and a record write.
 var pollAIExtractionActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: time.Minute,
-	RetryPolicy:         defaultRetryPolicy,
+	RetryPolicy:         DefaultRetryPolicy,
 }
 
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
@@ -78,11 +79,11 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // submit, every poll, and the apply, each visible in the Temporal UI.
 func ProcessDocumentAIExtractionWorkflow(
 	ctx workflow.Context,
-	payload *ProcessDocumentAIExtractionPayload,
-) (*ProcessDocumentAIExtractionResult, error) {
+	payload *documentanalysis.ProcessDocumentAIExtractionPayload,
+) (*documentanalysis.ProcessDocumentAIExtractionResult, error) {
 	var a *Activities
 	submitCtx := workflow.WithActivityOptions(ctx, submitAIExtractionActivityOptions)
-	var progress AIExtractionProgress
+	var progress documentanalysis.AIExtractionProgress
 	if err := workflow.ExecuteActivity(submitCtx, a.SubmitDocumentAIExtractionActivity, payload).
 		Get(submitCtx, &progress); err != nil {
 		return nil, err
@@ -95,7 +96,7 @@ func ProcessDocumentAIExtractionWorkflow(
 			return nil, err
 		}
 
-		input := &PollDocumentAIExtractionInput{
+		input := &documentanalysis.PollDocumentAIExtractionInput{
 			Payload: payload,
 			GiveUp:  !workflow.Now(ctx).Before(deadline),
 		}
@@ -110,13 +111,13 @@ func ProcessDocumentAIExtractionWorkflow(
 
 func applyAIExtraction(
 	ctx workflow.Context,
-	payload *ProcessDocumentAIExtractionPayload,
-	completion *AsyncAIExtractionCompletion,
-) (*ProcessDocumentAIExtractionResult, error) {
+	payload *documentanalysis.ProcessDocumentAIExtractionPayload,
+	completion *documentanalysis.AsyncAIExtractionCompletion,
+) (*documentanalysis.ProcessDocumentAIExtractionResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, asyncAIExtractionActivityOptions)
 
 	var a *Activities
-	var result *ProcessDocumentAIExtractionResult
+	var result *documentanalysis.ProcessDocumentAIExtractionResult
 	if err := workflow.ExecuteActivity(
 		ctx,
 		a.ApplyDocumentAIExtractionResultActivity,
@@ -139,14 +140,17 @@ func applyAIExtraction(
 	return result, nil
 }
 
-func considerShadow(ctx workflow.Context, payload *ProcessDocumentAIExtractionPayload) {
+func considerShadow(
+	ctx workflow.Context,
+	payload *documentanalysis.ProcessDocumentAIExtractionPayload,
+) {
 	ctx = workflow.WithActivityOptions(ctx, considerShadowActivityOptions)
 
 	var a *Activities
 	if err := workflow.ExecuteActivity(
 		ctx,
 		a.ConsiderDocumentAIExtractionShadowActivity,
-		&ConsiderDocumentAIExtractionShadowInput{
+		&documentanalysis.ConsiderDocumentAIExtractionShadowInput{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: payload.OrganizationID,
 				BusinessUnitID: payload.BusinessUnitID,

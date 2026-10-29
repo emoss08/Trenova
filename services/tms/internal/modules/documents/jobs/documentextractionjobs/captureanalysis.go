@@ -5,6 +5,8 @@ import (
 	"context"
 	"io"
 
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/referenceutils"
@@ -36,7 +38,7 @@ func (c *CaptureAnalyzer) Analyze(
 	req *captureports.CaptureAnalysisRequest,
 ) (*captureports.CaptureAnalysis, error) {
 	a := c.activities
-	control, err := a.getDocumentControl(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
+	control, err := a.support.GetDocumentControl(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +65,21 @@ func (c *CaptureAnalyzer) Analyze(
 		return nil, err
 	}
 
-	extracted := finalizeExtraction(
+	extracted := documentanalysis.FinalizeExtraction(
 		a.extractionPages(converted.Pages, nil),
 		a.cfg.GetMaxExtractedChars(),
 	)
-	features := extractDocumentFeatures(req.FileName, extracted.Pages, extracted.Text)
-	fingerprint := detectProviderFingerprint(req.FileName, extracted.Text, features)
-	classification := classifyDocumentWithControl(
+	features := documentanalysis.ExtractDocumentFeatures(
+		req.FileName,
+		extracted.Pages,
+		extracted.Text,
+	)
+	fingerprint := documentanalysis.DetectProviderFingerprint(
+		req.FileName,
+		extracted.Text,
+		features,
+	)
+	classification := documentanalysis.ClassifyDocumentWithControl(
 		req.FileName,
 		extracted.Text,
 		control,
@@ -78,15 +88,15 @@ func (c *CaptureAnalyzer) Analyze(
 	)
 
 	return captureAnalysisOf(
-		analyzeDocument(classification, extracted),
+		documentanalysis.AnalyzeDocument(classification, extracted),
 		classification,
 		extracted.Text,
 	), nil
 }
 
 func captureAnalysisOf(
-	intelligence *DocumentIntelligenceAnalysis,
-	classification *ClassificationResult,
+	intelligence *documentanalysis.DocumentIntelligenceAnalysis,
+	classification *documentanalysis.ClassificationResult,
 	text string,
 ) *captureports.CaptureAnalysis {
 	analysis := &captureports.CaptureAnalysis{
@@ -97,14 +107,17 @@ func captureAnalysisOf(
 	if analysis.Confidence == 0 {
 		analysis.Confidence = classification.Confidence
 	}
-	if inferred, ok := inferDocumentType(intelligence.Kind); ok {
+	if inferred, ok := documentaiextractionjobs.InferDocumentType(intelligence.Kind); ok {
 		analysis.DocumentTypeCode = inferred.Code
 	}
 
 	return analysis
 }
 
-func captureReferences(intelligence *DocumentIntelligenceAnalysis, text string) []string {
+func captureReferences(
+	intelligence *documentanalysis.DocumentIntelligenceAnalysis,
+	text string,
+) []string {
 	extracted := ""
 	if field, ok := intelligence.Fields["referenceNumber"]; ok && field != nil {
 		extracted = field.Value

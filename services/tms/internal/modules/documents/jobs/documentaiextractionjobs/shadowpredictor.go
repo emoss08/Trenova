@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentaiextractionjobs
 
 import (
 	"context"

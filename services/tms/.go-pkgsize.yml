@@ -17,7 +17,6 @@ exceptions:
       Matching and term comparison live in rateagreementmatch and rateagreementcompare.
 debt:
   services/tms/internal/modules/agent/ports/agentports: 10434
-  services/tms/internal/modules/documents/jobs/documentextractionjobs: 7211
   services/tms/internal/modules/identity/domain/permission: 10640
   services/tms/internal/modules/operations/domain/shipment: 6025
   services/tms/internal/modules/workforce/domain/worker: 14287

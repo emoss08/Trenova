@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentaiextractionjobs
 
 import (
 	"context"
@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionsupport"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractiontest"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +40,7 @@ func (memoryAIExtractionRepository) Update(
 }
 
 type inlineExtraction struct {
-	noopAIDocumentService
+	documentextractionsupport.NoopAIDocumentService
 	preferred pulid.ID
 }
 
@@ -65,14 +68,14 @@ func submitExtraction(t *testing.T) (*fakeRolloutRouter, *inlineExtraction) {
 	activities := &Activities{
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
-		documentRepo: &memoryDocumentRepository{doc: &document.Document{
+		documentRepo: &documentextractiontest.MemoryDocumentRepository{Doc: &document.Document{
 			ID:             docID,
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			OriginalName:   "rate-confirmation.pdf",
 		}},
-		contentRepo: &memoryContentRepository{
-			content: &documentcontent.Content{
+		contentRepo: &documentextractiontest.MemoryContentRepository{
+			Content: &documentcontent.Content{
 				ID:              pulid.MustNew("dc_"),
 				DocumentID:      docID,
 				OrganizationID:  orgID,
@@ -80,7 +83,7 @@ func submitExtraction(t *testing.T) (*fakeRolloutRouter, *inlineExtraction) {
 				ContentText:     "Load 48213",
 				LastExtractedAt: &extractedAt,
 			},
-			pages: []*documentcontent.Page{{PageNumber: 1, ExtractedText: "Load 48213"}},
+			Pages: []*documentcontent.Page{{PageNumber: 1, ExtractedText: "Load 48213"}},
 		},
 		aiExtractionRepo:  memoryAIExtractionRepository{},
 		aiDocumentService: ai,
@@ -92,7 +95,7 @@ func submitExtraction(t *testing.T) (*fakeRolloutRouter, *inlineExtraction) {
 	env.RegisterActivity(activities)
 	_, err := env.ExecuteActivity(
 		activities.SubmitDocumentAIExtractionActivity,
-		&ProcessDocumentAIExtractionPayload{
+		&documentanalysis.ProcessDocumentAIExtractionPayload{
 			BasePayload: temporaltype.BasePayload{OrganizationID: orgID, BusinessUnitID: buID},
 			DocumentID:  docID,
 			ExtractedAt: extractedAt,

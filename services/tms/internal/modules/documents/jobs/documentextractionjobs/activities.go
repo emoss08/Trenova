@@ -12,19 +12,17 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionsupport"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
@@ -34,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -49,60 +48,45 @@ type ActivitiesParams struct {
 	DocumentConversionConfig *documentconversionconfig.Config
 	Metrics                  *metrics.Registry
 	DocumentRepo             documentports.DocumentRepository
-	DocumentControlRepo      tenantports.DocumentControlRepository
 	DocumentTypeRepo         documenttypeports.DocumentTypeRepository
 	ContentRepo              documentcontentports.DocumentContentRepository
-	AIExtractionRepo         documentaiextractionports.DocumentAIExtractionRepository
 	DraftRepo                documentshipmentdraftports.DocumentShipmentDraftRepository
 	AIDocumentService        documentaiextractionports.AIDocumentService
-	SearchProjection         documentsearchprojectionports.DocumentSearchProjectionService
 	Storage                  kernelports.Client
 	WorkflowStarter          kernelports.WorkflowStarter
 	Encryption               *encryptionservice.Service
-	AgentEvents              agentports.AgentEventPublisher                 `optional:"true"`
-	ShadowSampler            extractionshadowports.ExtractionShadowSampler  `optional:"true"`
-	Rollout                  extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
 	Imaging                  kernelports.Imaging
 	Converter                kernelports.DocumentConverter       `optional:"true"`
 	Triage                   inboundmessageports.TriageEventSink `optional:"true"`
 	Realtime                 realtimeports.RealtimeService       `optional:"true"`
+	Support                  *documentextractionsupport.Service
 }
 
 type Activities struct {
-	logger              *zap.Logger
-	cfg                 *aiconfig.Config
-	metrics             *metrics.Registry
-	documentRepo        documentports.DocumentRepository
-	documentControlRepo tenantports.DocumentControlRepository
-	documentTypeRepo    documenttypeports.DocumentTypeRepository
-	contentRepo         documentcontentports.DocumentContentRepository
-	aiExtractionRepo    documentaiextractionports.DocumentAIExtractionRepository
-	draftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
-	aiDocumentService   documentaiextractionports.AIDocumentService
-	searchProjection    documentsearchprojectionports.DocumentSearchProjectionService
-	storage             kernelports.Client
-	workflowStarter     kernelports.WorkflowStarter
-	encryption          *encryptionservice.Service
-	agentEvents         agentports.AgentEventPublisher
-	shadowSampler       extractionshadowports.ExtractionShadowSampler
-	rollout             extractionrolloutports.ExtractionRolloutRouter
-	imaging             kernelports.Imaging
-	converter           kernelports.DocumentConverter
-	conversionCfg       *documentconversionconfig.Config
-	triage              inboundmessageports.TriageEventSink
-	realtime            realtimeports.RealtimeService
+	logger            *zap.Logger
+	cfg               *aiconfig.Config
+	metrics           *metrics.Registry
+	documentRepo      documentports.DocumentRepository
+	documentTypeRepo  documenttypeports.DocumentTypeRepository
+	contentRepo       documentcontentports.DocumentContentRepository
+	draftRepo         documentshipmentdraftports.DocumentShipmentDraftRepository
+	aiDocumentService documentaiextractionports.AIDocumentService
+	storage           kernelports.Client
+	workflowStarter   kernelports.WorkflowStarter
+	encryption        *encryptionservice.Service
+	imaging           kernelports.Imaging
+	converter         kernelports.DocumentConverter
+	conversionCfg     *documentconversionconfig.Config
+	triage            inboundmessageports.TriageEventSink
+	realtime          realtimeports.RealtimeService
+	support           *documentextractionsupport.Service
 }
 
 //nolint:gocritic // dependency injection param
 func NewActivities(p ActivitiesParams) *Activities {
 	aiDocumentService := p.AIDocumentService
 	if aiDocumentService == nil {
-		aiDocumentService = noopAIDocumentService{}
-	}
-
-	searchProjection := p.SearchProjection
-	if searchProjection == nil {
-		searchProjection = noopDocumentSearchProjectionService{}
+		aiDocumentService = documentextractionsupport.NoopAIDocumentService{}
 	}
 
 	workflowStarter := p.WorkflowStarter
@@ -111,28 +95,23 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 
 	return &Activities{
-		logger:              p.Logger.Named("temporal.document-extraction"),
-		cfg:                 p.AIConfig,
-		metrics:             p.Metrics,
-		documentRepo:        p.DocumentRepo,
-		documentControlRepo: p.DocumentControlRepo,
-		documentTypeRepo:    p.DocumentTypeRepo,
-		contentRepo:         p.ContentRepo,
-		aiExtractionRepo:    p.AIExtractionRepo,
-		draftRepo:           p.DraftRepo,
-		aiDocumentService:   aiDocumentService,
-		searchProjection:    searchProjection,
-		storage:             p.Storage,
-		workflowStarter:     workflowStarter,
-		encryption:          p.Encryption,
-		agentEvents:         p.AgentEvents,
-		shadowSampler:       p.ShadowSampler,
-		rollout:             p.Rollout,
-		triage:              p.Triage,
-		realtime:            p.Realtime,
-		imaging:             p.Imaging,
-		converter:           p.Converter,
-		conversionCfg:       p.DocumentConversionConfig,
+		logger:            p.Logger.Named("temporal.document-extraction"),
+		cfg:               p.AIConfig,
+		metrics:           p.Metrics,
+		documentRepo:      p.DocumentRepo,
+		documentTypeRepo:  p.DocumentTypeRepo,
+		contentRepo:       p.ContentRepo,
+		draftRepo:         p.DraftRepo,
+		aiDocumentService: aiDocumentService,
+		storage:           p.Storage,
+		workflowStarter:   workflowStarter,
+		encryption:        p.Encryption,
+		triage:            p.Triage,
+		realtime:          p.Realtime,
+		imaging:           p.Imaging,
+		converter:         p.Converter,
+		conversionCfg:     p.DocumentConversionConfig,
+		support:           p.Support,
 	}
 }
 
@@ -169,13 +148,13 @@ func (a *Activities) markExtractionStarted(
 		return err
 	}
 	a.metrics.Document.RecordExtraction("started", "", "none")
-	a.syncSearchProjection(ctx, doc, "")
+	a.support.SyncSearchProjection(ctx, doc, "")
 	return nil
 }
 
 func (a *Activities) finalizeProcessDocumentIntelligence(
 	ctx context.Context,
-	p *FinalizeIntelligenceParams,
+	p *documentanalysis.FinalizeIntelligenceParams,
 ) error {
 	draftStatus, err := a.upsertShipmentDraftForProcess(
 		ctx,
@@ -210,7 +189,7 @@ func (a *Activities) finalizeProcessDocumentIntelligence(
 	if !p.Control.EnableFullTextIndexing {
 		indexedText = ""
 	}
-	a.syncSearchProjection(ctx, p.Document, indexedText)
+	a.support.SyncSearchProjection(ctx, p.Document, indexedText)
 	inboundmessageports.AnnounceDocumentAttached(ctx, a.triage, p.Document)
 
 	return a.maybeApplyAsyncAIEnqueueFailure(ctx, p)
@@ -218,9 +197,9 @@ func (a *Activities) finalizeProcessDocumentIntelligence(
 
 func (a *Activities) persistIndexedContentAndAssociate(
 	ctx context.Context,
-	payload *PersistIndexedContentPayload,
+	payload *documentanalysis.PersistIndexedContentPayload,
 ) error {
-	structured := buildStructuredData(payload.Intelligence, payload.AIDiagnostics)
+	structured := documentanalysis.BuildStructuredData(payload.Intelligence, payload.AIDiagnostics)
 	payload.Content.Status = documentcontent.StatusIndexed
 	payload.Content.ContentText = payload.Extracted.Text
 	payload.Content.PageCount = payload.Extracted.PageCount
@@ -258,15 +237,19 @@ func (a *Activities) upsertShipmentDraftForProcess(
 	ctx context.Context,
 	doc *document.Document,
 	control *documentcontrol.DocumentControl,
-	classification *ClassificationResult,
-	intelligence *DocumentIntelligenceAnalysis,
+	classification *documentanalysis.ClassificationResult,
+	intelligence *documentanalysis.DocumentIntelligenceAnalysis,
 	enqueueAsyncAI bool,
 ) (document.ShipmentDraftStatus, error) {
-	isUsable := canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) &&
-		hasUsableShipmentDraft(intelligence)
+	isUsable := documentaiextractionjobs.CanGenerateShipmentDraft(
+		control,
+		doc.ResourceType,
+		classification.Kind,
+	) &&
+		documentaiextractionjobs.HasUsableShipmentDraft(intelligence)
 
 	if isUsable {
-		draftStatus, err := a.upsertDraft(ctx, doc, classification.Kind, intelligence, true)
+		draftStatus, err := a.support.UpsertDraft(ctx, doc, classification.Kind, intelligence, true)
 		if err != nil {
 			return "", err
 		}
@@ -274,7 +257,12 @@ func (a *Activities) upsertShipmentDraftForProcess(
 		return draftStatus, nil
 	}
 
-	if canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) && enqueueAsyncAI {
+	if documentaiextractionjobs.CanGenerateShipmentDraft(
+		control,
+		doc.ResourceType,
+		classification.Kind,
+	) &&
+		enqueueAsyncAI {
 		if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.DocumentShipmentDraft{
 			DocumentID:     doc.ID,
 			OrganizationID: doc.OrganizationID,
@@ -290,7 +278,7 @@ func (a *Activities) upsertShipmentDraftForProcess(
 		return document.ShipmentDraftStatusPending, nil
 	}
 
-	draftStatus, err := a.upsertDraft(ctx, doc, classification.Kind, intelligence, false)
+	draftStatus, err := a.support.UpsertDraft(ctx, doc, classification.Kind, intelligence, false)
 	if err != nil {
 		return "", err
 	}
@@ -300,7 +288,7 @@ func (a *Activities) upsertShipmentDraftForProcess(
 
 func (a *Activities) maybeApplyAsyncAIEnqueueFailure(
 	ctx context.Context,
-	p *FinalizeIntelligenceParams,
+	p *documentanalysis.FinalizeIntelligenceParams,
 ) error {
 	if !p.EnqueueAsyncAI {
 		return nil
@@ -316,9 +304,12 @@ func (a *Activities) maybeApplyAsyncAIEnqueueFailure(
 			zap.String("documentId", p.Document.ID.String()),
 			zap.Error(err),
 		)
-		p.AIDiagnostics.AcceptanceStatus = aiAcceptanceStatusRejected
+		p.AIDiagnostics.AcceptanceStatus = documentanalysis.AIAcceptanceStatusRejected
 		p.AIDiagnostics.RejectionReason = "ai_async_enqueue_failed"
-		p.Content.StructuredData = buildStructuredData(p.Intelligence, p.AIDiagnostics)
+		p.Content.StructuredData = documentanalysis.BuildStructuredData(
+			p.Intelligence,
+			p.AIDiagnostics,
+		)
 		if _, upsertErr := a.contentRepo.Upsert(ctx, p.Content); upsertErr != nil {
 			return upsertErr
 		}
@@ -328,8 +319,8 @@ func (a *Activities) maybeApplyAsyncAIEnqueueFailure(
 
 func (a *Activities) ListDocumentIntelligenceTenantsActivity(
 	ctx context.Context,
-	payload *ReconcileDocumentIntelligencePayload,
-) (*ListDocumentIntelligenceTenantsResult, error) {
+	payload *documentanalysis.ReconcileDocumentIntelligencePayload,
+) (*documentanalysis.ListDocumentIntelligenceTenantsResult, error) {
 	olderThan := time.Now().Add(-time.Duration(payload.OlderThanSeconds) * time.Second).Unix()
 	tenants, err := a.contentRepo.ListPendingExtractionTenants(
 		ctx,
@@ -342,7 +333,7 @@ func (a *Activities) ListDocumentIntelligenceTenantsActivity(
 		return nil, err
 	}
 
-	return &ListDocumentIntelligenceTenantsResult{
+	return &documentanalysis.ListDocumentIntelligenceTenantsResult{
 		Tenants: temporaljobs.BuildTenantWorkItems(tenants, a.cfg.GetReconcileBatchSize()),
 	}, nil
 }
@@ -399,24 +390,8 @@ func (a *Activities) markFailed(
 		}); err != nil {
 		return err
 	}
-	a.syncSearchProjection(ctx, doc, "")
+	a.support.SyncSearchProjection(ctx, doc, "")
 	return nil
-}
-
-func (a *Activities) syncSearchProjection(
-	ctx context.Context,
-	doc *document.Document,
-	contentText string,
-) {
-	if err := a.searchProjection.Upsert(ctx, doc, contentText); err != nil {
-		a.metrics.Document.RecordSearchProjectionSync(false)
-		a.logger.Warn("failed to sync document search projection",
-			zap.String("documentId", doc.ID.String()),
-			zap.Error(err),
-		)
-		return
-	}
-	a.metrics.Document.RecordSearchProjectionSync(true)
 }
 
 // enrichWithAI asks the model to route the document. A transient failure is
@@ -427,15 +402,15 @@ func (a *Activities) syncSearchProjection(
 //nolint:funlen // multi-step AI enrichment pipeline
 func (a *Activities) enrichWithAI(
 	ctx context.Context,
-	payload *EnrichmentPayload,
-) (*EnrichmentResult, error) {
-	diagnostics := &AIDiagnostics{
+	payload *documentanalysis.EnrichmentPayload,
+) (*documentanalysis.EnrichmentResult, error) {
+	diagnostics := &documentanalysis.AIDiagnostics{
 		FallbackAnalysis: payload.Intelligence,
-		AcceptanceStatus: aiAcceptanceStatusNotAttempted,
+		AcceptanceStatus: documentanalysis.AIAcceptanceStatusNotAttempted,
 	}
 	if !payload.Document.ProcessingProfile.ExtractsWithAI() {
 		diagnostics.RejectionReason = "profile_text_only"
-		return &EnrichmentResult{
+		return &documentanalysis.EnrichmentResult{
 			Classification:       payload.Classification,
 			DocumentIntelligence: payload.Intelligence,
 			AIDiagnostics:        diagnostics,
@@ -444,7 +419,7 @@ func (a *Activities) enrichWithAI(
 	}
 	if !a.cfg.DocumentExtractionEnabled() {
 		diagnostics.RejectionReason = "ai_disabled"
-		return &EnrichmentResult{
+		return &documentanalysis.EnrichmentResult{
 			Classification:       payload.Classification,
 			DocumentIntelligence: payload.Intelligence,
 			AIDiagnostics:        diagnostics,
@@ -463,7 +438,15 @@ func (a *Activities) enrichWithAI(
 		if strings.TrimSpace(page.Text) == "" && strings.TrimSpace(page.Markdown) == "" {
 			continue
 		}
-		pages = append(pages, modelPage(page.PageNumber, page.Text, page.Markdown, pageLimit))
+		pages = append(
+			pages,
+			documentaiextractionjobs.ModelPage(
+				page.PageNumber,
+				page.Text,
+				page.Markdown,
+				pageLimit,
+			),
+		)
 	}
 
 	var route *documentaiextractionports.AIRouteResult
@@ -490,14 +473,17 @@ func (a *Activities) enrichWithAI(
 					TermsSignals:     payload.Features.TermsSignals,
 					SignatureSignals: payload.Features.SignatureSignals,
 				},
-				Fingerprint: toAIFingerprintHint(payload.Fingerprint),
+				Fingerprint: documentaiextractionjobs.ToAIFingerprintHint(payload.Fingerprint),
 			},
 		)
 		return routeErr
 	})
 	if err != nil {
 		if modelcall.Transient(err) &&
-			!modelcall.FinalAttempt(ctx, defaultRetryPolicy.MaximumAttempts) {
+			!modelcall.FinalAttempt(
+				ctx,
+				documentaiextractionjobs.DefaultRetryPolicy.MaximumAttempts,
+			) {
 			return nil, modelcall.Classify(err)
 		}
 		a.logger.Warn(
@@ -510,7 +496,7 @@ func (a *Activities) enrichWithAI(
 		} else {
 			diagnostics.RejectionReason = "ai_route_failed"
 		}
-		return &EnrichmentResult{
+		return &documentanalysis.EnrichmentResult{
 			Classification:       payload.Classification,
 			DocumentIntelligence: payload.Intelligence,
 			AIDiagnostics:        diagnostics,
@@ -519,7 +505,7 @@ func (a *Activities) enrichWithAI(
 	}
 	if route == nil || strings.TrimSpace(route.DocumentKind) == "" {
 		diagnostics.RejectionReason = "ai_route_empty"
-		return &EnrichmentResult{
+		return &documentanalysis.EnrichmentResult{
 			Classification:       payload.Classification,
 			DocumentIntelligence: payload.Intelligence,
 			AIDiagnostics:        diagnostics,
@@ -528,37 +514,39 @@ func (a *Activities) enrichWithAI(
 	}
 
 	routedClassification := payload.Classification
-	routedClassification.Kind = normalizeRoutedKind(route.DocumentKind)
+	routedClassification.Kind = documentaiextractionjobs.NormalizeRoutedKind(route.DocumentKind)
 	routedClassification.Confidence = route.Confidence
-	routedClassification.Signals = dedupeStrings(
+	routedClassification.Signals = sliceutils.DedupeStrings(
 		append(payload.Classification.Signals, route.Signals...),
 	)
-	routedClassification.ReviewRequired = normalizeAIReviewStatus(
+	routedClassification.ReviewRequired = documentaiextractionjobs.NormalizeAIReviewStatus(
 		route.ReviewStatus,
-	) != reviewStatusReady
-	routedClassification.Source = normalizeClassifierSource(route.ClassifierSource)
+	) != documentanalysis.ReviewStatusReady
+	routedClassification.Source = documentaiextractionjobs.NormalizeClassifierSource(
+		route.ClassifierSource,
+	)
 	routedClassification.ProviderFingerprint = stringutils.FirstNonEmpty(
 		route.ProviderFingerprint,
-		providerName(payload.Fingerprint),
+		documentanalysis.ProviderName(payload.Fingerprint),
 	)
 	routedClassification.Reason = stringutils.FirstNonEmpty(
 		route.Reason,
 		payload.Classification.Reason,
 	)
-	routedAnalysis := analyzeDocument(routedClassification, payload.Extracted)
+	routedAnalysis := documentanalysis.AnalyzeDocument(routedClassification, payload.Extracted)
 
-	if !strings.EqualFold(routedClassification.Kind, kindRateConfirmation) ||
+	if !strings.EqualFold(routedClassification.Kind, documentanalysis.KindRateConfirmation) ||
 		!payload.Control.EnableAIAssistedExtraction ||
 		!route.ShouldExtract {
 		switch {
-		case !strings.EqualFold(routedClassification.Kind, kindRateConfirmation):
+		case !strings.EqualFold(routedClassification.Kind, documentanalysis.KindRateConfirmation):
 			diagnostics.RejectionReason = "ai_routed_non_rate_confirmation"
 		case !payload.Control.EnableAIAssistedExtraction:
 			diagnostics.RejectionReason = "ai_assisted_extraction_disabled"
 		case !route.ShouldExtract:
 			diagnostics.RejectionReason = "ai_route_declined_extraction"
 		}
-		return &EnrichmentResult{
+		return &documentanalysis.EnrichmentResult{
 			Classification:       routedClassification,
 			DocumentIntelligence: routedAnalysis,
 			AIDiagnostics:        diagnostics,
@@ -567,9 +555,9 @@ func (a *Activities) enrichWithAI(
 		}, nil
 	}
 
-	diagnostics.AcceptanceStatus = aiAcceptanceStatusPending
+	diagnostics.AcceptanceStatus = documentanalysis.AIAcceptanceStatusPending
 	diagnostics.RejectionReason = ""
-	return &EnrichmentResult{
+	return &documentanalysis.EnrichmentResult{
 		Classification:       routedClassification,
 		DocumentIntelligence: routedAnalysis,
 		AIDiagnostics:        diagnostics,
@@ -589,7 +577,7 @@ func (a *Activities) runWithHeartbeat(
 	defer close(done)
 
 	go func() {
-		ticker := time.NewTicker(heartbeatInterval)
+		ticker := time.NewTicker(documentanalysis.HeartbeatInterval)
 		defer ticker.Stop()
 
 		for {
@@ -631,7 +619,7 @@ func (a *Activities) associateDocumentType(
 ) error {
 	if !control.EnableAutoDocumentTypeAssociate ||
 		doc.DocumentTypeID != nil ||
-		!canApplyKindToResource(doc.ResourceType, kind) {
+		!documentaiextractionjobs.CanApplyKindToResource(doc.ResourceType, kind) {
 		switch {
 		case !control.EnableAutoDocumentTypeAssociate:
 			a.metrics.Document.RecordTypeAssociation("disabled", kind)
@@ -643,7 +631,7 @@ func (a *Activities) associateDocumentType(
 		return nil
 	}
 
-	inferred, ok := inferDocumentType(kind)
+	inferred, ok := documentaiextractionjobs.InferDocumentType(kind)
 	if !ok {
 		a.metrics.Document.RecordTypeAssociation("no_match", kind)
 		return nil
@@ -736,11 +724,4 @@ func (a *Activities) associateDocumentType(
 	doc.DocumentTypeID = &created.ID
 	a.metrics.Document.RecordTypeAssociation("created", kind)
 	return nil
-}
-
-func (a *Activities) getDocumentControl(
-	ctx context.Context,
-	orgID, buID pulid.ID,
-) (*documentcontrol.DocumentControl, error) {
-	return a.documentControlRepo.GetOrCreate(ctx, orgID, buID)
 }

@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentanalysis
 
 import (
 	"regexp"
@@ -17,25 +17,25 @@ import (
 )
 
 const (
-	reviewStatusReady       = "Ready"
-	reviewStatusNeedsReview = "NeedsReview"
-	reviewStatusUnavailable = "Unavailable"
+	ReviewStatusReady       = "Ready"
+	ReviewStatusNeedsReview = "NeedsReview"
+	ReviewStatusUnavailable = "Unavailable"
 
-	stopRoleShipper   = "shipper"
-	stopRoleConsignee = "consignee"
-	stopRolePickup    = "pickup"
-	stopRoleDelivery  = "delivery"
+	StopRoleShipper   = "shipper"
+	StopRoleConsignee = "consignee"
+	StopRolePickup    = "pickup"
+	StopRoleDelivery  = "delivery"
 
-	kindRateConfirmation = "RateConfirmation"
-	kindBillOfLading     = "BillOfLading"
-	kindProofOfDelivery  = "ProofOfDelivery"
-	kindInvoice          = "Invoice"
-	kindOther            = "Other"
+	KindRateConfirmation = "RateConfirmation"
+	KindBillOfLading     = "BillOfLading"
+	KindProofOfDelivery  = "ProofOfDelivery"
+	KindInvoice          = "Invoice"
+	KindOther            = "Other"
 
 	maxConfidence                  = 0.99
 	classificationMinConfidence    = 0.55
 	reviewRequiredConfidenceFloor  = 0.8
-	reviewReadyConfidenceThreshold = 0.82
+	ReviewReadyConfidenceThreshold = 0.82
 	defaultLowConfidence           = 0.3
 	ocrBaseStopConfidence          = 0.72
 	nativeBaseStopConfidence       = 0.9
@@ -43,7 +43,7 @@ const (
 	stopMissingCityStatePenalty    = 0.08
 	rawExcerptPreTruncateLen       = 2100
 	rawExcerptMaxLen               = 2000
-	heartbeatInterval              = 10 * time.Second
+	HeartbeatInterval              = 10 * time.Second
 	stopBlockMaxLines              = 36
 	stopBlockMaxBlankRun           = 5
 	sectionBlockMaxLines           = 6
@@ -316,19 +316,19 @@ func (a *DocumentIntelligenceAnalysis) ToMap() map[string]any {
 	}
 }
 
-type aiAcceptanceStatus string
+type AIAcceptanceStatus string
 
 const (
-	aiAcceptanceStatusNotAttempted aiAcceptanceStatus = "not_attempted"
-	aiAcceptanceStatusPending      aiAcceptanceStatus = "pending"
-	aiAcceptanceStatusAccepted     aiAcceptanceStatus = "accepted"
-	aiAcceptanceStatusRejected     aiAcceptanceStatus = "rejected"
+	AIAcceptanceStatusNotAttempted AIAcceptanceStatus = "not_attempted"
+	AIAcceptanceStatusPending      AIAcceptanceStatus = "pending"
+	AIAcceptanceStatusAccepted     AIAcceptanceStatus = "accepted"
+	AIAcceptanceStatusRejected     AIAcceptanceStatus = "rejected"
 )
 
 type AIDiagnostics struct {
 	FallbackAnalysis  *DocumentIntelligenceAnalysis
 	CandidateAnalysis *DocumentIntelligenceAnalysis
-	AcceptanceStatus  aiAcceptanceStatus
+	AcceptanceStatus  AIAcceptanceStatus
 	RejectionReason   string
 	ResponseID        string
 	SubmittedAt       *int64
@@ -483,4 +483,18 @@ type InferredDocumentType struct {
 	Category       documenttype.DocumentCategory
 	Classification documenttype.DocumentClassification
 	Color          string
+}
+
+type AsyncAIExtractionCompletion struct {
+	ResponseID      string                                                 `json:"responseId"`
+	Model           string                                                 `json:"model"`
+	ExtractedAt     int64                                                  `json:"extractedAt"`
+	Status          documentaiextractionports.AIBackgroundExtractionStatus `json:"status"`
+	RawStatus       string                                                 `json:"rawStatus"`
+	ExtractResult   *documentaiextractionports.AIExtractResult             `json:"extractResult,omitempty"`
+	FailureCode     string                                                 `json:"failureCode,omitempty"`
+	FailureMessage  string                                                 `json:"failureMessage,omitempty"`
+	SubmittedAt     *int64                                                 `json:"submittedAt,omitempty"`
+	LastPolledAt    *int64                                                 `json:"lastPolledAt,omitempty"`
+	AcceptanceState string                                                 `json:"acceptanceState,omitempty"`
 }

@@ -496,7 +496,10 @@ modules:
       - triagesupport
     job:
       - capturejobs
+      - documentaiextractionjobs
+      - documentanalysis
       - documentextractionjobs
+      - documentextractionsupport
       - documentuploadjobs
       - extractionevaljobs
       - extractionshadowjobs

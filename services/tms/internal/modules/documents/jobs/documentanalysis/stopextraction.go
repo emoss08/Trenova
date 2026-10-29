@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentanalysis
 
 import (
 	"regexp"
@@ -40,11 +40,11 @@ func extractRateConfirmationStops(pages []*PageExtractionResult) []*Intelligence
 
 			if stop.AddressLine1 == "" || stop.Date == "" {
 				stop.ReviewRequired = true
-				stop.Confidence = clampConfidence(stop.Confidence - stopMissingAddressPenalty)
+				stop.Confidence = ClampConfidence(stop.Confidence - stopMissingAddressPenalty)
 			}
 			if stop.City == "" || stop.State == "" {
 				stop.ReviewRequired = true
-				stop.Confidence = clampConfidence(stop.Confidence - stopMissingCityStatePenalty)
+				stop.Confidence = ClampConfidence(stop.Confidence - stopMissingCityStatePenalty)
 			}
 
 			stops = append(stops, stop)
@@ -65,26 +65,26 @@ func detectStopRole(line string) (string, bool) {
 		case strings.HasPrefix(lower, "shipper"),
 			strings.HasPrefix(lower, "pickup"),
 			strings.HasPrefix(lower, "origin"):
-			return stopRolePickup, true
+			return StopRolePickup, true
 		case strings.HasPrefix(lower, "receiver"),
 			strings.HasPrefix(lower, "consignee"),
 			strings.HasPrefix(lower, "delivery"),
 			strings.HasPrefix(lower, "drop"),
 			strings.HasPrefix(lower, "destination"):
-			return stopRoleDelivery, true
+			return StopRoleDelivery, true
 		}
 		return "", false
 	case strings.HasPrefix(lower, "pickup"):
 		if strings.HasPrefix(lower, "pickup date") || strings.HasPrefix(lower, "pickup window") {
 			return "", false
 		}
-		return stopRolePickup, true
+		return StopRolePickup, true
 	case strings.HasPrefix(lower, "delivery"), strings.HasPrefix(lower, "drop"):
 		if strings.HasPrefix(lower, "delivery date") ||
 			strings.HasPrefix(lower, "delivery window") {
 			return "", false
 		}
-		return stopRoleDelivery, true
+		return StopRoleDelivery, true
 	default:
 		return "", false
 	}
@@ -498,7 +498,7 @@ func extractCityStateZip(line string) (city, state, postalCode string) {
 
 func baseStopConfidence(page *PageExtractionResult) float64 {
 	if page.SourceKind == documentcontent.SourceKindOCR {
-		return clampConfidence((ocrBaseStopConfidence + page.OCRConfidence) / 2)
+		return ClampConfidence((ocrBaseStopConfidence + page.OCRConfidence) / 2)
 	}
 	return nativeBaseStopConfidence
 }

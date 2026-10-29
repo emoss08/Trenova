@@ -1,13 +1,14 @@
-package documentextractionjobs
+package documentanalysis
 
 import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-func classifyDocumentWithControl(
+func ClassifyDocumentWithControl(
 	name, text string,
 	control *documentcontrol.DocumentControl,
 	features *DocumentFeatureSet,
@@ -15,7 +16,7 @@ func classifyDocumentWithControl(
 ) *ClassificationResult {
 	if control == nil || !control.EnableAutoClassification {
 		return &ClassificationResult{
-			Kind:           kindOther,
+			Kind:           KindOther,
 			Confidence:     0,
 			Signals:        []string{"auto classification disabled"},
 			ReviewRequired: true,
@@ -40,7 +41,7 @@ func classifyDocumentWithFeatures(
 	}
 
 	best := &ClassificationResult{
-		Kind:           kindOther,
+		Kind:           KindOther,
 		Confidence:     defaultLowConfidence,
 		Signals:        []string{"no strong classification signals"},
 		ReviewRequired: true,
@@ -54,25 +55,25 @@ func classifyDocumentWithFeatures(
 		}
 	}
 
-	if best.Kind == kindOther || best.Confidence < classificationMinConfidence {
+	if best.Kind == KindOther || best.Confidence < classificationMinConfidence {
 		return &ClassificationResult{
-			Kind:                kindOther,
-			Confidence:          clampConfidence(best.Confidence),
+			Kind:                KindOther,
+			Confidence:          ClampConfidence(best.Confidence),
 			Signals:             best.Signals,
 			ReviewRequired:      true,
 			Source:              "deterministic",
-			ProviderFingerprint: providerName(fingerprint),
+			ProviderFingerprint: ProviderName(fingerprint),
 			Reason:              best.Reason,
 		}
 	}
 
-	best.Confidence = clampConfidence(best.Confidence)
+	best.Confidence = ClampConfidence(best.Confidence)
 	best.ReviewRequired = best.Confidence < reviewRequiredConfidenceFloor
 	if best.Source == "" {
 		best.Source = "deterministic"
 	}
 	if best.ProviderFingerprint == "" {
-		best.ProviderFingerprint = providerName(fingerprint)
+		best.ProviderFingerprint = ProviderName(fingerprint)
 	}
 
 	return best
@@ -148,17 +149,17 @@ func scoreRateConfirmation(
 		score += 0.05
 		signals = append(signals, "stop signals")
 	}
-	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, kindRateConfirmation) {
+	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, KindRateConfirmation) {
 		score += fingerprint.Confidence * 0.2
 		signals = append(signals, fingerprint.Signals...)
 	}
 
 	return &ClassificationResult{
-		Kind:                kindRateConfirmation,
+		Kind:                KindRateConfirmation,
 		Confidence:          score,
-		Signals:             dedupeStrings(signals),
+		Signals:             sliceutils.DedupeStrings(signals),
 		Source:              "deterministic",
-		ProviderFingerprint: providerName(fingerprint),
+		ProviderFingerprint: ProviderName(fingerprint),
 		Reason:              "rate and load-confirmation evidence detected",
 	}
 }
@@ -195,17 +196,17 @@ func scoreBillOfLading(
 		score += 0.08
 		signals = append(signals, "signature signals")
 	}
-	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, kindBillOfLading) {
+	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, KindBillOfLading) {
 		score += fingerprint.Confidence * 0.2
 		signals = append(signals, fingerprint.Signals...)
 	}
 
 	return &ClassificationResult{
-		Kind:                kindBillOfLading,
+		Kind:                KindBillOfLading,
 		Confidence:          score,
-		Signals:             dedupeStrings(signals),
+		Signals:             sliceutils.DedupeStrings(signals),
 		Source:              "deterministic",
-		ProviderFingerprint: providerName(fingerprint),
+		ProviderFingerprint: ProviderName(fingerprint),
 		Reason:              "bill-of-lading shipping evidence detected",
 	}
 }
@@ -235,22 +236,22 @@ func scoreProofOfDelivery(
 		score += 0.08
 		signals = append(signals, "signature signals")
 	}
-	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, kindProofOfDelivery) {
+	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, KindProofOfDelivery) {
 		score += fingerprint.Confidence * 0.2
 		signals = append(signals, fingerprint.Signals...)
 	}
 
 	return &ClassificationResult{
-		Kind:                kindProofOfDelivery,
+		Kind:                KindProofOfDelivery,
 		Confidence:          score,
-		Signals:             dedupeStrings(signals),
+		Signals:             sliceutils.DedupeStrings(signals),
 		Source:              "deterministic",
-		ProviderFingerprint: providerName(fingerprint),
+		ProviderFingerprint: ProviderName(fingerprint),
 		Reason:              "delivery completion evidence detected",
 	}
 }
 
-func extractDocumentFeatures(
+func ExtractDocumentFeatures(
 	name string,
 	pages []*PageExtractionResult,
 	text string,
@@ -314,14 +315,14 @@ func extractDocumentFeatures(
 		features.TermsSignals = append(features.TermsSignals, "carrier contract terms")
 	}
 
-	features.TitleCandidates = dedupeStrings(features.TitleCandidates)
-	features.SectionLabels = dedupeStrings(features.SectionLabels)
-	features.PartyLabels = dedupeStrings(features.PartyLabels)
-	features.ReferenceLabels = dedupeStrings(features.ReferenceLabels)
-	features.MoneySignals = dedupeStrings(features.MoneySignals)
-	features.StopSignals = dedupeStrings(features.StopSignals)
-	features.TermsSignals = dedupeStrings(features.TermsSignals)
-	features.SignatureSignals = dedupeStrings(features.SignatureSignals)
+	features.TitleCandidates = sliceutils.DedupeStrings(features.TitleCandidates)
+	features.SectionLabels = sliceutils.DedupeStrings(features.SectionLabels)
+	features.PartyLabels = sliceutils.DedupeStrings(features.PartyLabels)
+	features.ReferenceLabels = sliceutils.DedupeStrings(features.ReferenceLabels)
+	features.MoneySignals = sliceutils.DedupeStrings(features.MoneySignals)
+	features.StopSignals = sliceutils.DedupeStrings(features.StopSignals)
+	features.TermsSignals = sliceutils.DedupeStrings(features.TermsSignals)
+	features.SignatureSignals = sliceutils.DedupeStrings(features.SignatureSignals)
 
 	return features
 }
@@ -352,7 +353,7 @@ func recordLineFeatures(features *DocumentFeatureSet, line string) {
 	}
 }
 
-func detectProviderFingerprint(
+func DetectProviderFingerprint(
 	name, text string,
 	features *DocumentFeatureSet,
 ) *ProviderFingerprint {
@@ -360,25 +361,25 @@ func detectProviderFingerprint(
 	registry := []ProviderFingerprint{
 		{
 			Provider:   "CHRobinson",
-			KindHint:   kindRateConfirmation,
+			KindHint:   KindRateConfirmation,
 			Confidence: 0.95,
 			Signals:    []string{"ch robinson fingerprint", "carrier load confirmation format"},
 		},
 		{
 			Provider:   "TQL",
-			KindHint:   kindRateConfirmation,
+			KindHint:   KindRateConfirmation,
 			Confidence: 0.9,
 			Signals:    []string{"tql fingerprint"},
 		},
 		{
 			Provider:   "Echo",
-			KindHint:   kindRateConfirmation,
+			KindHint:   KindRateConfirmation,
 			Confidence: 0.9,
 			Signals:    []string{"echo fingerprint"},
 		},
 		{
 			Provider:   "UberFreight",
-			KindHint:   kindRateConfirmation,
+			KindHint:   KindRateConfirmation,
 			Confidence: 0.9,
 			Signals:    []string{"uber freight fingerprint"},
 		},
@@ -416,7 +417,7 @@ func detectProviderFingerprint(
 		stringutils.ContainsAny(corpus, "load confirmation", "carrier load") {
 		return &ProviderFingerprint{
 			Provider:   "GenericBrokerLoadConfirmation",
-			KindHint:   kindRateConfirmation,
+			KindHint:   KindRateConfirmation,
 			Confidence: 0.7,
 			Signals:    []string{"generic broker load confirmation fingerprint"},
 		}
@@ -425,7 +426,7 @@ func detectProviderFingerprint(
 	return nil
 }
 
-func providerName(fingerprint *ProviderFingerprint) string {
+func ProviderName(fingerprint *ProviderFingerprint) string {
 	if fingerprint == nil {
 		return ""
 	}
@@ -463,7 +464,7 @@ func looksLikeSectionLabel(line string) bool {
 	)
 }
 
-func buildStructuredData(
+func BuildStructuredData(
 	intelligence *DocumentIntelligenceAnalysis,
 	aiDiagnostics *AIDiagnostics,
 ) map[string]any {
@@ -474,7 +475,7 @@ func buildStructuredData(
 	}
 }
 
-func isPlainTextType(contentType, ext string) bool {
+func IsPlainTextType(contentType, ext string) bool {
 	return strings.HasPrefix(contentType, "text/") ||
 		ext == ".txt" ||
 		ext == ".csv" ||
@@ -483,6 +484,6 @@ func isPlainTextType(contentType, ext string) bool {
 		ext == ".html"
 }
 
-func isPDFType(contentType, ext string) bool {
+func IsPDFType(contentType, ext string) bool {
 	return contentType == "application/pdf" || ext == ".pdf"
 }

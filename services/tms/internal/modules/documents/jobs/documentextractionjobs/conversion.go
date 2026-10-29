@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -70,10 +71,10 @@ const (
 )
 
 type PlanDocumentExtractionResult struct {
-	Route                    ExtractionRoute                    `json:"route"`
-	OCR                      bool                               `json:"ocr"`
-	ConversionTimeoutSeconds int64                              `json:"conversionTimeoutSeconds"`
-	Result                   *ProcessDocumentIntelligenceResult `json:"result,omitempty"`
+	Route                    ExtractionRoute                                     `json:"route"`
+	OCR                      bool                                                `json:"ocr"`
+	ConversionTimeoutSeconds int64                                               `json:"conversionTimeoutSeconds"`
+	Result                   *documentanalysis.ProcessDocumentIntelligenceResult `json:"result,omitempty"`
 }
 
 type ConvertDocumentInput struct {
@@ -160,11 +161,11 @@ func conversionFormatOf(contentType, fileName string) conversionFormat {
 	}
 
 	switch {
-	case isPDFType(mediaType, ext):
+	case documentanalysis.IsPDFType(mediaType, ext):
 		return formatPDF
 	case mediaType == "message/rfc822" || ext == ".eml":
 		return formatEmail
-	case isPlainTextType(mediaType, ext):
+	case documentanalysis.IsPlainTextType(mediaType, ext):
 		return formatPlainText
 	}
 	if _, ok := convertibleImageTypes[mediaType]; ok {
@@ -200,7 +201,7 @@ func (a *Activities) PlanDocumentExtractionActivity(
 		return stoppedPlan(ExtractionRouteSkip, doc), nil
 	}
 
-	control, err := a.getDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
+	control, err := a.support.GetDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +308,7 @@ func unsupportedFormatMessage(format conversionFormat, fileType string) string {
 func stoppedPlan(route ExtractionRoute, doc *document.Document) *PlanDocumentExtractionResult {
 	return &PlanDocumentExtractionResult{
 		Route: route,
-		Result: &ProcessDocumentIntelligenceResult{
+		Result: &documentanalysis.ProcessDocumentIntelligenceResult{
 			DocumentID: doc.ID,
 			Status:     string(doc.ContentStatus),
 			Kind:       doc.DetectedKind,
@@ -350,25 +351,28 @@ func (a *Activities) markExtractionUnavailable(
 	why *extractionUnavailable,
 ) error {
 	now := timeutils.NowUnix()
-	analysis := &DocumentIntelligenceAnalysis{
+	analysis := &documentanalysis.DocumentIntelligenceAnalysis{
 		Kind:          "",
-		ReviewStatus:  reviewStatusUnavailable,
+		ReviewStatus:  documentanalysis.ReviewStatusUnavailable,
 		MissingFields: []string{},
 		Signals:       []string{},
-		Conflicts:     []*ReviewConflict{},
-		Fields:        make(map[string]*ReviewField),
-		Stops:         []*IntelligenceStop{},
+		Conflicts:     []*documentanalysis.ReviewConflict{},
+		Fields:        make(map[string]*documentanalysis.ReviewField),
+		Stops:         []*documentanalysis.IntelligenceStop{},
 	}
 	content := &documentcontent.Content{
 		DocumentID:     doc.ID,
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,
 		Status:         documentcontent.StatusIndexed,
-		StructuredData: buildStructuredData(analysis, &AIDiagnostics{
-			FallbackAnalysis: analysis,
-			AcceptanceStatus: aiAcceptanceStatusNotAttempted,
-			RejectionReason:  why.reason,
-		}),
+		StructuredData: documentanalysis.BuildStructuredData(
+			analysis,
+			&documentanalysis.AIDiagnostics{
+				FallbackAnalysis: analysis,
+				AcceptanceStatus: documentanalysis.AIAcceptanceStatusNotAttempted,
+				RejectionReason:  why.reason,
+			},
+		),
 		FailureCode:     why.code.String(),
 		FailureMessage:  why.message,
 		LastExtractedAt: &now,
@@ -402,7 +406,7 @@ func (a *Activities) markExtractionUnavailable(
 	}
 
 	a.metrics.Document.RecordExtraction("skipped", "", why.reason)
-	a.syncSearchProjection(ctx, doc, "")
+	a.support.SyncSearchProjection(ctx, doc, "")
 	inboundmessageports.AnnounceDocumentAttached(ctx, a.triage, doc)
 
 	return nil
@@ -580,7 +584,7 @@ func (a *Activities) readPlainText(
 }
 
 type convertedFile struct {
-	pages            []*PageExtractionResult
+	pages            []*documentanalysis.PageExtractionResult
 	pageCount        int
 	converterVersion string
 	raw              []byte
@@ -690,7 +694,7 @@ func (a *Activities) plainTextConversion(data []byte) *convertedFile {
 	text := stringutils.TruncateAndTrim(string(bounded), maxChars)
 
 	return &convertedFile{
-		pages: []*PageExtractionResult{{
+		pages: []*documentanalysis.PageExtractionResult{{
 			PageNumber: 1,
 			SourceKind: documentcontent.SourceKindNative,
 			Text:       text,
@@ -838,9 +842,9 @@ func recordConversionHeartbeat(ctx context.Context, taskID kernelports.Conversio
 func (a *Activities) extractionPages(
 	converted []kernelports.ConvertedPage,
 	nativePages map[int]bool,
-) []*PageExtractionResult {
+) []*documentanalysis.PageExtractionResult {
 	maxChars := a.cfg.GetMaxExtractedChars()
-	pages := make([]*PageExtractionResult, 0, len(converted))
+	pages := make([]*documentanalysis.PageExtractionResult, 0, len(converted))
 	for i := range converted {
 		page := &converted[i]
 		native := page.Native
@@ -849,7 +853,7 @@ func (a *Activities) extractionPages(
 		}
 		kind := sourceKindOf(page.OCR, native)
 
-		result := &PageExtractionResult{
+		result := &documentanalysis.PageExtractionResult{
 			PageNumber: page.Number,
 			SourceKind: kind,
 			Text:       stringutils.TruncateAndTrim(page.Text, maxChars),
@@ -905,7 +909,7 @@ func (a *Activities) storeConversion(
 	content *documentcontent.Content,
 	converted *convertedFile,
 ) error {
-	extracted := finalizeExtraction(converted.pages, a.cfg.GetMaxExtractedChars())
+	extracted := documentanalysis.FinalizeExtraction(converted.pages, a.cfg.GetMaxExtractedChars())
 
 	rawKey := ""
 	if len(converted.raw) > 0 {
@@ -928,7 +932,11 @@ func (a *Activities) storeConversion(
 		return err
 	}
 
-	return a.contentRepo.ReplacePages(ctx, content, buildContentPages(content, extracted.Pages))
+	return a.contentRepo.ReplacePages(
+		ctx,
+		content,
+		documentanalysis.BuildContentPages(content, extracted.Pages),
+	)
 }
 
 func (a *Activities) storeRawConversion(
@@ -973,7 +981,7 @@ func (a *Activities) storeRawConversion(
 func (a *Activities) AnalyzeConvertedDocumentActivity(
 	ctx context.Context,
 	input *AnalyzeConvertedDocumentInput,
-) (*ProcessDocumentIntelligenceResult, error) {
+) (*documentanalysis.ProcessDocumentIntelligenceResult, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  input.OrganizationID,
 		BuID:   input.BusinessUnitID,
@@ -984,7 +992,7 @@ func (a *Activities) AnalyzeConvertedDocumentActivity(
 	if err != nil {
 		return nil, err
 	}
-	control, err := a.getDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
+	control, err := a.support.GetDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
 	if err != nil {
 		return nil, err
 	}
@@ -1011,7 +1019,7 @@ func (a *Activities) AnalyzeConvertedDocumentActivity(
 	if content.LastExtractedAt != nil {
 		now = *content.LastExtractedAt
 	}
-	if err = a.persistIndexedContentAndAssociate(ctx, &PersistIndexedContentPayload{
+	if err = a.persistIndexedContentAndAssociate(ctx, &documentanalysis.PersistIndexedContentPayload{
 		Document:       doc,
 		TenantInfo:     tenantInfo,
 		Control:        control,
@@ -1025,7 +1033,7 @@ func (a *Activities) AnalyzeConvertedDocumentActivity(
 		return nil, err
 	}
 
-	if err = a.finalizeProcessDocumentIntelligence(ctx, &FinalizeIntelligenceParams{
+	if err = a.finalizeProcessDocumentIntelligence(ctx, &documentanalysis.FinalizeIntelligenceParams{
 		Document:       doc,
 		Payload:        payload,
 		Content:        content,
@@ -1042,7 +1050,7 @@ func (a *Activities) AnalyzeConvertedDocumentActivity(
 		return nil, err
 	}
 
-	return &ProcessDocumentIntelligenceResult{
+	return &documentanalysis.ProcessDocumentIntelligenceResult{
 		DocumentID: doc.ID,
 		Status:     string(doc.ContentStatus),
 		Kind:       outcome.Classification.Kind,
@@ -1052,10 +1060,10 @@ func (a *Activities) AnalyzeConvertedDocumentActivity(
 func storedExtraction(
 	content *documentcontent.Content,
 	pages []*documentcontent.Page,
-) *ExtractionResult {
-	results := make([]*PageExtractionResult, 0, len(pages))
+) *documentanalysis.ExtractionResult {
+	results := make([]*documentanalysis.PageExtractionResult, 0, len(pages))
 	for _, page := range pages {
-		results = append(results, &PageExtractionResult{
+		results = append(results, &documentanalysis.PageExtractionResult{
 			PageNumber:           page.PageNumber,
 			SourceKind:           page.SourceKind,
 			Text:                 page.ExtractedText,
@@ -1068,7 +1076,7 @@ func storedExtraction(
 		})
 	}
 
-	return &ExtractionResult{
+	return &documentanalysis.ExtractionResult{
 		Text:       content.ContentText,
 		PageCount:  content.PageCount,
 		SourceKind: content.SourceKind,
@@ -1081,19 +1089,27 @@ func (a *Activities) analyzeExtraction(
 	payload *documentintelligencecontract.ProcessDocumentIntelligencePayload,
 	doc *document.Document,
 	control *documentcontrol.DocumentControl,
-	extracted *ExtractionResult,
-) (*ExtractionPipelineOutcome, error) {
-	features := extractDocumentFeatures(doc.OriginalName, extracted.Pages, extracted.Text)
-	fingerprint := detectProviderFingerprint(doc.OriginalName, extracted.Text, features)
-	classification := classifyDocumentWithControl(
+	extracted *documentanalysis.ExtractionResult,
+) (*documentanalysis.ExtractionPipelineOutcome, error) {
+	features := documentanalysis.ExtractDocumentFeatures(
+		doc.OriginalName,
+		extracted.Pages,
+		extracted.Text,
+	)
+	fingerprint := documentanalysis.DetectProviderFingerprint(
+		doc.OriginalName,
+		extracted.Text,
+		features,
+	)
+	classification := documentanalysis.ClassifyDocumentWithControl(
 		doc.OriginalName,
 		extracted.Text,
 		control,
 		features,
 		fingerprint,
 	)
-	intelligence := analyzeDocument(classification, extracted)
-	result, err := a.enrichWithAI(ctx, &EnrichmentPayload{
+	intelligence := documentanalysis.AnalyzeDocument(classification, extracted)
+	result, err := a.enrichWithAI(ctx, &documentanalysis.EnrichmentPayload{
 		Payload:        payload,
 		Document:       doc,
 		Control:        control,
@@ -1107,7 +1123,7 @@ func (a *Activities) analyzeExtraction(
 		return nil, err
 	}
 
-	return &ExtractionPipelineOutcome{
+	return &documentanalysis.ExtractionPipelineOutcome{
 		Extracted:      extracted,
 		Classification: classification,
 		Intelligence:   intelligence,
@@ -1119,10 +1135,10 @@ func (a *Activities) analyzeExtraction(
 
 func (a *Activities) ReconcileDocumentExtractionActivity(
 	ctx context.Context,
-	payload *ReconcileDocumentIntelligencePayload,
-) (*ReconcileDocumentIntelligenceResult, error) {
+	payload *documentanalysis.ReconcileDocumentIntelligencePayload,
+) (*documentanalysis.ReconcileDocumentIntelligenceResult, error) {
 	if !a.workflowStarter.Enabled() {
-		return &ReconcileDocumentIntelligenceResult{}, nil
+		return &documentanalysis.ReconcileDocumentIntelligenceResult{}, nil
 	}
 
 	olderThan := time.Now().Add(-time.Duration(payload.OlderThanSeconds) * time.Second).Unix()
@@ -1141,7 +1157,7 @@ func (a *Activities) ReconcileDocumentExtractionActivity(
 		return nil, err
 	}
 
-	result := &ReconcileDocumentIntelligenceResult{}
+	result := &documentanalysis.ReconcileDocumentIntelligenceResult{}
 	for _, doc := range docs {
 		startErr := documentextractioncontract.Start(
 			ctx,

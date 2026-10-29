@@ -271,7 +271,7 @@ runs and `trenova ai fine-tune score` alike:
 | stop `sequence` | Position in the reply, from 1 | Ordering and scoring use array order, never the model's number |
 | field `conflict` | The field's key appears in `conflicts` | The UI already treated either signal as a conflict |
 | field `alternativeValues` | Not produced | It was dropped before storage; the UI's alternatives come from `conflicts[].values` |
-| field `evidenceExcerpt`, and `pageNumber` when the model left it out | Found in the page text by `documentextractionjobs.withFieldEvidence` when a finished extraction is applied (see below) | Reviewers see a quote of the document itself rather than the model's retelling of it |
+| field `evidenceExcerpt`, and `pageNumber` when the model left it out | Found in the page text by `documentaiextractionjobs.withFieldEvidence` when a finished extraction is applied (see below) | Reviewers see a quote of the document itself rather than the model's retelling of it |
 
 Conflict keys are also run through `aicorrection.CanonicalFieldKey`, so a conflict on
 `pickupwindow` now lines up with the `pickupWindow` field it is about.

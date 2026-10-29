@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentanalysis
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-func buildContentPages(
+func BuildContentPages(
 	content *documentcontent.Content,
 	pages []*PageExtractionResult,
 ) []*documentcontent.Page {
@@ -33,7 +33,7 @@ func buildContentPages(
 	return items
 }
 
-func finalizeExtraction(pages []*PageExtractionResult, maxExtractedChars int) *ExtractionResult {
+func FinalizeExtraction(pages []*PageExtractionResult, maxExtractedChars int) *ExtractionResult {
 	textParts := make([]string, 0, len(pages))
 	pageCount := len(pages)
 	nativeCount := 0
@@ -75,7 +75,7 @@ func finalizeExtraction(pages []*PageExtractionResult, maxExtractedChars int) *E
 			if pages[idx].Metadata == nil {
 				pages[idx].Metadata = map[string]any{}
 			}
-			pages[idx].Metadata["documentAverageConfidence"] = clampConfidence(
+			pages[idx].Metadata["documentAverageConfidence"] = ClampConfidence(
 				weightedConfidence / weightedPages,
 			)
 		}

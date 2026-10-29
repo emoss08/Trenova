@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentanalysis
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-func analyzeDocument(
+func AnalyzeDocument(
 	classification *ClassificationResult,
 	extracted *ExtractionResult,
 ) *DocumentIntelligenceAnalysis {
@@ -18,7 +18,7 @@ func analyzeDocument(
 	text := extracted.Text
 	analysis := &DocumentIntelligenceAnalysis{
 		Kind:                 classification.Kind,
-		ReviewStatus:         reviewStatusNeedsReview,
+		ReviewStatus:         ReviewStatusNeedsReview,
 		MissingFields:        []string{},
 		Signals:              append([]string{}, classification.Signals...),
 		ClassifierSource:     classification.Source,
@@ -36,13 +36,13 @@ func analyzeDocument(
 	required := requiredFieldsForKind(classification.Kind)
 
 	switch classification.Kind {
-	case kindRateConfirmation:
+	case KindRateConfirmation:
 		analyzeRateConfirmation(analysis, extracted)
-	case kindBillOfLading:
+	case KindBillOfLading:
 		analyzeBillOfLading(analysis, extracted)
-	case kindProofOfDelivery:
+	case KindProofOfDelivery:
 		analyzeProofOfDelivery(analysis, extracted)
-	case kindInvoice:
+	case KindInvoice:
 		analyzeInvoice(analysis, extracted)
 	}
 
@@ -64,21 +64,21 @@ func finalizeAnalysis(
 		totalConfidence += field.Confidence
 		fieldCount++
 	}
-	analysis.OverallConfidence = clampConfidence(totalConfidence / fieldCount)
+	analysis.OverallConfidence = ClampConfidence(totalConfidence / fieldCount)
 
 	for _, field := range required {
 		if _, ok := analysis.Fields[field.key]; !ok {
 			analysis.MissingFields = append(analysis.MissingFields, field.label)
 		}
 	}
-	if classification.Kind == kindRateConfirmation {
-		if !hasStopRole(analysis.Stops, stopRolePickup) {
+	if classification.Kind == KindRateConfirmation {
+		if !hasStopRole(analysis.Stops, StopRolePickup) {
 			analysis.MissingFields = sliceutils.AppendIfMissing(
 				analysis.MissingFields,
 				"Pickup Stop",
 			)
 		}
-		if !hasStopRole(analysis.Stops, stopRoleDelivery) {
+		if !hasStopRole(analysis.Stops, StopRoleDelivery) {
 			analysis.MissingFields = sliceutils.AppendIfMissing(
 				analysis.MissingFields,
 				"Delivery Stop",
@@ -87,7 +87,7 @@ func finalizeAnalysis(
 	}
 
 	if len(analysis.Fields) == 0 {
-		analysis.ReviewStatus = reviewStatusUnavailable
+		analysis.ReviewStatus = ReviewStatusUnavailable
 		return
 	}
 
@@ -100,34 +100,34 @@ func resolveReviewStatus(
 ) string {
 	noConflicts := len(analysis.Conflicts) == 0
 	noMissing := len(analysis.MissingFields) == 0
-	highConfidence := analysis.OverallConfidence >= reviewReadyConfidenceThreshold
+	highConfidence := analysis.OverallConfidence >= ReviewReadyConfidenceThreshold
 	baseReady := highConfidence && noMissing && noConflicts
 
 	switch kind {
-	case kindRateConfirmation:
+	case KindRateConfirmation:
 		if baseReady &&
-			hasStopRole(analysis.Stops, stopRolePickup) &&
-			hasStopRole(analysis.Stops, stopRoleDelivery) &&
+			hasStopRole(analysis.Stops, StopRolePickup) &&
+			hasStopRole(analysis.Stops, StopRoleDelivery) &&
 			!hasReviewRequiredStop(analysis.Stops) {
-			return reviewStatusReady
+			return ReviewStatusReady
 		}
-	case kindBillOfLading:
+	case KindBillOfLading:
 		if baseReady {
-			return reviewStatusReady
+			return ReviewStatusReady
 		}
-	case kindProofOfDelivery:
+	case KindProofOfDelivery:
 		if baseReady &&
 			!analysis.Fields["deliveryWindow"].ReviewRequired &&
 			!analysis.Fields["signature"].ReviewRequired {
-			return reviewStatusReady
+			return ReviewStatusReady
 		}
 	default:
 		if highConfidence && len(analysis.MissingFields) <= 1 && noConflicts {
-			return reviewStatusReady
+			return ReviewStatusReady
 		}
 	}
 
-	return reviewStatusNeedsReview
+	return ReviewStatusNeedsReview
 }
 
 func analyzeRateConfirmation(analysis *DocumentIntelligenceAnalysis, extracted *ExtractionResult) {
@@ -145,22 +145,22 @@ func analyzeRateConfirmation(analysis *DocumentIntelligenceAnalysis, extracted *
 	addStopPartyField(&AddStopFieldParams{
 		Fields: analysis.Fields, Signals: &analysis.Signals,
 		Key: "shipper", Label: "Shipper",
-		Stop: firstStopByRole(analysis.Stops, stopRolePickup), Confidence: 0.85,
+		Stop: firstStopByRole(analysis.Stops, StopRolePickup), Confidence: 0.85,
 	})
 	addStopPartyField(&AddStopFieldParams{
 		Fields: analysis.Fields, Signals: &analysis.Signals,
 		Key: "consignee", Label: "Consignee",
-		Stop: firstStopByRole(analysis.Stops, stopRoleDelivery), Confidence: 0.85,
+		Stop: firstStopByRole(analysis.Stops, StopRoleDelivery), Confidence: 0.85,
 	})
 	addStopTimingField(&AddStopFieldParams{
 		Fields: analysis.Fields, Signals: &analysis.Signals,
 		Key: "pickupWindow", Label: "Pickup Window",
-		Stop: firstStopByRole(analysis.Stops, stopRolePickup), Confidence: 0.88,
+		Stop: firstStopByRole(analysis.Stops, StopRolePickup), Confidence: 0.88,
 	})
 	addStopTimingField(&AddStopFieldParams{
 		Fields: analysis.Fields, Signals: &analysis.Signals,
 		Key: "deliveryWindow", Label: "Delivery Window",
-		Stop: firstStopByRole(analysis.Stops, stopRoleDelivery), Confidence: 0.88,
+		Stop: firstStopByRole(analysis.Stops, StopRoleDelivery), Confidence: 0.88,
 	})
 	addFieldFromPages(&RegexValueFieldParams{
 		Fields: analysis.Fields, Signals: &analysis.Signals,
@@ -324,7 +324,7 @@ func requiredFieldsForKind(kind string) []struct {
 	label string
 } {
 	switch kind {
-	case kindRateConfirmation:
+	case KindRateConfirmation:
 		return []struct {
 			key   string
 			label string
@@ -335,7 +335,7 @@ func requiredFieldsForKind(kind string) []struct {
 			{key: "deliveryWindow", label: "Delivery Window"},
 			{key: "rate", label: "Rate"},
 		}
-	case kindBillOfLading:
+	case KindBillOfLading:
 		return []struct {
 			key   string
 			label string
@@ -345,7 +345,7 @@ func requiredFieldsForKind(kind string) []struct {
 			{key: "commodity", label: "Commodity"},
 			{key: "referenceNumber", label: "Reference Number"},
 		}
-	case kindProofOfDelivery:
+	case KindProofOfDelivery:
 		return []struct {
 			key   string
 			label string
@@ -354,7 +354,7 @@ func requiredFieldsForKind(kind string) []struct {
 			{key: "deliveryWindow", label: "Delivery"},
 			{key: "signature", label: "Signature"},
 		}
-	case kindInvoice:
+	case KindInvoice:
 		return []struct {
 			key   string
 			label string

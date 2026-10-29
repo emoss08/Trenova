@@ -86,7 +86,7 @@ inspection, thumbnails, the page viewer, legacy extraction and the docling pre-c
   encodes WebP. Caching is ETag only, and the Desk prefetches the next page.
 - **Legacy OCR churns codecs and cannot run in the shipped image.** A scanned page is rendered,
   PNG-encoded, PNG-decoded, passed through four `disintegration/imaging` filters, thresholded by a
-  per-pixel `img.At()` loop (`documentextractionjobs/contentbuilding.go:103-125`), PNG-encoded again,
+  per-pixel `img.At()` loop (`documentanalysis/contentbuilding.go:103-125`), PNG-encoded again,
   written to a temp file, and handed to a `tesseract` subprocess (`activities.go:912-1029`). The TMS
   image does not include tesseract (`docs/self-hosting/README.md:398`).
 - **QR decoding runs on full pages.** `gozxing` with `TRY_HARDER` over a 150 DPI page builds a full

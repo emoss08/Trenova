@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentaiextractionjobs
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -50,7 +51,7 @@ func TestRolloutPreferenceAsksTheRouterForTheExtraction(t *testing.T) {
 	candidate := pulid.MustNew("aip_")
 	router := &fakeRolloutRouter{preferred: candidate}
 	activities := &Activities{logger: zap.NewNop(), rollout: router}
-	payload := &ProcessDocumentAIExtractionPayload{
+	payload := &documentanalysis.ProcessDocumentAIExtractionPayload{
 		DocumentID:  pulid.MustNew("doc_"),
 		ExtractedAt: 1_800_000_000,
 	}
@@ -66,7 +67,9 @@ func TestRolloutPreferenceAsksTheRouterForTheExtraction(t *testing.T) {
 func TestRolloutPreferenceNeverBlocksProduction(t *testing.T) {
 	t.Parallel()
 
-	payload := &ProcessDocumentAIExtractionPayload{DocumentID: pulid.MustNew("doc_")}
+	payload := &documentanalysis.ProcessDocumentAIExtractionPayload{
+		DocumentID: pulid.MustNew("doc_"),
+	}
 
 	withoutRouter := &Activities{logger: zap.NewNop()}
 	assert.True(t, withoutRouter.rolloutPreference(t.Context(), rolloutTenant(), payload).IsNil())
@@ -115,13 +118,17 @@ func TestSettleRolloutRecordsWhoServedTheExtraction(t *testing.T) {
 func TestRolloutOutcomeFollowsTheAppliedAnswer(t *testing.T) {
 	t.Parallel()
 
-	completed := &AsyncAIExtractionCompletion{Status: documentaiextractionports.AIBackgroundExtractionStatusCompleted}
-	failed := &AsyncAIExtractionCompletion{Status: documentaiextractionports.AIBackgroundExtractionStatusFailed}
+	completed := &documentanalysis.AsyncAIExtractionCompletion{
+		Status: documentaiextractionports.AIBackgroundExtractionStatusCompleted,
+	}
+	failed := &documentanalysis.AsyncAIExtractionCompletion{
+		Status: documentaiextractionports.AIBackgroundExtractionStatusFailed,
+	}
 
 	assert.Equal(t, extractionrollout.OutcomeAccepted,
-		rolloutOutcome(completed, aiAcceptanceStatusAccepted))
+		rolloutOutcome(completed, documentanalysis.AIAcceptanceStatusAccepted))
 	assert.Equal(t, extractionrollout.OutcomeRejected,
-		rolloutOutcome(completed, aiAcceptanceStatusRejected))
+		rolloutOutcome(completed, documentanalysis.AIAcceptanceStatusRejected))
 	assert.Equal(t, extractionrollout.OutcomeFailed,
-		rolloutOutcome(failed, aiAcceptanceStatusRejected))
+		rolloutOutcome(failed, documentanalysis.AIAcceptanceStatusRejected))
 }

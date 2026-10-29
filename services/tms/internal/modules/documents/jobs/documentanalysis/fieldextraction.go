@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentanalysis
 
 import (
 	"fmt"
@@ -144,7 +144,7 @@ func addStopField(params *AddStopFieldParams, value string) {
 	params.Fields[params.Key] = &ReviewField{
 		Label:           params.Label,
 		Value:           value,
-		Confidence:      clampConfidence((params.Confidence + params.Stop.Confidence) / 2),
+		Confidence:      ClampConfidence((params.Confidence + params.Stop.Confidence) / 2),
 		Excerpt:         params.Stop.EvidenceExcerpt,
 		EvidenceExcerpt: params.Stop.EvidenceExcerpt,
 		PageNumber:      params.Stop.PageNumber,
@@ -406,7 +406,7 @@ func collectFieldConflicts(fields map[string]*ReviewField) []*ReviewConflict {
 func collectStopConflicts(stops []*IntelligenceStop) []*ReviewConflict {
 	conflicts := make([]*ReviewConflict, 0)
 
-	for _, role := range []string{stopRolePickup, stopRoleDelivery} {
+	for _, role := range []string{StopRolePickup, StopRoleDelivery} {
 		addresses := make(map[string][]*IntelligenceStop)
 		dates := make(map[string][]*IntelligenceStop)
 		for _, stop := range stops {
@@ -477,18 +477,18 @@ func hasConflictingMatches(re *regexp.Regexp, selected string, pages []*PageExtr
 
 func pageAdjustedConfidence(base float64, pageNumber int, pages []*PageExtractionResult) float64 {
 	if pageNumber <= 0 {
-		return clampConfidence(base)
+		return ClampConfidence(base)
 	}
 	for _, page := range pages {
 		if page.PageNumber != pageNumber {
 			continue
 		}
 		if page.SourceKind == documentcontent.SourceKindOCR {
-			return clampConfidence((base + page.OCRConfidence) / 2)
+			return ClampConfidence((base + page.OCRConfidence) / 2)
 		}
-		return clampConfidence((base + maxConfidence) / 2)
+		return ClampConfidence((base + maxConfidence) / 2)
 	}
-	return clampConfidence(base)
+	return ClampConfidence(base)
 }
 
 func firstRegexValue(re *regexp.Regexp, text string) string {
@@ -597,9 +597,9 @@ func roleLabel(role string) string {
 		return "Unknown"
 	}
 	switch role {
-	case stopRolePickup:
+	case StopRolePickup:
 		return "Pickup"
-	case stopRoleDelivery:
+	case StopRoleDelivery:
 		return "Delivery"
 	default:
 		return strings.ToUpper(role[:1]) + role[1:]

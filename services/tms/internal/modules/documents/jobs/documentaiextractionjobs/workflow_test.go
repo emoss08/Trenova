@@ -1,10 +1,11 @@
-package documentextractionjobs
+package documentaiextractionjobs
 
 import (
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -15,8 +16,8 @@ import (
 	"go.temporal.io/sdk/testsuite"
 )
 
-func extractionPayload() *ProcessDocumentAIExtractionPayload {
-	return &ProcessDocumentAIExtractionPayload{
+func extractionPayload() *documentanalysis.ProcessDocumentAIExtractionPayload {
+	return &documentanalysis.ProcessDocumentAIExtractionPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -44,31 +45,33 @@ func TestProcessDocumentAIExtractionWorkflow_PollsOnItsOwnTimerUntilAnswered(t *
 	env := extractionEnv(t)
 	var a *Activities
 	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
-		Return(&AIExtractionProgress{}, nil).
+		Return(&documentanalysis.AIExtractionProgress{}, nil).
 		Once()
 
 	polls := 0
-	answer := &AsyncAIExtractionCompletion{
+	answer := &documentanalysis.AsyncAIExtractionCompletion{
 		ResponseID: "resp_1",
 		Status:     documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 	}
 	env.OnActivity(a.PollDocumentAIExtractionActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, input *PollDocumentAIExtractionInput) (*AIExtractionProgress, error) {
+		Return(func(_ context.Context, input *documentanalysis.PollDocumentAIExtractionInput) (*documentanalysis.AIExtractionProgress, error) {
 			polls++
 			assert.False(t, input.GiveUp, "the answer came long before the deadline")
 			if polls < 3 {
-				return &AIExtractionProgress{}, nil
+				return &documentanalysis.AIExtractionProgress{}, nil
 			}
 
-			return &AIExtractionProgress{Completion: answer}, nil
+			return &documentanalysis.AIExtractionProgress{Completion: answer}, nil
 		})
 
-	var applied *AsyncAIExtractionCompletion
+	var applied *documentanalysis.AsyncAIExtractionCompletion
 	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, payload *ApplyDocumentAIExtractionPayload) (*ProcessDocumentAIExtractionResult, error) {
+		Return(func(_ context.Context, payload *ApplyDocumentAIExtractionPayload) (*documentanalysis.ProcessDocumentAIExtractionResult, error) {
 			applied = payload.Completion
 
-			return &ProcessDocumentAIExtractionResult{DocumentID: payload.DocumentID}, nil
+			return &documentanalysis.ProcessDocumentAIExtractionResult{
+				DocumentID: payload.DocumentID,
+			}, nil
 		}).
 		Once()
 
@@ -89,13 +92,13 @@ func TestProcessDocumentAIExtractionWorkflow_AppliesAnInlineAnswerAtOnce(t *test
 	env := extractionEnv(t)
 	var a *Activities
 	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
-		Return(&AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
+		Return(&documentanalysis.AIExtractionProgress{Completion: &documentanalysis.AsyncAIExtractionCompletion{
 			RawStatus: "inline",
 			Status:    documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 		}}, nil).
 		Once()
 	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
-		Return(&ProcessDocumentAIExtractionResult{}, nil).
+		Return(&documentanalysis.ProcessDocumentAIExtractionResult{}, nil).
 		Once()
 
 	env.ExecuteWorkflow(ProcessDocumentAIExtractionWorkflow, extractionPayload())
@@ -112,20 +115,22 @@ func TestProcessDocumentAIExtractionWorkflow_ConsidersAShadowAfterApplying(t *te
 	var a *Activities
 	order := make([]string, 0, 2)
 	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
-		Return(&AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
+		Return(&documentanalysis.AIExtractionProgress{Completion: &documentanalysis.AsyncAIExtractionCompletion{
 			Status: documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 		}}, nil).
 		Once()
 	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *ApplyDocumentAIExtractionPayload) (*ProcessDocumentAIExtractionResult, error) {
+		Return(func(context.Context, *ApplyDocumentAIExtractionPayload) (*documentanalysis.ProcessDocumentAIExtractionResult, error) {
 			order = append(order, "apply")
-			return &ProcessDocumentAIExtractionResult{AcceptanceState: "accepted"}, nil
+			return &documentanalysis.ProcessDocumentAIExtractionResult{
+				AcceptanceState: "accepted",
+			}, nil
 		}).
 		Once()
 
-	var considered *ConsiderDocumentAIExtractionShadowInput
+	var considered *documentanalysis.ConsiderDocumentAIExtractionShadowInput
 	env.OnActivity(a.ConsiderDocumentAIExtractionShadowActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, input *ConsiderDocumentAIExtractionShadowInput) (*extractionshadowports.ExtractionShadowDecision, error) {
+		Return(func(_ context.Context, input *documentanalysis.ConsiderDocumentAIExtractionShadowInput) (*extractionshadowports.ExtractionShadowDecision, error) {
 			order = append(order, "shadow")
 			considered = input
 			return &extractionshadowports.ExtractionShadowDecision{Sampled: true}, nil
@@ -140,7 +145,7 @@ func TestProcessDocumentAIExtractionWorkflow_ConsidersAShadowAfterApplying(t *te
 	assert.Equal(t, payload.DocumentID, considered.DocumentID)
 	assert.Equal(t, payload.ExtractedAt, considered.ExtractedAt)
 	assert.Equal(t, payload.OrganizationID, considered.OrganizationID)
-	var result ProcessDocumentAIExtractionResult
+	var result documentanalysis.ProcessDocumentAIExtractionResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.Equal(t, "accepted", result.AcceptanceState)
 	env.AssertExpectations(t)
@@ -152,12 +157,12 @@ func TestProcessDocumentAIExtractionWorkflow_AShadowThatFailsLeavesProductionAlo
 	env := extractionEnv(t)
 	var a *Activities
 	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
-		Return(&AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
+		Return(&documentanalysis.AIExtractionProgress{Completion: &documentanalysis.AsyncAIExtractionCompletion{
 			Status: documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 		}}, nil).
 		Once()
 	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
-		Return(&ProcessDocumentAIExtractionResult{AcceptanceState: "accepted"}, nil).
+		Return(&documentanalysis.ProcessDocumentAIExtractionResult{AcceptanceState: "accepted"}, nil).
 		Once()
 	env.OnActivity(a.ConsiderDocumentAIExtractionShadowActivity, mock.Anything, mock.Anything).
 		Return(nil, errors.New("database unavailable")).
@@ -167,7 +172,7 @@ func TestProcessDocumentAIExtractionWorkflow_AShadowThatFailsLeavesProductionAlo
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	var result ProcessDocumentAIExtractionResult
+	var result documentanalysis.ProcessDocumentAIExtractionResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.Equal(t, "accepted", result.AcceptanceState)
 	env.AssertExpectations(t)
@@ -181,24 +186,26 @@ func TestProcessDocumentAIExtractionWorkflow_GivesUpAtTheLongestWait(t *testing.
 	env := extractionEnv(t)
 	var a *Activities
 	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
-		Return(&AIExtractionProgress{}, nil).
+		Return(&documentanalysis.AIExtractionProgress{}, nil).
 		Once()
 
 	gaveUp := false
 	env.OnActivity(a.PollDocumentAIExtractionActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, input *PollDocumentAIExtractionInput) (*AIExtractionProgress, error) {
+		Return(func(_ context.Context, input *documentanalysis.PollDocumentAIExtractionInput) (*documentanalysis.AIExtractionProgress, error) {
 			if !input.GiveUp {
-				return &AIExtractionProgress{}, nil
+				return &documentanalysis.AIExtractionProgress{}, nil
 			}
 			gaveUp = true
 
-			return &AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
-				Status:      documentaiextractionports.AIBackgroundExtractionStatusFailed,
-				FailureCode: "ai_extract_timeout",
-			}}, nil
+			return &documentanalysis.AIExtractionProgress{
+				Completion: &documentanalysis.AsyncAIExtractionCompletion{
+					Status:      documentaiextractionports.AIBackgroundExtractionStatusFailed,
+					FailureCode: "ai_extract_timeout",
+				},
+			}, nil
 		})
 	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
-		Return(&ProcessDocumentAIExtractionResult{}, nil).
+		Return(&documentanalysis.ProcessDocumentAIExtractionResult{}, nil).
 		Once()
 
 	env.ExecuteWorkflow(ProcessDocumentAIExtractionWorkflow, extractionPayload())

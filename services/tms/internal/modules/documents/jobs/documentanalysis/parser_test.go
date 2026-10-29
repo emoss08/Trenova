@@ -1,10 +1,9 @@
-package documentextractionjobs
+package documentanalysis
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -94,7 +93,7 @@ Denver, CO 80014
 func TestAnalyzeDocument_ReadsARateConfirmationLaidOutInRows(t *testing.T) {
 	t.Parallel()
 
-	extracted := finalizeExtraction([]*PageExtractionResult{{
+	extracted := FinalizeExtraction([]*PageExtractionResult{{
 		PageNumber: 1,
 		SourceKind: documentcontent.SourceKindNative,
 		Text: "Customer-Specified Equipment Requirements\n" +
@@ -115,22 +114,22 @@ func TestAnalyzeDocument_ReadsARateConfirmationLaidOutInRows(t *testing.T) {
 			"Total:   $2,481.00",
 	}}, 200_000)
 
-	analysis := analyzeDocument(
-		&ClassificationResult{Kind: kindRateConfirmation, Confidence: 0.99},
+	analysis := AnalyzeDocument(
+		&ClassificationResult{Kind: KindRateConfirmation, Confidence: 0.99},
 		extracted,
 	)
 
 	assert.Empty(t, analysis.MissingFields)
 	require.Len(t, analysis.Stops, 2)
 	pickup, delivery := analysis.Stops[0], analysis.Stops[1]
-	assert.Equal(t, stopRolePickup, pickup.Role)
+	assert.Equal(t, StopRolePickup, pickup.Role)
 	assert.Equal(t, "BEX Logistics-OH Consolidation", pickup.Name)
 	assert.Equal(t, "3685 Alum Creek Dr", pickup.AddressLine1)
 	assert.Equal(t, "Columbus", pickup.City)
 	assert.Equal(t, "OH", pickup.State)
 	assert.Equal(t, "08/02/22", pickup.Date)
 	assert.Equal(t, "08:00-18:00", pickup.TimeWindow)
-	assert.Equal(t, stopRoleDelivery, delivery.Role)
+	assert.Equal(t, StopRoleDelivery, delivery.Role)
 	assert.Equal(t, "Freight, Land, Sky", delivery.Name)
 	assert.Equal(t, "1000 Sycamore St.", delivery.AddressLine1)
 	assert.Equal(t, "HARRISBURG", delivery.City)
@@ -160,9 +159,9 @@ Frozen Produce
 Pieces: 18
 Weight: 42,000 lbs`
 
-	analysis := analyzeDocument(
+	analysis := AnalyzeDocument(
 		&ClassificationResult{
-			Kind:           kindBillOfLading,
+			Kind:           KindBillOfLading,
 			Confidence:     0.9,
 			Signals:        []string{"bill of lading"},
 			Source:         "deterministic",
@@ -179,8 +178,8 @@ Weight: 42,000 lbs`
 		},
 	)
 
-	assert.Equal(t, kindBillOfLading, analysis.Kind)
-	assert.Equal(t, reviewStatusReady, analysis.ReviewStatus)
+	assert.Equal(t, KindBillOfLading, analysis.Kind)
+	assert.Equal(t, ReviewStatusReady, analysis.ReviewStatus)
 	assert.Equal(t, "ACME Foods", analysis.Fields["shipper"].Value)
 	assert.Equal(t, "Blue Market", analysis.Fields["consignee"].Value)
 	assert.Equal(t, "BOL123456", analysis.Fields["referenceNumber"].Value)
@@ -209,9 +208,9 @@ Jane Smith
 REMARKS
 Received in good order`
 
-	analysis := analyzeDocument(
+	analysis := AnalyzeDocument(
 		&ClassificationResult{
-			Kind:           kindProofOfDelivery,
+			Kind:           KindProofOfDelivery,
 			Confidence:     0.9,
 			Signals:        []string{"proof of delivery"},
 			Source:         "deterministic",
@@ -228,8 +227,8 @@ Received in good order`
 		},
 	)
 
-	assert.Equal(t, kindProofOfDelivery, analysis.Kind)
-	assert.Equal(t, reviewStatusReady, analysis.ReviewStatus)
+	assert.Equal(t, KindProofOfDelivery, analysis.Kind)
+	assert.Equal(t, ReviewStatusReady, analysis.ReviewStatus)
 	assert.Equal(t, "Blue Market Receiving", analysis.Fields["consignee"].Value)
 	assert.Equal(t, "03/28/2026", analysis.Fields["deliveryWindow"].Value)
 	assert.Equal(t, "Jane Smith", analysis.Fields["signature"].Value)
@@ -242,8 +241,8 @@ func TestBuildStructuredDataIncludesIntelligenceAndAIDiagnostics(t *testing.T) {
 	t.Parallel()
 
 	intelligence := &DocumentIntelligenceAnalysis{
-		Kind:          kindRateConfirmation,
-		ReviewStatus:  reviewStatusReady,
+		Kind:          KindRateConfirmation,
+		ReviewStatus:  ReviewStatusReady,
 		MissingFields: []string{},
 		Signals:       []string{"rule:generic"},
 		Fields:        map[string]*ReviewField{},
@@ -251,21 +250,21 @@ func TestBuildStructuredDataIncludesIntelligenceAndAIDiagnostics(t *testing.T) {
 		Conflicts:     []*ReviewConflict{},
 	}
 
-	data := buildStructuredData(intelligence, &AIDiagnostics{
+	data := BuildStructuredData(intelligence, &AIDiagnostics{
 		FallbackAnalysis: intelligence,
-		AcceptanceStatus: aiAcceptanceStatusRejected,
+		AcceptanceStatus: AIAcceptanceStatusRejected,
 		RejectionReason:  "ai_candidate_missing_pickup_stop",
 	})
 	require.Equal(t, 6, data["schemaVersion"])
 
 	intelligenceMap, ok := data["intelligence"].(map[string]any)
 	require.True(t, ok)
-	require.Equal(t, kindRateConfirmation, intelligenceMap["kind"])
+	require.Equal(t, KindRateConfirmation, intelligenceMap["kind"])
 	require.Equal(t, []string{"rule:generic"}, intelligenceMap["signals"])
 
 	aiDiagnosticsMap, ok := data["aiDiagnostics"].(map[string]any)
 	require.True(t, ok)
-	require.Equal(t, aiAcceptanceStatusRejected, aiDiagnosticsMap["acceptanceStatus"])
+	require.Equal(t, AIAcceptanceStatusRejected, aiDiagnosticsMap["acceptanceStatus"])
 	require.Equal(t, "ai_candidate_missing_pickup_stop", aiDiagnosticsMap["rejectionReason"])
 }
 
@@ -282,9 +281,9 @@ Atlanta, GA 30301
 DELIVERY DATE
 03/28/2026 01:15 PM`
 
-	analysis := analyzeDocument(
+	analysis := AnalyzeDocument(
 		&ClassificationResult{
-			Kind:           kindProofOfDelivery,
+			Kind:           KindProofOfDelivery,
 			Confidence:     0.88,
 			Signals:        []string{"proof of delivery"},
 			Source:         "deterministic",
@@ -303,74 +302,4 @@ DELIVERY DATE
 
 	assert.Equal(t, "NeedsReview", analysis.ReviewStatus)
 	assert.Contains(t, analysis.MissingFields, "Signature")
-}
-
-func TestMergeAIAnalysis_NormalizesEquivalentAIExtractionShape(t *testing.T) {
-	t.Parallel()
-
-	fallback := &DocumentIntelligenceAnalysis{
-		Kind:                 kindRateConfirmation,
-		OverallConfidence:    0.61,
-		ReviewStatus:         "NeedsReview",
-		ClassifierSource:     "ai-route",
-		ProviderFingerprint:  "provider=CHRobinson",
-		ClassificationReason: "AI route matched rate confirmation",
-		Fields:               map[string]*ReviewField{},
-		Stops:                []*IntelligenceStop{},
-		Conflicts:            []*ReviewConflict{},
-	}
-
-	aiExtract := &documentaiextractionports.AIExtractResult{
-		DocumentKind:      "rate_confirmation",
-		OverallConfidence: 0.72,
-		ReviewStatus:      "REVIEW_REQUIRED",
-		Fields: map[string]documentaiextractionports.AIDocumentField{
-			"totalRate": {
-				Label:           "Total Rate",
-				Value:           "4500.00",
-				Confidence:      0.95,
-				EvidenceExcerpt: "$4,500.00",
-				PageNumber:      3,
-				Source:          "page-3",
-			},
-		},
-		Stops: []*documentaiextractionports.AIDocumentStop{
-			{
-				Sequence:        1,
-				Role:            "origin",
-				Name:            "Anyco Clothes #176",
-				AddressLine1:    "1234 Main Drive",
-				City:            "Houston",
-				State:           "TX",
-				PostalCode:      "78705",
-				PageNumber:      1,
-				EvidenceExcerpt: "Anyco Clothes #176\n1234 Main Drive\nHouston, TX 78705",
-				Confidence:      0.94,
-				Source:          "page-1",
-			},
-			{
-				Sequence:        2,
-				Role:            "destination",
-				Name:            "Anyco Clothes #255",
-				AddressLine1:    "123 S. 2nd BLVD, STE 100",
-				City:            "Denver",
-				State:           "CO",
-				PostalCode:      "80014",
-				PageNumber:      2,
-				EvidenceExcerpt: "Anyco Clothes #255\n123 S. 2nd BLVD, STE 100\nDenver, CO 80014",
-				Confidence:      0.92,
-				Source:          "page-2",
-			},
-		},
-	}
-
-	merged, ok, rejectionReason := mergeAIAnalysis(fallback, aiExtract)
-	require.True(t, ok)
-	assert.Empty(t, rejectionReason)
-	assert.Equal(t, "4500.00", merged.Fields["rate"].Value)
-	assert.Equal(t, "Anyco Clothes #176", merged.Fields["shipper"].Value)
-	assert.Equal(t, "Anyco Clothes #255", merged.Fields["consignee"].Value)
-	require.Len(t, merged.Stops, 2)
-	assert.Equal(t, "pickup", merged.Stops[0].Role)
-	assert.Equal(t, "delivery", merged.Stops[1].Role)
 }

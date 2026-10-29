@@ -1,4 +1,4 @@
-package documentextractionjobs
+package documentextractionsupport
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
@@ -27,7 +28,7 @@ func TestUpsertDraft_PublishesDocumentExtractedEvent(t *testing.T) {
 		Once()
 
 	recorder := &agenteventstest.Recorder{}
-	activities := &Activities{
+	activities := &Service{
 		logger:      zap.NewNop(),
 		draftRepo:   draftRepo,
 		agentEvents: recorder,
@@ -38,8 +39,12 @@ func TestUpsertDraft_PublishesDocumentExtractedEvent(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	status, err := activities.upsertDraft(
-		t.Context(), doc, kindRateConfirmation, &DocumentIntelligenceAnalysis{}, true,
+	status, err := activities.UpsertDraft(
+		t.Context(),
+		doc,
+		documentanalysis.KindRateConfirmation,
+		&documentanalysis.DocumentIntelligenceAnalysis{},
+		true,
 	)
 
 	require.NoError(t, err)

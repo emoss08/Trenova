@@ -3,7 +3,7 @@ package extractionevaljobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"go.uber.org/fx"
@@ -55,7 +55,7 @@ func (p *Predictor) Predict(
 	}
 
 	return &extractionevalports.ExtractionPrediction{
-		DraftData:    documentextractionjobs.ShipmentDraftDataFromAIExtract(result.Extract),
+		DraftData:    documentaiextractionjobs.ShipmentDraftDataFromAIExtract(result.Extract),
 		Model:        result.Model,
 		ProviderID:   result.ProviderID,
 		InputTokens:  result.InputTokens,

@@ -1,10 +1,11 @@
-package documentextractionjobs
+package documentaiextractionjobs
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,7 +16,7 @@ import (
 func (a *Activities) rolloutPreference(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	payload *ProcessDocumentAIExtractionPayload,
+	payload *documentanalysis.ProcessDocumentAIExtractionPayload,
 ) pulid.ID {
 	if a.rollout == nil {
 		return pulid.Nil
@@ -71,11 +72,11 @@ func (a *Activities) settleRollout(
 }
 
 func rolloutOutcome(
-	completion *AsyncAIExtractionCompletion,
-	acceptance aiAcceptanceStatus,
+	completion *documentanalysis.AsyncAIExtractionCompletion,
+	acceptance documentanalysis.AIAcceptanceStatus,
 ) extractionrollout.Outcome {
 	switch {
-	case acceptance == aiAcceptanceStatusAccepted:
+	case acceptance == documentanalysis.AIAcceptanceStatusAccepted:
 		return extractionrollout.OutcomeAccepted
 	case completion.Status == documentaiextractionports.AIBackgroundExtractionStatusFailed:
 		return extractionrollout.OutcomeFailed

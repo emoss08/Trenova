@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -33,7 +34,10 @@ func readSignature(
 	now int64,
 ) signatureFinding {
 	unknown := signatureFinding{Status: document.SignatureStatusUnknown}
-	if reading == nil || clampConfidence(reading.Confidence) < reviewReadyConfidenceThreshold {
+	if reading == nil ||
+		documentanalysis.ClampConfidence(
+			reading.Confidence,
+		) < documentanalysis.ReviewReadyConfidenceThreshold {
 		return unknown
 	}
 
