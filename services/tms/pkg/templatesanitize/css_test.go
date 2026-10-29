@@ -1,9 +1,10 @@
-package templateengine
+package templatesanitize
 
 import (
-	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/templatediag"
+	"github.com/emoss08/trenova/pkg/templatediagtest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,8 +37,14 @@ func TestSanitizeCSSRejectsStylesheetCorpus(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			diags := SanitizeCSS("cssContent", source)
-			assert.True(t, hasCode(diags, CodeForbiddenCSS), "%s: %v", name, diags)
+			diags := CSS("cssContent", source)
+			assert.True(
+				t,
+				templatediagtest.HasCode(diags, templatediag.CodeForbiddenCSS),
+				"%s: %v",
+				name,
+				diags,
+			)
 			assert.True(t, diags.HasErrors(), name)
 		})
 	}
@@ -54,21 +61,5 @@ func TestSanitizeCSSAcceptsAnOrdinaryStylesheet(t *testing.T) {
 		.mark::before { content: "\2014"; }
 		table td { padding: 4px 8px }
 	`
-	assert.Empty(t, SanitizeCSS("cssContent", source))
-}
-
-func TestWrapDocumentLeavesOutAStylesheetWithFindings(t *testing.T) {
-	t.Parallel()
-
-	document := WrapDocument(WrapRequest{
-		Title:    "Invoice",
-		BodyHTML: "<p>Total</p>",
-		CSS:      `p { color: red } </style><script>alert(1)</script>`,
-	})
-	assert.NotContains(t, document, "<script>")
-	assert.NotContains(t, document, "color: red")
-	assert.Contains(t, document, "<p>Total</p>")
-
-	clean := WrapDocument(WrapRequest{BodyHTML: "<p>Total</p>", CSS: `p { color: red }`})
-	assert.Equal(t, 1, strings.Count(clean, "p { color: red }"))
+	assert.Empty(t, CSS("cssContent", source))
 }

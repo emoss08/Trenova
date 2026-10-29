@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/tendertemplate"
 	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/pkg/templatesanitize"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -162,11 +163,11 @@ func TestRenderedStartersAreSanitary(t *testing.T) {
 				out, renderErr := engine.Render(t.Context(), compiled, probe)
 				require.NoError(t, renderErr)
 
-				opts := templateengine.DocumentSanitizeOptions()
+				opts := templatesanitize.DocumentOptions()
 				if channel == documenttemplate.ChannelEmailHTML {
-					opts = templateengine.EmailSanitizeOptions()
+					opts = templatesanitize.EmailOptions()
 				}
-				outputDiags := templateengine.SanitizeHTML(channel.Field(), out, opts)
+				outputDiags := templatesanitize.HTML(channel.Field(), out, opts)
 				assert.False(t, outputDiags.HasErrors(),
 					"%s/%s renders unsafe output from hostile data: %s",
 					starter.Kind, channel, outputDiags.Summary())
@@ -221,7 +222,7 @@ func TestDocumentStartersHaveAStylesheet(t *testing.T) {
 		t.Run(string(starter.Kind), func(t *testing.T) {
 			assert.NotEmpty(t, starter.CSS)
 
-			cssDiags := templateengine.SanitizeCSS("cssContent", starter.CSS)
+			cssDiags := templatesanitize.CSS("cssContent", starter.CSS)
 			assert.False(t, cssDiags.HasErrors(),
 				"%s stylesheet is not acceptable: %s", starter.Kind, cssDiags.Summary())
 		})

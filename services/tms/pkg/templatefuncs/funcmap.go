@@ -1,4 +1,4 @@
-package templateengine
+package templatefuncs
 
 import (
 	"html/template"
@@ -130,8 +130,8 @@ func joinNonEmpty(sep string, values []string) string {
 	return strings.Join(stringutils.FilterEmpty(values), sep)
 }
 
-// maxSeqLength bounds seq so a template cannot ask for a billion iterations.
-const maxSeqLength = 10000
+// MaxSeqLength bounds seq so a template cannot ask for a billion iterations.
+const MaxSeqLength = 10000
 
 // seq produces the integers [0,n) for range loops that need an index rather than
 // a collection.
@@ -139,8 +139,8 @@ func seq(n int) []int {
 	if n <= 0 {
 		return nil
 	}
-	if n > maxSeqLength {
-		n = maxSeqLength
+	if n > MaxSeqLength {
+		n = MaxSeqLength
 	}
 	out := make([]int, n)
 	for i := range out {
@@ -149,9 +149,9 @@ func seq(n int) []int {
 	return out
 }
 
-// allowedFunctionSet is the lookup the analyzer uses to reject calls to anything
+// AllowedFunctionSet is the lookup the analyzer uses to reject calls to anything
 // outside the permitted set, including the builtins a FuncMap cannot remove.
-func allowedFunctionSet() map[string]struct{} {
+func AllowedFunctionSet() map[string]struct{} {
 	fm := FuncMap()
 	out := make(map[string]struct{}, len(fm)+len(builtinTemplateFunctions))
 	for name := range fm {

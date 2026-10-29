@@ -1,4 +1,4 @@
-package templateengine
+package templatefuncs
 
 import (
 	"slices"
@@ -133,7 +133,7 @@ func TestSeqIsBounded(t *testing.T) {
 	assert.Len(t, seq(3), 3)
 	assert.Equal(t, []int{0, 1, 2}, seq(3))
 	// A template must not be able to ask for a billion iterations.
-	assert.Len(t, seq(1_000_000), maxSeqLength)
+	assert.Len(t, seq(1_000_000), MaxSeqLength)
 }
 
 // TestForbiddenFunctionsAreAbsentFromTheMap asserts the escape hatches never

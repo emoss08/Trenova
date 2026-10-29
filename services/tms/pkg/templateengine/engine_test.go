@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/templatediag"
+	"github.com/emoss08/trenova/pkg/templatediagtest"
+	"github.com/emoss08/trenova/pkg/templatefuncs"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -114,7 +117,7 @@ func TestParseReportsSyntaxErrorWithPosition(t *testing.T) {
 	})
 	require.True(t, diags.HasErrors())
 	assert.Nil(t, compiled, "a failed parse must never return something renderable")
-	assert.True(t, hasCode(diags, CodeSyntaxError))
+	assert.True(t, templatediagtest.HasCode(diags, templatediag.CodeSyntaxError))
 	assert.Positive(t, diags[0].Line, "the editor needs a line to jump to")
 }
 
@@ -135,7 +138,7 @@ func TestUnknownVariableSeverityDependsOnStrict(t *testing.T) {
 	assert.False(t, draftDiags.HasErrors(), "drafting tolerates an unknown path")
 	assert.NotNil(t, draft)
 	require.NotEmpty(t, draftDiags)
-	assert.Equal(t, SeverityWarning, draftDiags[0].Severity)
+	assert.Equal(t, templatediag.SeverityWarning, draftDiags[0].Severity)
 	assert.Contains(t, draftDiags[0].Message, `Did you mean "Total"?`)
 
 	_, publishDiags := engine.Parse(&ParseRequest{
@@ -146,7 +149,7 @@ func TestUnknownVariableSeverityDependsOnStrict(t *testing.T) {
 		Strict:       true,
 	})
 	assert.True(t, publishDiags.HasErrors(), "publishing rejects an unknown path")
-	assert.True(t, hasCode(publishDiags, CodeUnknownVariable))
+	assert.True(t, templatediagtest.HasCode(publishDiags, templatediag.CodeUnknownVariable))
 }
 
 func TestNestedPathsResolveThroughRangeAndWith(t *testing.T) {
@@ -231,7 +234,7 @@ func TestRequiredPathsBlockPublish(t *testing.T) {
 
 		diags := CheckRequiredPaths("bodyHtml", paths, required)
 		require.True(t, diags.HasErrors())
-		assert.True(t, hasCode(diags, CodeRequiredVariableMissing))
+		assert.True(t, templatediagtest.HasCode(diags, templatediag.CodeRequiredVariableMissing))
 		assert.Contains(t, diags.Summary(), `"Total"`)
 	})
 
@@ -316,7 +319,10 @@ func TestNestedTemplatesAreRejected(t *testing.T) {
 				Source:  tt.source,
 			})
 			require.True(t, diags.HasErrors())
-			assert.True(t, hasCode(diags, CodeNestedTemplateForbidden))
+			assert.True(
+				t,
+				templatediagtest.HasCode(diags, templatediag.CodeNestedTemplateForbidden),
+			)
 		})
 	}
 }
@@ -325,7 +331,7 @@ func TestUnknownFunctionIsRejected(t *testing.T) {
 	engine := testEngine(t)
 
 	// These are the names an author would reach for to escape auto-escaping.
-	for _, name := range ForbiddenFunctionNames() {
+	for _, name := range templatefuncs.ForbiddenFunctionNames() {
 		if name == "template" {
 			// {{template}} is an action, not a call; it has its own diagnostic.
 			continue
@@ -338,7 +344,12 @@ func TestUnknownFunctionIsRejected(t *testing.T) {
 				AllowedPaths: invoicePaths(),
 			})
 			require.True(t, diags.HasErrors())
-			assert.True(t, hasCode(diags, CodeUnknownFunction), "codes: %v", codes(diags))
+			assert.True(
+				t,
+				templatediagtest.HasCode(diags, templatediag.CodeUnknownFunction),
+				"codes: %v",
+				templatediagtest.Codes(diags),
+			)
 		})
 	}
 }
@@ -367,7 +378,12 @@ func TestBuiltinEscapersAreRejected(t *testing.T) {
 			})
 			require.True(t, diags.HasErrors(),
 				"%s is a builtin and must still be refused", name)
-			assert.True(t, hasCode(diags, CodeUnknownFunction), "codes: %v", codes(diags))
+			assert.True(
+				t,
+				templatediagtest.HasCode(diags, templatediag.CodeUnknownFunction),
+				"codes: %v",
+				templatediagtest.Codes(diags),
+			)
 		})
 	}
 }
@@ -399,7 +415,7 @@ func TestTemplateSizeCap(t *testing.T) {
 		Source:  strings.Repeat("<p>x</p>", 100),
 	})
 	require.True(t, diags.HasErrors())
-	assert.True(t, hasCode(diags, CodeTemplateTooLarge))
+	assert.True(t, templatediagtest.HasCode(diags, templatediag.CodeTemplateTooLarge))
 }
 
 // TestVerifyRejectsUnsafeInterpolationContext covers the case where the escaper
@@ -430,7 +446,10 @@ func TestVerifyRejectsUnsafeInterpolationContext(t *testing.T) {
 		Sample:   sample,
 	})
 	require.True(t, verifyDiags.HasErrors())
-	assert.True(t, hasCode(verifyDiags, CodeUnsafeInterpolationContext))
+	assert.True(
+		t,
+		templatediagtest.HasCode(verifyDiags, templatediag.CodeUnsafeInterpolationContext),
+	)
 }
 
 func TestVerifyAcceptsASoundTemplate(t *testing.T) {
@@ -473,7 +492,7 @@ func TestVerifyRejectsATemplateThatFailsOnSampleData(t *testing.T) {
 		Sample:   newInvoiceSample(),
 	})
 	require.True(t, verifyDiags.HasErrors())
-	assert.True(t, hasCode(verifyDiags, CodeSampleRenderFailed))
+	assert.True(t, templatediagtest.HasCode(verifyDiags, templatediag.CodeSampleRenderFailed))
 }
 
 // TestDataFlowingThroughATemplateIsEscaped is the property that makes an
@@ -534,7 +553,7 @@ func TestTextChannelHasNoNl2br(t *testing.T) {
 		AllowedPaths: invoicePaths(),
 	})
 	require.True(t, diags.HasErrors())
-	assert.True(t, hasCode(diags, CodeUnknownFunction))
+	assert.True(t, templatediagtest.HasCode(diags, templatediag.CodeUnknownFunction))
 }
 
 func TestTextChannelSkipsHTMLSanitizing(t *testing.T) {

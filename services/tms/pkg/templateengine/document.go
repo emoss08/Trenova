@@ -3,6 +3,8 @@ package templateengine
 import (
 	"html/template"
 	"strings"
+
+	"github.com/emoss08/trenova/pkg/templatesanitize"
 )
 
 // A template author writes body content and a stylesheet, not a whole document.
@@ -53,8 +55,8 @@ var documentSkeleton = template.Must(template.New("document").Parse(
 
 // WrapDocument assembles a printable document from a rendered body and stylesheet.
 //
-// The body must be rendered output of a source that passed SanitizeHTML; it is
-// inserted as trusted markup. The stylesheet is checked here with SanitizeCSS on
+// The body must be rendered output of a source that passed templatesanitize.HTML;
+// it is inserted as trusted markup. The stylesheet is checked here with templatesanitize.CSS on
 // every call, and one with any finding is left out of the document rather than
 // inserted, so a stylesheet that slipped past the save and publish checks still
 // cannot end the style element or load anything.
@@ -65,7 +67,7 @@ func WrapDocument(req WrapRequest) string {
 	}
 
 	css := req.CSS
-	if SanitizeCSS("cssContent", css).HasErrors() {
+	if templatesanitize.CSS("cssContent", css).HasErrors() {
 		css = ""
 	}
 
@@ -73,17 +75,17 @@ func WrapDocument(req WrapRequest) string {
 	b.Grow(len(req.BodyHTML) + len(css) + 1024)
 
 	// The template's fields are typed as trusted markup, which is why the escaper
-	// leaves them alone: the body passed SanitizeHTML before it was rendered, and
-	// the stylesheet passed SanitizeCSS just above.
+	// leaves them alone: the body passed templatesanitize.HTML before it was rendered,
+	// and the stylesheet passed templatesanitize.CSS just above.
 	err := documentSkeleton.Execute(&b, struct {
 		Title string
 		Body  template.HTML
 		CSS   template.CSS
 	}{
 		Title: title,
-		//nolint:gosec // Body is rendered output that already passed SanitizeHTML.
+		//nolint:gosec // Body is rendered output that already passed templatesanitize.HTML.
 		Body: template.HTML(req.BodyHTML),
-		//nolint:gosec // css passed SanitizeCSS above; one with findings is dropped.
+		//nolint:gosec // css passed templatesanitize.CSS above; one with findings is dropped.
 		CSS: template.CSS(css),
 	})
 	if err != nil {

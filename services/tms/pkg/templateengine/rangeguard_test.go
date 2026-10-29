@@ -6,13 +6,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/templatediag"
+	"github.com/emoss08/trenova/pkg/templatediagtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func parseFor(t *testing.T, engine *Engine, channel Channel, source string) (*Compiled, Diagnostics) {
+func parseFor(
+	t *testing.T,
+	engine *Engine,
+	channel Channel,
+	source string,
+) (*Compiled, templatediag.Diagnostics) {
 	t.Helper()
-	return engine.Parse(&ParseRequest{Field: "body", Kind: "test", Channel: channel, Source: source})
+	return engine.Parse(
+		&ParseRequest{Field: "body", Kind: "test", Channel: channel, Source: source},
+	)
 }
 
 func newTestEngine(t *testing.T, cfg Config) *Engine {
@@ -33,7 +42,13 @@ func TestParseRefusesARangeOverANumberInTheTemplate(t *testing.T) {
 	} {
 		compiled, diags := parseFor(t, engine, ChannelEmailText, source)
 		assert.Nil(t, compiled, source)
-		assert.True(t, hasCode(diags, CodeRangeOverNumber), "%s: %v", source, diags)
+		assert.True(
+			t,
+			templatediagtest.HasCode(diags, templatediag.CodeRangeOverNumber),
+			"%s: %v",
+			source,
+			diags,
+		)
 	}
 }
 
@@ -41,12 +56,24 @@ func TestParseRefusesRangesNestedTooDeep(t *testing.T) {
 	t.Parallel()
 
 	engine := newTestEngine(t, Config{})
-	source := strings.Repeat(`{{range seq 2}}`, maxRangeDepth+1) + strings.Repeat(`{{end}}`, maxRangeDepth+1)
+	source := strings.Repeat(
+		`{{range seq 2}}`,
+		maxRangeDepth+1,
+	) + strings.Repeat(
+		`{{end}}`,
+		maxRangeDepth+1,
+	)
 	compiled, diags := parseFor(t, engine, ChannelEmailText, source)
 	assert.Nil(t, compiled)
-	assert.True(t, hasCode(diags, CodeRangeTooDeep), "%v", diags)
+	assert.True(t, templatediagtest.HasCode(diags, templatediag.CodeRangeTooDeep), "%v", diags)
 
-	allowed := strings.Repeat(`{{range seq 2}}`, maxRangeDepth) + "x" + strings.Repeat(`{{end}}`, maxRangeDepth)
+	allowed := strings.Repeat(
+		`{{range seq 2}}`,
+		maxRangeDepth,
+	) + "x" + strings.Repeat(
+		`{{end}}`,
+		maxRangeDepth,
+	)
 	compiled, diags = parseFor(t, engine, ChannelEmailText, allowed)
 	require.NotNil(t, compiled, "%v", diags)
 	out, err := compiled.Render(t.Context(), nil, 1<<20)

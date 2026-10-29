@@ -1,4 +1,4 @@
-package templateengine
+package templatediag
 
 import (
 	"fmt"
@@ -194,12 +194,12 @@ func (d Diagnostics) Summary() string {
 	return strings.Join(parts, "; ")
 }
 
-func errorDiag(code, field, message string) Diagnostic {
+func Error(code, field, message string) Diagnostic {
 	return Diagnostic{Severity: SeverityError, Code: code, Field: field, Message: message}
 }
 
-// positionedError is an errorDiag that can point the editor at a line.
-func positionedError(code, field, message string, line, column int) Diagnostic {
+// ErrorAt is an Error that can point the editor at a line.
+func ErrorAt(code, field, message string, line, column int) Diagnostic {
 	return Diagnostic{
 		Severity: SeverityError,
 		Code:     code,

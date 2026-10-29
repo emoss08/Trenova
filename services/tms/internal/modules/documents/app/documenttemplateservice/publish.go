@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/pkg/templateengine"
 )
 
@@ -142,12 +143,12 @@ func (s *Service) verifyAgainstContexts(
 	ctx context.Context,
 	def *templatecatalog.KindDefinition,
 	compiled *compiledVersion,
-) templateengine.Diagnostics {
+) templatediag.Diagnostics {
 	sample, err := s.registry.SampleContext(def.Kind)
 	if err != nil {
-		return templateengine.Diagnostics{{
-			Severity: templateengine.SeverityError,
-			Code:     templateengine.CodeSampleRenderFailed,
+		return templatediag.Diagnostics{{
+			Severity: templatediag.SeverityError,
+			Code:     templatediag.CodeSampleRenderFailed,
 			Field:    documenttemplate.ChannelPDF.Field(),
 			Message: fmt.Sprintf(
 				"this kind has no sample context, so the template cannot be verified: %s",
@@ -158,9 +159,9 @@ func (s *Service) verifyAgainstContexts(
 
 	probe, err := s.registry.HostileProbeContext(def.Kind)
 	if err != nil {
-		return templateengine.Diagnostics{{
-			Severity: templateengine.SeverityError,
-			Code:     templateengine.CodeSampleRenderFailed,
+		return templatediag.Diagnostics{{
+			Severity: templatediag.SeverityError,
+			Code:     templatediag.CodeSampleRenderFailed,
 			Field:    documenttemplate.ChannelPDF.Field(),
 			Message: fmt.Sprintf(
 				"this kind has no hostile probe context, so the template cannot be verified: %s",
@@ -169,7 +170,7 @@ func (s *Service) verifyAgainstContexts(
 		}}
 	}
 
-	var diags templateengine.Diagnostics
+	var diags templatediag.Diagnostics
 
 	for _, channel := range def.Channels {
 		target := compiled.compiledFor(channel)

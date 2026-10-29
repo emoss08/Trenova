@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -233,7 +234,7 @@ type PreviewResult struct {
 
 	// Diagnostics are advisory here rather than blocking. A draft is allowed to
 	// be wrong; the author needs to see why, not be refused a preview.
-	Diagnostics templateengine.Diagnostics
+	Diagnostics templatediag.Diagnostics
 }
 
 // RecordGeneratedDocumentRequest logs one rendered artifact against the template
@@ -308,7 +309,7 @@ type AssetInlineRequest struct {
 
 type AssetInlineResult struct {
 	HTML  string
-	Diags templateengine.Diagnostics
+	Diags templatediag.Diagnostics
 	// Inlined counts the assets that made it in; Bytes is their decoded size.
 	Inlined int
 	Bytes   int64

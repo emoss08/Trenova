@@ -3,6 +3,7 @@ package templateengine
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/templatefuncs"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -129,6 +130,6 @@ func TestTranslatedTextIsEscapedInHTML(t *testing.T) {
 func TestTIsAnAllowedFunction(t *testing.T) {
 	t.Parallel()
 
-	assert.Contains(t, AllowedFunctionNames(), "t",
+	assert.Contains(t, templatefuncs.AllowedFunctionNames(), "t",
 		"the analyzer rejects calls outside the allowed set, so t must be listed")
 }

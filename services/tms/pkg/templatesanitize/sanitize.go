@@ -1,4 +1,4 @@
-package templateengine
+package templatesanitize
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"golang.org/x/net/html"
 )
 
@@ -117,19 +118,19 @@ var (
 	cssQuotedPattern     = regexp.MustCompile(`['"]([^'"]*)['"]`)
 )
 
-// SanitizeHTML walks markup and reports every construct we refuse to render.
+// HTML walks markup and reports every construct we refuse to render.
 //
 // It runs on the template source at save time, and again on rendered output
 // before that output leaves the process. The second pass is not redundant: the
 // data flowing through a template — a customer name, an invoice memo, a shipment
 // comment — is attacker-influenced, and a template that is clean on its own can
 // still interpolate something hostile into a position that matters.
-func SanitizeHTML(field, source string, opts SanitizeOptions) Diagnostics {
+func HTML(field, source string, opts Options) templatediag.Diagnostics {
 	if strings.TrimSpace(source) == "" {
 		return nil
 	}
 
-	diags := make(Diagnostics, 0, 4)
+	diags := make(templatediag.Diagnostics, 0, 4)
 	tokenizer := html.NewTokenizer(strings.NewReader(source))
 
 	// The tokenizer does not expose positions, so track them by counting the raw
@@ -156,8 +157,8 @@ func SanitizeHTML(field, source string, opts SanitizeOptions) Diagnostics {
 			tag := strings.ToLower(string(name))
 
 			if reason, forbidden := forbiddenElements[tag]; forbidden {
-				diags = append(diags, positionedError(
-					CodeForbiddenElement, field,
+				diags = append(diags, templatediag.ErrorAt(
+					templatediag.CodeForbiddenElement, field,
 					fmt.Sprintf("<%s> is not allowed: %s", tag, reason),
 					tokenLine, tokenColumn,
 				))
@@ -166,8 +167,8 @@ func SanitizeHTML(field, source string, opts SanitizeOptions) Diagnostics {
 
 			if tag == "style" && tokenType == html.StartTagToken {
 				if !opts.AllowStyleElement {
-					diags = append(diags, positionedError(
-						CodeForbiddenElement, field,
+					diags = append(diags, templatediag.ErrorAt(
+						templatediag.CodeForbiddenElement, field,
 						"<style> blocks are stripped by mail clients; use inline style attributes",
 						tokenLine, tokenColumn,
 					))
@@ -185,7 +186,7 @@ func SanitizeHTML(field, source string, opts SanitizeOptions) Diagnostics {
 			name, _ := tokenizer.TagName()
 			if strings.EqualFold(string(name), "style") && inStyle {
 				inStyle = false
-				diags = append(diags, SanitizeCSS(field, styleBody.String())...)
+				diags = append(diags, CSS(field, styleBody.String())...)
 			}
 
 		case html.TextToken:
@@ -197,8 +198,8 @@ func SanitizeHTML(field, source string, opts SanitizeOptions) Diagnostics {
 			// Conditional comments are the one comment form that executes, in
 			// legacy mail clients.
 			if text := string(tokenizer.Text()); strings.Contains(text, "[if") {
-				diags = append(diags, positionedError(
-					CodeForbiddenElement, field,
+				diags = append(diags, templatediag.ErrorAt(
+					templatediag.CodeForbiddenElement, field,
 					"conditional comments are not allowed",
 					tokenLine, tokenColumn,
 				))
@@ -217,8 +218,8 @@ func checkAttributes(
 	tag, field string,
 	hasAttr bool,
 	line, column int,
-) Diagnostics {
-	var diags Diagnostics
+) templatediag.Diagnostics {
+	var diags templatediag.Diagnostics
 
 	for hasAttr {
 		var key, val []byte
@@ -228,8 +229,8 @@ func checkAttributes(
 
 		// Any on* attribute is an inline event handler.
 		if strings.HasPrefix(name, "on") {
-			diags = append(diags, positionedError(
-				CodeForbiddenAttribute, field,
+			diags = append(diags, templatediag.ErrorAt(
+				templatediag.CodeForbiddenAttribute, field,
 				fmt.Sprintf("event handler attribute %q is not allowed on <%s>", name, tag),
 				line, column,
 			))
@@ -238,8 +239,8 @@ func checkAttributes(
 
 		// srcdoc injects a whole nested document.
 		if name == "srcdoc" {
-			diags = append(diags, positionedError(
-				CodeForbiddenAttribute, field,
+			diags = append(diags, templatediag.ErrorAt(
+				templatediag.CodeForbiddenAttribute, field,
 				"srcdoc is not allowed",
 				line, column,
 			))
@@ -247,8 +248,8 @@ func checkAttributes(
 		}
 
 		if name == "http-equiv" {
-			diags = append(diags, positionedError(
-				CodeForbiddenAttribute, field,
+			diags = append(diags, templatediag.ErrorAt(
+				templatediag.CodeForbiddenAttribute, field,
 				"http-equiv can redirect the document and is not allowed",
 				line, column,
 			))
@@ -256,7 +257,7 @@ func checkAttributes(
 		}
 
 		if name == "style" {
-			diags = append(diags, SanitizeCSS(field, value)...)
+			diags = append(diags, CSS(field, value)...)
 			continue
 		}
 
@@ -285,18 +286,18 @@ func checkURLScheme(
 	field, tag, attr, value string,
 	fetched bool,
 	line, column int,
-) (Diagnostic, bool) {
+) (templatediag.Diagnostic, bool) {
 	// Entity-encoded and whitespace-padded schemes are the standard evasions;
 	// browsers decode both before dispatching, so we normalize the same way.
 	normalized := normalizeURLForSchemeCheck(value)
 	if normalized == "" {
-		return Diagnostic{}, false
+		return templatediag.Diagnostic{}, false
 	}
 
 	for _, scheme := range dangerousURLSchemes {
 		if strings.HasPrefix(normalized, scheme) {
-			return positionedError(
-				CodeForbiddenURLScheme, field,
+			return templatediag.ErrorAt(
+				templatediag.CodeForbiddenURLScheme, field,
 				fmt.Sprintf("%s on <%s> uses the %s scheme, which is not allowed",
 					attr, tag, strings.TrimSuffix(scheme, ":")),
 				line, column,
@@ -308,7 +309,7 @@ func checkURLScheme(
 		if diag, bad := checkDataURIType(field, tag, attr, normalized, line, column); bad {
 			return diag, true
 		}
-		return Diagnostic{}, false
+		return templatediag.Diagnostic{}, false
 	}
 
 	allowed := navigationSchemes
@@ -317,21 +318,21 @@ func checkURLScheme(
 	}
 	for _, scheme := range allowed {
 		if strings.HasPrefix(normalized, scheme) {
-			return Diagnostic{}, false
+			return templatediag.Diagnostic{}, false
 		}
 	}
 
 	// A template variable in the URL position resolves at render time; the
 	// render-time pass checks the result.
 	if strings.Contains(value, "{{") {
-		return Diagnostic{}, false
+		return templatediag.Diagnostic{}, false
 	}
 
 	if fetched {
 		// The renderer has no network route, so a remote or relative asset would
 		// silently fail to load even if we allowed it through.
-		return positionedError(
-			CodeForbiddenURLScheme, field,
+		return templatediag.ErrorAt(
+			templatediag.CodeForbiddenURLScheme, field,
 			fmt.Sprintf(
 				"%s on <%s> must be a data: URI; remote and relative URLs cannot be "+
 					"loaded while rendering. Upload the image and reference it by key, "+
@@ -344,8 +345,8 @@ func checkURLScheme(
 
 	// A relative link has no base to resolve against once a document has left the
 	// system, so it would arrive at the reader broken.
-	return positionedError(
-		CodeForbiddenURLScheme, field,
+	return templatediag.ErrorAt(
+		templatediag.CodeForbiddenURLScheme, field,
 		fmt.Sprintf(
 			"%s on <%s> must be an absolute https, http, mailto, or tel URL; a relative "+
 				"link has nothing to resolve against once this has been sent",
@@ -358,24 +359,24 @@ func checkURLScheme(
 func checkDataURIType(
 	field, tag, attr, normalized string,
 	line, column int,
-) (Diagnostic, bool) {
+) (templatediag.Diagnostic, bool) {
 	meta, _, _ := strings.Cut(strings.TrimPrefix(normalized, "data:"), ",")
 	mediaType, _, _ := strings.Cut(meta, ";")
 	mediaType = strings.TrimSpace(mediaType)
 
 	// A bare "data:," defaults to text/plain, which is inert.
 	if mediaType == "" {
-		return Diagnostic{}, false
+		return templatediag.Diagnostic{}, false
 	}
 
 	for _, allowed := range dataURIAllowedTypes {
 		if mediaType == allowed {
-			return Diagnostic{}, false
+			return templatediag.Diagnostic{}, false
 		}
 	}
 
-	return positionedError(
-		CodeForbiddenURLScheme, field,
+	return templatediag.ErrorAt(
+		templatediag.CodeForbiddenURLScheme, field,
 		fmt.Sprintf(
 			"%s on <%s> declares data: type %q; only PNG, JPEG, GIF, and WebP images are allowed",
 			attr, tag, mediaType,
@@ -409,18 +410,18 @@ func normalizeURLForSchemeCheck(value string) string {
 	return normalized
 }
 
-// SanitizeCSS reports stylesheet constructs that fetch or execute.
-func SanitizeCSS(field, source string) Diagnostics {
+// CSS reports stylesheet constructs that fetch or execute.
+func CSS(field, source string) templatediag.Diagnostics {
 	if strings.TrimSpace(source) == "" {
 		return nil
 	}
 
-	var diags Diagnostics
+	var diags templatediag.Diagnostics
 
 	// The HTML tokenizer ends a <style> element at the first </style it meets,
 	// whatever the CSS around it, so this is checked on the source as written.
 	if cssStyleEndPattern.MatchString(source) {
-		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
+		diags = append(diags, templatediag.Error(templatediag.CodeForbiddenCSS, field,
 			"</style is not allowed in a stylesheet: it would end the style element"))
 	}
 
@@ -429,19 +430,19 @@ func SanitizeCSS(field, source string) Diagnostics {
 	normalized := normalizeCSS(source)
 
 	if cssImportPattern.MatchString(normalized) {
-		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
+		diags = append(diags, templatediag.Error(templatediag.CodeForbiddenCSS, field,
 			"@import is not allowed: it would fetch a remote stylesheet"))
 	}
 	if cssExpressionPattern.MatchString(normalized) {
-		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
+		diags = append(diags, templatediag.Error(templatediag.CodeForbiddenCSS, field,
 			"expression() is not allowed: it executes script"))
 	}
 	if cssBehaviorPattern.MatchString(normalized) {
-		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
+		diags = append(diags, templatediag.Error(templatediag.CodeForbiddenCSS, field,
 			"behavior is not allowed: it executes script"))
 	}
 	if cssBindingPattern.MatchString(normalized) {
-		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
+		diags = append(diags, templatediag.Error(templatediag.CodeForbiddenCSS, field,
 			"-moz-binding is not allowed: it executes script"))
 	}
 
@@ -453,7 +454,7 @@ func SanitizeCSS(field, source string) Diagnostics {
 		if strings.Contains(match[1], "{{") {
 			continue
 		}
-		diags = append(diags, errorDiag(CodeForbiddenCSS, field, fmt.Sprintf(
+		diags = append(diags, templatediag.Error(templatediag.CodeForbiddenCSS, field, fmt.Sprintf(
 			"url(%s) is not allowed: only data: URIs can be loaded",
 			strings.TrimSpace(match[1]),
 		)))
@@ -465,10 +466,13 @@ func SanitizeCSS(field, source string) Diagnostics {
 			if target == "" || strings.HasPrefix(target, "data:") {
 				continue
 			}
-			diags = append(diags, errorDiag(CodeForbiddenCSS, field, fmt.Sprintf(
-				"image-set(%s) is not allowed: only data: URIs can be loaded",
-				strings.TrimSpace(quoted[1]),
-			)))
+			diags = append(
+				diags,
+				templatediag.Error(templatediag.CodeForbiddenCSS, field, fmt.Sprintf(
+					"image-set(%s) is not allowed: only data: URIs can be loaded",
+					strings.TrimSpace(quoted[1]),
+				)),
+			)
 		}
 	}
 
@@ -545,8 +549,8 @@ func isCSSWhitespace(c byte) bool {
 	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'
 }
 
-// SanitizeOptions tunes the rules per output channel.
-type SanitizeOptions struct {
+// Options tunes the rules per output channel.
+type Options struct {
 	// AllowStyleElement permits a <style> block. True for PDF documents, where a
 	// real stylesheet is the point. False for email, where clients strip <style>
 	// and an author who relies on it ships a document that looks broken in half
@@ -554,14 +558,14 @@ type SanitizeOptions struct {
 	AllowStyleElement bool
 }
 
-// DocumentSanitizeOptions is the rule set for PDF output.
-func DocumentSanitizeOptions() SanitizeOptions {
-	return SanitizeOptions{AllowStyleElement: true}
+// DocumentOptions is the rule set for PDF output.
+func DocumentOptions() Options {
+	return Options{AllowStyleElement: true}
 }
 
-// EmailSanitizeOptions is the rule set for HTML email bodies.
-func EmailSanitizeOptions() SanitizeOptions {
-	return SanitizeOptions{AllowStyleElement: false}
+// EmailOptions is the rule set for HTML email bodies.
+func EmailOptions() Options {
+	return Options{AllowStyleElement: false}
 }
 
 // advancePosition tracks line and column across consumed source bytes.

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/i18n"
 	"go.uber.org/zap"
@@ -99,7 +100,7 @@ func (s *Service) renderDocumentHTML(
 	data any,
 	title string,
 	opts compileOptions,
-) (*renderedDocument, templateengine.Diagnostics, error) {
+) (*renderedDocument, templatediag.Diagnostics, error) {
 	compiled := s.compile(def, &resolved.Content, opts)
 
 	if multiErr := diagnosticsToMultiError(compiled.diags); multiErr != nil {

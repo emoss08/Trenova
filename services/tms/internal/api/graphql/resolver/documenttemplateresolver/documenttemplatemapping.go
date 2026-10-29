@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/pkg/templatediag"
 )
 
 func documentTemplateColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -144,7 +144,7 @@ func documentTemplateKindToModel(
 }
 
 func documentTemplateDiagnosticsToModel(
-	diags templateengine.Diagnostics,
+	diags templatediag.Diagnostics,
 ) []*gqlmodel.DocumentTemplateDiagnostic {
 	out := make([]*gqlmodel.DocumentTemplateDiagnostic, 0, len(diags))
 	for _, diag := range diags {

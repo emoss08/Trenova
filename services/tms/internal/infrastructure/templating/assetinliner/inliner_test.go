@@ -15,7 +15,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/shared/imageutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,7 +73,7 @@ func newInliner(t *testing.T, store ObjectReader, limits Limits) *Inliner {
 	return New(Params{Storage: store, Logger: zap.NewNop(), Limits: limits})
 }
 
-func hasCode(diags templateengine.Diagnostics, code string) bool {
+func hasCode(diags templatediag.Diagnostics, code string) bool {
 	for i := range diags {
 		if diags[i].Code == code {
 			return true
@@ -135,7 +135,7 @@ func TestInlineRefusesInternalAddresses(t *testing.T) {
 			assert.NotContains(t, result.HTML, target)
 			assert.NotContains(t, result.HTML, "<img")
 			assert.Zero(t, result.Inlined)
-			assert.True(t, hasCode(result.Diags, templateengine.CodeRemoteAssetBlocked),
+			assert.True(t, hasCode(result.Diags, templatediag.CodeRemoteAssetBlocked),
 				"the omission must be reported, never silent")
 		})
 	}
@@ -164,7 +164,7 @@ func TestInlineRefusesDangerousSchemes(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.NotContains(t, result.HTML, "<img")
-			assert.True(t, hasCode(result.Diags, templateengine.CodeRemoteAssetBlocked))
+			assert.True(t, hasCode(result.Diags, templatediag.CodeRemoteAssetBlocked))
 		})
 	}
 }
@@ -185,7 +185,7 @@ func TestInlineFetchesPublicRemoteAssets(t *testing.T) {
 		Field: "bodyHtml",
 	})
 	require.NoError(t, err)
-	assert.True(t, hasCode(result.Diags, templateengine.CodeRemoteAssetBlocked),
+	assert.True(t, hasCode(result.Diags, templatediag.CodeRemoteAssetBlocked),
 		"a loopback target must be refused even when it really serves an image")
 }
 
@@ -211,7 +211,7 @@ func TestInlineValidatesExistingDataURIs(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.NotContains(t, result.HTML, "<img")
-		assert.True(t, hasCode(result.Diags, templateengine.CodeRemoteAssetBlocked))
+		assert.True(t, hasCode(result.Diags, templatediag.CodeRemoteAssetBlocked))
 	})
 
 	t.Run("an svg data uri is dropped", func(t *testing.T) {
@@ -286,7 +286,7 @@ func TestInlineEnforcesPerAssetSizeCap(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Zero(t, result.Inlined)
-	assert.True(t, hasCode(result.Diags, templateengine.CodeRemoteAssetBlocked))
+	assert.True(t, hasCode(result.Diags, templatediag.CodeRemoteAssetBlocked))
 }
 
 func TestInlineEnforcesAssetCountCap(t *testing.T) {
@@ -305,7 +305,7 @@ func TestInlineEnforcesAssetCountCap(t *testing.T) {
 
 	assert.Equal(t, 2, result.Inlined)
 	assert.Equal(t, 2, strings.Count(result.HTML, "<img"))
-	assert.True(t, hasCode(result.Diags, templateengine.CodeAssetBudgetExceeded))
+	assert.True(t, hasCode(result.Diags, templatediag.CodeAssetBudgetExceeded))
 }
 
 func TestInlineEnforcesTotalByteBudget(t *testing.T) {
@@ -322,7 +322,7 @@ func TestInlineEnforcesTotalByteBudget(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, result.Inlined)
-	assert.True(t, hasCode(result.Diags, templateengine.CodeAssetBudgetExceeded))
+	assert.True(t, hasCode(result.Diags, templatediag.CodeAssetBudgetExceeded))
 }
 
 func TestInlineKeepsSourcelessImages(t *testing.T) {
@@ -347,7 +347,7 @@ func TestInlineReportsMissingStorageObject(t *testing.T) {
 
 	require.NotEmpty(t, result.Diags)
 	assert.Equal(t, "headerHtml", result.Diags[0].Field)
-	assert.Equal(t, templateengine.SeverityWarning, result.Diags[0].Severity)
+	assert.Equal(t, templatediag.SeverityWarning, result.Diags[0].Severity)
 }
 
 func TestInlineWithoutStorageClient(t *testing.T) {
@@ -356,7 +356,7 @@ func TestInlineWithoutStorageClient(t *testing.T) {
 		Field: "bodyHtml",
 	})
 	require.NoError(t, err)
-	assert.True(t, hasCode(result.Diags, templateengine.CodeRemoteAssetBlocked))
+	assert.True(t, hasCode(result.Diags, templatediag.CodeRemoteAssetBlocked))
 }
 
 func TestInlineEmptyInput(t *testing.T) {

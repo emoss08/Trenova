@@ -1,30 +1,14 @@
-package templateengine
+package templatesanitize
 
 import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/templatediag"
+	"github.com/emoss08/trenova/pkg/templatediagtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// hasCode reports whether any diagnostic carries the given code.
-func hasCode(diags Diagnostics, code string) bool {
-	for i := range diags {
-		if diags[i].Code == code {
-			return true
-		}
-	}
-	return false
-}
-
-func codes(diags Diagnostics) []string {
-	out := make([]string, 0, len(diags))
-	for i := range diags {
-		out = append(out, diags[i].Code)
-	}
-	return out
-}
 
 // TestSanitizeHTMLRejectsXSSCorpus is the load-bearing security test for
 // organization-authored markup. Every entry must be refused at save time, with a
@@ -36,163 +20,231 @@ func TestSanitizeHTMLRejectsXSSCorpus(t *testing.T) {
 		wantCode string
 	}{
 		// Script execution.
-		{"script element", `<div><script>alert(1)</script></div>`, CodeForbiddenElement},
-		{"script with type", `<script type="text/javascript">x()</script>`, CodeForbiddenElement},
-		{"uppercase script", `<SCRIPT>alert(1)</SCRIPT>`, CodeForbiddenElement},
-		{"mixed case script", `<ScRiPt>alert(1)</ScRiPt>`, CodeForbiddenElement},
+		{
+			"script element",
+			`<div><script>alert(1)</script></div>`,
+			templatediag.CodeForbiddenElement,
+		},
+		{
+			"script with type",
+			`<script type="text/javascript">x()</script>`,
+			templatediag.CodeForbiddenElement,
+		},
+		{"uppercase script", `<SCRIPT>alert(1)</SCRIPT>`, templatediag.CodeForbiddenElement},
+		{"mixed case script", `<ScRiPt>alert(1)</ScRiPt>`, templatediag.CodeForbiddenElement},
 
 		// Inline event handlers.
 		{
 			"img onerror",
 			`<img src="data:image/png;base64,AA" onerror="alert(1)">`,
-			CodeForbiddenAttribute,
+			templatediag.CodeForbiddenAttribute,
 		},
-		{"body onload", `<body onload="alert(1)">x</body>`, CodeForbiddenAttribute},
-		{"div onmouseover", `<div onmouseover="alert(1)">x</div>`, CodeForbiddenAttribute},
+		{"body onload", `<body onload="alert(1)">x</body>`, templatediag.CodeForbiddenAttribute},
+		{
+			"div onmouseover",
+			`<div onmouseover="alert(1)">x</div>`,
+			templatediag.CodeForbiddenAttribute,
+		},
 		{
 			"uppercase ONERROR",
 			`<img src="data:image/png;base64,AA" ONERROR="alert(1)">`,
-			CodeForbiddenAttribute,
+			templatediag.CodeForbiddenAttribute,
 		},
 		{
 			"onfocus with autofocus",
 			`<span onfocus="alert(1)" autofocus>x</span>`,
-			CodeForbiddenAttribute,
+			templatediag.CodeForbiddenAttribute,
 		},
 
 		// Dangerous URL schemes.
-		{"javascript href", `<a href="javascript:alert(1)">x</a>`, CodeForbiddenURLScheme},
-		{"javascript uppercase", `<a href="JAVASCRIPT:alert(1)">x</a>`, CodeForbiddenURLScheme},
-		{"javascript with spaces", `<a href="  javascript:alert(1)">x</a>`, CodeForbiddenURLScheme},
+		{
+			"javascript href",
+			`<a href="javascript:alert(1)">x</a>`,
+			templatediag.CodeForbiddenURLScheme,
+		},
+		{
+			"javascript uppercase",
+			`<a href="JAVASCRIPT:alert(1)">x</a>`,
+			templatediag.CodeForbiddenURLScheme,
+		},
+		{
+			"javascript with spaces",
+			`<a href="  javascript:alert(1)">x</a>`,
+			templatediag.CodeForbiddenURLScheme,
+		},
 		{
 			"javascript entity encoded colon",
 			`<a href="javascript&#58;alert(1)">x</a>`,
-			CodeForbiddenURLScheme,
+			templatediag.CodeForbiddenURLScheme,
 		},
 		{
 			"javascript percent encoded colon",
 			`<a href="javascript%3aalert(1)">x</a>`,
-			CodeForbiddenURLScheme,
+			templatediag.CodeForbiddenURLScheme,
 		},
 		{
 			"javascript with embedded newline",
 			"<a href=\"java\nscript:alert(1)\">x</a>",
-			CodeForbiddenURLScheme,
+			templatediag.CodeForbiddenURLScheme,
 		},
 		{
 			"javascript with embedded tab",
 			"<a href=\"java\tscript:alert(1)\">x</a>",
-			CodeForbiddenURLScheme,
+			templatediag.CodeForbiddenURLScheme,
 		},
-		{"vbscript href", `<a href="vbscript:msgbox(1)">x</a>`, CodeForbiddenURLScheme},
-		{"file src", `<img src="file:///etc/passwd">`, CodeForbiddenURLScheme},
-		{"about src", `<img src="about:blank">`, CodeForbiddenURLScheme},
-		{"blob src", `<img src="blob:http://x/y">`, CodeForbiddenURLScheme},
-		{"view-source", `<a href="view-source:http://x">x</a>`, CodeForbiddenURLScheme},
+		{
+			"vbscript href",
+			`<a href="vbscript:msgbox(1)">x</a>`,
+			templatediag.CodeForbiddenURLScheme,
+		},
+		{"file src", `<img src="file:///etc/passwd">`, templatediag.CodeForbiddenURLScheme},
+		{"about src", `<img src="about:blank">`, templatediag.CodeForbiddenURLScheme},
+		{"blob src", `<img src="blob:http://x/y">`, templatediag.CodeForbiddenURLScheme},
+		{
+			"view-source",
+			`<a href="view-source:http://x">x</a>`,
+			templatediag.CodeForbiddenURLScheme,
+		},
 
 		// Remote fetches. The renderer has no network route, so these would fail
 		// silently at best and probe the internal network at worst.
-		{"absolute http image", `<img src="http://evil.example/x.png">`, CodeForbiddenURLScheme},
-		{"absolute https image", `<img src="https://evil.example/x.png">`, CodeForbiddenURLScheme},
-		{"protocol relative image", `<img src="//evil.example/x.png">`, CodeForbiddenURLScheme},
+		{
+			"absolute http image",
+			`<img src="http://evil.example/x.png">`,
+			templatediag.CodeForbiddenURLScheme,
+		},
+		{
+			"absolute https image",
+			`<img src="https://evil.example/x.png">`,
+			templatediag.CodeForbiddenURLScheme,
+		},
+		{
+			"protocol relative image",
+			`<img src="//evil.example/x.png">`,
+			templatediag.CodeForbiddenURLScheme,
+		},
 		{
 			"metadata endpoint",
 			`<img src="http://169.254.169.254/latest/meta-data/">`,
-			CodeForbiddenURLScheme,
+			templatediag.CodeForbiddenURLScheme,
 		},
-		{"relative path image", `<img src="/assets/logo.png">`, CodeForbiddenURLScheme},
+		{
+			"relative path image",
+			`<img src="/assets/logo.png">`,
+			templatediag.CodeForbiddenURLScheme,
+		},
 
 		// data: URIs that are not images.
 		{
 			"data html",
 			`<img src="data:text/html,<script>alert(1)</script>">`,
-			CodeForbiddenURLScheme,
+			templatediag.CodeForbiddenURLScheme,
 		},
 		{
 			"data html base64",
 			`<img src="data:text/html;base64,PHNjcmlwdD4=">`,
-			CodeForbiddenURLScheme,
+			templatediag.CodeForbiddenURLScheme,
 		},
-		{"data svg", `<img src="data:image/svg+xml;base64,PHN2Zz4=">`, CodeForbiddenURLScheme},
-		{"data javascript", `<img src="data:text/javascript,alert(1)">`, CodeForbiddenURLScheme},
+		{
+			"data svg",
+			`<img src="data:image/svg+xml;base64,PHN2Zz4=">`,
+			templatediag.CodeForbiddenURLScheme,
+		},
+		{
+			"data javascript",
+			`<img src="data:text/javascript,alert(1)">`,
+			templatediag.CodeForbiddenURLScheme,
+		},
 
 		// Framing and embedding.
-		{"iframe", `<iframe src="data:text/html,x"></iframe>`, CodeForbiddenElement},
-		{"object", `<object data="data:x"></object>`, CodeForbiddenElement},
-		{"embed", `<embed src="data:x">`, CodeForbiddenElement},
-		{"srcdoc attribute", `<div srcdoc="<script>x</script>">y</div>`, CodeForbiddenAttribute},
+		{"iframe", `<iframe src="data:text/html,x"></iframe>`, templatediag.CodeForbiddenElement},
+		{"object", `<object data="data:x"></object>`, templatediag.CodeForbiddenElement},
+		{"embed", `<embed src="data:x">`, templatediag.CodeForbiddenElement},
+		{
+			"srcdoc attribute",
+			`<div srcdoc="<script>x</script>">y</div>`,
+			templatediag.CodeForbiddenAttribute,
+		},
 
 		// Document-level rewrites.
-		{"base element", `<base href="http://evil.example/">`, CodeForbiddenElement},
-		{"link stylesheet", `<link rel="stylesheet" href="data:text/css,x">`, CodeForbiddenElement},
+		{"base element", `<base href="http://evil.example/">`, templatediag.CodeForbiddenElement},
+		{
+			"link stylesheet",
+			`<link rel="stylesheet" href="data:text/css,x">`,
+			templatediag.CodeForbiddenElement,
+		},
 		{
 			"meta refresh",
 			`<meta http-equiv="refresh" content="0;url=http://evil.example">`,
-			CodeForbiddenAttribute,
+			templatediag.CodeForbiddenAttribute,
 		},
 
 		// SVG and MathML are script vectors.
-		{"svg element", `<svg><circle r="1"/></svg>`, CodeForbiddenElement},
-		{"svg with onload", `<svg onload="alert(1)"></svg>`, CodeForbiddenElement},
-		{"mathml", `<math><mi>x</mi></math>`, CodeForbiddenElement},
+		{"svg element", `<svg><circle r="1"/></svg>`, templatediag.CodeForbiddenElement},
+		{"svg with onload", `<svg onload="alert(1)"></svg>`, templatediag.CodeForbiddenElement},
+		{"mathml", `<math><mi>x</mi></math>`, templatediag.CodeForbiddenElement},
 
 		// Forms.
-		{"form", `<form action="data:x"><input name="a"></form>`, CodeForbiddenElement},
-		{"bare input", `<input type="text" name="a">`, CodeForbiddenElement},
+		{
+			"form",
+			`<form action="data:x"><input name="a"></form>`,
+			templatediag.CodeForbiddenElement,
+		},
+		{"bare input", `<input type="text" name="a">`, templatediag.CodeForbiddenElement},
 
 		// Legacy conditional comments execute in some mail clients.
 		{
 			"conditional comment",
 			`<!--[if IE]><script>alert(1)</script><![endif]-->`,
-			CodeForbiddenElement,
+			templatediag.CodeForbiddenElement,
 		},
 
 		// CSS that fetches or executes.
 		{
 			"style attribute import",
 			`<div style="@import url(http://evil.example/x.css)">y</div>`,
-			CodeForbiddenCSS,
+			templatediag.CodeForbiddenCSS,
 		},
 		{
 			"style attribute expression",
 			`<div style="width:expression(alert(1))">y</div>`,
-			CodeForbiddenCSS,
+			templatediag.CodeForbiddenCSS,
 		},
 		{
 			"style attribute behavior",
 			`<div style="behavior:url(#default#x)">y</div>`,
-			CodeForbiddenCSS,
+			templatediag.CodeForbiddenCSS,
 		},
 		{
 			"style attribute moz binding",
 			`<div style="-moz-binding:url(http://evil.example/x)">y</div>`,
-			CodeForbiddenCSS,
+			templatediag.CodeForbiddenCSS,
 		},
 		{
 			"style attribute remote background",
 			`<div style="background-image:url(http://evil.example/x.png)">y</div>`,
-			CodeForbiddenCSS,
+			templatediag.CodeForbiddenCSS,
 		},
 		{
 			"style block import",
 			`<style>@import "http://evil.example/x.css";</style>`,
-			CodeForbiddenCSS,
+			templatediag.CodeForbiddenCSS,
 		},
 		{
 			"style block remote url",
 			`<style>body{background:url(https://evil.example/x.png)}</style>`,
-			CodeForbiddenCSS,
+			templatediag.CodeForbiddenCSS,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diags := SanitizeHTML("bodyHtml", tt.source, DocumentSanitizeOptions())
+			diags := HTML("bodyHtml", tt.source, DocumentOptions())
 
 			require.True(t, diags.HasErrors(),
-				"%s must be rejected; got %v", tt.name, codes(diags))
-			assert.True(t, hasCode(diags, tt.wantCode),
-				"expected code %s, got %v", tt.wantCode, codes(diags))
+				"%s must be rejected; got %v", tt.name, templatediagtest.Codes(diags))
+			assert.True(t, templatediagtest.HasCode(diags, tt.wantCode),
+				"expected code %s, got %v", tt.wantCode, templatediagtest.Codes(diags))
 		})
 	}
 }
@@ -236,7 +288,7 @@ func TestSanitizeHTMLAcceptsLegitimateDocumentMarkup(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diags := SanitizeHTML("bodyHtml", tt.source, DocumentSanitizeOptions())
+			diags := HTML("bodyHtml", tt.source, DocumentOptions())
 			assert.False(t, diags.HasErrors(),
 				"%s must be accepted; got %v", tt.name, diags.Summary())
 		})
@@ -249,24 +301,24 @@ func TestSanitizeHTMLAcceptsLegitimateDocumentMarkup(t *testing.T) {
 func TestSanitizeEmailRejectsStyleBlocks(t *testing.T) {
 	source := `<style>body{color:#111}</style><p>Invoice attached.</p>`
 
-	emailDiags := SanitizeHTML("bodyHtml", source, EmailSanitizeOptions())
+	emailDiags := HTML("bodyHtml", source, EmailOptions())
 	require.True(t, emailDiags.HasErrors())
-	assert.True(t, hasCode(emailDiags, CodeForbiddenElement))
+	assert.True(t, templatediagtest.HasCode(emailDiags, templatediag.CodeForbiddenElement))
 	assert.Contains(t, emailDiags.Summary(), "stripped by mail clients")
 
-	docDiags := SanitizeHTML("bodyHtml", source, DocumentSanitizeOptions())
+	docDiags := HTML("bodyHtml", source, DocumentOptions())
 	assert.False(t, docDiags.HasErrors(), "a PDF may use a real stylesheet")
 }
 
 func TestSanitizeHTMLReportsPosition(t *testing.T) {
 	source := "<p>line one</p>\n<p>line two</p>\n<script>alert(1)</script>"
 
-	diags := SanitizeHTML("bodyHtml", source, DocumentSanitizeOptions())
+	diags := HTML("bodyHtml", source, DocumentOptions())
 	require.True(t, diags.HasErrors())
 
 	found := false
 	for _, d := range diags {
-		if d.Code == CodeForbiddenElement {
+		if d.Code == templatediag.CodeForbiddenElement {
 			assert.Equal(t, 3, d.Line, "the script is on the third line")
 			found = true
 		}
@@ -275,7 +327,7 @@ func TestSanitizeHTMLReportsPosition(t *testing.T) {
 }
 
 func TestSanitizeHTMLReportsFieldForEditorRouting(t *testing.T) {
-	diags := SanitizeHTML("headerHtml", `<script>x</script>`, DocumentSanitizeOptions())
+	diags := HTML("headerHtml", `<script>x</script>`, DocumentOptions())
 	require.NotEmpty(t, diags)
 	assert.Equal(t, "headerHtml", diags[0].Field)
 }
@@ -311,9 +363,9 @@ func TestSanitizeCSS(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diags := SanitizeCSS("cssContent", tt.source)
+			diags := CSS("cssContent", tt.source)
 			assert.Equal(t, tt.wantErr, diags.HasErrors(),
-				"source %q produced %v", tt.source, codes(diags))
+				"source %q produced %v", tt.source, templatediagtest.Codes(diags))
 		})
 	}
 }
@@ -350,80 +402,11 @@ func TestSanitizeHTMLMultipleFindings(t *testing.T) {
 		<img src="http://evil.example/x.png" onerror="b()">
 		<iframe src="data:text/html,c"></iframe>`
 
-	diags := SanitizeHTML("bodyHtml", source, DocumentSanitizeOptions())
+	diags := HTML("bodyHtml", source, DocumentOptions())
 
-	assert.GreaterOrEqual(t, len(diags), 3, "got %v", codes(diags))
-	assert.True(t, hasCode(diags, CodeForbiddenElement))
-	assert.True(t, hasCode(diags, CodeForbiddenAttribute))
-}
-
-func TestDiagnosticsSortedPutsErrorsFirst(t *testing.T) {
-	diags := Diagnostics{
-		{Severity: SeverityWarning, Code: CodeUnknownVariable, Field: "a", Line: 1},
-		{Severity: SeverityError, Code: CodeForbiddenElement, Field: "a", Line: 9},
-		{Severity: SeverityError, Code: CodeForbiddenElement, Field: "a", Line: 2},
-	}
-
-	sorted := diags.Sorted()
-
-	assert.Equal(t, SeverityError, sorted[0].Severity)
-	assert.Equal(t, 2, sorted[0].Line)
-	assert.Equal(t, SeverityError, sorted[1].Severity)
-	assert.Equal(t, SeverityWarning, sorted[2].Severity)
-}
-
-func TestDiagnosticStringIncludesPosition(t *testing.T) {
-	d := Diagnostic{
-		Severity: SeverityError,
-		Code:     CodeSyntaxError,
-		Field:    "bodyHtml",
-		Message:  "unexpected {{end}}",
-		Line:     12,
-		Column:   4,
-	}
-
-	s := d.String()
-	assert.Contains(t, s, "error")
-	assert.Contains(t, s, CodeSyntaxError)
-	assert.Contains(t, s, "bodyHtml")
-	assert.Contains(t, s, "line 12")
-	assert.Contains(t, s, "col 4")
-	assert.Contains(t, s, "unexpected {{end}}")
-}
-
-func TestExtractTemplatePosition(t *testing.T) {
-	tests := []struct {
-		name       string
-		in         string
-		wantLine   int
-		wantColumn int
-		wantMsg    string
-	}{
-		{
-			"line and column",
-			`template: invoice.pdf:PDF:12:4: unexpected "}" in operand`,
-			12, 4, `unexpected "}" in operand`,
-		},
-		{
-			"line only",
-			`template: invoice.pdf:7: unexpected EOF`,
-			7, 0, "unexpected EOF",
-		},
-		{
-			"no position",
-			"some other failure",
-			0, 0, "some other failure",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			line, column, msg := extractTemplatePosition(tt.in)
-			assert.Equal(t, tt.wantLine, line)
-			assert.Equal(t, tt.wantColumn, column)
-			assert.Equal(t, tt.wantMsg, msg)
-		})
-	}
+	assert.GreaterOrEqual(t, len(diags), 3, "got %v", templatediagtest.Codes(diags))
+	assert.True(t, templatediagtest.HasCode(diags, templatediag.CodeForbiddenElement))
+	assert.True(t, templatediagtest.HasCode(diags, templatediag.CodeForbiddenAttribute))
 }
 
 // TestSanitizeHTMLDoesNotFlagTextContent confirms text is left alone: a document
@@ -431,8 +414,8 @@ func TestExtractTemplatePosition(t *testing.T) {
 func TestSanitizeHTMLDoesNotFlagTextContent(t *testing.T) {
 	source := `<p>Do not paste &lt;script&gt; tags into the notes field.</p>`
 
-	diags := SanitizeHTML("bodyHtml", source, DocumentSanitizeOptions())
-	assert.False(t, diags.HasErrors(), strings.Join(codes(diags), ","))
+	diags := HTML("bodyHtml", source, DocumentOptions())
+	assert.False(t, diags.HasErrors(), strings.Join(templatediagtest.Codes(diags), ","))
 }
 
 // TestFetchedAndNavigatedURLsHaveDifferentRules covers a distinction that is easy to
@@ -467,9 +450,9 @@ func TestFetchedAndNavigatedURLsHaveDifferentRules(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diags := SanitizeHTML("bodyHtml", tt.source, DocumentSanitizeOptions())
+			diags := HTML("bodyHtml", tt.source, DocumentOptions())
 			assert.Equal(t, tt.wantErr, diags.HasErrors(),
-				"source %q produced %v", tt.source, codes(diags))
+				"source %q produced %v", tt.source, templatediagtest.Codes(diags))
 		})
 	}
 }
