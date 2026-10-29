@@ -118,7 +118,9 @@ func settlementStatementSpecs() []readspec.List {
 			QueryNote: "Optional free text matched against the settlement number. Narrow to " +
 				"a carrier by carrierId, from carrier_list.",
 			References: map[string]readspec.Reference{querytool.ParamCarrierID: {
-				Resource: permission.ResourceCarrier, What: "The carrier", Source: querytool.ToolCarrierList,
+				Resource: permission.ResourceCarrier,
+				What:     "The carrier",
+				Source:   querytool.ToolCarrierList,
 			}},
 			Resource: permission.ResourceCarrierSettlement,
 			Amounts:  true,

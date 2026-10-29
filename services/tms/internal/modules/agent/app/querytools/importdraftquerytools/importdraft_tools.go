@@ -48,7 +48,7 @@ func Providers() []any {
 }
 
 func draftPolicy(name string) agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(name, querytool.ReadSpec{
+	return querytool.ReadPolicy(name, &querytool.ReadSpec{
 		Resource:  permission.ResourceDocument,
 		Scope:     agenttooltrust.ToolScopeSelf,
 		Effect:    agenttooltrust.ToolEffectPresent,

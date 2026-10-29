@@ -437,7 +437,7 @@ func TestListTool_KeepsUnlistedValuesOutOfTheDescriptionButStillRefusesOthers(t 
 	spec := probeSpec(capture)
 	spec.Fields[1].ValuesUnlisted = true
 	spec.Fields[1].Note = "the probe's state"
-	tool := New(spec)
+	tool := New(&spec)
 
 	description := tool.Description()
 	assert.Contains(t, description, "status (enum): the probe's state")
@@ -488,7 +488,7 @@ func TestListTool_RefusesAFieldTheEntityNoLongerCarries(t *testing.T) {
 	spec.Config = &domaintypes.FieldConfiguration{
 		FilterableFields: map[string]bool{"code": true},
 	}
-	tool := New(spec)
+	tool := New(&spec)
 
 	_, err := tool.Query(t.Context(), querytooltest.TestParams(filterParams(
 		map[string]any{"field": "status", "operator": "eq", "value": "Active"},
@@ -562,7 +562,7 @@ func TestListTool_SaysWhenTheRowsMatchedAsACloseSpelling(t *testing.T) {
 			func(row any) any { return row },
 		), nil
 	}
-	tool := New(spec)
+	tool := New(&spec)
 
 	result, err := tool.Query(
 		t.Context(),

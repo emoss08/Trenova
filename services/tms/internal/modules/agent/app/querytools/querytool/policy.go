@@ -20,7 +20,7 @@ type ReadSpec struct {
 	Rationale       string
 }
 
-func ReadPolicy(name string, spec ReadSpec) agenttoolports.ToolPolicy {
+func ReadPolicy(name string, spec *ReadSpec) agenttoolports.ToolPolicy {
 	policy := agenttoolports.ToolPolicy{
 		Name:            name,
 		Kind:            agenttooltrust.ToolKindQuery,

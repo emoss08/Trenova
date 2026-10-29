@@ -61,6 +61,7 @@ type PageResume struct {
 	ByOffset bool
 }
 
+//nolint:gocritic // a list returns its outcome by value, and the runtime reads its page through it
 func (o SearchOutcome) PageRows() int {
 	list := reflect.ValueOf(o.Items)
 	if list.Kind() != reflect.Slice {
@@ -70,6 +71,7 @@ func (o SearchOutcome) PageRows() int {
 	return list.Len()
 }
 
+//nolint:gocritic // a list returns its outcome by value, and the runtime reads its page through it
 func (o SearchOutcome) CutPage(rows int) (any, bool) {
 	cut, ok := o.Cut(rows)
 	if !ok {
@@ -104,6 +106,8 @@ func (o *SearchOutcome) Cut(rows int) (SearchOutcome, bool) {
 }
 
 // paged records where a page sits in the whole list.
+//
+//nolint:gocritic // it returns an amended copy, chained on outcomes built in place
 func (o SearchOutcome) Paged(p Page, hasMore bool) SearchOutcome {
 	o.Offset = p.Offset
 	o.HasMore = hasMore

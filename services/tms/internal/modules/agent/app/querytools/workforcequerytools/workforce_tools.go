@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
@@ -65,7 +64,7 @@ func (t *workforceRead) ParamSchema() map[string]any {
 }
 
 func (t *workforceRead) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.name, querytool.ReadSpec{
+	return querytool.ReadPolicy(t.name, &querytool.ReadSpec{
 		Resource:  t.resource,
 		Reads:     t.reads,
 		Source:    t.source,
@@ -84,29 +83,6 @@ func (t *workforceRead) Query(
 	return t.run(ctx, params, t.access.Gate(ctx, params, t.resource))
 }
 
-func wfWorkerProperty(what string) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyDescription: what + ", by id from worker_list. A name is not an id.",
-		toolschema.KeyRecordOf:    permission.ResourceWorker.String(),
-	}
-}
-
-func wfBoolProperty(description string) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeBoolean,
-		toolschema.KeyDescription: description,
-	}
-}
-
-func optionalWorker(params map[string]any) (pulid.ID, error) {
-	if querytool.OptionalString(params, querytool.ParamWorkerID) == "" {
-		return pulid.Nil, nil
-	}
-
-	return querytool.RequirePulid(params, querytool.ParamWorkerID)
-}
-
 func gatedText(gate *fieldgate.Gate, field, value string) string {
 	if value == "" || !gate.Show(field, field) {
 		return ""
@@ -121,17 +97,6 @@ func decimalText(value decimal.NullDecimal) string {
 	}
 
 	return value.Decimal.String()
-}
-
-func boolRef(value *bool) string {
-	switch {
-	case value == nil:
-		return ""
-	case *value:
-		return "yes"
-	default:
-		return "no"
-	}
 }
 
 func joinStrings[T ~string](values []T) string {

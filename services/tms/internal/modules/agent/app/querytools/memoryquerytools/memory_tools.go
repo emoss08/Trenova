@@ -2,6 +2,7 @@ package memoryquerytools
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -108,7 +109,7 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 }
 
 func (t *recallMemoryTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceAssistant,
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceMemory,
@@ -154,39 +155,21 @@ func (t *recallMemoryTool) Query(
 		req.IDs = []pulid.ID{memoryID}
 	}
 
-	// A type with no id names no record, so it narrows nothing: a model that
-	// fills every field sends one, and refusing it kept the search from ever
-	// running. An id with no type cannot be looked up.
-	subjectType := agentmemory.MemorySubjectType(
-		querytool.OptionalString(params.Params, "subjectType"),
-	)
-	rawID := querytool.OptionalString(params.Params, "subjectId")
-	if rawID == "" {
-		subjectType = ""
-	} else if subjectType == "" {
-		return nil, fmt.Errorf("subjectId needs subjectType: Customer, Location, Worker or Carrier")
+	subject, err := readMemorySubject(params.Params)
+	if err != nil {
+		return nil, err
 	}
-	if subjectType != "" {
-		if !subjectType.IsValid() {
-			return nil, fmt.Errorf(
-				"subjectType %q is not Customer, Location, Worker or Carrier",
-				subjectType,
-			)
-		}
-		subjectID, err := pulid.Parse(rawID)
-		if err != nil {
-			return nil, fmt.Errorf("subjectId %q is not a record id", rawID)
-		}
-		req.SubjectType = subjectType
-		req.SubjectID = subjectID
+	if subject.kind != "" {
+		req.SubjectType = subject.kind
+		req.SubjectID = subject.id
 	}
 
 	criteria := filtercatalog.NewCriteria("memories").At(querytool.ClockFor(params))
 	criteria.Text(req.Query)
 	criteria.Field("id", rawMemoryID)
 	criteria.Field("kind", string(req.Kind))
-	if subjectType != "" {
-		criteria.Field("about", strings.ToLower(string(subjectType))+" "+rawID)
+	if subject.kind != "" {
+		criteria.Field("about", strings.ToLower(string(subject.kind))+" "+subject.raw)
 	}
 	criteria.Field("tool", req.ToolName)
 
@@ -195,9 +178,70 @@ func (t *recallMemoryTool) Query(
 		return nil, err
 	}
 
-	rows := make([]memoryRow, 0, len(memories))
-	tainted := make([]agentrecord.RecordRef, 0, len(memories))
-	ids := make([]pulid.ID, 0, len(memories))
+	rows, tainted, ids := recalledRows(memories)
+
+	// A memory read back is a memory used, as much as one a prompt carried;
+	// counting only the prompt's left the ones agents look up reading as
+	// never used. A count that fails costs the count, not the answer.
+	if len(ids) > 0 {
+		_ = t.memories.RecordUse(ctx, agentmemoryports.RecordMemoryUseRequest{
+			TenantInfo: req.TenantInfo,
+			IDs:        ids,
+		})
+	}
+
+	return &recallOutcome{
+		SearchOutcome: querytool.SearchResult(criteria, rows, len(rows)),
+		tainted:       tainted,
+		recalled:      ids,
+	}, nil
+}
+
+type memorySubject struct {
+	kind agentmemory.MemorySubjectType
+	raw  string
+	id   pulid.ID
+}
+
+// readMemorySubject reads the record a recall is about. A type with no id
+// names no record, so it narrows nothing: a model that fills every field
+// sends one, and refusing it kept the search from ever running. An id with no
+// type cannot be looked up.
+func readMemorySubject(args map[string]any) (memorySubject, error) {
+	subject := memorySubject{
+		kind: agentmemory.MemorySubjectType(querytool.OptionalString(args, "subjectType")),
+		raw:  querytool.OptionalString(args, "subjectId"),
+	}
+	if subject.raw == "" {
+		subject.kind = ""
+		return subject, nil
+	}
+	if subject.kind == "" {
+		return subject, errors.New(
+			"subjectId needs subjectType: Customer, Location, Worker or Carrier",
+		)
+	}
+	if !subject.kind.IsValid() {
+		return subject, fmt.Errorf(
+			"subjectType %q is not Customer, Location, Worker or Carrier",
+			subject.kind,
+		)
+	}
+	id, err := pulid.Parse(subject.raw)
+	if err != nil {
+		return subject, fmt.Errorf("subjectId %q is not a record id", subject.raw)
+	}
+	subject.id = id
+
+	return subject, nil
+}
+
+func recalledRows(
+	memories []agentmemoryports.RecalledMemory,
+) (rows []memoryRow, tainted []agentrecord.RecordRef, ids []pulid.ID) {
+	rows = make([]memoryRow, 0, len(memories))
+	tainted = make([]agentrecord.RecordRef, 0, len(memories))
+	ids = make([]pulid.ID, 0, len(memories))
 	for _, recalled := range memories {
 		memory := recalled.Memory
 		tainted = append(tainted, memory.TaintedRecords()...)
@@ -217,21 +261,7 @@ func (t *recallMemoryTool) Query(
 		})
 	}
 
-	// A memory read back is a memory used, as much as one a prompt carried;
-	// counting only the prompt's left the ones agents look up reading as
-	// never used. A count that fails costs the count, not the answer.
-	if len(ids) > 0 {
-		_ = t.memories.RecordUse(ctx, agentmemoryports.RecordMemoryUseRequest{
-			TenantInfo: req.TenantInfo,
-			IDs:        ids,
-		})
-	}
-
-	return recallOutcome{
-		SearchOutcome: querytool.SearchResult(criteria, rows, len(rows)),
-		tainted:       tainted,
-		recalled:      ids,
-	}, nil
+	return rows, tainted, ids
 }
 
 // recallOutcome is a recall's answer, which names the memories in it that
@@ -244,9 +274,9 @@ type recallOutcome struct {
 	recalled []pulid.ID
 }
 
-func (o recallOutcome) TaintedRecords() []agentrecord.RecordRef { return o.tainted }
+func (o *recallOutcome) TaintedRecords() []agentrecord.RecordRef { return o.tainted }
 
-func (o recallOutcome) RecalledMemoryIDs() []pulid.ID { return o.recalled }
+func (o *recallOutcome) RecalledMemoryIDs() []pulid.ID { return o.recalled }
 
 func recordedBy(source agentmemory.MemorySource) string {
 	switch source {

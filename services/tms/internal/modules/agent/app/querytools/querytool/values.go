@@ -218,8 +218,8 @@ func PulidList(raw any, key string) ([]pulid.ID, error) {
 
 	ids := make([]pulid.ID, 0, len(values))
 	for index, value := range values {
-		text, ok := value.(string)
-		if !ok || strings.TrimSpace(text) == "" {
+		text, isText := value.(string)
+		if !isText || strings.TrimSpace(text) == "" {
 			return nil, fmt.Errorf("parameter %q[%d] must be a non-empty id", key, index)
 		}
 		id, err := pulid.Parse(strings.TrimSpace(text))

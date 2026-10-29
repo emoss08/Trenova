@@ -30,6 +30,8 @@ const (
 	FilterValue                = "value"
 	MinutesPerHour             = 60
 	ListFieldName              = "name"
+	ListFieldCode              = "code"
+	ListFieldStatus            = "status"
 	ToolOrderList              = "order_list"
 	ParamAfter                 = "after"
 	ToolCarrierList            = "carrier_list"

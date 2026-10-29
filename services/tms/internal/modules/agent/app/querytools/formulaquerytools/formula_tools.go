@@ -146,7 +146,7 @@ type formulaTemplateRow struct {
 func NewListFormulaTemplatesTool(
 	repo formulatemplateports.FormulaTemplateRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         toolListFormulaTemplates,
 		Row:          formulaTemplateRow{},
 		EntityPlural: pluralFormulaTemplates,
@@ -266,7 +266,7 @@ func (t *describeFormulaLanguageTool) ParamSchema() map[string]any {
 func (t *describeFormulaLanguageTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceFormulaTemplate},
+		&querytool.ReadSpec{Resource: permission.ResourceFormulaTemplate},
 	)
 }
 
@@ -353,7 +353,7 @@ func (t *checkFormulaTool) ParamSchema() map[string]any {
 }
 
 func (t *checkFormulaTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource:  permission.ResourceFormulaTemplate,
 		Rationale: "Checks source the model holds; nothing is saved and nothing is sent.",
 	})
@@ -451,7 +451,7 @@ func (t *runFormulaTestsTool) ParamSchema() map[string]any {
 }
 
 func (t *runFormulaTestsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource:  permission.ResourceFormulaTemplate,
 		Rationale: "Runs the tests in source the model holds; nothing is saved and nothing is sent.",
 	})
@@ -541,7 +541,7 @@ func (t *previewFormulaTool) ParamSchema() map[string]any {
 const formulaassistantPreviewInputs = 100
 
 func (t *previewFormulaTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceFormulaTemplate,
 		Rationale: "Rates source with the engine, for the sample record or a shipment the " +
 			"caller may read; nothing is saved and nothing is sent.",
@@ -743,7 +743,7 @@ func (t *proposeSourceTool) ParamSchema() map[string]any {
 }
 
 func (t *proposeSourceTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: t.spec.resource,
 		Scope:    agenttooltrust.ToolScopeSelf,
 		Effect:   agenttooltrust.ToolEffectPresent,

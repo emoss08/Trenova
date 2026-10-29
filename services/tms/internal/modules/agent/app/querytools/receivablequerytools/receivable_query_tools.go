@@ -170,7 +170,7 @@ func (t *listInvoiceAdjustmentsTool) ParamSchema() map[string]any {
 }
 
 func (t *listInvoiceAdjustmentsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{Resource: permission.ResourceInvoice})
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{Resource: permission.ResourceInvoice})
 }
 
 func (t *listInvoiceAdjustmentsTool) Query(
@@ -347,7 +347,7 @@ func (t *listCreditMemoApplicationsTool) ParamSchema() map[string]any {
 }
 
 func (t *listCreditMemoApplicationsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{Resource: permission.ResourceInvoice})
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{Resource: permission.ResourceInvoice})
 }
 
 func (t *listCreditMemoApplicationsTool) Query(
@@ -447,7 +447,7 @@ func newListInvoiceRunsTool(
 ) agenttoolports.AgentQueryTool {
 	access := fieldgate.NewAccess(permissions)
 
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         "invoice_list_runs",
 		Row:          invoiceRunRow{},
 		EntityPlural: "invoice runs",
@@ -561,7 +561,7 @@ func (t *getInvoiceRunTool) ParamSchema() map[string]any {
 func (t *getInvoiceRunTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceInvoiceRun},
+		&querytool.ReadSpec{Resource: permission.ResourceInvoiceRun},
 	)
 }
 
@@ -701,7 +701,7 @@ func (t *listOpenStatementsTool) ParamSchema() map[string]any {
 func (t *listOpenStatementsTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceInvoiceRun},
+		&querytool.ReadSpec{Resource: permission.ResourceInvoiceRun},
 	)
 }
 
@@ -819,7 +819,7 @@ func (t *listInvoiceShareCandidatesTool) ParamSchema() map[string]any {
 }
 
 func (t *listInvoiceShareCandidatesTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{Resource: permission.ResourceInvoice})
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{Resource: permission.ResourceInvoice})
 }
 
 func (t *listInvoiceShareCandidatesTool) Query(

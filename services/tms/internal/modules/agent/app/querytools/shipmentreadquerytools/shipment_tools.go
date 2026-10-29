@@ -100,7 +100,7 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 }
 
 func (t *getShipmentTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipment,
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceRecordNote,

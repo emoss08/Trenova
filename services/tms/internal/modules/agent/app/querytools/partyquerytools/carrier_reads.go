@@ -61,10 +61,10 @@ func carrierIntelEventsListSpec() readspec.List {
 			"subjectId":      "subject",
 		},
 		Unoffered: []string{
-			"status", "severity", "category", "carrierId", "subjectType", "subjectId",
+			querytool.ParamStatus, "severity", "category", "carrierId", "subjectType", "subjectId",
 			fieldFieldPath, fieldRuleCode, fieldVendorChangedAt,
 			"acknowledgedById", "resolvedById", "resolutionNote", "snapshotId", "updatedAt",
-			"createdAt",
+			querytool.FieldCreatedAt,
 		},
 		Notes: map[string]string{
 			querytool.ParamStatus:   "Open and Acknowledged ones are not settled yet.",

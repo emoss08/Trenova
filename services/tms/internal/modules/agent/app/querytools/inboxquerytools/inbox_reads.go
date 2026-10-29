@@ -338,7 +338,11 @@ func inboundSender(row map[string]any, _ map[string]struct{}, _ filtercatalog.Cl
 // inboundSearchParams are what a search by words still narrows by: the
 // filters the retrieval index keeps beside each message.
 var inboundSearchParams = []string{
-	querytool.ParamQuery, querytool.ParamStatus, paramInboundClassification, paramMailboxID, querytool.ParamLimit,
+	querytool.ParamQuery,
+	querytool.ParamStatus,
+	paramInboundClassification,
+	paramMailboxID,
+	querytool.ParamLimit,
 }
 
 // listInboundMessagesTool reads the inbox through GraphQL, and searches it by

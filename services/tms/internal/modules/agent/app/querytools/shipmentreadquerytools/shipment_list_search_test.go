@@ -106,7 +106,7 @@ func TestSearchShipments_AWordWithSeveralReadingsStillNarrowsTheOthers(t *testin
 	cascade := &customer.Customer{ID: pulid.MustNew("cus_"), Name: "Cascade Steel"}
 	steel := &commodity.Commodity{ID: pulid.MustNew("com_"), Name: "Steel Coils"}
 	repo := &recordingShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{
 		Customers:   &namedCustomers{items: []*customer.Customer{acme, cascade}},
 		Commodities: &namedCommodities{items: []*commodity.Commodity{steel}},
 	})
@@ -135,7 +135,7 @@ func TestSearchShipments_TwoCustomersNamedAreEitherOfThem(t *testing.T) {
 	acme := &customer.Customer{ID: pulid.MustNew("cus_"), Name: "Acme Foods"}
 	sunbelt := &customer.Customer{ID: pulid.MustNew("cus_"), Name: "Sunbelt Produce"}
 	repo := &recordingShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{
 		Customers: &namedCustomers{items: []*customer.Customer{acme, sunbelt}},
 	})
 
@@ -164,7 +164,7 @@ func TestSearchShipments_FindsALoadByTheCustomersPONumber(t *testing.T) {
 		PONumber:    "77Q-4182",
 	}
 	repo := &recordingShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{
 		Orders: &namedOrders{items: []shipmentports.OrderReferenceMatch{ord}},
 	})
 
@@ -190,7 +190,7 @@ func TestShipmentListSchema_SaysPOAndReferenceNumbersMatch(t *testing.T) {
 
 	tool := shipmentquerytools.NewShipmentListTool(
 		&fakeShipmentRepo{},
-		shipmentquerytools.PartySources{},
+		&shipmentquerytools.PartySources{},
 	)
 	properties, ok := tool.ParamSchema()["properties"].(map[string]any)
 	require.True(t, ok)
@@ -217,7 +217,7 @@ func TestSearchShipments_EachRowSaysWhatItCarries(t *testing.T) {
 	assert.Equal(t, "Steel Coils, Lumber", row.Carrying)
 
 	repo := &recordingShipmentRepo{}
-	_, err := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{}).
+	_, err := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{}).
 		Query(t.Context(), querytooltest.TestParams(map[string]any{"query": "acme"}))
 	require.NoError(t, err)
 	require.NotEmpty(t, repo.requests)
@@ -256,7 +256,7 @@ func TestShipmentList_RowsCarryTheHoldsInForceReadOnceForThePage(t *testing.T) {
 	t.Parallel()
 
 	items, holds := heldShipments()
-	tool := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{items: items}, shipmentquerytools.PartySources{}).
+	tool := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{items: items}, &shipmentquerytools.PartySources{}).
 		WithHolds(holds, &querytooltest.FakePermissions{Allowed: true})
 
 	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{}))
@@ -282,7 +282,7 @@ func TestShipmentList_ListsOnlyHeldLoads(t *testing.T) {
 
 	items, holds := heldShipments()
 	repo := &fakeShipmentRepo{items: items[:1]}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{}).
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{}).
 		WithHolds(holds, &querytooltest.FakePermissions{Allowed: true})
 
 	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{
@@ -308,7 +308,7 @@ func TestShipmentList_RefusesHoldReasonsWithLoadsThatAreNotHeld(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{}).
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{}).
 		WithHolds(&fakeActiveHolds{}, &querytooltest.FakePermissions{Allowed: true})
 
 	_, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{
@@ -323,7 +323,7 @@ func TestShipmentList_HoldsFollowTheReadersAccess(t *testing.T) {
 	t.Parallel()
 
 	items, holds := heldShipments()
-	tool := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{items: items}, shipmentquerytools.PartySources{}).
+	tool := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{items: items}, &shipmentquerytools.PartySources{}).
 		WithHolds(holds, querytooltest.PersonReaching(
 			permission.ResourceShipment,
 			permission.SensitivityRestricted,

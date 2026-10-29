@@ -64,8 +64,8 @@ func listCatalogSpecs() []listtool.Spec {
 func FilterCatalog() *filtercatalog.Catalog {
 	specs := listCatalogSpecs()
 	resources := make([]filtercatalog.Resource, 0, len(specs))
-	for _, spec := range specs {
-		resources = append(resources, listtool.CatalogResource(spec))
+	for i := range specs {
+		resources = append(resources, listtool.CatalogResource(&specs[i]))
 	}
 
 	return filtercatalog.New(resources...)

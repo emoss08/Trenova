@@ -84,7 +84,7 @@ func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 }
 
 func (t *getDocumentSummaryTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceDocument,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceDocument,

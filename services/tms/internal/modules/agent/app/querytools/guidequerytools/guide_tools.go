@@ -82,7 +82,7 @@ func (t *findInTrenovaTool) ParamSchema() map[string]any {
 }
 
 func (t *findInTrenovaTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceAssistant,
 		Scope:    agenttooltrust.ToolScopeSelf,
 		Effect:   agenttooltrust.ToolEffectDiscover,
@@ -265,7 +265,7 @@ func (t *openPageTool) ParamSchema() map[string]any {
 }
 
 func (t *openPageTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource:  permission.ResourceAssistant,
 		Scope:     agenttooltrust.ToolScopeSelf,
 		Effect:    agenttooltrust.ToolEffectNavigate,

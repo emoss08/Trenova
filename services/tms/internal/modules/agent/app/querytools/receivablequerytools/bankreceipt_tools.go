@@ -2,6 +2,7 @@ package receivablequerytools
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -118,9 +120,11 @@ func bankReceiptRowFrom(
 	return row
 }
 
+var errNoActiveWorkItem = errors.New("the receipt has no open queue entry")
+
 // activeWorkItem reads the queue entry for a receipt, and reads "none" as
-// none rather than as a failure: a receipt with no open item is the normal
-// state of a matched one.
+// errNoActiveWorkItem rather than as a failure: a receipt with no open item is
+// the normal state of a matched one.
 func activeWorkItem(
 	ctx context.Context,
 	items workItemReader,
@@ -128,13 +132,13 @@ func activeWorkItem(
 	receiptID pulid.ID,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	if items == nil {
-		return nil, nil
+		return nil, errNoActiveWorkItem
 	}
 
 	item, err := items.GetActiveByReceiptID(ctx, tenant, receiptID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil
+			return nil, errNoActiveWorkItem
 		}
 
 		return nil, err
@@ -169,20 +173,20 @@ func (t *listBankReceiptExceptionsTool) Description() string {
 
 func (t *listBankReceiptExceptionsTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"query": map[string]any{
-				"type":        "string",
-				"description": "Words to look for in the reference, the memo or the exception reason.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Words to look for in the reference, the memo or the exception reason.",
 			},
 			querytool.ParamLimit: querytool.LimitSchema(defaultBankReceiptRows, maxBankReceiptRows),
 		},
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *listBankReceiptExceptionsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceBankReceipt,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceBankReceipt,
@@ -320,19 +324,19 @@ func (t *getBankReceiptTool) Description() string {
 
 func (t *getBankReceiptTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"bankReceiptId": agenttoolschema.RecordIDText(permission.ResourceBankReceipt,
 				"The bank receipt's id, from receivable_list_bank_receipt_exceptions or "+
 					"this run's subject."),
 		},
-		"required":             []string{"bankReceiptId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"bankReceiptId"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *getBankReceiptTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceBankReceipt,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceBankReceipt,
@@ -362,7 +366,7 @@ func (t *getBankReceiptTool) Query(
 	}
 
 	item, err := activeWorkItem(ctx, t.items, tenant, id)
-	if err != nil {
+	if err != nil && !errors.Is(err, errNoActiveWorkItem) {
 		return nil, err
 	}
 

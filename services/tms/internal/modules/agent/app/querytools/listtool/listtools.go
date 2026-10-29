@@ -2,6 +2,7 @@ package listtool
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -117,8 +118,8 @@ type Tool struct {
 	description string
 }
 
-func New(spec Spec) agenttoolports.AgentQueryTool {
-	return Build(&spec)
+func New(spec *Spec) agenttoolports.AgentQueryTool {
+	return Build(spec)
 }
 
 func Build(spec *Spec) *Tool {
@@ -134,7 +135,7 @@ func Build(spec *Spec) *Tool {
 		}
 	}
 
-	resource := CatalogResource(*spec)
+	resource := CatalogResource(spec)
 
 	return &Tool{
 		Spec:        *spec,
@@ -143,7 +144,7 @@ func Build(spec *Spec) *Tool {
 		Operators:   agenttoolschema.Derived(spec.Name+".operator", operators),
 		sortable:    agenttoolschema.Derived(spec.Name+".sortBy", resource.SortableNames()),
 		Columns:     agenttoolschema.Derived(spec.Name+".column", rowColumns(spec.Row)),
-		description: buildListDescription(*spec),
+		description: buildListDescription(spec),
 	}
 }
 
@@ -162,7 +163,7 @@ func rowColumns(row any) []string {
 // CatalogResource is the one place a list spec becomes a catalogued resource,
 // so the tool and the table composer narrow the same entity by the same
 // fields.
-func CatalogResource(spec Spec) filtercatalog.Resource {
+func CatalogResource(spec *Spec) filtercatalog.Resource {
 	return filtercatalog.Resource{
 		Tool:     spec.Name,
 		Resource: spec.Resource,
@@ -181,7 +182,7 @@ const DateRule = " Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; "
 // buildListDescription renders the summary and every filterable field as
 // compactly as a model still reads them. A field with values or a note is
 // spelled out on its own; the rest are only names, grouped under their kind.
-func buildListDescription(spec Spec) string {
+func buildListDescription(spec *Spec) string {
 	var b strings.Builder
 	b.WriteString(spec.Summary)
 	b.WriteString(" Filters: ")
@@ -244,7 +245,7 @@ func (t *Tool) Description() string { return t.description }
 func (t *Tool) SearchTerms() []string { return t.Spec.SearchTerms }
 
 func (t *Tool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: t.Spec.Resource,
 	})
 }
@@ -392,7 +393,7 @@ func (t *Tool) Query(
 		return nil, err
 	}
 
-	outcome, more := window.outcome(criteria, fetched)
+	outcome, more := window.outcome(criteria, &fetched)
 	if fetched.fuzzy && outcome.Count > 0 {
 		outcome.Note = closeSpellingNote(t.Spec.EntityPlural, query)
 	}
@@ -459,7 +460,7 @@ func (w *listWindow) first() bool {
 	return w.offset.Offset == 0 && w.cursor.First()
 }
 
-func (w *listWindow) rows(fetched Page) ([]any, bool) {
+func (w *listWindow) rows(fetched *Page) ([]any, bool) {
 	if w.byCursor {
 		return fetched.Rows, fetched.hasMore
 	}
@@ -469,7 +470,7 @@ func (w *listWindow) rows(fetched Page) ([]any, bool) {
 
 func (w *listWindow) outcome(
 	criteria *filtercatalog.Criteria,
-	fetched Page,
+	fetched *Page,
 ) (querytool.SearchOutcome, bool) {
 	rows, more := w.rows(fetched)
 	outcome := querytool.SearchResult(criteria, rows, len(rows))
@@ -573,7 +574,7 @@ func (t *Tool) RunView(
 		return nil, err
 	}
 
-	rows, more := window.rows(fetched)
+	rows, more := window.rows(&fetched)
 	run := &querytool.ViewRun{
 		Outcome: querytool.SearchResult(criteria, rows, len(rows)),
 		More:    more,
@@ -630,7 +631,7 @@ func (t *Tool) BuildFilters(
 
 	entries, ok := raw.([]any)
 	if !ok {
-		return nil, fmt.Errorf(
+		return nil, errors.New(
 			`parameter "filters" must be an array of {field, operator, value} objects`,
 		)
 	}
@@ -643,9 +644,9 @@ func (t *Tool) BuildFilters(
 
 	conditions := make([]filtercatalog.Condition, 0, len(entries))
 	for _, entry := range entries {
-		object, ok := entry.(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf(
+		object, isObject := entry.(map[string]any)
+		if !isObject {
+			return nil, errors.New(
 				`each entry in "filters" must be an object with field and operator`,
 			)
 		}

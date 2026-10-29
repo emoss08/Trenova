@@ -72,7 +72,7 @@ func (t *listPortalSitesTool) ParamSchema() map[string]any {
 }
 
 func (t *listPortalSitesTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourcePortalAutomation,
 		Rationale: "Lists the portal sites an administrator set up; it changes nothing, " +
 			"sends nothing, and returns only what administrators wrote.",
@@ -185,7 +185,7 @@ func (t *readPortalTool) ParamSchema() map[string]any {
 }
 
 func (t *readPortalTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource:        permission.ResourcePortalAutomation,
 		Reads:           agenttooltrust.ExternalReadAlways,
 		Source:          agent.TaintSourceWeb,

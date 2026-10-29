@@ -29,7 +29,7 @@ type customerRow struct {
 }
 
 func NewListCustomersTool(repo customerports.CustomerRepository) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolCustomerList,
 		Row:          customerRow{},
 		EntityPlural: pluralCustomers,
@@ -37,13 +37,17 @@ func NewListCustomersTool(repo customerports.CustomerRepository) agenttoolports.
 		Resource:     permission.ResourceCustomer,
 		Config:       listquery.Describe((*customer.Customer)(nil), customerdb.CustomersSchema()),
 		Fields: []filtercatalog.Field{
-			{Name: "status", Kind: filtercatalog.KindEnum, Values: querytool.StatusValues},
-			{Name: "code", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "name", Kind: filtercatalog.KindText, Sortable: true},
+			{
+				Name:   querytool.ListFieldStatus,
+				Kind:   filtercatalog.KindEnum,
+				Values: querytool.StatusValues,
+			},
+			{Name: querytool.ListFieldCode, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: querytool.ListFieldName, Kind: filtercatalog.KindText, Sortable: true},
 			{Name: "city", Kind: filtercatalog.KindText, Sortable: true},
 			{Name: "dotNumber", Kind: filtercatalog.KindText},
 			{Name: "mcNumber", Kind: filtercatalog.KindText},
-			{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 		},
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listtool.Page, error) {
 			result, err := repo.List(ctx, &customerports.ListCustomerRequest{Filter: opts})
@@ -76,7 +80,7 @@ type locationRow struct {
 }
 
 func NewListLocationsTool(repo locationports.LocationRepository) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolLocationList,
 		Row:          locationRow{},
 		EntityPlural: pluralLocations,
@@ -84,12 +88,16 @@ func NewListLocationsTool(repo locationports.LocationRepository) agenttoolports.
 		Resource:     permission.ResourceLocation,
 		Config:       listquery.Describe((*location.Location)(nil), locationdb.LocationsSchema()),
 		Fields: []filtercatalog.Field{
-			{Name: "status", Kind: filtercatalog.KindEnum, Values: querytool.StatusValues},
-			{Name: "code", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "name", Kind: filtercatalog.KindText, Sortable: true},
+			{
+				Name:   querytool.ListFieldStatus,
+				Kind:   filtercatalog.KindEnum,
+				Values: querytool.StatusValues,
+			},
+			{Name: querytool.ListFieldCode, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: querytool.ListFieldName, Kind: filtercatalog.KindText, Sortable: true},
 			{Name: "city", Kind: filtercatalog.KindText, Sortable: true},
 			{Name: "postalCode", Kind: filtercatalog.KindText},
-			{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 		},
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listtool.Page, error) {
 			result, err := repo.List(ctx, &locationports.ListLocationRequest{Filter: opts})

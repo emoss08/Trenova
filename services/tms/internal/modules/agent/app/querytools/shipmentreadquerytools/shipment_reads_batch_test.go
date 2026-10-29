@@ -64,7 +64,7 @@ func TestShipmentList_RowsCarryTheHoldsNoteAndWhenItStarted(t *testing.T) {
 		noteHold(items[0].ID, shipmenthold.HoldSourceUser, "Waiting on a corrected BOL."),
 		noteHold(items[1].ID, shipmenthold.HoldSourceEDI, "partner text"),
 	}}
-	tool := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{items: items}, shipmentquerytools.PartySources{}).
+	tool := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{items: items}, &shipmentquerytools.PartySources{}).
 		WithHolds(holds, &querytooltest.FakePermissions{Allowed: true})
 
 	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{}))

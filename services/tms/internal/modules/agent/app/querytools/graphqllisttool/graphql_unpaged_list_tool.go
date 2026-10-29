@@ -87,7 +87,12 @@ func NewUnpaged(
 	if err != nil {
 		return nil, err
 	}
-	if params, required, err = graphqlread.Renamed(spec.Name, params, spec.Names, required); err != nil {
+	if params, required, err = graphqlread.Renamed(
+		spec.Name,
+		params,
+		spec.Names,
+		required,
+	); err != nil {
 		return nil, err
 	}
 	if params, err = graphqlread.Referenced(spec.Name, params, spec.References); err != nil {
@@ -157,7 +162,7 @@ func (t *UnpagedTool) Policy() agenttoolports.ToolPolicy {
 	spec := t.spec.Reads
 	spec.Resource = t.spec.Resource
 
-	return querytool.ReadPolicy(t.Name(), spec)
+	return querytool.ReadPolicy(t.Name(), &spec)
 }
 
 func (t *UnpagedTool) ParamSchema() map[string]any {
@@ -198,21 +203,9 @@ func (t *UnpagedTool) Query(
 	if err := t.checkArguments(args); err != nil {
 		return nil, err
 	}
-	variables, err := graphqlread.CompileInputs(t.Params, args, clk)
+	variables, window, err := t.variables(args, clk)
 	if err != nil {
 		return nil, err
-	}
-	for name, value := range t.spec.Inputs {
-		variables[name] = value
-	}
-	var window querytool.OffsetWindow
-	if t.paged {
-		if window, err = querytool.ReadOffsetWindow(t.spec.Name, args, querytool.GraphQLListLimit,
-			querytool.UnpagedMost); err != nil {
-			return nil, err
-		}
-		variables[querytool.ParamLimit] = window.Fetch(querytool.UnpagedMost)
-		variables[querytool.ParamOffset] = window.Offset
 	}
 
 	result, err := t.reader.Read(ctx, &graphqlreadports.GraphQLReadRequest{
@@ -237,30 +230,8 @@ func (t *UnpagedTool) Query(
 	query := strings.ToLower(
 		strings.TrimSpace(querytool.OptionalString(params.Params, graphqlread.ParamQuery)),
 	)
-	items := make([]map[string]any, 0, len(rows))
-	positions := make([]int, 0, len(rows))
-	for idx, row := range rows {
-		if node, ok := row.(map[string]any); ok && matchesQuery(node, t.spec.Matches, query) {
-			items = append(items, graphqlread.Compact(node))
-			positions = append(positions, idx)
-		}
-	}
-	withheld := graphqlread.RelativePaths(result.Withheld, prefix)
-	if t.spec.Shape != nil {
-		hidden := make(map[string]struct{}, len(withheld))
-		for _, path := range withheld {
-			hidden[path] = struct{}{}
-		}
-		for _, item := range items {
-			t.spec.Shape(item, hidden, clk)
-		}
-	}
-	if t.spec.Amounts {
-		for _, item := range items {
-			graphqlread.PresentAmounts(item)
-		}
-		withheld = graphqlread.PresentedPaths(withheld)
-	}
+	items, positions := t.matched(rows, query)
+	withheld := t.present(items, graphqlread.RelativePaths(result.Withheld, prefix), clk)
 
 	criteria := DescribeCriteria(t.spec.EntityPlural, t.Params, args, query)
 	outcome := map[string]any{
@@ -316,6 +287,68 @@ func (t *UnpagedTool) Query(
 	}
 
 	return outcome, nil
+}
+
+func (t *UnpagedTool) variables(
+	args map[string]any,
+	clk filtercatalog.Clock,
+) (map[string]any, querytool.OffsetWindow, error) {
+	var window querytool.OffsetWindow
+	variables, err := graphqlread.CompileInputs(t.Params, args, clk)
+	if err != nil {
+		return nil, window, err
+	}
+	for name, value := range t.spec.Inputs {
+		variables[name] = value
+	}
+	if !t.paged {
+		return variables, window, nil
+	}
+	if window, err = querytool.ReadOffsetWindow(t.spec.Name, args, querytool.GraphQLListLimit,
+		querytool.UnpagedMost); err != nil {
+		return nil, window, err
+	}
+	variables[querytool.ParamLimit] = window.Fetch(querytool.UnpagedMost)
+	variables[querytool.ParamOffset] = window.Offset
+
+	return variables, window, nil
+}
+
+func (t *UnpagedTool) matched(rows []any, query string) (items []map[string]any, positions []int) {
+	items = make([]map[string]any, 0, len(rows))
+	positions = make([]int, 0, len(rows))
+	for idx, row := range rows {
+		if node, ok := row.(map[string]any); ok && matchesQuery(node, t.spec.Matches, query) {
+			items = append(items, graphqlread.Compact(node))
+			positions = append(positions, idx)
+		}
+	}
+
+	return items, positions
+}
+
+func (t *UnpagedTool) present(
+	items []map[string]any,
+	withheld []string,
+	clk filtercatalog.Clock,
+) []string {
+	if t.spec.Shape != nil {
+		hidden := make(map[string]struct{}, len(withheld))
+		for _, path := range withheld {
+			hidden[path] = struct{}{}
+		}
+		for _, item := range items {
+			t.spec.Shape(item, hidden, clk)
+		}
+	}
+	if t.spec.Amounts {
+		for _, item := range items {
+			graphqlread.PresentAmounts(item)
+		}
+		withheld = graphqlread.PresentedPaths(withheld)
+	}
+
+	return withheld
 }
 
 // OffsetPage is a page of a list that pages by offset under the cursor

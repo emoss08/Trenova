@@ -84,7 +84,7 @@ func (t *listWeatherAlertsTool) ParamSchema() map[string]any {
 }
 
 func (t *listWeatherAlertsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipment,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceWeather,

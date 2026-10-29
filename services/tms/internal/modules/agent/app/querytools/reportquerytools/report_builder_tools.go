@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -208,24 +209,24 @@ func (t *listReportDatasetsTool) Description() string {
 
 func (t *listReportDatasetsTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": querytool.WithPaging(map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: querytool.WithPaging(map[string]any{
 			"query": map[string]any{
-				"type": "string",
-				"description": "Words matched against the dataset key, label and description; " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Words matched against the dataset key, label and description; " +
 					"each word must begin a word there.",
 			},
 			"category": map[string]any{
-				"type":        "string",
-				"description": "Optional area to narrow to, such as Operations, Billing or Fleet.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Optional area to narrow to, such as Operations, Billing or Fleet.",
 			},
 		}, defaultDatasetPage, maxDatasetPage),
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *listReportDatasetsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 	})
 }
@@ -428,25 +429,25 @@ func (t *describeReportDatasetTool) Description() string {
 
 func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": querytool.WithPaging(map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: querytool.WithPaging(map[string]any{
 			"dataset": map[string]any{
-				"type":        "string",
-				"description": "The dataset key from report_list_datasets, such as shipment.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The dataset key from report_list_datasets, such as shipment.",
 			},
 			"query": map[string]any{
-				"type": "string",
-				"description": "Optional words matched against field keys, labels and " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional words matched against field keys, labels and " +
 					"descriptions, here and on the datasets the edges reach.",
 			},
 		}, defaultFieldPage, maxFieldPage),
-		"required":             []string{"dataset"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"dataset"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *describeReportDatasetTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 	})
 }
@@ -722,23 +723,23 @@ func (t *describeReportTool) Description() string {
 
 func (t *describeReportTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"reportKey": map[string]any{
-				"type":        "string",
-				"description": "The reportKey of a built-in report from report_list.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The reportKey of a built-in report from report_list.",
 			},
 			"definitionId": agenttoolschema.OfResource(map[string]any{
-				"type":        "string",
-				"description": "The definitionId of a saved report from report_list.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The definitionId of a saved report from report_list.",
 			}, permission.ResourceReport),
 		},
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *describeReportTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 	})
 }
@@ -945,29 +946,29 @@ func (t *previewReportTool) Description() string {
 
 func (t *previewReportTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"definition": report.DefinitionToolSchema(),
 			"definitionId": agenttoolschema.OfResource(map[string]any{
-				"type":        "string",
-				"description": "Preview a saved report from report_list instead of a definition.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Preview a saved report from report_list instead of a definition.",
 			}, permission.ResourceReport),
 			"reportKey": map[string]any{
-				"type":        "string",
-				"description": "Preview a built-in report from report_list instead of a definition.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Preview a built-in report from report_list instead of a definition.",
 			},
 			"parameters": map[string]any{
-				"type": "object",
-				"description": "Values for the report's parameters, keyed by name, in the " +
+				toolschema.KeyType: toolschema.TypeObject,
+				toolschema.KeyDescription: "Values for the report's parameters, keyed by name, in the " +
 					"shape each declares. A list parameter takes a plain JSON array.",
 			},
 		},
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *previewReportTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 	})
 }
@@ -1002,7 +1003,7 @@ func (t *previewReportTool) Query(
 		return nil, fmt.Errorf("the report could not be previewed: %w", err)
 	}
 
-	return previewOf(source, result, querytool.ClockFor(params)), nil
+	return previewOf(&source, result, querytool.ClockFor(params)), nil
 }
 
 func (t *previewReportTool) source(
@@ -1035,7 +1036,7 @@ func (t *previewReportTool) source(
 }
 
 func previewOf(
-	source reportSource,
+	source *reportSource,
 	result *reporting.PreviewResult,
 	clk filtercatalog.Clock,
 ) reportPreview {

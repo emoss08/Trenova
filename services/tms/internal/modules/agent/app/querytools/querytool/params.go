@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -165,53 +165,6 @@ func OptionalInt(params map[string]any, key string, fallback int) int {
 	}
 }
 
-// maxUnixSeconds is the last instant a seconds parameter is read as: a value
-// past it is almost always milliseconds, and reading it as seconds would put
-// the window centuries away and match nothing without saying why.
-const maxUnixSeconds = int64(9_999_999_999)
-
-// optionalUnixSeconds reads an instant given as whole Unix seconds. Unlike
-// optionalInt it refuses what it cannot read, because a time bound dropped
-// silently widens the answer to everything.
-func optionalUnixSeconds(params map[string]any, key string) (int64, error) {
-	raw, ok := params[key]
-	if !ok || raw == nil {
-		return 0, nil
-	}
-
-	var value int64
-	switch typed := raw.(type) {
-	case float64:
-		if typed != math.Trunc(typed) {
-			return 0, fmt.Errorf("parameter %q must be whole Unix seconds, not %v", key, typed)
-		}
-		value = int64(typed)
-	case int:
-		value = int64(typed)
-	case int64:
-		value = typed
-	case string:
-		parsed, err := strconv.ParseInt(strings.TrimSpace(typed), 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("parameter %q must be whole Unix seconds, not %q", key, typed)
-		}
-		value = parsed
-	default:
-		return 0, fmt.Errorf("parameter %q must be whole Unix seconds", key)
-	}
-
-	switch {
-	case value < 0:
-		return 0, fmt.Errorf("parameter %q must not be negative", key)
-	case value > maxUnixSeconds:
-		return 0, fmt.Errorf(
-			"parameter %q is %d, which reads as milliseconds; give Unix seconds", key, value,
-		)
-	}
-
-	return value, nil
-}
-
 // OptionalObject reads a nested object the caller may leave out. A model that
 // sends null rather than omitting the key means the same thing, and a tool that
 // treats the two differently fails on a distinction the model cannot see.
@@ -256,15 +209,24 @@ func EndOfDay(clk filtercatalog.Clock, day int64) int64 {
 }
 
 func IntParam(description string) map[string]any {
-	return map[string]any{"type": "integer", "description": description}
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeInteger,
+		toolschema.KeyDescription: description,
+	}
 }
 
 func BoolParam(description string) map[string]any {
-	return map[string]any{"type": "boolean", "description": description}
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeBoolean,
+		toolschema.KeyDescription: description,
+	}
 }
 
 func StringParam(description string) map[string]any {
-	return map[string]any{"type": "string", "description": description}
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeString,
+		toolschema.KeyDescription: description,
+	}
 }
 
 func EnumParam(description string, source agenttoolschema.EnumSource[string]) map[string]any {
@@ -273,12 +235,12 @@ func EnumParam(description string, source agenttoolschema.EnumSource[string]) ma
 
 func ObjectSchema(properties map[string]any, required ...string) map[string]any {
 	schema := map[string]any{
-		"type":                 "object",
-		"properties":           properties,
-		"additionalProperties": false,
+		toolschema.KeyType:                 toolschema.TypeObject,
+		toolschema.KeyProperties:           properties,
+		toolschema.KeyAdditionalProperties: false,
 	}
 	if len(required) > 0 {
-		schema["required"] = required
+		schema[toolschema.KeyRequired] = required
 	}
 
 	return schema
@@ -303,31 +265,6 @@ func ValidEnum(
 	return "", fmt.Errorf(
 		"%s %q is not one of %s", key, value, strings.Join(source.Values, ", "),
 	)
-}
-
-// optionalEnums reads a list of enum values the caller may leave out and
-// refuses any value the domain does not know, naming it, so a misspelt status
-// is a correctable error rather than a filter that silently matches nothing.
-func optionalEnums[T ~string](
-	params map[string]any,
-	key string,
-	valid func(T) bool,
-) ([]T, error) {
-	raw := OptionalStrings(params, key)
-	if len(raw) == 0 {
-		return nil, nil
-	}
-
-	values := make([]T, 0, len(raw))
-	for _, value := range raw {
-		typed := T(value)
-		if !valid(typed) {
-			return nil, fmt.Errorf("%s %q is not a known value", key, value)
-		}
-		values = append(values, typed)
-	}
-
-	return values, nil
 }
 
 func OptionalBoolPointer(params map[string]any, key string) *bool {

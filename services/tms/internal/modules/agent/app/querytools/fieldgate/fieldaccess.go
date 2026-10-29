@@ -444,7 +444,7 @@ func Result(outcome *querytool.SearchOutcome, gate *Gate) *Outcome {
 // CutPage cuts the page and keeps what the gate withheld. Every marked record
 // stays marked: a row the cut left out was still read.
 func (o *Outcome) CutPage(rows int) (any, bool) {
-	cut, ok := o.SearchOutcome.Cut(rows)
+	cut, ok := o.Cut(rows)
 	if !ok {
 		return nil, false
 	}

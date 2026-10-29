@@ -132,7 +132,7 @@ func (t *previewEDIDocumentTool) ParamSchema() map[string]any {
 }
 
 func (t *previewEDIDocumentTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceEDI,
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceEDI,

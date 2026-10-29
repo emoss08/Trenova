@@ -38,7 +38,7 @@ func NewListInvoicesTool(
 	repo invoiceports.InvoiceRepository,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         "invoice_list",
 		Row:          invoiceRow{},
 		EntityPlural: "invoices",

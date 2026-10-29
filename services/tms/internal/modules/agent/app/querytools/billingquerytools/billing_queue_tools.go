@@ -99,7 +99,7 @@ func buildBillingQueueList(
 	lister billingQueueLister,
 	access fieldgate.Access,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         "billing_list_queue_items",
 		Row:          billingQueueRow{},
 		EntityPlural: "billing queue items",
@@ -325,7 +325,7 @@ func (t *getBillingQueueItemTool) ParamSchema() map[string]any {
 func (t *getBillingQueueItemTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceBillingQueue},
+		&querytool.ReadSpec{Resource: permission.ResourceBillingQueue},
 	)
 }
 

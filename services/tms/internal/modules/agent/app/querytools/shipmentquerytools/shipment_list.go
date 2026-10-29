@@ -106,7 +106,7 @@ func ListSpec(repo shipmentports.ShipmentRepository) listtool.Spec {
 			})
 		},
 		Count: func(ctx context.Context, opts *pagination.QueryOptions) (int, bool, error) {
-			return countShipments(ctx, repo, opts, shipmentports.ShipmentOptions{})
+			return countShipments(ctx, repo, opts, &shipmentports.ShipmentOptions{})
 		},
 	}
 }
@@ -117,8 +117,8 @@ func countShipments(
 	ctx context.Context,
 	repo shipmentports.ShipmentRepository,
 	opts *pagination.QueryOptions,
-	options shipmentports.ShipmentOptions,
-) (int, bool, error) {
+	options *shipmentports.ShipmentOptions,
+) (total int, exact bool, err error) {
 	probe := *opts
 	probe.Pagination = pagination.Info{Limit: 1}
 	probe.Sort = nil
@@ -126,7 +126,7 @@ func countShipments(
 	result, err := repo.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter:          &probe,
 		Cursor:          pagination.CursorInfo{Limit: 1, IncludeTotalCount: true},
-		ShipmentOptions: options,
+		ShipmentOptions: *options,
 	})
 	if err != nil {
 		return 0, false, err

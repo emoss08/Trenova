@@ -195,8 +195,8 @@ func ExpectedMention(tool agenttoolports.AgentQueryTool, name string) (string, b
 		if param.Name != name {
 			continue
 		}
-		mention, described := graphqllisttool.DescribedName(param)
-		if !described || !list.Describable(param) {
+		mention, described := graphqllisttool.DescribedName(&param)
+		if !described || !list.Describable(&param) {
 			return "", false
 		}
 		if parent, _, nested := strings.Cut(param.Field, "."); nested {

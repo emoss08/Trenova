@@ -95,7 +95,7 @@ func (t *draftEDIConnectionTool) ParamSchema() map[string]any {
 }
 
 func (t *draftEDIConnectionTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource:        permission.ResourceEDI,
 		Reads:           agenttooltrust.ExternalReadAlways,
 		Source:          agent.TaintSourceAttachment,

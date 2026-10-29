@@ -44,27 +44,6 @@ const (
 	nearMissSample    = 5
 )
 
-func (t *Tool) conditionFilters(
-	args map[string]any,
-) (filters, groups []map[string]any, err error) {
-	for idx := range t.Spec.Conditions {
-		condition := &t.Spec.Conditions[idx]
-		raw, present := args[condition.Name]
-		if !present || raw == nil {
-			continue
-		}
-		yes, ok := raw.(bool)
-		if !ok {
-			return nil, nil, fmt.Errorf("parameter %q must be true or false", condition.Name)
-		}
-		all, oneOf := condition.Compile(yes)
-		filters = append(filters, all...)
-		groups = append(groups, oneOf...)
-	}
-
-	return filters, groups, nil
-}
-
 type Tool struct {
 	Spec  readspec.List
 	Read  graphqlread.Read
@@ -119,32 +98,16 @@ func New(
 		return nil, fmt.Errorf("%s reads %s, which is not a list", spec.Name, read.Operation)
 	}
 	input, inputType, tabled := read.TableInput()
-	skip := map[string]struct{}{IncludeTotalCount: {}}
-	switch {
-	case tabled:
-		skip[input] = struct{}{}
-	case read.PagesByCursor():
-		skip[graphqlread.InputFirst], skip[graphqlread.InputAfter] = struct{}{}, struct{}{}
-	case read.PagedInput() != "":
-	default:
-		return nil, fmt.Errorf("%s: %s takes no table input and no page of its own",
-			spec.Name, read.Operation)
-	}
-	if err := searchedFields(spec.Name, read.Fields, spec.Searches); err != nil {
-		return nil, err
-	}
-	params, err := Offered(spec.Name, read.TypedParams(), spec.Unoffered)
+	skip, err := pageSkips(spec.Name, &read, input, tabled)
 	if err != nil {
 		return nil, err
 	}
-	if params, err = graphqlread.InstantParams(spec.Name, params, spec.Instants); err != nil {
+	if err = searchedFields(spec.Name, read.Fields, spec.Searches); err != nil {
 		return nil, err
 	}
-	if spec.Amounts {
-		params = graphqlread.AmountParams(params)
-	}
-	if tabled {
-		params = graphqlread.WithInputParams(params, graphqlread.InputParams(inputType))
+	params, err := offeredParams(spec, &read, inputType, tabled)
+	if err != nil {
+		return nil, err
 	}
 	args, required, search, err := read.RootParams(spec.Name, skip)
 	if err != nil {
@@ -159,25 +122,15 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	theirs := insteadNames(instead)
-	if params, required, err = graphqlread.Renamed(spec.Name, params, without(spec.Names, theirs),
-		required); err != nil {
+	if params, required, err = namedParams(
+		spec,
+		params,
+		required,
+		insteadNames(instead),
+	); err != nil {
 		return nil, err
 	}
-	if params, err = graphqlread.Referenced(spec.Name, params,
-		without(spec.References, theirs)); err != nil {
-		return nil, err
-	}
-	if params, err = graphqlread.Annotate(spec.Name, params, without(spec.Notes, theirs)); err != nil {
-		return nil, err
-	}
-	for idx := range instead {
-		for _, param := range params {
-			if param.ArgField == "" && slices.Contains(instead[idx].bound.Keys, param.Arg) {
-				instead[idx].shared = append(instead[idx].shared, param)
-			}
-		}
-	}
+	shareInsteadKeys(instead, params)
 	bound, err := graphqlread.MatchAlongside(spec.Name, "alongside", spec.Alongside, read.Alongside)
 	if err != nil {
 		return nil, err
@@ -211,16 +164,128 @@ func New(
 	tool.Params = slices.DeleteFunc(params, func(param graphqlread.Param) bool {
 		return tool.confidential(&param)
 	})
-	if input != "" {
-		tool.Searched = read.ConfiguredSearch()
+	tool.Searched = searchedOf(&read, input, spec.Searches)
+
+	return tool, nil
+}
+
+func pageSkips(
+	name string,
+	read *graphqlread.Read,
+	input string,
+	tabled bool,
+) (map[string]struct{}, error) {
+	skip := map[string]struct{}{IncludeTotalCount: {}}
+	switch {
+	case tabled:
+		skip[input] = struct{}{}
+	case read.PagesByCursor():
+		skip[graphqlread.InputFirst], skip[graphqlread.InputAfter] = struct{}{}, struct{}{}
+	case read.PagedInput() != "":
+	default:
+		return nil, fmt.Errorf("%s: %s takes no table input and no page of its own",
+			name, read.Operation)
 	}
-	for _, name := range spec.Searches {
-		if !slices.Contains(tool.Searched, name) {
-			tool.Searched = append(tool.Searched, name)
+
+	return skip, nil
+}
+
+func offeredParams(
+	spec *readspec.List,
+	read *graphqlread.Read,
+	inputType string,
+	tabled bool,
+) ([]graphqlread.Param, error) {
+	params, err := Offered(spec.Name, read.TypedParams(), spec.Unoffered)
+	if err != nil {
+		return nil, err
+	}
+	if params, err = graphqlread.InstantParams(spec.Name, params, spec.Instants); err != nil {
+		return nil, err
+	}
+	if spec.Amounts {
+		params = graphqlread.AmountParams(params)
+	}
+	if tabled {
+		params = graphqlread.WithInputParams(params, graphqlread.InputParams(inputType))
+	}
+
+	return params, nil
+}
+
+func namedParams(
+	spec *readspec.List,
+	params []graphqlread.Param,
+	required []string,
+	theirs map[string]struct{},
+) ([]graphqlread.Param, []string, error) {
+	params, required, err := graphqlread.Renamed(
+		spec.Name,
+		params,
+		without(spec.Names, theirs),
+		required,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if params, err = graphqlread.Referenced(spec.Name, params,
+		without(spec.References, theirs)); err != nil {
+		return nil, nil, err
+	}
+	if params, err = graphqlread.Annotate(
+		spec.Name,
+		params,
+		without(spec.Notes, theirs),
+	); err != nil {
+		return nil, nil, err
+	}
+
+	return params, required, nil
+}
+
+func shareInsteadKeys(instead []insteadRead, params []graphqlread.Param) {
+	for idx := range instead {
+		for _, param := range params {
+			if param.ArgField == "" && slices.Contains(instead[idx].bound.Keys, param.Arg) {
+				instead[idx].shared = append(instead[idx].shared, param)
+			}
+		}
+	}
+}
+
+func searchedOf(read *graphqlread.Read, input string, searches []string) []string {
+	var searched []string
+	if input != "" {
+		searched = read.ConfiguredSearch()
+	}
+	for _, name := range searches {
+		if !slices.Contains(searched, name) {
+			searched = append(searched, name)
 		}
 	}
 
-	return tool, nil
+	return searched
+}
+
+func (t *Tool) conditionFilters(
+	args map[string]any,
+) (filters, groups []map[string]any, err error) {
+	for idx := range t.Spec.Conditions {
+		condition := &t.Spec.Conditions[idx]
+		raw, present := args[condition.Name]
+		if !present || raw == nil {
+			continue
+		}
+		yes, ok := raw.(bool)
+		if !ok {
+			return nil, nil, fmt.Errorf("parameter %q must be true or false", condition.Name)
+		}
+		all, oneOf := condition.Compile(yes)
+		filters = append(filters, all...)
+		groups = append(groups, oneOf...)
+	}
+
+	return filters, groups, nil
 }
 
 func checkConditions(spec *readspec.List, tabled bool, params []graphqlread.Param) error {
@@ -416,8 +481,8 @@ func (t *Tool) Description() string {
 	nested := make(map[string][]string)
 	var holders []string
 	for _, param := range t.Params {
-		name, ok := DescribedName(param)
-		if !ok || !t.Describable(param) {
+		name, ok := DescribedName(&param)
+		if !ok || !t.Describable(&param) {
 			continue
 		}
 		parent, _, isNested := strings.Cut(param.Field, ".")
@@ -509,7 +574,7 @@ func namesReference(spec *readspec.List, args map[string]any) bool {
 // default agent data access. A description names only those: the schema
 // still offers every parameter, and a reader above the default may use one
 // the description leaves out.
-func (t *Tool) Describable(param graphqlread.Param) bool {
+func (t *Tool) Describable(param *graphqlread.Param) bool {
 	if param.OnInput {
 		return true
 	}
@@ -520,7 +585,7 @@ func (t *Tool) Describable(param graphqlread.Param) bool {
 
 // DescribedName is how a description names a parameter: a range once, by
 // its lower end.
-func DescribedName(param graphqlread.Param) (string, bool) {
+func DescribedName(param *graphqlread.Param) (string, bool) {
 	switch param.Kind {
 	case graphqlread.ParamDayTo, graphqlread.ParamAtMost, graphqlread.ParamInstantTo:
 		return "", false
@@ -547,7 +612,7 @@ func (t *Tool) Policy() agenttoolports.ToolPolicy {
 	spec := t.Spec.Reads
 	spec.Resource = t.Spec.Resource
 
-	return querytool.ReadPolicy(t.Name(), spec)
+	return querytool.ReadPolicy(t.Name(), &spec)
 }
 
 func (t *Tool) ParamSchema() map[string]any {
@@ -704,6 +769,7 @@ type Outcome struct {
 	window  querytool.CursorWindow
 }
 
+//nolint:gocritic // the outcome is passed by value wherever a list returns it
 func (o Outcome) PageRows() int { return len(o.Items) }
 
 // CutPage is the page ending after its first rows rows, resuming at the edge
@@ -762,6 +828,64 @@ func (t *Tool) Query(
 	}
 
 	args := applyDefaults(&t.Spec, params.Params, clk)
+	req, err := t.compileRequest(args, clk)
+	if err != nil {
+		return nil, err
+	}
+	fewest, most := t.pageBounds()
+	window, err := querytool.ReadCursorWindow(t.Name(), params.Params, fewest, most)
+	if err != nil {
+		return nil, err
+	}
+	req.query = strings.TrimSpace(querytool.OptionalString(params.Params, graphqlread.ParamQuery))
+	req.sort = t.sort(params.Params)
+	req.limit = window.Limit
+	req.after = window.Info.After
+	req.total = params.IncludeTotal
+	criteria := t.criteria(args, req.query)
+
+	page, err := t.page(ctx, params, req)
+	if err != nil {
+		return nil, err
+	}
+	beside, besideWithheld, besideNotes, err := t.beside.Read(
+		ctx, params, req.args, namesReference(&t.Spec, args),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if t.Spec.Combine != nil {
+		t.Spec.Combine(page.Items, beside)
+	}
+	page.withheld = append(page.withheld, besideWithheld...)
+
+	outcome := t.outcome(params, page, criteria, &window, req.query)
+	notes := besideNotes
+	if len(page.Items) == 0 && page.first {
+		note := criteria.EmptyNote()
+		if near := t.nearMiss(ctx, params, &pageRequest{
+			query:   req.query,
+			inputs:  req.inputs,
+			args:    req.args,
+			filters: req.filters,
+			groups:  req.groups,
+		}); near != "" {
+			note = near
+		}
+		notes = append([]string{note}, notes...)
+	}
+	outcome.Note = strings.Join(notes, " ")
+	if len(beside) == 0 {
+		return outcome, nil
+	}
+
+	return WithBeside(&outcome, beside)
+}
+
+func (t *Tool) compileRequest(
+	args map[string]any,
+	clk filtercatalog.Clock,
+) (*pageRequest, error) {
 	if err := graphqlread.RequireArguments(t.Required, args); err != nil {
 		return nil, err
 	}
@@ -776,7 +900,6 @@ func (t *Tool) Query(
 	if err != nil {
 		return nil, err
 	}
-	filters = append(filters, conditioned...)
 	inputs, err := graphqlread.CompileInputs(t.Params, args, clk)
 	if err != nil {
 		return nil, err
@@ -785,12 +908,16 @@ func (t *Tool) Query(
 	if err != nil {
 		return nil, err
 	}
-	fewest, most := t.pageBounds()
-	window, err := querytool.ReadCursorWindow(t.Name(), params.Params, fewest, most)
-	if err != nil {
-		return nil, err
-	}
-	query := strings.TrimSpace(querytool.OptionalString(params.Params, graphqlread.ParamQuery))
+
+	return &pageRequest{
+		inputs:  inputs,
+		args:    rootArgs,
+		filters: append(filters, conditioned...),
+		groups:  groups,
+	}, nil
+}
+
+func (t *Tool) criteria(args map[string]any, query string) *filtercatalog.Criteria {
 	criteria := DescribeCriteria(t.Spec.EntityPlural, t.Params, args, query)
 	for idx := range t.Spec.Conditions {
 		if raw, present := args[t.Spec.Conditions[idx].Name]; present && raw != nil {
@@ -798,38 +925,22 @@ func (t *Tool) Query(
 		}
 	}
 
-	page, err := t.page(ctx, params, &pageRequest{
-		query:   query,
-		inputs:  inputs,
-		args:    rootArgs,
-		filters: filters,
-		groups:  groups,
-		sort:    t.sort(params.Params),
-		limit:   window.Limit,
-		after:   window.Info.After,
-		total:   params.IncludeTotal,
-	})
-	if err != nil {
-		return nil, err
-	}
-	beside, besideWithheld, besideNotes, err := t.beside.Read(
-		ctx, params, rootArgs, namesReference(&t.Spec, args),
-	)
-	if err != nil {
-		return nil, err
-	}
-	if t.Spec.Combine != nil {
-		t.Spec.Combine(page.Items, beside)
-	}
-	page.withheld = append(page.withheld, besideWithheld...)
+	return criteria
+}
 
+func (t *Tool) outcome(
+	params *agenttoolports.QueryToolParams,
+	page *Page,
+	criteria *filtercatalog.Criteria,
+	window *querytool.CursorWindow,
+	query string,
+) Outcome {
 	cursors := page.cursors
 	if t.Spec.Rank != nil && query != "" &&
 		querytool.OptionalString(params.Params, listtool.ParamSortBy) == "" {
 		page.Items = t.Spec.Rank(query, page.Items)
 		cursors = nil
 	}
-	outside := markedRows(&t.Spec, page.Items)
 
 	outcome := Outcome{
 		Count:            len(page.Items),
@@ -840,9 +951,9 @@ func (t *Tool) Query(
 		Total:            page.total,
 		TotalEstimated:   page.total != nil && !page.totalExact,
 		WithheldByAccess: page.withheld,
-		Outside:          outside,
+		Outside:          markedRows(&t.Spec, page.Items),
 		cursors:          cursors,
-		window:           window,
+		window:           *window,
 	}
 	if page.HasMore {
 		outcome.NextCursor = window.Next(page.endCursor)
@@ -850,22 +961,8 @@ func (t *Tool) Query(
 	if len(page.withheld) > 0 {
 		outcome.WithheldNote = fieldgate.WithheldNote
 	}
-	notes := besideNotes
-	if len(page.Items) == 0 && page.first {
-		note := criteria.EmptyNote()
-		if near := t.nearMiss(ctx, params, &pageRequest{
-			query: query, inputs: inputs, args: rootArgs, filters: filters, groups: groups,
-		}); near != "" {
-			note = near
-		}
-		notes = append([]string{note}, notes...)
-	}
-	outcome.Note = strings.Join(notes, " ")
-	if len(beside) == 0 {
-		return outcome, nil
-	}
 
-	return WithBeside(&outcome, beside)
+	return outcome
 }
 
 // WithBeside is a page's outcome with the records read alongside it, each
@@ -1158,7 +1255,9 @@ func (t *Tool) refuseWithheld(
 	if err := t.refuseFields(ctx, params, fields); err != nil {
 		return err
 	}
-	if query := strings.TrimSpace(querytool.OptionalString(params.Params, querytool.ParamQuery)); query != "" {
+	if query := strings.TrimSpace(
+		querytool.OptionalString(params.Params, querytool.ParamQuery),
+	); query != "" {
 		return t.RefuseSearch(ctx, params)
 	}
 
@@ -1246,80 +1345,142 @@ func (t *Tool) nearMiss(
 	params *agenttoolports.QueryToolParams,
 	asked *pageRequest,
 ) string {
-	query, inputs, args, filters := asked.query, asked.inputs, asked.args, asked.filters
-	probe := func(req pageRequest) *Page {
-		req.groups, req.limit = asked.groups, nearMissSample
-		page, err := t.page(ctx, params, &req)
-		if err != nil || len(page.Items) == 0 {
-			return nil
-		}
-		return page
-	}
-	probes, conditions := 0, 0
-	if query != "" {
-		probes++
-		conditions++
-		if probe(pageRequest{inputs: inputs, args: args, filters: filters}) != nil {
-			return fmt.Sprintf("Nothing matched the text %q, but %s do match the other "+
-				"conditions. Try different words, or drop the text.", query, t.Spec.EntityPlural)
+	probe := &nearMissProbe{tool: t, ctx: ctx, params: params, asked: asked}
+	for _, loosen := range []func() string{
+		probe.withoutQuery,
+		probe.withoutFilter,
+		probe.withoutInput,
+		probe.withoutArgField,
+	} {
+		if note := loosen(); note != "" {
+			return note
 		}
 	}
-	for idx := range filters {
-		conditions++
-		if probes >= maxNearMissProbes {
+	if probe.conditions == 1 && probe.probes == 1 && len(t.Spec.Inputs) == 0 {
+		return fmt.Sprintf("No %s matched, and without that condition none do either: "+
+			"there are no %s here for you to find, so another filter will not find any.",
+			t.Spec.EntityPlural, t.Spec.EntityPlural)
+	}
+
+	return ""
+}
+
+type nearMissProbe struct {
+	tool       *Tool
+	ctx        context.Context
+	params     *agenttoolports.QueryToolParams
+	asked      *pageRequest
+	probes     int
+	conditions int
+}
+
+func (p *nearMissProbe) read(req *pageRequest) *Page {
+	req.groups, req.limit = p.asked.groups, nearMissSample
+	page, err := p.tool.page(p.ctx, p.params, req)
+	if err != nil || len(page.Items) == 0 {
+		return nil
+	}
+
+	return page
+}
+
+func (p *nearMissProbe) spent() bool {
+	return p.probes >= maxNearMissProbes
+}
+
+func (p *nearMissProbe) withoutQuery() string {
+	asked := p.asked
+	if asked.query == "" {
+		return ""
+	}
+	p.probes++
+	p.conditions++
+	if p.read(&pageRequest{inputs: asked.inputs, args: asked.args, filters: asked.filters}) == nil {
+		return ""
+	}
+
+	return fmt.Sprintf("Nothing matched the text %q, but %s do match the other "+
+		"conditions. Try different words, or drop the text.", asked.query, p.tool.Spec.EntityPlural)
+}
+
+func (p *nearMissProbe) withoutFilter() string {
+	asked := p.asked
+	for idx := range asked.filters {
+		p.conditions++
+		if p.spent() {
 			continue
 		}
-		probes++
-		rest := slices.Delete(slices.Clone(filters), idx, idx+1)
-		page := probe(pageRequest{query: query, inputs: inputs, args: args, filters: rest})
+		p.probes++
+		rest := slices.Delete(slices.Clone(asked.filters), idx, idx+1)
+		page := p.read(&pageRequest{
+			query:   asked.query,
+			inputs:  asked.inputs,
+			args:    asked.args,
+			filters: rest,
+		})
 		if page != nil {
-			return t.KeptOut(filters[idx][querytool.ParamField], page)
+			return p.tool.KeptOut(asked.filters[idx][querytool.ParamField], page)
 		}
 	}
-	for _, name := range slices.Sorted(maps.Keys(inputs)) {
-		conditions++
-		if _, toggle := inputs[name].(bool); toggle {
+
+	return ""
+}
+
+func (p *nearMissProbe) withoutInput() string {
+	asked := p.asked
+	for _, name := range slices.Sorted(maps.Keys(asked.inputs)) {
+		p.conditions++
+		if _, toggle := asked.inputs[name].(bool); toggle || p.spent() {
 			continue
 		}
-		if probes >= maxNearMissProbes {
-			continue
-		}
-		probes++
-		rest := maps.Clone(inputs)
+		p.probes++
+		rest := maps.Clone(asked.inputs)
 		delete(rest, name)
-		page := probe(pageRequest{query: query, inputs: rest, args: args, filters: filters})
+		page := p.read(&pageRequest{
+			query:   asked.query,
+			inputs:  rest,
+			args:    asked.args,
+			filters: asked.filters,
+		})
 		if page != nil {
-			return t.KeptOut(name, page)
+			return p.tool.KeptOut(name, page)
 		}
 	}
-	for _, param := range t.Params {
-		if _, scoped := args[param.Arg]; scoped && param.ArgField == "" {
-			conditions++
+
+	return ""
+}
+
+func (p *nearMissProbe) withoutArgField() string {
+	asked := p.asked
+	for idx := range p.tool.Params {
+		param := &p.tool.Params[idx]
+		if _, scoped := asked.args[param.Arg]; scoped && param.ArgField == "" {
+			p.conditions++
 			continue
 		}
-		filter, _ := args[param.Arg].(map[string]any)
+		filter, _ := asked.args[param.Arg].(map[string]any)
 		value, set := filter[param.ArgField]
 		if param.ArgField == "" || !set {
 			continue
 		}
-		conditions++
-		if _, toggle := value.(bool); toggle || probes >= maxNearMissProbes {
+		p.conditions++
+		if _, toggle := value.(bool); toggle || p.spent() {
 			continue
 		}
-		probes++
-		rest := maps.Clone(args)
+		p.probes++
+		rest := maps.Clone(asked.args)
 		narrower := maps.Clone(filter)
 		delete(narrower, param.ArgField)
 		rest[param.Arg] = narrower
-		page := probe(pageRequest{query: query, inputs: inputs, args: rest, filters: filters})
+		page := p.read(&pageRequest{
+			query:   asked.query,
+			inputs:  asked.inputs,
+			args:    rest,
+			filters: asked.filters,
+		})
 		if page != nil {
-			return t.KeptOut(param.Name, page)
+			return p.tool.KeptOut(param.Name, page)
 		}
-	}
-	if conditions == 1 && probes == 1 && len(t.Spec.Inputs) == 0 {
-		return fmt.Sprintf("No %s matched, and without that condition none do either: "+
-			"there are no %s here for you to find, so another filter will not find any.",
-			t.Spec.EntityPlural, t.Spec.EntityPlural)
 	}
 
 	return ""

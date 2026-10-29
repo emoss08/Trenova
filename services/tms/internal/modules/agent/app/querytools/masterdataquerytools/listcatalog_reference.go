@@ -69,10 +69,14 @@ type codedRow struct {
 // codedFields are the filters every status/code/description table shares.
 func codedFields() []filtercatalog.Field {
 	return []filtercatalog.Field{
-		{Name: "status", Kind: filtercatalog.KindEnum, Values: querytool.StatusValues},
-		{Name: "code", Kind: filtercatalog.KindText, Sortable: true},
-		{Name: "description", Kind: filtercatalog.KindText},
-		{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+		{
+			Name:   querytool.ListFieldStatus,
+			Kind:   filtercatalog.KindEnum,
+			Values: querytool.StatusValues,
+		},
+		{Name: querytool.ListFieldCode, Kind: filtercatalog.KindText, Sortable: true},
+		{Name: listFieldDescription, Kind: filtercatalog.KindText},
+		{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 	}
 }
 
@@ -85,7 +89,7 @@ func NewListEquipmentTypesTool(
 		Values: []string{"Tractor", "Trailer", "Container", "Other"},
 	})
 
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolListEquipmentTypes,
 		Row:          codedRow{},
 		EntityPlural: "equipment types",
@@ -120,7 +124,7 @@ func NewListEquipmentTypesTool(
 }
 
 func NewListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolListFleetCodes,
 		Row:          codedRow{},
 		EntityPlural: "fleet codes",
@@ -152,7 +156,7 @@ func NewListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agenttoolpor
 func NewListServiceTypesTool(
 	repo servicetypeports.ServiceTypeRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolMasterdataListServiceTypes,
 		Row:          codedRow{},
 		EntityPlural: "service types",
@@ -184,7 +188,7 @@ func NewListServiceTypesTool(
 func NewListShipmentTypesTool(
 	repo shipmenttypeports.ShipmentTypeRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         toolListShipmentTypes,
 		Row:          codedRow{},
 		EntityPlural: "shipment types",
@@ -225,7 +229,7 @@ type commodityRow struct {
 }
 
 func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         toolListCommodities,
 		Row:          commodityRow{},
 		EntityPlural: pluralCommodities,
@@ -236,9 +240,13 @@ func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolpo
 			commoditydb.CommoditiesSchema(),
 		),
 		Fields: []filtercatalog.Field{
-			{Name: "status", Kind: filtercatalog.KindEnum, Values: querytool.StatusValues},
-			{Name: "name", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "description", Kind: filtercatalog.KindText},
+			{
+				Name:   querytool.ListFieldStatus,
+				Kind:   filtercatalog.KindEnum,
+				Values: querytool.StatusValues,
+			},
+			{Name: querytool.ListFieldName, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: listFieldDescription, Kind: filtercatalog.KindText},
 			{Name: "freightClass", Kind: filtercatalog.KindText},
 			{Name: "stackable", Kind: filtercatalog.KindBoolean},
 			{Name: "fragile", Kind: filtercatalog.KindBoolean},
@@ -247,7 +255,7 @@ func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolpo
 				Kind: filtercatalog.KindText,
 				Note: "set when the commodity is hazmat; use isnotnull to find all of them",
 			},
-			{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 		},
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listtool.Page, error) {
 			result, err := repo.List(ctx, &commodityports.ListCommodityRequest{Filter: opts})
@@ -286,7 +294,7 @@ type hazmatRow struct {
 func NewListHazardousMaterialsTool(
 	repo hazardousmaterialports.HazardousMaterialRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         toolListHazardousMaterials,
 		Row:          hazmatRow{},
 		EntityPlural: "hazardous materials",
@@ -297,13 +305,17 @@ func NewListHazardousMaterialsTool(
 			hazardousmaterialdb.HazardousMaterialsSchema(),
 		),
 		Fields: []filtercatalog.Field{
-			{Name: "status", Kind: filtercatalog.KindEnum, Values: querytool.StatusValues},
-			{Name: "code", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "name", Kind: filtercatalog.KindText, Sortable: true},
+			{
+				Name:   querytool.ListFieldStatus,
+				Kind:   filtercatalog.KindEnum,
+				Values: querytool.StatusValues,
+			},
+			{Name: querytool.ListFieldCode, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: querytool.ListFieldName, Kind: filtercatalog.KindText, Sortable: true},
 			{Name: fieldUNNumber, Kind: filtercatalog.KindText, Note: noteUNNumber},
 			{Name: "placardRequired", Kind: filtercatalog.KindBoolean},
 			{Name: "marinePollutant", Kind: filtercatalog.KindBoolean},
-			{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 		},
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listtool.Page, error) {
 			result, err := repo.List(
@@ -345,7 +357,7 @@ type accessorialRow struct {
 func NewListAccessorialChargesTool(
 	repo accessorialchargeports.AccessorialChargeRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         toolListAccessorialCharges,
 		Row:          accessorialRow{},
 		EntityPlural: "accessorial charges",
@@ -356,11 +368,15 @@ func NewListAccessorialChargesTool(
 			accessorialchargedb.AccessorialChargesSchema(),
 		),
 		Fields: []filtercatalog.Field{
-			{Name: "status", Kind: filtercatalog.KindEnum, Values: querytool.StatusValues},
-			{Name: "code", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "description", Kind: filtercatalog.KindText},
+			{
+				Name:   querytool.ListFieldStatus,
+				Kind:   filtercatalog.KindEnum,
+				Values: querytool.StatusValues,
+			},
+			{Name: querytool.ListFieldCode, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: listFieldDescription, Kind: filtercatalog.KindText},
 			{Name: "amount", Kind: filtercatalog.KindNumber, Sortable: true},
-			{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 		},
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listtool.Page, error) {
 			result, err := repo.List(
@@ -390,7 +406,7 @@ func NewListAccessorialChargesTool(
 func NewListDocumentTypesTool(
 	repo documenttypeports.DocumentTypeRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         toolListDocumentTypes,
 		Row:          codedRow{},
 		EntityPlural: "document types",
@@ -401,15 +417,15 @@ func NewListDocumentTypesTool(
 			documenttypedb.DocumentTypesSchema(),
 		),
 		Fields: []filtercatalog.Field{
-			{Name: "code", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "name", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "description", Kind: filtercatalog.KindText},
+			{Name: querytool.ListFieldCode, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: querytool.ListFieldName, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: listFieldDescription, Kind: filtercatalog.KindText},
 			{
 				Name: fieldIsSystem,
 				Kind: filtercatalog.KindBoolean,
 				Note: noteSystemDocumentType,
 			},
-			{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 		},
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listtool.Page, error) {
 			result, err := repo.List(ctx, &documenttypeports.ListDocumentTypesRequest{Filter: opts})
@@ -432,7 +448,7 @@ func NewListDocumentTypesTool(
 func NewListLocationCategoriesTool(
 	repo locationcategoryports.LocationCategoryRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolListLocationCategories,
 		Row:          codedRow{},
 		EntityPlural: "location categories",
@@ -443,13 +459,13 @@ func NewListLocationCategoriesTool(
 			locationcategorydb.LocationCategoriesSchema(),
 		),
 		Fields: []filtercatalog.Field{
-			{Name: "name", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "description", Kind: filtercatalog.KindText},
+			{Name: querytool.ListFieldName, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: listFieldDescription, Kind: filtercatalog.KindText},
 			{Name: "hasSecureParking", Kind: filtercatalog.KindBoolean},
 			{Name: "requiresAppointment", Kind: filtercatalog.KindBoolean},
 			{Name: "allowsOvernight", Kind: filtercatalog.KindBoolean},
 			{Name: "hasRestroom", Kind: filtercatalog.KindBoolean},
-			{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 		},
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listtool.Page, error) {
 			result, err := repo.List(
@@ -488,7 +504,7 @@ type holdReasonRow struct {
 func NewListHoldReasonsTool(
 	repo holdreasonports.HoldReasonRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         toolListHoldReasons,
 		Row:          holdReasonRow{},
 		EntityPlural: "hold reasons",
@@ -509,7 +525,7 @@ func NewListHoldReasonsTool(
 					"FinanceHold",
 				},
 			},
-			{Name: "code", Kind: filtercatalog.KindText, Sortable: true},
+			{Name: querytool.ListFieldCode, Kind: filtercatalog.KindText, Sortable: true},
 			{Name: "label", Kind: filtercatalog.KindText, Sortable: true},
 			{
 				Name: querytool.FieldActive,

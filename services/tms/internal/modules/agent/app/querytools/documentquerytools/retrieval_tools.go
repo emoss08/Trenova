@@ -150,7 +150,7 @@ func (t *searchDocumentsTool) ParamSchema() map[string]any {
 }
 
 func (t *searchDocumentsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceDocument,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceDocument,

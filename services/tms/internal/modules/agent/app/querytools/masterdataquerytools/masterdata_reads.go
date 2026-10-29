@@ -55,7 +55,7 @@ func ProvideListEquipmentManufacturersTool(
 func NewListEquipmentManufacturersTool(
 	repo equipmentmanufacturerports.EquipmentManufacturerRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolListEquipmentManufacturers,
 		Row:          codedRow{},
 		EntityPlural: "equipment manufacturers",

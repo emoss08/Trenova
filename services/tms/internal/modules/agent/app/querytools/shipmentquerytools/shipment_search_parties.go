@@ -47,7 +47,7 @@ type PartySources struct {
 	Orders      shipmentports.OrderReferenceMatcher
 }
 
-func (s PartySources) none() bool {
+func (s *PartySources) none() bool {
 	return s.Customers == nil && s.Locations == nil && s.workers == nil &&
 		s.Commodities == nil && s.Types == nil && s.Orders == nil
 }

@@ -78,7 +78,7 @@ func NewListWorkersTool(
 	repo workerports.WorkerRepository,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolWorkerList,
 		EntityPlural: "workers",
 		Summary:      workersSummary,

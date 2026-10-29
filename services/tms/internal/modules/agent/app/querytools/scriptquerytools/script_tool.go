@@ -201,7 +201,7 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 }
 
 func (t *runScriptTool) Policy() agenttoolports.ToolPolicy {
-	policy := querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	policy := querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceCodeMode,
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceRecordNote,

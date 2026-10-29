@@ -113,7 +113,7 @@ func (t *ComposeTableViewTool) entities() []string {
 }
 
 func (t *ComposeTableViewTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 		Effect:   agenttooltrust.ToolEffectPresent,
 	})
@@ -322,7 +322,7 @@ func (t *listDashboardsTool) ParamSchema() map[string]any {
 }
 
 func (t *listDashboardsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceDashboard,
 	})
 }

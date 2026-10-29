@@ -824,7 +824,8 @@ func CompileFilters(
 	clk filtercatalog.Clock,
 ) ([]map[string]any, error) {
 	out := make([]map[string]any, 0, len(params))
-	for _, param := range params {
+	for i := range params {
+		param := &params[i]
 		raw, present := args[param.Name]
 		if param.OnInput || !present || raw == nil {
 			continue
@@ -844,7 +845,7 @@ func CompileFilters(
 // compileFilter is one parameter's filter, and whether the call asked for
 // one: an empty list or blank text narrows nothing.
 func compileFilter(
-	param Param,
+	param *Param,
 	args map[string]any,
 	clk filtercatalog.Clock,
 ) (filter map[string]any, sent bool, err error) {

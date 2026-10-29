@@ -74,7 +74,7 @@ func recurringShipmentRowFrom(entity *recurringshipment.RecurringShipment) recur
 func NewListRecurringShipmentsTool(
 	repo recurringshipmentports.RecurringShipmentRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         "shipment_list_recurring",
 		Row:          recurringShipmentRow{},
 		EntityPlural: "recurring shipments",

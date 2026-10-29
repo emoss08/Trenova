@@ -108,7 +108,7 @@ func (t *explainRateTool) ParamSchema() map[string]any {
 }
 
 func (t *explainRateTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceRateMatrix,
 	})
 }

@@ -36,6 +36,16 @@ const (
 	maxSearchLimit     = 25
 )
 
+type shipmentListTool struct {
+	repo         shipmentports.ShipmentRepository
+	parties      PartySources
+	holds        shipmentports.ActiveHoldReader
+	access       fieldgate.Access
+	list         *listtool.Tool
+	filterFields agenttoolschema.EnumSource[string]
+	columns      agenttoolschema.EnumSource[string]
+}
+
 func (t *shipmentListTool) partySources(parties *shipmentParties) []partySource {
 	sources := make([]partySource, 0, 5)
 	if t.parties.Customers != nil {
@@ -252,16 +262,6 @@ const (
 	maxHoldReasonCodes       = 10
 )
 
-type shipmentListTool struct {
-	repo         shipmentports.ShipmentRepository
-	parties      PartySources
-	holds        shipmentports.ActiveHoldReader
-	access       fieldgate.Access
-	list         *listtool.Tool
-	filterFields agenttoolschema.EnumSource[string]
-	columns      agenttoolschema.EnumSource[string]
-}
-
 func ProvideShipmentListTool(
 	repo shipmentports.ShipmentRepository,
 	customers customerports.CustomerRepository,
@@ -273,7 +273,7 @@ func ProvideShipmentListTool(
 	holds shipmentports.ActiveHoldReader,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return NewShipmentListTool(repo, PartySources{
+	return NewShipmentListTool(repo, &PartySources{
 		Customers:   customers,
 		Locations:   locations,
 		workers:     workers,
@@ -285,7 +285,7 @@ func ProvideShipmentListTool(
 
 func NewShipmentListTool(
 	repo shipmentports.ShipmentRepository,
-	parties PartySources,
+	parties *PartySources,
 ) *shipmentListTool {
 	spec := ListSpec(repo)
 	list := listtool.Build(&spec)
@@ -298,7 +298,7 @@ func NewShipmentListTool(
 
 	return &shipmentListTool{
 		repo:         repo,
-		parties:      parties,
+		parties:      *parties,
 		list:         list,
 		filterFields: agenttoolschema.Derived(querytool.ShipmentListName+".filterField", fields),
 		columns:      list.Columns,
@@ -415,7 +415,7 @@ func (t *shipmentListTool) filtersSchema() map[string]any {
 }
 
 func (t *shipmentListTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipment,
 	})
 }
@@ -798,7 +798,7 @@ func (t *shipmentListTool) wordOutcome(
 			TenantInfo:   querytool.TenantOf(search.params),
 			Query:        search.query,
 			FieldFilters: search.filters,
-		}, options); err == nil &&
+		}, &options); err == nil &&
 			total > len(rows) {
 			outcome.Total = &total
 			outcome.TotalEstimated = !exact

@@ -187,7 +187,7 @@ func (t *findShipmentRecordsTool) ParamSchema() map[string]any {
 }
 
 func (t *findShipmentRecordsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipment,
 		Effect:   agenttooltrust.ToolEffectLookup,
 		Rationale: "Matches the records a new shipment names against the organization's own; " +

@@ -224,7 +224,7 @@ func (t *listWatchtowerItemsTool) ParamSchema() map[string]any {
 }
 
 func (t *listWatchtowerItemsTool) Policy() agenttoolports.ToolPolicy {
-	policy := querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	policy := querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceWatchtower,
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceInboundMessage,

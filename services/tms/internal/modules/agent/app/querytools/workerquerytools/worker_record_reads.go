@@ -82,7 +82,7 @@ const (
 	noteFallingDue = "Leave it out for the credentials across the organization."
 	paramWorkerIDs = "workerIds"
 
-	paramCredentialTypeCode = "credentialTypeCode"
+	paramCredentialTypeCode = "credentialTypeCode" //nolint:gosec // a tool parameter's name, not a credential
 	noteEveryWorker         = "Leave it out for every worker's."
 	fieldPrivacyCase        = "privacyCase"
 	fieldWorker             = "worker"
@@ -95,24 +95,7 @@ const (
 // repository tool did.
 func RecordReadSpecs() []readspec.List {
 	return []readspec.List{
-		{
-			Name:         ToolListWorkerChecklists,
-			EntityPlural: "checklists",
-			Summary:      workerChecklistsSummary,
-			Resource:     permission.ResourceWorkerChecklist,
-			References:   readspec.TheWorker,
-			Notes:        map[string]string{querytool.WfParamClosed: NoteOpenOnly},
-			Defaults:     map[string]any{querytool.WfParamClosed: false},
-			Alongside: []readspec.Alongside{{
-				Key:       "templatesStartedByHand",
-				Operation: opDeskChecklistTemplates,
-				What:      "checklist templates",
-				Inputs: map[string]any{
-					querytool.InputStatus: querytool.ActiveStatus,
-					inputTrigger:          string(workerchecklist.ChecklistTriggerManual),
-				},
-			}},
-		},
+		workerChecklistsSpec(),
 		{
 			Name:         ToolListWorkerTraining,
 			EntityPlural: "training assignments",
@@ -163,48 +146,8 @@ func RecordReadSpecs() []readspec.List {
 			Notes:        map[string]string{querytool.ParamWorkerID: noteEveryWorker},
 			Defaults:     querytool.ListDefaults,
 		},
-		{
-			Name:         ToolListWorkerSafetyEvents,
-			EntityPlural: "safety events",
-			Summary:      workerSafetyEventsSummary,
-			Resource:     permission.ResourceWorkerSafetyEvent,
-			References:   readspec.TheWorker,
-			Notes: map[string]string{
-				querytool.ParamWorkerID:   noteEveryWorker,
-				querytool.WfParamOpenOnly: noteOpenAcrossTheFleet,
-			},
-			Defaults: querytool.ListDefaults,
-			Unscoped: map[string]any{querytool.WfParamOpenOnly: true},
-			Alongside: []readspec.Alongside{{
-				Key:       "recognitions",
-				Operation: opDeskWorkerRecognitions,
-				What:      "recognitions",
-			}},
-		},
-		{
-			Name:         ToolWorkerListCredentials,
-			EntityPlural: credentialEntity,
-			Summary:      workerCredentialsSummary,
-			SearchTerms: []string{
-				"expiring licenses", "credentials due", "about to lapse", "lapsed",
-			},
-			Resource:   permission.ResourceWorkerCredential,
-			References: map[string]readspec.Reference{paramWorkerIDs: readspec.WorkerReference},
-			Notes:      map[string]string{paramWorkerIDs: noteFallingDue},
-			Defaults: map[string]any{
-				querytool.ParamLimit: querytool.GraphQLListLimit,
-				paramIncludeArchived: false,
-			},
-			Shape: shapeCredentialWorker,
-			Alongside: []readspec.Alongside{{
-				Key:       "credentialTypes",
-				Operation: opDeskCredentialTypes,
-				What:      "credential types",
-				Inputs:    map[string]any{querytool.InputStatus: querytool.ActiveStatus},
-				Scoped:    true,
-				Unless:    []string{paramCredentialTypeCode},
-			}},
-		},
+		workerSafetyEventsSpec(),
+		workerCredentialsSpec(),
 		{
 			Name:         toolListEmploymentVerifications,
 			EntityPlural: "previous employers",
@@ -214,6 +157,75 @@ func RecordReadSpecs() []readspec.List {
 			Notes:        map[string]string{querytool.ParamWorkerID: noteEveryWorker},
 			Defaults:     querytool.ListDefaults,
 		},
+	}
+}
+
+func workerChecklistsSpec() readspec.List {
+	return readspec.List{
+		Name:         ToolListWorkerChecklists,
+		EntityPlural: "checklists",
+		Summary:      workerChecklistsSummary,
+		Resource:     permission.ResourceWorkerChecklist,
+		References:   readspec.TheWorker,
+		Notes:        map[string]string{querytool.WfParamClosed: NoteOpenOnly},
+		Defaults:     map[string]any{querytool.WfParamClosed: false},
+		Alongside: []readspec.Alongside{{
+			Key:       "templatesStartedByHand",
+			Operation: opDeskChecklistTemplates,
+			What:      "checklist templates",
+			Inputs: map[string]any{
+				querytool.InputStatus: querytool.ActiveStatus,
+				inputTrigger:          string(workerchecklist.ChecklistTriggerManual),
+			},
+		}},
+	}
+}
+
+func workerSafetyEventsSpec() readspec.List {
+	return readspec.List{
+		Name:         ToolListWorkerSafetyEvents,
+		EntityPlural: "safety events",
+		Summary:      workerSafetyEventsSummary,
+		Resource:     permission.ResourceWorkerSafetyEvent,
+		References:   readspec.TheWorker,
+		Notes: map[string]string{
+			querytool.ParamWorkerID:   noteEveryWorker,
+			querytool.WfParamOpenOnly: noteOpenAcrossTheFleet,
+		},
+		Defaults: querytool.ListDefaults,
+		Unscoped: map[string]any{querytool.WfParamOpenOnly: true},
+		Alongside: []readspec.Alongside{{
+			Key:       "recognitions",
+			Operation: opDeskWorkerRecognitions,
+			What:      "recognitions",
+		}},
+	}
+}
+
+func workerCredentialsSpec() readspec.List {
+	return readspec.List{
+		Name:         ToolWorkerListCredentials,
+		EntityPlural: credentialEntity,
+		Summary:      workerCredentialsSummary,
+		SearchTerms: []string{
+			"expiring licenses", "credentials due", "about to lapse", "lapsed",
+		},
+		Resource:   permission.ResourceWorkerCredential,
+		References: map[string]readspec.Reference{paramWorkerIDs: readspec.WorkerReference},
+		Notes:      map[string]string{paramWorkerIDs: noteFallingDue},
+		Defaults: map[string]any{
+			querytool.ParamLimit: querytool.GraphQLListLimit,
+			paramIncludeArchived: false,
+		},
+		Shape: shapeCredentialWorker,
+		Alongside: []readspec.Alongside{{
+			Key:       "credentialTypes",
+			Operation: opDeskCredentialTypes,
+			What:      "credential types",
+			Inputs:    map[string]any{querytool.InputStatus: querytool.ActiveStatus},
+			Scoped:    true,
+			Unless:    []string{paramCredentialTypeCode},
+		}},
 	}
 }
 

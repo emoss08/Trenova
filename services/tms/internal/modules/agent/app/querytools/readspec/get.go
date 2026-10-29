@@ -92,7 +92,7 @@ type Pages struct {
 	Total  string
 }
 
-func (s Get) IDDescription() string {
+func (s *Get) IDDescription() string {
 	if s.IDSource == "" {
 		return fmt.Sprintf("The %s's id.", s.Entity)
 	}

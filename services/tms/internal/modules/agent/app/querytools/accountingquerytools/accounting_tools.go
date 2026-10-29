@@ -136,7 +136,7 @@ func arBucketsFrom(totals customerledgerports.ARAgingBucketTotals) *arBuckets {
 	}
 }
 
-func oldestBucket(totals customerledgerports.ARAgingBucketTotals) (string, int) {
+func oldestBucket(totals customerledgerports.ARAgingBucketTotals) (bucket string, rank int) {
 	switch {
 	case totals.DaysOver90Minor > 0:
 		return bucketOver90, 4
@@ -185,7 +185,7 @@ func (t *getARAgingTool) ParamSchema() map[string]any {
 func (t *getARAgingTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceAccountsReceivable},
+		&querytool.ReadSpec{Resource: permission.ResourceAccountsReceivable},
 	)
 }
 
@@ -363,7 +363,7 @@ func (t *listAROpenItemsTool) ParamSchema() map[string]any {
 func (t *listAROpenItemsTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceAccountsReceivable},
+		&querytool.ReadSpec{Resource: permission.ResourceAccountsReceivable},
 	)
 }
 
@@ -519,7 +519,7 @@ func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 func (t *getCustomerStatementTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceAccountsReceivable},
+		&querytool.ReadSpec{Resource: permission.ResourceAccountsReceivable},
 	)
 }
 
@@ -616,14 +616,13 @@ func (t *getCustomerStatementTool) Query(
 func statementTransactions(
 	transactions []*customerledgerports.ARStatementTransaction,
 	showAmounts bool,
-) ([]statementTransactionRow, int) {
-	omitted := 0
+) (rows []statementTransactionRow, omitted int) {
 	if len(transactions) > maxStatementRows {
 		omitted = len(transactions) - maxStatementRows
 		transactions = transactions[omitted:]
 	}
 
-	rows := make([]statementTransactionRow, 0, len(transactions))
+	rows = make([]statementTransactionRow, 0, len(transactions))
 	for _, txn := range transactions {
 		if txn == nil {
 			continue
@@ -651,14 +650,13 @@ func statementTransactions(
 func statementOpenItems(
 	items []*customerledgerports.AROpenItem,
 	showAmounts bool,
-) ([]arOpenItemRow, int) {
-	omitted := 0
+) (rows []arOpenItemRow, omitted int) {
 	if len(items) > maxStatementRows {
 		omitted = len(items) - maxStatementRows
 		items = items[:maxStatementRows]
 	}
 
-	rows := make([]arOpenItemRow, 0, len(items))
+	rows = make([]arOpenItemRow, 0, len(items))
 	for _, item := range items {
 		if item != nil {
 			rows = append(rows, arOpenItemRowFrom(item, showAmounts))
@@ -710,7 +708,7 @@ func (t *listCollectionsWorklistTool) ParamSchema() map[string]any {
 func (t *listCollectionsWorklistTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceAccountsReceivable},
+		&querytool.ReadSpec{Resource: permission.ResourceAccountsReceivable},
 	)
 }
 
@@ -832,7 +830,7 @@ func NewListGLAccountsTool(
 	repo glaccountports.GLAccountRepository,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         "ledger_list_accounts",
 		Row:          glAccountRow{},
 		EntityPlural: "general ledger accounts",
@@ -924,7 +922,7 @@ func NewListFiscalPeriodsTool(
 	repo fiscalperiodports.FiscalPeriodRepository,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         "ledger_list_fiscal_periods",
 		Row:          fiscalPeriodRow{},
 		EntityPlural: "fiscal periods",
@@ -1059,7 +1057,7 @@ func (t *getFiscalCloseBlockersTool) ParamSchema() map[string]any {
 func (t *getFiscalCloseBlockersTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceFiscalPeriod},
+		&querytool.ReadSpec{Resource: permission.ResourceFiscalPeriod},
 	)
 }
 

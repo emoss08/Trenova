@@ -80,7 +80,7 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 }
 
 func (t *rankMoveCandidatesTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipmentMove,
 	})
 }
@@ -292,7 +292,7 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 }
 
 func (t *planDispatchTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipmentMove,
 		Effect:   agenttooltrust.ToolEffectPresent,
 	})

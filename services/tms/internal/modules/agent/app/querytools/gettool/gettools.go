@@ -32,7 +32,7 @@ func (t *Tool) Description() string { return t.Spec.Summary }
 func (t *Tool) SearchTerms() []string { return t.Spec.SearchTerms }
 
 func (t *Tool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource:  t.Spec.Resource,
 		Scope:     t.Spec.Scope,
 		Reads:     t.Spec.Reads,
@@ -86,10 +86,6 @@ func (t *Tool) Query(
 	}
 
 	return t.Access.Redactor(ctx, params).Withhold(entity)
-}
-
-func specOfGet(tool agenttoolports.AgentQueryTool) readspec.Get {
-	return tool.(*Tool).Spec //nolint:errcheck,forcetypeassert // constructed above
 }
 
 func IDSchema(param string, property map[string]any) map[string]any {

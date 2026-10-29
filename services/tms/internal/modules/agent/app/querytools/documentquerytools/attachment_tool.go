@@ -93,7 +93,7 @@ func (t *readAttachmentTool) ParamSchema() map[string]any {
 }
 
 func (t *readAttachmentTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceAssistant,
 		Scope:    agenttooltrust.ToolScopeSelf,
 		Reads:    agenttooltrust.ExternalReadAlways,

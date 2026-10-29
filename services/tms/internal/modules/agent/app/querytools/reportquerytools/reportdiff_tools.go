@@ -40,8 +40,8 @@ func (t *compareReportRunsTool) Description() string {
 
 func (t *compareReportRunsTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"runIdA": map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: "The earlier run, from report_list_runs.",
@@ -51,31 +51,31 @@ func (t *compareReportRunsTool) ParamSchema() map[string]any {
 				toolschema.KeyDescription: "The later run, from report_list_runs.",
 			},
 			"keys": map[string]any{
-				"type":  "array",
-				"items": map[string]any{"type": "string"},
-				"description": "Column ids that identify a row, so the same row is " +
+				toolschema.KeyType:  toolschema.TypeArray,
+				toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
+				toolschema.KeyDescription: "Column ids that identify a row, so the same row is " +
 					"matched across the two runs. Omit to use every text, enum, " +
 					"reference, date and yes/no column, which is usually right.",
 			},
 			"measures": map[string]any{
-				"type":  "array",
-				"items": map[string]any{"type": "string"},
-				"description": "Column ids to compare as numbers. Omit to use every " +
+				toolschema.KeyType:  toolschema.TypeArray,
+				toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
+				toolschema.KeyDescription: "Column ids to compare as numbers. Omit to use every " +
 					"numeric column.",
 			},
 			"includeUnchanged": map[string]any{
-				"type": "boolean",
-				"description": "List rows that did not move as well. Defaults to " +
+				toolschema.KeyType: toolschema.TypeBoolean,
+				toolschema.KeyDescription: "List rows that did not move as well. Defaults to " +
 					"false; their count is always reported either way.",
 			},
 		},
-		"required":             []string{"runIdA", "runIdB"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"runIdA", "runIdB"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *compareReportRunsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 		Effect:   agenttooltrust.ToolEffectPresent,
 	})

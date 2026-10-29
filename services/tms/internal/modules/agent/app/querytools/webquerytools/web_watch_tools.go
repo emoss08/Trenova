@@ -53,7 +53,7 @@ func (t *listWebWatchesTool) ParamSchema() map[string]any {
 }
 
 func (t *listWebWatchesTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceWebResearch,
 		Rationale: "Lists the web watches set for the person; it changes nothing, reaches " +
 			"no one, and returns only what the agents wrote when they set them.",

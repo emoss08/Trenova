@@ -78,7 +78,7 @@ func (t *listRateImportsTool) ParamSchema() map[string]any {
 func (t *listRateImportsTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(
 		t.Name(),
-		querytool.ReadSpec{Resource: permission.ResourceRateAgreement},
+		&querytool.ReadSpec{Resource: permission.ResourceRateAgreement},
 	)
 }
 
@@ -106,7 +106,9 @@ func (t *listRateImportsTool) Query(
 			)},
 		},
 	}
-	if raw := strings.TrimSpace(querytool.OptionalString(params.Params, "rateAgreementId")); raw != "" {
+	if raw := strings.TrimSpace(
+		querytool.OptionalString(params.Params, "rateAgreementId"),
+	); raw != "" {
 		agreementID, err := pulid.Parse(raw)
 		if err != nil {
 			return nil, fmt.Errorf("%q is not a rate agreement id; find it with "+

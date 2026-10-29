@@ -64,7 +64,7 @@ func (t *listRateConfirmationsTool) ParamSchema() map[string]any {
 }
 
 func (t *listRateConfirmationsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceRateConfirmation,
 		Rationale: "Reads a move's rate confirmation revisions; the name a carrier typed " +
 			"when signing is left out, so nothing written outside the organization is read.",

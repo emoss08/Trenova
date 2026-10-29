@@ -71,7 +71,10 @@ func (t *listBillingTransferCandidatesTool) ParamSchema() map[string]any {
 }
 
 func (t *listBillingTransferCandidatesTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{Resource: permission.ResourceShipment})
+	return querytool.ReadPolicy(
+		t.Name(),
+		&querytool.ReadSpec{Resource: permission.ResourceShipment},
+	)
 }
 
 type billingTransferCandidateRow struct {
@@ -156,7 +159,7 @@ func (t *listBillingTransferCandidatesTool) Query(
 		window.Offset == 0 && !candidates.HasMore,
 	)
 	if selection.Status == shipmentvocab.StatusReadyToInvoice {
-		if note := t.completedAlsoWaiting(ctx, params, selection); note != "" {
+		if note := t.completedAlsoWaiting(ctx, params, &selection); note != "" {
 			result.Note = strings.TrimSpace(result.Note + " " + note)
 		}
 	}
@@ -171,17 +174,18 @@ func (t *listBillingTransferCandidatesTool) Query(
 func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 	ctx context.Context,
 	params *agenttoolports.QueryToolParams,
-	selection billingtransfercriteria.Criteria,
+	selection *billingtransfercriteria.Criteria,
 ) string {
-	selection.Status = shipmentvocab.StatusCompleted
+	completedOnly := *selection
+	completedOnly.Status = shipmentvocab.StatusCompleted
 	completed, err := t.shipments.ListBillingTransferCandidates(
 		ctx,
 		&shipmentbillingports.ListBillingTransferCandidatesRequest{
-			Filter: selection.QueryOptions(
+			Filter: completedOnly.QueryOptions(
 				querytool.TenantOf(params),
 				pagination.Info{Limit: 1},
 			),
-			Status:                      selection.Status,
+			Status:                      completedOnly.Status,
 			MarkCompletedReadyToInvoice: true,
 		},
 	)

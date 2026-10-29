@@ -181,7 +181,7 @@ func (t *listAgentRunsTool) ParamSchema() map[string]any {
 }
 
 func (t *listAgentRunsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceAgentRun,
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceRunRecord,
@@ -425,7 +425,7 @@ func (t *getAgentRunTool) ParamSchema() map[string]any {
 }
 
 func (t *getAgentRunTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceAgentRun,
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceRunRecord,

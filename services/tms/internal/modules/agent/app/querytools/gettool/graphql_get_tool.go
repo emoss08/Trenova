@@ -96,7 +96,12 @@ func NewGraphQL(
 	if err != nil {
 		return nil, err
 	}
-	if params, required, err = graphqlread.Renamed(spec.Name, params, spec.Names, required); err != nil {
+	if params, required, err = graphqlread.Renamed(
+		spec.Name,
+		params,
+		spec.Names,
+		required,
+	); err != nil {
 		return nil, err
 	}
 	references := spec.References

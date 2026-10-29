@@ -70,7 +70,7 @@ func TestSearchShipments_ListsWithoutAQuery(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: []*shipment.Shipment{{ID: pulid.MustNew("shp_")}}}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{})
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{})
 
 	_, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{}))
 	require.NoError(t, err)
@@ -83,7 +83,7 @@ func TestSearchShipments_KeepsTheStatusFilter(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{})
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{})
 
 	// Completed, not "Delivered". These fixtures used to say Delivered, copied
 	// from the tool's own description, which named a status the system does not
@@ -131,7 +131,7 @@ func TestSearchShipments_EmptyResultNamesEveryFilterItApplied(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: nil}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{})
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{})
 
 	result, err := tool.Query(
 		t.Context(),
@@ -153,7 +153,7 @@ func TestSearchShipments_UnfilteredEmptyResultSaysSo(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: nil}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{})
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{})
 
 	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{}))
 	require.NoError(t, err)
@@ -177,7 +177,7 @@ func TestSearchShipments_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 
 	result, err := shipmentquerytools.NewShipmentListTool(
 		repo,
-		shipmentquerytools.PartySources{},
+		&shipmentquerytools.PartySources{},
 	).Query(t.Context(), querytooltest.TestParams(map[string]any{}))
 	require.NoError(t, err)
 
@@ -203,7 +203,7 @@ func TestSearchShipments_DistinguishesInTransitFromUnrecorded(t *testing.T) {
 
 	result, err := shipmentquerytools.NewShipmentListTool(
 		repo,
-		shipmentquerytools.PartySources{},
+		&shipmentquerytools.PartySources{},
 	).Query(t.Context(), querytooltest.TestParams(map[string]any{}))
 	require.NoError(t, err)
 
@@ -232,7 +232,7 @@ func TestSearchShipments_RefusesAStatusThatDoesNotExist(t *testing.T) {
 	repo := &fakeShipmentRepo{}
 	_, err := shipmentquerytools.NewShipmentListTool(
 		repo,
-		shipmentquerytools.PartySources{},
+		&shipmentquerytools.PartySources{},
 	).Query(t.Context(), querytooltest.TestParams(map[string]any{
 		"status": "Delivered",
 	}))
@@ -248,7 +248,7 @@ func TestSearchShipments_AcceptsAStatusThatExists(t *testing.T) {
 	repo := &fakeShipmentRepo{}
 	_, err := shipmentquerytools.NewShipmentListTool(
 		repo,
-		shipmentquerytools.PartySources{},
+		&shipmentquerytools.PartySources{},
 	).Query(t.Context(), querytooltest.TestParams(map[string]any{
 		"status": "InTransit",
 	}))
@@ -268,7 +268,7 @@ func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
 	repo := &fakeShipmentRepo{}
 	_, err := shipmentquerytools.NewShipmentListTool(
 		repo,
-		shipmentquerytools.PartySources{},
+		&shipmentquerytools.PartySources{},
 	).Query(t.Context(), querytooltest.TestParams(map[string]any{
 		"status": []any{"New", "PartiallyAssigned", "Assigned", "New"},
 	}))
@@ -280,7 +280,7 @@ func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
 	repo = &fakeShipmentRepo{}
 	_, err = shipmentquerytools.NewShipmentListTool(
 		repo,
-		shipmentquerytools.PartySources{},
+		&shipmentquerytools.PartySources{},
 	).Query(t.Context(), querytooltest.TestParams(map[string]any{
 		"query":  "chicago",
 		"status": []any{"New", "Assigned"},
@@ -295,7 +295,7 @@ func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
 func TestSearchShipmentsSchema_OffersOnlyStatusesTheToolAccepts(t *testing.T) {
 	t.Parallel()
 
-	properties, ok := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{}, shipmentquerytools.PartySources{}).
+	properties, ok := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{}, &shipmentquerytools.PartySources{}).
 		ParamSchema()["properties"].(map[string]any)
 	require.True(t, ok)
 	items, ok := properties["status"].(map[string]any)["items"].(map[string]any)
@@ -317,7 +317,7 @@ func TestListShipments_FindsShipmentsNeverTransferredToBilling(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{})
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{})
 
 	filters, ok := tool.ParamSchema()["properties"].(map[string]any)["filters"].(map[string]any)
 	require.True(t, ok)
@@ -945,7 +945,7 @@ func TestSearchShipments_MatchesWhatALoadCarries(t *testing.T) {
 
 	steel := &commodity.Commodity{ID: pulid.MustNew("com_"), Name: "Steel Coils"}
 	repo := &recordingShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{
 		Commodities: &namedCommodities{items: []*commodity.Commodity{steel}},
 	})
 
@@ -984,7 +984,7 @@ func TestSearchShipments_MatchesTheShipmentType(t *testing.T) {
 
 	ltl := &shipmenttype.ShipmentType{ID: pulid.MustNew("sht_"), Code: "LTL"}
 	repo := &recordingShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{
 		Types: &namedShipmentTypes{items: []*shipmenttype.ShipmentType{ltl}},
 	})
 
@@ -1034,7 +1034,7 @@ func TestSearchShipments_RequiresAStopAtEachPlaceNamed(t *testing.T) {
 		ID: pulid.MustNew("loc_"), Name: "Phoenix Cold Storage", City: "Phoenix",
 	}
 	repo := &recordingShipmentRepo{}
-	tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{
+	tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{
 		Locations: &namedLocations{items: []*location.Location{denver, phoenix}},
 	})
 
@@ -1097,7 +1097,7 @@ func TestSearchShipments_AFullPageStillShowsEachStatusAskedFor(t *testing.T) {
 	}
 	items = append(items, delayed)
 
-	result, err := shipmentquerytools.NewShipmentListTool(&statusShipmentRepo{items: items}, shipmentquerytools.PartySources{}).
+	result, err := shipmentquerytools.NewShipmentListTool(&statusShipmentRepo{items: items}, &shipmentquerytools.PartySources{}).
 		Query(t.Context(), querytooltest.TestParams(map[string]any{
 			"query":  "freshhaul los angeles",
 			"status": []any{"New", "InTransit", "Delayed"},
@@ -1179,7 +1179,7 @@ func TestShipmentList_NarrowsASearchByWordsWithTheFiltersAndPagesIt(t *testing.T
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{}).
+	_, err := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{}).
 		Query(t.Context(),
 			querytooltest.TestParams(map[string]any{
 				"query": "acme",
@@ -1249,7 +1249,7 @@ func TestShipmentList_PagesByCursor(t *testing.T) {
 			t.Parallel()
 
 			repo := &pagedShipmentRepo{items: items}
-			tool := shipmentquerytools.NewShipmentListTool(repo, shipmentquerytools.PartySources{})
+			tool := shipmentquerytools.NewShipmentListTool(repo, &shipmentquerytools.PartySources{})
 			params := querytooltest.TestParams(nil)
 
 			querytooltest.AssertCursorPaging(t, querytooltest.CursorPagingCase{
@@ -1270,7 +1270,7 @@ func TestShipmentList_PagesByCursor(t *testing.T) {
 func TestShipmentListSchema_OffersStatusOnceAndNotAgainAsAFilter(t *testing.T) {
 	t.Parallel()
 
-	properties, ok := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{}, shipmentquerytools.PartySources{}).
+	properties, ok := shipmentquerytools.NewShipmentListTool(&fakeShipmentRepo{}, &shipmentquerytools.PartySources{}).
 		ParamSchema()["properties"].(map[string]any)
 	require.True(t, ok)
 	filters, ok := properties["filters"].(map[string]any)

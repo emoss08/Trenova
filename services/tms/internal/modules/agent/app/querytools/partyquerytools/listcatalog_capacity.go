@@ -71,7 +71,7 @@ func toCapacityPostingRow(item *carriercapacity.Posting) capacityPostingRow {
 func NewListCarrierCapacityPostingsTool(
 	repo carriercapacityports.CarrierCapacityPostingRepository,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         "carrier_list_capacity_postings",
 		Row:          capacityPostingRow{},
 		EntityPlural: "carrier capacity postings",

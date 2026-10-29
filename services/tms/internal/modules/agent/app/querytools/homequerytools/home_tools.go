@@ -135,7 +135,7 @@ func (t *listHomeWidgetsTool) ParamSchema() map[string]any {
 }
 
 func (t *listHomeWidgetsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceHomeLayoutPreset,
 		Scope:    agenttooltrust.ToolScopeSelf,
 		Rationale: "Lists the widgets the caller's home page can show; nothing changes and " +

@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -68,20 +69,20 @@ func (t *getShipmentDraftTool) Description() string {
 
 func (t *getShipmentDraftTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"documentId": agenttoolschema.RecordIDText(permission.ResourceDocument,
 				"The id of the uploaded document the draft was read from: "+
 					"an attachment on the message, a documentId in inbox_get_inbound_message, or "+
 					"this run's subject."),
 		},
-		"required":             []string{"documentId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"documentId"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *getShipmentDraftTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceDocument,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceDocument,
@@ -304,8 +305,8 @@ func (t *quoteShipmentTool) Description() string {
 
 func (t *quoteShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"The customer being billed, from customer_list."),
 			"serviceTypeId": agenttoolschema.RecordIDText(permission.ResourceServiceType,
@@ -313,44 +314,44 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 			"shipmentTypeId": agenttoolschema.RecordIDText(permission.ResourceShipmentType,
 				"The shipment type, from masterdata_list_shipment_types."),
 			"stops": map[string]any{
-				"type":        "array",
-				"description": "The stops in travel order: at least a pickup and a delivery.",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
+				toolschema.KeyType:        toolschema.TypeArray,
+				toolschema.KeyDescription: "The stops in travel order: at least a pickup and a delivery.",
+				toolschema.KeyItems: map[string]any{
+					toolschema.KeyType: toolschema.TypeObject,
+					toolschema.KeyProperties: map[string]any{
 						"locationId": agenttoolschema.RecordIDText(
 							permission.ResourceLocation, "A location id from location_list.",
 						),
 						"type": agenttoolschema.Enum("", agenttoolschema.StopTypes),
 						"date": map[string]any{
-							"type":        "string",
-							"description": "The scheduled date, YYYY-MM-DD, or an RFC 3339 time.",
+							toolschema.KeyType:        toolschema.TypeString,
+							toolschema.KeyDescription: "The scheduled date, YYYY-MM-DD, or an RFC 3339 time.",
 						},
 					},
-					"required":             []string{"locationId", "type"},
-					"additionalProperties": false,
+					toolschema.KeyRequired:             []string{"locationId", "type"},
+					toolschema.KeyAdditionalProperties: false,
 				},
 			},
 			"pieces": map[string]any{
-				"type":        "integer",
-				"description": "Piece count, when known.",
+				toolschema.KeyType:        toolschema.TypeInteger,
+				toolschema.KeyDescription: "Piece count, when known.",
 			},
 			"weight": map[string]any{
-				"type":        "integer",
-				"description": "Weight in pounds, when known.",
+				toolschema.KeyType:        toolschema.TypeInteger,
+				toolschema.KeyDescription: "Weight in pounds, when known.",
 			},
 			"asOf": map[string]any{
-				"type":        "string",
-				"description": "Rate as of this date, YYYY-MM-DD. Defaults to the first stop's date, then today.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Rate as of this date, YYYY-MM-DD. Defaults to the first stop's date, then today.",
 			},
 		},
-		"required":             []string{"customerId", "serviceTypeId", "stops"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"customerId", "serviceTypeId", "stops"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *quoteShipmentTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceRateQuote,
 	})
 }
@@ -411,7 +412,10 @@ func (t *quoteShipmentTool) Query(
 	}
 	entity.CustomerID = customerID
 	entity.ServiceTypeID = serviceTypeID
-	if shipmentTypeID, ok, pErr := querytool.OptionalPulid(params.Params, "shipmentTypeId"); pErr != nil {
+	if shipmentTypeID, ok, pErr := querytool.OptionalPulid(
+		params.Params,
+		"shipmentTypeId",
+	); pErr != nil {
 		return nil, pErr
 	} else if ok {
 		entity.ShipmentTypeID = shipmentTypeID
@@ -662,8 +666,8 @@ func (t *shopCarriersTool) Description() string {
 
 func (t *shopCarriersTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The saved shipment to price, from shipment_list or "+
 					"the page you are on."),
@@ -672,20 +676,20 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 				shopStrategies,
 			),
 			"carrierIds": agenttoolschema.OfResource(map[string]any{
-				"type":  "array",
-				"items": map[string]any{"type": "string"},
-				"description": "An explicit shortlist of carrier ids from carrier_list. " +
+				toolschema.KeyType:  toolschema.TypeArray,
+				toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
+				toolschema.KeyDescription: "An explicit shortlist of carrier ids from carrier_list. " +
 					"Empty means the routing guide's candidates.",
 			}, permission.ResourceCarrier),
 			querytool.ParamLimit: querytool.LimitSchema(defaultShopMax, maxShopOptions),
 		},
-		"required":             []string{"shipmentId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"shipmentId"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *shopCarriersTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceRateQuote,
 	})
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportvalue"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -116,25 +117,25 @@ func (t *listReportsTool) Description() string {
 
 func (t *listReportsTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": querytool.WithPaging(map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: querytool.WithPaging(map[string]any{
 			"category": map[string]any{
-				"type": "string",
-				"description": "Optional area to narrow to, such as Accounting, Billing, " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional area to narrow to, such as Accounting, Billing, " +
 					"Operations, Fleet, Workforce or Compliance.",
 			},
 			"query": map[string]any{
-				"type": "string",
-				"description": "Optional words matched against the report's name, description " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional words matched against the report's name, description " +
 					"and key; every word must begin a word there, in any order.",
 			},
 		}, defaultReportsListed, maxReportsListed),
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *listReportsTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 	})
 }
@@ -440,24 +441,24 @@ func (t *runReportTool) Description() string {
 
 func (t *runReportTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"reportKey": map[string]any{
-				"type":        "string",
-				"description": "The reportKey of a built-in report from report_list.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The reportKey of a built-in report from report_list.",
 			},
 			"key": map[string]any{
-				"type": "string",
-				"description": "Accepted as an alias of reportKey, from report_list; " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Accepted as an alias of reportKey, from report_list; " +
 					"prefer reportKey.",
 			},
 			"definitionId": agenttoolschema.OfResource(map[string]any{
-				"type":        "string",
-				"description": "The definitionId of a saved report from report_list.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The definitionId of a saved report from report_list.",
 			}, permission.ResourceReport),
 			"parameters": map[string]any{
-				"type": "object",
-				"description": "The report's parameters, keyed by the names report_list " +
+				toolschema.KeyType: toolschema.TypeObject,
+				toolschema.KeyDescription: "The report's parameters, keyed by the names report_list " +
 					"gave, each in the shape it named. A list parameter takes a plain " +
 					"JSON array and nothing else — [\"A\",\"B\"], never " +
 					"{\"item\":[\"A\"]} and never a comma-separated string. Supply " +
@@ -467,12 +468,12 @@ func (t *runReportTool) ParamSchema() map[string]any {
 				"Optional output format. Defaults to the report's own.", reportRunFormats,
 			),
 		},
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *runReportTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 		Effect:   agenttooltrust.ToolEffectPresent,
 	})
@@ -508,7 +509,9 @@ func (t *runReportTool) Query(
 	}
 
 	format := source.DefaultFormat
-	if requested := report.Format(querytool.OptionalString(params.Params, "format")); requested.IsValid() {
+	if requested := report.Format(
+		querytool.OptionalString(params.Params, "format"),
+	); requested.IsValid() {
 		format = requested
 	}
 
@@ -707,20 +710,20 @@ func (t *getReportRunTool) Description() string {
 
 func (t *getReportRunTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"runId": agenttoolschema.OfKinds(map[string]any{
-				"type":        "string",
-				"description": "The run id returned by report_run.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The run id returned by report_run.",
 			}, recordkind.ReportRun),
 		},
-		"required":             []string{"runId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"runId"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
 func (t *getReportRunTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceReport,
 	})
 }

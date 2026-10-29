@@ -82,7 +82,7 @@ func NewListOrdersTool(
 	repo orderports.OrderRepository,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         "order_list",
 		Row:          orderRow{},
 		EntityPlural: "orders",

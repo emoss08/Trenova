@@ -28,7 +28,7 @@ type carrierRow struct {
 }
 
 func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.AgentQueryTool {
-	return listtool.New(listtool.Spec{
+	return listtool.New(&listtool.Spec{
 		Name:         querytool.ToolCarrierList,
 		Row:          carrierRow{},
 		EntityPlural: pluralCarriers,
@@ -36,7 +36,11 @@ func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.Age
 		Resource:     permission.ResourceCarrier,
 		Config:       listquery.Describe((*carrier.Carrier)(nil), carrierdb.CarriersSchema()),
 		Fields: []filtercatalog.Field{
-			{Name: "status", Kind: filtercatalog.KindEnum, Values: querytool.StatusValues},
+			{
+				Name:   querytool.ListFieldStatus,
+				Kind:   filtercatalog.KindEnum,
+				Values: querytool.StatusValues,
+			},
 			{
 				Name:   "complianceStatus",
 				Kind:   filtercatalog.KindEnum,
@@ -48,8 +52,8 @@ func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.Age
 				Kind:   filtercatalog.KindEnum,
 				Values: []string{"Satisfactory", "Conditional", "Unsatisfactory", "NotRated"},
 			},
-			{Name: "code", Kind: filtercatalog.KindText, Sortable: true},
-			{Name: "name", Kind: filtercatalog.KindText, Sortable: true},
+			{Name: querytool.ListFieldCode, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: querytool.ListFieldName, Kind: filtercatalog.KindText, Sortable: true},
 			{Name: "dotNumber", Kind: filtercatalog.KindText},
 			{Name: "mcNumber", Kind: filtercatalog.KindText},
 			{
@@ -57,7 +61,7 @@ func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.Age
 				Kind:   filtercatalog.KindEnum,
 				Values: []string{"Common", "Contract", "Broker", "Exempt"},
 			},
-			{Name: "createdAt", Kind: filtercatalog.KindDate, Sortable: true},
+			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},
 		},
 		Fetch: func(ctx context.Context, opts *pagination.QueryOptions, _ pagination.CursorInfo) (listtool.Page, error) {
 			result, err := repo.List(ctx, &carrierports.ListCarrierRequest{Filter: opts})

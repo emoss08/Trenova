@@ -126,7 +126,7 @@ func (t *listEDITenderChangesTool) ParamSchema() map[string]any {
 }
 
 func (t *listEDITenderChangesTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceEDI,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceEDI,
@@ -295,7 +295,7 @@ func (t *listEDITransferChangesTool) ParamSchema() map[string]any {
 }
 
 func (t *listEDITransferChangesTool) Policy() agenttoolports.ToolPolicy {
-	return querytool.ReadPolicy(t.Name(), querytool.ReadSpec{
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceEDI,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceEDI,

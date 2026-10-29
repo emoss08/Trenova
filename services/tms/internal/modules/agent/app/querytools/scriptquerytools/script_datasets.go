@@ -101,8 +101,8 @@ func datasetsFrom(raw any) ([]datasetRequest, error) {
 			return nil, err
 		}
 		var definition *ir.Definition
-		if raw, given := fields[paramDatasetDefinition]; given && raw != nil {
-			if definition, err = reporting.DecodeDefinition(raw); err != nil {
+		if encoded, given := fields[paramDatasetDefinition]; given && encoded != nil {
+			if definition, err = reporting.DecodeDefinition(encoded); err != nil {
 				return nil, fmt.Errorf("dataset %s: %w", name, err)
 			}
 		}

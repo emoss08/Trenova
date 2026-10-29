@@ -71,7 +71,7 @@ func TestRecallMemory_NarrowsToASubjectAndReadsBackTheFilters(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	recalled, ok := result.(recallOutcome)
+	recalled, ok := result.(*recallOutcome)
 	require.True(t, ok)
 	outcome := recalled.SearchOutcome
 	assert.Equal(t, 1, outcome.Count)
@@ -98,7 +98,7 @@ func TestRecallMemory_SaysNothingMatchedRatherThanNothingExists(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	outcome := result.(recallOutcome).SearchOutcome
+	outcome := result.(*recallOutcome).SearchOutcome
 	assert.Equal(t, 0, outcome.Count)
 	assert.Contains(t, outcome.Note, "No memories matched")
 }
@@ -231,7 +231,7 @@ func TestRecallMemory_ReadsOneMemoryByIDWithoutAMatchLabel(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{memoryID}, recall.captured.IDs)
 
-	outcome := result.(recallOutcome).SearchOutcome
+	outcome := result.(*recallOutcome).SearchOutcome
 	rows, ok := outcome.Items.([]memoryRow)
 	require.True(t, ok)
 	require.Len(t, rows, 1)

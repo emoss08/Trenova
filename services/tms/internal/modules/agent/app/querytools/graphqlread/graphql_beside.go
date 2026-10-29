@@ -236,7 +236,8 @@ func MatchAlongside(
 	bound []Alongside,
 ) ([]Alongside, error) {
 	out := make([]Alongside, 0, len(specs))
-	for _, beside := range specs {
+	for i := range specs {
+		beside := &specs[i]
 		idx := slices.IndexFunc(bound, func(b Alongside) bool {
 			return b.Operation == beside.Operation
 		})
