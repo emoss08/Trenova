@@ -134,7 +134,7 @@ func (t *GuideProfileTool) Policy() agenttoolports.ToolPolicy {
 			Description: "Guidance recorded after the run read text from outside the " +
 				"organization waits for a person's approval, because every later prompt is " +
 				"written from it.",
-			Applies: func(agenttoolports.ToolExecuteParams) bool { return true },
+			Applies: func(*agenttoolports.ToolExecuteParams) bool { return true },
 		},
 		Rationale: "Adds a line every later write-up of a profile honours. Guidance about the " +
 			"person's own work reaches only their conversations; guidance about the " +
@@ -146,7 +146,7 @@ func (t *GuideProfileTool) Policy() agenttoolports.ToolPolicy {
 // shapes only the profile their own conversations read. Guidance about the
 // organization shapes every conversation, so it is internal.
 func classifyGuideProfile(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	actor := params.Actor
 	if toolparams.OptionalString(params.Params, fieldProfileAbout) != profileAboutMe ||
@@ -212,9 +212,9 @@ func guidanceActor(
 
 func (t *GuideProfileTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the Tool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -230,9 +230,9 @@ var guidanceLabels = map[string]string{"subject": "About", changepreview.FieldCo
 
 func (t *GuideProfileTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func guidanceSummary(req *agentprofileports.AddGuidanceRequest, offered bool) st
 
 func (t *GuideProfileTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }

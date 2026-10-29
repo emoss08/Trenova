@@ -1720,7 +1720,7 @@ type RateIncreaseTool struct {
 
 func (t RateIncreaseTool) ResolveSelection(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	if _, named := params.Params[paramAgreementIDs]; !named {
 		return params.Params, nil

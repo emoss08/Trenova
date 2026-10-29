@@ -177,7 +177,7 @@ func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error)
 }
 
 func classifyHoldVisibility(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	if toolparams.OptionalBool(params.Params, ParamVisibleToCustomer) {
 		return agenttoolports.CallPolicy{Egress: agent.EgressCustomerVisible}

@@ -140,9 +140,9 @@ type stopScheduleView struct {
 
 func (t *rescheduleStopTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -154,9 +154,9 @@ func (t *rescheduleStopTool) Execute(
 
 func (t *rescheduleStopTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 func (t *rescheduleStopTool) plan(
@@ -261,9 +261,9 @@ func scheduleViewOf(stop *shipment.Stop, zone *time.Location) stopScheduleView {
 
 func (t *rescheduleStopTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(
@@ -407,9 +407,9 @@ type shipmentChargePlan struct {
 
 func (t *addShipmentChargeTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -421,9 +421,9 @@ func (t *addShipmentChargeTool) Execute(
 
 func (t *addShipmentChargeTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 func (t *addShipmentChargeTool) plan(
@@ -556,9 +556,9 @@ func shipmentChargeViewOf(plan *shipmentChargePlan) *shipmentChargeView {
 
 func (t *addShipmentChargeTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(

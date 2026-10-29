@@ -363,9 +363,9 @@ func (t *RecurringPayTool[E]) planned(
 
 func (t *RecurringPayTool[E]) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -375,15 +375,15 @@ func (t *RecurringPayTool[E]) Validate(
 
 func (t *RecurringPayTool[E]) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -399,9 +399,9 @@ func (t *RecurringPayTool[E]) Execute(
 
 func (t *RecurringPayTool[E]) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}

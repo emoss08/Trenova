@@ -7,8 +7,8 @@ import (
 
 type ClassifiedTool[R, P any] struct {
 	ReportingReceivableTool[R, P]
-	Egress   []agent.EgressClass                                              `json:"-"`
-	Classify func(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy `json:"-"`
+	Egress   []agent.EgressClass                                               `json:"-"`
+	Classify func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy `json:"-"`
 }
 
 func (t ClassifiedTool[R, P]) Policy() agenttoolports.ToolPolicy {

@@ -158,9 +158,9 @@ func (t *ActOnPortalTool) request(
 
 func (t *ActOnPortalTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -174,10 +174,10 @@ func (t *ActOnPortalTool) Validate(
 // the details it will type. It never reaches the vendor.
 func (t *ActOnPortalTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	summary := "Would ask a browser to act on a portal."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func (t *ActOnPortalTool) Preview(
 
 func (t *ActOnPortalTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -229,16 +229,16 @@ func (t *ActOnPortalTool) Execute(
 // approval is the idempotency key, so a retry finds the task it started.
 func (t *ActOnPortalTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
 		return nil, ErrPortalActionNeedsAPerson
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}

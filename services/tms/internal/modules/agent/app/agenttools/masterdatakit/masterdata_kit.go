@@ -664,7 +664,7 @@ type Policy struct {
 }
 
 func (p *Policy) classify(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	switch {
 	case toolparams.SendsAny(params.Params, p.MoneyKeys...):

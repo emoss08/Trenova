@@ -242,9 +242,9 @@ func (t *OpenEscrowAccountTool) planned(
 
 func (t *OpenEscrowAccountTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -254,15 +254,15 @@ func (t *OpenEscrowAccountTool) Validate(
 
 func (t *OpenEscrowAccountTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	entity, err := t.entity(&params)
+	entity, err := t.entity(params)
 	if err != nil {
 		return err
 	}
@@ -273,9 +273,9 @@ func (t *OpenEscrowAccountTool) Execute(
 
 func (t *OpenEscrowAccountTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -405,9 +405,9 @@ func (t *UpdateEscrowAccountTool) planned(
 
 func (t *UpdateEscrowAccountTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -417,15 +417,15 @@ func (t *UpdateEscrowAccountTool) Validate(
 
 func (t *UpdateEscrowAccountTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -439,9 +439,9 @@ func (t *UpdateEscrowAccountTool) Execute(
 
 func (t *UpdateEscrowAccountTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -602,9 +602,9 @@ func (t *AdjustEscrowAccountTool) planned(
 
 func (t *AdjustEscrowAccountTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, plan, err := t.planned(ctx, &params)
+	_, plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -614,15 +614,15 @@ func (t *AdjustEscrowAccountTool) Validate(
 
 func (t *AdjustEscrowAccountTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -633,9 +633,9 @@ func (t *AdjustEscrowAccountTool) Execute(
 
 func (t *AdjustEscrowAccountTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, plan, err := t.planned(ctx, &params)
+	req, plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -724,9 +724,9 @@ func (t *CloseEscrowAccountTool) planned(
 
 func (t *CloseEscrowAccountTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -736,12 +736,12 @@ func (t *CloseEscrowAccountTool) Validate(
 
 func (t *CloseEscrowAccountTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
 	accountID, err := toolparams.RequirePulid(params.Params, paramEscrowAccountID)
@@ -750,7 +750,7 @@ func (t *CloseEscrowAccountTool) Execute(
 	}
 	_, err = t.escrow.CloseEscrowAccount(
 		ctx,
-		toolparams.TenantFrom(&params),
+		toolparams.TenantFrom(params),
 		accountID,
 		params.Actor,
 	)
@@ -760,9 +760,9 @@ func (t *CloseEscrowAccountTool) Execute(
 
 func (t *CloseEscrowAccountTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}

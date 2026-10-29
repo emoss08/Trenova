@@ -30,9 +30,9 @@ var tenderOfferLabels = map[string]string{
 
 func (t *CancelTenderTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -92,16 +92,16 @@ func (t *CancelTenderTool) Preview(
 
 func (t *RecordTenderResponseTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
+	if bounce, err := t.bounceRequest(params); bounce != nil || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		return t.previewBounce(ctx, bounce)
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}

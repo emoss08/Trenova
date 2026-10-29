@@ -16,7 +16,7 @@ import (
 const reportRecordEntity = "report"
 
 func classifyReportVisibility(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	shared := agenttoolports.CallPolicy{
 		Egress:  agent.EgressInternal,
@@ -45,9 +45,9 @@ func classifyReportVisibility(
 // can use it next.
 func (t *CreateReportTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	save, err := t.prepare(&params)
+	save, err := t.prepare(params)
 	if err != nil {
 		return nil, err
 	}

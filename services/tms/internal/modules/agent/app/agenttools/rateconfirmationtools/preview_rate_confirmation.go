@@ -19,9 +19,9 @@ import (
 
 func (t *GenerateRateConfirmationTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	moveID, err := t.moveID(&params)
+	moveID, err := t.moveID(params)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (t *GenerateRateConfirmationTool) Preview(
 	summary := "Would generate a rate confirmation for this move."
 	plan, err := t.rateCons.PreviewGenerate(
 		ctx,
-		toolparams.TenantFrom(&params),
+		toolparams.TenantFrom(params),
 		moveID,
 		params.Actor,
 	)
@@ -103,15 +103,15 @@ func (t *GenerateRateConfirmationTool) Preview(
 
 func (t *SendRateConfirmationTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	id, err := rateConfirmationArg(t, &params)
+	id, err := rateConfirmationArg(t, params)
 	if err != nil {
 		return nil, err
 	}
 
 	summary := "Would email this rate confirmation to the carrier."
-	plan, err := t.rateCons.PreviewSend(ctx, toolparams.TenantFrom(&params), id)
+	plan, err := t.rateCons.PreviewSend(ctx, toolparams.TenantFrom(params), id)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
@@ -153,15 +153,15 @@ func (t *SendRateConfirmationTool) Preview(
 
 func (t *VoidRateConfirmationTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	id, reason, err := t.arguments(&params)
+	id, reason, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
 
 	summary := "Would void this rate confirmation. Reason: " + reason
-	plan, err := t.rateCons.PreviewVoid(ctx, toolparams.TenantFrom(&params), id, reason)
+	plan, err := t.rateCons.PreviewVoid(ctx, toolparams.TenantFrom(params), id, reason)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
@@ -205,15 +205,15 @@ func (t *VoidRateConfirmationTool) Preview(
 
 func (t *RecordRateConfirmationConfirmedTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	id, name, err := t.arguments(&params)
+	id, name, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
 
 	summary := "Would record that " + name + " confirmed this rate confirmation for the carrier."
-	plan, err := t.rateCons.PreviewMarkConfirmed(ctx, toolparams.TenantFrom(&params), id, name)
+	plan, err := t.rateCons.PreviewMarkConfirmed(ctx, toolparams.TenantFrom(params), id, name)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil

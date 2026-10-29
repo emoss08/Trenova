@@ -190,15 +190,15 @@ func (t *WatchWebTool) request(
 
 func (t *WatchWebTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if params.Delegated {
 		return ErrDelegatedWatch
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -212,13 +212,13 @@ func (t *WatchWebTool) Validate(
 // vendor.
 func (t *WatchWebTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	summary := "Would keep watching the web."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
@@ -255,7 +255,7 @@ func endDay(at int64) string {
 
 func (t *WatchWebTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -267,9 +267,9 @@ func (t *WatchWebTool) Execute(
 // one, and it would bill for nothing.
 func (t *WatchWebTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if params.Delegated {
@@ -279,7 +279,7 @@ func (t *WatchWebTool) ExecuteWithResult(
 		return nil, errNoWatcher
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -387,25 +387,25 @@ func (t *StopWebWatchTool) request(
 
 func (t *StopWebWatchTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	_, err := t.request(&params)
+	_, err := t.request(params)
 
 	return err
 }
 
 func (t *StopWebWatchTool) Preview(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	summary := "Would stop a web watch, so the vendor searches and bills for it no more."
-	if _, err := t.request(&params); err != nil {
+	if _, err := t.request(params); err != nil {
 		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
 
@@ -414,7 +414,7 @@ func (t *StopWebWatchTool) Preview(
 
 func (t *StopWebWatchTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -423,12 +423,12 @@ func (t *StopWebWatchTool) Execute(
 
 func (t *StopWebWatchTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}

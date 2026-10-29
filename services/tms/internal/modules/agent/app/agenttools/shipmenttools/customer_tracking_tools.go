@@ -50,9 +50,7 @@ type sharedLinkView struct {
 
 // classifyShareLink tells a link that is only shared apart from one emailed to
 // an address outside the organization.
-//
-//nolint:gocritic // the Classify hook passes params by value
-func classifyShareLink(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+func classifyShareLink(params *agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 	if toolparams.OptionalString(params.Params, paramRecipientEmail) != "" {
 		return agenttoolports.CallPolicy{Egress: agent.EgressExternalRecipient}
 	}

@@ -165,13 +165,13 @@ func (t *LogCheckCallTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *LogCheckCallTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(ctx, &params)
+	request, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -183,9 +183,9 @@ func (t *LogCheckCallTool) Execute(
 
 func (t *LogCheckCallTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 func (t *LogCheckCallTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {

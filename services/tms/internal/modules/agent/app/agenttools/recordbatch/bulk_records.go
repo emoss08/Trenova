@@ -122,14 +122,14 @@ func (b *RecordBatch) singleArguments(params map[string]any, id pulid.ID) map[st
 func (b *RecordBatch) singleParams(
 	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
-) agenttoolports.ToolExecuteParams {
+) *agenttoolports.ToolExecuteParams {
 	single := *params
 	single.Params = b.singleArguments(params.Params, id)
 	if params.IdempotencyKey != "" {
 		single.IdempotencyKey = params.IdempotencyKey + ":" + id.String()
 	}
 
-	return single
+	return &single
 }
 
 // Split is the call naming each record alone, in the order named and each

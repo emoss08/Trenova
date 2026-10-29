@@ -36,9 +36,9 @@ func NewAddShipmentCommentTool(
 
 func (t *AddShipmentCommentTool) Preview(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	entity, err := t.comment(&params)
+	entity, err := t.comment(params)
 	if err != nil {
 		return nil, err
 	}
@@ -171,9 +171,9 @@ func (t *AddShipmentCommentTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *AddShipmentCommentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	entity, err := t.comment(&params)
+	entity, err := t.comment(params)
 	if err != nil {
 		return err
 	}
@@ -244,9 +244,9 @@ func (t *AddShipmentCommentTool) comment(
 // service would refuse is refused to the model before it runs.
 func (t *AddShipmentCommentTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 func commentTaintMetadata(params *agenttoolports.ToolExecuteParams) map[string]any {

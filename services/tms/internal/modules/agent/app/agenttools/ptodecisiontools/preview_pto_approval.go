@@ -14,10 +14,10 @@ import (
 
 func (t *ApproveWorkerPTOTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	summary := "Would approve a time-off request."
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		if errors.Is(err, toolguard.ErrAgentCannotApprove) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
@@ -25,7 +25,7 @@ func (t *ApproveWorkerPTOTool) Preview(
 		return nil, err
 	}
 
-	request, err := ptoStatusRequest(&params)
+	request, err := ptoStatusRequest(params)
 	if err != nil {
 		return nil, err
 	}

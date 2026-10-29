@@ -157,9 +157,9 @@ func (t *PayWorkerNowTool) plan(
 
 func (t *PayWorkerNowTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -169,15 +169,15 @@ func (t *PayWorkerNowTool) Validate(
 
 func (t *PayWorkerNowTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
 		return nil, settlementpreview.ErrSettlementNeedsAPerson
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func (t *PayWorkerNowTool) ExecuteWithResult(
 
 func (t *PayWorkerNowTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -200,9 +200,9 @@ func (t *PayWorkerNowTool) Execute(
 
 func (t *PayWorkerNowTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return nil, err
 	}

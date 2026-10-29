@@ -162,9 +162,9 @@ func (t *IssuePayAdvanceTool) entity(
 
 func (t *IssuePayAdvanceTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	entity, err := t.entity(&params)
+	entity, err := t.entity(params)
 	if err != nil {
 		return err
 	}
@@ -174,15 +174,15 @@ func (t *IssuePayAdvanceTool) Validate(
 
 func (t *IssuePayAdvanceTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	entity, err := t.entity(&params)
+	entity, err := t.entity(params)
 	if err != nil {
 		return err
 	}
@@ -193,9 +193,9 @@ func (t *IssuePayAdvanceTool) Execute(
 
 func (t *IssuePayAdvanceTool) Preview(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	entity, err := t.entity(&params)
+	entity, err := t.entity(params)
 	if err != nil {
 		return nil, err
 	}
@@ -346,9 +346,9 @@ func (t *WriteOffPayAdvanceTool) plan(
 
 func (t *WriteOffPayAdvanceTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -358,21 +358,21 @@ func (t *WriteOffPayAdvanceTool) Validate(
 
 func (t *WriteOffPayAdvanceTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
 	_, err = t.Advances.WriteOffAdvance(
 		ctx,
-		toolparams.TenantFrom(&params),
+		toolparams.TenantFrom(params),
 		plan.before.ID,
 		plan.reason,
 		params.Actor,
@@ -383,9 +383,9 @@ func (t *WriteOffPayAdvanceTool) Execute(
 
 func (t *WriteOffPayAdvanceTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return nil, err
 	}

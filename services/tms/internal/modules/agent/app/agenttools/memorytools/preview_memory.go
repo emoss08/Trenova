@@ -45,9 +45,9 @@ func memoryRecord(memory *agentmemory.Memory) toolpreview.Record {
 
 func (t *RememberTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, err := t.request(ctx, &params)
+	request, err := t.request(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +118,9 @@ func (t *RememberTool) Preview(
 
 func (t *ForgetMemoryTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}

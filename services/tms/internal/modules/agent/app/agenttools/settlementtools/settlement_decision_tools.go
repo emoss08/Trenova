@@ -141,7 +141,7 @@ func (t *SettlementDecisionTool[E]) Policy() agenttoolports.ToolPolicy {
 		policy.TaintHold = &agenttoolports.TaintHold{
 			Description: "Its text is what payroll or the payee reads next, so a run that has " +
 				"read outside text proposes it rather than writing it.",
-			Applies: func(agenttoolports.ToolExecuteParams) bool { return true },
+			Applies: func(*agenttoolports.ToolExecuteParams) bool { return true },
 		}
 	}
 
@@ -194,12 +194,12 @@ func (t *SettlementDecisionTool[E]) plan(
 
 func (t *SettlementDecisionTool[E]) withinBounds(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.MoneyBound {
 	if t.book == nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
@@ -247,9 +247,9 @@ func (t *SettlementDecisionTool[E]) withinBounds(
 
 func (t *SettlementDecisionTool[E]) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -259,16 +259,16 @@ func (t *SettlementDecisionTool[E]) Validate(
 
 func (t *SettlementDecisionTool[E]) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {
 		return settlementpreview.ErrSettlementNeedsAPerson
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}

@@ -116,9 +116,9 @@ func DriverPayReviewToolProviders() []any {
 }
 
 func classifyDriverPayDecision(moneyMoves func(params map[string]any) bool) func(
-	agenttoolports.ToolExecuteParams,
+	*agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
-	return func(params agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	return func(params *agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 		if moneyMoves(params.Params) {
 			return agenttoolports.CallPolicy{Egress: agent.EgressMoney}
 		}

@@ -9,7 +9,7 @@ import (
 
 func (t *AssignMoveTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }

@@ -474,7 +474,7 @@ func (e *commentEdit) entity(
 }
 
 func classifyCommentEditVisibility(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	return shipmentpreview.ClassifyCommentVisibility(params)
 }

@@ -137,16 +137,16 @@ func (t *GenerateRateConfirmationTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *GenerateRateConfirmationTool) tierLimit(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
-	moveID, err := t.moveID(&params)
+	moveID, err := t.moveID(params)
 	if err != nil {
 		return agent.TierPropose
 	}
 
 	plan, err := t.rateCons.PreviewGenerate(
 		ctx,
-		toolparams.TenantFrom(&params),
+		toolparams.TenantFrom(params),
 		moveID,
 		params.Actor,
 	)
@@ -159,27 +159,27 @@ func (t *GenerateRateConfirmationTool) tierLimit(
 
 func (t *GenerateRateConfirmationTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.moveID(&params)
+	_, err := t.moveID(params)
 
 	return err
 }
 
 func (t *GenerateRateConfirmationTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	moveID, err := t.moveID(&params)
+	moveID, err := t.moveID(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.rateCons.Generate(ctx, toolparams.TenantFrom(&params), moveID, params.Actor)
+	_, err = t.rateCons.Generate(ctx, toolparams.TenantFrom(params), moveID, params.Actor)
 
 	return err
 }
@@ -259,27 +259,27 @@ func (t *SendRateConfirmationTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *SendRateConfirmationTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := rateConfirmationArg(t, &params)
+	_, err := rateConfirmationArg(t, params)
 
 	return err
 }
 
 func (t *SendRateConfirmationTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	id, err := rateConfirmationArg(t, &params)
+	id, err := rateConfirmationArg(t, params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.rateCons.Send(ctx, toolparams.TenantFrom(&params), id)
+	_, err = t.rateCons.Send(ctx, toolparams.TenantFrom(params), id)
 
 	return err
 }
@@ -345,14 +345,14 @@ func (t *VoidRateConfirmationTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *VoidRateConfirmationTool) tierLimit(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
-	id, reason, err := t.arguments(&params)
+	id, reason, err := t.arguments(params)
 	if err != nil {
 		return agent.TierPropose
 	}
 
-	plan, err := t.rateCons.PreviewVoid(ctx, toolparams.TenantFrom(&params), id, reason)
+	plan, err := t.rateCons.PreviewVoid(ctx, toolparams.TenantFrom(params), id, reason)
 	if err != nil || plan.Before.Status != rateconfirmation.StatusGenerated {
 		return agent.TierPropose
 	}
@@ -362,27 +362,27 @@ func (t *VoidRateConfirmationTool) tierLimit(
 
 func (t *VoidRateConfirmationTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.arguments(&params)
+	_, _, err := t.arguments(params)
 
 	return err
 }
 
 func (t *VoidRateConfirmationTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	id, reason, err := t.arguments(&params)
+	id, reason, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.rateCons.Void(ctx, toolparams.TenantFrom(&params), id, reason)
+	_, err = t.rateCons.Void(ctx, toolparams.TenantFrom(params), id, reason)
 
 	return err
 }
@@ -465,27 +465,27 @@ func (t *RecordRateConfirmationConfirmedTool) Policy() agenttoolports.ToolPolicy
 
 func (t *RecordRateConfirmationConfirmedTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, _, err := t.arguments(&params)
+	_, _, err := t.arguments(params)
 
 	return err
 }
 
 func (t *RecordRateConfirmationConfirmedTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	id, name, err := t.arguments(&params)
+	id, name, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.rateCons.MarkConfirmed(ctx, toolparams.TenantFrom(&params), id, name)
+	_, err = t.rateCons.MarkConfirmed(ctx, toolparams.TenantFrom(params), id, name)
 
 	return err
 }

@@ -20,25 +20,25 @@ import (
 var ErrNeedsAPersonsApproval = errors.New("this runs only once a person approves the proposal")
 
 type ReceivableSpec struct {
-	Name        string                                                           `json:"-"`
-	Description string                                                           `json:"-"`
-	Resource    permission.Resource                                              `json:"-"`
-	Operation   permission.Operation                                             `json:"-"`
-	Egress      agent.EgressClass                                                `json:"-"`
-	AlsoEgress  []agent.EgressClass                                              `json:"-"`
-	Classify    func(agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy `json:"-"`
-	DefaultTier agent.AutonomyTier                                               `json:"-"`
-	MaxTier     agent.AutonomyTier                                               `json:"-"`
-	PersonOnly  bool                                                             `json:"-"`
-	Reversible  bool                                                             `json:"-"`
-	Idempotent  bool                                                             `json:"-"`
-	TaintHold   string                                                           `json:"-"`
-	Condition   *agenttoolports.TierCondition                                    `json:"-"`
-	Artifact    string                                                           `json:"-"`
-	Rationale   string                                                           `json:"-"`
-	Properties  map[string]any                                                   `json:"-"`
-	Required    []string                                                         `json:"-"`
-	SearchTerms []string                                                         `json:"-"`
+	Name        string                                                            `json:"-"`
+	Description string                                                            `json:"-"`
+	Resource    permission.Resource                                               `json:"-"`
+	Operation   permission.Operation                                              `json:"-"`
+	Egress      agent.EgressClass                                                 `json:"-"`
+	AlsoEgress  []agent.EgressClass                                               `json:"-"`
+	Classify    func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy `json:"-"`
+	DefaultTier agent.AutonomyTier                                                `json:"-"`
+	MaxTier     agent.AutonomyTier                                                `json:"-"`
+	PersonOnly  bool                                                              `json:"-"`
+	Reversible  bool                                                              `json:"-"`
+	Idempotent  bool                                                              `json:"-"`
+	TaintHold   string                                                            `json:"-"`
+	Condition   *agenttoolports.TierCondition                                     `json:"-"`
+	Artifact    string                                                            `json:"-"`
+	Rationale   string                                                            `json:"-"`
+	Properties  map[string]any                                                    `json:"-"`
+	Required    []string                                                          `json:"-"`
+	SearchTerms []string                                                          `json:"-"`
 	// prerequisites and recipe are the lookups the tool's ids come from and
 	// the order a task with it is done in; see serviceports.RecipeTool.
 	Prerequisites []string                                                      `json:"-"`
@@ -127,7 +127,7 @@ func (t *ReceivableTool[R, P]) Policy() agenttoolports.ToolPolicy {
 	if t.spec.TaintHold != "" {
 		policy.TaintHold = &agenttoolports.TaintHold{
 			Description: t.spec.TaintHold,
-			Applies:     func(agenttoolports.ToolExecuteParams) bool { return true },
+			Applies:     func(*agenttoolports.ToolExecuteParams) bool { return true },
 		}
 	}
 
@@ -165,33 +165,33 @@ func (t *ReceivableTool[R, P]) settled(
 
 func (t *ReceivableTool[R, P]) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
-	if err = t.settled(ctx, req, &params); err != nil {
+	if err = t.settled(ctx, req, params); err != nil {
 		return err
 	}
-	_, err = t.steps.Plan(ctx, req, &params)
+	_, err = t.steps.Plan(ctx, req, params)
 
 	return err
 }
 
 func (t *ReceivableTool[R, P]) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
-	if err = t.settled(ctx, req, &params); err != nil {
+	if err = t.settled(ctx, req, params); err != nil {
 		return changepreview.WarnRefusal(toolpreview.Build(t.steps.Refused(req)), err)
 	}
 
-	plan, err := t.steps.Plan(ctx, req, &params)
+	plan, err := t.steps.Plan(ctx, req, params)
 	if err != nil {
 		return changepreview.WarnRefusal(toolpreview.Build(t.steps.Refused(req)), err)
 	}
@@ -201,9 +201,9 @@ func (t *ReceivableTool[R, P]) Preview(
 
 func (t *ReceivableTool[R, P]) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.execute(ctx, &params)
+	_, err := t.execute(ctx, params)
 
 	return err
 }
@@ -232,7 +232,7 @@ func (t *ReceivableTool[R, P]) execute(
 
 func (t ReportingReceivableTool[R, P]) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	return t.execute(ctx, &params)
+	return t.execute(ctx, params)
 }

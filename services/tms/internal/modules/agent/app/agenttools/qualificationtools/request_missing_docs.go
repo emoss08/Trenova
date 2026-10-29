@@ -125,9 +125,9 @@ func (t *RequestMissingDocsTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RequestMissingDocsTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	composed, err := t.compose(ctx, &params)
+	composed, err := t.compose(ctx, params)
 	if err != nil {
 		return err
 	}

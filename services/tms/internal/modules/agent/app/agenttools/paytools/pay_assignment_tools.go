@@ -190,9 +190,9 @@ func (t *AssignPayProfileTool) planned(
 
 func (t *AssignPayProfileTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -202,15 +202,15 @@ func (t *AssignPayProfileTool) Validate(
 
 func (t *AssignPayProfileTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	entity, err := t.entity(&params)
+	entity, err := t.entity(params)
 	if err != nil {
 		return err
 	}
@@ -233,9 +233,9 @@ func assignmentRecord(
 
 func (t *AssignPayProfileTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -391,9 +391,9 @@ func (t *EndPayAssignmentTool) planned(
 
 func (t *EndPayAssignmentTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -403,21 +403,21 @@ func (t *EndPayAssignmentTool) Validate(
 
 func (t *EndPayAssignmentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := settlementpreview.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
 	_, err = t.Assignments.EndAssignment(
 		ctx,
-		toolparams.TenantFrom(&params),
+		toolparams.TenantFrom(params),
 		plan.before.ID,
 		plan.endDate,
 		params.Actor,
@@ -428,9 +428,9 @@ func (t *EndPayAssignmentTool) Execute(
 
 func (t *EndPayAssignmentTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}

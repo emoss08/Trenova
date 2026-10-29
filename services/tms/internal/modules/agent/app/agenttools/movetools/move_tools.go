@@ -127,13 +127,13 @@ func (t *RecordStopActualTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RecordStopActualTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(ctx, &params)
+	request, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -157,9 +157,9 @@ func (t *RecordStopActualTool) Execute(
 // state does not admit is refused to the model before it is proposed.
 func (t *RecordStopActualTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 func (t *RecordStopActualTool) request(

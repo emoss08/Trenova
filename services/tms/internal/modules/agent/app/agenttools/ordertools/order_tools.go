@@ -479,7 +479,7 @@ func NewUpdateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 }
 
 func classifyOrderAmounts(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	if toolparams.SendsAny(params.Params, paramQuotedAmount, paramBaseAmount) {
 		return agenttoolports.CallPolicy{Egress: agent.EgressMoney}

@@ -156,13 +156,13 @@ func (t *EvaluateServiceFailuresTool) Target(
 
 func (t *EvaluateServiceFailuresTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	scope, err := t.request(&params)
+	scope, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -286,12 +286,12 @@ func (s *evaluationScope) oneListed() {
 // Validate to refuse by name.
 func (t *EvaluateServiceFailuresTool) ResolveSelection(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	if _, listed := params.Params["shipmentIds"]; !listed {
 		return params.Params, nil
 	}
-	scope, err := t.request(&params)
+	scope, err := t.request(params)
 	if err != nil || len(scope.shipmentIDs) > 0 {
 		return params.Params, nil //nolint:nilerr // Validate refuses the call with its own reason
 	}
@@ -382,9 +382,9 @@ func (t *ResolveServiceFailureTool) Target(
 
 func (t *ResolveServiceFailureTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, _, err := t.request(ctx, &params)
+	request, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -456,9 +456,9 @@ func (t *ResolveServiceFailureTool) request(
 
 func (t *EvaluateServiceFailuresTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	plans, err := t.plans(ctx, &params)
+	plans, err := t.plans(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(
@@ -486,9 +486,9 @@ func (t *EvaluateServiceFailuresTool) Preview(
 
 func (t *EvaluateServiceFailuresTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.plans(ctx, &params)
+	_, err := t.plans(ctx, params)
 
 	return err
 }
@@ -528,9 +528,9 @@ func (t *EvaluateServiceFailuresTool) plans(
 
 func (t *ResolveServiceFailureTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	request, existing, err := t.request(ctx, &params)
+	request, existing, err := t.request(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -568,7 +568,7 @@ func (t *ResolveServiceFailureTool) Preview(
 
 func (t *ResolveServiceFailureTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return toolspec.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }

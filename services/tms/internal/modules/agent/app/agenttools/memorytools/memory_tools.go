@@ -153,10 +153,10 @@ func (t *RememberTool) Policy() agenttoolports.ToolPolicy {
 // personal: it reaches nobody else's conversations. Anything wider, or any
 // memory recorded with nobody in the conversation, is internal.
 func classifyRemember(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	actor := params.Actor
-	if rememberAudience(&params) != visibleToMe || actor == nil ||
+	if rememberAudience(params) != visibleToMe || actor == nil ||
 		actor.PrincipalType != permissionports.PrincipalTypeUser || actor.UserID.IsNil() {
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
@@ -178,7 +178,7 @@ func rememberAudience(params *agenttoolports.ToolExecuteParams) string {
 }
 
 func rememberHeldWhenTainted(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // TaintHold.Applies passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) bool {
 	return rememberKind(params.Params) != agentmemory.MemoryKindFact
 }
@@ -194,7 +194,7 @@ func rememberKind(params map[string]any) agentmemory.MemoryKind {
 
 func (t *RememberTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.Record(ctx, params)
 
@@ -205,9 +205,9 @@ func (t *RememberTool) Execute(
 // person what was kept and let them edit or undo it.
 func (t *RememberTool) Record(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the MemoryRecordingTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentmemory.Memory, error) {
-	request, err := t.request(ctx, &params)
+	request, err := t.request(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -378,9 +378,9 @@ func (t *ForgetMemoryTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ForgetMemoryTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}

@@ -147,9 +147,9 @@ func (t *CancelTenderTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CancelTenderTool) tierLimit(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return agent.TierPropose
 	}
@@ -164,9 +164,9 @@ func (t *CancelTenderTool) tierLimit(
 
 func (t *CancelTenderTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -179,13 +179,13 @@ func (t *CancelTenderTool) Validate(
 
 func (t *CancelTenderTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -322,7 +322,7 @@ func (t *RecordTenderResponseTool) Policy() agenttoolports.ToolPolicy {
 // anything else sends the next offer. An answer that cannot be read is taken
 // as the one that reaches furthest.
 func classifyTenderResponse(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a policy's Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	if tenderAnswer(toolparams.OptionalString(params.Params, fieldAction)) == answerDecline {
 		return agenttoolports.CallPolicy{Egress: agent.EgressExternalRecipient}
@@ -333,7 +333,7 @@ func classifyTenderResponse(
 
 func tenderResponseTierLimit(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	if tenderAnswer(toolparams.OptionalString(params.Params, fieldAction)) == answerDecline {
 		return agent.TierActWithApproval
@@ -344,9 +344,9 @@ func tenderResponseTierLimit(
 
 func (t *RecordTenderResponseTool) Validate(
 	_ context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
+	if bounce, err := t.bounceRequest(params); bounce != nil || err != nil {
 		if err != nil {
 			return err
 		}
@@ -355,20 +355,20 @@ func (t *RecordTenderResponseTool) Validate(
 		}
 		return nil
 	}
-	_, err := t.request(&params)
+	_, err := t.request(params)
 
 	return err
 }
 
 func (t *RecordTenderResponseTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
+	if bounce, err := t.bounceRequest(params); bounce != nil || err != nil {
 		if err != nil {
 			return err
 		}
@@ -376,7 +376,7 @@ func (t *RecordTenderResponseTool) Execute(
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}

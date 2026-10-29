@@ -80,13 +80,13 @@ func (t *PlaceShipmentHoldTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *PlaceShipmentHoldTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -173,13 +173,13 @@ func (t *ReleaseShipmentHoldTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ReleaseShipmentHoldTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -271,9 +271,9 @@ func (t *CancelShipmentTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CancelShipmentTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}

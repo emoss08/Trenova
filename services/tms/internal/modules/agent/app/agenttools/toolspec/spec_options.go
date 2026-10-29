@@ -17,7 +17,7 @@ func PreviewValidates(
 	previewer agenttoolports.ToolPreviewer,
 	params *agenttoolports.ToolExecuteParams,
 ) error {
-	preview, err := previewer.Preview(ctx, *params)
+	preview, err := previewer.Preview(ctx, params)
 	if err != nil {
 		return err
 	}

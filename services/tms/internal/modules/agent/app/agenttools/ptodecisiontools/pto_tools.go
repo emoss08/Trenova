@@ -84,13 +84,13 @@ func (t *ApproveWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *ApproveWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := ptoStatusRequest(&params)
+	request, err := ptoStatusRequest(params)
 	if err != nil {
 		return err
 	}
@@ -157,9 +157,9 @@ func (t *RejectWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *RejectWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -232,9 +232,9 @@ func (t *CancelWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 
 func (t *CancelWorkerPTOTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}

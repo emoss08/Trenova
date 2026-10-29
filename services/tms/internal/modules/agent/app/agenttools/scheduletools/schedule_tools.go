@@ -217,12 +217,12 @@ func (t *CreateScheduleTool) plan(
 
 func (t *CreateScheduleTool) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -237,14 +237,14 @@ func (t *CreateScheduleTool) Validate(
 
 func (t *CreateScheduleTool) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	if err := toolguard.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	fallback := toolpreview.Build("Would repeat a request in this conversation on a schedule.")
 
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		if changepreview.IsRefusal(err) || errors.Is(err, errNeedsPerson) ||
 			errors.Is(err, errNeedsConversation) {
@@ -276,7 +276,7 @@ func (t *CreateScheduleTool) Preview(
 
 func (t *CreateScheduleTool) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -285,15 +285,15 @@ func (t *CreateScheduleTool) Execute(
 
 func (t *CreateScheduleTool) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	if err := toolguard.GuardExecute(t, &params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if t.planner == nil {
 		return nil, errNoSchedules
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}

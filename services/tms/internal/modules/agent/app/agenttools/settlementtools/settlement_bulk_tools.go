@@ -191,9 +191,9 @@ func (t *SettlementBulkTool[E]) Policy() agenttoolports.ToolPolicy {
 
 func (t *SettlementBulkTool[E]) Preview(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *SettlementBulkTool[E]) SplitRecords(params map[string]any) ([]map[string]any, error) {
@@ -202,14 +202,14 @@ func (t *SettlementBulkTool[E]) SplitRecords(params map[string]any) ([]map[strin
 
 func (t *SettlementBulkTool[E]) Validate(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *SettlementBulkTool[E]) Execute(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -218,9 +218,9 @@ func (t *SettlementBulkTool[E]) Execute(
 
 func (t *SettlementBulkTool[E]) ExecuteWithResult(
 	ctx context.Context,
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentrecord.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	return t.batch.Execute(ctx, t, params)
 }
 
 func driverBulkSpec(

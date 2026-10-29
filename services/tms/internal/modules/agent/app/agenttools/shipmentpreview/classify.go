@@ -8,7 +8,7 @@ import (
 )
 
 func ClassifyCommentVisibility(
-	params agenttoolports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	switch shipmentvocab.CommentVisibility(toolparams.OptionalString(params.Params, "visibility")) {
 	case shipmentvocab.CommentVisibilityCustomer:

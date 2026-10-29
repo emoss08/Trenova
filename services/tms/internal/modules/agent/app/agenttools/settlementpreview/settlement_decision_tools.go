@@ -65,7 +65,7 @@ type SettlementLedger[E any] struct {
 }
 
 func ClassifyAsMoney(
-	agenttoolports.ToolExecuteParams,
+	*agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	return agenttoolports.CallPolicy{Egress: agent.EgressMoney}
 }
