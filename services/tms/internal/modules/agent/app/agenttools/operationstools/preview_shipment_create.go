@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/money"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -218,7 +218,7 @@ func enteredShipmentSummary(
 	summary := fmt.Sprintf(
 		"Would enter a new shipment with %d %s",
 		stops,
-		stringutils.Pluralize("stop", "stops", stops),
+		inflect.Pluralize("stop", "stops", stops),
 	)
 	if entity.BOL != "" {
 		summary += " under BOL " + entity.BOL

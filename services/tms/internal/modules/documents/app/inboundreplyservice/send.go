@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/emailutils"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -171,7 +172,7 @@ func newMessageKey(mailboxAddress string) (string, error) {
 		return "", errortypes.NewBusinessError("The mailbox address has no domain to send from")
 	}
 
-	token, ok := stringutils.MessageIDToken(pulid.MustNew("irplm_").String() + "@" + domain)
+	token, ok := mailtext.MessageIDToken(pulid.MustNew("irplm_").String() + "@" + domain)
 	if !ok {
 		return "", errortypes.NewBusinessError("The mailbox address cannot carry a message id")
 	}
@@ -216,12 +217,12 @@ func (s *Service) dispatch(
 
 func threadHeaders(message *inboundmessage.InboundMessage, reply *triage.Reply) map[string]string {
 	headers := make(map[string]string, 3)
-	if token, ok := stringutils.MessageIDToken(reply.MessageKey); ok {
+	if token, ok := mailtext.MessageIDToken(reply.MessageKey); ok {
 		headers["Message-ID"] = token
 	}
-	if token, ok := stringutils.MessageIDToken(message.MessageID); ok {
+	if token, ok := mailtext.MessageIDToken(message.MessageID); ok {
 		headers["In-Reply-To"] = token
-		headers["References"] = stringutils.ReplyReferences(
+		headers["References"] = mailtext.ReplyReferences(
 			message.References,
 			token,
 			maxReplyReferences,

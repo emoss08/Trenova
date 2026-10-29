@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/money"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/shopspring/decimal"
 )
 
@@ -131,7 +131,7 @@ func (t *PostCustomerPaymentTool) Preview(
 		changes = append(changes, matched...)
 		summary += fmt.Sprintf(
 			" %s would be matched to it.",
-			stringutils.CapitalizeFirst(bankReceiptLabel(match.ReceiptBefore)),
+			textcase.CapitalizeFirst(bankReceiptLabel(match.ReceiptBefore)),
 		)
 	}
 

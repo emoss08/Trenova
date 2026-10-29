@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textfence"
 )
 
 const (
@@ -51,10 +51,10 @@ func MemorySection(memories []*agentmemory.Memory) string {
 	builder.WriteString(memoryOpenTag)
 	for _, group := range groupMemories(memories) {
 		builder.WriteString("\n### ")
-		builder.WriteString(stringutils.FenceText(group.heading, memoryCloseTag))
+		builder.WriteString(textfence.FenceText(group.heading, memoryCloseTag))
 		for _, memory := range group.memories {
 			builder.WriteString("\n")
-			builder.WriteString(stringutils.FenceText(memoryLine(memory), memoryCloseTag))
+			builder.WriteString(textfence.FenceText(memoryLine(memory), memoryCloseTag))
 		}
 	}
 	builder.WriteString("\n")
@@ -91,7 +91,7 @@ func OutsideMemorySection(memories []*agentmemory.Memory) string {
 	for _, memory := range memories {
 		builder.WriteString("\n")
 		builder.WriteString(
-			stringutils.FenceText(outsideMemoryLine(memory), outsideMemoryCloseTag),
+			textfence.FenceText(outsideMemoryLine(memory), outsideMemoryCloseTag),
 		)
 	}
 	builder.WriteString("\n")

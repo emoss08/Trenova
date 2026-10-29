@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -317,7 +318,7 @@ func assignReason(in *ruleInput, deadhead string, driveRemainingMs, pickupDue in
 		return closes
 	}
 
-	return stringutils.CapitalizeFirst(strings.Join(parts, " ")) + ". " + closes
+	return textcase.CapitalizeFirst(strings.Join(parts, " ")) + ". " + closes
 }
 
 func tenderSuggestion(

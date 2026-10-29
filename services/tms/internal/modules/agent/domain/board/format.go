@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/floatutils"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/inflect"
 )
 
 const (
@@ -76,7 +76,7 @@ func FormatMoment(at int64, location *time.Location) string {
 func RecordsPhrase(resource permission.Resource, count int) string {
 	noun := resource.Noun()
 	if count != 1 {
-		noun = stringutils.PluralNoun(noun)
+		noun = inflect.PluralNoun(noun)
 	}
 
 	return strconv.Itoa(count) + " " + noun

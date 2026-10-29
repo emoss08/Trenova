@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.uber.org/fx"
 )
@@ -165,7 +165,7 @@ func ResourceTypes(
 		if def.Kind != ast.Object || def.BuiltIn {
 			continue
 		}
-		resource := stringutils.ConvertCamelToSnake(name)
+		resource := textcase.ConvertCamelToSnake(name)
 		if registry.HasResource(resource) {
 			out[name] = permission.Resource(resource)
 		}

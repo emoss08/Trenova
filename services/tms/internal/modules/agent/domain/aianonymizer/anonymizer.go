@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/piiscrub"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 	"github.com/shopspring/decimal"
 )
 
@@ -125,7 +126,7 @@ func (p *pseudonymizer) surrogate(c category, key string, generate func() string
 
 	value := generate()
 	for range maxSurrogateTries {
-		if stringutils.NormalizeName(value) != stringutils.NormalizeName(key) {
+		if textsim.NormalizeName(value) != textsim.NormalizeName(key) {
 			break
 		}
 		value = generate()
@@ -340,7 +341,7 @@ func residual(out *Anonymized, known []*knownValue) bool {
 	writeSnapshot(&b, out.Prediction)
 	joined := b.String()
 
-	tokens := " " + stringutils.NormalizeName(joined) + " "
+	tokens := " " + textsim.NormalizeName(joined) + " "
 	stream := stringutils.NormalizeIdentifier(joined)
 	for _, value := range known {
 		if value.check != "" && strings.Contains(tokens, " "+value.check+" ") {

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 	"github.com/shopspring/decimal"
 )
 
@@ -221,7 +222,7 @@ func fieldKnown(key, value string) *knownValue {
 }
 
 func partyKnown(value string) *knownValue {
-	base := stringutils.NormalizeCompanyName(value)
+	base := textsim.NormalizeCompanyName(value)
 	if alnumRunes(base) < minNameRunes {
 		return nil
 	}
@@ -239,7 +240,7 @@ func partyKnown(value string) *knownValue {
 }
 
 func personKnown(value string) *knownValue {
-	name := stringutils.NormalizeName(value)
+	name := textsim.NormalizeName(value)
 	tokens := strings.Fields(name)
 	if len(tokens) < 2 || alnumRunes(name) < minCheckedRunes {
 		return nil
@@ -254,7 +255,7 @@ func personKnown(value string) *knownValue {
 }
 
 func streetKnown(value string) *knownValue {
-	name := stringutils.NormalizeName(value)
+	name := textsim.NormalizeName(value)
 	tokens := strings.Fields(name)
 	if len(tokens) < 2 || alnumRunes(name) < postalDigits {
 		return nil
@@ -269,7 +270,7 @@ func streetKnown(value string) *knownValue {
 }
 
 func cityKnown(value string) *knownValue {
-	name := stringutils.NormalizeName(value)
+	name := textsim.NormalizeName(value)
 	if alnumRunes(name) < minNameRunes {
 		return nil
 	}

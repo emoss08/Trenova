@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -314,7 +315,7 @@ func inboundSender(row map[string]any, _ map[string]struct{}, _ clock) {
 	if name == "" && address == "" {
 		return
 	}
-	row[inboundFieldFrom] = stringutils.FormatEmailAddress(name, address)
+	row[inboundFieldFrom] = mailtext.FormatEmailAddress(name, address)
 	delete(row, inboundFieldFromName)
 	delete(row, inboundFieldFromAddress)
 }

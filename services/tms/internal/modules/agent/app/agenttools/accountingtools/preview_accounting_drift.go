@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -100,7 +100,7 @@ func (t *ResolveAccountingDriftTool) Preview(
 		return nil, err
 	}
 
-	preview := plan.PlanPreview("Would " + stringutils.LowerFirst(fix.Summary))
+	preview := plan.PlanPreview("Would " + textcase.LowerFirst(fix.Summary))
 	preview.Partial = true
 	return preview, nil
 }
@@ -130,7 +130,7 @@ func (t *DismissAccountingDriftTool) Preview(
 	}
 
 	return plan.PlanPreview(
-		"Would " + stringutils.LowerFirst(fix.Summary) + " Reason: " + req.Note,
+		"Would " + textcase.LowerFirst(fix.Summary) + " Reason: " + req.Note,
 	), nil
 }
 

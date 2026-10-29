@@ -32,7 +32,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -219,8 +219,8 @@ func workerNameScore(query string, item *worker.Worker) float64 {
 // round.
 func namesScore(query, first, last string) float64 {
 	return max(
-		stringutils.NameSimilarity(query, strings.TrimSpace(first+" "+last)),
-		stringutils.NameSimilarity(query, last+" "+first),
+		textsim.NameSimilarity(query, strings.TrimSpace(first+" "+last)),
+		textsim.NameSimilarity(query, last+" "+first),
 	)
 }
 

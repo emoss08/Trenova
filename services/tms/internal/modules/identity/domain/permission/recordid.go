@@ -3,7 +3,7 @@ package permission
 import (
 	"maps"
 
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 // recordIDPrefixes is the prefix every id of a resource's records carries, for
@@ -149,5 +149,5 @@ func RecordIDPrefixes() map[Resource]string {
 // Noun is how one of the resource's records is named in a sentence: "worker
 // credential", "shipment".
 func (r Resource) Noun() string {
-	return stringutils.HumanizeSnakeCasePhrase(string(r))
+	return textcase.HumanizeSnakeCasePhrase(string(r))
 }

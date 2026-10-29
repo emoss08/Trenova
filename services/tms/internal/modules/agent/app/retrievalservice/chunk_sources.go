@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const (
@@ -74,8 +76,8 @@ func documentHeader(source *retrievalports.RetrievalDocumentSource) string {
 	}
 	if doc.ResourceType != "" {
 		b.WriteString("\nAttached to: ")
-		b.WriteString(stringutils.HumanizeSnakeCase(
-			stringutils.ConvertCamelToSnake(doc.ResourceType),
+		b.WriteString(textcase.HumanizeSnakeCase(
+			textcase.ConvertCamelToSnake(doc.ResourceType),
 		))
 	}
 
@@ -221,7 +223,7 @@ func scalarText(value any) (string, bool) {
 }
 
 func emailSender(message *inboundmessage.InboundMessage) string {
-	return stringutils.FormatEmailAddress(message.FromName, message.FromAddress)
+	return mailtext.FormatEmailAddress(message.FromName, message.FromAddress)
 }
 
 func ChunkEmail(message *inboundmessage.InboundMessage) []Chunk {
@@ -234,7 +236,7 @@ func ChunkEmail(message *inboundmessage.InboundMessage) []Chunk {
 		header += "\nSubject: " + subject
 	}
 
-	windows := Windows(stringutils.MailBody(message.TextBody))
+	windows := Windows(mailtext.MailBody(message.TextBody))
 	if len(windows) == 0 {
 		return sealChunks(EmailChunkerVersion, []Chunk{{Text: header}})
 	}

@@ -13,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/inflect"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"gopkg.in/yaml.v3"
@@ -279,14 +280,14 @@ func rootReads(schema *ast.Schema) []rootRead {
 		if verb == verbList && field.Type.Elem != nil {
 			continue
 		}
-		resource := permission.Resource(stringutils.ConvertCamelToSnake(node))
+		resource := permission.Resource(textcase.ConvertCamelToSnake(node))
 		kind, known := resource.Kind()
 		if !known {
 			continue
 		}
 		noun := string(kind)
 		if verb == verbList {
-			noun = stringutils.PluralNoun(noun)
+			noun = inflect.PluralNoun(noun)
 		}
 		out = append(out, rootRead{
 			field:    field,

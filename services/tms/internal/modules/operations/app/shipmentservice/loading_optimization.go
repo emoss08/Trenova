@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const (
@@ -978,10 +978,10 @@ func checkAxleViolations(
 		recs = append(recs, shipmentserviceports.LoadingRecommendation{
 			Type:     "reorder",
 			Priority: "critical",
-			Title:    fmt.Sprintf("%s axle overweight", stringutils.CapitalizeFirst(aw.Axle)),
+			Title:    fmt.Sprintf("%s axle overweight", textcase.CapitalizeFirst(aw.Axle)),
 			Description: fmt.Sprintf(
 				"%s axle at %s lbs exceeds %s lb limit by %s lbs. Shift heavy items toward the opposite end of the trailer.",
-				stringutils.CapitalizeFirst(
+				textcase.CapitalizeFirst(
 					aw.Axle,
 				),
 				intutils.FormatWithCommas(aw.Weight),

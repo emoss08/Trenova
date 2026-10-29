@@ -8,7 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textfence"
 )
 
 const (
@@ -98,7 +100,7 @@ func writeAttachmentHead(b *strings.Builder, attachment *agentturn.RuntimeAttach
 		b.WriteString(fenced(attachment.ContentType))
 		if attachment.PageCount > 0 {
 			b.WriteString(", ")
-			b.WriteString(stringutils.CountNoun(attachment.PageCount, "page", "pages"))
+			b.WriteString(inflect.CountNoun(attachment.PageCount, "page", "pages"))
 		}
 		b.WriteString(")")
 	}
@@ -171,8 +173,8 @@ func describeReading(reading agentturn.AttachmentReading) string {
 }
 
 func fenced(text string) string {
-	return stringutils.FenceText(
-		stringutils.FenceText(text, fileTextCloseTag),
+	return textfence.FenceText(
+		textfence.FenceText(text, fileTextCloseTag),
 		attachmentsCloseTag,
 	)
 }

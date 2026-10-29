@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 )
 
 const (
@@ -139,7 +140,7 @@ func replacePOBoxes(p *pseudonymizer, text string) string {
 func replaceStreets(p *pseudonymizer, text string) string {
 	return replaceMatches(text, streetPattern, nil, func(match []int) string {
 		original := text[match[0]:match[1]]
-		key := canonicalStreet(strings.Fields(stringutils.NormalizeName(original)))
+		key := canonicalStreet(strings.Fields(textsim.NormalizeName(original)))
 		return p.hold(styleLike(p.surrogate(categoryStreet, key, p.street), original))
 	})
 }

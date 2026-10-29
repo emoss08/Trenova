@@ -3,7 +3,7 @@ package permission
 import (
 	"slices"
 
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 // RecordKind is one kind of record with one id prefix. A resource whose
@@ -200,7 +200,7 @@ func (k RecordKind) Noun() string {
 		return spec.noun
 	}
 
-	return stringutils.HumanizeSnakeCasePhrase(string(k))
+	return textcase.HumanizeSnakeCasePhrase(string(k))
 }
 
 // Known reports whether ids of this kind have a prefix the runtime can check.

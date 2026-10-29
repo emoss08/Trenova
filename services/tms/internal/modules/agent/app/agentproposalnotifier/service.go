@@ -41,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -597,7 +598,7 @@ func reminderLines(proposals []*agent.AgentProposal) []portaltemplate.ProposalRe
 	lines := make([]portaltemplate.ProposalReminderLine, 0, len(proposals))
 	for _, proposal := range proposals {
 		lines = append(lines, portaltemplate.ProposalReminderLine{
-			Tool: stringutils.HumanizeSnakeCase(
+			Tool: textcase.HumanizeSnakeCase(
 				agenttoolports.ReadingOrder(proposal.ToolName),
 			),
 			Rationale: proposal.Rationale,
@@ -620,7 +621,7 @@ func describeTools(proposals []*agent.AgentProposal) string {
 		if len(names) < maxListedTools {
 			names = append(
 				names,
-				stringutils.HumanizeSnakeCase(agenttoolports.ReadingOrder(proposal.ToolName)),
+				textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(proposal.ToolName)),
 			)
 		}
 	}

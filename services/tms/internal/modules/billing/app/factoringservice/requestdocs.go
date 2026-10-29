@@ -23,8 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -193,7 +193,7 @@ func (s *ReadinessService) resolveRecipient(
 	needs []factoringreadiness.Check,
 ) (recipients []string, kind string, err error) {
 	if explicit := strings.TrimSpace(req.Recipient); explicit != "" {
-		to := stringutils.SplitEmailList(explicit)
+		to := mailtext.SplitEmailList(explicit)
 		if len(to) == 0 {
 			return nil, "", errortypes.NewValidationError(
 				"recipient",

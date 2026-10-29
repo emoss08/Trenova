@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/emailutils"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -63,7 +64,7 @@ func (i *Inputs) Normalize() Inputs {
 	return Inputs{
 		OrganizationName: stringutils.CollapseWhitespace(i.OrganizationName),
 		AdminName:        stringutils.CollapseWhitespace(i.AdminName),
-		AdminEmail:       stringutils.NormalizeEmailAddress(i.AdminEmail),
+		AdminEmail:       mailtext.NormalizeEmailAddress(i.AdminEmail),
 		Timezone:         stringutils.WithDefault(i.Timezone, DefaultTimezone),
 		State:            strings.ToUpper(stringutils.WithDefault(i.State, DefaultState)),
 		City: stringutils.WithDefault(

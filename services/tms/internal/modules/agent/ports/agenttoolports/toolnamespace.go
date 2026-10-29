@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/inflect"
 )
 
 type ToolNamespace struct {
@@ -257,7 +257,7 @@ func ReadingOrder(toolName string) string {
 	}
 	if !found {
 		if verb == listVerb {
-			return verb + toolNamespaceSeparator + stringutils.PluralNoun(noun)
+			return verb + toolNamespaceSeparator + inflect.PluralNoun(noun)
 		}
 
 		return verb + toolNamespaceSeparator + noun
@@ -307,7 +307,7 @@ func namespacedName(namespace, verb, rest, qualifier string) (string, bool) {
 		parts = append(parts, qualifier)
 	}
 	switch {
-	case rest == noun, verb == listVerb && rest == stringutils.PluralNoun(noun):
+	case rest == noun, verb == listVerb && rest == inflect.PluralNoun(noun):
 	case strings.HasPrefix(rest, noun+toolNamespaceSeparator):
 		parts = append(parts, strings.TrimPrefix(rest, noun+toolNamespaceSeparator))
 	default:
@@ -319,7 +319,7 @@ func namespacedName(namespace, verb, rest, qualifier string) (string, bool) {
 
 func (n *ToolNamespace) opensWithRecord(object string) bool {
 	for _, record := range n.Records {
-		for _, form := range [...]string{record, stringutils.PluralNoun(record)} {
+		for _, form := range [...]string{record, inflect.PluralNoun(record)} {
 			if object == form || strings.HasPrefix(object, form+toolNamespaceSeparator) {
 				return true
 			}

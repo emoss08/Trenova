@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -40,7 +40,7 @@ func buildContext(
 	var findings strings.Builder
 
 	if facts.BrokenPromises > 0 {
-		value := stringutils.CountNoun(facts.BrokenPromises, "promise", "promises") +
+		value := inflect.CountNoun(facts.BrokenPromises, "promise", "promises") +
 			" to pay lapsed unpaid, " + dollars(facts.BrokenPromiseMinor) + " still owed"
 		if _, name, ok := facts.CustomerFor(accountingbrief.LinkBrokenPromise); ok {
 			value += ", by " + name
@@ -85,7 +85,7 @@ func buildContext(
 	if facts.PromisesDue > 0 {
 		writeLine(&findings, "Promises to pay coming due in the next "+
 			days(accountingbrief.PromiseLookaheadDays),
-			stringutils.CountNoun(facts.PromisesDue, "promise", "promises")+", "+
+			inflect.CountNoun(facts.PromisesDue, "promise", "promises")+", "+
 				dollars(facts.PromisesDueMinor),
 			accountingbrief.LinkPromisesDue)
 	}

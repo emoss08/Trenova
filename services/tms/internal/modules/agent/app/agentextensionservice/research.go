@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -54,7 +54,7 @@ func (s *Service) SearchWeb(
 ) (*agentextensionports.WebSearchOutcome, error) {
 	text := strings.TrimSpace(query.Query)
 	if err := agentextension.CheckSearchQuery(text); err != nil {
-		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error())}
+		return nil, &ToolError{Message: textcase.CapitalizeFirst(err.Error())}
 	}
 
 	research, err := s.webResearch(ctx, tenantInfo)
@@ -141,7 +141,7 @@ func (s *Service) ReadWebPage(
 ) (*agentextensionports.WebPage, error) {
 	target := strings.TrimSpace(query.URL)
 	if _, err := agentextension.ParsePageURL(target); err != nil {
-		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error()) + "."}
+		return nil, &ToolError{Message: textcase.CapitalizeFirst(err.Error()) + "."}
 	}
 
 	part := query.Part

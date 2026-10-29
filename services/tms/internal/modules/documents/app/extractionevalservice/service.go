@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -312,7 +313,7 @@ func caseTitle(
 	title := strings.TrimSpace(requested)
 	if title == "" {
 		parts := stringutils.NonEmptyStrings(
-			stringutils.HumanizeCamelCase(correction.DocumentKind),
+			textcase.HumanizeCamelCase(correction.DocumentKind),
 			strings.TrimSpace(doc.OriginalName),
 		)
 		title = strings.Join(parts, " · ")

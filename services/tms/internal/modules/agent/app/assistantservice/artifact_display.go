@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/pkg/productguide"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/inflect"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -159,7 +160,7 @@ func projectRecord(record map[string]any, order []string) []assistantartifact.Di
 			assistantartifact.RecordLabel(nested) == "" {
 			for _, child := range slices.Sorted(maps.Keys(nested)) {
 				if text, isText := nested[child].(string); isText {
-					appendField(key+stringutils.CapitalizeFirst(child), text)
+					appendField(key+textcase.CapitalizeFirst(child), text)
 				}
 			}
 			continue
@@ -173,7 +174,7 @@ func projectRecord(record map[string]any, order []string) []assistantartifact.Di
 // recordEntityOf is the record-link registry's name for a list's entity, when
 // its records have a page: "shipments" opens as "shipment".
 func recordEntityOf(entity string) string {
-	for _, candidate := range []string{entity, stringutils.SingularNoun(entity)} {
+	for _, candidate := range []string{entity, inflect.SingularNoun(entity)} {
 		if candidate == "" {
 			continue
 		}

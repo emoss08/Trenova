@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"go.uber.org/fx"
 )
 
@@ -118,7 +118,7 @@ func PolicyViews(policies []agenttoolports.ToolPolicy) []agenttoolports.AgentToo
 func PolicyView(policy agenttoolports.ToolPolicy) agenttoolports.AgentToolPolicyView {
 	view := agenttoolports.AgentToolPolicyView{
 		Policy: policy,
-		Title: stringutils.HumanizeCamelCaseSentence(
+		Title: textcase.HumanizeCamelCaseSentence(
 			agenttoolports.ReadingOrder(policy.Name),
 		),
 		Promotable:  agenttoolpolicy.Promotable(policy),

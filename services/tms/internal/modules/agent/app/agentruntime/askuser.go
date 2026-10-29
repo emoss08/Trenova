@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -479,12 +479,12 @@ func askNote(request *askRequest) string {
 	if fields := len(request.Fields); fields > 0 {
 		fmt.Fprintf(&b, "The person has been shown a form with %d %s for this question, "+
 			"pinned above their message box. Their answers arrive together as their next "+
-			"message. ", fields, stringutils.Pluralize("field", "fields", fields))
+			"message. ", fields, inflect.Pluralize("field", "fields", fields))
 	} else {
 		b.WriteString("The person has been shown this question")
 		if options := len(request.Options); options > 0 {
 			fmt.Fprintf(&b, " with %d %s", options,
-				stringutils.Pluralize("option", "options", options))
+				inflect.Pluralize("option", "options", options))
 		}
 		if request.AllowOther {
 			b.WriteString(" and a box for their own value")
@@ -798,5 +798,5 @@ func schedulingQuestion(question string) bool {
 func pastDateNote(past []string) string {
 	return fmt.Sprintf(" %s %s in the past. If that is not what you meant, say so in one "+
 		"short line instead of ending in silence; do not schedule anything for a day that "+
-		"has already gone.", strings.Join(past, ", "), stringutils.Pluralize("is", "are", len(past)))
+		"has already gone.", strings.Join(past, ", "), inflect.Pluralize("is", "are", len(past)))
 }

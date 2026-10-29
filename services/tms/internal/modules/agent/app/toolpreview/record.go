@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 var ErrNoRecord = errors.New("the record to preview was not loaded")
@@ -373,7 +374,7 @@ func camelPath(path string) string {
 			builder.WriteString(segment)
 			continue
 		}
-		builder.WriteString(stringutils.CapitalizeFirst(segment))
+		builder.WriteString(textcase.CapitalizeFirst(segment))
 	}
 
 	return builder.String()

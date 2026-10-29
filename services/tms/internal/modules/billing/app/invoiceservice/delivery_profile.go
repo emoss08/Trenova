@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // deliveryProfileRepos is the repository set profile resolution needs.
@@ -231,9 +231,9 @@ func resolveRecipients(
 	emailProfile *customer.CustomerEmailProfile,
 ) invoiceports.InvoiceSendRecipients {
 	recipients := invoiceports.InvoiceSendRecipients{
-		To:  stringutils.NormalizeEmailList(entity.EmailToSnapshot),
-		CC:  stringutils.NormalizeEmailList(entity.EmailCCSnapshot),
-		BCC: stringutils.NormalizeEmailList(entity.EmailBCCSnapshot),
+		To:  mailtext.NormalizeEmailList(entity.EmailToSnapshot),
+		CC:  mailtext.NormalizeEmailList(entity.EmailCCSnapshot),
+		BCC: mailtext.NormalizeEmailList(entity.EmailBCCSnapshot),
 	}
 	if len(recipients.To) > 0 {
 		return recipients
@@ -241,8 +241,8 @@ func resolveRecipients(
 	if emailProfile == nil {
 		return recipients
 	}
-	recipients.To = stringutils.SplitEmailList(emailProfile.ToRecipients)
-	recipients.CC = stringutils.SplitEmailList(emailProfile.CCRecipients)
-	recipients.BCC = stringutils.SplitEmailList(emailProfile.BCCRecipients)
+	recipients.To = mailtext.SplitEmailList(emailProfile.ToRecipients)
+	recipients.CC = mailtext.SplitEmailList(emailProfile.CCRecipients)
+	recipients.BCC = mailtext.SplitEmailList(emailProfile.BCCRecipients)
 	return recipients
 }

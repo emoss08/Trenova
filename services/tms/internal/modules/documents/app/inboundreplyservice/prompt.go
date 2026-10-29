@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
@@ -329,12 +330,12 @@ func stopFacts(mc *messageContext) string {
 	add("Checked in", format(stops.CheckedInAt))
 	add("Departed", format(stops.DepartedAt))
 	if stops.LateMinutes > 0 {
-		add("Late by", stringutils.CountNoun(stops.LateMinutes, "minute", "minutes"))
+		add("Late by", inflect.CountNoun(stops.LateMinutes, "minute", "minutes"))
 	}
 	if stops.BilledDetentionMinutes > 0 {
 		add(
 			"Billed detention",
-			stringutils.CountNoun(stops.BilledDetentionMinutes, "minute", "minutes"),
+			inflect.CountNoun(stops.BilledDetentionMinutes, "minute", "minutes"),
 		)
 	}
 	if stops.BilledDetentionAmount != nil {

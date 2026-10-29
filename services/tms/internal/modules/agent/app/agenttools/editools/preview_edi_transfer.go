@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const tenderResponseAccept = "A"
@@ -169,7 +169,7 @@ func summarizeAcceptTender(outcome *tenderOutcome, call *tenderCall) string {
 		tenderSubject(outcome, call),
 		outcome.before.TenderPayload.CustomerLabel,
 		tenderStops(outcome.before),
-		stringutils.Pluralize("stop", "stops", tenderStops(outcome.before)),
+		inflect.Pluralize("stop", "stops", tenderStops(outcome.before)),
 	)
 	if outcome.refusal == nil {
 		summary += " " + tellsPartner(outcome.before) + " accepted."

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 )
@@ -55,7 +56,7 @@ func FuncMapFor(locale i18n.Locale) template.FuncMap {
 		// argument, so the shared helpers are wrapped rather than bound directly.
 		"upper":    strings.ToUpper,
 		"lower":    strings.ToLower,
-		"title":    stringutils.CapitalizeFirst,
+		"title":    textcase.CapitalizeFirst,
 		"trim":     strings.TrimSpace,
 		"default":  withDefault,
 		"nonEmpty": stringutils.FilterEmpty,

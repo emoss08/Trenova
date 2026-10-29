@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -116,7 +116,7 @@ func RequiredSet(schema map[string]any) map[string]bool {
 func fieldFrom(name string, property map[string]any, required bool) Field {
 	field := Field{
 		Name:        name,
-		Label:       stringutils.HumanizeCamelCaseSentence(name),
+		Label:       textcase.HumanizeCamelCaseSentence(name),
 		Description: typeutils.StringOf(property["description"]),
 		Required:    required,
 		Options:     []string{},

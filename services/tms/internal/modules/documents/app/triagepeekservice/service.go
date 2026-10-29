@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
@@ -273,8 +273,8 @@ func HumanizeKind(kind string) string {
 		return ""
 	}
 	if strings.ContainsAny(trimmed, "_-. ") {
-		return stringutils.CapitalizeFirst(strings.ToLower(stringutils.HumanizeSnakeCase(trimmed)))
+		return textcase.CapitalizeFirst(strings.ToLower(textcase.HumanizeSnakeCase(trimmed)))
 	}
 
-	return stringutils.HumanizeCamelCaseSentence(trimmed)
+	return textcase.HumanizeCamelCaseSentence(trimmed)
 }

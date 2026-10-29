@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // CandidateVerdict records why a policy did or did not govern a stop. Surfacing
@@ -152,7 +152,7 @@ func explain(
 			"(priority %d, specificity %d) while the next closest, %s (%s), applies %s "+
 			"(priority %d, specificity %d).",
 		winner.Name, winner.Code,
-		len(matched)-1, stringutils.Pluralize("policy", "policies", len(matched)-1),
+		len(matched)-1, inflect.Pluralize("policy", "policies", len(matched)-1),
 		scope, winner.Priority, winner.ComputeSpecificity(),
 		runnerUp.Name, runnerUp.Code, describeScope(runnerUp),
 		runnerUp.Priority, runnerUp.ComputeSpecificity(),

@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"go.uber.org/zap"
 )
 
@@ -257,7 +257,7 @@ func (s *Service) describeSubject(
 	bare := &agentturn.RuntimeSubject{
 		Type:  thread.SubjectType,
 		ID:    thread.SubjectID.String(),
-		Label: stringutils.HumanizeSnakeCase(string(thread.SubjectType)),
+		Label: textcase.HumanizeSnakeCase(string(thread.SubjectType)),
 	}
 	if s.subjects == nil {
 		return bare

@@ -42,7 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const domainPackagePrefix = "github.com/emoss08/trenova/internal/modules/"
@@ -160,7 +160,7 @@ func kindOfName(registry *permissioncatalog.Registry, pkgPath, name string) perm
 	if name == "" || !isDomainPackage(pkgPath) {
 		return ""
 	}
-	if resource := stringutils.ConvertCamelToSnake(name); registry.HasResource(resource) {
+	if resource := textcase.ConvertCamelToSnake(name); registry.HasResource(resource) {
 		return permission.Resource(resource)
 	}
 

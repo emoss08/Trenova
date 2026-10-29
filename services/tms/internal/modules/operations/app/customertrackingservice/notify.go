@@ -17,8 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -205,11 +205,11 @@ func recipients(sc *shipmentContext) []string {
 	if sc.customer == nil {
 		return nil
 	}
-	if list := stringutils.SplitEmailList(sc.customer.StatusUpdateRecipients); len(list) > 0 {
+	if list := mailtext.SplitEmailList(sc.customer.StatusUpdateRecipients); len(list) > 0 {
 		return list
 	}
 	if sc.customer.EmailProfile != nil {
-		return stringutils.SplitEmailList(sc.customer.EmailProfile.ToRecipients)
+		return mailtext.SplitEmailList(sc.customer.EmailProfile.ToRecipients)
 	}
 	return nil
 }

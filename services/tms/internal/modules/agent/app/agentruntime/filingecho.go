@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -72,7 +72,7 @@ func boundedArguments(args map[string]any) string {
 func describeFiledValue(value any) string {
 	switch typed := value.(type) {
 	case []any:
-		return fmt.Sprintf("%d %s", len(typed), stringutils.Pluralize("item", "items", len(typed)))
+		return fmt.Sprintf("%d %s", len(typed), inflect.Pluralize("item", "items", len(typed)))
 	case map[string]any:
 		encoded, err := jsonutils.CanonicalMarshal(typed)
 		if err == nil && len(encoded) <= maxFilingEchoValue {
@@ -80,7 +80,7 @@ func describeFiledValue(value any) string {
 		}
 
 		return fmt.Sprintf("an object of %d %s", len(typed),
-			stringutils.Pluralize("field", "fields", len(typed)))
+			inflect.Pluralize("field", "fields", len(typed)))
 	case string:
 		if len(typed) > maxFilingEchoValue {
 			return fmt.Sprintf("%d characters of text", len([]rune(typed)))

@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 // contentReader is the one question the summary tool asks of document
@@ -127,7 +127,7 @@ func (t *getDocumentSummaryTool) Query(
 	if !readable[doc.ID] {
 		return nil, fmt.Errorf(
 			"document %s is attached to a %s you may not read",
-			doc.ID, stringutils.HumanizeSnakeCase(doc.OwnerResource().String()),
+			doc.ID, textcase.HumanizeSnakeCase(doc.OwnerResource().String()),
 		)
 	}
 

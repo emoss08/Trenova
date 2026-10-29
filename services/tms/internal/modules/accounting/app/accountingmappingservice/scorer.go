@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 )
 
 const (
@@ -321,21 +322,21 @@ func scoreCandidate(t *target, ref *accountingmapping.AccountingReferenceObject)
 		scoreNames(
 			t.Names,
 			[]string{ref.Name, ref.FullyQualifiedName},
-			stringutils.NameSimilarity,
+			textsim.NameSimilarity,
 			consider,
 		)
 	case accountingsync.TargetAccessorialCharge,
 		accountingsync.TargetLineType,
 		accountingsync.TargetItemRole:
-		if code := stringutils.NormalizeName(t.Code); code != "" {
+		if code := textsim.NormalizeName(t.Code); code != "" {
 			switch code {
-			case stringutils.NormalizeName(ref.Number):
+			case textsim.NormalizeName(ref.Number):
 				consider(
 					scoreCode,
 					matcherCode,
 					fmt.Sprintf("Charge code %s matches the item's SKU", t.Code),
 				)
-			case stringutils.NormalizeName(ref.Name):
+			case textsim.NormalizeName(ref.Name):
 				consider(
 					scoreCode,
 					matcherCode,
@@ -346,7 +347,7 @@ func scoreCandidate(t *target, ref *accountingmapping.AccountingReferenceObject)
 		scoreNames(
 			t.Names,
 			[]string{ref.Name, ref.Description},
-			stringutils.NameSimilarity,
+			textsim.NameSimilarity,
 			consider,
 		)
 	case accountingsync.TargetCustomer, accountingsync.TargetCarrier, accountingsync.TargetDriver:
@@ -359,9 +360,9 @@ func scoreCandidate(t *target, ref *accountingmapping.AccountingReferenceObject)
 				fmt.Sprintf("Due in %d days in both systems", *t.DueDays),
 			)
 		}
-		scoreNames(termSynonyms[t.Key], []string{ref.Name}, stringutils.NameSimilarity, consider)
+		scoreNames(termSynonyms[t.Key], []string{ref.Name}, textsim.NameSimilarity, consider)
 	case accountingsync.TargetPaymentMethod:
-		scoreNames(t.Names, []string{ref.Name}, stringutils.NameSimilarity, consider)
+		scoreNames(t.Names, []string{ref.Name}, textsim.NameSimilarity, consider)
 	}
 
 	result.score = min(result.score, maxDeterministicScore)
@@ -389,12 +390,12 @@ func scoreParty(
 			if name == "" || other == "" {
 				continue
 			}
-			if stringutils.NormalizeCompanyName(name) == stringutils.NormalizeCompanyName(other) {
+			if textsim.NormalizeCompanyName(name) == textsim.NormalizeCompanyName(other) {
 				consider(scoreEqualCompany, matcherName, "Same company name")
 			}
 		}
 	}
-	scoreNames(t.Names, names, stringutils.CompanyNameSimilarity, consider)
+	scoreNames(t.Names, names, textsim.CompanyNameSimilarity, consider)
 
 	if t.PostalCode != "" && ref.PostalCode != "" && result.score > 0 &&
 		normalizePostal(t.PostalCode) == normalizePostal(ref.PostalCode) {
@@ -534,7 +535,7 @@ func digitRuns(value string) []string {
 func partyTokens(values ...string) []string {
 	tokens := make([]string, 0, len(values)*3)
 	for _, value := range values {
-		tokens = append(tokens, strings.Fields(stringutils.NormalizeCompanyName(value))...)
+		tokens = append(tokens, strings.Fields(textsim.NormalizeCompanyName(value))...)
 	}
 	return tokens
 }

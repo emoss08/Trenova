@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -99,7 +99,7 @@ func Recipients(
 	}
 
 	if entity.EmailProfile != nil {
-		recipients = stringutils.SplitEmailList(entity.EmailProfile.ToRecipients)
+		recipients = mailtext.SplitEmailList(entity.EmailProfile.ToRecipients)
 	}
 	if len(recipients) == 0 {
 		return nil, "", fmt.Errorf(

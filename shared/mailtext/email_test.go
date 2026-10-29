@@ -1,4 +1,4 @@
-package stringutils
+package mailtext
 
 import (
 	"testing"
@@ -29,7 +29,9 @@ func TestNormalizeEmailList(t *testing.T) {
 	require.Equal(
 		t,
 		[]string{"ops@example.com", "billing@example.com"},
-		NormalizeEmailList([]string{" Ops@Example.COM ", "", "billing@example.com", "ops@example.com"}),
+		NormalizeEmailList(
+			[]string{" Ops@Example.COM ", "", "billing@example.com", "ops@example.com"},
+		),
 		"a list keeps the order it was given in, having dropped blanks and repeats",
 	)
 }

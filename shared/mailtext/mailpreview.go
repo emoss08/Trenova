@@ -1,9 +1,11 @@
-package stringutils
+package mailtext
 
 import (
 	"iter"
 	"regexp"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 var quotedReplyIntro = regexp.MustCompile(`^On .{4,200} wrote:$`)
@@ -32,7 +34,7 @@ func MailPreview(body string, maxLength int) string {
 		}
 	}
 
-	return Ellipsize(b.String(), maxLength)
+	return stringutils.Ellipsize(b.String(), maxLength)
 }
 
 func MailBody(body string) string {

@@ -26,7 +26,7 @@ Read from those, never copied:
 - **Page context and mentions.** `agentpagecontext.IsKnownPageEntityType` accepts any kind
   the permission registry knows except `assistant_thread`.
 - **Subjects.** Their prefixes and nouns are read from the permission
-  registry, and their articles from `stringutils.WithArticle`.
+  registry, and their articles from `inflect.WithArticle`.
 - **Memory.** It recognises a record id by the registry's prefix table.
 - **Mention search.** It checks the kind's own resource
   (`RecordKind.Resource()`).

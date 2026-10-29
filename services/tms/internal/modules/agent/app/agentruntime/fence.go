@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/jsonflex"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textfence"
 )
 
 const (
@@ -27,7 +27,7 @@ func FenceUntrusted(header, payload string) string {
 	builder.WriteString("\n")
 	builder.WriteString(untrustedOpenTag)
 	builder.WriteString("\n")
-	builder.WriteString(stringutils.FenceText(payload, untrustedCloseTag))
+	builder.WriteString(textfence.FenceText(payload, untrustedCloseTag))
 	builder.WriteString("\n")
 	builder.WriteString(untrustedCloseTag)
 
@@ -193,5 +193,5 @@ func UnfenceToolResult(content string) (toolName, payload string, ok bool) {
 	}
 	body = body[:end]
 
-	return toolName, stringutils.RestoreCloseTag(body, untrustedCloseTag), true
+	return toolName, textfence.RestoreCloseTag(body, untrustedCloseTag), true
 }

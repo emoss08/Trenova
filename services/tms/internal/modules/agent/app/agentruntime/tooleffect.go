@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -146,7 +147,7 @@ func reportSummary(record map[string]any) string {
 	}
 
 	return summaryLine(fmt.Sprintf("%s · %d %s",
-		name, rows, stringutils.Pluralize("row", "rows", int(rows))))
+		name, rows, inflect.Pluralize("row", "rows", int(rows))))
 }
 
 func recordName(record map[string]any) string {

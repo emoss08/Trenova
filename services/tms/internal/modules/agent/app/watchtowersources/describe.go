@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 /*
@@ -136,7 +137,7 @@ func DescribeProposal(
 		SourceKind: watchtower.SourceAgentProposal,
 		SourceID:   entity.ID.String(),
 		Severity:   watchtower.SeverityInfo,
-		Title: who + " wants to " + stringutils.HumanizeSnakeCase(
+		Title: who + " wants to " + textcase.HumanizeSnakeCase(
 			agenttoolports.ReadingOrder(entity.ToolName),
 		),
 		Summary: entity.Rationale,
@@ -145,7 +146,7 @@ func DescribeProposal(
 			fact("Agent", who),
 			fact(
 				"Change",
-				stringutils.HumanizeSnakeCase(agenttoolports.ReadingOrder(entity.ToolName)),
+				textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(entity.ToolName)),
 			),
 		},
 		OccurredAt: entity.CreatedAt,
@@ -247,13 +248,13 @@ func DescribeException(entity *agentexception.AgentException) watchtowerports.Wa
 		SourceKind:  watchtower.SourceAgentException,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
-		Title:       "Agent exception: " + stringutils.HumanizeSnakeCase(string(entity.Category)),
+		Title:       "Agent exception: " + textcase.HumanizeSnakeCase(string(entity.Category)),
 		Summary:     entity.AttemptSummary,
 		SubjectType: entity.SubjectType,
 		SubjectID:   entity.SubjectID,
 		Path:        pathAgentControl + "?tab=activity&view=exceptions&exception=" + entity.ID.String(),
 		Facts: []watchtower.Fact{
-			fact("Category", stringutils.HumanizeSnakeCase(string(entity.Category))),
+			fact("Category", textcase.HumanizeSnakeCase(string(entity.Category))),
 		},
 		OccurredAt: entity.CreatedAt,
 	}
@@ -270,7 +271,7 @@ func DescribeServiceFailure(
 	}
 	summary := fmt.Sprintf(
 		"%s, %d minutes late",
-		stringutils.HumanizeSnakeCase(string(entity.Type)),
+		textcase.HumanizeSnakeCase(string(entity.Type)),
 		entity.LateMinutes,
 	)
 	if entity.Notes != "" {
@@ -293,7 +294,7 @@ func DescribeServiceFailure(
 		Path:        panelPath(pathServiceFailures, entity.ID.String()),
 		Record:      resourceRecord(permission.ResourceServiceFailure, entity.Number),
 		Facts: []watchtower.Fact{
-			fact("Failure", stringutils.HumanizeSnakeCase(string(entity.Type))),
+			fact("Failure", textcase.HumanizeSnakeCase(string(entity.Type))),
 			fact("Late by", minutesPhrase(int64(entity.LateMinutes))),
 			factAt("Detected", entity.DetectedAt),
 		},
@@ -338,7 +339,7 @@ func DescribeCarrierIntelEvent(
 		SourceKind:  watchtower.SourceCarrierIntelEvent,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
-		Title:       name + ": " + stringutils.HumanizeSnakeCase(string(entity.Category)),
+		Title:       name + ": " + textcase.HumanizeSnakeCase(string(entity.Category)),
 		Summary:     entity.Summary,
 		SubjectType: agent.SubjectCarrierIntelEvent,
 		SubjectID:   entity.ID,
@@ -347,7 +348,7 @@ func DescribeCarrierIntelEvent(
 		Record:      resourceRecord(permission.ResourceCarrier, name),
 		Facts: []watchtower.Fact{
 			fact("DOT", entity.DOTNumber),
-			fact("Change", stringutils.HumanizeSnakeCase(string(entity.Category))),
+			fact("Change", textcase.HumanizeSnakeCase(string(entity.Category))),
 			factAt("Detected", entity.DetectedAt),
 		},
 		OccurredAt: entity.DetectedAt,
@@ -379,7 +380,7 @@ func DescribeHOSViolation(
 		SourceKind: watchtower.SourceHOSViolation,
 		SourceID:   HOSViolationSourceID(entity),
 		Severity:   watchtower.SeverityWarning,
-		Title:      who + ": " + stringutils.HumanizeSnakeCase(entity.ViolationType),
+		Title:      who + ": " + textcase.HumanizeSnakeCase(entity.ViolationType),
 		Summary:    entity.Description,
 		// Nothing is woken by an hours violation, so the item carries its
 		// driver for a conversation to start from rather than an event to
@@ -389,7 +390,7 @@ func DescribeHOSViolation(
 		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
 		Record:      resourceRecord(permission.ResourceWorker, who),
 		Facts: []watchtower.Fact{
-			fact("Violation", stringutils.HumanizeSnakeCase(entity.ViolationType)),
+			fact("Violation", textcase.HumanizeSnakeCase(entity.ViolationType)),
 			factAt("Started", entity.ViolationStartAt),
 		},
 		OccurredAt: entity.ViolationStartAt,
@@ -476,7 +477,7 @@ func DescribeBillingException(
 ) watchtowerports.WatchtowerItemInput {
 	reason := "Needs review"
 	if entity.ExceptionReasonCode != nil {
-		reason = stringutils.HumanizeSnakeCase(string(*entity.ExceptionReasonCode))
+		reason = textcase.HumanizeSnakeCase(string(*entity.ExceptionReasonCode))
 	}
 
 	return watchtowerports.WatchtowerItemInput{

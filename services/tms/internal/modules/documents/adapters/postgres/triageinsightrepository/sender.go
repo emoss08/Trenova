@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -210,7 +211,7 @@ func driverParty(
 	req *triageports.SenderPartyRequest,
 ) (*triageports.SenderParty, error) {
 	unknown := &triageports.SenderParty{Role: inboundmessageports.SenderRoleUnknown}
-	address := stringutils.NormalizeEmailAddress(req.Address)
+	address := mailtext.NormalizeEmailAddress(req.Address)
 	if address == "" && req.SenderDomain == "" {
 		return unknown, nil
 	}

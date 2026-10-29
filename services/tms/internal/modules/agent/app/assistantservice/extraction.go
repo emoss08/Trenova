@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/zap"
 )
@@ -209,7 +210,7 @@ func extractionArtifact(
 	}
 
 	documentKind := typeutils.StringOfTrimmed(draft["documentKind"])
-	kindLabel := stringutils.CapitalizeFirst(strings.ToLower(splitCamel(documentKind)))
+	kindLabel := textcase.CapitalizeFirst(strings.ToLower(splitCamel(documentKind)))
 	if kindLabel == "" {
 		kindLabel = "Document"
 	}
@@ -289,7 +290,7 @@ func missingFields(labels []string) []map[string]string {
 		}
 		key := aicorrection.CanonicalFieldKey(label)
 		if key == label {
-			key = stringutils.LowerCamel(label)
+			key = textcase.LowerCamel(label)
 		}
 		out = append(out, map[string]string{"key": key, "label": label})
 	}
@@ -314,7 +315,7 @@ func draftReadings(draft map[string]any, source extractionSource) []fieldReading
 		}
 		label := typeutils.StringOfTrimmed(field["label"])
 		if label == "" {
-			label = stringutils.CapitalizeFirst(strings.ToLower(splitCamel(key)))
+			label = textcase.CapitalizeFirst(strings.ToLower(splitCamel(key)))
 		}
 		readings := conflicts[key]
 		out = append(out, fieldReading{

@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
+	"github.com/emoss08/trenova/shared/textfence"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -48,17 +50,17 @@ func DescribeAnchors(anchors []agentturn.RuntimeAnchor, now int64, timezone stri
 
 func writeAnchor(b *strings.Builder, anchor *agentturn.RuntimeAnchor, now int64) {
 	b.WriteString("- ")
-	b.WriteString(stringutils.CapitalizeFirst(permission.RecordKind(anchor.Kind).Noun()))
+	b.WriteString(textcase.CapitalizeFirst(permission.RecordKind(anchor.Kind).Noun()))
 	if label := stringutils.OneLine(anchor.Label, maxAnchorValueLen); label != "" {
 		b.WriteString(" ")
-		b.WriteString(stringutils.FenceText(label, anchorsCloseTag))
+		b.WriteString(textfence.FenceText(label, anchorsCloseTag))
 	}
 	b.WriteString(" (")
 	b.WriteString(anchor.ID)
 	b.WriteString(")")
 	if anchor.Note != "" {
 		b.WriteString(": ")
-		b.WriteString(stringutils.FenceText(anchor.Note, anchorsCloseTag))
+		b.WriteString(textfence.FenceText(anchor.Note, anchorsCloseTag))
 	}
 	b.WriteString("\n")
 	for _, fact := range anchor.Facts {
@@ -69,7 +71,7 @@ func writeAnchor(b *strings.Builder, anchor *agentturn.RuntimeAnchor, now int64)
 		b.WriteString("  - ")
 		b.WriteString(fact.Name)
 		b.WriteString(": ")
-		b.WriteString(stringutils.FenceText(value, anchorsCloseTag))
+		b.WriteString(textfence.FenceText(value, anchorsCloseTag))
 		if ago := timeutils.DescribeAgo(fact.SeenAt, now); ago != "" {
 			b.WriteString(" (reported ")
 			b.WriteString(ago)

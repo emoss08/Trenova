@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func refuseDeliveryUpdate(
@@ -54,13 +54,13 @@ func applyDraftUpdate(entity *invoice.Invoice, req *invoiceports.UpdateInvoiceDr
 		entity.EmailBodySnapshot = strings.TrimSpace(*req.EmailBody)
 	}
 	if req.EmailTo != nil {
-		entity.EmailToSnapshot = stringutils.NormalizeEmailList(*req.EmailTo)
+		entity.EmailToSnapshot = mailtext.NormalizeEmailList(*req.EmailTo)
 	}
 	if req.EmailCC != nil {
-		entity.EmailCCSnapshot = stringutils.NormalizeEmailList(*req.EmailCC)
+		entity.EmailCCSnapshot = mailtext.NormalizeEmailList(*req.EmailCC)
 	}
 	if req.EmailBCC != nil {
-		entity.EmailBCCSnapshot = stringutils.NormalizeEmailList(*req.EmailBCC)
+		entity.EmailBCCSnapshot = mailtext.NormalizeEmailList(*req.EmailBCC)
 	}
 }
 

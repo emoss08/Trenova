@@ -28,8 +28,8 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -599,7 +599,7 @@ func (s *NoaService) requestCustomer(
 
 func recipientsFor(cus *customer.Customer, override string) (customer.EmailRecipients, error) {
 	if trimmed := strings.TrimSpace(override); trimmed != "" {
-		to := stringutils.SplitEmailList(trimmed)
+		to := mailtext.SplitEmailList(trimmed)
 		if len(to) == 0 {
 			return customer.EmailRecipients{}, errortypes.NewValidationError(
 				"recipient",

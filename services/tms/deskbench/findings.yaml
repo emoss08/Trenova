@@ -487,7 +487,7 @@ findings:
       "unknown", "tbd", "?") in an optional record id as not sent, the way it already reads "" and
       an empty list, and trims a trailing comma, period or semicolon from any record id. Only
       properties marked x-recordOf or x-recordKinds are touched. To verify in a run.
-    files: [services/tms/pkg/toolschema/coerce.go]
+    files: [services/tms/pkg/toolcoerce/coerce.go]
     fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-021
@@ -1326,7 +1326,7 @@ findings:
     fixedIn: uncommitted; unit-tested, to verify in a run
     files:
       - services/tms/internal/modules/agent/app/agentquerytoolservice/rate_tools.go
-      - services/tms/pkg/toolschema/coerce.go
+      - services/tms/pkg/toolcoerce/coerce.go
 
   - id: DB-056
     title: A corrected proposal in the same turn was approved together with the one it corrected
@@ -3171,7 +3171,7 @@ findings:
       - services/tms/internal/modules/agent/app/assistantservice/artifacts.go
       - services/tms/internal/modules/agent/domain/assistantartifact/naming.go
       - services/tms/internal/modules/identity/domain/permission/recordid.go
-      - shared/stringutils/noun.go
+      - shared/inflect/noun.go
       - client/apps/web/src/components/desk-chat/conversation/desk-turns.tsx
       - client/apps/web/src/lib/artifact-ref.ts
 

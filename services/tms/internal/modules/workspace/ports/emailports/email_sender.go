@@ -3,8 +3,8 @@ package emailports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // EmailSender is who an email would go out as, and which of its recipients
@@ -24,7 +24,7 @@ func (s *EmailSender) Address() string {
 		return ""
 	}
 
-	return stringutils.FormatEmailAddress(s.Name, s.Email)
+	return mailtext.FormatEmailAddress(s.Name, s.Email)
 }
 
 // EmailSenderResolver resolves the profile a send would use, so a preview can

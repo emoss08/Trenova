@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 // The external tests read through the real GraphQL reader, which this
@@ -228,7 +228,7 @@ func ExpectedMention(tool agenttoolports.AgentQueryTool, name string) (string, b
 			return "", false
 		}
 		if parent, _, nested := strings.Cut(param.Field, "."); nested {
-			mention = stringutils.LowerFirst(strings.TrimPrefix(mention, parent))
+			mention = textcase.LowerFirst(strings.TrimPrefix(mention, parent))
 		}
 
 		return mention, true

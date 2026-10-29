@@ -1,4 +1,4 @@
-package stringutils
+package textsim
 
 import (
 	"testing"
@@ -47,7 +47,12 @@ func TestJaroWinklerMatchesKnownValues(t *testing.T) {
 func TestJaroWinklerIsSymmetric(t *testing.T) {
 	t.Parallel()
 
-	assert.InDelta(t, JaroWinkler("detention", "detension"), JaroWinkler("detension", "detention"), 1e-12)
+	assert.InDelta(
+		t,
+		JaroWinkler("detention", "detension"),
+		JaroWinkler("detension", "detention"),
+		1e-12,
+	)
 }
 
 func TestTokenSetRatioIgnoresOrderAndExtraWords(t *testing.T) {
@@ -56,14 +61,23 @@ func TestTokenSetRatioIgnoresOrderAndExtraWords(t *testing.T) {
 	assert.InDelta(t, 1.0, TokenSetRatio("fuel surcharge", "surcharge fuel"), 1e-9)
 	assert.InDelta(t, 1.0, TokenSetRatio("fuel surcharge", "fuel surcharge income"), 1e-9)
 	assert.InDelta(t, 0.0, TokenSetRatio("", "fuel"), 1e-9)
-	assert.Less(t, TokenSetRatio("detention", "lumper fee"), TokenSetRatio("detention", "detention fee"))
+	assert.Less(
+		t,
+		TokenSetRatio("detention", "lumper fee"),
+		TokenSetRatio("detention", "detention fee"),
+	)
 }
 
 func TestNameSimilarityRanksTheIntendedMatchFirst(t *testing.T) {
 	t.Parallel()
 
 	target := "Freight Revenue"
-	candidates := []string{"Freight Income", "Fuel Surcharge Revenue", "Freight Revenue", "Accounts Receivable"}
+	candidates := []string{
+		"Freight Income",
+		"Fuel Surcharge Revenue",
+		"Freight Revenue",
+		"Accounts Receivable",
+	}
 
 	best, bestScore := "", -1.0
 	for _, candidate := range candidates {
@@ -74,7 +88,11 @@ func TestNameSimilarityRanksTheIntendedMatchFirst(t *testing.T) {
 
 	assert.Equal(t, "Freight Revenue", best)
 	assert.InDelta(t, 1.0, bestScore, 1e-9)
-	assert.Greater(t, NameSimilarity(target, "Freight Income"), NameSimilarity(target, "Accounts Receivable"))
+	assert.Greater(
+		t,
+		NameSimilarity(target, "Freight Income"),
+		NameSimilarity(target, "Accounts Receivable"),
+	)
 }
 
 func TestNameSimilarityScoresNormalizedEqualNamesAsExact(t *testing.T) {

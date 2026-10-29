@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -120,7 +121,7 @@ func (r *InboundMessageResolver) AttachmentCount(ctx context.Context, obj *inbou
 }
 
 func (r *InboundMessageResolver) Preview(ctx context.Context, obj *inboundmessage.InboundMessage) (string, error) {
-	return stringutils.MailPreview(obj.TextBody, inboundPreviewLength), nil
+	return mailtext.MailPreview(obj.TextBody, inboundPreviewLength), nil
 }
 
 // MatchedShipment is shown only to a reader who could open the shipment. A

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 )
 
 type AccountingReferenceObject struct {
@@ -54,13 +54,13 @@ type AccountingReferenceObject struct {
 }
 
 func (r *AccountingReferenceObject) BeforeUpdate(_ context.Context) error {
-	r.SearchName = stringutils.NormalizeName(r.Name)
+	r.SearchName = textsim.NormalizeName(r.Name)
 
 	return nil
 }
 
 func (r *AccountingReferenceObject) BeforeCreate(_ context.Context) error {
-	r.SearchName = stringutils.NormalizeName(r.Name)
+	r.SearchName = textsim.NormalizeName(r.Name)
 
 	return nil
 }
@@ -74,7 +74,7 @@ func (r *AccountingReferenceObject) GetOrganizationID() pulid.ID { return r.Orga
 func (r *AccountingReferenceObject) GetBusinessUnitID() pulid.ID { return r.BusinessUnitID }
 
 func (r *AccountingReferenceObject) BeforeSave(_ context.Context) error {
-	r.SearchName = stringutils.NormalizeName(r.Name)
+	r.SearchName = textsim.NormalizeName(r.Name)
 	return nil
 }
 

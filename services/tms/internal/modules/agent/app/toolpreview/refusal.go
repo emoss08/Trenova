@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 // WouldFailPrefix leads the message of a would_fail warning; the rest is
@@ -103,7 +103,7 @@ func fieldLabel(field string) string {
 		last = last[:bracket]
 	}
 
-	return stringutils.HumanizeCamelCaseSentence(last)
+	return textcase.HumanizeCamelCaseSentence(last)
 }
 
 // LocateReasons names, for each reason of a would_fail warning, the call's

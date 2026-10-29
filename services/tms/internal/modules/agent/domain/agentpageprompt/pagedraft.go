@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textfence"
 )
 
 func DescribePageDraft(draft *pagedraft.Draft) string {
@@ -59,7 +59,7 @@ func DescribePageDraft(draft *pagedraft.Draft) string {
 }
 
 func draftText(value string) string {
-	return stringutils.FenceText(value, pageDraftCloseTag)
+	return textfence.FenceText(value, pageDraftCloseTag)
 }
 
 func writeImportDraft(builder *strings.Builder, draft *pagedraft.ShipmentImport) {

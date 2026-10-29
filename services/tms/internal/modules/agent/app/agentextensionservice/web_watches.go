@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -179,7 +180,7 @@ func (s *Service) draftWebWatch(
 	}
 	for _, text := range []string{watch.Query, watch.Purpose} {
 		if err = agentextension.CheckSearchQuery(text); err != nil {
-			return nil, 0, &ToolError{Message: stringutils.CapitalizeFirst(err.Error()) + "."}
+			return nil, 0, &ToolError{Message: textcase.CapitalizeFirst(err.Error()) + "."}
 		}
 	}
 

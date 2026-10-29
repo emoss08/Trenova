@@ -25,8 +25,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
 
@@ -582,7 +582,7 @@ func (t *ReplyToInboundMessageTool) prepare(
 	return &inboundReply{
 		message:   message,
 		profileID: profileID,
-		subject:   stringutils.ReplySubject(message.Subject),
+		subject:   mailtext.ReplySubject(message.Subject),
 		body:      body,
 	}, nil
 }
@@ -594,11 +594,11 @@ func replyable(message *inboundmessage.InboundMessage) error {
 		return errInboundQuarantined
 	case strings.TrimSpace(message.FromAddress) == "":
 		return errors.New("the message has no sender to answer")
-	case stringutils.IsAutomatedSender(message.FromAddress):
+	case mailtext.IsAutomatedSender(message.FromAddress):
 		return errInboundAutomatedSender
 	case message.Mailbox != nil &&
-		stringutils.NormalizeEmailAddress(message.Mailbox.Address) ==
-			stringutils.NormalizeEmailAddress(message.FromAddress):
+		mailtext.NormalizeEmailAddress(message.Mailbox.Address) ==
+			mailtext.NormalizeEmailAddress(message.FromAddress):
 		return errInboundOwnMailbox
 	default:
 		return nil
@@ -644,14 +644,14 @@ func (t *ReplyToInboundMessageTool) Execute(
 // id is missing or malformed gets none: a reply outside the thread is better
 // than a header built from something the sender wrote.
 func threadHeaders(message *inboundmessage.InboundMessage) map[string]string {
-	token, ok := stringutils.MessageIDToken(message.MessageID)
+	token, ok := mailtext.MessageIDToken(message.MessageID)
 	if !ok {
 		return nil
 	}
 
 	return map[string]string{
 		"In-Reply-To": token,
-		"References":  stringutils.ReplyReferences(message.References, token, maxReplyReferences),
+		"References":  mailtext.ReplyReferences(message.References, token, maxReplyReferences),
 	}
 }
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textfence"
 )
 
 const (
@@ -44,7 +44,7 @@ func BuildContextText(deliminated llmports.DelimitedContext) string {
 }
 
 func neutralizeUntrusted(content string) string {
-	return stringutils.FenceText(content, untrustedCloseTag)
+	return textfence.FenceText(content, untrustedCloseTag)
 }
 
 // WithSchemaInstruction appends the schema to a system prompt for providers that

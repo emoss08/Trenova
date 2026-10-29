@@ -22,9 +22,9 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -602,7 +602,7 @@ func describeUsages(usages []formulatemplateports.TemplateUsageCount) string {
 		if !ok {
 			noun = [2]string{usage.Type, usage.Type}
 		}
-		parts = append(parts, stringutils.CountNoun(usage.Count, noun[0], noun[1]))
+		parts = append(parts, inflect.CountNoun(usage.Count, noun[0], noun[1]))
 	}
 	return strings.Join(parts, ", ")
 }

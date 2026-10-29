@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
 	"gopkg.in/yaml.v3"
@@ -559,7 +559,7 @@ func TestNamedKindsAreRegisteredResources(t *testing.T) {
 		require.Truef(t, registry.HasResource(kind.String()),
 			"%s names unknown resource %s", typ, kind)
 		require.Truef(t, isDomainPackage(typ.PkgPath()), "%s is not a domain type", typ)
-		require.NotEqualf(t, permission.Resource(stringutils.ConvertCamelToSnake(typ.Name())), kind,
+		require.NotEqualf(t, permission.Resource(textcase.ConvertCamelToSnake(typ.Name())), kind,
 			"%s is spelled as its resource; it needs no entry", typ)
 	}
 }

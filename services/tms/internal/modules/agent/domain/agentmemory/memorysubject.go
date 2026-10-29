@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const MaxMemorySubjectsPerTurn = 12
@@ -41,7 +41,7 @@ func AllMemoryRecordKinds() []MemoryRecordKind {
 }
 
 func ParseMemoryRecordKind(raw string) (MemoryRecordKind, bool) {
-	normalized := strings.ToLower(stringutils.ConvertCamelToSnake(strings.TrimSpace(raw)))
+	normalized := strings.ToLower(textcase.ConvertCamelToSnake(strings.TrimSpace(raw)))
 	for _, kind := range AllMemoryRecordKinds() {
 		if string(kind) == normalized {
 			return kind, true

@@ -22,8 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -483,7 +483,7 @@ func (s *Service) noticeRecipients(
 
 	var recipients []string
 	if entity.EmailProfile != nil {
-		recipients = stringutils.SplitEmailList(entity.EmailProfile.ToRecipients)
+		recipients = mailtext.SplitEmailList(entity.EmailProfile.ToRecipients)
 	}
 
 	if len(recipients) == 0 {

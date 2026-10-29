@@ -29,9 +29,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/zap"
 )
@@ -1142,7 +1143,7 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 func listedEntity(toolName string) string {
 	reading := agenttoolports.ReadingOrder(toolName)
 	if entity, read := strings.CutPrefix(reading, getToolPrefix); read {
-		return stringutils.PluralNoun(stringutils.SingularNoun(entity))
+		return inflect.PluralNoun(inflect.SingularNoun(entity))
 	}
 
 	return strings.TrimPrefix(strings.TrimPrefix(reading, listToolPrefix), searchToolPrefix)
@@ -1580,7 +1581,7 @@ func previewArtifact(
 	title := typeutils.StringOfTrimmed(result["name"])
 	if title == "" {
 		title = "Preview of " +
-			stringutils.HumanizeSnakeCasePhrase(typeutils.StringOfTrimmed(result["dataset"]))
+			textcase.HumanizeSnakeCasePhrase(typeutils.StringOfTrimmed(result["dataset"]))
 	}
 
 	return &assistantartifact.Artifact{
@@ -1612,7 +1613,7 @@ func runArtifact(callID string, result map[string]any) *assistantartifact.Artifa
 
 	title := typeutils.StringOfTrimmed(result["reportName"])
 	if title == "" {
-		title = stringutils.HumanizeSnakeCasePhrase(typeutils.StringOfTrimmed(result["reportKey"]))
+		title = textcase.HumanizeSnakeCasePhrase(typeutils.StringOfTrimmed(result["reportKey"]))
 	}
 	if title == "" {
 		title = "Report run"

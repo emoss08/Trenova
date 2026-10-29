@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping/accountingmappingdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -184,7 +185,7 @@ func (r *referenceRepository) Search(
 				keel.When(req.UsableOnly, usableReference()),
 			).Limit(limit)
 
-			if term := stringutils.NormalizeName(req.Query); term != "" {
+			if term := textsim.NormalizeName(req.Query); term != "" {
 				prefix := stringutils.EscapeLikePattern(term) + "%"
 				q = q.Where(keel.Or(
 					ro.SearchName.Contains(term),

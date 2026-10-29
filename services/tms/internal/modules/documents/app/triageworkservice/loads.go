@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -146,7 +147,7 @@ func (s *Service) draftLoad(
 
 	s.record(ctx, triage.NewActivity(updated, triage.ActivityLoadDrafted).
 		ByNova().
-		About(draft.Source, stringutils.CountNoun(filledFields(draft), "field", "fields")))
+		About(draft.Source, inflect.CountNoun(filledFields(draft), "field", "fields")))
 	s.changed(ctx, updated)
 
 	return updated, nil

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -526,5 +527,5 @@ func (r *WatchtowerRecordResolver) Noun(ctx context.Context, obj *watchtower.Rec
 		return "", nil
 	}
 
-	return stringutils.CapitalizeFirst(obj.Kind.Noun()), nil
+	return textcase.CapitalizeFirst(obj.Kind.Noun()), nil
 }

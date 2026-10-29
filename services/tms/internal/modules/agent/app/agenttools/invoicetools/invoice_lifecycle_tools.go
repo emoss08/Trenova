@@ -20,8 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/shopspring/decimal"
 )
@@ -402,7 +402,7 @@ func presentRecipients(params map[string]any, key string) (*[]string, error) {
 		return nil, err
 	}
 
-	addresses := stringutils.NormalizeEmailAddresses(values)
+	addresses := mailtext.NormalizeEmailAddresses(values)
 	for _, address := range addresses {
 		if err = is.EmailFormat.Validate(address); err != nil {
 			return nil, fmt.Errorf("parameter %q: %q is not an email address", key, address)

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -221,7 +221,7 @@ func RenderWords(schema *ast.Schema, registry *permissioncatalog.Registry) (stri
 	b.WriteString("var viewWords = map[string][]viewWord{\n")
 	for _, def := range defs {
 		words := ViewWords(def.ReferenceView, func(field string) bool {
-			_, ok := registry.Get(stringutils.ConvertCamelToSnake(field))
+			_, ok := registry.Get(textcase.ConvertCamelToSnake(field))
 			return ok
 		})
 		if len(words) == 0 {

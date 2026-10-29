@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const (
@@ -235,7 +235,7 @@ func (r *graphQLRead) argumentParams(tool string) (params []graphQLParam, requir
 // field is.
 func argumentParam(field *graphQLField) []graphQLParam {
 	if field.Type == graphQLTypeID && field.List {
-		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
+		words := textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(
 			strings.TrimSuffix(field.Name, "Ids")))
 		return []graphQLParam{{
 			Name: field.Name, Field: field.Name, Kind: paramReferences,
@@ -250,7 +250,7 @@ func argumentParam(field *graphQLField) []graphQLParam {
 		}}
 	}
 	if field.Type == graphQLTypeID && !field.List {
-		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
+		words := textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(
 			strings.TrimSuffix(field.Name, suffixID)))
 		return []graphQLParam{{
 			Name: field.Name, Field: field.Name, Kind: paramReference,
@@ -264,7 +264,7 @@ func argumentParam(field *graphQLField) []graphQLParam {
 	if field.Type == graphQLTypeID {
 		description := field.Description
 		if description == "" {
-			description = "The " + stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
+			description = "The " + textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(
 				field.Name)) + " whose records are read."
 		}
 		return []graphQLParam{{

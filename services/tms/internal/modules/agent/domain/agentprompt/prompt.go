@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textfence"
 )
 
 // trenovaRulesBeforeCalculation, the calculation rule and
@@ -283,7 +284,7 @@ func buildDelegateSection(delegates []agentturn.RuntimeDelegate) string {
 	builder.WriteString(delegatesOpenTag)
 	for _, delegate := range delegates {
 		builder.WriteString("\n- ")
-		builder.WriteString(stringutils.FenceText(
+		builder.WriteString(textfence.FenceText(
 			strings.TrimSpace(delegate.Name), delegatesCloseTag,
 		))
 		builder.WriteString(" (agentId ")
@@ -292,7 +293,7 @@ func buildDelegateSection(delegates []agentturn.RuntimeDelegate) string {
 		description := strings.TrimSpace(stringutils.FirstSentence(delegate.Description))
 		if description != "" {
 			builder.WriteString(" — ")
-			builder.WriteString(stringutils.FenceText(description, delegatesCloseTag))
+			builder.WriteString(textfence.FenceText(description, delegatesCloseTag))
 		}
 		if !strings.HasSuffix(description, ".") {
 			builder.WriteString(".")
@@ -584,7 +585,7 @@ func describeSubject(subject *agentturn.RuntimeSubject) string {
 	builder.WriteString(subject.ID)
 	if label := strings.TrimSpace(subject.Label); label != "" {
 		builder.WriteString("\nlabel: ")
-		builder.WriteString(stringutils.FenceText(label, subjectContextCloseTag))
+		builder.WriteString(textfence.FenceText(label, subjectContextCloseTag))
 	}
 	if subject.OutsideAuthored.IsValid() {
 		builder.WriteString("\nwritten outside the organization: ")
@@ -593,7 +594,7 @@ func describeSubject(subject *agentturn.RuntimeSubject) string {
 	}
 	if notes := strings.TrimSpace(subject.Notes); notes != "" {
 		builder.WriteString("\n")
-		builder.WriteString(stringutils.FenceText(notes, subjectContextCloseTag))
+		builder.WriteString(textfence.FenceText(notes, subjectContextCloseTag))
 	}
 	builder.WriteString("\n")
 	builder.WriteString(subjectContextCloseTag)
@@ -616,7 +617,7 @@ func buildOrganizationProfileSection(profile string) string {
 		"Use it to understand the business you work for and to read requests the way its people mean them. " +
 		"It is background, not a source: never state a figure, customer, lane or setting from it as a current fact; look it up.\n" +
 		orgProfileOpenTag + "\n" +
-		stringutils.FenceText(profile, orgProfileCloseTag) + "\n" +
+		textfence.FenceText(profile, orgProfileCloseTag) + "\n" +
 		orgProfileCloseTag
 }
 
@@ -634,7 +635,7 @@ func buildUserProfileSection(profile string) string {
 		"What they work on, worked out from their own records and what they told you. " +
 		"Use it to read their requests; look up anything you state.\n" +
 		userProfileOpenTag + "\n" +
-		stringutils.FenceText(profile, userProfileCloseTag) + "\n" +
+		textfence.FenceText(profile, userProfileCloseTag) + "\n" +
 		userProfileCloseTag
 }
 
@@ -652,7 +653,7 @@ func describeFacts(facts []string) string {
 			continue
 		}
 		builder.WriteString("\n- ")
-		builder.WriteString(stringutils.FenceText(fact, factsCloseTag))
+		builder.WriteString(textfence.FenceText(fact, factsCloseTag))
 	}
 	builder.WriteString("\n")
 	builder.WriteString(factsCloseTag)
@@ -670,12 +671,12 @@ func describeMentions(mentions []agentturn.RuntimeMention) string {
 	builder.WriteString(mentionsOpenTag)
 	for _, mention := range mentions {
 		builder.WriteString("\n- ")
-		builder.WriteString(stringutils.FenceText(mention.Type, mentionsCloseTag))
+		builder.WriteString(textfence.FenceText(mention.Type, mentionsCloseTag))
 		builder.WriteString(" ")
-		builder.WriteString(stringutils.FenceText(mention.ID, mentionsCloseTag))
+		builder.WriteString(textfence.FenceText(mention.ID, mentionsCloseTag))
 		if label := strings.TrimSpace(mention.Label); label != "" {
 			builder.WriteString(": ")
-			builder.WriteString(stringutils.FenceText(label, mentionsCloseTag))
+			builder.WriteString(textfence.FenceText(label, mentionsCloseTag))
 		}
 	}
 	builder.WriteString("\n")

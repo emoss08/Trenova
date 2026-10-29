@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -559,7 +559,7 @@ func (r *repository) CreateSuppression(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*email.Suppression, error) {
 		s := emaildb.Suppressions
 		db := r.db.Keel(ctx)
-		entity.EmailAddress = stringutils.NormalizeEmailAddress(entity.EmailAddress)
+		entity.EmailAddress = mailtext.NormalizeEmailAddress(entity.EmailAddress)
 		inserted, err := s.Upsert(
 			ctx,
 			db,
@@ -605,7 +605,7 @@ func (r *repository) HasSuppression(
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		s := emaildb.Suppressions
-		return s.Where(s.EmailAddress.Eq(stringutils.NormalizeEmailAddress(emailAddress))).
+		return s.Where(s.EmailAddress.Eq(mailtext.NormalizeEmailAddress(emailAddress))).
 			Exists(ctx, r.db.Keel(ctx))
 	})
 }

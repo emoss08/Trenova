@@ -53,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -472,7 +473,7 @@ func (s *Service) document(
 	}
 
 	if draft.DocumentKind != "" {
-		subject.Label = "Document (" + stringutils.HumanizeSnakeCase(draft.DocumentKind) + ")"
+		subject.Label = "Document (" + textcase.HumanizeSnakeCase(draft.DocumentKind) + ")"
 	}
 	notes := map[string]any{
 		"status":     draft.Status,
@@ -828,7 +829,7 @@ func (s *Service) carrierIntelEvent(
 
 	event := events[0]
 	name := stringutils.FirstNonEmpty(event.SubjectName, "DOT "+event.DOTNumber)
-	subject.Label = name + ": " + stringutils.HumanizeSnakeCase(string(event.Category))
+	subject.Label = name + ": " + textcase.HumanizeSnakeCase(string(event.Category))
 
 	notes := map[string]any{
 		"status":      event.Status,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/mailtext"
 )
 
 var _ emailports.EmailSenderResolver = (*Service)(nil)
@@ -61,7 +61,7 @@ func (s *Service) splitSuppressed(
 	keep := func(recipients []string) ([]string, error) {
 		kept := make([]string, 0, len(recipients))
 		for _, recipient := range recipients {
-			normalized := stringutils.NormalizeEmailAddress(recipient)
+			normalized := mailtext.NormalizeEmailAddress(recipient)
 			refused, checked := seen[normalized]
 			if !checked {
 				var err error

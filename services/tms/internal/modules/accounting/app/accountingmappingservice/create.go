@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -532,7 +533,7 @@ func (s *Service) duplicateNameError(
 	)
 	if err == nil {
 		for _, ref := range existing {
-			if stringutils.NormalizeName(ref.Name) == stringutils.NormalizeName(name) {
+			if textsim.NormalizeName(ref.Name) == textsim.NormalizeName(name) {
 				return errortypes.NewBusinessError(
 					"{0} already exists in the accounting system; map {1} to it instead",
 					ref.Label(),

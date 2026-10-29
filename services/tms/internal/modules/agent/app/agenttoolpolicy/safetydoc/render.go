@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const (
@@ -198,7 +199,7 @@ func writeGroup(buf *bytes.Buffer, class agent.EgressClass, policies []agenttool
 		fmt.Fprintf(buf, "| %s | %s | %s | %s | %s | %s |\n",
 			stringutils.MarkdownTableCell(fmt.Sprintf(
 				"%s (`%s`)",
-				stringutils.HumanizeCamelCaseSentence(
+				textcase.HumanizeCamelCaseSentence(
 					agenttoolports.ReadingOrder(policy.Name),
 				),
 				policy.Name,
@@ -233,7 +234,7 @@ func classList(egress []agent.EgressClass) string {
 		return none
 	}
 
-	return stringutils.CapitalizeFirst(strings.Join(names, ", "))
+	return textcase.CapitalizeFirst(strings.Join(names, ", "))
 }
 
 func condition(policy *agenttoolports.ToolPolicy) string {
@@ -305,7 +306,7 @@ func sourceLabel(source agent.TaintSource) string {
 		return "EDI"
 	}
 
-	return stringutils.HumanizeSnakeCase(source.String())
+	return textcase.HumanizeSnakeCase(source.String())
 }
 
 func yesNo(value bool) string {

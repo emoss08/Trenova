@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const maxRationaleChars = 600
@@ -463,7 +464,7 @@ func proposalRationale(in rationaleInput) string {
 	if trimmed := strings.TrimSpace(in.Input); trimmed != "" {
 		prefix := fmt.Sprintf(
 			"Asked to %s in reply to: \u201c",
-			stringutils.HumanizeSnakeCase(agenttoolports.ReadingOrder(in.ToolName)),
+			textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(in.ToolName)),
 		)
 		room := maxRationaleChars - len([]rune(prefix)) - 1
 

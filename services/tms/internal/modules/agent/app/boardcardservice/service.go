@@ -25,8 +25,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -266,7 +266,7 @@ func (s *Service) Check(ctx context.Context, req *assistantports.BoardFillReques
 		}
 		if !allowed {
 			return mistake("the person may not read %s, so leave the blocks that name them out",
-				stringutils.PluralNoun(resource.Noun()))
+				inflect.PluralNoun(resource.Noun()))
 		}
 	}
 	for _, key := range req.Board.Metrics() {

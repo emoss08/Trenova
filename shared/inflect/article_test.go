@@ -1,4 +1,4 @@
-package stringutils
+package inflect
 
 import (
 	"testing"

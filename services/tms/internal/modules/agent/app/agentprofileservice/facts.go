@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 // Facts are said in rounded words on purpose. A count to two figures and a
@@ -526,11 +526,11 @@ func shareText(part, whole int64) string {
 }
 
 func capitalize(text string) string {
-	return stringutils.CapitalizeFirst(text)
+	return textcase.CapitalizeFirst(text)
 }
 
 // splitWords reads a camel-cased enum or resource name as words:
 // "ManualReviewRequired" is "manual review required".
 func splitWords(name string) string {
-	return strings.ReplaceAll(stringutils.ConvertCamelToSnake(name), "_", " ")
+	return strings.ReplaceAll(textcase.ConvertCamelToSnake(name), "_", " ")
 }

@@ -1,4 +1,4 @@
-package stringutils
+package textcase
 
 import (
 	"strings"
@@ -168,4 +168,20 @@ func HumanizeSnakeCase(s string) string {
 	return strings.Join(strings.FieldsFunc(s, func(r rune) bool {
 		return r == '_' || r == '-' || r == '.'
 	}), " ")
+}
+
+func HumanizeSnakeCasePhrase(s string) string {
+	words := strings.FieldsFunc(s, func(r rune) bool {
+		return r == '_' || r == '-' || r == '.' || unicode.IsSpace(r)
+	})
+	for idx, word := range words {
+		lower := strings.ToLower(word)
+		if special, ok := humanizeSpecialWords[lower]; ok {
+			words[idx] = special
+			continue
+		}
+		words[idx] = lower
+	}
+
+	return strings.Join(words, " ")
 }

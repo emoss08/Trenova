@@ -37,8 +37,8 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -360,9 +360,9 @@ func (s *Service) Send(
 		FromEmail:      fromEmail,
 		FromName:       profile.SenderName,
 		ReplyToEmail:   profile.ReplyToEmail,
-		ToRecipients:   stringutils.NormalizeEmailAddresses(req.To),
-		CCRecipients:   stringutils.NormalizeEmailAddresses(req.CC),
-		BCCRecipients:  stringutils.NormalizeEmailAddresses(req.BCC),
+		ToRecipients:   mailtext.NormalizeEmailAddresses(req.To),
+		CCRecipients:   mailtext.NormalizeEmailAddresses(req.CC),
+		BCCRecipients:  mailtext.NormalizeEmailAddresses(req.BCC),
 		Subject:        strings.TrimSpace(req.Subject),
 		BodyTextSize:   int64(len(req.Text)),
 		BodyHTMLSize:   int64(len(req.HTML)),
@@ -560,7 +560,7 @@ func (s *Service) SendPersisted(
 		Config: cfg.Config,
 		Message: SendProviderMessage{
 			IdempotencyKey: msg.IdempotencyKey,
-			From:           stringutils.FormatEmailAddress(msg.FromName, msg.FromEmail),
+			From:           mailtext.FormatEmailAddress(msg.FromName, msg.FromEmail),
 			ReplyTo:        msg.ReplyToEmail,
 			To:             msg.ToRecipients,
 			CC:             msg.CCRecipients,
@@ -941,7 +941,7 @@ func (s *Service) bouncedRecipients(
 	if err != nil {
 		return nil, err
 	}
-	return stringutils.NormalizeEmailList(recipients), nil
+	return mailtext.NormalizeEmailList(recipients), nil
 }
 
 func unbouncedRecipients(msg *email.Message, bounced []string) []string {
@@ -952,7 +952,7 @@ func unbouncedRecipients(msg *email.Message, bounced []string) []string {
 	for _, address := range bounced {
 		seen[address] = struct{}{}
 	}
-	all := stringutils.NormalizeEmailList(
+	all := mailtext.NormalizeEmailList(
 		slices.Concat(msg.ToRecipients, msg.CCRecipients, msg.BCCRecipients),
 	)
 	remaining := make([]string, 0, len(all))

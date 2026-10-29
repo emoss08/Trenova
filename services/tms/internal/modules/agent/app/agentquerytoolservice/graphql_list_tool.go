@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -722,7 +722,7 @@ func (t *graphQLListTool) Description() string {
 			holders = append(holders, parent)
 		}
 		nested[parent] = append(nested[parent],
-			stringutils.LowerFirst(strings.TrimPrefix(name, parent)))
+			textcase.LowerFirst(strings.TrimPrefix(name, parent)))
 	}
 	for idx := range t.spec.conditions {
 		own = append(own, t.spec.conditions[idx].name)
@@ -737,7 +737,7 @@ func (t *graphQLListTool) Description() string {
 	b.WriteString(strings.Join(own, ", "))
 	for _, parent := range holders {
 		fmt.Fprintf(&b, "; %s fields, each named %s and the field (%s%s): %s",
-			parent, parent, parent, stringutils.CapitalizeFirst(nested[parent][0]),
+			parent, parent, parent, textcase.CapitalizeFirst(nested[parent][0]),
 			strings.Join(nested[parent], ", "))
 	}
 	b.WriteString(".")
@@ -1643,7 +1643,7 @@ func (t *graphQLListTool) fieldOwner(field string) (resource permission.Resource
 	if !ok {
 		return t.spec.resource, field
 	}
-	kind := stringutils.ConvertCamelToSnake(parent.Type)
+	kind := textcase.ConvertCamelToSnake(parent.Type)
 	if t.registry.HasResource(kind) {
 		return permission.Resource(kind), child.Name
 	}

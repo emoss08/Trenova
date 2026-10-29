@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/inflect"
 )
 
 type Facts struct {
@@ -62,7 +62,7 @@ func linked(
 }
 
 func loads(count int) string {
-	return stringutils.CountNoun(count, "load", "loads")
+	return inflect.CountNoun(count, "load", "loads")
 }
 
 func joinClauses(
@@ -97,19 +97,19 @@ func Deterministic(f Facts) []shipmentbriefports.ShipmentBriefingSegment {
 	if f.DeliveringToday > 0 {
 		board = append(board, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.DeliveringToday)+" "+
-				stringutils.Pluralize("delivers", "deliver", f.DeliveringToday)+" today",
+				inflect.Pluralize("delivers", "deliver", f.DeliveringToday)+" today",
 			quickfilter.QuickFilterDeliveringToday,
 		)})
 	}
 	if f.Moving > 0 {
 		board = append(board, []shipmentbriefports.ShipmentBriefingSegment{linked(
-			loads(f.Moving)+" "+stringutils.Pluralize("is", "are", f.Moving)+" moving on schedule",
+			loads(f.Moving)+" "+inflect.Pluralize("is", "are", f.Moving)+" moving on schedule",
 			quickfilter.QuickFilterMoving,
 		)})
 	}
 	if f.Late > 0 {
 		clause := []shipmentbriefports.ShipmentBriefingSegment{linked(
-			loads(f.Late)+" "+stringutils.Pluralize("is", "are", f.Late)+" late",
+			loads(f.Late)+" "+inflect.Pluralize("is", "are", f.Late)+" late",
 			quickfilter.QuickFilterLate,
 		)}
 		if reason := strings.TrimSpace(f.LateReason); reason != "" {
@@ -121,21 +121,21 @@ func Deterministic(f Facts) []shipmentbriefports.ShipmentBriefingSegment {
 	followUp := make([][]shipmentbriefports.ShipmentBriefingSegment, 0, 3)
 	if f.Uncovered > 0 {
 		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
-			loads(f.Uncovered)+" still "+stringutils.Pluralize("needs", "need", f.Uncovered)+" "+
+			loads(f.Uncovered)+" still "+inflect.Pluralize("needs", "need", f.Uncovered)+" "+
 				f.OperationType.CoverageNoun(),
 			quickfilter.QuickFilterUncovered,
 		)})
 	}
 	if f.Detention > 0 {
 		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
-			loads(f.Detention)+" "+stringutils.Pluralize("is", "are", f.Detention)+
+			loads(f.Detention)+" "+inflect.Pluralize("is", "are", f.Detention)+
 				" accruing detention",
 			quickfilter.QuickFilterDetention,
 		)})
 	}
 	if f.ReadyToBill > 0 {
 		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
-			loads(f.ReadyToBill)+" "+stringutils.Pluralize("is", "are", f.ReadyToBill)+
+			loads(f.ReadyToBill)+" "+inflect.Pluralize("is", "are", f.ReadyToBill)+
 				" ready to bill",
 			quickfilter.QuickFilterReadyToBill,
 		)})

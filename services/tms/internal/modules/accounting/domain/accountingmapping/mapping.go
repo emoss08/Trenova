@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -77,13 +78,13 @@ type AccountingMapping struct {
 }
 
 func (m *AccountingMapping) BeforeUpdate(_ context.Context) error {
-	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
+	m.SearchLabel = textsim.NormalizeName(m.TargetLabel)
 
 	return nil
 }
 
 func (m *AccountingMapping) BeforeCreate(_ context.Context) error {
-	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
+	m.SearchLabel = textsim.NormalizeName(m.TargetLabel)
 
 	return nil
 }
@@ -201,7 +202,7 @@ func (m *AccountingMapping) GetPostgresSearchConfig() domaintypes.PostgresSearch
 }
 
 func (m *AccountingMapping) BeforeSave(_ context.Context) error {
-	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
+	m.SearchLabel = textsim.NormalizeName(m.TargetLabel)
 	return nil
 }
 

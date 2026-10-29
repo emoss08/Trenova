@@ -1,8 +1,10 @@
-package stringutils
+package inflect
 
 import (
 	"strings"
 	"unicode"
+
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 var irregularPlurals = map[string]string{
@@ -25,22 +27,6 @@ var irregularSingulars = func() map[string]string {
 
 	return out
 }()
-
-func HumanizeSnakeCasePhrase(s string) string {
-	words := strings.FieldsFunc(s, func(r rune) bool {
-		return r == '_' || r == '-' || r == '.' || unicode.IsSpace(r)
-	})
-	for idx, word := range words {
-		lower := strings.ToLower(word)
-		if special, ok := humanizeSpecialWords[lower]; ok {
-			words[idx] = special
-			continue
-		}
-		words[idx] = lower
-	}
-
-	return strings.Join(words, " ")
-}
 
 func PluralNoun(phrase string) string {
 	head, last := splitLastWord(phrase)
@@ -150,7 +136,7 @@ func isInitialism(word string) bool {
 
 func matchLeadingCase(original, replacement string) string {
 	if original != "" && unicode.IsUpper([]rune(original)[0]) {
-		return CapitalizeFirst(replacement)
+		return textcase.CapitalizeFirst(replacement)
 	}
 
 	return replacement

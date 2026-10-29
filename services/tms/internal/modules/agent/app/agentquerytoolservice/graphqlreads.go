@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 // graphQLRead is a tool bound to the persisted GraphQL operation it reads
@@ -301,7 +301,7 @@ func inputParams(typ string) []graphQLParam {
 // range end (startDateFrom) is a day, read in the organization's zone, and a
 // described Boolean is a switch its own description explains (overlapping).
 func inputFieldParams(field *graphQLField) []graphQLParam {
-	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field.Name))
+	words := textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(field.Name))
 	describe := func(fallback string) string {
 		if field.Description != "" {
 			return field.Description + " " + fallback
@@ -309,7 +309,7 @@ func inputFieldParams(field *graphQLField) []graphQLParam {
 		return fallback
 	}
 	if field.Type == graphQLTypeTimestamp {
-		words = stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
+		words = textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(
 			strings.TrimSuffix(strings.TrimSuffix(field.Name, suffixFrom), suffixTo)))
 		switch {
 		case strings.HasSuffix(field.Name, suffixFrom):
@@ -484,7 +484,7 @@ func (r *graphQLRead) configuredSearch() []string {
 		}
 		field, mapped := byColumn[column.Name]
 		if !mapped {
-			field = stringutils.LowerCamel(column.Name)
+			field = textcase.LowerCamel(column.Name)
 		}
 		if !slices.Contains(fields, field) {
 			fields = append(fields, field)
@@ -503,7 +503,7 @@ func exactParams(params []graphQLParam) []graphQLParam {
 		if out[idx].Kind != paramContains {
 			continue
 		}
-		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(out[idx].Field))
+		words := textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(out[idx].Field))
 		out[idx].Kind = paramEquals
 		out[idx].Schema = map[string]any{
 			toolschema.KeyType:        toolschema.TypeString,
@@ -525,7 +525,7 @@ func (r *graphQLRead) nestedParams(filterable map[string]bool) []graphQLParam {
 			continue
 		}
 		for _, param := range paramsFor(child) {
-			param.Name = parent.Name + stringutils.CapitalizeFirst(param.Name)
+			param.Name = parent.Name + textcase.CapitalizeFirst(param.Name)
 			param.Field = parent.Name + "." + param.Field
 			param.Holder = parent.Type
 			out = append(out, param)
@@ -611,7 +611,7 @@ func paramsFor(field *graphQLField) []graphQLParam {
 }
 
 func fieldParams(field *graphQLField) []graphQLParam {
-	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field.Name))
+	words := textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(field.Name))
 	describe := func(fallback string) string {
 		if field.Description != "" {
 			return field.Description + " " + fallback
@@ -741,7 +741,7 @@ func instantParams(tool string, params []graphQLParam, instants []string) ([]gra
 				continue
 			}
 			matched = true
-			words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field))
+			words := textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(field))
 			if param.Kind == paramDayFrom {
 				param.Kind = paramInstantFrom
 				param.Schema = agenttoolschema.DateTime("Only records whose " + words +
@@ -782,7 +782,7 @@ func presenceParam(field *graphQLField, describe func(string) string) (graphQLPa
 	if field.NonNull || !ok || thing == "" {
 		return graphQLParam{}, false
 	}
-	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(thing))
+	words := textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(thing))
 
 	return graphQLParam{
 		Name:  prefixHas + strings.ToUpper(thing[:1]) + thing[1:],

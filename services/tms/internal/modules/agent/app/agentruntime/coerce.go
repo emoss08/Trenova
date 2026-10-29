@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolcoerce"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -305,7 +306,7 @@ func wrongKindProblem(path string, id pulid.ID, check idCheck) (argumentProblem,
 		if prefix == got {
 			return argumentProblem{}, false
 		}
-		nouns = append(nouns, stringutils.WithArticle(kind.Noun()))
+		nouns = append(nouns, inflect.WithArticle(kind.Noun()))
 		prefixes = append(prefixes, strconv.Quote(prefix))
 		checked = append(checked, kind)
 	}
@@ -321,7 +322,7 @@ func wrongKindProblem(path string, id pulid.ID, check idCheck) (argumentProblem,
 	if actual, found := permission.RecordKindOfIDPrefix(got); found {
 		return argumentProblem{Path: path, Message: fmt.Sprintf(
 			"%q is %s id; this parameter takes %s id%s.",
-			id, stringutils.WithArticle(actual.Noun()), takes, from,
+			id, inflect.WithArticle(actual.Noun()), takes, from,
 		)}, true
 	}
 	if len(nouns) == 1 {

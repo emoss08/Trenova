@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -134,7 +134,7 @@ func TestEveryKindToKindFieldIsCovered(t *testing.T) {
 			if _, kind := kinds[child.Name]; kind {
 				continue
 			}
-			named := stringutils.ConvertCamelToSnake(field.Name)
+			named := textcase.ConvertCamelToSnake(field.Name)
 			if !registry.HasResource(named) &&
 				!registry.HasResource(strings.TrimSuffix(named, "s")) {
 				continue

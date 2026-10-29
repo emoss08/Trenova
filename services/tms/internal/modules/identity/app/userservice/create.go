@@ -21,9 +21,9 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"go.uber.org/zap"
 )
@@ -124,7 +124,7 @@ func prepareNewUser(entity *tenant.User, tenantInfo pagination.TenantInfo) {
 	entity.BusinessUnitID = tenantInfo.BuID
 	entity.Name = strings.TrimSpace(entity.Name)
 	entity.Username = strings.TrimSpace(entity.Username)
-	entity.EmailAddress = stringutils.NormalizeEmailAddress(entity.EmailAddress)
+	entity.EmailAddress = mailtext.NormalizeEmailAddress(entity.EmailAddress)
 	entity.Timezone = strings.TrimSpace(entity.Timezone)
 	entity.LastLoginAt = nil
 	entity.PasswordChangedAt = nil

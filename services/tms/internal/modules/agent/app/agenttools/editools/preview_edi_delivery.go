@@ -17,8 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 type ediRecordView struct {
@@ -183,8 +183,8 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 	changes, going := refusedFirst(planned)
 	preview := toolpreview.Build(fmt.Sprintf(
 		"Would send %d of %d EDI %s checked to %s again.",
-		going, len(checked), stringutils.Pluralize("message", "messages", len(checked)),
-		stringutils.Pluralize("its trading partner", "their trading partners", going),
+		going, len(checked), inflect.Pluralize("message", "messages", len(checked)),
+		inflect.Pluralize("its trading partner", "their trading partners", going),
 	), changes...)
 
 	return finishBulkPreview(preview, going, more, len(ids)), nil
@@ -245,7 +245,7 @@ func (t *ReprocessEDIInboundFilesTool) Preview(
 	preview := toolpreview.Build(fmt.Sprintf(
 		"Would process %d of %d inbound EDI %s checked again. What each transaction "+
 			"becomes, and the acknowledgments its partner is sent, are decided when it runs.",
-		going, len(checked), stringutils.Pluralize("file", "files", len(checked)),
+		going, len(checked), inflect.Pluralize("file", "files", len(checked)),
 	), changes...)
 	preview.Partial = true
 

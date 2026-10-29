@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -124,7 +125,7 @@ func isDeliveredStatus(status string) bool {
 
 func behindPhrase(minutes int) string {
 	if minutes < minutesPerHour {
-		return "about " + stringutils.CountNoun(minutes, "minute", "minutes")
+		return "about " + inflect.CountNoun(minutes, "minute", "minutes")
 	}
 
 	hours := (minutes + halfHourMinutes) / minutesPerHour

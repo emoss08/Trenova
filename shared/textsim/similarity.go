@@ -1,4 +1,4 @@
-package stringutils
+package textsim
 
 import (
 	"slices"

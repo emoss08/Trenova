@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/emailutils"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -383,7 +384,7 @@ func hintText(message *inboundmessage.InboundMessage, hints []*triage.SenderHint
 			"People corrected mail from %s to %s %s.",
 			stringutils.FirstNonEmpty(hint.SenderDomain, message.SenderDomain),
 			hint.Classification,
-			stringutils.CountNoun(hint.Corrections, "time", "times"),
+			inflect.CountNoun(hint.Corrections, "time", "times"),
 		))
 	}
 

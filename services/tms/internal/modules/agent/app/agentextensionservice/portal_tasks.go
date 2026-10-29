@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -222,7 +223,7 @@ func taskText(
 
 func checkTask(instruction string, raw map[string]string) (map[string]string, error) {
 	if err := extensionportal.CheckPortalInstruction(instruction); err != nil {
-		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error()) + "."}
+		return nil, &ToolError{Message: textcase.CapitalizeFirst(err.Error()) + "."}
 	}
 
 	return extensionportal.NormalizePortalDetails(raw)

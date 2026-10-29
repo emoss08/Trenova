@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textfence"
 )
 
 const (
@@ -70,31 +70,31 @@ func DescribePage(
 	}
 	builder.WriteString(pageContextOpenTag)
 	builder.WriteString("\npath: ")
-	builder.WriteString(stringutils.FenceText(page.Path, pageContextCloseTag))
+	builder.WriteString(textfence.FenceText(page.Path, pageContextCloseTag))
 	if guide != nil {
 		builder.WriteString("\npage: ")
-		builder.WriteString(stringutils.FenceText(guide.Name, pageContextCloseTag))
+		builder.WriteString(textfence.FenceText(guide.Name, pageContextCloseTag))
 		if guide.Location != "" && guide.Location != guide.Name {
 			builder.WriteString(" (")
-			builder.WriteString(stringutils.FenceText(guide.Location, pageContextCloseTag))
+			builder.WriteString(textfence.FenceText(guide.Location, pageContextCloseTag))
 			builder.WriteString(")")
 		}
 		if guide.Summary != "" {
 			builder.WriteString("\nabout: ")
-			builder.WriteString(stringutils.FenceText(guide.Summary, pageContextCloseTag))
+			builder.WriteString(textfence.FenceText(guide.Summary, pageContextCloseTag))
 		}
 	}
 	if page.EntityType != "" {
 		builder.WriteString("\nrecord: ")
-		builder.WriteString(stringutils.FenceText(page.EntityType, pageContextCloseTag))
+		builder.WriteString(textfence.FenceText(page.EntityType, pageContextCloseTag))
 		if page.EntityID != "" {
 			builder.WriteString(" ")
-			builder.WriteString(stringutils.FenceText(page.EntityID, pageContextCloseTag))
+			builder.WriteString(textfence.FenceText(page.EntityID, pageContextCloseTag))
 		}
 	}
 	if title := strings.TrimSpace(page.Title); title != "" {
 		builder.WriteString("\ntitle: ")
-		builder.WriteString(stringutils.FenceText(title, pageContextCloseTag))
+		builder.WriteString(textfence.FenceText(title, pageContextCloseTag))
 	}
 	builder.WriteString("\n")
 	builder.WriteString(pageContextCloseTag)
@@ -124,10 +124,10 @@ func DescribePageView(view *agentpagecontext.PageView, surface agentpagecontext.
 	}
 	builder.WriteString(pageViewOpenTag)
 	builder.WriteString("\nresource: ")
-	builder.WriteString(stringutils.FenceText(view.Resource, pageViewCloseTag))
+	builder.WriteString(textfence.FenceText(view.Resource, pageViewCloseTag))
 	if view.Query != "" {
 		builder.WriteString("\nsearch: ")
-		builder.WriteString(stringutils.FenceText(view.Query, pageViewCloseTag))
+		builder.WriteString(textfence.FenceText(view.Query, pageViewCloseTag))
 	}
 	for _, filter := range view.FieldFilters {
 		builder.WriteString("\nfilter: ")
@@ -143,7 +143,7 @@ func DescribePageView(view *agentpagecontext.PageView, surface agentpagecontext.
 	}
 	for _, sort := range view.Sort {
 		builder.WriteString("\nsort: ")
-		builder.WriteString(stringutils.FenceText(sort.Field, pageViewCloseTag))
+		builder.WriteString(textfence.FenceText(sort.Field, pageViewCloseTag))
 		builder.WriteString(" ")
 		builder.WriteString(string(sort.Direction))
 	}
@@ -168,12 +168,12 @@ func DescribePageView(view *agentpagecontext.PageView, surface agentpagecontext.
 	}
 	for _, kpi := range view.KPIs {
 		builder.WriteString("\nfigure: ")
-		builder.WriteString(stringutils.FenceText(kpi.Label, pageViewCloseTag))
+		builder.WriteString(textfence.FenceText(kpi.Label, pageViewCloseTag))
 		builder.WriteString(" = ")
-		builder.WriteString(stringutils.FenceText(kpi.Value, pageViewCloseTag))
+		builder.WriteString(textfence.FenceText(kpi.Value, pageViewCloseTag))
 		if kpi.Sub != "" {
 			builder.WriteString(" (")
-			builder.WriteString(stringutils.FenceText(kpi.Sub, pageViewCloseTag))
+			builder.WriteString(textfence.FenceText(kpi.Sub, pageViewCloseTag))
 			builder.WriteString(")")
 		}
 	}
@@ -188,14 +188,14 @@ func DescribePageView(view *agentpagecontext.PageView, surface agentpagecontext.
 }
 
 func describeFilter(filter domaintypes.FieldFilter) string {
-	line := stringutils.FenceText(
+	line := textfence.FenceText(
 		filter.Field,
 		pageViewCloseTag,
 	) + " " + string(
 		filter.Operator,
 	)
 	if value := agentpagecontext.FormatFilterValue(filter.Value); value != "" {
-		line += " " + stringutils.FenceText(value, pageViewCloseTag)
+		line += " " + textfence.FenceText(value, pageViewCloseTag)
 	}
 
 	return line

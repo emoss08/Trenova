@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"github.com/shopspring/decimal"
 )
@@ -115,7 +115,7 @@ func amountParams(params []graphQLParam) []graphQLParam {
 		if param.Kind == paramAtMost {
 			suffix, bound = suffixMax, "at most"
 		}
-		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(base))
+		words := textcase.HumanizeSnakeCase(textcase.ConvertCamelToSnake(base))
 		param.Name = base + suffix
 		param.Minor = true
 		param.Schema = map[string]any{

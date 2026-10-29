@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -253,7 +253,7 @@ func DisplayLabel(key string, displayType DisplayType) string {
 		}
 	}
 
-	return stringutils.HumanizeCamelCaseSentence(key)
+	return textcase.HumanizeCamelCaseSentence(key)
 }
 
 func HiddenKey(key string) bool {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // subjectRecordKinds is the kind of record each subject is, as the permission
@@ -80,7 +80,7 @@ func (s SubjectType) Noun() string {
 // NounWithArticle is Noun as a sentence introduces it: "a report", "an
 // insight".
 func (s SubjectType) NounWithArticle() string {
-	return stringutils.WithArticle(s.Noun())
+	return inflect.WithArticle(s.Noun())
 }
 
 // SubjectTypeOfID is the kind of record an id's prefix belongs to.

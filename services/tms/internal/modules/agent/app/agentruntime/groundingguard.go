@@ -14,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/numberguard"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/shopspring/decimal"
 )
 
@@ -707,7 +708,7 @@ func schemaLabels(schema map[string]any) []schemaLabel {
 			return
 		}
 		words := strings.ToLower(
-			strings.ReplaceAll(stringutils.ConvertCamelToSnake(name), "_", " "),
+			strings.ReplaceAll(textcase.ConvertCamelToSnake(name), "_", " "),
 		)
 		kind, _ := node[toolschema.KeyType].(string)
 		collection := kind == toolschema.TypeArray || kind == toolschema.TypeObject
@@ -755,7 +756,7 @@ func (c replyClaims) readFrom(words string, reads readResults) bool {
 	if len(reads) == 0 {
 		return false
 	}
-	singular := stringutils.SingularNoun(words)
+	singular := inflect.SingularNoun(words)
 	named := false
 	for _, sentence := range c {
 		at, size := indexWords(sentence, words), len(words)
@@ -781,7 +782,7 @@ func speaksOfChange(sentence string) bool {
 }
 
 func (c replyClaims) names(words string) bool {
-	singular := stringutils.SingularNoun(words)
+	singular := inflect.SingularNoun(words)
 	for _, sentence := range c {
 		if containsWords(sentence, words) ||
 			(singular != words && containsWords(sentence, singular)) {

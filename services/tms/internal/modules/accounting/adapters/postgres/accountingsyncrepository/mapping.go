@@ -23,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textsim"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -77,7 +77,7 @@ func mappingFilters(
 	req *accountingmappingports.ListAccountingMappingsConnectionRequest,
 ) []keel.Pred {
 	am := accountingmappingdb.AccountingMappings
-	term := stringutils.NormalizeName(req.Search)
+	term := textsim.NormalizeName(req.Search)
 
 	return []keel.Pred{
 		am.ConnectionID.Eq(req.ConnectionID),
@@ -234,7 +234,7 @@ func (r *mappingRepository) ApplyScoring(
 		var applied int64
 
 		for _, entity := range entities {
-			entity.SearchLabel = stringutils.NormalizeName(entity.TargetLabel)
+			entity.SearchLabel = textsim.NormalizeName(entity.TargetLabel)
 			affected, err := am.Where(
 				am.ID.Eq(entity.ID),
 				am.Version.Eq(entity.Version),
@@ -274,7 +274,7 @@ func (r *mappingRepository) UpdateLabels(
 		am := accountingmappingdb.AccountingMappings
 		db := r.db.Keel(ctx)
 		for _, entity := range entities {
-			entity.SearchLabel = stringutils.NormalizeName(entity.TargetLabel)
+			entity.SearchLabel = textsim.NormalizeName(entity.TargetLabel)
 			if _, err := am.Where(am.ID.Eq(entity.ID)).Update(
 				ctx,
 				db,

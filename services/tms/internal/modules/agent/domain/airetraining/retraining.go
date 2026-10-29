@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -334,7 +335,7 @@ func (c *RetrainingCycle) ExportFinished(export *aitraining.TrainingExport, now 
 		c.Status = RetrainingStatusReady
 		return true
 	case aitraining.ExportStatusFailed, aitraining.ExportStatusCanceled:
-		message := "The training export was " + stringutils.HumanizeCamelCase(
+		message := "The training export was " + textcase.HumanizeCamelCase(
 			export.Status.String(),
 		)
 		if export.FailureMessage != "" {
@@ -372,7 +373,7 @@ func (c *RetrainingCycle) Claim(trainer string, now, lease int64) error {
 		return errortypes.NewBusinessError(
 			"Retraining cycle {0} is {1}, not ready to train",
 			c.ID.String(),
-			stringutils.HumanizeCamelCase(c.Status.String()),
+			textcase.HumanizeCamelCase(c.Status.String()),
 		).WithInternal(ErrRetrainingNotReady)
 	}
 
@@ -449,7 +450,7 @@ func (c *RetrainingCycle) Cancel(now int64) error {
 	if !c.Status.IsOpen() {
 		return errortypes.NewBusinessError(
 			"Only an exporting, ready or training cycle can be canceled; this one is {0}",
-			stringutils.HumanizeCamelCase(c.Status.String()),
+			textcase.HumanizeCamelCase(c.Status.String()),
 		).WithInternal(ErrRetrainingClosed)
 	}
 	c.Status = RetrainingStatusCanceled

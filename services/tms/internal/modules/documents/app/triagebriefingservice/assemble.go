@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -276,8 +276,8 @@ func deckItem(
 }
 
 func waitedLonger(candidate, current *inboundmessageports.DeckItem) bool {
-	candidateAutomated := stringutils.IsAutomatedSender(candidate.FromAddress)
-	if candidateAutomated != stringutils.IsAutomatedSender(current.FromAddress) {
+	candidateAutomated := mailtext.IsAutomatedSender(candidate.FromAddress)
+	if candidateAutomated != mailtext.IsAutomatedSender(current.FromAddress) {
 		return !candidateAutomated
 	}
 

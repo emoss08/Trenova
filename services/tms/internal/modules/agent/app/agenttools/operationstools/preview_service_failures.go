@@ -14,8 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 var detectedFailureFields = []string{
@@ -181,7 +183,7 @@ func detectedFailureChange(
 ) (*agentpreview.RecordChange, error) {
 	label := fmt.Sprintf(
 		"%s, %s",
-		stringutils.HumanizeCamelCaseSentence(string(detected.Failure.Type)),
+		textcase.HumanizeCamelCaseSentence(string(detected.Failure.Type)),
 		shipmentpreview.StopLabel(shipmentStop(source, detected.Failure.StopID)),
 	)
 	if detected.Existing == nil {
@@ -227,7 +229,7 @@ func detectionSummary(plan *servicefailureports.ServiceFailureDetectionPlan) str
 			"Would check %s and find no late stop to record; %d %s passed the check.",
 			shipmentLabel,
 			len(plan.SkippedStops),
-			stringutils.Pluralize("stop", "stops", len(plan.SkippedStops)),
+			inflect.Pluralize("stop", "stops", len(plan.SkippedStops)),
 		)
 	}
 
@@ -236,14 +238,14 @@ func detectionSummary(plan *servicefailureports.ServiceFailureDetectionPlan) str
 		summary += fmt.Sprintf(
 			", opening %d service %s",
 			opened,
-			stringutils.Pluralize("failure", "failures", opened),
+			inflect.Pluralize("failure", "failures", opened),
 		)
 	}
 	if refreshed > 0 {
 		summary += fmt.Sprintf(
 			", refreshing %d open %s with the latest actuals",
 			refreshed,
-			stringutils.Pluralize("failure", "failures", refreshed),
+			inflect.Pluralize("failure", "failures", refreshed),
 		)
 	}
 	if plan.MarksDelayed {

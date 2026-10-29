@@ -1,4 +1,4 @@
-package stringutils
+package textfence
 
 import (
 	"strings"

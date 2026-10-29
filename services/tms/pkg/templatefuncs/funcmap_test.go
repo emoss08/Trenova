@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -90,7 +91,7 @@ func TestFuncMapDelegatesToSharedHelpers(t *testing.T) {
 	t.Run("title", func(t *testing.T) {
 		fn, ok := fm["title"].(func(string) string)
 		require.True(t, ok)
-		assert.Equal(t, stringutils.CapitalizeFirst("acme freight"), fn("acme freight"))
+		assert.Equal(t, textcase.CapitalizeFirst("acme freight"), fn("acme freight"))
 	})
 
 	t.Run("bytes", func(t *testing.T) {
