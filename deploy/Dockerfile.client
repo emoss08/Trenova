@@ -16,6 +16,7 @@ COPY client/packages/config/package.json ./packages/config/
 COPY client/packages/edition/package.json ./packages/edition/
 COPY client/packages/graphql/package.json ./packages/graphql/
 COPY client/packages/shared/package.json ./packages/shared/
+COPY client/patches ./patches/
 
 RUN pnpm install --frozen-lockfile
 
