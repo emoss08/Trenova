@@ -26,8 +26,9 @@ func ExpectedFunding(faceMinor int64, agreement *Agreement, days int) Funding {
 		out.FeeRateBP = tier.RateBP
 		out.FeeMinor = basisPointsOf(faceMinor, tier.RateBP) + tier.FlatMinor
 	}
-	out.FeeMinor = max(out.FeeMinor, agreement.MinimumFeeMinor)
-	out.RestOnReleaseMinor = max(faceMinor-out.AdvanceMinor-out.FeeMinor, 0)
+	out.FeeMinor = min(max(out.FeeMinor, agreement.MinimumFeeMinor), faceMinor)
+	out.AdvanceMinor = min(out.AdvanceMinor, faceMinor-out.FeeMinor)
+	out.RestOnReleaseMinor = faceMinor - out.AdvanceMinor - out.FeeMinor
 	return out
 }
 
