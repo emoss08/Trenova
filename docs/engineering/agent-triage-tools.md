@@ -14,7 +14,9 @@ page explains them.
 
 ## The rule
 
-The write tools live in `agenttools/inboundtools`, beside the ones that came before them
+The queue and sender tools live in `agenttools/triagequeuetools` and the reply, load, filing,
+exception and conflict tools in `agenttools/triageworktools`; both build on the shared triage
+pieces in `agenttools/inboundtools`, beside the tools that came before them
 (`inbox_link_inbound_message`, `inbox_mark_inbound_message`, `inbox_send_reply`); the reads
 (`inbox_get_inbound_message`, `inbox_list_triage_assignees`) live in `agentquerytoolservice`.
 

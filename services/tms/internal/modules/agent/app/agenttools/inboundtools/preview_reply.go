@@ -124,7 +124,7 @@ func (t *ReplyToInboundMessageTool) Preview(
 		toolpreview.Record{
 			Resource: permission.ResourceInboundMessage,
 			ID:       message.ID,
-			Label:    describeInboundMessage(message),
+			Label:    DescribeMessage(message),
 			Version:  changepreview.PinnedVersion(message.Version),
 		},
 		message,
@@ -148,7 +148,7 @@ func (t *ReplyToInboundMessageTool) Preview(
 
 	preview := toolpreview.Build(
 		"Would reply to "+message.FromAddress+" in the thread "+
-			describeInboundMessage(message)+", and mark the message actioned.",
+			DescribeMessage(message)+", and mark the message actioned.",
 		send,
 		settled,
 	)

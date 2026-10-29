@@ -30,7 +30,7 @@ import (
 	"go.uber.org/fx"
 )
 
-const paramMessageID = "messageId"
+const ParamMessageID = "messageId"
 
 // maxInboundReviewNote is the note column a person reads beside the
 // message, and the same bound the inbox's own review applies.
@@ -38,7 +38,7 @@ const maxInboundReviewNote = 2000
 
 // maxInboundReplyBody bounds a reply. An answer to a status question is a
 // paragraph; pages of it are a model that lost the thread.
-const maxInboundReplyBody = 10000
+const MaxReplyBody = 10000
 
 // maxReplyReferences keeps the References header to the recent thread.
 const maxReplyReferences = 20
@@ -62,7 +62,7 @@ var inboundReviewStatuses = agenttoolschema.Source(
 	[]inboundmessage.Status{inboundmessage.StatusActioned, inboundmessage.StatusIgnored},
 )
 
-type inboundMessageReader interface {
+type MessageReader interface {
 	GetByID(
 		ctx context.Context,
 		req inboundmessageports.GetInboundMessageByIDRequest,
@@ -70,7 +70,7 @@ type inboundMessageReader interface {
 }
 
 type inboundMessageDesk interface {
-	inboundMessageReader
+	MessageReader
 	CheckLink(ctx context.Context, req inboundmessageservice.LinkRequest) error
 	Link(
 		ctx context.Context,
@@ -84,10 +84,10 @@ type inboundMessageDesk interface {
 
 func loadInboundMessage(
 	ctx context.Context,
-	desk inboundMessageReader,
+	desk MessageReader,
 	params agenttoolports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, error) {
-	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func loadInboundMessage(
 // settled, or unreadable — is a proposal a person decides.
 func inboundTierLimit(
 	ctx context.Context,
-	desk inboundMessageReader,
+	desk MessageReader,
 	params agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	message, err := loadInboundMessage(ctx, desk, params)
@@ -118,7 +118,7 @@ func inboundTierLimit(
 	return agent.TierAutoExecute
 }
 
-func inboundCondition(desk inboundMessageReader) *agenttoolports.TierCondition {
+func MessageCondition(desk MessageReader) *agenttoolports.TierCondition {
 	return &agenttoolports.TierCondition{
 		Description: "A call on an inbound message runs only as far as its mailbox allows: " +
 			"a classified message the mailbox handles without review may run on its own, " +
@@ -132,7 +132,7 @@ func inboundCondition(desk inboundMessageReader) *agenttoolports.TierCondition {
 	}
 }
 
-func describeInboundMessage(message *inboundmessage.InboundMessage) string {
+func DescribeMessage(message *inboundmessage.InboundMessage) string {
 	subject := strings.TrimSpace(message.Subject)
 	if subject == "" {
 		subject = "(no subject)"
@@ -152,7 +152,7 @@ func NewLinkInboundMessageTool(inbox inboundMessageDesk) agenttoolports.AgentToo
 func (t *LinkInboundMessageTool) Name() string { return "inbox_link_inbound_message" }
 
 func (t *LinkInboundMessageTool) Recipe() []string {
-	return []string{toolGetInboundMessage, "inbox_link_inbound_message"}
+	return []string{ToolGetMessage, "inbox_link_inbound_message"}
 }
 
 func (t *LinkInboundMessageTool) Description() string {
@@ -168,7 +168,7 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or inbox_list_inbound_messages."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"Optional: the shipment the message is about, from "+
@@ -183,7 +183,7 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 				"description": "Why these are the right records, in words a person can check.",
 			},
 		},
-		"required":             []string{paramMessageID, "reason"},
+		"required":             []string{ParamMessageID, "reason"},
 		"additionalProperties": false,
 	}
 }
@@ -198,7 +198,7 @@ func (t *LinkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Condition:     inboundCondition(t.inbox),
+		Condition:     MessageCondition(t.inbox),
 		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
@@ -208,13 +208,13 @@ func (t *LinkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *LinkInboundMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+	return toolparams.TargetOf(params, ParamMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *LinkInboundMessageTool) request(
 	params agenttoolports.ToolExecuteParams,
 ) (inboundmessageservice.LinkRequest, error) {
-	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
 		return inboundmessageservice.LinkRequest{}, err
 	}
@@ -285,7 +285,7 @@ func NewMarkInboundMessageTool(inbox inboundMessageDesk) agenttoolports.AgentToo
 func (t *MarkInboundMessageTool) Name() string { return "inbox_mark_inbound_message" }
 
 func (t *MarkInboundMessageTool) Recipe() []string {
-	return []string{toolGetInboundMessage, "inbox_mark_inbound_message"}
+	return []string{ToolGetMessage, "inbox_mark_inbound_message"}
 }
 
 func (t *MarkInboundMessageTool) SearchTerms() []string {
@@ -305,7 +305,7 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or inbox_list_inbound_messages."),
 			changepreview.FieldStatus: agenttoolschema.Enum(
 				"Actioned when it was dealt with, Ignored when there was nothing to do.",
@@ -317,7 +317,7 @@ func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 				"description": "What was done, or why nothing was, for the person reading the inbox.",
 			},
 		},
-		"required":             []string{paramMessageID, "status", "note"},
+		"required":             []string{ParamMessageID, "status", "note"},
 		"additionalProperties": false,
 	}
 }
@@ -332,7 +332,7 @@ func (t *MarkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Condition:     inboundCondition(t.inbox),
+		Condition:     MessageCondition(t.inbox),
 		Effect:        agenttooltrust.ToolEffectChange,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Settles an inbound message inside Trenova; the mailbox decides how far " +
@@ -341,7 +341,7 @@ func (t *MarkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *MarkInboundMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+	return toolparams.TargetOf(params, ParamMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *MarkInboundMessageTool) arguments(
@@ -478,7 +478,7 @@ func (t *ReplyToInboundMessageTool) Name() string { return "inbox_send_reply" }
 
 func (t *ReplyToInboundMessageTool) Recipe() []string {
 	return []string{
-		toolGetInboundMessage,
+		ToolGetMessage,
 		"shipment_get_tracking",
 		"inbox_send_reply",
 	}
@@ -502,7 +502,7 @@ func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message being answered, from this run's subject or "+
 					"inbox_list_inbound_messages."),
 			"profileId": agenttoolschema.RecordIDText(permission.ResourceEmailProfile,
@@ -510,12 +510,12 @@ func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 					"send from the profile the organization assigns to operations email."),
 			"body": map[string]any{
 				"type":      "string",
-				"maxLength": maxInboundReplyBody,
+				"maxLength": MaxReplyBody,
 				"description": "The answer in plain prose. The template adds the greeting, the " +
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{paramMessageID, "body"},
+		"required":             []string{ParamMessageID, "body"},
 		"additionalProperties": false,
 	}
 }
@@ -530,7 +530,7 @@ func (t *ReplyToInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Condition:     inboundCondition(t.inbox),
+		Condition:     MessageCondition(t.inbox),
 		Effect:        agenttooltrust.ToolEffectChange,
 		Idempotent:    true,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
@@ -541,7 +541,7 @@ func (t *ReplyToInboundMessageTool) Policy() agenttoolports.ToolPolicy {
 func (t *ReplyToInboundMessageTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+	return toolparams.TargetOf(params, ParamMessageID, permission.ResourceInboundMessage)
 }
 
 type inboundReply struct {
@@ -564,10 +564,10 @@ func (t *ReplyToInboundMessageTool) prepare(
 		return nil, err
 	}
 	body = strings.TrimSpace(body)
-	if utf8.RuneCountInString(body) > maxInboundReplyBody {
+	if utf8.RuneCountInString(body) > MaxReplyBody {
 		return nil, fmt.Errorf(
 			`parameter "body" is longer than the %d characters a reply may run to`,
-			maxInboundReplyBody,
+			MaxReplyBody,
 		)
 	}
 

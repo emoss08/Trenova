@@ -1,4 +1,4 @@
-package inboundtools
+package triageworktools
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -75,7 +76,7 @@ type documentStatusView struct {
 
 func filedAttachmentOf(attachment *inboundmessage.InboundAttachment) *filedAttachmentView {
 	return &filedAttachmentView{
-		FiledShipmentID: idText(attachment.FiledShipmentID),
+		FiledShipmentID: inboundtools.IDText(attachment.FiledShipmentID),
 		FiledAs:         attachment.FiledAs,
 		FiledAt:         attachment.FiledAt,
 	}
@@ -128,12 +129,12 @@ type fileCall struct {
 	file      *triageworkservice.FileRequest
 }
 
-func NewFileInboundAttachmentTool(p triageToolParams) agenttoolports.AgentTool {
+func NewFileInboundAttachmentTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newFileInboundAttachmentTool(p.Inbox, p.Work)
 }
 
 func newFileInboundAttachmentTool(
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	filing triageFiling,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
@@ -150,12 +151,12 @@ func newFileInboundAttachmentTool(
 			Egress:      agent.EgressInternal,
 			DefaultTier: agent.TierPropose,
 			MaxTier:     agent.TierAutoExecute,
-			Condition:   inboundCondition(inbox),
+			Condition:   inboundtools.MessageCondition(inbox),
 			Reversible:  true,
 			Rationale: "Files a document already in Trenova on a shipment; nobody outside is " +
 				"told and it can be unfiled.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The message the attachment came on, from inbox_list_inbound_messages, " +
 						"newest first or by query.",
 				),
@@ -166,17 +167,17 @@ func newFileInboundAttachmentTool(
 				paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 					"The shipment to file it on: the message's matched shipment from "+
 						"inbox_get_inbound_message, or one from shipment_list."),
-				paramDocumentTypeID: agenttoolschema.RecordIDText(
+				inboundtools.ParamDocumentTypeID: agenttoolschema.RecordIDText(
 					permission.ResourceDocumentType,
 					"Optional, for the whole file: what to file it as, from "+
 						"document_list_types. Ignored when pages are given.",
 				),
 				paramPages: filingPagesProperty(),
 			},
-			Required:    []string{paramMessageID, paramAttachmentID, paramShipmentID},
+			Required:    []string{inboundtools.ParamMessageID, paramAttachmentID, paramShipmentID},
 			SearchTerms: []string{"file attachment", "attach POD", "split pdf", "file on load"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_file_attachment"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_file_attachment"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*fileCall, *triageworkservice.FilePlan]{
 			Request: fileRequest,
@@ -208,10 +209,10 @@ func newFileInboundAttachmentTool(
 				return &agentrecord.ToolExecutionResult{
 					Action: "filed",
 					Kind:   "email attachment",
-					Name:   describeInboundMessage(message),
+					Name:   inboundtools.DescribeMessage(message),
 					IDs: map[string]string{
-						paramMessageID:  message.ID.String(),
-						paramShipmentID: call.file.ShipmentID.String(),
+						inboundtools.ParamMessageID: message.ID.String(),
+						paramShipmentID:             call.file.ShipmentID.String(),
 					},
 					Record: changepreview.RecordOf(
 						changepreview.ShipmentRecordEntity,
@@ -243,13 +244,13 @@ func filingPagesProperty() map[string]any {
 					toolschema.KeyDescription: "The last page, inclusive.",
 					toolschema.KeyMinimum:     1,
 				},
-				paramDocumentTypeID: agenttoolschema.RecordIDText(
+				inboundtools.ParamDocumentTypeID: agenttoolschema.RecordIDText(
 					permission.ResourceDocumentType,
 					"What these pages are, from document_list_types.",
 				),
 			},
 			toolschema.KeyRequired: []string{
-				paramFromPage, paramToPage, paramDocumentTypeID,
+				paramFromPage, paramToPage, inboundtools.ParamDocumentTypeID,
 			},
 			toolschema.KeyAdditionalProperties: false,
 		},
@@ -257,7 +258,7 @@ func filingPagesProperty() map[string]any {
 }
 
 func fileRequest(params *agenttoolports.ToolExecuteParams) (*fileCall, error) {
-	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, inboundtools.ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +270,7 @@ func fileRequest(params *agenttoolports.ToolExecuteParams) (*fileCall, error) {
 	if err != nil {
 		return nil, err
 	}
-	documentType, err := toolparams.OptionalID(params.Params, paramDocumentTypeID)
+	documentType, err := toolparams.OptionalID(params.Params, inboundtools.ParamDocumentTypeID)
 	if err != nil {
 		return nil, err
 	}
@@ -281,8 +282,8 @@ func fileRequest(params *agenttoolports.ToolExecuteParams) (*fileCall, error) {
 	return &fileCall{
 		messageID: messageID,
 		file: &triageworkservice.FileRequest{
-			TenantInfo:     tenantOnly(params),
-			UserID:         actorOf(params),
+			TenantInfo:     inboundtools.TenantOnly(params),
+			UserID:         inboundtools.ActorOf(params),
 			AttachmentID:   attachmentID,
 			ShipmentID:     shipmentID,
 			DocumentTypeID: documentType,
@@ -318,7 +319,7 @@ func pageRanges(params map[string]any) ([]triageworkservice.PageRange, error) {
 		typeID, err := pulid.Parse(page.DocumentTypeID)
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d].%s is not a valid id: %w",
-				paramPages, idx, paramDocumentTypeID, err)
+				paramPages, idx, inboundtools.ParamDocumentTypeID, err)
 		}
 		pages = append(pages, triageworkservice.PageRange{
 			FromPage:       page.FromPage,
@@ -336,7 +337,7 @@ func renderFiling(
 ) (*agentpreview.ToolPreview, error) {
 	summary := "Would file " + plan.Attachment.FileName + " on the shipment"
 	if plan.Message.ID != call.messageID {
-		return refusedPreview(summary+".", errAttachmentElsewhere(call.messageID)), nil
+		return inboundtools.RefusedPreview(summary+".", errAttachmentElsewhere(call.messageID)), nil
 	}
 
 	filed, err := attachmentChange(plan.Attachment, plan.After)
@@ -389,7 +390,7 @@ func renderFiling(
 
 func requireAttachmentOn(
 	ctx context.Context,
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	tenant pagination.TenantInfo,
 	messageID, attachmentID pulid.ID,
 ) error {
@@ -415,18 +416,18 @@ type unfileCall struct {
 	unfile    *triageworkservice.UnfileRequest
 }
 
-func NewUnfileInboundAttachmentTool(p triageToolParams) agenttoolports.AgentTool {
+func NewUnfileInboundAttachmentTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newUnfileInboundAttachmentTool(p.Inbox, p.Work)
 }
 
 func newUnfileInboundAttachmentTool(
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	filing triageFiling,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_unfile_attachment",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Take an email attachment off the shipment it was filed on, when " +
 				"it went on the wrong load or as the wrong type. A whole file returns " +
 				"to the message and any document it replaced is restored; the documents a " +
@@ -440,7 +441,7 @@ func newUnfileInboundAttachmentTool(
 			Rationale: "Takes a document off a shipment inside Trenova and deletes the " +
 				"documents a split made, so a person approves it.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The message the attachment came on, from inbox_list_inbound_messages, " +
 						"newest first or by query.",
 				),
@@ -449,14 +450,17 @@ func newUnfileInboundAttachmentTool(
 						"for the message.",
 				),
 			},
-			Required:    []string{paramMessageID, paramAttachmentID},
+			Required:    []string{inboundtools.ParamMessageID, paramAttachmentID},
 			SearchTerms: []string{"unfile attachment", "wrong load", "take document off"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_unfile_attachment"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_unfile_attachment"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*unfileCall, *triageworkservice.UnfilePlan]{
 			Request: func(params *agenttoolports.ToolExecuteParams) (*unfileCall, error) {
-				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(
+					params.Params,
+					inboundtools.ParamMessageID,
+				)
 				if err != nil {
 					return nil, err
 				}
@@ -468,8 +472,8 @@ func newUnfileInboundAttachmentTool(
 				return &unfileCall{
 					messageID: messageID,
 					unfile: &triageworkservice.UnfileRequest{
-						TenantInfo:   tenantOnly(params),
-						UserID:       actorOf(params),
+						TenantInfo:   inboundtools.TenantOnly(params),
+						UserID:       inboundtools.ActorOf(params),
 						AttachmentID: attachmentID,
 					},
 				}, nil
@@ -499,7 +503,7 @@ func newUnfileInboundAttachmentTool(
 					return nil, err
 				}
 
-				return messageResult("unfiled an attachment of", message), nil
+				return inboundtools.MessageResult("unfiled an attachment of", message), nil
 			},
 		},
 	)
@@ -512,7 +516,7 @@ func renderUnfiling(
 	summary := "Would take " + plan.Attachment.FileName + " back off the shipment it was " +
 		"filed on"
 	if plan.Message.ID != call.messageID {
-		return refusedPreview(summary+".", errAttachmentElsewhere(call.messageID)), nil
+		return inboundtools.RefusedPreview(summary+".", errAttachmentElsewhere(call.messageID)), nil
 	}
 
 	unfiled, err := attachmentChange(plan.Attachment, plan.After)

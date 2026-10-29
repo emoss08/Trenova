@@ -27,23 +27,23 @@ var inboundLinkLabels = map[string]string{
 	changepreview.FieldMatchedShipmentID: changepreview.LabelShipment,
 	changepreview.FieldMatchedCustomerID: changepreview.LabelCustomer,
 	changepreview.FieldMatchedCarrierID:  changepreview.LabelCarrier,
-	fieldMatchReason:                     "Why",
+	FieldMatchReason:                     "Why",
 }
 
 var inboundLinkFields = []string{
 	changepreview.FieldMatchedShipmentID,
 	changepreview.FieldMatchedCustomerID,
 	changepreview.FieldMatchedCarrierID,
-	fieldMatchReason,
+	FieldMatchReason,
 }
 
 var inboundReviewFields = []string{changepreview.FieldStatus, "reviewNote", "reviewedAt"}
 
-func inboundMessageRecord(message *inboundmessage.InboundMessage) toolpreview.Record {
+func MessageRecord(message *inboundmessage.InboundMessage) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceInboundMessage,
 		ID:       message.ID,
-		Label:    describeInboundMessage(message),
+		Label:    DescribeMessage(message),
 		Version:  changepreview.PreviewVersion(message.Version),
 	}
 }
@@ -73,7 +73,7 @@ func (t *LinkInboundMessageTool) Preview(
 		return nil, err
 	}
 
-	summary := "Would link the message " + describeInboundMessage(message)
+	summary := "Would link the message " + DescribeMessage(message)
 	if err = t.inbox.CheckLink(ctx, req); err != nil {
 		if changepreview.IsRefusal(err) {
 			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
@@ -83,7 +83,7 @@ func (t *LinkInboundMessageTool) Preview(
 	}
 
 	change, err := toolpreview.Update(
-		inboundMessageRecord(message),
+		MessageRecord(message),
 		message,
 		func(linked *inboundmessage.InboundMessage) error {
 			inboundmessageservice.ApplyLink(linked, &req)
@@ -122,7 +122,7 @@ func (t *MarkInboundMessageTool) Preview(
 	review := reviewRequest(&params, message, status, note)
 	now := timeutils.NowUnix()
 	plan, err := changepreview.PlanArchive(
-		inboundMessageRecord(message),
+		MessageRecord(message),
 		message,
 		func(settled *inboundmessage.InboundMessage) error {
 			return inboundmessageservice.ApplyReview(settled, &review, now)
@@ -136,7 +136,7 @@ func (t *MarkInboundMessageTool) Preview(
 
 	return plan.PlanPreview(fmt.Sprintf(
 		"Would mark the message %s %s and take it off the waiting lane.",
-		describeInboundMessage(message),
+		DescribeMessage(message),
 		strings.ToLower(string(status)),
 	)), nil
 }

@@ -1,4 +1,4 @@
-package inboundtools
+package triageworktools
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -93,36 +94,36 @@ func loadDraftRecord(message *inboundmessage.InboundMessage) toolpreview.Record 
 	return toolpreview.Record{
 		Resource: permission.ResourceInboundMessage,
 		ID:       message.ID,
-		Label:    "Load drafted from " + describeInboundMessage(message),
+		Label:    "Load drafted from " + inboundtools.DescribeMessage(message),
 		Version:  changepreview.PreviewVersion(message.Version),
 	}
 }
 
 func loadRequest(params *agenttoolports.ToolExecuteParams) (*triageworkservice.LoadRequest, error) {
-	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, inboundtools.ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &triageworkservice.LoadRequest{
-		TenantInfo: tenantOnly(params),
-		UserID:     actorOf(params),
+		TenantInfo: inboundtools.TenantOnly(params),
+		UserID:     inboundtools.ActorOf(params),
 		MessageID:  messageID,
 	}, nil
 }
 
-func NewDraftInboundLoadTool(p triageToolParams) agenttoolports.AgentTool {
+func NewDraftInboundLoadTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newDraftInboundLoadTool(p.Inbox, p.Work)
 }
 
 func newDraftInboundLoadTool(
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	loads triageLoads,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_draft_load",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Read the load a tender in Triage describes into a draft on the " +
 				"message: customer, stops, dates, equipment, weight, rate and references. It " +
 				"is read from the attached tender's document when that has one, else from " +
@@ -133,19 +134,19 @@ func newDraftInboundLoadTool(
 			Egress:      agent.EgressInternal,
 			DefaultTier: agent.TierPropose,
 			MaxTier:     agent.TierAutoExecute,
-			Condition:   inboundCondition(inbox),
+			Condition:   inboundtools.MessageCondition(inbox),
 			Reversible:  true,
 			Rationale: "Writes a draft on the message only people inside the organization " +
 				"see; nothing is booked.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The tender, from inbox_list_inbound_messages, newest first or by query.",
 				),
 			},
-			Required:    []string{paramMessageID},
+			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"draft the load", "tender fields", "read out the load"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_draft_load"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_draft_load"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDraftPlan]{
 			Request: loadRequest,
@@ -166,7 +167,7 @@ func newDraftInboundLoadTool(
 				if plan.NeedsNova {
 					preview := toolpreview.Build(
 						"Would have Nova read the load from the message body into a draft on " +
-							describeInboundMessage(plan.Message) + "; the fields are read " +
+							inboundtools.DescribeMessage(plan.Message) + "; the fields are read " +
 							"when this runs. Nothing is booked.",
 					)
 					preview.Partial = true
@@ -199,13 +200,13 @@ func newDraftInboundLoadTool(
 					return nil, err
 				}
 
-				return messageResult("drafted a load from", message), nil
+				return inboundtools.MessageResult("drafted a load from", message), nil
 			},
 		},
 	)
 }
 
-func NewCreateInboundLoadTool(p triageToolParams) agenttoolports.AgentTool {
+func NewCreateInboundLoadTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newCreateInboundLoadTool(p.Work)
 }
 
@@ -229,7 +230,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 			Rationale: "A new load commits a customer's freight and the money that follows, " +
 				"so no desk books one unattended.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The tender, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramLoadFields: map[string]any{
@@ -254,10 +255,10 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 					},
 				},
 			},
-			Required:    []string{paramMessageID, paramLoadFields},
+			Required:    []string{inboundtools.ParamMessageID, paramLoadFields},
 			SearchTerms: []string{"enter the tender", "tender from triage"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_create_load"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_create_load"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
 			*triageworkservice.CreateLoadRequest,
@@ -297,10 +298,10 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 				return &agentrecord.ToolExecutionResult{
 					Action: "created",
 					Kind:   "shipment",
-					Name:   "Shipment from " + describeInboundMessage(message),
+					Name:   "Shipment from " + inboundtools.DescribeMessage(message),
 					IDs: map[string]string{
-						paramShipmentID: idText(shipmentID),
-						paramMessageID:  message.ID.String(),
+						paramShipmentID:             inboundtools.IDText(shipmentID),
+						inboundtools.ParamMessageID: message.ID.String(),
 					},
 					Record: changepreview.RecordOf(changepreview.ShipmentRecordEntity, shipmentID),
 				}, nil
@@ -319,7 +320,7 @@ func errLoadAlreadyCreated(message *inboundmessage.InboundMessage) error {
 func createLoadRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*triageworkservice.CreateLoadRequest, error) {
-	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, inboundtools.ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -349,8 +350,8 @@ func createLoadRequest(
 	}
 
 	return &triageworkservice.CreateLoadRequest{
-		TenantInfo:     tenantOnly(params),
-		UserID:         actorOf(params),
+		TenantInfo:     inboundtools.TenantOnly(params),
+		UserID:         inboundtools.ActorOf(params),
 		MessageID:      messageID,
 		Fields:         fields,
 		IdempotencyKey: params.IdempotencyKey,
@@ -361,15 +362,15 @@ func renderCreateLoad(
 	_ *triageworkservice.CreateLoadRequest,
 	plan *triageworkservice.CreateLoadPlan,
 ) (*agentpreview.ToolPreview, error) {
-	summary := "Would create a shipment from " + describeInboundMessage(plan.Message)
+	summary := "Would create a shipment from " + inboundtools.DescribeMessage(plan.Message)
 	if plan.AlreadyCreated {
-		return refusedPreview(summary+".", errLoadAlreadyCreated(plan.Message)), nil
+		return inboundtools.RefusedPreview(summary+".", errLoadAlreadyCreated(plan.Message)), nil
 	}
 
 	shipment, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceShipment,
-			Label:    "Shipment from " + describeInboundMessage(plan.Message),
+			Label:    "Shipment from " + inboundtools.DescribeMessage(plan.Message),
 		},
 		loadValuesView(plan.Load.Fields),
 	)
@@ -386,18 +387,18 @@ func renderCreateLoad(
 	return toolpreview.Build(summary+". The message records the shipment it made.", shipment), nil
 }
 
-func NewDiscardInboundLoadTool(p triageToolParams) agenttoolports.AgentTool {
+func NewDiscardInboundLoadTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newDiscardInboundLoadTool(p.Inbox, p.Work)
 }
 
 func newDiscardInboundLoadTool(
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	loads triageLoads,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_discard_load",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Throw away the load drafted from a tender in Triage, when the " +
 				"draft is wrong or the tender is not going to be booked. A load already " +
 				"created from the message is refused; inbox_draft_load reads it again.",
@@ -406,19 +407,19 @@ func newDiscardInboundLoadTool(
 			Egress:      agent.EgressInternal,
 			DefaultTier: agent.TierPropose,
 			MaxTier:     agent.TierAutoExecute,
-			Condition:   inboundCondition(inbox),
+			Condition:   inboundtools.MessageCondition(inbox),
 			Reversible:  true,
 			Rationale: "Removes a draft from the message inside Trenova; it can be read " +
 				"again and nothing is booked or sent.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The tender, from inbox_list_inbound_messages, newest first or by query.",
 				),
 			},
-			Required:    []string{paramMessageID},
+			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"discard the load draft", "throw away drafted load"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_discard_load"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_discard_load"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDiscardPlan]{
 			Request: loadRequest,
@@ -437,9 +438,9 @@ func newDiscardInboundLoadTool(
 				plan *triageworkservice.LoadDiscardPlan,
 			) (*agentpreview.ToolPreview, error) {
 				summary := "Would throw away the load drafted from " +
-					describeInboundMessage(plan.Message) + "."
+					inboundtools.DescribeMessage(plan.Message) + "."
 				if plan.Message.LoadDraft == nil {
-					return refusedPreview(summary, errNoDraftedLoad), nil
+					return inboundtools.RefusedPreview(summary, errNoDraftedLoad), nil
 				}
 				change, err := toolpreview.Changed(
 					loadDraftRecord(plan.Message),
@@ -469,7 +470,7 @@ func newDiscardInboundLoadTool(
 					return nil, err
 				}
 
-				return messageResult("discarded the drafted load of", message), nil
+				return inboundtools.MessageResult("discarded the drafted load of", message), nil
 			},
 		},
 	)

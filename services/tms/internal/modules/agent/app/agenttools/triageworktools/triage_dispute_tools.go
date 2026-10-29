@@ -1,4 +1,4 @@
-package inboundtools
+package triageworktools
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -101,7 +102,7 @@ func actionStateChange(
 	before, after *inboundmessage.InboundMessage,
 ) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(
-		inboundMessageRecord(before),
+		inboundtools.MessageRecord(before),
 		actionStateOf(before),
 		actionStateOf(after),
 		toolpreview.Labels(map[string]string{
@@ -111,18 +112,18 @@ func actionStateChange(
 	)
 }
 
-func NewLogInboundExceptionTool(p triageToolParams) agenttoolports.AgentTool {
+func NewLogInboundExceptionTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newLogInboundExceptionTool(p.Inbox, p.Work)
 }
 
 func newLogInboundExceptionTool(
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	disputes triageDisputes,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_record_discrepancy",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Log a shortage, overage or damage a delivery email reports on the " +
 				"message's linked shipment, as a billing hold. That hold keeps it from being " +
 				"invoiced until someone releases it. Count what the sender reports, in the " +
@@ -133,12 +134,12 @@ func newLogInboundExceptionTool(
 			Egress:      agent.EgressInternal,
 			DefaultTier: agent.TierPropose,
 			MaxTier:     agent.TierAutoExecute,
-			Condition:   inboundCondition(inbox),
+			Condition:   inboundtools.MessageCondition(inbox),
 			Reversible:  true,
 			Rationale: "Places a billing hold on a shipment inside Trenova; nothing is sent " +
 				"and a person can release it.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The delivery email, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramExceptionKind: agenttoolschema.Enum(
@@ -161,14 +162,14 @@ func newLogInboundExceptionTool(
 				),
 			},
 			Required: []string{
-				paramMessageID,
+				inboundtools.ParamMessageID,
 				paramExceptionKind,
 				paramExceptionQuantity,
 				paramExceptionUnit,
 			},
 			SearchTerms: []string{"shortage", "overage", "damaged goods", "OS&D", "billing hold"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_record_discrepancy"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_record_discrepancy"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
 			*triageworkservice.LogExceptionRequest,
@@ -196,7 +197,7 @@ func newLogInboundExceptionTool(
 					return nil, err
 				}
 
-				return messageResult("logged an exception from", message), nil
+				return inboundtools.MessageResult("logged an exception from", message), nil
 			},
 		},
 	)
@@ -237,7 +238,7 @@ func renderLoggedException(
 func logExceptionRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*triageworkservice.LogExceptionRequest, error) {
-	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, inboundtools.ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -264,8 +265,8 @@ func logExceptionRequest(
 	}
 
 	return &triageworkservice.LogExceptionRequest{
-		TenantInfo: tenantOnly(params),
-		UserID:     actorOf(params),
+		TenantInfo: inboundtools.TenantOnly(params),
+		UserID:     inboundtools.ActorOf(params),
 		MessageID:  messageID,
 		Kind:       kind,
 		Quantity:   quantity,
@@ -279,7 +280,7 @@ type stopsDecisionPlan struct {
 	times *inboundmessageports.StopTimes
 }
 
-func NewSettleDetentionDisputeTool(p triageToolParams) agenttoolports.AgentTool {
+func NewSettleDetentionDisputeTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newSettleDetentionDisputeTool(p.Work, p.Peeks)
 }
 
@@ -290,7 +291,7 @@ func newSettleDetentionDisputeTool(
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "detention_resolve_dispute",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Waive or stand by a detention charge a customer disputes by email, " +
 				"once the stop times are checked, and have Triage draft the answer for a " +
 				"person to send. Waive when the times do not support the charge; stand by " +
@@ -305,7 +306,7 @@ func newSettleDetentionDisputeTool(
 			Rationale: "Gives up or keeps detention revenue the customer disputes, and may " +
 				"credit an invoice; only a person approves it.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The detention dispute, from inbox_list_inbound_messages, " +
 						"newest first or by query.",
 				),
@@ -314,20 +315,23 @@ func newSettleDetentionDisputeTool(
 					triageStopsDecisions,
 				),
 			},
-			Required:    []string{paramMessageID, paramStopsDecision},
+			Required:    []string{inboundtools.ParamMessageID, paramStopsDecision},
 			SearchTerms: []string{"disputed detention", "contested detention"},
 			Recipe: []string{
-				toolGetInboundMessage,
+				inboundtools.ToolGetMessage,
 				"detention_get_occurrence",
 				"detention_resolve_dispute",
 			},
-			Target: targetMessage,
+			Target: inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*triageworkservice.DecideStopsRequest, *stopsDecisionPlan]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.DecideStopsRequest, error) {
-				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(
+					params.Params,
+					inboundtools.ParamMessageID,
+				)
 				if err != nil {
 					return nil, err
 				}
@@ -338,8 +342,8 @@ func newSettleDetentionDisputeTool(
 				}
 
 				return &triageworkservice.DecideStopsRequest{
-					TenantInfo: tenantOnly(params),
-					UserID:     actorOf(params),
+					TenantInfo: inboundtools.TenantOnly(params),
+					UserID:     inboundtools.ActorOf(params),
 					Actor:      params.Actor,
 					MessageID:  messageID,
 					Decision:   decision,
@@ -375,7 +379,7 @@ func newSettleDetentionDisputeTool(
 					return nil, err
 				}
 
-				return messageResult("decided the detention dispute of", message), nil
+				return inboundtools.MessageResult("decided the detention dispute of", message), nil
 			},
 		},
 	)
@@ -391,7 +395,7 @@ func renderStopsDecision(
 	}
 	summary := "Would " + verb + " the disputed detention charge"
 	if decided.plan.Unchanged {
-		return refusedPreview(summary+".", errStopsAlreadyDecided), nil
+		return inboundtools.RefusedPreview(summary+".", errStopsAlreadyDecided), nil
 	}
 
 	decision, err := actionStateChange(decided.plan.Message, decided.plan.After)

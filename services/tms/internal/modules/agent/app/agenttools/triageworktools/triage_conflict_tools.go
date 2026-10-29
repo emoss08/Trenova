@@ -1,10 +1,11 @@
-package inboundtools
+package triageworktools
 
 import (
 	"context"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -60,7 +61,7 @@ func conflictViewOf(conflict *inboundmessage.Conflict) *conflictView {
 		Kind:       string(conflict.Kind),
 		Resolution: string(conflict.Resolution),
 		ResolvedAt: conflict.ResolvedAt,
-		ResolvedBy: idText(conflict.ResolvedBy),
+		ResolvedBy: inboundtools.IDText(conflict.ResolvedBy),
 	}
 }
 
@@ -81,7 +82,7 @@ func renderConflictPlan(
 			Resource: permission.ResourceInboundMessage,
 			ID:       plan.Message.ID,
 			Label: conflictLabel(plan.Before.Kind) + " on " +
-				describeInboundMessage(plan.Message),
+				inboundtools.DescribeMessage(plan.Message),
 			Version: changepreview.PreviewVersion(plan.Message.Version),
 		},
 		conflictViewOf(&plan.Before),
@@ -102,7 +103,7 @@ func renderConflictPlan(
 	return toolpreview.Build(summary, change), nil
 }
 
-func NewResolveInboundConflictTool(p triageToolParams) agenttoolports.AgentTool {
+func NewResolveInboundConflictTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newResolveInboundConflictTool(p.Conflicts)
 }
 
@@ -110,7 +111,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_resolve_conflict",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Settle a conflict Triage found on a message. A duplicate document: " +
 				"ReplaceExisting files the new one in place of the one on file, KeepBoth " +
 				"keeps both. A repeated load: SkipDuplicate when the load is already " +
@@ -126,7 +127,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 			Rationale: "Decides whether a document on file is replaced or a load is a " +
 				"duplicate, which later filing and booking follow, so a person approves it.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The message, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramConflictID: agenttoolschema.IDText(
@@ -138,10 +139,14 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 					triageConflictResolutions,
 				),
 			},
-			Required:    []string{paramMessageID, paramConflictID, paramConflictResolution},
+			Required: []string{
+				inboundtools.ParamMessageID,
+				paramConflictID,
+				paramConflictResolution,
+			},
 			SearchTerms: []string{"duplicate document", "duplicate load", "replace on file"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_resolve_conflict"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_resolve_conflict"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
 			*triageconflictservice.ResolveRequest,
@@ -150,7 +155,10 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*triageconflictservice.ResolveRequest, error) {
-				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(
+					params.Params,
+					inboundtools.ParamMessageID,
+				)
 				if err != nil {
 					return nil, err
 				}
@@ -166,8 +174,8 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 				}
 
 				return &triageconflictservice.ResolveRequest{
-					TenantInfo: tenantOnly(params),
-					ActorID:    actorOf(params),
+					TenantInfo: inboundtools.TenantOnly(params),
+					ActorID:    inboundtools.ActorOf(params),
 					MessageID:  messageID,
 					ConflictID: conflictID,
 					Resolution: resolution,
@@ -203,24 +211,24 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 					return nil, err
 				}
 
-				return messageResult("settled a conflict on", message), nil
+				return inboundtools.MessageResult("settled a conflict on", message), nil
 			},
 		},
 	)
 }
 
-func NewReopenInboundConflictTool(p triageToolParams) agenttoolports.AgentTool {
+func NewReopenInboundConflictTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newReopenInboundConflictTool(p.Inbox, p.Conflicts)
 }
 
 func newReopenInboundConflictTool(
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	conflicts triageConflicts,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_reopen_conflict",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Reopen a conflict on a message that was settled the wrong way, so " +
 				"it can be settled again with inbox_resolve_conflict. A document conflict " +
 				"whose attachment is already filed is refused: unfile it first with " +
@@ -230,12 +238,12 @@ func newReopenInboundConflictTool(
 			Egress:      agent.EgressInternal,
 			DefaultTier: agent.TierPropose,
 			MaxTier:     agent.TierAutoExecute,
-			Condition:   inboundCondition(inbox),
+			Condition:   inboundtools.MessageCondition(inbox),
 			Reversible:  true,
 			Rationale: "Takes back how a conflict on an inbound message was settled; nothing " +
 				"filed or booked changes.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The message, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramConflictID: agenttoolschema.IDText(
@@ -243,10 +251,10 @@ func newReopenInboundConflictTool(
 						"the message.",
 				),
 			},
-			Required:    []string{paramMessageID, paramConflictID},
+			Required:    []string{inboundtools.ParamMessageID, paramConflictID},
 			SearchTerms: []string{"reopen conflict", "undo duplicate decision"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_reopen_conflict"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_reopen_conflict"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
 			*triageconflictservice.ReopenRequest,
@@ -255,7 +263,10 @@ func newReopenInboundConflictTool(
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*triageconflictservice.ReopenRequest, error) {
-				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(
+					params.Params,
+					inboundtools.ParamMessageID,
+				)
 				if err != nil {
 					return nil, err
 				}
@@ -266,8 +277,8 @@ func newReopenInboundConflictTool(
 				}
 
 				return &triageconflictservice.ReopenRequest{
-					TenantInfo: tenantOnly(params),
-					ActorID:    actorOf(params),
+					TenantInfo: inboundtools.TenantOnly(params),
+					ActorID:    inboundtools.ActorOf(params),
 					MessageID:  messageID,
 					ConflictID: conflictID,
 				}, nil
@@ -303,7 +314,7 @@ func newReopenInboundConflictTool(
 					return nil, err
 				}
 
-				return messageResult("reopened a conflict on", message), nil
+				return inboundtools.MessageResult("reopened a conflict on", message), nil
 			},
 		},
 	)

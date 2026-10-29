@@ -1,10 +1,11 @@
-package inboundtools
+package triageworktools
 
 import (
 	"context"
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
@@ -90,7 +91,7 @@ func replyDraftRecord(message *inboundmessage.InboundMessage) toolpreview.Record
 	return toolpreview.Record{
 		Resource: permission.ResourceInboundMessage,
 		ID:       message.ID,
-		Label:    "Reply draft to " + describeInboundMessage(message),
+		Label:    "Reply draft to " + inboundtools.DescribeMessage(message),
 	}
 }
 
@@ -99,18 +100,18 @@ type draftReplyCall struct {
 	write *inboundreplyservice.DraftReplyRequest
 }
 
-func NewDraftInboundReplyTool(p triageToolParams) agenttoolports.AgentTool {
+func NewDraftInboundReplyTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newDraftInboundReplyTool(p.Inbox, p.Replies)
 }
 
 func newDraftInboundReplyTool(
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	replies triageReplies,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_draft_reply",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Save a reply to a message as its draft in Triage, for a person to " +
 				"review and send; nothing is sent. Write the body yourself, or leave it out to " +
 				"have Triage's drafter write it from the message, its linked records and, for " +
@@ -121,18 +122,18 @@ func newDraftInboundReplyTool(
 			Egress:      agent.EgressInternal,
 			DefaultTier: agent.TierPropose,
 			MaxTier:     agent.TierAutoExecute,
-			Condition:   inboundCondition(inbox),
+			Condition:   inboundtools.MessageCondition(inbox),
 			Reversible:  true,
 			Rationale: "Writes a draft only people inside the organization see; sending it " +
 				"stays with a person.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The message to answer, from inbox_list_inbound_messages, newest first or by query.",
 				),
 				paramReplyBody: toolparams.StringProperty(
 					"The reply in plain prose, as the person should send it. Leave it out to "+
 						"have Triage's drafter write it.",
-					maxInboundReplyBody,
+					inboundtools.MaxReplyBody,
 				),
 				paramReplySubject: toolparams.StringProperty(
 					"Optional, with a body only: the subject. Defaults to Re: and the "+
@@ -140,10 +141,10 @@ func newDraftInboundReplyTool(
 					maxReplySubject,
 				),
 			},
-			Required:    []string{paramMessageID},
+			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"draft a reply", "prepare an answer", "write a response"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_draft_reply"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_draft_reply"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*draftReplyCall, *inboundreplyservice.DraftPlan]{
 			Request: draftReplyRequest,
@@ -184,8 +185,10 @@ func newDraftInboundReplyTool(
 					Action: "drafted",
 					Kind:   "reply draft",
 					Name:   reply.Subject,
-					IDs:    map[string]string{paramMessageID: reply.MessageID.String()},
-					Record: changepreview.RecordOf(inboundMessageEntity, reply.MessageID),
+					IDs: map[string]string{
+						inboundtools.ParamMessageID: reply.MessageID.String(),
+					},
+					Record: changepreview.RecordOf(inboundtools.MessageEntity, reply.MessageID),
 				}, nil
 			},
 		},
@@ -193,11 +196,11 @@ func newDraftInboundReplyTool(
 }
 
 func draftReplyRequest(params *agenttoolports.ToolExecuteParams) (*draftReplyCall, error) {
-	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, inboundtools.ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
-	body, err := toolparams.BoundedText(params.Params, paramReplyBody, maxInboundReplyBody)
+	body, err := toolparams.BoundedText(params.Params, paramReplyBody, inboundtools.MaxReplyBody)
 	if err != nil {
 		return nil, err
 	}
@@ -212,16 +215,16 @@ func draftReplyRequest(params *agenttoolports.ToolExecuteParams) (*draftReplyCal
 		}
 
 		return &draftReplyCall{write: &inboundreplyservice.DraftReplyRequest{
-			TenantInfo: tenantOnly(params),
-			UserID:     actorOf(params),
+			TenantInfo: inboundtools.TenantOnly(params),
+			UserID:     inboundtools.ActorOf(params),
 			MessageID:  messageID,
 			Mode:       triagenova.Interactive,
 		}}, nil
 	}
 
 	return &draftReplyCall{save: &inboundreplyservice.SaveDraftRequest{
-		TenantInfo: tenantOnly(params),
-		UserID:     actorOf(params),
+		TenantInfo: inboundtools.TenantOnly(params),
+		UserID:     inboundtools.ActorOf(params),
 		MessageID:  messageID,
 		Subject:    subject,
 		Body:       body,
@@ -264,7 +267,7 @@ func renderReplyDraft(
 	return preview, nil
 }
 
-func NewDiscardInboundReplyDraftTool(p triageToolParams) agenttoolports.AgentTool {
+func NewDiscardInboundReplyDraftTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newDiscardInboundReplyDraftTool(p.Replies)
 }
 
@@ -272,7 +275,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_discard_reply_draft",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Throw away the reply draft waiting on a message in Triage, when it " +
 				"should not be sent at all. inbox_get_inbound_message shows whether a message has " +
 				"one. A person's own draft is lost with it; to change a draft, write a new " +
@@ -285,20 +288,20 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 			Rationale: "Deletes a draft that may be a person's own unsent words, with nothing " +
 				"to bring it back.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The message, from inbox_list_inbound_messages, newest first or by query.",
 				),
 			},
-			Required:    []string{paramMessageID},
+			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"discard draft", "delete reply draft", "throw away reply"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_discard_reply_draft"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_discard_reply_draft"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
 			*inboundmessageservice.MessageActionRequest,
 			*inboundreplyservice.DraftPlan,
 		]{
-			Request: messageAction,
+			Request: inboundtools.MessageAction,
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
@@ -314,9 +317,9 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 				plan *inboundreplyservice.DraftPlan,
 			) (*agentpreview.ToolPreview, error) {
 				summary := "Would throw away the reply draft on " +
-					describeInboundMessage(plan.Message) + "."
+					inboundtools.DescribeMessage(plan.Message) + "."
 				if plan.Current == nil {
-					return refusedPreview(summary, errNoReplyDraft), nil
+					return inboundtools.RefusedPreview(summary, errNoReplyDraft), nil
 				}
 				change, err := toolpreview.Delete(replyDraftRecord(plan.Message),
 					replyDraftViewOf(plan.Current), toolpreview.Labels(replyDraftLabels))
@@ -343,7 +346,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 					return nil, err
 				}
 
-				return messageResult("discarded the reply draft of", message), nil
+				return inboundtools.MessageResult("discarded the reply draft of", message), nil
 			},
 		},
 	)

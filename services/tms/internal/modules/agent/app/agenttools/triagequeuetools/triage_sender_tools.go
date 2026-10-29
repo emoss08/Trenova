@@ -1,10 +1,11 @@
-package inboundtools
+package triagequeuetools
 
 import (
 	"context"
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
@@ -67,7 +68,7 @@ func mailboxSendersChange(plan *triageworkservice.SenderPlan) (*agentpreview.Rec
 	)
 }
 
-func NewBlockInboundSenderTool(p triageToolParams) agenttoolports.AgentTool {
+func NewBlockInboundSenderTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newBlockInboundSenderTool(p.Work)
 }
 
@@ -75,7 +76,7 @@ func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_block_sender",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Send every future message from a message's sender, on the source it " +
 				"arrived on, straight to Ignored, and settle this message as Ignored. Only for " +
 				"spam, phishing or a sender the organization does not want to hear from: a " +
@@ -90,28 +91,31 @@ func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 			Rationale: "Silently drops an outside sender's future mail, which can hide a " +
 				"customer or carrier from everyone, so a person always approves it.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"A message from the sender, from inbox_list_inbound_messages, " +
 						"newest first or by query.",
 				),
 			},
-			Required:    []string{paramMessageID},
+			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"block sender", "phishing", "junk sender"},
-			Recipe:      []string{toolGetInboundMessage, "inbox_block_sender"},
-			Target:      targetMessage,
+			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_block_sender"},
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*triageworkservice.BlockSenderRequest, *triageworkservice.SenderPlan]{
 			Request: func(
 				params *agenttoolports.ToolExecuteParams,
 			) (*triageworkservice.BlockSenderRequest, error) {
-				messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
+				messageID, err := toolparams.RequirePulid(
+					params.Params,
+					inboundtools.ParamMessageID,
+				)
 				if err != nil {
 					return nil, err
 				}
 
 				return &triageworkservice.BlockSenderRequest{
-					TenantInfo: tenantOnly(params),
-					UserID:     actorOf(params),
+					TenantInfo: inboundtools.TenantOnly(params),
+					UserID:     inboundtools.ActorOf(params),
 					MessageID:  messageID,
 				}, nil
 			},
@@ -133,7 +137,7 @@ func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 				if err != nil {
 					return nil, err
 				}
-				settled, err := inboundMessageChange(plan.Message, plan.After,
+				settled, err := inboundtools.MessageChange(plan.Message, plan.After,
 					settledMessageFields...)
 				if err != nil {
 					return nil, err
@@ -158,24 +162,24 @@ func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 					return nil, err
 				}
 
-				return messageResult("blocked the sender of", message), nil
+				return inboundtools.MessageResult("blocked the sender of", message), nil
 			},
 		},
 	)
 }
 
-func NewUnblockInboundSenderTool(p triageToolParams) agenttoolports.AgentTool {
+func NewUnblockInboundSenderTool(p inboundtools.TriageToolParams) agenttoolports.AgentTool {
 	return newUnblockInboundSenderTool(p.Inbox, p.Work)
 }
 
 func newUnblockInboundSenderTool(
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	senders triageSenders,
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
 			Name:     "inbox_unblock_sender",
-			Artifact: inboundMessageEntity,
+			Artifact: inboundtools.MessageEntity,
 			Description: "Let a blocked sender's mail reach the Triage queue again on the " +
 				"source it arrives on. Name the sender by one of their messages: their mail " +
 				"since the block sits under Ignored, which inbox_list_inbound_messages finds " +
@@ -191,21 +195,21 @@ func newUnblockInboundSenderTool(
 			Rationale: "Lets an outside sender's mail reach people again; it changes which " +
 				"mail the organization reads, so a person approves it.",
 			Properties: map[string]any{
-				paramMessageID: messageIDProperty(
+				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"A message from the blocked sender, from inbox_list_inbound_messages " +
 						"with a query naming the sender.",
 				),
 			},
-			Required:    []string{paramMessageID},
+			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"unblock sender", "allow sender"},
 			Recipe:      []string{"inbox_list_inbound_messages", "inbox_unblock_sender"},
-			Target:      targetMessage,
+			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
 			*inboundmessageservice.MessageActionRequest,
 			*triageworkservice.SenderPlan,
 		]{
-			Request: messageAction,
+			Request: inboundtools.MessageAction,
 			Plan: func(
 				ctx context.Context,
 				req *inboundmessageservice.MessageActionRequest,
@@ -247,7 +251,7 @@ func newUnblockInboundSenderTool(
 					Action: "unblocked",
 					Kind:   "sender",
 					Name:   unblock.Sender + " on " + mailbox.Address,
-					IDs:    map[string]string{paramMessageID: req.MessageID.String()},
+					IDs:    map[string]string{inboundtools.ParamMessageID: req.MessageID.String()},
 				}, nil
 			},
 		},
@@ -256,7 +260,7 @@ func newUnblockInboundSenderTool(
 
 func unblockRequest(
 	ctx context.Context,
-	inbox inboundMessageReader,
+	inbox inboundtools.MessageReader,
 	req *inboundmessageservice.MessageActionRequest,
 ) (*triageworkservice.UnblockSenderRequest, error) {
 	message, err := inbox.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
@@ -286,7 +290,7 @@ func renderUnblockSender(
 	summary := "Would let mail from " + plan.Sender + " on " + plan.Mailbox.Address +
 		" reach the Triage queue again."
 	if !plan.Changed {
-		return refusedPreview(summary, errSenderNotBlocked), nil
+		return inboundtools.RefusedPreview(summary, errSenderNotBlocked), nil
 	}
 	mailbox, err := mailboxSendersChange(plan)
 	if err != nil {

@@ -38,7 +38,6 @@ debt:
   services/tms/internal/modules/agent/app/agenttools/accountingtools: 4281
   services/tms/internal/modules/agent/app/agenttools/billingtools: 3397
   services/tms/internal/modules/agent/app/agenttools/factoringtools: 3048
-  services/tms/internal/modules/agent/app/agenttools/inboundtools: 4506
   services/tms/internal/modules/agent/app/agenttools/operationstools: 3373
   services/tms/internal/modules/agent/app/agenttools/settlementtools: 3663
   services/tms/internal/modules/agent/app/agenttools/shipmenttools: 3956
