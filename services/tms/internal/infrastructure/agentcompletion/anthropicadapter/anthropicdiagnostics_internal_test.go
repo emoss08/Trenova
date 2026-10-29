@@ -68,7 +68,7 @@ func claudeAPIServer(t *testing.T, reply string) (*http.Client, func() []map[str
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 		Transport: modeladaptertest.HostRouter{
-			routes: map[string]*url.URL{"api.anthropic.com": target},
+			Routes: map[string]*url.URL{"api.anthropic.com": target},
 		},
 	}
 

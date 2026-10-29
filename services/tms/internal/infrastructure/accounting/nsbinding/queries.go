@@ -124,13 +124,13 @@ type editorRow struct {
 
 type ReferenceSpec struct {
 	SelectFrom string
-	alias      string
+	Alias      string
 	Filter     string
 	Subsidiary string
 }
 
 func (s *ReferenceSpec) Column(name string) string {
-	return s.alias + "." + name
+	return s.Alias + "." + name
 }
 
 type SQLBuilder struct {

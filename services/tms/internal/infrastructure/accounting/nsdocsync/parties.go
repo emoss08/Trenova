@@ -49,9 +49,9 @@ func (c *Documents) upsertParty(
 			return nil, err
 		}
 	} else if id, err = nsrefsync.CreateParty(ctx, s, &nsrefsync.PartyCreate{
-		kind:      w.kind,
-		requestID: w.requestID,
-		draft:     w.party,
+		Kind:      w.kind,
+		RequestID: w.requestID,
+		Draft:     w.party,
 	}); err != nil {
 		return nil, err
 	}

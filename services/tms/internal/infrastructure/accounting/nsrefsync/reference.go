@@ -294,9 +294,9 @@ func (c *References) CreateReference(
 		return readReference(ctx, s, req.Kind, id)
 	}
 	id, err := CreateParty(ctx, s, &PartyCreate{
-		kind:      partyKindOf(req.Kind),
-		requestID: req.RequestID,
-		draft:     req.Party,
+		Kind:      partyKindOf(req.Kind),
+		RequestID: req.RequestID,
+		Draft:     req.Party,
 	})
 	if err != nil {
 		return nil, err
@@ -470,21 +470,21 @@ func PartyBodyOf(kind PartyKind, draft *accountingconnectorports.AccountingParty
 }
 
 type PartyCreate struct {
-	kind      PartyKind
-	requestID string
-	draft     *accountingconnectorports.AccountingPartyDraft
+	Kind      PartyKind
+	RequestID string
+	Draft     *accountingconnectorports.AccountingPartyDraft
 }
 
 func CreateParty(ctx context.Context, s *nsbinding.Session, p *PartyCreate) (string, error) {
-	body := PartyBodyOf(p.kind, p.draft)
+	body := PartyBodyOf(p.Kind, p.Draft)
 	if body.CompanyName == "" {
 		return "", nsbinding.ErrNameRequired
 	}
-	requestID := strings.TrimSpace(p.requestID)
+	requestID := strings.TrimSpace(p.RequestID)
 	if requestID == "" {
 		return "", nsbinding.ErrRequestID
 	}
-	spec := p.kind.spec()
+	spec := p.Kind.spec()
 	check := (&nsbinding.SQLBuilder{}).Where(
 		"(UPPER("+spec.Column("entityid")+") = UPPER(?) OR UPPER("+
 			spec.Column("companyname")+") = UPPER(?))",
@@ -496,7 +496,7 @@ func CreateParty(ctx context.Context, s *nsbinding.Session, p *PartyCreate) (str
 	}
 	body.Subsidiary = s.Subsidiary()
 	return s.Client.Upsert(ctx, netsuite.RecordWrite{
-		Type:       p.kind.recordType(),
+		Type:       p.Kind.recordType(),
 		ExternalID: requestID,
 		Body:       body,
 	})

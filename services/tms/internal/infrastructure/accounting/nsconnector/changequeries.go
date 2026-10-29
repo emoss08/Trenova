@@ -25,7 +25,7 @@ const (
 var (
 	transactionSpec = nsbinding.ReferenceSpec{
 		SelectFrom: nsdocsync.TransactionSQL,
-		alias:      "t",
+		Alias:      "t",
 		Subsidiary: transactionSubsidiary,
 	}
 )
