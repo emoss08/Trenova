@@ -8,7 +8,7 @@ func SnapToChapter(
 	older []conversation.Message,
 	through int,
 	titles map[int]string,
-) ([]conversation.Message, int) {
+) (snapped []conversation.Message, snappedThrough int) {
 	if len(titles) == 0 || len(older) == 0 {
 		return older, through
 	}

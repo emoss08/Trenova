@@ -595,6 +595,9 @@ func (s *Service) portalOutcomeError(
 		return &agentextensionservice.ToolError{Message: portalStrayedMessage}
 	case extensionportal.PortalRunStatusTimedOut:
 		return &agentextensionservice.ToolError{Message: portalTimedOutMessage}
+	case extensionportal.PortalRunStatusRunning, extensionportal.PortalRunStatusSucceeded,
+		extensionportal.PortalRunStatusFailed, extensionportal.PortalRunStatusStopped,
+		extensionportal.PortalRunStatusAwaitingCode:
 	}
 	if cause != nil {
 		return s.core.ProviderError(call.Failing(cause, "follow the portal task"))
@@ -855,8 +858,8 @@ func (s *Service) StopPortalRun(
 	if run.VendorTaskID == "" {
 		return s.finish(ctx, tenantInfo, run, outcome), nil
 	}
-	call, callErr := s.portalCallOf(ctx, tenantInfo, run.ExtensionType)
-	if callErr != nil {
+	call := s.reachablePortalCall(ctx, tenantInfo, run.ExtensionType)
+	if call == nil {
 		return s.finish(ctx, tenantInfo, run, outcome), nil
 	}
 
@@ -873,6 +876,19 @@ func (s *Service) StopPortalRun(
 	s.release(ctx, call, finished)
 
 	return finished, nil
+}
+
+func (s *Service) reachablePortalCall(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	typ agentextension.Type,
+) *portalCall {
+	call, err := s.portalCallOf(ctx, tenantInfo, typ)
+	if err != nil {
+		return nil
+	}
+
+	return call
 }
 
 func (s *Service) portalCallOf(

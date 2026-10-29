@@ -84,8 +84,10 @@ type placement struct {
 	box  map[string]float64
 }
 
-func DraftEvidence(data map[string]any) (map[string]string, map[int]string) {
-	fields := map[string]string{}
+func DraftEvidence(
+	data map[string]any,
+) (fields map[string]string, stops map[int]string) {
+	fields = map[string]string{}
 	if raw, ok := data["fields"].(map[string]any); ok {
 		for key, value := range raw {
 			field, isObject := value.(map[string]any)
@@ -98,7 +100,7 @@ func DraftEvidence(data map[string]any) (map[string]string, map[int]string) {
 		}
 	}
 
-	stops := map[int]string{}
+	stops = map[int]string{}
 	if raw, ok := data["stops"].([]any); ok {
 		for idx, value := range raw {
 			stop, isObject := value.(map[string]any)
@@ -124,7 +126,7 @@ func evidenceOf(object map[string]any) string {
 func ExtractionArtifact(
 	callID string,
 	draft map[string]any,
-	source ExtractionSource,
+	source *ExtractionSource,
 ) *assistantartifact.Artifact {
 	pages := slices.Clone(source.Pages)
 	slices.SortFunc(pages, func(a, b ExtractionPage) int { return cmp.Compare(a.Number, b.Number) })
@@ -234,7 +236,7 @@ func missingFields(labels []string) []map[string]string {
 	return out
 }
 
-func draftReadings(draft map[string]any, source ExtractionSource) []fieldReading {
+func draftReadings(draft map[string]any, source *ExtractionSource) []fieldReading {
 	raw, _ := draft["fields"].(map[string]any)
 	stops, _ := draft["stops"].([]any)
 	conflicts := conflictReadings(draft["conflicts"])
@@ -381,7 +383,7 @@ func extractionFields(readings []fieldReading, pages []ExtractionPage) []map[str
 		return cmp.Or(
 			cmp.Compare(sortPage(a), sortPage(b)),
 			cmp.Compare(sortTop(a), sortTop(b)),
-			cmp.Compare(a["key"].(string), b["key"].(string)),
+			cmp.Compare(fieldKey(a), fieldKey(b)),
 		)
 	})
 
@@ -454,11 +456,11 @@ func (m *lineMatch) beats(other *lineMatch) bool {
 }
 
 func locate(reading *fieldReading, pages []ExtractionPage) (placement, bool) {
-	evidence := comparable(reading.evidence)
-	label := comparable(reading.label)
+	evidence := foldedText(reading.evidence)
+	label := foldedText(reading.label)
 	words := strings.Fields(reading.value)
 	for n := len(words); n > 0; n-- {
-		value := comparable(strings.Join(words[:n], " "))
+		value := foldedText(strings.Join(words[:n], " "))
 		if n < len(words) && utf8.RuneCountInString(value) < minPrefixRunes {
 			break
 		}
@@ -562,7 +564,7 @@ func spanAcross(
 	line *documentcontent.LayoutLine,
 	runes []rune,
 	first, last int,
-) (float64, float64) {
+) (left, right float64) {
 	if words := wordRanges(runes); len(words)*2 == len(line.Words) && len(words) > 0 {
 		return wordEdge(line, words, first, false), wordEdge(line, words, last, true)
 	}
@@ -614,16 +616,16 @@ func wordEdge(line *documentcontent.LayoutLine, words []wordRange, at int, closi
 	return line.Words[len(line.Words)-1]
 }
 
-// comparable is text as a value and a line are compared: lower case, letters
+// foldedText is text as a value and a line are compared: lower case, letters
 // and digits only, so "$1,359.56" on the page matches "1359.56" in the draft.
-func comparable(text string) string {
+func foldedText(text string) string {
 	hay, _ := comparableIndex(text)
 	return hay
 }
 
-func comparableIndex(text string) (string, []int) {
+func comparableIndex(text string) (folded string, index []int) {
 	var b strings.Builder
-	index := make([]int, 0, len(text))
+	index = make([]int, 0, len(text))
 	position := 0
 	for _, r := range text {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
@@ -672,6 +674,12 @@ func splitCamel(text string) string {
 	}
 
 	return b.String()
+}
+
+func fieldKey(field map[string]any) string {
+	key, _ := field["key"].(string)
+
+	return key
 }
 
 func sortPage(field map[string]any) int {

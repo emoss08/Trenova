@@ -17,6 +17,13 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+type Limits struct {
+	Budgets       agentbudgetports.AgentBudgetService
+	Conversations conversationports.ConversationRepository
+	AgentControls tenantports.AgentControlRepository
+	Quota         platformplanports.QuotaGuard
+}
+
 // PersonAllowance is how many questions one person has asked this month
 // against what their organization allows. Nil when nobody is limited.
 func (s *Limits) PersonAllowance(
@@ -26,14 +33,14 @@ func (s *Limits) PersonAllowance(
 	now time.Time,
 ) (*assistantports.PersonAllowance, error) {
 	if s.AgentControls == nil || userID.IsNil() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil allowance is the contract for nobody being limited
 	}
 	control, err := s.AgentControls.GetOrCreate(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 	if control.PersonMonthlyMessages <= 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil allowance is the contract for nobody being limited
 	}
 
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
@@ -82,13 +89,6 @@ func (s *Limits) AssertWithinAllowance(
 	}
 
 	return refused
-}
-
-type Limits struct {
-	Budgets       agentbudgetports.AgentBudgetService
-	Conversations conversationports.ConversationRepository
-	AgentControls tenantports.AgentControlRepository
-	Quota         platformplanports.QuotaGuard
 }
 
 func (s *Limits) AssertWithinPlan(ctx context.Context, tenantInfo pagination.TenantInfo) error {

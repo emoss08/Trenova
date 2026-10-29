@@ -26,34 +26,48 @@ type Turn struct {
 }
 
 func TouchedRecords(turn *Turn) []conversation.WorkingRecord {
-	touched := make([]conversation.WorkingRecord, 0, 8)
-	add := func(id, label string, source conversation.WorkingSource) {
-		if record, ok := conversationworkingset.NewWorkingRecord(id, label, source, turn.At); ok {
-			touched = append(touched, record)
-		}
-	}
+	set := &touchedSet{at: turn.At, records: make([]conversation.WorkingRecord, 0, 8)}
 
 	if turn.Thread.HasSubject() {
-		add(turn.Thread.SubjectID.String(), "", conversation.WorkingSourceSubject)
+		set.add(turn.Thread.SubjectID.String(), "", conversation.WorkingSourceSubject)
 	}
 	if turn.Page != nil {
-		add(turn.Page.EntityID, turn.Page.Title, conversation.WorkingSourcePage)
+		set.add(turn.Page.EntityID, turn.Page.Title, conversation.WorkingSourcePage)
 	}
 	for _, mention := range turn.Mentions {
-		add(mention.ID, mention.Label, conversation.WorkingSourceMention)
+		set.add(mention.ID, mention.Label, conversation.WorkingSourceMention)
 	}
 
-	failed := make(map[string]bool, len(turn.Saved))
-	summaries := make(map[string]string, len(turn.Saved))
-	for idx := range turn.Saved {
-		message := &turn.Saved[idx]
+	set.addRead(turn.Saved)
+	set.addWritten(turn.Actions)
+	set.addApproved(turn.Proposals, lastTouched(turn.Thread.WorkingSet))
+
+	return set.records
+}
+
+type touchedSet struct {
+	at      int64
+	records []conversation.WorkingRecord
+}
+
+func (t *touchedSet) add(id, label string, source conversation.WorkingSource) {
+	if record, ok := conversationworkingset.NewWorkingRecord(id, label, source, t.at); ok {
+		t.records = append(t.records, record)
+	}
+}
+
+func (t *touchedSet) addRead(saved []conversation.Message) {
+	failed := make(map[string]bool, len(saved))
+	summaries := make(map[string]string, len(saved))
+	for idx := range saved {
+		message := &saved[idx]
 		if message.Role == conversation.RoleTool && message.ToolCallID != "" {
 			failed[message.ToolCallID] = message.ToolFailed
 			summaries[message.ToolCallID] = message.ToolSummary
 		}
 	}
-	for idx := range turn.Saved {
-		message := &turn.Saved[idx]
+	for idx := range saved {
+		message := &saved[idx]
 		if message.Role != conversation.RoleAssistant || message.Delegated() {
 			continue
 		}
@@ -62,37 +76,38 @@ func TouchedRecords(turn *Turn) []conversation.WorkingRecord {
 				continue
 			}
 			for _, record := range worldwatch.RecordsRead(call.Name, call.Arguments, summaries[call.ID]) {
-				add(record.ID, record.Label, conversation.WorkingSourceRead)
+				t.add(record.ID, record.Label, conversation.WorkingSourceRead)
 			}
 		}
 	}
+}
 
-	for idx := range turn.Actions {
-		action := &turn.Actions[idx]
+func (t *touchedSet) addWritten(actions []agentruntimeports.PendingAction) {
+	for idx := range actions {
+		action := &actions[idx]
 		if !action.Executed || action.ExecutionError != "" {
 			continue
 		}
 		if action.Target != nil && action.Target.ID.IsNotNil() {
-			add(action.Target.ID.String(), "", conversation.WorkingSourceWrote)
+			t.add(action.Target.ID.String(), "", conversation.WorkingSourceWrote)
 		}
 		if id, label := madeRecord(action.ExecutionResult); id != "" {
-			add(id, label, conversation.WorkingSourceWrote)
+			t.add(id, label, conversation.WorkingSourceWrote)
 		}
 	}
+}
 
-	since := lastTouched(turn.Thread.WorkingSet)
-	for idx := range turn.Proposals {
-		outcome := &turn.Proposals[idx]
+func (t *touchedSet) addApproved(proposals []agentruntimeports.ProposalOutcome, since int64) {
+	for idx := range proposals {
+		outcome := &proposals[idx]
 		if outcome.Status != agent.ProposalStatusExecuted || outcome.ExecutedAt == nil ||
 			*outcome.ExecutedAt < since {
 			continue
 		}
 		if id, label := madeRecord(outcome.ExecutionResult); id != "" {
-			add(id, label, conversation.WorkingSourceWrote)
+			t.add(id, label, conversation.WorkingSourceWrote)
 		}
 	}
-
-	return touched
 }
 
 // madeRecord is the one record an executed write made or changed, so a load

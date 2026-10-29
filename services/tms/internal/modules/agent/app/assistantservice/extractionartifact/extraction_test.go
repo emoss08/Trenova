@@ -90,7 +90,7 @@ func TestExtractionArtifact_BoxesTheLabelledLineOverTheLetterhead(t *testing.T) 
 	artifact := ExtractionArtifact(
 		"call_1",
 		rateconDraft(),
-		ExtractionSource{Pages: rateconPages()},
+		&ExtractionSource{Pages: rateconPages()},
 	)
 	require.NotNil(t, artifact)
 
@@ -105,7 +105,7 @@ func TestExtractionArtifact_BoxesTheLabelledLineOverTheLetterhead(t *testing.T) 
 func TestExtractionArtifact_PrefersTheLineTheReadingQuoted(t *testing.T) {
 	t.Parallel()
 
-	source := ExtractionSource{
+	source := &ExtractionSource{
 		Pages:         rateconPages(),
 		FieldEvidence: map[string]string{"billTo": "NORTHLINE LOGISTICS"},
 	}
@@ -123,7 +123,7 @@ func TestExtractionArtifact_MeasuresTheValueOnTheLineItself(t *testing.T) {
 	artifact := ExtractionArtifact(
 		"call_1",
 		rateconDraft(),
-		ExtractionSource{Pages: rateconPages()},
+		&ExtractionSource{Pages: rateconPages()},
 	)
 	require.NotNil(t, artifact)
 
@@ -139,7 +139,7 @@ func TestExtractionArtifact_PlacesWordsWhereTheReaderPutThem(t *testing.T) {
 	artifact := ExtractionArtifact(
 		"call_1",
 		rateconDraft(),
-		ExtractionSource{Pages: rateconPages()},
+		&ExtractionSource{Pages: rateconPages()},
 	)
 	require.NotNil(t, artifact)
 
@@ -161,7 +161,7 @@ func TestExtractionArtifact_SaysWhyAFieldNeedsALook(t *testing.T) {
 	artifact := ExtractionArtifact(
 		"call_1",
 		rateconDraft(),
-		ExtractionSource{Pages: rateconPages()},
+		&ExtractionSource{Pages: rateconPages()},
 	)
 	require.NotNil(t, artifact)
 	fields := assistanttest.FieldsByKey(t, artifact)
@@ -185,7 +185,7 @@ func TestExtractionArtifact_ReadsEachStopAsItsParts(t *testing.T) {
 	artifact := ExtractionArtifact(
 		"call_1",
 		rateconDraft(),
-		ExtractionSource{Pages: rateconPages()},
+		&ExtractionSource{Pages: rateconPages()},
 	)
 	require.NotNil(t, artifact)
 	fields := assistanttest.FieldsByKey(t, artifact)
@@ -230,7 +230,7 @@ func TestExtractionArtifact_ReadsEachStopAsItsParts(t *testing.T) {
 func TestExtractionArtifact_DescribesTheFileAndItsPages(t *testing.T) {
 	t.Parallel()
 
-	source := ExtractionSource{
+	source := &ExtractionSource{
 		FileName:       "Northline_RateCon.pdf",
 		KindConfidence: 0.944,
 		Pages:          rateconPages(),
@@ -275,7 +275,7 @@ func TestExtractionArtifact_LooksOnOtherPagesWhenTheNamedOneLacksTheValue(t *tes
 			},
 		},
 	}
-	artifact := ExtractionArtifact("call_1", draft, ExtractionSource{Pages: rateconPages()})
+	artifact := ExtractionArtifact("call_1", draft, &ExtractionSource{Pages: rateconPages()})
 	require.NotNil(t, artifact)
 
 	assert.Equal(t, 1, assistanttest.FieldsByKey(t, artifact)["loadNumber"]["page"])
@@ -295,7 +295,7 @@ func TestExtractionArtifact_KeepsTheNamedPageOfAValueNotOnAnyPage(t *testing.T) 
 			},
 		},
 	}
-	artifact := ExtractionArtifact("call_1", draft, ExtractionSource{Pages: rateconPages()})
+	artifact := ExtractionArtifact("call_1", draft, &ExtractionSource{Pages: rateconPages()})
 	require.NotNil(t, artifact)
 
 	scac := assistanttest.FieldsByKey(t, artifact)["scac"]
@@ -308,7 +308,7 @@ func TestExtractionArtifact_NothingReadIsNoArtifact(t *testing.T) {
 
 	assert.Nil(t, ExtractionArtifact("call_1", map[string]any{
 		"documentId": "doc_1", "status": "Pending", "fields": map[string]any{},
-	}, ExtractionSource{}))
+	}, &ExtractionSource{}))
 }
 
 func TestExtractionArtifact_AttachedShipmentIsCarried(t *testing.T) {
@@ -316,7 +316,7 @@ func TestExtractionArtifact_AttachedShipmentIsCarried(t *testing.T) {
 
 	draft := rateconDraft()
 	draft["attachedShipmentId"] = "shp_1"
-	artifact := ExtractionArtifact("call_1", draft, ExtractionSource{})
+	artifact := ExtractionArtifact("call_1", draft, &ExtractionSource{})
 	require.NotNil(t, artifact)
 
 	assert.Equal(t, "shp_1", artifact.Payload["attachedShipmentId"])

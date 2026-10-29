@@ -74,7 +74,7 @@ func TestExtractionArtifact_BoxesValuesOnDoclingLines(t *testing.T) {
 	artifact := ExtractionArtifact(
 		"call_1",
 		draft,
-		ExtractionSource{FileName: "rate-confirmation.pdf", Pages: pages},
+		&ExtractionSource{FileName: "rate-confirmation.pdf", Pages: pages},
 	)
 	require.NotNil(t, artifact)
 	assert.Equal(t, assistantartifact.KindExtraction, artifact.Kind)

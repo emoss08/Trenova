@@ -9,6 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type Index struct {
+	Logger   *zap.Logger
+	Chapters assistantchapterports.ChapterRepository
+}
+
 func (s *Index) Titles(
 	ctx context.Context,
 	threadID pulid.ID,
@@ -37,9 +42,4 @@ func (s *Index) Titles(
 	}
 
 	return titles
-}
-
-type Index struct {
-	Logger   *zap.Logger
-	Chapters assistantchapterports.ChapterRepository
 }

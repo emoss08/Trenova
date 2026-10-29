@@ -204,6 +204,11 @@ func liftedHold(history []conversation.Message, proposal *agent.AgentProposal) s
 	switch proposal.Status {
 	case agent.ProposalStatusExecuted, agent.ProposalStatusExecutionFailed,
 		agent.ProposalStatusAccepted, agent.ProposalStatusModified:
+	case agent.ProposalStatusPending, agent.ProposalStatusApproving,
+		agent.ProposalStatusRejected, agent.ProposalStatusExpired,
+		agent.ProposalStatusSuperseded, agent.ProposalStatusSkipped,
+		agent.ProposalStatusSimulated:
+		return ""
 	default:
 		return ""
 	}
@@ -267,6 +272,9 @@ func decisionLine(proposal *agent.AgentProposal) string {
 		return fmt.Sprintf("%s expired before anyone decided it.", tool)
 	case agent.ProposalStatusSuperseded:
 		return fmt.Sprintf("%s was replaced by a later proposal.", tool)
+	case agent.ProposalStatusPending, agent.ProposalStatusApproving,
+		agent.ProposalStatusSkipped, agent.ProposalStatusSimulated:
+		return fmt.Sprintf("%s is now %s.", tool, proposal.Status)
 	default:
 		return fmt.Sprintf("%s is now %s.", tool, proposal.Status)
 	}
@@ -382,6 +390,8 @@ func planOutcomeLine(plan *agentplan.AgentPlan) string {
 		return fmt.Sprintf("Rejected the plan %q.", title)
 	case agentplan.PlanStatusExpired:
 		return fmt.Sprintf("The plan %q expired before anyone decided it.", title)
+	case agentplan.PlanStatusPending, agentplan.PlanStatusApproving:
+		return fmt.Sprintf("The plan %q is now %s.", title, plan.Status)
 	default:
 		return fmt.Sprintf("The plan %q is now %s.", title, plan.Status)
 	}

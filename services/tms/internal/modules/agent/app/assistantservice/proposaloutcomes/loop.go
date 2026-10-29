@@ -10,7 +10,8 @@ func Pending(
 	outcomes []agentruntimeports.ProposalOutcome,
 ) []agentturn.PendingProposal {
 	pending := make([]agentturn.PendingProposal, 0, len(outcomes))
-	for _, outcome := range outcomes {
+	for idx := range outcomes {
+		outcome := &outcomes[idx]
 		if outcome.Pending() {
 			pending = append(pending, agentturn.PendingProposal{
 				ProposalID: outcome.ProposalID,

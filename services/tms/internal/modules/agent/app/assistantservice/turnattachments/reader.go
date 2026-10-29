@@ -17,6 +17,12 @@ import (
 	"go.uber.org/zap"
 )
 
+type Reader struct {
+	Logger    *zap.Logger
+	Documents documentports.DocumentRepository
+	Contents  documentports.DocumentContentService
+}
+
 // ResolveAttachments turns document ids into what the turn stores and what
 // the prompt says. Every document must be one this person uploaded to this
 // thread; an id that is not is refused as a validation error rather than
@@ -213,10 +219,4 @@ func (s *Reader) EarlierFileTexts(
 	}
 
 	return files
-}
-
-type Reader struct {
-	Logger    *zap.Logger
-	Documents documentports.DocumentRepository
-	Contents  documentports.DocumentContentService
 }

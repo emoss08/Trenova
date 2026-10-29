@@ -30,6 +30,12 @@ const (
 	viewCustomer         = "customer"
 	viewWorker           = "worker"
 
+	keyType     = "type"
+	keyStatus   = "status"
+	keySubtitle = "subtitle"
+	keyBOL      = "bol"
+	keyFacts    = "facts"
+
 	stopPickup   = "Pickup"
 	stopDelivery = "Delivery"
 )
@@ -183,21 +189,21 @@ func shipmentView(result map[string]any) map[string]any {
 	}
 
 	view := map[string]any{
-		"type":     viewShipment,
-		"status":   TextOf(result, "status"),
-		"subtitle": TextOf(ObjectOf(result["customer"]), "name"),
+		keyType:     viewShipment,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: TextOf(ObjectOf(result["customer"]), "name"),
 	}
 
 	if len(stops) > 0 {
 		first, last := 0, len(stops)-1
 		for idx, stop := range stops {
-			if TextOf(stop, "type") == stopPickup {
+			if TextOf(stop, keyType) == stopPickup {
 				first = idx
 				break
 			}
 		}
 		for idx := len(stops) - 1; idx > first; idx-- {
-			if TextOf(stops[idx], "type") == stopDelivery {
+			if TextOf(stops[idx], keyType) == stopDelivery {
 				last = idx
 				break
 			}
@@ -212,7 +218,7 @@ func shipmentView(result map[string]any) map[string]any {
 			via := make([]map[string]any, 0, len(route)-2)
 			for _, stop := range route[1 : len(route)-1] {
 				shown := stopView(stop, false)
-				shown["type"] = TextOf(stop, "type")
+				shown[keyType] = TextOf(stop, keyType)
 				shown["done"] = stopDone(stop)
 				via = append(via, shown)
 			}
@@ -220,7 +226,7 @@ func shipmentView(result map[string]any) map[string]any {
 		}
 
 		view["progress"] = routeProgress(route)
-		if TextOf(result, "status") == "Completed" {
+		if TextOf(result, keyStatus) == "Completed" {
 			view["progress"] = 1.0
 		}
 	}
@@ -235,7 +241,7 @@ func shipmentView(result map[string]any) map[string]any {
 	if rate == "" {
 		rate = TextOf(result, "totalChargeAmount")
 	}
-	view["facts"] = facts(
+	view[keyFacts] = facts(
 		fact{"driver", nameOf(assignment, "primaryWorker")},
 		fact{"tractor", nameOf(assignment, "tractor")},
 		fact{"trailer", nameOf(assignment, "trailer")},
@@ -243,7 +249,7 @@ func shipmentView(result map[string]any) map[string]any {
 		fact{"weight", weight},
 		fact{"miles", miles},
 		fact{"rate", rate},
-		fact{"bol", TextOf(result, "bol")},
+		fact{keyBOL, TextOf(result, keyBOL)},
 		fact{"serviceType", nameOf(result, "serviceType")},
 		fact{"shipmentType", nameOf(result, "shipmentType")},
 	)
@@ -252,7 +258,7 @@ func shipmentView(result map[string]any) map[string]any {
 }
 
 func stopDone(stop map[string]any) bool {
-	return TextOf(stop, "actualDeparture") != "" || TextOf(stop, "status") == "Completed"
+	return TextOf(stop, "actualDeparture") != "" || TextOf(stop, keyStatus) == "Completed"
 }
 
 // routeProgress is how far along the line the truck is, with the stops evenly
@@ -323,21 +329,21 @@ func stopView(stop map[string]any, origin bool) map[string]any {
 // invoiceView is what an invoice bills, to whom, and whether it is paid.
 func invoiceView(result map[string]any) map[string]any {
 	return map[string]any{
-		"type":     ViewInvoice,
-		"status":   TextOf(result, "status"),
-		"subtitle": TextOf(result, "billToName"),
+		keyType:     ViewInvoice,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: TextOf(result, "billToName"),
 		"amount": map[string]any{
 			"total":    TextOf(result, "totalAmount"),
 			"balance":  TextOf(result, "balanceDue"),
 			"currency": TextOf(result, "currency"),
 		},
-		"facts": facts(
+		keyFacts: facts(
 			fact{"settlement", TextOf(result, "settlementStatus")},
 			fact{"dueDate", result["dueDate"]},
 			fact{"invoiceDate", result["invoiceDate"]},
 			fact{"paymentTerm", TextOf(result, "paymentTerm")},
 			fact{"proNumber", TextOf(result, "proNumber")},
-			fact{"bol", TextOf(result, "bol")},
+			fact{keyBOL, TextOf(result, keyBOL)},
 			fact{"sent", TextOf(result, "sendStatus")},
 			fact{"lines", NumberOf(result, "lineCount")},
 		),
@@ -348,13 +354,13 @@ func invoiceView(result map[string]any) map[string]any {
 // between it and an invoice.
 func billingQueueView(result map[string]any) map[string]any {
 	view := map[string]any{
-		"type":     ViewBillingQueueItem,
-		"status":   TextOf(result, "status"),
-		"subtitle": TextOf(result, "billTo"),
-		"amount":   map[string]any{"total": TextOf(result, "amount")},
-		"facts": facts(
+		keyType:     ViewBillingQueueItem,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: TextOf(result, "billTo"),
+		"amount":    map[string]any{"total": TextOf(result, "amount")},
+		keyFacts: facts(
 			fact{"proNumber", TextOf(result, "proNumber")},
-			fact{"bol", TextOf(result, "bol")},
+			fact{keyBOL, TextOf(result, keyBOL)},
 			fact{"biller", TextOf(result, "assignedBiller")},
 			fact{"billType", TextOf(result, "billType")},
 			fact{"ageDays", NumberOf(result, "ageDays")},
@@ -365,7 +371,7 @@ func billingQueueView(result map[string]any) map[string]any {
 		readiness := ObjectOf(result["readiness"])
 		blockers := len(ListOf(result["detentionHolds"]))
 		for _, key := range []string{"missingDocuments", "validationFailures"} {
-			if items, ok := readiness[key].([]any); ok {
+			if items, listed := readiness[key].([]any); listed {
 				blockers += len(items)
 			}
 		}
@@ -413,10 +419,10 @@ func joined(parts ...string) string {
 func customerView(result map[string]any) map[string]any {
 	billing := ObjectOf(result["billingProfile"])
 	view := map[string]any{
-		"type":     viewCustomer,
-		"status":   TextOf(result, "status"),
-		"subtitle": joined(TextOf(result, "code"), place(result)),
-		"facts": facts(
+		keyType:     viewCustomer,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: joined(TextOf(result, "code"), place(result)),
+		keyFacts: facts(
 			fact{"paymentTerm", TextOf(billing, "paymentTerm")},
 			fact{"billingCycle", TextOf(billing, "billingCycle")},
 			fact{"invoiceDelivery", TextOf(billing, "invoiceDelivery")},
@@ -436,10 +442,10 @@ func customerView(result map[string]any) map[string]any {
 // load, what they are qualified for, and when their papers come due.
 func workerView(result map[string]any) map[string]any {
 	view := map[string]any{
-		"type":     viewWorker,
-		"status":   TextOf(result, "status"),
-		"subtitle": joined(TextOf(result, "driverType"), TextOf(result, "type"), place(result)),
-		"facts": facts(
+		keyType:     viewWorker,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: joined(TextOf(result, "driverType"), TextOf(result, keyType), place(result)),
+		keyFacts: facts(
 			fact{"fleet", TextOf(result, "fleetCode")},
 			fact{"cdlClass", TextOf(result, "cdlClass")},
 			fact{"endorsement", TextOf(result, "endorsement")},

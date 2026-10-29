@@ -27,7 +27,9 @@ func (r *Recorder) extraction(callID string, data any) *assistantartifact.Artifa
 		return nil
 	}
 
-	return extractionartifact.ExtractionArtifact(callID, draft, r.extractionSource(documentID))
+	source := r.extractionSource(documentID)
+
+	return extractionartifact.ExtractionArtifact(callID, draft, &source)
 }
 
 func (r *Recorder) extractionSource(documentID pulid.ID) extractionartifact.ExtractionSource {

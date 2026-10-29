@@ -10,6 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type Usage struct {
+	Logger        *zap.Logger
+	Conversations conversationports.ConversationRepository
+}
+
 // KeepContextUsage writes the measure on the thread and on the copy in hand.
 func (s *Usage) KeepContextUsage(
 	ctx context.Context,
@@ -47,9 +52,4 @@ func (s *Usage) ModelHistory(
 		ExcludeKinds:    conversation.ModelHiddenKinds(),
 		SinceCompaction: true,
 	})
-}
-
-type Usage struct {
-	Logger        *zap.Logger
-	Conversations conversationports.ConversationRepository
 }
