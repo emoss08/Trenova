@@ -46,7 +46,8 @@ func DraftStatus(status agent.ProposalStatus) assistantartifact.Status {
 		agent.ProposalStatusSuperseded, agent.ProposalStatusExecutionFailed,
 		agent.ProposalStatusSkipped:
 		return assistantartifact.StatusFailed
-	case agent.ProposalStatusPending, agent.ProposalStatusAccepted, agent.ProposalStatusModified:
+	case agent.ProposalStatusPending, agent.ProposalStatusApproving, agent.ProposalStatusAccepted,
+		agent.ProposalStatusModified:
 		return assistantartifact.StatusPending
 	default:
 		return assistantartifact.StatusPending
@@ -61,7 +62,8 @@ func DecisionStatus(status agent.ProposalStatus) assistantartifact.Status {
 		agent.ProposalStatusSuperseded, agent.ProposalStatusExecutionFailed,
 		agent.ProposalStatusSkipped:
 		return assistantartifact.StatusFailed
-	case agent.ProposalStatusPending, agent.ProposalStatusAccepted, agent.ProposalStatusModified:
+	case agent.ProposalStatusPending, agent.ProposalStatusApproving, agent.ProposalStatusAccepted,
+		agent.ProposalStatusModified:
 		return assistantartifact.StatusPending
 	default:
 		return assistantartifact.StatusPending
@@ -74,7 +76,7 @@ func PlanStatus(status agentplan.PlanStatus) assistantartifact.Status {
 		return assistantartifact.StatusReady
 	case agentplan.PlanStatusFailed, agentplan.PlanStatusRejected, agentplan.PlanStatusExpired:
 		return assistantartifact.StatusFailed
-	case agentplan.PlanStatusPending, agentplan.PlanStatusApproved:
+	case agentplan.PlanStatusPending, agentplan.PlanStatusApproving, agentplan.PlanStatusApproved:
 		return assistantartifact.StatusPending
 	default:
 		return assistantartifact.StatusPending
@@ -90,34 +92,34 @@ func PayloadSize(payload map[string]any) int {
 	return len(encoded)
 }
 
-// JsonDocument is a tool result in its JSON form, which is the contract the
+// JSONDocument is a tool result in its JSON form, which is the contract the
 // tool publishes; its Go type is the tool's own business. The encoding is
 // kept for the one reader that needs the order the fields were written in.
-type JsonDocument struct {
+type JSONDocument struct {
 	Fields  map[string]any
 	encoded []byte
 }
 
-func ToJSONDocument(data any) (JsonDocument, bool) {
+func ToJSONDocument(data any) (JSONDocument, bool) {
 	if m, ok := data.(map[string]any); ok {
-		return JsonDocument{Fields: m}, true
+		return JSONDocument{Fields: m}, true
 	}
 
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
-		return JsonDocument{}, false
+		return JSONDocument{}, false
 	}
 	var out map[string]any
 	if err = sonic.Unmarshal(encoded, &out); err != nil || out == nil {
-		return JsonDocument{}, false
+		return JSONDocument{}, false
 	}
 
-	return JsonDocument{Fields: out, encoded: encoded}, true
+	return JSONDocument{Fields: out, encoded: encoded}, true
 }
 
 // KeyOrder is the order the result declared its fields in, or alphabetical
 // when it arrived as a map and so declared none.
-func (d JsonDocument) KeyOrder() []string {
+func (d JSONDocument) KeyOrder() []string {
 	if len(d.encoded) > 0 {
 		if keys := jsonutils.ObjectKeyOrder(d.encoded); len(keys) == len(d.Fields) {
 			return keys

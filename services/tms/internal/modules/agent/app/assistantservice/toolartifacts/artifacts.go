@@ -402,7 +402,7 @@ var (
 // sources its citation marks point to.
 func DocumentArtifact(
 	callID string,
-	document agentruntimeports.PublishedDocument,
+	document *agentruntimeports.PublishedDocument,
 	author string,
 ) *assistantartifact.Artifact {
 	sources := make([]assistantartifact.DocumentSource, 0, len(document.Sources))
@@ -1065,7 +1065,7 @@ func runStatus(finished bool, status string) assistantartifact.Status {
 // nested structure are the model's business.
 func EntityCardArtifact(
 	callID, toolName string,
-	document artifactpayload.JsonDocument,
+	document artifactpayload.JSONDocument,
 ) *assistantartifact.Artifact {
 	return RecordCardArtifact(&RecordCard{
 		CallID:   callID,

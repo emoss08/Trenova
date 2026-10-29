@@ -36,6 +36,45 @@ import (
 	"go.uber.org/zap"
 )
 
+// Recorder collects what one turn produced. It saves each artifact
+// as the tool that made it finishes, so the pane can open it while the reply
+// is still arriving, and ties them to their messages once the turn is saved.
+type Recorder struct {
+	repo      assistantartifactports.AssistantArtifactRepository
+	proposals proposalstores.ProposalStore
+	activity  agentactivityports.AgentActivityPublisher
+	logger    *zap.Logger
+	ctx       context.Context
+	thread    *conversation.Thread
+	tenant    pagination.TenantInfo
+	actor     kernelports.AuditActor
+	reader    *permissionports.RequestActor
+	emit      kernelports.AssistantStreamEmitter
+	Recorded  []*assistantartifact.Artifact
+	readBy    *attribution.AgentIdentity
+	agentRead bool
+	// reads is what an artifact needs beyond the tool's result: the agent
+	// a document is credited to, the pages an extraction was read from.
+	reads *Reads
+}
+
+type Reads struct {
+	Attribution   *attribution.Attributor
+	Conversations conversationports.ConversationRepository
+	Runtime       *agentruntime.Service
+	Boards        assistantports.BoardFiller
+	Documents     documentports.DocumentRepository
+	Contents      documentports.DocumentContentService
+}
+
+type Deps struct {
+	Repo      assistantartifactports.AssistantArtifactRepository
+	Proposals proposalstores.ProposalStore
+	Activity  agentactivityports.AgentActivityPublisher
+	Logger    *zap.Logger
+	Reads     *Reads
+}
+
 // withAnalyses is a document's text with each analysis it names added after
 // it, written from what the analysis kept: a model that retyped an analysis
 // into a document copied its figures by hand, and a person who asked to
@@ -239,45 +278,6 @@ func (r *Recorder) tableContinuedBy(
 	return latest
 }
 
-// Recorder collects what one turn produced. It saves each artifact
-// as the tool that made it finishes, so the pane can open it while the reply
-// is still arriving, and ties them to their messages once the turn is saved.
-type Recorder struct {
-	repo      assistantartifactports.AssistantArtifactRepository
-	proposals proposalstores.ProposalStore
-	activity  agentactivityports.AgentActivityPublisher
-	logger    *zap.Logger
-	ctx       context.Context
-	thread    *conversation.Thread
-	tenant    pagination.TenantInfo
-	actor     kernelports.AuditActor
-	reader    *permissionports.RequestActor
-	emit      kernelports.AssistantStreamEmitter
-	Recorded  []*assistantartifact.Artifact
-	readBy    *attribution.AgentIdentity
-	agentRead bool
-	// reads is what an artifact needs beyond the tool's result: the agent
-	// a document is credited to, the pages an extraction was read from.
-	reads *Reads
-}
-
-type Reads struct {
-	Attribution   *attribution.Attributor
-	Conversations conversationports.ConversationRepository
-	Runtime       *agentruntime.Service
-	Boards        assistantports.BoardFiller
-	Documents     documentports.DocumentRepository
-	Contents      documentports.DocumentContentService
-}
-
-type Deps struct {
-	Repo      assistantartifactports.AssistantArtifactRepository
-	Proposals proposalstores.ProposalStore
-	Activity  agentactivityports.AgentActivityPublisher
-	Logger    *zap.Logger
-	Reads     *Reads
-}
-
 func Open(
 	ctx context.Context,
 	deps Deps,
@@ -318,11 +318,12 @@ func (r *Recorder) Observer() agentruntimeports.ToolObserver {
 	return r.Observe
 }
 
+//nolint:gocritic // Observe is the runtime's ToolObserver, which takes the observation by value
 func (r *Recorder) Observe(
 	observation agentruntimeports.ToolObservation,
 ) (*agentruntimeports.ShownArtifact, error) {
 	if document, ok := observation.Data.(agentruntimeports.PublishedDocument); ok {
-		return r.publish(observation.Call.ID, document)
+		return r.publish(observation.Call.ID, &document)
 	}
 	if request, ok := observation.Data.(agentruntimeports.DecisionRequest); ok {
 		return r.requestDecision(observation.Call.ID, request)
@@ -332,12 +333,7 @@ func (r *Recorder) Observe(
 	}
 	if observation.Call.Name == artifactpayload.ToolGetShipmentDraft && !observation.Failed {
 		if extraction := r.extraction(observation.Call.ID, observation.Data); extraction != nil {
-			saved, err := r.save(extraction)
-			if err != nil {
-				return nil, nil
-			}
-
-			return toolartifacts.ShownArtifact(saved), nil
+			return r.shownIfKept(extraction), nil
 		}
 	}
 
@@ -355,11 +351,11 @@ func (r *Recorder) Observe(
 
 	artifact := toolartifacts.ArtifactFromObservation(observation)
 	if artifact == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a ToolObserver answers nil, nil for a result nothing shows
 	}
 	if artifact.Kind == assistantartifact.KindNavigation {
 		r.announceNavigation(artifact)
-		return nil, nil
+		return nil, nil //nolint:nilnil // a ToolObserver answers nil, nil for a result nothing shows
 	}
 	artifact.LineageKey = assistantartifact.LineageKeyFor(
 		artifact.Kind,
@@ -372,12 +368,18 @@ func (r *Recorder) Observe(
 		return r.bunch(&observation, artifact)
 	}
 
-	saved, err := r.save(artifact)
+	return r.shownIfKept(artifact), nil
+}
+
+func (r *Recorder) shownIfKept(
+	artifact *assistantartifact.Artifact,
+) *agentruntimeports.ShownArtifact {
+	shown, err := r.keep(artifact)
 	if err != nil {
-		return nil, nil
+		return nil
 	}
 
-	return toolartifacts.ShownArtifact(saved), nil
+	return shown
 }
 
 // announceNavigation tells the app to move to the page the agent opened. It
@@ -402,7 +404,7 @@ func (r *Recorder) announceNavigation(artifact *assistantartifact.Artifact) {
 // with its versions, and the text it replaced can be read and restored.
 func (r *Recorder) publish(
 	callID string,
-	document agentruntimeports.PublishedDocument,
+	document *agentruntimeports.PublishedDocument,
 ) (*agentruntimeports.ShownArtifact, error) {
 	body, err := r.withAnalyses(document.Body, document.Analyses)
 	if err != nil {
@@ -412,11 +414,11 @@ func (r *Recorder) publish(
 	artifact := toolartifacts.DocumentArtifact(callID, document, r.author())
 
 	if !document.ArtifactID.IsNil() {
-		existing, err := r.repo.GetByID(r.ctx, assistantartifactports.GetArtifactRequest{
+		existing, getErr := r.repo.GetByID(r.ctx, assistantartifactports.GetArtifactRequest{
 			ID:         document.ArtifactID,
 			TenantInfo: r.tenant,
 		})
-		if err != nil || existing.ThreadID != r.thread.ID ||
+		if getErr != nil || existing.ThreadID != r.thread.ID ||
 			existing.Kind != assistantartifact.KindDocument {
 			return nil, toolartifacts.ErrUnknownDocument
 		}
@@ -522,12 +524,12 @@ func (r *Recorder) FromProposals(
 			continue
 		}
 		if artifact := toolartifacts.DraftArtifact(proposal); artifact != nil {
-			r.save(artifact)
+			r.shownIfKept(artifact)
 		}
 	}
 
 	if plan != nil {
-		r.save(toolartifacts.PlanArtifact(plan, proposals))
+		r.shownIfKept(toolartifacts.PlanArtifact(plan, proposals))
 	}
 }
 
