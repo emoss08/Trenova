@@ -58,7 +58,11 @@ func (r *submissionRepository) Create(
 				item.SubmissionID = entity.ID
 				item.Position = idx + 1
 			}
-			if err := factoringsubmissiondb.SubmissionItems.CreateMany(ctx, db, entity.Items); err != nil {
+			if err := factoringsubmissiondb.SubmissionItems.CreateMany(
+				ctx,
+				db,
+				entity.Items,
+			); err != nil {
 				return nil, translateSubmissionError(err, entity.ID)
 			}
 
@@ -304,7 +308,8 @@ func liveItems(
 ) *keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringsubmissiondb.SubmissionItems
 	sub := factoringsubmissiondb.Submissions
-	return item.Pick(item.InvoiceID, item.SubmissionID, sub.Number, sub.Status, item.ID, item.Status).
+	return item.
+		Pick(item.InvoiceID, item.SubmissionID, sub.Number, sub.Status, item.ID, item.Status).
 		Join(sub, sub.ID.EqCol(item.SubmissionID)).
 		Where(
 			item.InvoiceID.In(req.InvoiceIDs...),

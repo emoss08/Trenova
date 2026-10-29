@@ -667,11 +667,15 @@ func (s *Service) autoAssignDefaultBiller(
 		zap.String("defaultBillerId", cust.BillingProfile.DefaultBillerID.String()),
 	)
 
-	if _, err = s.AssignBiller(billingqueueactivity.SystemEvents(ctx), &billingqueueports.AssignBillerRequest{
-		ItemID:     item.ID,
-		BillerID:   *cust.BillingProfile.DefaultBillerID,
-		TenantInfo: tenantInfo,
-	}, actor); err != nil {
+	if _, err = s.AssignBiller(
+		billingqueueactivity.SystemEvents(ctx),
+		&billingqueueports.AssignBillerRequest{
+			ItemID:     item.ID,
+			BillerID:   *cust.BillingProfile.DefaultBillerID,
+			TenantInfo: tenantInfo,
+		},
+		actor,
+	); err != nil {
 		s.l.Warn("failed to auto-assign default biller from customer billing profile",
 			zap.String("billingQueueItemId", item.ID.String()),
 			zap.String("customerId", customerID.String()),
@@ -817,7 +821,11 @@ func (s *Service) UpdateStatus(
 			if holdErr := s.guardRatingReview(txCtx, entity, req.TenantInfo); holdErr != nil {
 				return holdErr
 			}
-			if issueErr := s.readiness.GuardOpenIssues(txCtx, entity, req.TenantInfo); issueErr != nil {
+			if issueErr := s.readiness.GuardOpenIssues(
+				txCtx,
+				entity,
+				req.TenantInfo,
+			); issueErr != nil {
 				return issueErr
 			}
 		}

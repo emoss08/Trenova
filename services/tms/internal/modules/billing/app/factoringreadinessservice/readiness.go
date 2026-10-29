@@ -501,7 +501,10 @@ func (s *ReadinessService) SetOverride(
 	req *factoringports.SetOverrideRequest,
 	actor *permissionports.RequestActor,
 ) (*factoringreadiness.InvoiceState, error) {
-	if err := factoringaction.RequireActor(actor, "Changing whether an invoice is factored"); err != nil {
+	if err := factoringaction.RequireActor(
+		actor,
+		"Changing whether an invoice is factored",
+	); err != nil {
 		return nil, err
 	}
 	plan, err := s.PlanOverride(ctx, req)

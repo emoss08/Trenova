@@ -45,7 +45,11 @@ func (r *repository) CreateApprovalRun(
 				})
 			}
 			if len(items) > 0 {
-				if err := billingapprovalrundb.ApprovalRunItems.CreateMany(ctx, db, items); err != nil {
+				if err := billingapprovalrundb.ApprovalRunItems.CreateMany(
+					ctx,
+					db,
+					items,
+				); err != nil {
 					return nil, runItemErrors.Map(err, run.ID.String())
 				}
 			}

@@ -230,7 +230,10 @@ func (s *NoaService) Acknowledge(
 	if err := factoringaction.RequireRequest(req != nil); err != nil {
 		return nil, err
 	}
-	if err := factoringaction.RequireActor(actor, "Recording a notice acknowledgement"); err != nil {
+	if err := factoringaction.RequireActor(
+		actor,
+		"Recording a notice acknowledgement",
+	); err != nil {
 		return nil, err
 	}
 

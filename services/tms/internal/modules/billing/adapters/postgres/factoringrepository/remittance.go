@@ -53,7 +53,11 @@ func (r *remittanceRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*factoringremittance.Remittance, error) {
-			if err := factoringremittancedb.Remittances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if err := factoringremittancedb.Remittances.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				return nil, remittanceErrors.Map(err, entity.ID.String())
 			}
 

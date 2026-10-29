@@ -297,7 +297,10 @@ func (s *RemittanceService) UpdateLine(
 			return err
 		}
 		rem.SettleIfDone()
-		if err = s.remittances.UpdateLines(txCtx, []*factoringremittance.RemittanceLine{line}); err != nil {
+		if err = s.remittances.UpdateLines(
+			txCtx,
+			[]*factoringremittance.RemittanceLine{line},
+		); err != nil {
 			return err
 		}
 		updated, err = s.save(txCtx, rem)

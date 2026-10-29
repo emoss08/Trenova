@@ -231,13 +231,16 @@ func (s *Service) FinishCheck(
 		return err
 	}
 	conn.FinishDriftCheck(s.now().Unix())
-	if err = s.connections.SaveDriftCheck(ctx, &accountingconnectionports.SaveAccountingDriftCheckRequest{
-		TenantInfo:    req.TenantInfo,
-		ID:            conn.ID,
-		CheckedAt:     conn.DriftCheckedAt,
-		ErrorCategory: conn.DriftErrorCategory,
-		ErrorMessage:  conn.DriftErrorMessage,
-	}); err != nil {
+	if err = s.connections.SaveDriftCheck(
+		ctx,
+		&accountingconnectionports.SaveAccountingDriftCheckRequest{
+			TenantInfo:    req.TenantInfo,
+			ID:            conn.ID,
+			CheckedAt:     conn.DriftCheckedAt,
+			ErrorCategory: conn.DriftErrorCategory,
+			ErrorMessage:  conn.DriftErrorMessage,
+		},
+	); err != nil {
 		return err
 	}
 	s.refreshAttention(ctx, conn)

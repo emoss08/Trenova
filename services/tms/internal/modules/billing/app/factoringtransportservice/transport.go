@@ -91,7 +91,10 @@ func (s *TransportService) Save(
 	if err := factoringaction.RequireRequest(req != nil); err != nil {
 		return nil, err
 	}
-	if err := factoringaction.RequireActor(actor, "Changing how schedules reach a factor"); err != nil {
+	if err := factoringaction.RequireActor(
+		actor,
+		"Changing how schedules reach a factor",
+	); err != nil {
 		return nil, err
 	}
 	if _, err := s.factors.GetByID(ctx, factoringcompanyports.GetFactoringCompanyByIDRequest{
@@ -215,7 +218,10 @@ func (s *TransportService) Test(
 	if err := factoringaction.RequireRequest(req != nil); err != nil {
 		return nil, err
 	}
-	if err := factoringaction.RequireActor(actor, "Testing a factor's delivery settings"); err != nil {
+	if err := factoringaction.RequireActor(
+		actor,
+		"Testing a factor's delivery settings",
+	); err != nil {
 		return nil, err
 	}
 	entity, err := s.repo.Get(ctx, factoringsubmissionports.GetTransportRequest{
