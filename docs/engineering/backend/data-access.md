@@ -204,7 +204,10 @@ struct.
   `listquery.Result(items, total)`; a total taken from rows already in memory (a whole set read
   with `AllInto`, a filtered scan) is `len` and exact. Never `keel.CountInto` for a list total.
 - **Select options** use `listquery.SelectOptions` with the search predicate the picker needs
-  (`ContainsFold` over the code and description).
+  (`ContainsFold` over the code and description). A picker hydrating its saved selection reads
+  every selected ID with the kind's one `…ByIDs` read and maps it through
+  `selectoption.OrderedItems`, which keeps the request order and drops an ID that was deleted or
+  is out of scope instead of failing the request (`*selectoptions` resolver packages).
 - **Code that pages to a total** never stops at an estimate: an estimate can sit below the rows
   that match when statistics are stale. Stop at a short or empty page, or at `Total` only when
   `TotalExact` (`invoiceshareservice/candidates.go`), and say whether there is a next page with
