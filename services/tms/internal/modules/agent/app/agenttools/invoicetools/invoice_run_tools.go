@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -158,7 +157,7 @@ func NewBuildInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 			return fmt.Sprintf("Would build an invoice run for %s.",
 				changepreview.CountOf(len(req.CustomerIDs), "customer"))
 		},
-		Render: masterdatatools.RenderBuiltRun,
+		Render: RenderBuiltRun,
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.PreviewInvoiceRunRequest,
@@ -300,7 +299,7 @@ func NewAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agenttoolports.Age
 		Refused: func(*invoicerunports.AdjustInvoiceRunMembershipRequest) string {
 			return "Would change which shipments the invoice run bills."
 		},
-		Render: masterdatatools.RenderMembership,
+		Render: RenderMembership,
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.AdjustInvoiceRunMembershipRequest,
@@ -466,7 +465,7 @@ func NewCommitInvoiceRunTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 		Refused: func(*invoicerunports.CommitInvoiceRunRequest) string {
 			return "Would commit the invoice run."
 		},
-		Render: masterdatatools.RenderCommit,
+		Render: RenderCommit,
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.CommitInvoiceRunRequest,
@@ -602,7 +601,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 		Refused: func(*invoicerunports.BillStatementNowRequest) string {
 			return "Would bill the customer's open statement now."
 		},
-		Render: masterdatatools.RenderStatementBill,
+		Render: RenderStatementBill,
 		Run: func(
 			ctx context.Context,
 			req *invoicerunports.BillStatementNowRequest,

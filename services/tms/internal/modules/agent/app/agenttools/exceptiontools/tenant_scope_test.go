@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
@@ -113,7 +113,7 @@ func (f *fakeExceptionService) Flag(
 // in another organization by naming that organization's ids.
 func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 	assignments := assignmentportsmock.NewMockAssignmentService(t)
-	tool := masterdatatools.NewAssignMoveTool(assignments, nil)
+	tool := movetools.NewAssignMoveTool(assignments, nil)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -154,7 +154,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 
 func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
 	assignments := assignmentportsmock.NewMockAssignmentService(t)
-	tool := masterdatatools.NewAssignMoveTool(assignments, nil)
+	tool := movetools.NewAssignMoveTool(assignments, nil)
 
 	err := tool.Execute(t.Context(), agenttoolports.ToolExecuteParams{
 		OrganizationID: pulid.MustNew("org_"),

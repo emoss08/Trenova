@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/journalpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
@@ -115,7 +114,7 @@ func (t *ledgerTool) movementChanges(
 		if movement == nil || len(movement.Lines) == 0 {
 			continue
 		}
-		change, buildErr := masterdatatools.BookedEntryChange(
+		change, buildErr := journalpreview.BookedEntryChange(
 			journals[idx],
 			currency,
 			movementLabel(movement),

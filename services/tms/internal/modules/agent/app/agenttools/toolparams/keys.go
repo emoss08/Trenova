@@ -85,3 +85,5 @@ const ParamJurisdictionID = "jurisdictionId"
 const SearchTermIFTA = "ifta"
 
 const ParamCurrencyCode = "currencyCode"
+
+const SchemaItems = "items"

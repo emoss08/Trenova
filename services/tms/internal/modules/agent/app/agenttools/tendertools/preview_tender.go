@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -33,11 +32,11 @@ func (t *TenderToRoutingGuideTool) Preview(
 		changepreview.CountOf(len(planned.Tender.Offers), "carrier"),
 	)
 	if screening := planned.Screening; screening != nil {
-		summary += masterdatatools.ScreeningSentence("Skipped as ineligible", screening.Skipped)
-		summary += masterdatatools.ScreeningSentence("Offered despite a warning", screening.Warned)
+		summary += ScreeningSentence("Skipped as ineligible", screening.Skipped)
+		summary += ScreeningSentence("Offered despite a warning", screening.Warned)
 	}
 
-	return masterdatatools.TenderPreview(summary, planned)
+	return TenderPreview(summary, planned)
 }
 
 func (t *TenderToCarriersTool) Preview(
@@ -64,7 +63,7 @@ func (t *TenderToCarriersTool) Preview(
 		summary += " Eligibility warnings: " + strings.Join(planned.Warnings, "; ") + "."
 	}
 
-	preview, err := masterdatatools.TenderPreview(summary, planned)
+	preview, err := TenderPreview(summary, planned)
 	if err != nil {
 		return nil, err
 	}

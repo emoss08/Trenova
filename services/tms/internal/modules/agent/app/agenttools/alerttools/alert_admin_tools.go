@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -114,17 +114,17 @@ func alertEditFrom(params *agenttoolports.ToolExecuteParams) (*alertEdit, error)
 
 func (e *alertEdit) apply(subscription *tablechangealert.TCASubscription) error {
 	multiErr := errortypes.NewMultiError()
-	for _, key := range []string{masterdatatools.MdName, masterdatatools.AlertTableName, masterdatatools.AlertCustomMessage, "conditionMatch"} {
+	for _, key := range []string{masterdatakit.MdName, alertTableName, alertCustomMessage, "conditionMatch"} {
 		if _, given := e.values[key]; !given {
 			continue
 		}
 		text := strings.TrimSpace(toolparams.OptionalString(e.values, key))
 		switch key {
-		case masterdatatools.MdName:
+		case masterdatakit.MdName:
 			subscription.Name = text
-		case masterdatatools.AlertTableName:
+		case alertTableName:
 			subscription.TableName = text
-		case masterdatatools.AlertCustomMessage:
+		case alertCustomMessage:
 			subscription.CustomMessage = text
 		default:
 			if !slices.Contains(alertConditionMatches.Values, text) {
@@ -201,7 +201,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 		Properties: properties,
 		Required:   []string{ParamAlertID},
 		SearchTerms: []string{
-			masterdatatools.AlertKind,
+			alertKind,
 			"edit notification",
 			"watch different column",
 		},
@@ -250,8 +250,8 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			}
 
 			return &agentrecord.ToolExecutionResult{
-				Action: masterdatatools.ActionUpdated,
-				Kind:   masterdatatools.AlertKind,
+				Action: masterdatakit.ActionUpdated,
+				Kind:   alertKind,
 				Name:   updated.Name,
 				IDs:    map[string]string{ParamAlertID: updated.ID.String()},
 			}, nil
@@ -346,8 +346,8 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 			}
 
 			return &agentrecord.ToolExecutionResult{
-				Action: masterdatatools.ActionUpdated,
-				Kind:   masterdatatools.AlertKind,
+				Action: masterdatakit.ActionUpdated,
+				Kind:   alertKind,
 				Name:   updated.Name,
 				IDs:    map[string]string{ParamAlertID: updated.ID.String()},
 			}, nil
@@ -406,7 +406,7 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 
 			return &agentrecord.ToolExecutionResult{
 				Action: changepreview.ActionDeleted,
-				Kind:   masterdatatools.AlertKind,
+				Kind:   alertKind,
 				IDs:    map[string]string{ParamAlertID: id.String()},
 			}, nil
 		},

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -47,7 +47,7 @@ func (t *UnassignMovesTool) Preview(
 		removed, rErr := toolpreview.Delete(toolpreview.Record{
 			Resource: permission.ResourceShipmentMove,
 			Label:    "Assignment on " + plan.ShipmentBefore.ProNumber,
-		}, plan.Assignment, masterdatatools.AssignmentOptions()...)
+		}, plan.Assignment, movetools.AssignmentOptions()...)
 		if rErr != nil {
 			return nil, rErr
 		}

@@ -1,10 +1,10 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/equipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agenttoolports.ToolPreviewer = (*masterdatatools.UpdateTractorStatusTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*equipmenttools.UpdateTractorStatusTool)(nil)
 
-var _ agenttoolports.ToolPreviewer = (*masterdatatools.UpdateTrailerStatusTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*equipmenttools.UpdateTrailerStatusTool)(nil)

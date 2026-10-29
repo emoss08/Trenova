@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/documenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
@@ -72,12 +73,12 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		{&shipmenttools.AddShipmentCommentTool{}, "shipmentId", permission.ResourceShipment},
 		// The document, not the shipment: attaching changes the document's
 		// lineage, so that is the record whose version the proposal pins.
-		{&masterdatatools.AttachDocumentTool{}, "documentId", permission.ResourceDocument},
+		{&documenttools.AttachDocumentTool{}, "documentId", permission.ResourceDocument},
 		{&shipmenttools.PlaceShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
 		{&shipmenttools.ReleaseShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
 		{&shipmenttools.CancelShipmentTool{}, "shipmentId", permission.ResourceShipment},
 		{&movetools.RecordStopActualTool{}, "moveId", permission.ResourceShipmentMove},
-		{&masterdatatools.AssignMoveTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{&movetools.AssignMoveTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
 		{&operationstools.ApproveWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
 		{&operationstools.RejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
 		{&operationstools.CancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
@@ -86,7 +87,7 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 			"billingQueueItemId",
 			permission.ResourceBillingQueue,
 		},
-		{&masterdatatools.AddDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
+		{&dashboardtools.AddDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
 		{&alerttools.ScheduleReportTool{}, "definitionId", permission.ResourceReport},
 		{&inboundtools.LinkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
 		{&inboundtools.MarkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},

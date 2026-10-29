@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/journalpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -569,7 +568,7 @@ func newDraftManualJournalTool(
 			return fmt.Sprintf("Would draft the manual journal %q with %s.",
 				req.Description, changepreview.CountOf(len(req.Lines), "line"))
 		},
-		Render: masterdatatools.RenderManualJournalDraft,
+		Render: journalpreview.RenderManualJournalDraft,
 		Run: func(
 			ctx context.Context,
 			req *manualjournalports.CreateManualJournalRequest,
@@ -622,7 +621,7 @@ func newReviseManualJournalDraftTool(
 		Refused: func(*journalpreview.JournalRevision) string {
 			return "Would revise a draft manual journal."
 		},
-		Render: masterdatatools.RenderManualJournalRevision,
+		Render: journalpreview.RenderManualJournalRevision,
 		Run: func(
 			ctx context.Context,
 			revision *journalpreview.JournalRevision,
@@ -692,7 +691,7 @@ func newSubmitManualJournalTool(
 		Refused: func(*manualjournalports.GetManualJournalRequest) string {
 			return "Would submit a manual journal for approval."
 		},
-		Render: masterdatatools.RenderManualJournalSubmit,
+		Render: journalpreview.RenderManualJournalSubmit,
 		Run: func(
 			ctx context.Context,
 			req *manualjournalports.GetManualJournalRequest,
@@ -770,7 +769,7 @@ func newCancelManualJournalTool(
 		Refused: func(*manualjournalports.CancelManualJournalRequest) string {
 			return "Would cancel a manual journal."
 		},
-		Render: masterdatatools.RenderManualJournalCancel,
+		Render: journalpreview.RenderManualJournalCancel,
 		Run: func(
 			ctx context.Context,
 			req *manualjournalports.CancelManualJournalRequest,
@@ -818,7 +817,7 @@ func newPostManualJournalTool(
 		Refused: func(*manualjournalports.GetManualJournalRequest) string {
 			return "Would post a manual journal to the general ledger."
 		},
-		Render: masterdatatools.RenderManualJournalPost,
+		Render: journalpreview.RenderManualJournalPost,
 		Run: func(
 			ctx context.Context,
 			req *manualjournalports.GetManualJournalRequest,
@@ -926,7 +925,7 @@ func newRequestJournalReversalTool(
 			Refused: func(*journalreversalports.CreateJournalReversalRequest) string {
 				return "Would request a reversal of a posted journal entry."
 			},
-			Render: masterdatatools.RenderReversalRequest,
+			Render: journalpreview.RenderReversalRequest,
 			Run: func(
 				ctx context.Context,
 				req *journalreversalports.CreateJournalReversalRequest,
@@ -1016,7 +1015,7 @@ func newCancelJournalReversalTool(
 		Refused: func(*journalreversalports.CancelJournalReversalRequest) string {
 			return "Would cancel a journal reversal."
 		},
-		Render: masterdatatools.RenderReversalCancel,
+		Render: journalpreview.RenderReversalCancel,
 		Run: func(
 			ctx context.Context,
 			req *journalreversalports.CancelJournalReversalRequest,
@@ -1076,7 +1075,7 @@ func newPostJournalReversalTool(
 		Refused: func(*journalreversalports.GetJournalReversalRequest) string {
 			return "Would post a journal reversal to the general ledger."
 		},
-		Render: masterdatatools.RenderReversalPost,
+		Render: journalpreview.RenderReversalPost,
 		Run: func(
 			ctx context.Context,
 			req *journalreversalports.GetJournalReversalRequest,

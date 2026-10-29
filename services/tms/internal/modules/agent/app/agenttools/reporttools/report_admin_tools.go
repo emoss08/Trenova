@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recurringshipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
@@ -360,7 +360,7 @@ func NewDeleteDashboardTool(reports ReportAdministrator) agenttoolports.AgentToo
 					Label:    existing.Name,
 					Version:  changepreview.PinnedVersion(existing.Version),
 				},
-				masterdatatools.DashboardViewOf(existing),
+				dashboardtools.DashboardViewOf(existing),
 			)
 			if err != nil {
 				return nil, err

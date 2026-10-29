@@ -5,15 +5,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dispatchtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/documenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/editools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/equipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/exceptiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/locationtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/memorytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/portaltools"
@@ -109,14 +114,14 @@ func ToolProviders() []any {
 		provideVoidInvoiceTool,
 		provideSendInvoiceEDITool,
 		provideCorrectChargeCodeTool,
-		masterdatatools.NewSaveTableViewTool,
-		masterdatatools.NewCreateDashboardTool,
-		masterdatatools.NewAddDashboardTileTool,
+		dashboardtools.NewSaveTableViewTool,
+		dashboardtools.NewCreateDashboardTool,
+		dashboardtools.NewAddDashboardTileTool,
 		alerttools.NewScheduleReportTool,
 		alerttools.NewCreateTableChangeAlertTool,
 		workforcetools.NewRequestMissingDocsTool,
 		provideAttachDocumentTool,
-		masterdatatools.NewAssignMoveTool,
+		movetools.NewAssignMoveTool,
 		exceptiontools.NewRaiseExceptionTool,
 		carriertools.NewWaitUntilTool,
 		carriertools.NewCancelWaitTool,
@@ -186,9 +191,9 @@ func ToolProviders() []any {
 		dispatchtools.ProvideSendRateConfirmationTool,
 		dispatchtools.ProvideVoidRateConfirmationTool,
 		dispatchtools.ProvideRecordRateConfirmationConfirmedTool,
-		masterdatatools.NewRememberTool,
-		masterdatatools.NewGuideProfileTool,
-		masterdatatools.NewForgetMemoryTool,
+		memorytools.NewRememberTool,
+		memorytools.NewGuideProfileTool,
+		memorytools.NewForgetMemoryTool,
 		provideDismissInsightTool,
 		accountingtools.ProvideCheckAccountingConnectionTool,
 		accountingtools.ProvideSetAccountingMappingTool,
@@ -244,11 +249,11 @@ func grouped() []any {
 }
 
 func provideUpdateTractorStatusTool(tractors *tractorservice.Service) agenttoolports.AgentTool {
-	return masterdatatools.NewUpdateTractorStatusTool(tractors)
+	return equipmenttools.NewUpdateTractorStatusTool(tractors)
 }
 
 func provideUpdateTrailerStatusTool(trailers *trailerservice.Service) agenttoolports.AgentTool {
-	return masterdatatools.NewUpdateTrailerStatusTool(trailers)
+	return equipmenttools.NewUpdateTrailerStatusTool(trailers)
 }
 
 func provideApproveWorkerPTOTool(pto workerptoports.WorkerPTOService) agenttoolports.AgentTool {
@@ -328,7 +333,7 @@ func provideCreateLocationTool(
 	categories locationcategoryports.LocationCategoryRepository,
 	places kernelports.AutoCompleteService,
 ) agenttoolports.AgentTool {
-	return masterdatatools.NewCreateLocationTool(masterdatatools.CreateLocationToolParams{
+	return locationtools.NewCreateLocationTool(locationtools.CreateLocationToolParams{
 		Locations:  locations,
 		States:     states,
 		Categories: categories,
@@ -396,7 +401,7 @@ func provideResolveBankReceiptWorkItemTool(
 }
 
 func provideEscalateDetentionTool(detention *detentionservice.Service) agenttoolports.AgentTool {
-	return masterdatatools.NewEscalateDetentionTool(detention)
+	return findingtools.NewEscalateDetentionTool(detention)
 }
 
 func provideTransferToBillingTool(
@@ -464,35 +469,35 @@ func provideApproveBillingQueueItemsTool(
 }
 
 func provideApproveDetentionTool(detention *detentionservice.Service) agenttoolports.AgentTool {
-	return masterdatatools.NewApproveDetentionTool(detention)
+	return findingtools.NewApproveDetentionTool(detention)
 }
 
 func provideRequestCredentialRenewalTool(
 	credentials *workercredentialservice.Service,
 ) agenttoolports.AgentTool {
-	return masterdatatools.NewRequestCredentialRenewalTool(credentials)
+	return findingtools.NewRequestCredentialRenewalTool(credentials)
 }
 
 func providePlaceWorkerDispatchHoldTool(workers *workerservice.Service) agenttoolports.AgentTool {
-	return masterdatatools.NewPlaceWorkerDispatchHoldTool(workers)
+	return findingtools.NewPlaceWorkerDispatchHoldTool(workers)
 }
 
 func provideAcknowledgeCarrierIntelEventTool(
 	intel *carrierintelservice.Service,
 ) agenttoolports.AgentTool {
-	return masterdatatools.NewAcknowledgeCarrierIntelEventTool(intel)
+	return findingtools.NewAcknowledgeCarrierIntelEventTool(intel)
 }
 
 func provideResolveCarrierIntelEventTool(
 	intel *carrierintelservice.Service,
 ) agenttoolports.AgentTool {
-	return masterdatatools.NewResolveCarrierIntelEventTool(intel)
+	return findingtools.NewResolveCarrierIntelEventTool(intel)
 }
 
 // The tool takes a narrow interface so it can be tested without the whole
 // document stack; fx holds the concrete service, so the widening happens here.
 func provideAttachDocumentTool(documents *documentservice.Service) agenttoolports.AgentTool {
-	return masterdatatools.NewAttachDocumentTool(documents)
+	return documenttools.NewAttachDocumentTool(documents)
 }
 
 func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) agenttoolports.AgentTool {

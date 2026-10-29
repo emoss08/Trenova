@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -333,8 +333,8 @@ func (t *CreateTableChangeAlertTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"required": []string{
-			masterdatatools.MdName,
-			masterdatatools.AlertTableName,
+			masterdatakit.MdName,
+			alertTableName,
 			"eventTypes",
 		},
 		"properties":           alertProperties(""),
@@ -344,11 +344,11 @@ func (t *CreateTableChangeAlertTool) ParamSchema() map[string]any {
 
 func alertProperties(keep string) map[string]any {
 	return map[string]any{
-		masterdatatools.MdName: map[string]any{
+		masterdatakit.MdName: map[string]any{
 			"type":        "string",
 			"description": "What the alert is called, in the words of the thing watched." + keep,
 		},
-		masterdatatools.AlertTableName: map[string]any{
+		alertTableName: map[string]any{
 			"type":        "string",
 			"description": "The table to watch, e.g. shipments, customers, workers." + keep,
 		},
@@ -386,7 +386,7 @@ func alertProperties(keep string) map[string]any {
 			"Whether every condition must hold, or any one. Defaults to all."+keep,
 			alertConditionMatches,
 		),
-		masterdatatools.AlertCustomMessage: map[string]any{
+		alertCustomMessage: map[string]any{
 			"type":        "string",
 			"description": "What the notification should say." + keep,
 		},

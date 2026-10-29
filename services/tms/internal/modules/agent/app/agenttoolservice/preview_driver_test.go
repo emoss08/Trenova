@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -221,7 +221,7 @@ func TestRequestCredentialRenewalPreview_ShowsTheAskAndWhoCannotReadIt(t *testin
 	t.Parallel()
 
 	stub := &agenttoolstest.StubCredentialActor{}
-	tool := masterdatatools.NewRequestCredentialRenewalTool(stub)
+	tool := findingtools.NewRequestCredentialRenewalTool(stub)
 	params := agenttoolstest.DeskParams(map[string]any{
 		"workerId":      pulid.MustNew("wrk_").String(),
 		"credentialIds": []any{pulid.MustNew("wcred_").String()},
