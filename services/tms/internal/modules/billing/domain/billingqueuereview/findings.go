@@ -1,9 +1,10 @@
-package billingqueue
+package billingqueuereview
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -53,12 +54,12 @@ func (d *DetentionDwell) Disagrees() bool {
 type FindingInput struct {
 	CustomerName     string
 	ShipmentRef      string
-	Charges          *ChargeReview
+	Charges          *billingqueue.ChargeReview
 	POD              *PODState
 	Detention        []*DetentionDwell
-	DetentionHolds   []*DetentionHold
-	RatingReview     *RatingReviewHold
-	Duplicates       []*DuplicateRef
+	DetentionHolds   []*billingqueue.DetentionHold
+	RatingReview     *billingqueue.RatingReviewHold
+	Duplicates       []*billingqueue.DuplicateRef
 	CreditHold       bool
 	CreditHoldReason string
 	PayerShareError  string
@@ -67,17 +68,17 @@ type FindingInput struct {
 // Findings is every issue the item has right now, unsaved. The same input
 // gives the same findings with the same keys, which is what lets the sync
 // that stores them run on every read without raising anything twice.
-func Findings(in FindingInput) []*Issue {
-	out := make([]*Issue, 0, 4)
+func Findings(in FindingInput) []*billingqueue.Issue {
+	out := make([]*billingqueue.Issue, 0, 4)
 	customer := in.CustomerName
 	if customer == "" {
 		customer = "The customer"
 	}
 
 	if in.PayerShareError != "" {
-		out = append(out, &Issue{
-			CheckKey:  CheckCharges,
-			Code:      IssueChargesUnsplittable,
+		out = append(out, &billingqueue.Issue{
+			CheckKey:  billingqueue.CheckCharges,
+			Code:      billingqueue.IssueChargesUnsplittable,
 			Summary:   "The charges can't be divided between payers",
 			Reasoning: in.PayerShareError,
 		})
@@ -88,9 +89,9 @@ func Findings(in FindingInput) []*Issue {
 		if hold.LocationName != "" {
 			where = " at " + hold.LocationName
 		}
-		out = append(out, &Issue{
-			CheckKey:   CheckCharges,
-			Code:       IssueDetentionAwaitingApproval,
+		out = append(out, &billingqueue.Issue{
+			CheckKey:   billingqueue.CheckCharges,
+			Code:       billingqueue.IssueDetentionAwaitingApproval,
 			SubjectKey: hold.OccurrenceID.String(),
 			Summary: FormatMoney(
 				hold.BillableAmount,
@@ -100,9 +101,9 @@ func Findings(in FindingInput) []*Issue {
 	}
 
 	if hold := in.RatingReview; hold != nil {
-		out = append(out, &Issue{
-			CheckKey:   CheckCharges,
-			Code:       IssueRatingAwaitingReview,
+		out = append(out, &billingqueue.Issue{
+			CheckKey:   billingqueue.CheckCharges,
+			Code:       billingqueue.IssueRatingAwaitingReview,
 			SubjectKey: hold.ShipmentID.String(),
 			Summary:    "The tariff held this rating for review",
 			Reasoning: "The item can't be approved until a person approves the rating: " +
@@ -119,9 +120,9 @@ func Findings(in FindingInput) []*Issue {
 		if reason == "" {
 			reason = customer + " is past its credit terms. Accounts receivable has to release the hold before anything more is billed to them."
 		}
-		out = append(out, &Issue{
-			CheckKey:  CheckTerms,
-			Code:      IssueBillToCreditHold,
+		out = append(out, &billingqueue.Issue{
+			CheckKey:  billingqueue.CheckTerms,
+			Code:      billingqueue.IssueBillToCreditHold,
 			Summary:   customer + " is on credit hold",
 			Reasoning: reason,
 		})
@@ -132,34 +133,34 @@ func Findings(in FindingInput) []*Issue {
 		if dup.Kind == "invoice" {
 			what = "Invoice " + dup.Number
 		}
-		out = append(out, &Issue{
-			CheckKey:   CheckDuplicate,
-			Code:       IssuePossibleDuplicate,
+		out = append(out, &billingqueue.Issue{
+			CheckKey:   billingqueue.CheckDuplicate,
+			Code:       billingqueue.IssuePossibleDuplicate,
 			SubjectKey: dup.ID.String(),
 			Summary:    what + " already bills this shipment",
 			Reasoning: "Both bill " + customer + " for " + in.ShipmentRef +
 				". If they're for different work, bill it; otherwise put this one on hold.",
-			Options: []IssueOption{{
+			Options: []billingqueue.IssueOption{{
 				Key:    "bill",
 				Label:  "Bill it anyway",
 				Done:   "Billed alongside " + dup.Number,
-				Effect: IssueEffect{Kind: EffectAccept},
+				Effect: billingqueue.IssueEffect{Kind: billingqueue.EffectAccept},
 			}},
 		})
 	}
 
 	for _, issue := range out {
-		issue.Source = IssueSourceDeterministic
+		issue.Source = billingqueue.IssueSourceDeterministic
 		if issue.Options == nil {
-			issue.Options = []IssueOption{}
+			issue.Options = []billingqueue.IssueOption{}
 		}
 	}
 
 	return out
 }
 
-func detentionFindings(dwells []*DetentionDwell) []*Issue {
-	out := make([]*Issue, 0, len(dwells))
+func detentionFindings(dwells []*DetentionDwell) []*billingqueue.Issue {
+	out := make([]*billingqueue.Issue, 0, len(dwells))
 	for _, dwell := range dwells {
 		if dwell == nil || !dwell.Disagrees() {
 			continue
@@ -173,15 +174,15 @@ func detentionFindings(dwells []*DetentionDwell) []*Issue {
 			FormatHours(eldBillable),
 			FormatHours(dwell.LoggedBillableMinutes()),
 		)
-		options := make([]IssueOption, 0, 2)
+		options := make([]billingqueue.IssueOption, 0, 2)
 		if eldBillable > 0 {
-			options = append(options, IssueOption{
+			options = append(options, billingqueue.IssueOption{
 				Key:    "eld",
 				Label:  "Bill ELD time · " + FormatMoney(dwell.ELDAmount),
 				Amount: decimal.NewNullDecimal(dwell.ELDAmount),
 				Done:   "Detention set to ELD time",
-				Effect: IssueEffect{
-					Kind:     EffectSet,
+				Effect: billingqueue.IssueEffect{
+					Kind:     billingqueue.EffectSet,
 					ChargeID: chargeID,
 					Amount:   decimal.NewNullDecimal(dwell.ELDAmount),
 					Basis: FormatHours(eldBillable) + " × " + FormatMoney(dwell.HourlyRate) +
@@ -189,23 +190,23 @@ func detentionFindings(dwells []*DetentionDwell) []*Issue {
 				},
 			})
 		} else {
-			options = append(options, IssueOption{
+			options = append(options, billingqueue.IssueOption{
 				Key:    "keep",
 				Label:  "Keep it · bill " + FormatMoney(dwell.BilledAmount),
 				Amount: decimal.NewNullDecimal(dwell.BilledAmount),
 				Done:   "Detention kept as logged",
-				Effect: IssueEffect{Kind: EffectKeep, ChargeID: chargeID},
+				Effect: billingqueue.IssueEffect{Kind: billingqueue.EffectKeep, ChargeID: chargeID},
 			})
 		}
-		options = append(options, IssueOption{
+		options = append(options, billingqueue.IssueOption{
 			Key:    "drop",
 			Label:  "Remove detention",
 			Done:   "Detention removed",
-			Effect: IssueEffect{Kind: EffectDrop, ChargeID: chargeID},
+			Effect: billingqueue.IssueEffect{Kind: billingqueue.EffectDrop, ChargeID: chargeID},
 		})
-		out = append(out, &Issue{
-			CheckKey:        CheckCharges,
-			Code:            IssueDetentionELDMismatch,
+		out = append(out, &billingqueue.Issue{
+			CheckKey:        billingqueue.CheckCharges,
+			Code:            billingqueue.IssueDetentionELDMismatch,
 			SubjectKey:      dwell.OccurrenceID.String(),
 			Summary:         "Detention doesn't match the ELD",
 			Reasoning:       reasoning,
@@ -217,7 +218,11 @@ func detentionFindings(dwells []*DetentionDwell) []*Issue {
 	return out
 }
 
-func chargeFindings(charges *ChargeReview, customer string, dwells []*DetentionDwell) []*Issue {
+func chargeFindings(
+	charges *billingqueue.ChargeReview,
+	customer string,
+	dwells []*DetentionDwell,
+) []*billingqueue.Issue {
 	if charges == nil || !charges.HasRateCon {
 		return nil
 	}
@@ -228,7 +233,7 @@ func chargeFindings(charges *ChargeReview, customer string, dwells []*DetentionD
 		}
 	}
 
-	out := make([]*Issue, 0, 2)
+	out := make([]*billingqueue.Issue, 0, 2)
 	for _, line := range charges.Lines {
 		if line.AdditionalChargeID.IsNil() || line.Removed || line.Adjusted {
 			continue
@@ -240,49 +245,55 @@ func chargeFindings(charges *ChargeReview, customer string, dwells []*DetentionD
 		label := strings.ToLower(line.Label)
 		switch {
 		case !line.Expected.Valid && line.Billed.IsPositive():
-			out = append(out, &Issue{
-				CheckKey:   CheckCharges,
-				Code:       IssueAccessorialNotOnRateCon,
+			out = append(out, &billingqueue.Issue{
+				CheckKey:   billingqueue.CheckCharges,
+				Code:       billingqueue.IssueAccessorialNotOnRateCon,
 				SubjectKey: chargeID.String(),
 				Summary:    FormatMoney(line.Billed) + " " + label + " isn't on the rate con",
 				Reasoning: customer + "'s rate con doesn't price a " + label +
 					". It was added to the shipment by hand, so bill it only if the contract passes it through or there's a receipt for it.",
 				FlaggedChargeID: &chargeID,
-				Options: []IssueOption{
+				Options: []billingqueue.IssueOption{
 					{
 						Key:    "keep",
 						Label:  "Keep it · bill " + FormatMoney(line.Billed),
 						Amount: decimal.NewNullDecimal(line.Billed),
 						Done:   capitalize(label) + " kept",
-						Effect: IssueEffect{Kind: EffectKeep, ChargeID: chargeID},
+						Effect: billingqueue.IssueEffect{
+							Kind:     billingqueue.EffectKeep,
+							ChargeID: chargeID,
+						},
 					},
 					{
-						Key:    "drop",
-						Label:  "Remove it",
-						Done:   capitalize(label) + " removed",
-						Effect: IssueEffect{Kind: EffectDrop, ChargeID: chargeID},
+						Key:   "drop",
+						Label: "Remove it",
+						Done:  capitalize(label) + " removed",
+						Effect: billingqueue.IssueEffect{
+							Kind:     billingqueue.EffectDrop,
+							ChargeID: chargeID,
+						},
 					},
 				},
 			})
 		case line.Expected.Valid && line.Billed.Sub(line.Expected.Decimal).GreaterThan(decimal.NewFromFloat(0.005)):
 			over := line.Billed.Sub(line.Expected.Decimal)
-			out = append(out, &Issue{
-				CheckKey:   CheckCharges,
-				Code:       IssueChargeOverRateCon,
+			out = append(out, &billingqueue.Issue{
+				CheckKey:   billingqueue.CheckCharges,
+				Code:       billingqueue.IssueChargeOverRateCon,
 				SubjectKey: chargeID.String(),
 				Summary:    capitalize(label) + " is " + FormatMoney(over) + " over the rate con",
 				Reasoning: customer + "'s rate con prices the " + label + " at " +
 					FormatMoney(line.Expected.Decimal) + "; the shipment bills " +
 					FormatMoney(line.Billed) + ".",
 				FlaggedChargeID: &chargeID,
-				Options: []IssueOption{
+				Options: []billingqueue.IssueOption{
 					{
 						Key:    "ratecon",
 						Label:  "Bill the rate con · " + FormatMoney(line.Expected.Decimal),
 						Amount: line.Expected,
 						Done:   capitalize(label) + " set to the rate con",
-						Effect: IssueEffect{
-							Kind:     EffectSet,
+						Effect: billingqueue.IssueEffect{
+							Kind:     billingqueue.EffectSet,
 							ChargeID: chargeID,
 							Amount:   line.Expected,
 							Basis:    "Per rate con",
@@ -293,7 +304,10 @@ func chargeFindings(charges *ChargeReview, customer string, dwells []*DetentionD
 						Label:  "Keep " + FormatMoney(line.Billed),
 						Amount: decimal.NewNullDecimal(line.Billed),
 						Done:   capitalize(label) + " kept at " + FormatMoney(line.Billed),
-						Effect: IssueEffect{Kind: EffectKeep, ChargeID: chargeID},
+						Effect: billingqueue.IssueEffect{
+							Kind:     billingqueue.EffectKeep,
+							ChargeID: chargeID,
+						},
 					},
 				},
 			})
@@ -303,7 +317,7 @@ func chargeFindings(charges *ChargeReview, customer string, dwells []*DetentionD
 	return out
 }
 
-func podFindings(pod *PODState, customer string) []*Issue {
+func podFindings(pod *PODState, customer string) []*billingqueue.Issue {
 	if pod == nil || !pod.Required || pod.Signed {
 		return nil
 	}
@@ -313,18 +327,18 @@ func podFindings(pod *PODState, customer string) []*Issue {
 	if driver != "" {
 		reasoning += " " + driver + " can re-send it from the driver app."
 	}
-	options := []IssueOption{
+	options := []billingqueue.IssueOption{
 		{
-			Key:    OptionKeyRequest,
+			Key:    billingqueue.OptionKeyRequest,
 			Label:  "Ask the driver for it",
 			Done:   "Asked the driver for a signed POD",
-			Effect: IssueEffect{Kind: EffectRequest},
+			Effect: billingqueue.IssueEffect{Kind: billingqueue.EffectRequest},
 		},
 		{
 			Key:    "accept",
 			Label:  "Bill without it",
 			Done:   "Billing without a signed POD",
-			Effect: IssueEffect{Kind: EffectAccept},
+			Effect: billingqueue.IssueEffect{Kind: billingqueue.EffectAccept},
 		},
 	}
 	if pod.DriverID.IsNil() {
@@ -332,9 +346,9 @@ func podFindings(pod *PODState, customer string) []*Issue {
 	}
 
 	if !pod.Present {
-		return []*Issue{{
-			CheckKey:   CheckPOD,
-			Code:       IssuePODMissing,
+		return []*billingqueue.Issue{{
+			CheckKey:   billingqueue.CheckPOD,
+			Code:       billingqueue.IssuePODMissing,
 			SubjectKey: pod.DocumentType,
 			Summary:    "There's no POD on file",
 			Reasoning:  reasoning,
@@ -345,9 +359,9 @@ func podFindings(pod *PODState, customer string) []*Issue {
 		return nil
 	}
 
-	return []*Issue{{
-		CheckKey:   CheckPOD,
-		Code:       IssuePODUnsigned,
+	return []*billingqueue.Issue{{
+		CheckKey:   billingqueue.CheckPOD,
+		Code:       billingqueue.IssuePODUnsigned,
 		SubjectKey: pod.DocumentID.String(),
 		Summary:    "POD isn't signed — the receiver's line is blank",
 		Reasoning:  reasoning,

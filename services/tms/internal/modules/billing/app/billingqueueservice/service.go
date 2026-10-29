@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -477,7 +478,7 @@ func (s *service) TransferToBillingItems(
 			item = s.autoApprove(ctx, item, req.TenantInfo, actor)
 		}
 
-		s.recordEvent(systemEvents(ctx), item, billingqueue.EventTransferred,
+		s.recordEvent(systemEvents(ctx), item, billingqueueevent.EventTransferred,
 			"Queued when "+shipmentRef(shp)+" was transferred to billing", actor, nil)
 		s.syncReview(ctx, item.ID, req.TenantInfo)
 
@@ -738,7 +739,7 @@ func (s *service) AssignBiller(
 		updated,
 		"Biller assigned to billing queue item",
 	)
-	s.recordEvent(ctx, updated, billingqueue.EventAssigned,
+	s.recordEvent(ctx, updated, billingqueueevent.EventAssigned,
 		"Assigned "+userName(biller)+" as biller", actor,
 		map[string]any{"billerId": req.BillerID.String()})
 	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)

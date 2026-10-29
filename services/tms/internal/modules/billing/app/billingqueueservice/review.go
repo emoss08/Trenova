@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -63,7 +65,7 @@ func (s *service) attachReview(
 	markLedger(facts.charges, issues)
 	facts.charges.Totals()
 
-	review := billingqueue.BuildReadiness(item, issues, billingqueue.CheckFacts{
+	review := billingqueuereview.BuildReadiness(item, issues, billingqueuereview.CheckFacts{
 		BillerName:   facts.billerName,
 		Charges:      facts.charges,
 		POD:          facts.pod,
@@ -75,7 +77,7 @@ func (s *service) attachReview(
 	review.Documents = facts.documents
 	review.Duplicates = facts.duplicates
 	for _, issue := range issues {
-		issue.Undoable = issue.Settled() && billingqueue.IsReviewable(item.Status) &&
+		issue.Undoable = issue.Settled() && billingqueuereview.IsReviewable(item.Status) &&
 			issueEffectKind(issue) != billingqueue.EffectRequest
 	}
 	item.Review = review
@@ -85,13 +87,13 @@ type reviewFacts struct {
 	billerName   string
 	customerName string
 	charges      *billingqueue.ChargeReview
-	pod          *billingqueue.PODState
+	pod          *billingqueuereview.PODState
 	terms        *billingqueue.BillingTerms
 	invoice      *billingqueue.InvoiceRef
 	documents    []*billingqueue.DocumentTile
 	duplicates   []*billingqueue.DuplicateRef
-	dwells       []*billingqueue.DetentionDwell
-	findings     billingqueue.FindingInput
+	dwells       []*billingqueuereview.DetentionDwell
+	findings     billingqueuereview.FindingInput
 }
 
 func (s *service) reviewFacts(
@@ -149,7 +151,7 @@ func (s *service) reviewFacts(
 	if item.PayerShare != nil {
 		shareError = item.PayerShare.ResolutionError
 	}
-	facts.findings = billingqueue.FindingInput{
+	facts.findings = billingqueuereview.FindingInput{
 		CustomerName:     facts.customerName,
 		ShipmentRef:      shipmentRef(item.Shipment),
 		Charges:          facts.charges,
@@ -178,7 +180,7 @@ func (s *service) storedIssues(
 	if s.reviewRepo == nil {
 		return []*billingqueue.Issue{}
 	}
-	if !billingqueue.IsReviewable(item.Status) && item.Status != billingqueue.StatusOnHold {
+	if !billingqueuereview.IsReviewable(item.Status) && item.Status != billingqueue.StatusOnHold {
 		issues, err := s.reviewRepo.ListIssues(ctx, tenantInfo, item.ID)
 		if err != nil {
 			s.l.Warn(
@@ -194,7 +196,7 @@ func (s *service) storedIssues(
 	result, err := s.reviewRepo.SyncIssues(ctx, &billingqueueports.SyncBillingQueueIssuesRequest{
 		TenantInfo: tenantInfo,
 		ItemID:     item.ID,
-		Findings:   billingqueue.Findings(facts.findings),
+		Findings:   billingqueuereview.Findings(facts.findings),
 	})
 	if err != nil {
 		s.l.Warn(
@@ -205,13 +207,13 @@ func (s *service) storedIssues(
 		return []*billingqueue.Issue{}
 	}
 
-	events := make([]*billingqueue.ItemEvent, 0, len(result.Raised)+len(result.Cleared))
+	events := make([]*billingqueueevent.ItemEvent, 0, len(result.Raised)+len(result.Cleared))
 	for _, issue := range append(result.Raised, result.Reopened...) {
-		events = append(events, s.newEvent(ctx, item, billingqueue.EventIssueRaised,
+		events = append(events, s.newEvent(ctx, item, billingqueueevent.EventIssueRaised,
 			"Flagged: "+issue.Summary, nil, map[string]any{"issueId": issue.ID.String()}))
 	}
 	for _, issue := range result.Cleared {
-		events = append(events, s.newEvent(ctx, item, billingqueue.EventIssueCleared,
+		events = append(events, s.newEvent(ctx, item, billingqueueevent.EventIssueCleared,
 			"Cleared: "+issue.Summary, nil, map[string]any{"issueId": issue.ID.String()}))
 	}
 	if len(events) > 0 {
@@ -508,7 +510,10 @@ func freightBasis(shp *shipment.Shipment) string {
 	parts := make([]string, 0, 2)
 	if miles > 0 && shp.FreightChargeAmount.Decimal.IsPositive() {
 		rate := shp.FreightChargeAmount.Decimal.Div(decimal.NewFromFloat(miles)).Round(2)
-		parts = append(parts, fmt.Sprintf("%.0f mi × %s", miles, billingqueue.FormatMoney(rate)))
+		parts = append(
+			parts,
+			fmt.Sprintf("%.0f mi × %s", miles, billingqueuereview.FormatMoney(rate)),
+		)
 	}
 	if detail != nil {
 		switch {
@@ -553,12 +558,12 @@ func detentionBasis(occurrence *detention.DetentionOccurrence) string {
 		billable = occurrence.BillableMinutes
 	}
 	rate := hourlyRate(occurrence)
-	text := billingqueue.FormatHours(billable)
+	text := billingqueuereview.FormatHours(billable)
 	if rate.IsPositive() {
-		text += " × " + billingqueue.FormatMoney(rate)
+		text += " × " + billingqueuereview.FormatMoney(rate)
 	}
 	if occurrence.FreeMinutesGranted > 0 {
-		text += " after " + billingqueue.FormatHours(occurrence.FreeMinutesGranted) + " free"
+		text += " after " + billingqueuereview.FormatHours(occurrence.FreeMinutesGranted) + " free"
 	}
 
 	return text
@@ -569,7 +574,7 @@ func manualBasis(charge *shipment.AdditionalCharge) string {
 		return fmt.Sprintf(
 			"%d × %s · added by hand",
 			charge.Unit,
-			billingqueue.FormatMoney(charge.Amount),
+			billingqueuereview.FormatMoney(charge.Amount),
 		)
 	}
 
@@ -599,7 +604,7 @@ func hourlyRate(occurrence *detention.DetentionOccurrence) decimal.Decimal {
 func detentionDwells(
 	item *billingqueue.BillingQueueItem,
 	occurrences []*detention.DetentionOccurrence,
-) []*billingqueue.DetentionDwell {
+) []*billingqueuereview.DetentionDwell {
 	if item.PayerShare == nil {
 		return nil
 	}
@@ -610,7 +615,7 @@ func detentionDwells(
 		}
 	}
 
-	out := make([]*billingqueue.DetentionDwell, 0, len(occurrences))
+	out := make([]*billingqueuereview.DetentionDwell, 0, len(occurrences))
 	for _, occurrence := range occurrences {
 		if occurrence == nil || occurrence.AdditionalChargeID == nil {
 			continue
@@ -631,7 +636,7 @@ func detentionDwells(
 			step := int32(occurrence.PolicySnapshot.BillingIncrementMinutes)
 			eldBillable = (eldBillable + step - 1) / step * step
 		}
-		out = append(out, &billingqueue.DetentionDwell{
+		out = append(out, &billingqueuereview.DetentionDwell{
 			OccurrenceID:  occurrence.ID,
 			ChargeID:      *occurrence.AdditionalChargeID,
 			LocationName:  occurrence.LocationName,
@@ -702,7 +707,7 @@ func (s *service) invoiceRef(
 	return &billingqueue.InvoiceRef{
 		ID:          inv.ID,
 		Number:      inv.Number,
-		DraftNumber: billingqueue.DraftInvoiceNumber(inv.Number),
+		DraftNumber: billingqueuereview.DraftInvoiceNumber(inv.Number),
 		Status:      string(inv.Status),
 		InvoiceDate: inv.InvoiceDate,
 		DueDate:     inv.DueDate,
@@ -720,13 +725,13 @@ func termsFor(cus *customer.Customer, inv *billingqueue.InvoiceRef) *billingqueu
 		return terms
 	}
 	if cus.EmailProfile != nil {
-		terms.Recipients = billingqueue.ParseRecipients(cus.EmailProfile.ToRecipients)
+		terms.Recipients = billingqueuereview.ParseRecipients(cus.EmailProfile.ToRecipients)
 	}
 	if cus.BillingProfile == nil {
 		return terms
 	}
 	terms.PaymentTerm = string(cus.BillingProfile.PaymentTerm)
-	terms.NetDays = billingqueue.NetDaysFor(terms.PaymentTerm)
+	terms.NetDays = billingqueuereview.NetDaysFor(terms.PaymentTerm)
 	terms.CreditHold, _ = creditHoldOf(cus)
 	switch {
 	case inv != nil && inv.DueDate != nil:
@@ -797,8 +802,8 @@ func podState(
 	shp *shipment.Shipment,
 	docs []*document.Document,
 	required []*documenttype.DocumentType,
-) *billingqueue.PODState {
-	pod := &billingqueue.PODState{DocumentType: podCode}
+) *billingqueuereview.PODState {
+	pod := &billingqueuereview.PODState{DocumentType: podCode}
 	for _, docType := range required {
 		if docType != nil && docType.Code == podCode {
 			pod.Required = true

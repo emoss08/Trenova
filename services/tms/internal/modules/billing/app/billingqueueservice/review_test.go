@@ -5,7 +5,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -43,7 +45,7 @@ type memoryReview struct {
 
 	mu     sync.Mutex
 	issues []*billingqueue.Issue
-	events []*billingqueue.ItemEvent
+	events []*billingqueueevent.ItemEvent
 	open   int
 }
 
@@ -160,7 +162,10 @@ func (m *memoryReview) CountOpenIssues(
 	return count, nil
 }
 
-func (m *memoryReview) CreateEvents(_ context.Context, events ...*billingqueue.ItemEvent) error {
+func (m *memoryReview) CreateEvents(
+	_ context.Context,
+	events ...*billingqueueevent.ItemEvent,
+) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.events = append(m.events, events...)
@@ -667,7 +672,7 @@ func TestApproveIfReadyLeavesAnItemThatStillNeedsAPerson(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.False(t, result.Approved)
-	assert.Equal(t, billingqueue.ApprovalFailureNotReady, result.FailureCode)
+	assert.Equal(t, billingapprovalrun.ApprovalFailureNotReady, result.FailureCode)
 	assert.Equal(t, "$110.00 lumper fee isn't on the rate con", result.Reason)
 	assert.Equal(t, billingqueue.StatusInReview, w.item.Status)
 }
@@ -682,7 +687,7 @@ func TestApproveIfReadySkipsAnItemSomebodyHeld(t *testing.T) {
 	}, w.actor)
 
 	require.NoError(t, err)
-	assert.Equal(t, billingqueue.ApprovalFailureOnHold, result.FailureCode)
+	assert.Equal(t, billingapprovalrun.ApprovalFailureOnHold, result.FailureCode)
 }
 
 // unassigned leaves the world's item with nobody as its biller.

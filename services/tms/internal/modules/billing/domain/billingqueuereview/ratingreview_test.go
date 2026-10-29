@@ -1,8 +1,9 @@
-package billingqueue
+package billingqueuereview
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -10,17 +11,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func reviewedItem(reviews ...string) *BillingQueueItem {
+func reviewedItem(reviews ...string) *billingqueue.BillingQueueItem {
 	shipmentID := pulid.MustNew("shp_")
 	bill := &tarifftypes.Bill{Currency: "USD"}
 	for _, text := range reviews {
 		bill.Reviews = append(bill.Reviews, tarifftypes.Note{Text: text})
 	}
-	return &BillingQueueItem{
+	return &billingqueue.BillingQueueItem{
 		ID:         pulid.MustNew("bqi_"),
 		ShipmentID: shipmentID,
-		Status:     StatusInReview,
-		BillType:   BillTypeInvoice,
+		Status:     billingqueue.StatusInReview,
+		BillType:   billingqueue.BillTypeInvoice,
 		Shipment: &shipment.Shipment{
 			ID: shipmentID,
 			RatingDetail: &shipment.RatingDetail{
@@ -37,7 +38,7 @@ func TestNewRatingReviewHold_DescribesAHeldRating(t *testing.T) {
 
 	item := reviewedItem("Holiday pickup", "Liftgate on a dock")
 
-	hold := NewRatingReviewHold(item)
+	hold := billingqueue.NewRatingReviewHold(item)
 
 	require.NotNil(t, hold)
 	assert.Equal(t, item.ShipmentID, hold.ShipmentID)
@@ -55,15 +56,15 @@ func TestNewRatingReviewHold_HoldsNothingWhenNothingBills(t *testing.T) {
 	require.NoError(t, err)
 
 	credit := reviewedItem("Holiday pickup")
-	credit.BillType = BillTypeCreditMemo
+	credit.BillType = billingqueue.BillTypeCreditMemo
 
 	posted := reviewedItem("Holiday pickup")
-	posted.Status = StatusPosted
+	posted.Status = billingqueue.StatusPosted
 
 	unread := reviewedItem("Holiday pickup")
 	unread.Shipment = nil
 
-	for name, item := range map[string]*BillingQueueItem{
+	for name, item := range map[string]*billingqueue.BillingQueueItem{
 		"no reviews":   reviewedItem(),
 		"approved":     approved,
 		"credit memo":  credit,
@@ -71,20 +72,20 @@ func TestNewRatingReviewHold_HoldsNothingWhenNothingBills(t *testing.T) {
 		"not expanded": unread,
 		"no item":      nil,
 	} {
-		assert.Nil(t, NewRatingReviewHold(item), name)
+		assert.Nil(t, billingqueue.NewRatingReviewHold(item), name)
 	}
 }
 
 func TestFindings_RaiseTheRatingReviewAsABlockingCheck(t *testing.T) {
 	t.Parallel()
 
-	hold := NewRatingReviewHold(reviewedItem("Holiday pickup"))
+	hold := billingqueue.NewRatingReviewHold(reviewedItem("Holiday pickup"))
 
 	issues := Findings(FindingInput{RatingReview: hold})
 
 	require.Len(t, issues, 1)
-	assert.Equal(t, CheckCharges, issues[0].CheckKey)
-	assert.Equal(t, IssueRatingAwaitingReview, issues[0].Code)
+	assert.Equal(t, billingqueue.CheckCharges, issues[0].CheckKey)
+	assert.Equal(t, billingqueue.IssueRatingAwaitingReview, issues[0].Code)
 	assert.Equal(t, hold.ShipmentID.String(), issues[0].SubjectKey)
 	assert.Contains(t, issues[0].Reasoning, "Holiday pickup")
 	assert.Empty(t, issues[0].Options, "only approving the rating settles it")

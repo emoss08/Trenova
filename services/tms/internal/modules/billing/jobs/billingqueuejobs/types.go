@@ -1,7 +1,7 @@
 package billingqueuejobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,21 +43,21 @@ type RecordItemFailurePayload struct {
 type FinalizeApprovalRunPayload struct {
 	temporaltype.BasePayload
 
-	RunID          pulid.ID                         `json:"runId"`
-	Status         billingqueue.ApprovalRunStatus   `json:"status"`
-	FailureMessage string                           `json:"failureMessage,omitempty"`
-	LeftoverCode   billingqueue.ApprovalFailureCode `json:"leftoverCode,omitempty"`
+	RunID          pulid.ID                               `json:"runId"`
+	Status         billingapprovalrun.ApprovalRunStatus   `json:"status"`
+	FailureMessage string                                 `json:"failureMessage,omitempty"`
+	LeftoverCode   billingapprovalrun.ApprovalFailureCode `json:"leftoverCode,omitempty"`
 }
 
 type ApproveItemResult struct {
-	Status      billingqueue.ApprovalItemStatus  `json:"status"`
-	FailureCode billingqueue.ApprovalFailureCode `json:"failureCode,omitempty"`
+	Status      billingapprovalrun.ApprovalItemStatus  `json:"status"`
+	FailureCode billingapprovalrun.ApprovalFailureCode `json:"failureCode,omitempty"`
 }
 
 type ApprovalRunResult struct {
-	RunID         pulid.ID                       `json:"runId"`
-	Status        billingqueue.ApprovalRunStatus `json:"status"`
-	ApprovedCount int                            `json:"approvedCount"`
-	FailedCount   int                            `json:"failedCount"`
-	SkippedCount  int                            `json:"skippedCount"`
+	RunID         pulid.ID                             `json:"runId"`
+	Status        billingapprovalrun.ApprovalRunStatus `json:"status"`
+	ApprovedCount int                                  `json:"approvedCount"`
+	FailedCount   int                                  `json:"failedCount"`
+	SkippedCount  int                                  `json:"skippedCount"`
 }

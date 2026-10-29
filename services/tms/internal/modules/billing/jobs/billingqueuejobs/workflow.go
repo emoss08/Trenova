@@ -4,9 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
@@ -77,7 +76,7 @@ func BulkApprovalWorkflow(
 
 	undoCh := workflow.GetSignalChannel(ctx, billingqueuecontract.UndoSignalName)
 	timerCtx, cancelTimer := workflow.WithCancel(ctx)
-	timer := workflow.NewTimer(timerCtx, billingqueue.ApprovalUndoWindowSeconds*time.Second)
+	timer := workflow.NewTimer(timerCtx, billingapprovalrun.ApprovalUndoWindowSeconds*time.Second)
 
 	undone := false
 	selector := workflow.NewSelector(ctx)
@@ -93,9 +92,9 @@ func BulkApprovalWorkflow(
 		return finalize(
 			ctx,
 			payload,
-			billingqueue.ApprovalRunUndone,
+			billingapprovalrun.ApprovalRunUndone,
 			"",
-			billingqueue.ApprovalFailureUndone,
+			billingapprovalrun.ApprovalFailureUndone,
 		)
 	}
 
@@ -109,9 +108,9 @@ func BulkApprovalWorkflow(
 		return finalize(
 			ctx,
 			payload,
-			billingqueue.ApprovalRunUndone,
+			billingapprovalrun.ApprovalRunUndone,
 			"",
-			billingqueue.ApprovalFailureUndone,
+			billingapprovalrun.ApprovalFailureUndone,
 		)
 	}
 
@@ -153,18 +152,18 @@ func BulkApprovalWorkflow(
 	return finalize(
 		ctx,
 		payload,
-		billingqueue.ApprovalRunCompleted,
+		billingapprovalrun.ApprovalRunCompleted,
 		"",
-		billingqueue.ApprovalFailureUnexpected,
+		billingapprovalrun.ApprovalFailureUnexpected,
 	)
 }
 
 func finalize(
 	ctx workflow.Context,
 	payload *billingqueuecontract.ApprovalRunPayload,
-	status billingqueue.ApprovalRunStatus,
+	status billingapprovalrun.ApprovalRunStatus,
 	message string,
-	leftover billingqueue.ApprovalFailureCode,
+	leftover billingapprovalrun.ApprovalFailureCode,
 ) (*ApprovalRunResult, error) {
 	finalizeCtx := workflow.WithActivityOptions(ctx, finalizeActivityOptions)
 	var result *ApprovalRunResult
@@ -193,8 +192,8 @@ func finalizeFailure(
 	disconnected, cancel := workflow.NewDisconnectedContext(ctx)
 	defer cancel()
 
-	result, err := finalize(disconnected, payload, billingqueue.ApprovalRunFailed,
-		failureMessageFrom(cause), billingqueue.ApprovalFailureUnexpected)
+	result, err := finalize(disconnected, payload, billingapprovalrun.ApprovalRunFailed,
+		failureMessageFrom(cause), billingapprovalrun.ApprovalFailureUnexpected)
 	if err != nil {
 		return nil, err
 	}

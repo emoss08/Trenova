@@ -305,7 +305,7 @@ var carried = map[string]string{
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry.JournalEntryLine":                           "a line of the journal entry that carries it",
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal.Line":                                      "a line of the manual journal request that carries it",
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation.Thread":                                          "the caller's own conversation a message belongs to",
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.ApprovalRunItem":                               "one item of the billing queue approval run that carries it",
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun.ApprovalRunItem":                         "one item of the billing queue approval run that carries it",
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment.Application":                                "how the payment that carries it was applied to an invoice",
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice.Attachment":                                         "a file attached to the invoice that carries it",
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DocumentShareToken":                                 "the share link of an invoice delivery attachment",

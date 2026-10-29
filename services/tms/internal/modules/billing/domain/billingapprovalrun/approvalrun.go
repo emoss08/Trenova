@@ -1,4 +1,4 @@
-package billingqueue
+package billingapprovalrun
 
 import (
 	"github.com/emoss08/keel"

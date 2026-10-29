@@ -57,7 +57,6 @@ debt:
   services/tms/internal/modules/billing/app/factoringservice: 8073
   services/tms/internal/modules/billing/app/invoiceadjustmentservice: 3641
   services/tms/internal/modules/billing/app/invoiceservice: 9852
-  services/tms/internal/modules/billing/domain/billingqueue: 1972
   services/tms/internal/modules/billing/domain/invoice: 1832
   services/tms/internal/modules/documents/app/captureservice: 5885
   services/tms/internal/modules/documents/app/inboundmessageservice: 6558

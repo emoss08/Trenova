@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -107,28 +107,28 @@ func (a *Activities) ApproveQueueItemActivity(
 		TenantInfo:     tenant,
 		AssignApprover: payload.AssignApprover,
 	}, actor)
-	record := &billingqueue.ApprovalRunItem{RunID: payload.RunID, ItemID: payload.ItemID}
+	record := &billingapprovalrun.ApprovalRunItem{RunID: payload.RunID, ItemID: payload.ItemID}
 	switch {
 	case err != nil && isRefusal(err):
-		record.Status = billingqueue.ApprovalItemFailed
-		record.FailureCode = billingqueue.ApprovalFailureNotReady
+		record.Status = billingapprovalrun.ApprovalItemFailed
+		record.FailureCode = billingapprovalrun.ApprovalFailureNotReady
 		record.ErrorMessage = err.Error()
 	case err != nil:
 		return nil, err
 	case outcome.Approved:
-		record.Status = billingqueue.ApprovalItemApproved
+		record.Status = billingapprovalrun.ApprovalItemApproved
 		record.InvoiceID = outcome.InvoiceID
 		record.InvoiceNumber = outcome.InvoiceNumber
-	case outcome.FailureCode == billingqueue.ApprovalFailureAlreadyDone &&
+	case outcome.FailureCode == billingapprovalrun.ApprovalFailureAlreadyDone &&
 		activity.GetInfo(ctx).Attempt > 1:
-		record.Status = billingqueue.ApprovalItemApproved
-	case outcome.FailureCode == billingqueue.ApprovalFailureAlreadyDone ||
-		outcome.FailureCode == billingqueue.ApprovalFailureOnHold:
-		record.Status = billingqueue.ApprovalItemSkipped
+		record.Status = billingapprovalrun.ApprovalItemApproved
+	case outcome.FailureCode == billingapprovalrun.ApprovalFailureAlreadyDone ||
+		outcome.FailureCode == billingapprovalrun.ApprovalFailureOnHold:
+		record.Status = billingapprovalrun.ApprovalItemSkipped
 		record.FailureCode = outcome.FailureCode
 		record.ErrorMessage = outcome.Reason
 	default:
-		record.Status = billingqueue.ApprovalItemFailed
+		record.Status = billingapprovalrun.ApprovalItemFailed
 		record.FailureCode = outcome.FailureCode
 		record.ErrorMessage = outcome.Reason
 	}
@@ -164,11 +164,11 @@ func (a *Activities) RecordApprovalItemFailureActivity(
 	}
 	if err := a.repo.RecordApprovalRunItem(ctx, &billingqueueports.RecordApprovalRunItemRequest{
 		TenantInfo: tenant,
-		Item: &billingqueue.ApprovalRunItem{
+		Item: &billingapprovalrun.ApprovalRunItem{
 			RunID:        payload.RunID,
 			ItemID:       payload.ItemID,
-			Status:       billingqueue.ApprovalItemFailed,
-			FailureCode:  billingqueue.ApprovalFailureUnexpected,
+			Status:       billingapprovalrun.ApprovalItemFailed,
+			FailureCode:  billingapprovalrun.ApprovalFailureUnexpected,
 			ErrorMessage: payload.Message,
 		},
 	}); err != nil {

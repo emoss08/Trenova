@@ -20,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -179,7 +181,7 @@ type bilItemInvoice struct {
 
 type bilRows struct {
 	items     []*billingqueue.BillingQueueItem
-	events    []*billingqueue.ItemEvent
+	events    []*billingqueueevent.ItemEvent
 	invoices  []*invoice.Invoice
 	lines     []*invoice.InvoiceLine
 	links     []bilItemInvoice
@@ -529,7 +531,7 @@ func (g *generator) bilQueueItem(
 	entity.SyncAllocatedMinor()
 	rows.items = append(rows.items, entity)
 
-	g.bilEvent(setup, rows, entity, billingqueue.EventTransferred,
+	g.bilEvent(setup, rows, entity, billingqueueevent.EventTransferred,
 		"Queued when "+bilShipmentRef(r)+" was transferred to billing", transfer, nil, nil)
 
 	if status == billingqueue.StatusReadyForReview && g.fake.chance(0.35) {
@@ -547,7 +549,7 @@ func (g *generator) bilQueueItem(
 	assignedAt := g.bilClamp(transfer+g.fake.between64(5*bilMinute, 90*bilMinute), transfer)
 	assignedAt = max(transfer, min(assignedAt, ceiling))
 	assigner := g.refs.adminID
-	g.bilEvent(setup, rows, entity, billingqueue.EventAssigned,
+	g.bilEvent(setup, rows, entity, billingqueueevent.EventAssigned,
 		"Assigned "+bilName(setup, biller)+" as biller", assignedAt, &assigner,
 		map[string]any{"billerId": biller.String()})
 	entity.UpdatedAt = assignedAt
@@ -572,14 +574,14 @@ func (g *generator) bilQueueItem(
 		entity.HeldByID = &biller
 		entity.StatusBeforeHold = &before
 		entity.ReviewNotes = bilHoldNotes[code]
-		g.bilEvent(setup, rows, entity, billingqueue.EventHeld,
+		g.bilEvent(setup, rows, entity, billingqueueevent.EventHeld,
 			"Put on hold · "+code.Phrase(), actionAt, &biller, nil)
 		entity.UpdatedAt = actionAt
 	case billingqueue.StatusException:
 		code := pick(g.fake, bilExceptionCodes)
 		entity.ExceptionReasonCode = &code
 		entity.ExceptionNotes = bilExceptionNotes[code]
-		g.bilEvent(setup, rows, entity, billingqueue.EventStatusChanged,
+		g.bilEvent(setup, rows, entity, billingqueueevent.EventStatusChanged,
 			"Moved to exception", actionAt, &biller, nil)
 		entity.UpdatedAt = actionAt
 	case billingqueue.StatusSentBackToOps:
@@ -587,14 +589,24 @@ func (g *generator) bilQueueItem(
 		code := reason.code
 		entity.ExceptionReasonCode = &code
 		entity.ExceptionNotes = reason.note
-		g.bilEvent(setup, rows, entity, billingqueue.EventStatusChanged,
+		g.bilEvent(setup, rows, entity, billingqueueevent.EventStatusChanged,
 			"Moved to sent back to operations", actionAt, &biller, nil)
 		rows.comments = append(rows.comments, g.bilSendBackComment(entity, biller, actionAt))
 		entity.UpdatedAt = actionAt
 	case billingqueue.StatusApproved, billingqueue.StatusPosted:
 		entity.ReviewCompletedAt = &actionAt
-		g.bilEvent(setup, rows, entity, billingqueue.EventApproved,
-			"Approved the invoice for "+billingqueue.FormatMoney(total), actionAt, &biller, nil)
+		g.bilEvent(
+			setup,
+			rows,
+			entity,
+			billingqueueevent.EventApproved,
+			"Approved the invoice for "+billingqueuereview.FormatMoney(
+				total,
+			),
+			actionAt,
+			&biller,
+			nil,
+		)
 		entity.UpdatedAt = actionAt
 	}
 
@@ -637,7 +649,7 @@ func (g *generator) bilEvent(
 	setup *bilSetup,
 	rows *bilRows,
 	entity *billingqueue.BillingQueueItem,
-	kind billingqueue.EventKind,
+	kind billingqueueevent.EventKind,
 	text string,
 	at int64,
 	actor *pulid.ID,
@@ -646,21 +658,21 @@ func (g *generator) bilEvent(
 	if payload == nil {
 		payload = map[string]any{}
 	}
-	event := &billingqueue.ItemEvent{
+	event := &billingqueueevent.ItemEvent{
 		ID:             idAt("bqe_", at),
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
 		ItemID:         entity.ID,
 		Kind:           kind,
 		Text:           text,
-		ActorType:      billingqueue.EventActorSystem,
+		ActorType:      billingqueueevent.EventActorSystem,
 		Payload:        payload,
 		At:             at,
 		CreatedAt:      at,
 	}
 	if actor != nil {
 		id := *actor
-		event.ActorType = billingqueue.EventActorUser
+		event.ActorType = billingqueueevent.EventActorUser
 		event.ActorID = &id
 		event.ActorName = bilName(setup, id)
 	}
@@ -861,7 +873,7 @@ func (g *generator) bilPostedEvents(
 	if entity.AssignedBillerID != nil {
 		actor = *entity.AssignedBillerID
 	}
-	g.bilEvent(setup, rows, entity, billingqueue.EventPosted, text, inv.InvoiceDate, &actor,
+	g.bilEvent(setup, rows, entity, billingqueueevent.EventPosted, text, inv.InvoiceDate, &actor,
 		map[string]any{"invoiceId": inv.ID.String(), "invoiceNumber": inv.Number})
 	entity.UpdatedAt = max(entity.UpdatedAt, inv.InvoiceDate)
 }
@@ -1138,7 +1150,7 @@ func (g *generator) bilCreditMemo(
 	rows.links = append(rows.links, bilItemInvoice{item: entity.ID, invoice: memo.ID})
 	rows.memoCount++
 
-	g.bilEvent(setup, rows, entity, billingqueue.EventPosted, "Posted as "+number, memoDate,
+	g.bilEvent(setup, rows, entity, billingqueueevent.EventPosted, "Posted as "+number, memoDate,
 		&raisedBy, map[string]any{"invoiceId": memo.ID.String(), "invoiceNumber": number})
 
 	if err := g.bilPostInvoice(setup, rows, memo, target.ID, entity); err != nil {
@@ -1604,7 +1616,7 @@ func (g *generator) bilWrite(ctx context.Context, tx *keel.DB, rows *bilRows) er
 		return err
 	}
 	if err := bilInsert(ctx, tx, billingqueuedb.ItemEvents.Handle, rows.events,
-		func(r *billingqueue.ItemEvent) stamp {
+		func(r *billingqueueevent.ItemEvent) stamp {
 			return stamp{id: r.ID, created: r.At}
 		}, true); err != nil {
 		return err

@@ -3,6 +3,8 @@
 package billingqueuedb
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"context"
 	"unsafe"
 
@@ -19,12 +21,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// approvalRunsTable is the schema of billingqueue.ApprovalRun.
+// approvalRunsTable is the schema of billingapprovalrun.ApprovalRun.
 var approvalRunsTable = schema.Table{
 	Name:   "billingqueue_approval_runs",
 	Quoted: `"billingqueue_approval_runs"`,
 	Alias:  "bar",
-	Model:  "billingqueue.ApprovalRun",
+	Model:  "billingapprovalrun.ApprovalRun",
 	Label:  `Approval Run`,
 	Plural: `Approval Runs`,
 	Doc:    `ApprovalRun is one press of Approve over several queue items.`,
@@ -67,7 +69,7 @@ var approvalRunsTable = schema.Table{
 	IDPrefix:   "bqar_",
 	New:        newApprovalRun,
 	NewN:       newNApprovalRun,
-	Size:       unsafe.Sizeof(billingqueue.ApprovalRun{}),
+	Size:       unsafe.Sizeof(billingapprovalrun.ApprovalRun{}),
 	Ptr:        ptrApprovalRun,
 	Value:      valueApprovalRun,
 	Attach:     attachApprovalRun,
@@ -75,9 +77,9 @@ var approvalRunsTable = schema.Table{
 
 var approvalRunsRef = keel.Ref{Table: &approvalRunsTable}
 
-// ApprovalRunsTable is the table of billingqueue.ApprovalRun.
+// ApprovalRunsTable is the table of billingapprovalrun.ApprovalRun.
 type ApprovalRunsTable struct {
-	keel.Handle[*billingqueue.ApprovalRun]
+	keel.Handle[*billingapprovalrun.ApprovalRun]
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -103,7 +105,7 @@ type ApprovalRunsTable struct {
 
 // ApprovalRuns references the billingqueue_approval_runs table.
 var ApprovalRuns = &ApprovalRunsTable{
-	Handle:              keel.Handle[*billingqueue.ApprovalRun]{Ref: &approvalRunsRef},
+	Handle:              keel.Handle[*billingapprovalrun.ApprovalRun]{Ref: &approvalRunsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 2}}},
@@ -130,7 +132,7 @@ var ApprovalRuns = &ApprovalRunsTable{
 // BuildApprovalRuns builds the handle of billingqueue_approval_runs for ref. Generated relation and alias methods call it.
 func BuildApprovalRuns(r *keel.Ref) *ApprovalRunsTable {
 	return &ApprovalRunsTable{
-		Handle:              keel.Handle[*billingqueue.ApprovalRun]{Ref: r},
+		Handle:              keel.Handle[*billingapprovalrun.ApprovalRun]{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -169,18 +171,18 @@ func (t *ApprovalRunsTable) Items() *ApprovalRunItemsTable {
 }
 
 // Get returns the billingqueue_approval_runs row with the given key, or keel.ErrNotFound.
-func (t *ApprovalRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueue.ApprovalRun, error) {
+func (t *ApprovalRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingapprovalrun.ApprovalRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newApprovalRun() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.ApprovalRun)) }
+func newApprovalRun() unsafe.Pointer { return unsafe.Pointer(new(billingapprovalrun.ApprovalRun)) }
 
 func newNApprovalRun(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]billingqueue.ApprovalRun, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]billingapprovalrun.ApprovalRun, n)))
 }
 
 func ptrApprovalRun(p unsafe.Pointer, c int32) any {
-	r := (*billingqueue.ApprovalRun)(p)
+	r := (*billingapprovalrun.ApprovalRun)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -229,7 +231,7 @@ func ptrApprovalRun(p unsafe.Pointer, c int32) any {
 }
 
 func valueApprovalRun(p unsafe.Pointer, c int32) any {
-	r := (*billingqueue.ApprovalRun)(p)
+	r := (*billingapprovalrun.ApprovalRun)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -299,19 +301,19 @@ func valueApprovalRun(p unsafe.Pointer, c int32) any {
 }
 
 func attachApprovalRun(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*billingqueue.ApprovalRun)(p)
+	r := (*billingapprovalrun.ApprovalRun)(p)
 	switch rel {
 	case 0:
-		r.Items = append(r.Items, (*billingqueue.ApprovalRunItem)(child))
+		r.Items = append(r.Items, (*billingapprovalrun.ApprovalRunItem)(child))
 	}
 }
 
-// approvalRunItemsTable is the schema of billingqueue.ApprovalRunItem.
+// approvalRunItemsTable is the schema of billingapprovalrun.ApprovalRunItem.
 var approvalRunItemsTable = schema.Table{
 	Name:   "billingqueue_approval_run_items",
 	Quoted: `"billingqueue_approval_run_items"`,
 	Alias:  "bari",
-	Model:  "billingqueue.ApprovalRunItem",
+	Model:  "billingapprovalrun.ApprovalRunItem",
 	Label:  `Approval Run Item`,
 	Plural: `Approval Run Items`,
 	Doc:    `ApprovalRunItem is one item inside a bulk approval.`,
@@ -344,16 +346,16 @@ var approvalRunItemsTable = schema.Table{
 	IDPrefix:   "bqari_",
 	New:        newApprovalRunItem,
 	NewN:       newNApprovalRunItem,
-	Size:       unsafe.Sizeof(billingqueue.ApprovalRunItem{}),
+	Size:       unsafe.Sizeof(billingapprovalrun.ApprovalRunItem{}),
 	Ptr:        ptrApprovalRunItem,
 	Value:      valueApprovalRunItem,
 }
 
 var approvalRunItemsRef = keel.Ref{Table: &approvalRunItemsTable}
 
-// ApprovalRunItemsTable is the table of billingqueue.ApprovalRunItem.
+// ApprovalRunItemsTable is the table of billingapprovalrun.ApprovalRunItem.
 type ApprovalRunItemsTable struct {
-	keel.Handle[*billingqueue.ApprovalRunItem]
+	keel.Handle[*billingapprovalrun.ApprovalRunItem]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -372,7 +374,7 @@ type ApprovalRunItemsTable struct {
 
 // ApprovalRunItems references the billingqueue_approval_run_items table.
 var ApprovalRunItems = &ApprovalRunItemsTable{
-	Handle:         keel.Handle[*billingqueue.ApprovalRunItem]{Ref: &approvalRunItemsRef},
+	Handle:         keel.Handle[*billingapprovalrun.ApprovalRunItem]{Ref: &approvalRunItemsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 2}}},
@@ -392,7 +394,7 @@ var ApprovalRunItems = &ApprovalRunItemsTable{
 // BuildApprovalRunItems builds the handle of billingqueue_approval_run_items for ref. Generated relation and alias methods call it.
 func BuildApprovalRunItems(r *keel.Ref) *ApprovalRunItemsTable {
 	return &ApprovalRunItemsTable{
-		Handle:         keel.Handle[*billingqueue.ApprovalRunItem]{Ref: r},
+		Handle:         keel.Handle[*billingapprovalrun.ApprovalRunItem]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -419,18 +421,18 @@ func (t *ApprovalRunItemsTable) As(alias string) *ApprovalRunItemsTable {
 }
 
 // Get returns the billingqueue_approval_run_items row with the given key, or keel.ErrNotFound.
-func (t *ApprovalRunItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueue.ApprovalRunItem, error) {
+func (t *ApprovalRunItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingapprovalrun.ApprovalRunItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newApprovalRunItem() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.ApprovalRunItem)) }
+func newApprovalRunItem() unsafe.Pointer { return unsafe.Pointer(new(billingapprovalrun.ApprovalRunItem)) }
 
 func newNApprovalRunItem(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]billingqueue.ApprovalRunItem, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]billingapprovalrun.ApprovalRunItem, n)))
 }
 
 func ptrApprovalRunItem(p unsafe.Pointer, c int32) any {
-	r := (*billingqueue.ApprovalRunItem)(p)
+	r := (*billingapprovalrun.ApprovalRunItem)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -465,7 +467,7 @@ func ptrApprovalRunItem(p unsafe.Pointer, c int32) any {
 }
 
 func valueApprovalRunItem(p unsafe.Pointer, c int32) any {
-	r := (*billingqueue.ApprovalRunItem)(p)
+	r := (*billingapprovalrun.ApprovalRunItem)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1322,12 +1324,12 @@ func beforeCreateIssue(ctx context.Context, p unsafe.Pointer) error {
 	return (*billingqueue.Issue)(p).BeforeCreate(ctx)
 }
 
-// itemEventsTable is the schema of billingqueue.ItemEvent.
+// itemEventsTable is the schema of billingqueueevent.ItemEvent.
 var itemEventsTable = schema.Table{
 	Name:   "billing_queue_events",
 	Quoted: `"billing_queue_events"`,
 	Alias:  "bqe",
-	Model:  "billingqueue.ItemEvent",
+	Model:  "billingqueueevent.ItemEvent",
 	Label:  `Item Event`,
 	Plural: `Item Events`,
 	Doc:    `ItemEvent is one line of an item's activity, written in plain words when it happens so the timeline never has to reconstruct it from audit diffs.`,
@@ -1358,7 +1360,7 @@ var itemEventsTable = schema.Table{
 	IDPrefix:     "bqe_",
 	New:          newItemEvent,
 	NewN:         newNItemEvent,
-	Size:         unsafe.Sizeof(billingqueue.ItemEvent{}),
+	Size:         unsafe.Sizeof(billingqueueevent.ItemEvent{}),
 	Ptr:          ptrItemEvent,
 	Value:        valueItemEvent,
 	BeforeCreate: beforeCreateItemEvent,
@@ -1366,9 +1368,9 @@ var itemEventsTable = schema.Table{
 
 var itemEventsRef = keel.Ref{Table: &itemEventsTable}
 
-// ItemEventsTable is the table of billingqueue.ItemEvent.
+// ItemEventsTable is the table of billingqueueevent.ItemEvent.
 type ItemEventsTable struct {
-	keel.Handle[*billingqueue.ItemEvent]
+	keel.Handle[*billingqueueevent.ItemEvent]
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1385,7 +1387,7 @@ type ItemEventsTable struct {
 
 // ItemEvents references the billing_queue_events table.
 var ItemEvents = &ItemEventsTable{
-	Handle:         keel.Handle[*billingqueue.ItemEvent]{Ref: &itemEventsRef},
+	Handle:         keel.Handle[*billingqueueevent.ItemEvent]{Ref: &itemEventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 2}}},
@@ -1403,7 +1405,7 @@ var ItemEvents = &ItemEventsTable{
 // BuildItemEvents builds the handle of billing_queue_events for ref. Generated relation and alias methods call it.
 func BuildItemEvents(r *keel.Ref) *ItemEventsTable {
 	return &ItemEventsTable{
-		Handle:         keel.Handle[*billingqueue.ItemEvent]{Ref: r},
+		Handle:         keel.Handle[*billingqueueevent.ItemEvent]{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1428,18 +1430,18 @@ func (t *ItemEventsTable) As(alias string) *ItemEventsTable {
 }
 
 // Get returns the billing_queue_events row with the given key, or keel.ErrNotFound.
-func (t *ItemEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueue.ItemEvent, error) {
+func (t *ItemEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueueevent.ItemEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-func newItemEvent() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.ItemEvent)) }
+func newItemEvent() unsafe.Pointer { return unsafe.Pointer(new(billingqueueevent.ItemEvent)) }
 
 func newNItemEvent(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]billingqueue.ItemEvent, n)))
+	return unsafe.Pointer(unsafe.SliceData(make([]billingqueueevent.ItemEvent, n)))
 }
 
 func ptrItemEvent(p unsafe.Pointer, c int32) any {
-	r := (*billingqueue.ItemEvent)(p)
+	r := (*billingqueueevent.ItemEvent)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
@@ -1470,7 +1472,7 @@ func ptrItemEvent(p unsafe.Pointer, c int32) any {
 }
 
 func valueItemEvent(p unsafe.Pointer, c int32) any {
-	r := (*billingqueue.ItemEvent)(p)
+	r := (*billingqueueevent.ItemEvent)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
@@ -1510,7 +1512,7 @@ func valueItemEvent(p unsafe.Pointer, c int32) any {
 }
 
 func beforeCreateItemEvent(ctx context.Context, p unsafe.Pointer) error {
-	return (*billingqueue.ItemEvent)(p).BeforeCreate(ctx)
+	return (*billingqueueevent.ItemEvent)(p).BeforeCreate(ctx)
 }
 
 func init() {
@@ -1630,114 +1632,114 @@ var enumStatus = [...]schema.EnumValue{
 	{Value: `Canceled`, Label: `Canceled`},
 }
 
-// ApprovalFailureCodeCol is a column of billingqueue.ApprovalFailureCode values.
+// ApprovalFailureCodeCol is a column of billingapprovalrun.ApprovalFailureCode values.
 type ApprovalFailureCodeCol struct{ keel.StringCol }
 
-func (c ApprovalFailureCodeCol) Eq(v billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) Eq(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ApprovalFailureCodeCol) Ne(v billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) Ne(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ApprovalFailureCodeCol) Gt(v billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) Gt(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ApprovalFailureCodeCol) Gte(v billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) Gte(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ApprovalFailureCodeCol) Lt(v billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) Lt(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ApprovalFailureCodeCol) Lte(v billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) Lte(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ApprovalFailureCodeCol) IsDistinctFrom(v billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) IsDistinctFrom(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ApprovalFailureCodeCol) Between(lo, hi billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) Between(lo, hi billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ApprovalFailureCodeCol) To(v billingqueue.ApprovalFailureCode) keel.Assignment {
+func (c ApprovalFailureCodeCol) To(v billingapprovalrun.ApprovalFailureCode) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ApprovalFailureCodeCol) In(vs ...billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) In(vs ...billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ApprovalFailureCodeCol) NotIn(vs ...billingqueue.ApprovalFailureCode) keel.Pred {
+func (c ApprovalFailureCodeCol) NotIn(vs ...billingapprovalrun.ApprovalFailureCode) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ApprovalItemStatusCol is a column of billingqueue.ApprovalItemStatus values.
+// ApprovalItemStatusCol is a column of billingapprovalrun.ApprovalItemStatus values.
 type ApprovalItemStatusCol struct{ keel.StringCol }
 
-func (c ApprovalItemStatusCol) Eq(v billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) Eq(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ApprovalItemStatusCol) Ne(v billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) Ne(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ApprovalItemStatusCol) Gt(v billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) Gt(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ApprovalItemStatusCol) Gte(v billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) Gte(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ApprovalItemStatusCol) Lt(v billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) Lt(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ApprovalItemStatusCol) Lte(v billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) Lte(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ApprovalItemStatusCol) IsDistinctFrom(v billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) IsDistinctFrom(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ApprovalItemStatusCol) Between(lo, hi billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) Between(lo, hi billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ApprovalItemStatusCol) To(v billingqueue.ApprovalItemStatus) keel.Assignment {
+func (c ApprovalItemStatusCol) To(v billingapprovalrun.ApprovalItemStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ApprovalItemStatusCol) In(vs ...billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) In(vs ...billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ApprovalItemStatusCol) NotIn(vs ...billingqueue.ApprovalItemStatus) keel.Pred {
+func (c ApprovalItemStatusCol) NotIn(vs ...billingapprovalrun.ApprovalItemStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// ApprovalRunStatusCol is a column of billingqueue.ApprovalRunStatus values.
+// ApprovalRunStatusCol is a column of billingapprovalrun.ApprovalRunStatus values.
 type ApprovalRunStatusCol struct{ keel.StringCol }
 
-func (c ApprovalRunStatusCol) Eq(v billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) Eq(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c ApprovalRunStatusCol) Ne(v billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) Ne(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c ApprovalRunStatusCol) Gt(v billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) Gt(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c ApprovalRunStatusCol) Gte(v billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) Gte(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c ApprovalRunStatusCol) Lt(v billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) Lt(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c ApprovalRunStatusCol) Lte(v billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) Lte(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c ApprovalRunStatusCol) IsDistinctFrom(v billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) IsDistinctFrom(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c ApprovalRunStatusCol) Between(lo, hi billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) Between(lo, hi billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c ApprovalRunStatusCol) To(v billingqueue.ApprovalRunStatus) keel.Assignment {
+func (c ApprovalRunStatusCol) To(v billingapprovalrun.ApprovalRunStatus) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c ApprovalRunStatusCol) In(vs ...billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) In(vs ...billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c ApprovalRunStatusCol) NotIn(vs ...billingqueue.ApprovalRunStatus) keel.Pred {
+func (c ApprovalRunStatusCol) NotIn(vs ...billingapprovalrun.ApprovalRunStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -1787,63 +1789,63 @@ func (c CheckKeyCol) NotIn(vs ...billingqueue.CheckKey) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// EventActorTypeCol is a column of billingqueue.EventActorType values.
+// EventActorTypeCol is a column of billingqueueevent.EventActorType values.
 type EventActorTypeCol struct{ keel.StringCol }
 
-func (c EventActorTypeCol) Eq(v billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) Eq(v billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.Eq(string(v))
 }
-func (c EventActorTypeCol) Ne(v billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) Ne(v billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.Ne(string(v))
 }
-func (c EventActorTypeCol) Gt(v billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) Gt(v billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.Gt(string(v))
 }
-func (c EventActorTypeCol) Gte(v billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) Gte(v billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.Gte(string(v))
 }
-func (c EventActorTypeCol) Lt(v billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) Lt(v billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.Lt(string(v))
 }
-func (c EventActorTypeCol) Lte(v billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) Lte(v billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.Lte(string(v))
 }
-func (c EventActorTypeCol) IsDistinctFrom(v billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) IsDistinctFrom(v billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EventActorTypeCol) Between(lo, hi billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) Between(lo, hi billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EventActorTypeCol) To(v billingqueue.EventActorType) keel.Assignment {
+func (c EventActorTypeCol) To(v billingqueueevent.EventActorType) keel.Assignment {
 	return c.StringCol.To(string(v))
 }
-func (c EventActorTypeCol) In(vs ...billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) In(vs ...billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EventActorTypeCol) NotIn(vs ...billingqueue.EventActorType) keel.Pred {
+func (c EventActorTypeCol) NotIn(vs ...billingqueueevent.EventActorType) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// EventKindCol is a column of billingqueue.EventKind values.
+// EventKindCol is a column of billingqueueevent.EventKind values.
 type EventKindCol struct{ keel.StringCol }
 
-func (c EventKindCol) Eq(v billingqueue.EventKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EventKindCol) Ne(v billingqueue.EventKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EventKindCol) Gt(v billingqueue.EventKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EventKindCol) Gte(v billingqueue.EventKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EventKindCol) Lt(v billingqueue.EventKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EventKindCol) Lte(v billingqueue.EventKind) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c EventKindCol) IsDistinctFrom(v billingqueue.EventKind) keel.Pred {
+func (c EventKindCol) Eq(v billingqueueevent.EventKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c EventKindCol) Ne(v billingqueueevent.EventKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c EventKindCol) Gt(v billingqueueevent.EventKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c EventKindCol) Gte(v billingqueueevent.EventKind) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c EventKindCol) Lt(v billingqueueevent.EventKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c EventKindCol) Lte(v billingqueueevent.EventKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EventKindCol) IsDistinctFrom(v billingqueueevent.EventKind) keel.Pred {
 	return c.StringCol.IsDistinctFrom(string(v))
 }
-func (c EventKindCol) Between(lo, hi billingqueue.EventKind) keel.Pred {
+func (c EventKindCol) Between(lo, hi billingqueueevent.EventKind) keel.Pred {
 	return c.StringCol.Between(string(lo), string(hi))
 }
-func (c EventKindCol) To(v billingqueue.EventKind) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c EventKindCol) In(vs ...billingqueue.EventKind) keel.Pred {
+func (c EventKindCol) To(v billingqueueevent.EventKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c EventKindCol) In(vs ...billingqueueevent.EventKind) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
-func (c EventKindCol) NotIn(vs ...billingqueue.EventKind) keel.Pred {
+func (c EventKindCol) NotIn(vs ...billingqueueevent.EventKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

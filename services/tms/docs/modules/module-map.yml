@@ -733,8 +733,12 @@ modules:
       - bankreceipt
       - bankreceiptbatch
       - bankreceiptworkitem
+      - billingapprovalrun
+      - billingpayershare
       - billingqueue
+      - billingqueueevent
       - billingqueuefilterpreset
+      - billingqueuereview
       - billingtransfer
       - collection
       - costingcontrol

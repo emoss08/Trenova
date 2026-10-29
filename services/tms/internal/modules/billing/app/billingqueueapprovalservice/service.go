@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -53,7 +53,7 @@ func New(p Params) billingqueueports.BillingQueueApprovalService {
 func (s *Service) Start(
 	ctx context.Context,
 	req *billingqueueports.StartBillingQueueApprovalRequest,
-) (*billingqueue.ApprovalRun, error) {
+) (*billingapprovalrun.ApprovalRun, error) {
 	if req.TenantInfo.UserID.IsNil() {
 		return nil, errortypes.NewAuthenticationError("A user is required to approve")
 	}
@@ -80,7 +80,7 @@ func (s *Service) Start(
 			"Pick at least one item",
 		)
 	}
-	if len(itemIDs) > billingqueue.MaxApprovalRunItems {
+	if len(itemIDs) > billingapprovalrun.MaxApprovalRunItems {
 		return nil, errortypes.NewValidationError(
 			"itemIds", errortypes.ErrInvalid, "Approve at most 500 items at a time",
 		)
@@ -92,14 +92,14 @@ func (s *Service) Start(
 	}
 
 	run, err := s.repo.CreateApprovalRun(ctx, &billingqueueports.CreateApprovalRunRequest{
-		Run: &billingqueue.ApprovalRun{
+		Run: &billingapprovalrun.ApprovalRun{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			RequestedByID:  req.TenantInfo.UserID,
 			IdempotencyKey: key,
-			Status:         billingqueue.ApprovalRunScheduled,
+			Status:         billingapprovalrun.ApprovalRunScheduled,
 			TotalCount:     len(itemIDs),
-			CommitAt:       timeutils.NowUnix() + billingqueue.ApprovalUndoWindowSeconds,
+			CommitAt:       timeutils.NowUnix() + billingapprovalrun.ApprovalUndoWindowSeconds,
 		},
 		ItemIDs: itemIDs,
 	})
@@ -119,7 +119,7 @@ func (s *Service) Start(
 
 func (s *Service) startWorkflow(
 	ctx context.Context,
-	run *billingqueue.ApprovalRun,
+	run *billingapprovalrun.ApprovalRun,
 	assignApprover bool,
 ) error {
 	wf, err := s.workflows.StartWorkflow(ctx,
@@ -164,9 +164,9 @@ func (s *Service) startWorkflow(
 	if _, finErr := s.repo.FinalizeApprovalRun(ctx, &billingqueueports.FinalizeApprovalRunRequest{
 		TenantInfo:     tenantOf(run),
 		RunID:          run.ID,
-		Status:         billingqueue.ApprovalRunFailed,
+		Status:         billingapprovalrun.ApprovalRunFailed,
 		FailureMessage: "The approval could not be queued",
-		LeftoverCode:   billingqueue.ApprovalFailureUnexpected,
+		LeftoverCode:   billingapprovalrun.ApprovalFailureUnexpected,
 	}); finErr != nil {
 		s.l.Error("failed to mark unqueued approval run as failed", zap.Error(finErr))
 	}
@@ -177,7 +177,7 @@ func (s *Service) startWorkflow(
 func (s *Service) Get(
 	ctx context.Context,
 	req *billingqueueports.BillingQueueApprovalRunRequest,
-) (*billingqueue.ApprovalRun, error) {
+) (*billingapprovalrun.ApprovalRun, error) {
 	return s.repo.GetApprovalRun(ctx, &billingqueueports.GetApprovalRunRequest{
 		TenantInfo:   req.TenantInfo,
 		RunID:        req.RunID,
@@ -191,7 +191,7 @@ func (s *Service) Get(
 func (s *Service) Undo(
 	ctx context.Context,
 	req *billingqueueports.BillingQueueApprovalRunRequest,
-) (*billingqueue.ApprovalRun, error) {
+) (*billingapprovalrun.ApprovalRun, error) {
 	run, err := s.Get(ctx, req)
 	if err != nil {
 		return nil, err
@@ -236,6 +236,6 @@ func (s *Service) Undo(
 	return s.Get(ctx, req)
 }
 
-func tenantOf(run *billingqueue.ApprovalRun) pagination.TenantInfo {
+func tenantOf(run *billingapprovalrun.ApprovalRun) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
 }

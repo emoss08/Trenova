@@ -1,8 +1,9 @@
-package billingqueue
+package billingpayershare
 
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -21,7 +22,7 @@ type splitFixture struct {
 	acme      pulid.ID
 	peak      pulid.ID
 	detention *shipment.AdditionalCharge
-	names     map[pulid.ID]PayerRef
+	names     map[pulid.ID]billingqueue.PayerRef
 }
 
 // newSplitFixture is the shipment from the field report: $2,850 freight split by
@@ -76,7 +77,7 @@ func newSplitFixture() *splitFixture {
 		acme:      acme,
 		peak:      peak,
 		detention: detention,
-		names: map[pulid.ID]PayerRef{
+		names: map[pulid.ID]billingqueue.PayerRef{
 			acme: {ID: acme, Name: "Acme Manufacturing", Code: "ACME"},
 			peak: {ID: peak, Name: "Peak Distributing", Code: "PEAK"},
 		},

@@ -4,7 +4,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -99,7 +102,7 @@ func (s *service) ResolveIssue(
 		return nil, err
 	}
 
-	s.recordEvent(ctx, item, billingqueue.EventIssueResolved, option.Done, actor,
+	s.recordEvent(ctx, item, billingqueueevent.EventIssueResolved, option.Done, actor,
 		map[string]any{"issueId": issue.ID.String(), "option": option.Key})
 	s.publishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
 
@@ -155,7 +158,7 @@ func (s *service) settleableIssue(
 	if err != nil {
 		return nil, err
 	}
-	if !billingqueue.IsReviewable(item.Status) {
+	if !billingqueuereview.IsReviewable(item.Status) {
 		return nil, errortypes.NewValidationError(
 			"status", errortypes.ErrInvalidOperation,
 			"This item is past review, so its checks can't change",
@@ -201,13 +204,17 @@ func (s *service) undoableIssue(
 	if err != nil {
 		return nil, err
 	}
-	if !issue.Settled() || !billingqueue.IsReviewable(item.Status) {
+	if !issue.Settled() || !billingqueuereview.IsReviewable(item.Status) {
 		return nil, errortypes.NewValidationError(
 			"issueId", errortypes.ErrInvalidOperation, "This can't be undone now",
 		)
 	}
 
-	return &issueSettlement{item: item, issue: issue, option: issue.Option(*issue.ResolutionKey)}, nil
+	return &issueSettlement{
+		item:   item,
+		issue:  issue,
+		option: issue.Option(*issue.ResolutionKey),
+	}, nil
 }
 
 // UndoIssue takes a settlement back: the charge it removed or repriced is put
@@ -261,7 +268,7 @@ func (s *service) UndoIssue(
 		return nil, err
 	}
 
-	s.recordEvent(ctx, item, billingqueue.EventIssueUndone, "Undid: "+lowerFirst(done), actor,
+	s.recordEvent(ctx, item, billingqueueevent.EventIssueUndone, "Undid: "+lowerFirst(done), actor,
 		map[string]any{"issueId": issue.ID.String()})
 	s.publishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
 
@@ -541,7 +548,7 @@ func (s *service) requestPaperwork(
 	if who == "" {
 		who = "the driver"
 	}
-	s.recordEvent(ctx, item, billingqueue.EventDocumentRequested,
+	s.recordEvent(ctx, item, billingqueueevent.EventDocumentRequested,
 		"Asked "+who+" for a signed POD", actor,
 		map[string]any{"issueId": issue.ID.String()})
 	s.publishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
@@ -687,7 +694,7 @@ func (s *service) Post(
 		if result.SentTo != "" {
 			text += " · emailed to " + result.SentTo
 		}
-		s.recordEvent(ctx, updated, billingqueue.EventPosted, text, actor,
+		s.recordEvent(ctx, updated, billingqueueevent.EventPosted, text, actor,
 			map[string]any{"invoiceId": posted.ID.String(), "invoiceNumber": posted.Number})
 		s.publishInvalidation(ctx, updated, actor.AuditActor(), "updated", updated)
 	}
@@ -722,15 +729,15 @@ func (s *service) ApproveIfReady(
 
 	switch {
 	case item.Status == billingqueue.StatusApproved || item.Status == billingqueue.StatusPosted:
-		result.FailureCode = billingqueue.ApprovalFailureAlreadyDone
+		result.FailureCode = billingapprovalrun.ApprovalFailureAlreadyDone
 		result.Reason = "Already approved"
 		return result, nil
 	case item.Status == billingqueue.StatusOnHold:
-		result.FailureCode = billingqueue.ApprovalFailureOnHold
+		result.FailureCode = billingapprovalrun.ApprovalFailureOnHold
 		result.Reason = "On hold"
 		return result, nil
 	case item.Review == nil || !item.Review.Ready:
-		result.FailureCode = billingqueue.ApprovalFailureNotReady
+		result.FailureCode = billingapprovalrun.ApprovalFailureNotReady
 		result.Reason = blockerReason(item)
 		return result, nil
 	}

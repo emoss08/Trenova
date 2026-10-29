@@ -1,4 +1,4 @@
-package billingqueue
+package billingqueueevent
 
 import (
 	"context"

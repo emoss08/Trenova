@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -33,30 +35,30 @@ func isSystemEvent(ctx context.Context) bool {
 func (s *service) newEvent(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
-	kind billingqueue.EventKind,
+	kind billingqueueevent.EventKind,
 	text string,
 	actor *permissionports.RequestActor,
 	payload map[string]any,
-) *billingqueue.ItemEvent {
-	event := &billingqueue.ItemEvent{
+) *billingqueueevent.ItemEvent {
+	event := &billingqueueevent.ItemEvent{
 		OrganizationID: item.OrganizationID,
 		BusinessUnitID: item.BusinessUnitID,
 		ItemID:         item.ID,
 		Kind:           kind,
 		Text:           text,
-		ActorType:      billingqueue.EventActorSystem,
+		ActorType:      billingqueueevent.EventActorSystem,
 		Payload:        payload,
 	}
 	switch {
 	case actor == nil || isSystemEvent(ctx):
 	case actor.IsAgent():
-		event.ActorType = billingqueue.EventActorAgent
+		event.ActorType = billingqueueevent.EventActorAgent
 		event.ActorName = "Agent"
 		if id := actor.PrincipalID; id.IsNotNil() {
 			event.ActorID = &id
 		}
 	case actor.UserID.IsNotNil():
-		event.ActorType = billingqueue.EventActorUser
+		event.ActorType = billingqueueevent.EventActorUser
 		id := actor.UserID
 		event.ActorID = &id
 		event.ActorName = s.personName(ctx, actor)
@@ -88,7 +90,7 @@ func (s *service) personName(ctx context.Context, actor *permissionports.Request
 func (s *service) recordEvent(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
-	kind billingqueue.EventKind,
+	kind billingqueueevent.EventKind,
 	text string,
 	actor *permissionports.RequestActor,
 	payload map[string]any,
@@ -121,29 +123,38 @@ func (s *service) recordStatusEvent(
 
 	switch updated.Status { //nolint:exhaustive // the rest read as a plain move
 	case billingqueue.StatusApproved:
-		text := "Approved the invoice for " + billingqueue.FormatMoney(updated.AllocatedTotalAmount)
+		text := "Approved the invoice for " + billingqueuereview.FormatMoney(
+			updated.AllocatedTotalAmount,
+		)
 		if created != nil && created.Invoice == nil {
 			text = "Approved onto the customer's statement"
 		}
-		s.recordEvent(ctx, updated, billingqueue.EventApproved, text, actor, nil)
+		s.recordEvent(ctx, updated, billingqueueevent.EventApproved, text, actor, nil)
 	case billingqueue.StatusOnHold:
 		text := "Put on hold"
 		if updated.HoldReasonCode != nil {
 			text += " · " + updated.HoldReasonCode.Phrase()
 		}
-		s.recordEvent(ctx, updated, billingqueue.EventHeld, text, actor, nil)
+		s.recordEvent(ctx, updated, billingqueueevent.EventHeld, text, actor, nil)
 	case billingqueue.StatusPosted:
 		// Posting from the item writes its own line with the invoice number.
 	default:
 		if previous.Status == billingqueue.StatusOnHold {
-			s.recordEvent(ctx, updated, billingqueue.EventReleased, "Released the hold", actor, nil)
+			s.recordEvent(
+				ctx,
+				updated,
+				billingqueueevent.EventReleased,
+				"Released the hold",
+				actor,
+				nil,
+			)
 			return
 		}
 		if previous.Status == billingqueue.StatusReadyForReview &&
 			updated.Status == billingqueue.StatusInReview {
 			return
 		}
-		s.recordEvent(ctx, updated, billingqueue.EventStatusChanged,
+		s.recordEvent(ctx, updated, billingqueueevent.EventStatusChanged,
 			"Moved to "+statusWords(updated.Status), actor, nil)
 	}
 }

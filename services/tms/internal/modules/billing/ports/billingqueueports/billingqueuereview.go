@@ -3,7 +3,9 @@ package billingqueueports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -46,9 +48,9 @@ type ListBillingQueueEventsRequest struct {
 }
 
 type BillingQueueEventPage struct {
-	Items   []*billingqueue.ItemEvent `json:"items"`
-	HasMore bool                      `json:"hasMore"`
-	Total   int                       `json:"total"`
+	Items   []*billingqueueevent.ItemEvent `json:"items"`
+	HasMore bool                           `json:"hasMore"`
+	Total   int                            `json:"total"`
 }
 
 // GetBillingQueueNeighborsRequest finds an item's place in the queue under the
@@ -95,7 +97,7 @@ type BillingQueueItemSummary struct {
 }
 
 type CreateApprovalRunRequest struct {
-	Run     *billingqueue.ApprovalRun
+	Run     *billingapprovalrun.ApprovalRun
 	ItemIDs []pulid.ID
 }
 
@@ -120,16 +122,16 @@ type RequestApprovalRunUndoRequest struct {
 
 type RecordApprovalRunItemRequest struct {
 	TenantInfo pagination.TenantInfo
-	Item       *billingqueue.ApprovalRunItem
+	Item       *billingapprovalrun.ApprovalRunItem
 }
 
 type FinalizeApprovalRunRequest struct {
 	TenantInfo     pagination.TenantInfo
 	RunID          pulid.ID
-	Status         billingqueue.ApprovalRunStatus
+	Status         billingapprovalrun.ApprovalRunStatus
 	FailureMessage string
 	// LeftoverCode is what the items nobody got to are marked with.
-	LeftoverCode billingqueue.ApprovalFailureCode
+	LeftoverCode billingapprovalrun.ApprovalFailureCode
 }
 
 // BillingQueueReviewRepository stores what a biller's review of an item reads
@@ -153,7 +155,7 @@ type BillingQueueReviewRepository interface {
 		itemID pulid.ID,
 	) (int, error)
 
-	CreateEvents(ctx context.Context, events ...*billingqueue.ItemEvent) error
+	CreateEvents(ctx context.Context, events ...*billingqueueevent.ItemEvent) error
 	ListEvents(
 		ctx context.Context,
 		req *ListBillingQueueEventsRequest,
@@ -175,16 +177,16 @@ type BillingQueueReviewRepository interface {
 	CreateApprovalRun(
 		ctx context.Context,
 		req *CreateApprovalRunRequest,
-	) (*billingqueue.ApprovalRun, error)
+	) (*billingapprovalrun.ApprovalRun, error)
 	GetApprovalRun(
 		ctx context.Context,
 		req *GetApprovalRunRequest,
-	) (*billingqueue.ApprovalRun, error)
+	) (*billingapprovalrun.ApprovalRun, error)
 	GetApprovalRunByKey(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		key string,
-	) (*billingqueue.ApprovalRun, error)
+	) (*billingapprovalrun.ApprovalRun, error)
 	// MarkApprovalRunRunning moves a run out of its undo window. It reports
 	// false, and changes nothing, when the run was undone first.
 	MarkApprovalRunRunning(
@@ -205,12 +207,12 @@ type BillingQueueReviewRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		runID pulid.ID,
-	) ([]*billingqueue.ApprovalRunItem, error)
+	) ([]*billingapprovalrun.ApprovalRunItem, error)
 	// RecordApprovalRunItem writes an item's outcome once; a retried
 	// activity writing the same item again changes nothing.
 	RecordApprovalRunItem(ctx context.Context, req *RecordApprovalRunItemRequest) error
 	FinalizeApprovalRun(
 		ctx context.Context,
 		req *FinalizeApprovalRunRequest,
-	) (*billingqueue.ApprovalRun, error)
+	) (*billingapprovalrun.ApprovalRun, error)
 }

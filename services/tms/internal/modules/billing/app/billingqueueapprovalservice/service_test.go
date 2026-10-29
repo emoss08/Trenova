@@ -4,11 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueapprovalservice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,14 +24,14 @@ func (reviewRepo) GetApprovalRunByKey(
 	context.Context,
 	pagination.TenantInfo,
 	string,
-) (*billingqueue.ApprovalRun, error) {
+) (*billingapprovalrun.ApprovalRun, error) {
 	return nil, errortypes.NewNotFoundError("Approval run not found")
 }
 
 func (reviewRepo) CreateApprovalRun(
 	_ context.Context,
 	req *billingqueueports.CreateApprovalRunRequest,
-) (*billingqueue.ApprovalRun, error) {
+) (*billingapprovalrun.ApprovalRun, error) {
 	req.Run.ID = pulid.MustNew("bqar_")
 	return req.Run, nil
 }

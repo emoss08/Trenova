@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -108,7 +109,7 @@ func TestPODFindingFollowsTheSignatureStatus(t *testing.T) {
 			assert.Equal(t, tc.tileState, tiles[0].State)
 			assert.Equal(t, tc.signed, tiles[0].Signed)
 
-			findings := billingqueue.Findings(billingqueue.FindingInput{
+			findings := billingqueuereview.Findings(billingqueuereview.FindingInput{
 				CustomerName: "Acme",
 				POD:          pod,
 			})
@@ -140,7 +141,7 @@ func TestPODFindingPrefersASignedCopyOverAnUnsignedOne(t *testing.T) {
 		assert.True(t, pod.Signed)
 		assert.False(t, pod.Unsigned)
 		assert.Equal(t, signed.ID, pod.DocumentID)
-		assert.Empty(t, billingqueue.Findings(billingqueue.FindingInput{POD: pod}))
+		assert.Empty(t, billingqueuereview.Findings(billingqueuereview.FindingInput{POD: pod}))
 
 		tiles := documentTiles(docs, required)
 		require.Len(t, tiles, 1)
