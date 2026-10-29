@@ -1,6 +1,6 @@
 package agenttemplate
 
-var templateLabels = map[Template]string{
+var templateLabels = map[Template]string{ //nolint:gosec // G101: agent template display names, not credentials
 	TemplateDispatchAssistant:    "Dispatch assistant",
 	TemplateBillingAssistant:     "Billing assistant",
 	TemplateComplianceAssistant:  "Compliance assistant",

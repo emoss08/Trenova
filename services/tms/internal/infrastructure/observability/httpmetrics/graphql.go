@@ -14,6 +14,9 @@ const (
 	OverflowOperation  = "other"
 
 	labelOperation = "operation"
+	labelStatus    = "status"
+	labelMethod    = "method"
+	labelPath      = "path"
 )
 
 var (
@@ -95,7 +98,7 @@ func NewGraphQL(
 			Name:      "operations_total",
 			Help:      "Total number of GraphQL operations executed",
 		},
-		[]string{labelOperation, labelType, "status"},
+		[]string{labelOperation, labelType, labelStatus},
 	)
 
 	m.operationDuration = prometheus.NewHistogramVec(

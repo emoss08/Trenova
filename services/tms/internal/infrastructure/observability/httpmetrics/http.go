@@ -34,7 +34,7 @@ func NewHTTP(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *H
 			Name:      "requests_total",
 			Help:      "Total number of HTTP requests processed",
 		},
-		[]string{"method", "path", "status"},
+		[]string{labelMethod, labelPath, labelStatus},
 	)
 
 	m.requestDuration = prometheus.NewHistogramVec(
@@ -45,7 +45,7 @@ func NewHTTP(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *H
 			Help:      "HTTP request latencies in seconds",
 			Buckets:   metricbase.HTTPDurationBuckets,
 		},
-		[]string{"method", "path", "status"},
+		[]string{labelMethod, labelPath, labelStatus},
 	)
 
 	m.responseSize = prometheus.NewHistogramVec(
@@ -56,7 +56,7 @@ func NewHTTP(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *H
 			Help:      "HTTP response sizes in bytes",
 			Buckets:   metricbase.HTTPResponseSizeBuckets,
 		},
-		[]string{"method", "path"},
+		[]string{labelMethod, labelPath},
 	)
 
 	m.activeRequests = prometheus.NewGauge(
