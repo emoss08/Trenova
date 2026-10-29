@@ -103,6 +103,27 @@ func (c *Checker) Evaluate(
 	calls := evidence.calls()
 	reply := evidence.reply()
 
+	checks = append(checks, callChecks(expect, calls)...)
+	checks = append(checks, replyChecks(expect, evidence, reply)...)
+	checks = append(checks, proposalChecks(expect, evidence)...)
+	checks = append(checks, c.databaseChecks(ctx, session, expect, evidence, reply)...)
+	if expect.MaxSeconds != nil {
+		elapsed := evidence.duration().Seconds()
+		checks = append(checks, benchresult.CheckResult{
+			Name:   fmt.Sprintf("answered within %.0fs", *expect.MaxSeconds),
+			Passed: elapsed <= *expect.MaxSeconds,
+			Detail: fmt.Sprintf("%.1fs", elapsed),
+		})
+	}
+
+	return checks
+}
+
+func callChecks(
+	expect *benchscenario.Expect,
+	calls []*benchrecord.ToolCallRecord,
+) []benchresult.CheckResult {
+	checks := make([]benchresult.CheckResult, 0, len(expect.Calls)+len(expect.NoCalls))
 	for _, want := range expect.Calls {
 		checks = append(checks, calledCheck(want, calls))
 	}
@@ -137,6 +158,20 @@ func (c *Checker) Evaluate(
 			Detail: describeCalls(failed),
 		})
 	}
+
+	return checks
+}
+
+func replyChecks(
+	expect *benchscenario.Expect,
+	evidence *Evidence,
+	reply string,
+) []benchresult.CheckResult {
+	checks := make(
+		[]benchresult.CheckResult,
+		0,
+		len(expect.ReplyIncludes)+len(expect.ReplyExcludes),
+	)
 	for _, want := range expect.ReplyIncludes {
 		checks = append(checks, replyCheck(want, reply, true))
 	}
@@ -155,6 +190,15 @@ func (c *Checker) Evaluate(
 	if expect.Refused != nil {
 		checks = append(checks, refusedCheck(*expect.Refused, evidence.Turns))
 	}
+
+	return checks
+}
+
+func proposalChecks(
+	expect *benchscenario.Expect,
+	evidence *Evidence,
+) []benchresult.CheckResult {
+	checks := make([]benchresult.CheckResult, 0, len(expect.Proposals))
 	for idx := range expect.Proposals {
 		checks = append(checks, proposedCheck(&expect.Proposals[idx], evidence.proposals()))
 	}
@@ -173,6 +217,18 @@ func (c *Checker) Evaluate(
 	if expect.Executed != nil {
 		checks = append(checks, executedCheck(*expect.Executed, evidence.Decisions))
 	}
+
+	return checks
+}
+
+func (c *Checker) databaseChecks(
+	ctx context.Context,
+	session *deskbench.Session,
+	expect *benchscenario.Expect,
+	evidence *Evidence,
+	reply string,
+) []benchresult.CheckResult {
+	checks := make([]benchresult.CheckResult, 0, len(expect.Facts)+len(expect.DB))
 	for idx := range expect.Facts {
 		fact := expect.Facts[idx]
 		fact.SQL = evidence.Run.substitute(fact.SQL)
@@ -182,14 +238,6 @@ func (c *Checker) Evaluate(
 		check := expect.DB[idx]
 		check.SQL = evidence.Run.substitute(check.SQL)
 		checks = append(checks, c.dbCheck(ctx, session, &check))
-	}
-	if expect.MaxSeconds != nil {
-		elapsed := evidence.duration().Seconds()
-		checks = append(checks, benchresult.CheckResult{
-			Name:   fmt.Sprintf("answered within %.0fs", *expect.MaxSeconds),
-			Passed: elapsed <= *expect.MaxSeconds,
-			Detail: fmt.Sprintf("%.1fs", elapsed),
-		})
 	}
 
 	return checks

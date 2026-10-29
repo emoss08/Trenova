@@ -234,13 +234,13 @@ func (c *Conversation) decide(
 	}
 
 	for _, decision := range decisions {
-		c.session.bench.live.Line(c.Label, "decided %s %s%s", decision.Decision, decision.Tool,
+		c.session.bench.live.Linef(c.Label, "decided %s %s%s", decision.Decision, decision.Tool,
 			errorSuffix(decision.Error))
 	}
 	turns, err := c.collect(ctx, within)
 	c.settleDecisions(ctx, decisions)
 	for _, decision := range decisions {
-		c.session.bench.live.Line(c.Label, "%s %s -> %s%s", decision.Decision, decision.Tool,
+		c.session.bench.live.Linef(c.Label, "%s %s -> %s%s", decision.Decision, decision.Tool,
 			decision.StatusAfter, errorSuffix(decision.ExecutionError))
 	}
 
@@ -298,7 +298,7 @@ func (c *Conversation) collect(
 			break
 		}
 
-		record := c.capture(ctx, started)
+		record := c.capture(ctx, &started)
 		records = append(records, record)
 		c.turns = append(c.turns, record)
 		if c.formula != nil {
@@ -312,7 +312,7 @@ func (c *Conversation) collect(
 
 func (c *Conversation) capture(
 	ctx context.Context,
-	started benchwatch.StartedTurn,
+	started *benchwatch.StartedTurn,
 ) *benchrecord.TurnRecord {
 	bench := c.session.bench
 	record := &benchrecord.TurnRecord{
@@ -332,13 +332,13 @@ func (c *Conversation) capture(
 	}
 
 	live := bench.live.Turn(c.Label)
-	live.Line(
+	live.Linef(
 		"== turn %s (%s) ==",
 		started.TurnID,
 		stringutils.WithDefault(string(record.Origin), "Person"),
 	)
 	if started.Content != "" {
-		live.Line("person: %s", started.Content)
+		live.Linef("person: %s", started.Content)
 	}
 	collector := newEventCollector(live)
 	relayCtx, cancelRelay := context.WithCancel(ctx)

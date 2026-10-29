@@ -73,7 +73,7 @@ func (r *Runner) runFire(
 		offCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), deskbench.CleanupWithin)
 		defer cancel()
 		if offErr := session.ShapeForRun(offCtx, definition, fire, false); offErr != nil {
-			r.live.Line(label, "could not turn %s off again: %v", definition.Name, offErr)
+			r.live.Linef(label, "could not turn %s off again: %v", definition.Name, offErr)
 		}
 	}()
 
@@ -81,7 +81,7 @@ func (r *Runner) runFire(
 	if err != nil {
 		return nil, nil, err
 	}
-	r.live.Line(label, "== run %s (%s) ==", fired.run.ID, fire.Label())
+	r.live.Linef(label, "== run %s (%s) ==", fired.run.ID, fire.Label())
 
 	record, outcome := r.captureRun(ctx, session, fired, label)
 	if fire.StopWhileWaiting {
@@ -139,7 +139,7 @@ func (r *Runner) startFreshRun(
 	if workflowID == "" {
 		return nil, err
 	}
-	r.live.Line(label, "stopping %s, which an earlier bench left running", workflowID)
+	r.live.Linef(label, "stopping %s, which an earlier bench left running", workflowID)
 	if cancelErr := r.watcher.CancelWorkflow(ctx, workflowID, ""); cancelErr != nil {
 		return nil, errors.Join(
 			err,
@@ -535,7 +535,7 @@ func (r *Runner) stopWaitingRun(
 		return
 	}
 
-	r.live.Line(label, "stopping run %s while it waits for a decision", fired.run.ID)
+	r.live.Linef(label, "stopping run %s while it waits for a decision", fired.run.ID)
 	if err := r.watcher.CancelWorkflow(ctx, fired.run.WorkflowID, ""); err != nil {
 		record.CaptureError = benchrecord.JoinErrors(record.CaptureError, "stop: "+err.Error())
 		return
@@ -592,7 +592,7 @@ func (r *Runner) settleRun(
 		}
 		_, err := r.decisions.DecideWithOutcome(session.Context(settleCtx), reject, &session.Actor)
 		if err != nil {
-			r.live.Line(label, "could not reject %s (%s): %v", proposal.Tool, proposal.ID, err)
+			r.live.Linef(label, "could not reject %s (%s): %v", proposal.Tool, proposal.ID, err)
 		}
 	}
 
@@ -601,7 +601,7 @@ func (r *Runner) settleRun(
 	if err := fired.workflow.Get(waitCtx, nil); err != nil && waitCtx.Err() != nil {
 		cancelErr := r.watcher.CancelWorkflow(settleCtx, fired.run.WorkflowID, "")
 		if cancelErr != nil {
-			r.live.Line(label, "could not stop run %s: %v", fired.run.ID, cancelErr)
+			r.live.Linef(label, "could not stop run %s: %v", fired.run.ID, cancelErr)
 		}
 	}
 }

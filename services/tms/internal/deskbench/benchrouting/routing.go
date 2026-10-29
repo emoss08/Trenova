@@ -507,7 +507,11 @@ func (r *RoutingReport) Write(dir string, baseline *RoutingReport) error {
 	if err != nil {
 		return fmt.Errorf("encode the routing report: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, routingReportFile), encoded, benchrecord.FileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(dir, routingReportFile),
+		encoded,
+		benchrecord.FileMode,
+	); err != nil {
 		return fmt.Errorf("write the routing report: %w", err)
 	}
 	if err = os.WriteFile(

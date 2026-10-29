@@ -1141,7 +1141,7 @@ func SplitReports(
 	}
 	reports := make(map[evalsplit.Split]*benchreport.Report, len(bySplit))
 	for split, picked := range bySplit {
-		reports[split] = benchreport.BuildReport(*meta, picked)
+		reports[split] = benchreport.BuildReport(meta, picked)
 	}
 
 	return reports
@@ -1173,7 +1173,7 @@ func WriteGateRun(
 	meta *benchreport.ReportMeta,
 	cases []*benchresult.CaseResult,
 ) error {
-	report := benchreport.BuildReport(*meta, cases)
+	report := benchreport.BuildReport(meta, cases)
 	sealed := SealedDir(root)
 	if err := report.WriteIndex(sealed); err != nil {
 		return err

@@ -62,7 +62,7 @@ func MeasureCase(result *CaseResult) CaseMetrics {
 	}
 	firstTokens := make([]float64, 0, len(turns))
 	for _, turn := range turns {
-		metrics.Usage.Add(turn.Usage)
+		metrics.Usage.Add(&turn.Usage)
 		metrics.ModelCalls += len(turn.Calls)
 		metrics.ToolCalls += len(turn.Tools)
 		for _, call := range turn.Tools {

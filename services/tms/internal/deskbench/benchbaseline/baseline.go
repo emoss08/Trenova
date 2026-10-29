@@ -133,7 +133,11 @@ func (b *Baseline) Write(dir string) error {
 	if err != nil {
 		return fmt.Errorf("encode the baseline: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, baselineJSON), encoded, benchrecord.FileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(dir, baselineJSON),
+		encoded,
+		benchrecord.FileMode,
+	); err != nil {
 		return fmt.Errorf("write the baseline: %w", err)
 	}
 
@@ -152,7 +156,7 @@ func (b *Baseline) Render() string {
 	}
 	fmt.Fprintf(&out, " · %s · commit %s · %s\n\n",
 		b.Meta.FinishedAt.Sub(b.Meta.StartedAt).Round(time.Second),
-		stringOr(b.Meta.Commit, "unknown"), benchrecord.UsageLine(b.Usage))
+		stringOr(b.Meta.Commit, "unknown"), benchrecord.UsageLine(&b.Usage))
 	out.WriteString("Every figure is a mean per trial with a 95% interval in brackets. A model's " +
 		"pass is the mean of its scenarios' pass rates with a t-interval over scenarios (a " +
 		"scenario's trials are not independent); a scenario's is a Wilson interval over its " +
@@ -196,7 +200,11 @@ func (r *SweepReport) Write(dir string) error {
 	if err != nil {
 		return fmt.Errorf("encode the sweep: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, sweepJSON), encoded, benchrecord.FileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(dir, sweepJSON),
+		encoded,
+		benchrecord.FileMode,
+	); err != nil {
 		return fmt.Errorf("write the sweep: %w", err)
 	}
 

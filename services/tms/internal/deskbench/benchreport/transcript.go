@@ -64,7 +64,7 @@ func renderCase(b *strings.Builder, result *benchresult.CaseResult) {
 		result.ThreadID,
 		result.FinishedAt.Sub(result.StartedAt).
 			Round(100*time.Millisecond),
-		benchrecord.UsageLine(result.Usage),
+		benchrecord.UsageLine(&result.Usage),
 	)
 	if result.Scenario.Source != "" {
 		fmt.Fprintf(b, "- Scenario: `%s`\n", result.Scenario.Source)
@@ -157,7 +157,7 @@ func renderTurn(b *strings.Builder, turn *benchrecord.TurnRecord) {
 	fmt.Fprintf(
 		b,
 		"%s · models: %s",
-		benchrecord.UsageLine(turn.Usage),
+		benchrecord.UsageLine(&turn.Usage),
 		strings.Join(turn.Models, ", "),
 	)
 	if turn.TraceID != "" {
@@ -190,7 +190,8 @@ func renderTurn(b *strings.Builder, turn *benchrecord.TurnRecord) {
 		fmt.Fprintf(b, "_%d model calls in this window carried no thread (guards, classifiers):_ ",
 			len(turn.Unattributed))
 		parts := make([]string, 0, len(turn.Unattributed))
-		for _, call := range turn.Unattributed {
+		for idx := range turn.Unattributed {
+			call := &turn.Unattributed[idx]
 			parts = append(parts, fmt.Sprintf("#%d %s %s", call.Seq, call.Kind, call.Model))
 		}
 		b.WriteString(strings.Join(parts, ", ") + "\n\n")

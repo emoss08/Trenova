@@ -64,7 +64,7 @@ func (f *Feed) Close() {
 	f.writers = nil
 }
 
-func (f *Feed) Line(label, format string, args ...any) {
+func (f *Feed) Linef(label, format string, args ...any) {
 	if f == nil {
 		return
 	}
@@ -111,12 +111,12 @@ const (
 	liveModeThinking = "thinking"
 )
 
-func (t *Turn) Line(format string, args ...any) {
+func (t *Turn) Linef(format string, args ...any) {
 	if t == nil {
 		return
 	}
 	t.flush()
-	t.feed.Line(t.label, format, args...)
+	t.feed.Linef(t.label, format, args...)
 }
 
 func (t *Turn) stream(mode, chunk string) {
@@ -126,7 +126,7 @@ func (t *Turn) stream(mode, chunk string) {
 	if t.mode != mode {
 		t.flush()
 		t.mode = mode
-		t.feed.Line(t.label, "%s:", mode)
+		t.feed.Linef(t.label, "%s:", mode)
 	}
 
 	t.pending.WriteString(chunk)
@@ -165,7 +165,7 @@ func (t *Turn) Frame(frame assistantstreamports.TurnStreamFrame) {
 	case assistantstreamports.AssistantEventToolStarted:
 		var started assistantstreamports.AssistantToolStartedEvent
 		if sonic.Unmarshal(frame.Data, &started) == nil {
-			t.Line(
+			t.Linef(
 				"-> %s%s %s",
 				started.Name,
 				delegateTag(started.DelegateCallID),
@@ -187,7 +187,7 @@ func (t *Turn) Frame(frame assistantstreamports.TurnStreamFrame) {
 			if record.Refused() {
 				detail = benchrecord.FirstLine(finished.Content)
 			}
-			t.Line("<- %s%s %s · %s", finished.Name, delegateTag(finished.DelegateCallID),
+			t.Linef("<- %s%s %s · %s", finished.Name, delegateTag(finished.DelegateCallID),
 				benchrecord.VerdictLabel(&record), stringutils.Ellipsize(detail, liveSummaryLimit))
 		}
 	case assistantstreamports.AssistantEventMessage, assistantstreamports.AssistantEventDone,
@@ -196,7 +196,7 @@ func (t *Turn) Frame(frame assistantstreamports.TurnStreamFrame) {
 		assistantstreamports.AssistantEventArtifact:
 		t.flush()
 	default:
-		t.Line(
+		t.Linef(
 			"event %s %s",
 			frame.Event,
 			stringutils.Ellipsize(string(frame.Data), liveEventLimit),
@@ -225,16 +225,16 @@ func delegateTag(delegateCallID string) string {
 
 func AnnounceTurnEnd(live *Turn, record *benchrecord.TurnRecord) {
 	live.flush()
-	live.Line(
+	live.Linef(
 		"== %s · %s · %d tool calls · %s ==",
 		record.Status,
 		record.Duration().
 			Round(100*time.Millisecond),
 		len(record.Tools),
-		benchrecord.UsageLine(record.Usage),
+		benchrecord.UsageLine(&record.Usage),
 	)
 	for _, proposal := range record.Proposals {
-		live.Line(
+		live.Linef(
 			"proposal %s %s (%s)",
 			proposal.Tool,
 			stringutils.Ellipsize(
@@ -245,6 +245,6 @@ func AnnounceTurnEnd(live *Turn, record *benchrecord.TurnRecord) {
 		)
 	}
 	if record.Failure != "" {
-		live.Line("failure: %s", record.Failure)
+		live.Linef("failure: %s", record.Failure)
 	}
 }

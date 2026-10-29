@@ -152,9 +152,11 @@ func statusRank(status FindingStatus) int {
 		return 0
 	case FindingFixed:
 		return 1
-	default:
+	case FindingWontFix:
 		return 2
 	}
+
+	return 2
 }
 
 func RenderFindingsMarkdown(findings []*Finding) string {

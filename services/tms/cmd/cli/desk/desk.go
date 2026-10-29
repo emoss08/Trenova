@@ -517,13 +517,13 @@ func execute(
 	)
 	fmt.Fprintf(os.Stderr, "watch it live: tail -f %s\n", livePath)
 
-	cases, runErr := benchrun.New(bench).Run(ctx, opts)
+	cases, runErr := benchrun.New(bench).Run(ctx, &opts)
 	meta.FinishedAt = time.Now()
 	if closeErr := bench.Close(); closeErr != nil {
 		fmt.Fprintf(os.Stderr, "stopping the bench: %v\n", closeErr)
 	}
 
-	report := benchreport.BuildReport(meta, cases)
+	report := benchreport.BuildReport(&meta, cases)
 	if baseline != nil {
 		report.Comparison = benchreport.Compare(baseline, report)
 		report.ComparisonNote = benchresult.ComparedDataNote(baseline.Meta.Data, report.Meta.Data)

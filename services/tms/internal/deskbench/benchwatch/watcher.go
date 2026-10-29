@@ -31,9 +31,9 @@ func newTurnQueue() *TurnQueue {
 	return &TurnQueue{ready: make(chan struct{}, 1)}
 }
 
-func (q *TurnQueue) push(turn StartedTurn) {
+func (q *TurnQueue) push(turn *StartedTurn) {
 	q.mu.Lock()
-	q.items = append(q.items, turn)
+	q.items = append(q.items, *turn)
 	q.mu.Unlock()
 
 	select {
@@ -144,7 +144,7 @@ func (w *TurnWatcher) StartWorkflow(
 	queue := w.queues[payload.ThreadID]
 	w.mu.Unlock()
 	if queue != nil {
-		queue.push(StartedTurn{
+		queue.push(&StartedTurn{
 			At:       startedAt,
 			TurnID:   payload.TurnID,
 			ThreadID: payload.ThreadID,

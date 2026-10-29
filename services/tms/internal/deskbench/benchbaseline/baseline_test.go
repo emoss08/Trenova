@@ -40,7 +40,7 @@ func TestBaseline_WritesMarkdownAndJSON(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	report := benchreport.BuildReport(benchreport.ReportMeta{Commit: "abc123"}, nil)
+	report := benchreport.BuildReport(&benchreport.ReportMeta{Commit: "abc123"}, nil)
 	require.NoError(t, benchbaseline.BaselineOf(report).Write(dir))
 
 	assert.FileExists(t, filepath.Join(dir, "baseline.md"))

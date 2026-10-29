@@ -53,7 +53,7 @@ func WriteJSON(dir, name string, value any) error {
 
 var JSON = sonic.Config{SortMapKeys: true, EscapeHTML: false}.Froze()
 
-func UsageLine(usage Usage) string {
+func UsageLine(usage *Usage) string {
 	line := fmt.Sprintf("%d model calls, %d in", usage.ModelCalls, usage.InputTokens)
 	if usage.CacheReadTokens > 0 || usage.CacheWriteTokens > 0 {
 		line += fmt.Sprintf(" + %d cache read + %d cache write", usage.CacheReadTokens,

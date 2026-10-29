@@ -205,15 +205,16 @@ type ModelNote struct {
 	Note   string `json:"note"`
 }
 
-func BuildReport(meta ReportMeta, cases []*benchresult.CaseResult) *Report {
-	if meta.PassK <= 0 {
-		meta.PassK = benchstats.DefaultPassK
+func BuildReport(meta *ReportMeta, cases []*benchresult.CaseResult) *Report {
+	resolved := *meta
+	if resolved.PassK <= 0 {
+		resolved.PassK = benchstats.DefaultPassK
 	}
 
 	return &Report{
 		SchemaVersion: reportVersion,
-		Meta:          meta,
-		Summary:       summarize(cases, meta.PassK),
+		Meta:          resolved,
+		Summary:       summarize(cases, resolved.PassK),
 		ToolHealth:    toolHealth(cases),
 		ModelNotes:    modelNotes(cases),
 		Cases:         cases,
@@ -236,7 +237,11 @@ func (r *Report) Write(dir string) error {
 	if err != nil {
 		return fmt.Errorf("encode the report: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(dir, reportFile), encoded, benchrecord.FileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(dir, reportFile),
+		encoded,
+		benchrecord.FileMode,
+	); err != nil {
 		return fmt.Errorf("write the report: %w", err)
 	}
 	if err = os.WriteFile(
@@ -375,7 +380,11 @@ func (w *callWriter) writeTurn(caseID string, turnIndex int, turn *benchrecord.T
 		if err != nil {
 			return fmt.Errorf("encode model call %d: %w", call.Seq, err)
 		}
-		if err = os.WriteFile(filepath.Join(w.dir, relative), encoded, benchrecord.FileMode); err != nil {
+		if err = os.WriteFile(
+			filepath.Join(w.dir, relative),
+			encoded,
+			benchrecord.FileMode,
+		); err != nil {
 			return fmt.Errorf("write model call %d: %w", call.Seq, err)
 		}
 		if idx < len(turn.Calls) {
@@ -399,7 +408,11 @@ func (w *callWriter) prompt(system string) (string, error) {
 	if err := os.MkdirAll(filepath.Join(w.dir, promptsDir), benchrecord.DirMode); err != nil {
 		return "", fmt.Errorf("create prompts dir: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(w.dir, relative), []byte(system), benchrecord.FileMode); err != nil {
+	if err := os.WriteFile(
+		filepath.Join(w.dir, relative),
+		[]byte(system),
+		benchrecord.FileMode,
+	); err != nil {
 		return "", fmt.Errorf("write system prompt: %w", err)
 	}
 	w.prompts[digest] = true
@@ -424,7 +437,11 @@ func (w *callWriter) toolSpecs(tools []kernelports.ToolSpec) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("encode tool specs: %w", err)
 	}
-	if err = os.WriteFile(filepath.Join(w.dir, relative), encoded, benchrecord.FileMode); err != nil {
+	if err = os.WriteFile(
+		filepath.Join(w.dir, relative),
+		encoded,
+		benchrecord.FileMode,
+	); err != nil {
 		return "", fmt.Errorf("write tool specs: %w", err)
 	}
 	w.tools[digest] = true
@@ -473,7 +490,7 @@ func summarize(cases []*benchresult.CaseResult, k int) Summary {
 		if result.Passed {
 			summary.Passed++
 		}
-		summary.Usage.Add(result.Usage)
+		summary.Usage.Add(&result.Usage)
 
 		key := result.Key()
 		if _, ok := groups[key]; !ok {
@@ -647,7 +664,13 @@ func MeasuresOf(results []*benchresult.CaseResult) Measures {
 
 func (m *measureSeries) add(result *benchresult.CaseResult) {
 	metrics := &result.Metrics
-	usage := &metrics.Usage
+	m.addActivity(metrics)
+	m.addUsage(metrics)
+	m.addOutcome(result)
+	m.addSelection(metrics)
+}
+
+func (m *measureSeries) addActivity(metrics *benchresult.CaseMetrics) {
 	m.seconds = append(m.seconds, metrics.Seconds)
 	if metrics.FirstTokenMs != nil {
 		m.firstToken = append(m.firstToken, *metrics.FirstTokenMs)
@@ -660,6 +683,16 @@ func (m *measureSeries) add(result *benchresult.CaseResult) {
 		m.argumentValidity = append(m.argumentValidity,
 			1-invalid/float64(metrics.ToolCalls))
 	}
+	for verdict, count := range metrics.RefusedByVerdict {
+		m.verdicts[verdict] += float64(count)
+	}
+	for guard, count := range metrics.ReasksByGuard {
+		m.guards[guard] += float64(count)
+	}
+}
+
+func (m *measureSeries) addUsage(metrics *benchresult.CaseMetrics) {
+	usage := &metrics.Usage
 	m.uncached = append(m.uncached, float64(usage.InputTokens))
 	m.read = append(m.read, float64(usage.CacheReadTokens))
 	m.write = append(m.write, float64(usage.CacheWriteTokens))
@@ -679,6 +712,9 @@ func (m *measureSeries) add(result *benchresult.CaseResult) {
 	if usage.EstimatedCalls > 0 {
 		m.estimated = true
 	}
+}
+
+func (m *measureSeries) addOutcome(result *benchresult.CaseResult) {
 	if result.Passed {
 		m.passed++
 	}
@@ -691,12 +727,9 @@ func (m *measureSeries) add(result *benchresult.CaseResult) {
 			m.unauthorizedRules[string(rule)]++
 		}
 	}
-	for verdict, count := range metrics.RefusedByVerdict {
-		m.verdicts[verdict] += float64(count)
-	}
-	for guard, count := range metrics.ReasksByGuard {
-		m.guards[guard] += float64(count)
-	}
+}
+
+func (m *measureSeries) addSelection(metrics *benchresult.CaseMetrics) {
 	if selection := metrics.Selection; selection != nil {
 		if selection.Precision != nil {
 			m.precision = append(m.precision, *selection.Precision)
@@ -836,8 +869,9 @@ func modelNotes(cases []*benchresult.CaseResult) []ModelNote {
 	notes := make([]ModelNote, 0, 4)
 	for _, result := range cases {
 		for _, turn := range allTurns(result) {
-			for _, call := range turn.Calls {
-				for _, note := range callNotes(&call) {
+			for idx := range turn.Calls {
+				call := &turn.Calls[idx]
+				for _, note := range callNotes(call) {
 					notes = append(notes, ModelNote{
 						Case:   result.Key() + " #" + strconv.Itoa(result.Repeat),
 						TurnID: turn.TurnID.String(),

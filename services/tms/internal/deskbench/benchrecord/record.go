@@ -82,7 +82,7 @@ func (u *Usage) PromptTokens() int {
 	return u.InputTokens + u.CacheReadTokens + u.CacheWriteTokens
 }
 
-func (u *Usage) Add(other Usage) {
+func (u *Usage) Add(other *Usage) {
 	u.ModelCalls += other.ModelCalls
 	u.InputTokens += other.InputTokens
 	u.CacheReadTokens += other.CacheReadTokens

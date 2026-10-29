@@ -194,7 +194,7 @@ func UsageOf(calls []*ModelCall, priceOf CallPricing) (usage Usage, models []str
 			next.EstimatedCalls = 1
 		}
 		next.CostUSD = price.cost
-		usage.Add(next)
+		usage.Add(&next)
 		if tokens.model != "" && !slices.Contains(models, tokens.model) {
 			models = append(models, tokens.model)
 		}

@@ -50,8 +50,9 @@ func costPerRun(row *MatrixRow) *float64 {
 
 func Compare(before, after *Report) []CompareEntry {
 	previous := make(map[string]MatrixRow, len(before.Summary.Matrix))
-	for _, row := range before.Summary.Matrix {
-		previous[row.Key()] = row
+	for idx := range before.Summary.Matrix {
+		row := &before.Summary.Matrix[idx]
+		previous[row.Key()] = *row
 	}
 
 	entries := make([]CompareEntry, 0, len(after.Summary.Matrix))
@@ -126,7 +127,7 @@ func RenderSummary(r *Report) string {
 		fmt.Fprintf(&b, ", %d skipped", summary.Skipped)
 	}
 	fmt.Fprintf(&b, " in %s · %s\n", r.Meta.FinishedAt.Sub(r.Meta.StartedAt).Round(time.Second),
-		benchrecord.UsageLine(summary.Usage))
+		benchrecord.UsageLine(&summary.Usage))
 	if r.Meta.Data.Shape != "" {
 		fmt.Fprintf(&b, "Data: %s\n", r.Meta.Data)
 	}

@@ -113,7 +113,7 @@ func (p plannedCase) label() string {
 	return p.scenario.Name + " @ " + provider + " #" + strconv.Itoa(p.repeat)
 }
 
-func (r *Runner) Run(ctx context.Context, opts RunOptions) ([]*benchresult.CaseResult, error) {
+func (r *Runner) Run(ctx context.Context, opts *RunOptions) ([]*benchresult.CaseResult, error) {
 	repeat := max(opts.Repeat, 1)
 	parallel := min(max(opts.Parallel, 1), maxParallel)
 	providers := opts.Providers
@@ -155,7 +155,7 @@ func (r *Runner) Run(ctx context.Context, opts RunOptions) ([]*benchresult.CaseR
 				if ctx.Err() != nil {
 					return
 				}
-				result := r.runCase(ctx, &opts, planned[idx])
+				result := r.runCase(ctx, opts, planned[idx])
 				results[idx] = result
 				if opts.Progress != nil {
 					progressMu.Lock()
@@ -223,7 +223,7 @@ func (r *Runner) runCase(
 		Repeat:    planned.repeat,
 		StartedAt: time.Now(),
 	}
-	r.live.Line(planned.label(), ">>> start: %s", benchrecord.FirstLine(scenario.Description))
+	r.live.Linef(planned.label(), ">>> start: %s", benchrecord.FirstLine(scenario.Description))
 	var session *deskbench.Session
 	defer func() {
 		result.FinishedAt = time.Now()
@@ -239,60 +239,9 @@ func (r *Runner) runCase(
 		r.liveVerdict(planned.label(), result)
 	}()
 
-	user := scenario.User
-	if user == "" {
-		user = opts.User
-	}
-	session, err := r.bench.SessionFor(ctx, user)
-	if err != nil {
-		result.Error = err.Error()
+	session, cell, ready := r.prepareCase(ctx, opts, planned, result)
+	if !ready {
 		return result
-	}
-
-	cell, err := session.Cell(ctx, planned.provider)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
-	provider := cell.Provider
-	result.Provider = cell.Label()
-	result.Model = providerModel(provider)
-	if provider != nil {
-		result.ProviderKind = string(provider.Kind)
-	}
-	result.Effort = string(cell.Effort)
-
-	unmet, err := r.database.UnmetRequirements(ctx, session, scenario.Requires)
-	if err != nil {
-		result.Error = err.Error()
-		return result
-	}
-	if unmet != "" {
-		result.Skipped = unmet
-		return result
-	}
-
-	r.tidied.Do(func() {
-		if tidyErr := r.database.RunStatements(ctx, session, benchsql.Leftovers()); tidyErr != nil {
-			r.live.Line("bench", "could not cancel what earlier bench runs left open: %v", tidyErr)
-		}
-		marked, delayErr := r.bringStatusesCurrent(ctx, session)
-		if delayErr != nil {
-			r.live.Line("bench", "could not bring shipment statuses current: %v", delayErr)
-		} else if marked > 0 {
-			r.live.Line("bench", "marked %d late shipment(s) Delayed, as the auto-delay schedule would", marked)
-		}
-	})
-	if err = r.database.RunSetup(ctx, session, scenario.Setup); err != nil {
-		result.Error = err.Error()
-		return result
-	}
-	if len(scenario.Setup) > 0 {
-		r.live.Line(
-			planned.label(),
-			"setup: %d statement(s) put the data in place",
-			len(scenario.Setup),
-		)
 	}
 
 	if scenario.Unattended() {
@@ -305,7 +254,101 @@ func (r *Runner) runCase(
 		return result
 	}
 
-	swept, release, err := r.sweptAgent(ctx, session, opts, scenario)
+	r.runConversation(ctx, &conversationCase{
+		opts:    opts,
+		planned: planned,
+		session: session,
+		cell:    cell,
+		result:  result,
+	})
+
+	return result
+}
+
+func (r *Runner) prepareCase(
+	ctx context.Context,
+	opts *RunOptions,
+	planned plannedCase,
+	result *benchresult.CaseResult,
+) (session *deskbench.Session, cell benchcell.Cell, ready bool) {
+	scenario := planned.scenario
+	user := scenario.User
+	if user == "" {
+		user = opts.User
+	}
+	session, err := r.bench.SessionFor(ctx, user)
+	if err != nil {
+		result.Error = err.Error()
+		return session, cell, false
+	}
+
+	cell, err = session.Cell(ctx, planned.provider)
+	if err != nil {
+		result.Error = err.Error()
+		return session, cell, false
+	}
+	provider := cell.Provider
+	result.Provider = cell.Label()
+	result.Model = providerModel(provider)
+	if provider != nil {
+		result.ProviderKind = string(provider.Kind)
+	}
+	result.Effort = string(cell.Effort)
+
+	unmet, err := r.database.UnmetRequirements(ctx, session, scenario.Requires)
+	if err != nil {
+		result.Error = err.Error()
+		return session, cell, false
+	}
+	if unmet != "" {
+		result.Skipped = unmet
+		return session, cell, false
+	}
+
+	r.tidied.Do(func() { r.tidyLeftovers(ctx, session) })
+	if err = r.database.RunSetup(ctx, session, scenario.Setup); err != nil {
+		result.Error = err.Error()
+		return session, cell, false
+	}
+	if len(scenario.Setup) > 0 {
+		r.live.Linef(
+			planned.label(),
+			"setup: %d statement(s) put the data in place",
+			len(scenario.Setup),
+		)
+	}
+
+	return session, cell, true
+}
+
+func (r *Runner) tidyLeftovers(ctx context.Context, session *deskbench.Session) {
+	if tidyErr := r.database.RunStatements(ctx, session, benchsql.Leftovers()); tidyErr != nil {
+		r.live.Linef("bench", "could not cancel what earlier bench runs left open: %v", tidyErr)
+	}
+	marked, delayErr := r.bringStatusesCurrent(ctx, session)
+	if delayErr != nil {
+		r.live.Linef("bench", "could not bring shipment statuses current: %v", delayErr)
+	} else if marked > 0 {
+		r.live.Linef(
+			"bench",
+			"marked %d late shipment(s) Delayed, as the auto-delay schedule would",
+			marked,
+		)
+	}
+}
+
+type conversationCase struct {
+	opts    *RunOptions
+	planned plannedCase
+	session *deskbench.Session
+	cell    benchcell.Cell
+	result  *benchresult.CaseResult
+}
+
+func (r *Runner) runConversation(ctx context.Context, c *conversationCase) {
+	scenario := c.planned.scenario
+	result := c.result
+	swept, release, err := r.sweptAgent(ctx, c.session, c.opts, scenario)
 	if release != nil {
 		defer release()
 	}
@@ -315,13 +358,13 @@ func (r *Runner) runCase(
 		} else {
 			result.Error = err.Error()
 		}
-		return result
+		return
 	}
 
-	conv, err := r.openCase(ctx, session, opts, planned, provider, swept)
+	conv, err := r.openCase(ctx, c.session, c.opts, c.planned, c.cell.Provider, swept)
 	if err != nil {
 		result.Error = err.Error()
-		return result
+		return
 	}
 	result.ThreadID = conv.Thread.ID.String()
 	conv.NeedsText = slices.Contains(
@@ -330,20 +373,20 @@ func (r *Runner) runCase(
 	)
 	unpin := r.recorder.Pin(
 		conv.Thread.ID,
-		benchrecord.ProviderPin{Effort: cell.Effort, Advisor: cell.Advisor},
+		benchrecord.ProviderPin{Effort: c.cell.Effort, Advisor: c.cell.Advisor},
 	)
 	defer unpin()
 	if conv.Agent != nil {
 		result.Agent = conv.Agent.Name
 	}
 	closing := deskbench.CloseOptions{
-		LeavePending: opts.Keep || opts.ThreadID.IsNotNil(),
-		Delete:       opts.Delete && opts.ThreadID.IsNil(),
+		LeavePending: c.opts.Keep || c.opts.ThreadID.IsNotNil(),
+		Delete:       c.opts.Delete && c.opts.ThreadID.IsNil(),
 	}
 
 	for idx := range scenario.Steps {
 		step := &scenario.Steps[idx]
-		stepResult, unmet := r.runStep(ctx, session, conv, idx, step)
+		stepResult, unmet := r.runStep(ctx, c.session, conv, idx, step)
 		result.Steps = append(result.Steps, stepResult)
 		if unmet != "" {
 			result.Skipped = unmet
@@ -364,8 +407,6 @@ func (r *Runner) runCase(
 	if closeErr != nil {
 		result.Error = benchrecord.JoinErrors(result.Error, closeErr.Error())
 	}
-
-	return result
 }
 
 func (r *Runner) openCase(
@@ -451,8 +492,8 @@ func (r *Runner) runStep(
 	conv *deskbench.Conversation,
 	idx int,
 	step *benchscenario.Step,
-) (*benchresult.StepResult, string) {
-	result := &benchresult.StepResult{
+) (result *benchresult.StepResult, unmet string) {
+	result = &benchresult.StepResult{
 		Index:  idx + 1,
 		Label:  step.Label(),
 		Rubric: step.Expect.Rubric,
@@ -465,40 +506,9 @@ func (r *Runner) runStep(
 	}
 
 	if step.Decide != "" {
-		result.Kind = "decide"
-		decisions, turns, err := conv.Decide(ctx, deskbench.Decide{
-			Action:        step.Decide,
-			Note:          step.Note,
-			Tool:          step.Tool,
-			Modifications: step.Modifications,
-		})
-		result.Decisions = decisions
-		result.Turns = turns
-		evidence.Turns = turns
-		evidence.Decisions = decisions
-		if err != nil {
-			result.Error = err.Error()
-		}
-	} else {
-		result.Kind = "say"
-		utterance, err := step.Utterance()
-		if err == nil {
-			err = r.findMentions(ctx, session, step, &utterance)
-		}
-		if err == nil && step.Agent != "" {
-			utterance.Directed, err = conv.DirectedAgent(ctx, step.Agent)
-		}
-		if err == nil {
-			result.Turns, err = conv.Say(ctx, &utterance)
-		}
-		evidence.Turns = result.Turns
-		if errors.Is(err, deskbench.ErrAttachmentUnreadable) {
-			return result, "needs " + (&benchscenario.Requirement{DocumentText: true}).Label() + ": " +
-				err.Error()
-		}
-		if err != nil {
-			result.Error = err.Error()
-		}
+		decideStep(ctx, conv, step, result, evidence)
+	} else if unmet = r.sayStep(ctx, session, conv, step, result, evidence); unmet != "" {
+		return result, unmet
 	}
 
 	result.Formula = conv.FormulaDescription()
@@ -507,6 +517,60 @@ func (r *Runner) runStep(
 	result.Passed = result.Error == "" && checksPassed(result.Checks)
 
 	return result, ""
+}
+
+func decideStep(
+	ctx context.Context,
+	conv *deskbench.Conversation,
+	step *benchscenario.Step,
+	result *benchresult.StepResult,
+	evidence *benchcheck.Evidence,
+) {
+	result.Kind = "decide"
+	decisions, turns, err := conv.Decide(ctx, deskbench.Decide{
+		Action:        step.Decide,
+		Note:          step.Note,
+		Tool:          step.Tool,
+		Modifications: step.Modifications,
+	})
+	result.Decisions = decisions
+	result.Turns = turns
+	evidence.Turns = turns
+	evidence.Decisions = decisions
+	if err != nil {
+		result.Error = err.Error()
+	}
+}
+
+func (r *Runner) sayStep(
+	ctx context.Context,
+	session *deskbench.Session,
+	conv *deskbench.Conversation,
+	step *benchscenario.Step,
+	result *benchresult.StepResult,
+	evidence *benchcheck.Evidence,
+) string {
+	result.Kind = "say"
+	utterance, err := step.Utterance()
+	if err == nil {
+		err = r.findMentions(ctx, session, step, &utterance)
+	}
+	if err == nil && step.Agent != "" {
+		utterance.Directed, err = conv.DirectedAgent(ctx, step.Agent)
+	}
+	if err == nil {
+		result.Turns, err = conv.Say(ctx, &utterance)
+	}
+	evidence.Turns = result.Turns
+	if errors.Is(err, deskbench.ErrAttachmentUnreadable) {
+		return "needs " + (&benchscenario.Requirement{DocumentText: true}).Label() + ": " +
+			err.Error()
+	}
+	if err != nil {
+		result.Error = err.Error()
+	}
+
+	return ""
 }
 
 func (r *Runner) runFireStep(
@@ -589,31 +653,31 @@ func exclusiveKey(scenario *benchscenario.Scenario) string {
 
 func (r *Runner) liveVerdict(label string, result *benchresult.CaseResult) {
 	if result.Skipped != "" {
-		r.live.Line(label, "<<< skipped: %s", result.Skipped)
+		r.live.Linef(label, "<<< skipped: %s", result.Skipped)
 		return
 	}
 	mark := benchresult.PassMark
 	if !result.Passed {
 		mark = benchresult.FailMark
 	}
-	r.live.Line(
+	r.live.Linef(
 		label,
 		"<<< %s in %s · %s",
 		mark,
 		result.FinishedAt.Sub(result.StartedAt).
 			Round(100*time.Millisecond),
-		benchrecord.UsageLine(result.Usage),
+		benchrecord.UsageLine(&result.Usage),
 	)
 	if result.Error != "" {
-		r.live.Line(label, "    error: %s", result.Error)
+		r.live.Linef(label, "    error: %s", result.Error)
 	}
 	for _, step := range result.Steps {
 		if step.Error != "" {
-			r.live.Line(label, "    step %d error: %s", step.Index, step.Error)
+			r.live.Linef(label, "    step %d error: %s", step.Index, step.Error)
 		}
 		for _, check := range step.Checks {
 			if !check.Passed {
-				r.live.Line(
+				r.live.Linef(
 					label,
 					"    step %d failed %s — %s",
 					step.Index,
@@ -652,11 +716,11 @@ func caseUsage(result *benchresult.CaseResult) benchrecord.Usage {
 	usage := benchrecord.Usage{}
 	for _, step := range result.Steps {
 		for _, turn := range step.Turns {
-			usage.Add(turn.Usage)
+			usage.Add(&turn.Usage)
 		}
 	}
 	for _, turn := range result.Cleanup {
-		usage.Add(turn.Usage)
+		usage.Add(&turn.Usage)
 	}
 
 	return usage

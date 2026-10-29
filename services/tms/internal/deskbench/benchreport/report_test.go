@@ -110,7 +110,7 @@ func TestCompare_ReadsAnOlderReportsTotalsPerRun(t *testing.T) {
 		RefusedTotal: 8, InputTotal: 4000, OutputTotal: 400,
 	}}}}
 	scenario := &benchscenario.Scenario{Name: "late-loads"}
-	after := BuildReport(ReportMeta{}, []*benchresult.CaseResult{
+	after := BuildReport(&ReportMeta{}, []*benchresult.CaseResult{
 		benchCase(scenario, "Haiku", true, 2, 1000, 0, "0.01"),
 		benchCase(scenario, "Haiku", true, 2, 1000, 0, "0.01"),
 	})
@@ -167,7 +167,7 @@ func TestSummarize_ReportsASkippedCaseApartFromPassesAndFailures(t *testing.T) {
 		skipped(),
 	}
 
-	report := BuildReport(ReportMeta{PassK: 2}, cases)
+	report := BuildReport(&ReportMeta{PassK: 2}, cases)
 	summary := report.Summary
 	assert.Equal(t, 2, summary.Cases, "a skipped case is not a trial")
 	assert.Equal(t, 1, summary.Passed)

@@ -60,7 +60,7 @@ func (r *Requirement) Label() string {
 	}
 }
 
-func (r *Requirement) Probe() (string, []any) {
+func (r *Requirement) Probe() (query string, args []any) {
 	switch {
 	case r.Extension != "":
 		return extensionReadySQL, []any{string(r.Extension), agentextension.ConfigKeyAPIKey}

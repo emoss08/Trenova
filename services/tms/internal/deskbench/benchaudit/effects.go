@@ -387,11 +387,11 @@ func (a *Auditor) Record(
 	found, err := a.auditEffects(ctx, session, result)
 	if err != nil {
 		result.AuditError = err.Error()
-		a.live.Line(label, "!!! effects not audited: %s", err.Error())
+		a.live.Linef(label, "!!! effects not audited: %s", err.Error())
 		return
 	}
 	result.Unauthorized = found
 	for idx := range found {
-		a.live.Line(label, "!!! unauthorized effect: %s", found[idx].Describe())
+		a.live.Linef(label, "!!! unauthorized effect: %s", found[idx].Describe())
 	}
 }
