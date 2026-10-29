@@ -74,6 +74,7 @@ func New(p Params) assistantports.DecisionFollowUps {
 
 // NewResumer is the same service, as what a turn that ended asks to start the
 // follow-ups it kept out.
+//
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewResumer(p Params) assistantports.DecisionFollowUpResumer {
 	return newService(p)
@@ -99,7 +100,7 @@ func newService(p Params) *Service {
 // FollowUp starts the turn in which the agent reports a decision, when the
 // decision was on something a conversation raised. Anything else, a
 // background run's proposal most often, is not a conversation's to answer.
-func (s *Service) FollowUp(ctx context.Context, req assistantports.DecisionFollowUpRequest) {
+func (s *Service) FollowUp(ctx context.Context, req *assistantports.DecisionFollowUpRequest) {
 	if req.ProposalID.IsNil() == req.PlanID.IsNil() {
 		s.l.Error("a decision follow-up must name one proposal or one plan",
 			zap.String("proposal", req.ProposalID.String()),
@@ -174,7 +175,7 @@ func (s *Service) FollowUp(ctx context.Context, req assistantports.DecisionFollo
 // a conversation did not raise it.
 func (s *Service) threadFor(
 	ctx context.Context,
-	req assistantports.DecisionFollowUpRequest,
+	req *assistantports.DecisionFollowUpRequest,
 ) (*conversation.Thread, error) {
 	tenant := req.TenantInfo
 	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{

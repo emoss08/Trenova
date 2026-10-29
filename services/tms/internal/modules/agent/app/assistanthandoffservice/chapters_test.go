@@ -27,9 +27,9 @@ type fakeChapterSpans struct {
 
 func (f *fakeChapterSpans) Span(
 	_ context.Context,
-	req assistantchapterports.ChapterSpanRequest,
+	req *assistantchapterports.ChapterSpanRequest,
 ) (*assistantchapterports.ChapterSpan, error) {
-	f.req = &req
+	f.req = req
 	if f.err != nil {
 		return nil, f.err
 	}

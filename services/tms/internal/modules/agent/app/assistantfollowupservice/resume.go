@@ -96,7 +96,7 @@ func (s *Service) ResumeFollowUps(ctx context.Context, req assistantports.Resume
 		return
 	}
 
-	s.FollowUp(ctx, assistantports.DecisionFollowUpRequest{
+	s.FollowUp(ctx, &assistantports.DecisionFollowUpRequest{
 		TenantInfo: tenant,
 		RunID:      next.runID,
 		ProposalID: next.proposalID,

@@ -43,7 +43,7 @@ func (h *Handler) listChapters(c *gin.Context) {
 		return
 	}
 
-	items, err := h.chapters.List(c.Request.Context(), assistantchapterports.ThreadChaptersRequest{
+	items, err := h.chapters.List(c.Request.Context(), &assistantchapterports.ThreadChaptersRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -72,7 +72,7 @@ func (h *Handler) openChapter(c *gin.Context) {
 		return
 	}
 
-	chapter, err := h.chapters.Open(c.Request.Context(), assistantchapterports.OpenChapterRequest{
+	chapter, err := h.chapters.Open(c.Request.Context(), &assistantchapterports.OpenChapterRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		MessageID:  body.MessageID,
@@ -101,7 +101,7 @@ func (h *Handler) renameChapter(c *gin.Context) {
 
 	chapter, err := h.chapters.Rename(
 		c.Request.Context(),
-		assistantchapterports.RenameChapterRequest{
+		&assistantchapterports.RenameChapterRequest{
 			ID:         chapterID,
 			ThreadID:   req.ID,
 			UserID:     req.UserID,
@@ -125,7 +125,7 @@ func (h *Handler) removeChapter(c *gin.Context) {
 		return
 	}
 
-	if err = h.chapters.Remove(c.Request.Context(), assistantchapterports.RemoveChapterRequest{
+	if err = h.chapters.Remove(c.Request.Context(), &assistantchapterports.RemoveChapterRequest{
 		ID:         chapterID,
 		ThreadID:   req.ID,
 		UserID:     req.UserID,

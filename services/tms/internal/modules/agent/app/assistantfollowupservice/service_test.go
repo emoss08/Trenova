@@ -188,7 +188,7 @@ func TestFollowUp_ReportsTheDecisionInTheConversationAsItsOwner(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	proposalID := pulid.MustNew("aprop_")
 
-	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), &assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: proposalID,
@@ -219,7 +219,7 @@ func TestFollowUp_ReportsAPlanByItsID(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	planID := pulid.MustNew("apl_")
 
-	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), &assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		PlanID:     planID,
@@ -237,7 +237,7 @@ func TestFollowUp_LeavesDecisionsOutsideAConversationAlone(t *testing.T) {
 
 	f := newFixture(agent.SubjectShipment)
 
-	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), &assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -256,7 +256,7 @@ func TestFollowUp_DoesNotInterruptAConversationMidReply(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	f.turns.startErr = errors.New("already working on a reply")
 
-	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), &assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -273,11 +273,11 @@ func TestFollowUp_RefusesARequestThatNamesNoSingleDecision(t *testing.T) {
 
 	f := newFixture(agent.SubjectAssistantThread)
 
-	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), &assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 	})
-	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), &assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -314,7 +314,7 @@ func TestFollowUp_SkipsWhenTheOwnerMayNoLongerUseTheAgent(t *testing.T) {
 			f := newFixture(agent.SubjectAssistantThread)
 			change(f)
 
-			f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
+			f.service.FollowUp(t.Context(), &assistantports.DecisionFollowUpRequest{
 				TenantInfo: f.tenant,
 				RunID:      f.runs.run.ID,
 				ProposalID: pulid.MustNew("aprop_"),
@@ -334,7 +334,7 @@ func TestFollowUp_ReportsWhenTheOwnersRoleIsGrantedTheAgent(t *testing.T) {
 	f.agent.AccessMode = agentdefinition.AccessRoles
 	f.permissions.GrantedAgents = []pulid.ID{f.agent.ID}
 
-	f.service.FollowUp(t.Context(), assistantports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), &assistantports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),

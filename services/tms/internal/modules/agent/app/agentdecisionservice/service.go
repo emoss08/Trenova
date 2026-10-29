@@ -432,7 +432,7 @@ func (s *Service) carryOut(
 	// Last, once the change has run or failed: the report is of the outcome,
 	// not of the click. A plan's steps are reported once, by the plan.
 	if !req.WithinPlan && s.followUps != nil {
-		s.followUps.FollowUp(ctx, assistantports.DecisionFollowUpRequest{
+		s.followUps.FollowUp(ctx, &assistantports.DecisionFollowUpRequest{
 			TenantInfo: req.TenantInfo,
 			RunID:      proposal.RunID,
 			ProposalID: proposal.ID,

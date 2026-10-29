@@ -505,7 +505,7 @@ type DecisionFollowUpRequest struct {
 // decision. A follow-up that cannot start because the conversation is busy
 // is not lost: the turn in the way resumes it when it ends.
 type DecisionFollowUps interface {
-	FollowUp(ctx context.Context, req DecisionFollowUpRequest)
+	FollowUp(ctx context.Context, req *DecisionFollowUpRequest)
 }
 
 // ResumeFollowUpsRequest names a conversation whose turn just ended.

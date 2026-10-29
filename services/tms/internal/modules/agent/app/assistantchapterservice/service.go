@@ -57,7 +57,7 @@ func New(p Params) assistantchapterports.AssistantChapterService {
 
 func (s *Service) List(
 	ctx context.Context,
-	req assistantchapterports.ThreadChaptersRequest,
+	req *assistantchapterports.ThreadChaptersRequest,
 ) ([]*conversationchapter.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (s *Service) List(
 
 func (s *Service) Open(
 	ctx context.Context,
-	req assistantchapterports.OpenChapterRequest,
+	req *assistantchapterports.OpenChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (s *Service) Open(
 
 func (s *Service) nameQuestionChapters(
 	ctx context.Context,
-	req assistantchapterports.OpenChapterRequest,
+	req *assistantchapterports.OpenChapterRequest,
 	opened *conversationchapter.Chapter,
 ) {
 	turn := &assistantchapterports.ChapterTurnRequest{
@@ -185,7 +185,7 @@ func (s *Service) cueNaming(
 
 func (s *Service) Rename(
 	ctx context.Context,
-	req assistantchapterports.RenameChapterRequest,
+	req *assistantchapterports.RenameChapterRequest,
 ) (*conversationchapter.Chapter, error) {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func (s *Service) Rename(
 
 func (s *Service) Remove(
 	ctx context.Context,
-	req assistantchapterports.RemoveChapterRequest,
+	req *assistantchapterports.RemoveChapterRequest,
 ) error {
 	if err := s.owned(ctx, req.ThreadID, req.UserID, req.TenantInfo); err != nil {
 		return err
@@ -240,9 +240,9 @@ func (s *Service) Remove(
 
 func (s *Service) Span(
 	ctx context.Context,
-	req assistantchapterports.ChapterSpanRequest,
+	req *assistantchapterports.ChapterSpanRequest,
 ) (*assistantchapterports.ChapterSpan, error) {
-	chapters, err := s.List(ctx, assistantchapterports.ThreadChaptersRequest{
+	chapters, err := s.List(ctx, &assistantchapterports.ThreadChaptersRequest{
 		ThreadID:   req.ThreadID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,

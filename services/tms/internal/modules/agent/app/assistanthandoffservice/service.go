@@ -274,7 +274,7 @@ func (s *Service) chapterSpan(
 		return nil, errortypes.NewBusinessError("Chapters are not available here")
 	}
 
-	return s.chapters.Span(ctx, assistantchapterports.ChapterSpanRequest{
+	return s.chapters.Span(ctx, &assistantchapterports.ChapterSpanRequest{
 		ID:         req.ChapterID,
 		ThreadID:   req.ThreadID,
 		UserID:     actor.UserID,

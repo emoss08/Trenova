@@ -661,7 +661,7 @@ func (s *Service) followUp(
 		return
 	}
 
-	s.followUps.FollowUp(ctx, assistantports.DecisionFollowUpRequest{
+	s.followUps.FollowUp(ctx, &assistantports.DecisionFollowUpRequest{
 		TenantInfo: tenant,
 		RunID:      plan.RunID,
 		PlanID:     plan.ID,

@@ -167,11 +167,11 @@ type ChapterSpanRequest struct {
 }
 
 type AssistantChapterService interface {
-	List(ctx context.Context, req ThreadChaptersRequest) ([]*conversationchapter.Chapter, error)
-	Open(ctx context.Context, req OpenChapterRequest) (*conversationchapter.Chapter, error)
-	Rename(ctx context.Context, req RenameChapterRequest) (*conversationchapter.Chapter, error)
-	Remove(ctx context.Context, req RemoveChapterRequest) error
-	Span(ctx context.Context, req ChapterSpanRequest) (*ChapterSpan, error)
+	List(ctx context.Context, req *ThreadChaptersRequest) ([]*conversationchapter.Chapter, error)
+	Open(ctx context.Context, req *OpenChapterRequest) (*conversationchapter.Chapter, error)
+	Rename(ctx context.Context, req *RenameChapterRequest) (*conversationchapter.Chapter, error)
+	Remove(ctx context.Context, req *RemoveChapterRequest) error
+	Span(ctx context.Context, req *ChapterSpanRequest) (*ChapterSpan, error)
 	Plan(ctx context.Context, req *ChapterTurnRequest) (*ChapterPlan, error)
 	Apply(
 		ctx context.Context,

@@ -55,9 +55,9 @@ type recordedFollowUps struct {
 
 func (r *recordedFollowUps) FollowUp(
 	_ context.Context,
-	req assistantports.DecisionFollowUpRequest,
+	req *assistantports.DecisionFollowUpRequest,
 ) {
-	r.requests = append(r.requests, req)
+	r.requests = append(r.requests, *req)
 }
 
 func TestDecide_AStalePlanIsRefusedAsApprovedAndNothingRuns(t *testing.T) {
