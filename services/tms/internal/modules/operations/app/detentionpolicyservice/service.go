@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -43,36 +43,36 @@ func New(p Params) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *detentionports.ListDetentionPoliciesRequest,
-) (*pagination.ListResult[*detention.DetentionPolicy], error) {
+) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *detentionports.ListDetentionPolicyConnectionRequest,
-) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
+) (*pagination.CursorListResult[*detentionpolicy.DetentionPolicy], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
 	req *detentionports.GetDetentionPolicyByIDRequest,
-) (*detention.DetentionPolicy, error) {
+) (*detentionpolicy.DetentionPolicy, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
 	req *detentionports.DetentionPolicySelectOptionsRequest,
-) (*pagination.ListResult[*detention.DetentionPolicy], error) {
+) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
+	entity *detentionpolicy.DetentionPolicy,
 	userID pulid.ID,
-) (*detention.DetentionPolicy, error) {
+) (*detentionpolicy.DetentionPolicy, error) {
 	log := s.l.With(
 		zap.String("operation", "Create"),
 		zap.String("userID", userID.String()),
@@ -107,9 +107,9 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
+	entity *detentionpolicy.DetentionPolicy,
 	userID pulid.ID,
-) (*detention.DetentionPolicy, error) {
+) (*detentionpolicy.DetentionPolicy, error) {
 	log := s.l.With(
 		zap.String("operation", "Update"),
 		zap.String("userID", userID.String()),

@@ -4,8 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,10 +38,10 @@ func TestBuildNotice_WarningCitesGoverningTerms(t *testing.T) {
 		t.Context(),
 		&detentionservice.BuildNoticeParams{
 			Occurrence:    noticeOccurrence(),
-			Kind:          detention.NoticeKindWarning,
+			Kind:          detentionnotice.NoticeKindWarning,
 			FacilityName:  "Memphis DC",
 			ShipmentRef:   "SHP-1001",
-			ArrivalSource: detention.EvidenceSourceGeofence,
+			ArrivalSource: detentionevidence.EvidenceSourceGeofence,
 			Location:      time.UTC,
 		},
 	)
@@ -67,7 +70,7 @@ func TestBuildNotice_FinalIncludesTheSettledNumbers(t *testing.T) {
 		t.Context(),
 		&detentionservice.BuildNoticeParams{
 			Occurrence:   occ,
-			Kind:         detention.NoticeKindFinal,
+			Kind:         detentionnotice.NoticeKindFinal,
 			FacilityName: "Memphis DC",
 			ShipmentRef:  "SHP-1001",
 			Location:     time.UTC,
@@ -92,19 +95,19 @@ func TestBuildNotice_TieredRatesAreQuotedInFull(t *testing.T) {
 
 	occ := noticeOccurrence()
 	snap := *occ.PolicySnapshot
-	snap.RateSource = detention.RateSourceTiers
-	snap.Tiers = []detention.TierSnapshot{
+	snap.RateSource = detentionpolicy.RateSourceTiers
+	snap.Tiers = []detentionpolicy.TierSnapshot{
 		{
 			FromMinute: 0,
 			ToMinute:   ptr(int32(120)),
 			Rate:       money("75.00"),
-			RateUnit:   detention.TierRateUnitHour,
+			RateUnit:   detentionpolicy.TierRateUnitHour,
 		},
 		{
 			FromMinute: 120,
 			ToMinute:   nil,
 			Rate:       money("100.00"),
-			RateUnit:   detention.TierRateUnitHour,
+			RateUnit:   detentionpolicy.TierRateUnitHour,
 		},
 	}
 	occ.PolicySnapshot = &snap
@@ -113,7 +116,7 @@ func TestBuildNotice_TieredRatesAreQuotedInFull(t *testing.T) {
 		t.Context(),
 		&detentionservice.BuildNoticeParams{
 			Occurrence: occ,
-			Kind:       detention.NoticeKindStarted,
+			Kind:       detentionnotice.NoticeKindStarted,
 			Location:   time.UTC,
 		},
 	)
@@ -134,7 +137,7 @@ func TestBuildNotice_FallsBackWhenContextIsMissing(t *testing.T) {
 		t.Context(),
 		&detentionservice.BuildNoticeParams{
 			Occurrence: occ,
-			Kind:       detention.NoticeKindUpdate,
+			Kind:       detentionnotice.NoticeKindUpdate,
 		},
 	)
 	require.NoError(t, err)
@@ -146,11 +149,11 @@ func TestBuildNotice_FallsBackWhenContextIsMissing(t *testing.T) {
 func TestBuildNotice_KindsProduceDistinctOpenings(t *testing.T) {
 	t.Parallel()
 
-	kinds := []detention.NoticeKind{
-		detention.NoticeKindWarning,
-		detention.NoticeKindStarted,
-		detention.NoticeKindUpdate,
-		detention.NoticeKindFinal,
+	kinds := []detentionnotice.NoticeKind{
+		detentionnotice.NoticeKindWarning,
+		detentionnotice.NoticeKindStarted,
+		detentionnotice.NoticeKindUpdate,
+		detentionnotice.NoticeKindFinal,
 	}
 
 	seen := map[string]bool{}
@@ -184,7 +187,7 @@ func TestBuildNotice_RespectsTimezone(t *testing.T) {
 		t.Context(),
 		&detentionservice.BuildNoticeParams{
 			Occurrence: noticeOccurrence(),
-			Kind:       detention.NoticeKindWarning,
+			Kind:       detentionnotice.NoticeKindWarning,
 			Location:   loc,
 		},
 	)
@@ -193,7 +196,7 @@ func TestBuildNotice_RespectsTimezone(t *testing.T) {
 		t.Context(),
 		&detentionservice.BuildNoticeParams{
 			Occurrence: noticeOccurrence(),
-			Kind:       detention.NoticeKindWarning,
+			Kind:       detentionnotice.NoticeKindWarning,
 			Location:   time.UTC,
 		},
 	)

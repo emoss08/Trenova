@@ -4,7 +4,7 @@ import (
 	"context"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
@@ -16,12 +16,12 @@ import (
 
 // BacktestRequest re-prices settled history under proposed terms.
 type BacktestRequest struct {
-	Policy        *detention.DetentionPolicy `json:"policy"`
-	CompareToID   *pulid.ID                  `json:"compareToPolicyId"`
-	From          int64                      `json:"from"`
-	To            int64                      `json:"to"`
-	Limit         int                        `json:"limit"`
-	DriverPayRate *string                    `json:"driverPayRate"`
+	Policy        *detentionpolicy.DetentionPolicy `json:"policy"`
+	CompareToID   *pulid.ID                        `json:"compareToPolicyId"`
+	From          int64                            `json:"from"`
+	To            int64                            `json:"to"`
+	Limit         int                              `json:"limit"`
+	DriverPayRate *string                          `json:"driverPayRate"`
 
 	// AssumeNoticeCompliance models the notice as having been sent on time.
 	// Defaults to true, because a backtest is asking what the *terms* would
@@ -124,10 +124,13 @@ func (s *Service) Backtest(
 		facts = facts[:limit]
 	}
 
-	accessorial, err := s.accessorialRepo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
-		ID:         req.Policy.AccessorialChargeID,
-		TenantInfo: &tenantInfo,
-	})
+	accessorial, err := s.accessorialRepo.GetByID(
+		ctx,
+		accessorialchargeports.GetAccessorialChargeByIDRequest{
+			ID:         req.Policy.AccessorialChargeID,
+			TenantInfo: &tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +166,7 @@ func (s *Service) Backtest(
 		stopType := shipment.StopType(fact.StopType)
 		scheduleType := shipment.StopScheduleType(fact.ScheduleType)
 
-		if !req.Policy.Matches(detention.MatchInput{
+		if !req.Policy.Matches(detentionpolicy.MatchInput{
 			CustomerID:     fact.CustomerID,
 			LocationID:     fact.LocationID,
 			ShipmentTypeID: fact.ShipmentTypeID,
@@ -177,7 +180,7 @@ func (s *Service) Backtest(
 
 		result.StopsMatched++
 
-		snapshot := detention.NewPolicySnapshot(detention.SnapshotInput{
+		snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
 			Policy:          req.Policy,
 			StopType:        fact.StopType,
 			FreeMinutes:     req.Policy.FreeMinutesForStopType(stopType),
@@ -203,7 +206,7 @@ func (s *Service) Backtest(
 		})
 
 		if computed.ArrivedLate &&
-			req.Policy.LateArrivalRule == detention.LateArrivalRuleForfeit {
+			req.Policy.LateArrivalRule == detentionpolicy.LateArrivalRuleForfeit {
 			result.StopsForfeited++
 		}
 		if computed.SuppressedByGate {

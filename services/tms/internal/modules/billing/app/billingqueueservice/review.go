@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -653,18 +654,18 @@ func detentionDwells(
 	return out
 }
 
-func eldTimes(evidence []*detention.DetentionEvidence) (arrived, departed int64) {
+func eldTimes(evidence []*detentionevidence.DetentionEvidence) (arrived, departed int64) {
 	for _, entry := range evidence {
-		if entry == nil || (entry.Source != detention.EvidenceSourceTelematics &&
-			entry.Source != detention.EvidenceSourceGeofence) {
+		if entry == nil || (entry.Source != detentionevidence.EvidenceSourceTelematics &&
+			entry.Source != detentionevidence.EvidenceSourceGeofence) {
 			continue
 		}
 		switch entry.Kind { //nolint:exhaustive // only the dock times matter here
-		case detention.EvidenceKindArrival:
+		case detentionevidence.EvidenceKindArrival:
 			if arrived == 0 || entry.ObservedAt < arrived {
 				arrived = entry.ObservedAt
 			}
-		case detention.EvidenceKindDeparture:
+		case detentionevidence.EvidenceKindDeparture:
 			if entry.ObservedAt > departed {
 				departed = entry.ObservedAt
 			}

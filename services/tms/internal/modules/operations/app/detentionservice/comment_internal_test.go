@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -60,12 +61,12 @@ func TestBuildChargeComment_StatesTheDerivationAndTheRisk(t *testing.T) {
 	occurrence.ArrivedLate = true
 	occurrence.LateByMinutes = 45
 	occurrence.CapApplied = detention.CapKindPerStopAmount
-	occurrence.PolicySnapshot = &detention.PolicySnapshot{
+	occurrence.PolicySnapshot = &detentionpolicy.PolicySnapshot{
 		PolicyName:   "Grocery DC Detention",
 		PolicyCode:   "GRC-DET",
-		RateSource:   detention.RateSourceAccessorial,
+		RateSource:   detentionpolicy.RateSourceAccessorial,
 		FlatRate:     decimal.NewFromInt(60),
-		FlatRateUnit: detention.TierRateUnitHour,
+		FlatRateUnit: detentionpolicy.TierRateUnitHour,
 	}
 
 	body := buildChargeComment(chargeCommentAdded, chargeCommentParams{

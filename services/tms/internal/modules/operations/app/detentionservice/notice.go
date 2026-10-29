@@ -13,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -45,10 +48,10 @@ type NoticeContent struct {
 // and the eventual invoice quote identical terms.
 type BuildNoticeParams struct {
 	Occurrence    *detention.DetentionOccurrence
-	Kind          detention.NoticeKind
+	Kind          detentionnotice.NoticeKind
 	FacilityName  string
 	ShipmentRef   string
-	ArrivalSource detention.EvidenceSource
+	ArrivalSource detentionevidence.EvidenceSource
 	Location      *time.Location
 	CustomerName  string
 	// CustomerID lets a customer with an assigned notice template receive it.
@@ -149,8 +152,8 @@ func (s *Service) BuildNotice(
 	return content, nil
 }
 
-func noticeRateLabel(snap *detention.PolicySnapshot) string {
-	if snap.RateSource == detention.RateSourceTiers && len(snap.Tiers) > 0 {
+func noticeRateLabel(snap *detentionpolicy.PolicySnapshot) string {
+	if snap.RateSource == detentionpolicy.RateSourceTiers && len(snap.Tiers) > 0 {
 		parts := make([]string, 0, len(snap.Tiers))
 		for _, tier := range snap.Tiers {
 			parts = append(parts, fmt.Sprintf("%s at %s",
@@ -169,7 +172,7 @@ func formatStamp(ts int64, loc *time.Location) string {
 // ScheduleNoticeParams describes an outbound notice to queue.
 type ScheduleNoticeParams struct {
 	Occurrence   *detention.DetentionOccurrence
-	Kind         detention.NoticeKind
+	Kind         detentionnotice.NoticeKind
 	ScheduledFor int64
 	Recipients   []string
 	Automatic    bool
@@ -185,7 +188,7 @@ type ScheduleNoticeParams struct {
 // re-rendered there, because the notice body is a snapshot and an attachment
 // rendered later could quote figures the snapshot does not.
 type ScheduledNotice struct {
-	Notice *detention.DetentionNotice
+	Notice *detentionnotice.DetentionNotice
 	PDF    *NoticePDF
 }
 
@@ -207,13 +210,13 @@ func (s *Service) ScheduleNotice(
 		return nil, err
 	}
 
-	notice := &detention.DetentionNotice{
+	notice := &detentionnotice.DetentionNotice{
 		OrganizationID:        occ.OrganizationID,
 		BusinessUnitID:        occ.BusinessUnitID,
 		DetentionOccurrenceID: occ.ID,
 		Kind:                  p.Kind,
-		Channel:               detention.NoticeChannelEmail,
-		DeliveryStatus:        detention.NoticeDeliveryStatusQueued,
+		Channel:               detentionnotice.NoticeChannelEmail,
+		DeliveryStatus:        detentionnotice.NoticeDeliveryStatusQueued,
 		Recipients:            p.Recipients,
 		Subject:               content.Subject,
 		Body:                  content.Text,
@@ -249,7 +252,7 @@ func (s *Service) ScheduleNotice(
 // SendNoticeParams is a queued notice, the occurrence it belongs to, and the
 // optional PDF rendered alongside its body.
 type SendNoticeParams struct {
-	Notice     *detention.DetentionNotice
+	Notice     *detentionnotice.DetentionNotice
 	Occurrence *detention.DetentionOccurrence
 	PDF        *NoticePDF
 }
@@ -261,7 +264,7 @@ type SendNoticeParams struct {
 func (s *Service) SendNotice(
 	ctx context.Context,
 	p *SendNoticeParams,
-) (*detention.DetentionNotice, error) {
+) (*detentionnotice.DetentionNotice, error) {
 	if p == nil || p.Notice == nil || p.Occurrence == nil {
 		return nil, errortypes.NewValidationError(
 			"notice", errortypes.ErrRequired, "Notice and occurrence are required")
@@ -340,10 +343,10 @@ func noticeAttachments(pdf *NoticePDF) []emailports.EmailAttachment {
 
 func (s *Service) persistNoticeOutcome(
 	ctx context.Context,
-	notice *detention.DetentionNotice,
+	notice *detentionnotice.DetentionNotice,
 	occurrence *detention.DetentionOccurrence,
 	now int64,
-) (*detention.DetentionNotice, error) {
+) (*detentionnotice.DetentionNotice, error) {
 	saved, err := s.noticeRepo.Update(ctx, notice)
 	if err != nil {
 		return nil, err
@@ -361,7 +364,7 @@ func (s *Service) persistNoticeOutcome(
 // evidence either way. A bounce is as important to the claim file as a success.
 func (s *Service) applyNoticeToOccurrence(
 	ctx context.Context,
-	notice *detention.DetentionNotice,
+	notice *detentionnotice.DetentionNotice,
 	occurrence *detention.DetentionOccurrence,
 	now int64,
 ) error {
@@ -374,13 +377,13 @@ func (s *Service) applyNoticeToOccurrence(
 	summary := fmt.Sprintf("%s notice %s to %s",
 		notice.Kind, noticeOutcomeVerb(notice), strings.Join(notice.Recipients, ", "))
 
-	s.appendEvidence(ctx, occurrence, detention.EvidenceKindNotice,
-		detention.EvidenceSourceSystem, summary, now)
+	s.appendEvidence(ctx, occurrence, detentionevidence.EvidenceKindNotice,
+		detentionevidence.EvidenceSourceSystem, summary, now)
 
 	return nil
 }
 
-func noticeOutcomeVerb(notice *detention.DetentionNotice) string {
+func noticeOutcomeVerb(notice *detentionnotice.DetentionNotice) string {
 	switch {
 	case notice.DeliveryStatus.IsFailure():
 		return "failed to send"
@@ -400,7 +403,7 @@ type SendOccurrenceNoticeParams struct {
 	// Policy is the governing policy when the caller already has it. The sweep
 	// does — it reads the policy to decide whether to send at all — so passing it
 	// here saves re-reading the same row for every occurrence it sends.
-	Policy *detention.DetentionPolicy
+	Policy *detentionpolicy.DetentionPolicy
 }
 
 // SendOccurrenceNotice schedules and delivers a customer notice for one
@@ -440,16 +443,19 @@ func (s *Service) SendOccurrenceNotice(
 // noticeKindFor picks the message the moment calls for: a warning while free
 // time is still running, a start-of-charges notice once it lapses, an update on
 // a repeat send, and a final summary after the clock has stopped.
-func noticeKindFor(occurrence *detention.DetentionOccurrence, now int64) detention.NoticeKind {
+func noticeKindFor(
+	occurrence *detention.DetentionOccurrence,
+	now int64,
+) detentionnotice.NoticeKind {
 	switch {
 	case occurrence.ClockStopAt != nil:
-		return detention.NoticeKindFinal
+		return detentionnotice.NoticeKindFinal
 	case now < occurrence.FreeTimeExpiresAt:
-		return detention.NoticeKindWarning
+		return detentionnotice.NoticeKindWarning
 	case occurrence.NoticeSentAt == nil:
-		return detention.NoticeKindStarted
+		return detentionnotice.NoticeKindStarted
 	default:
-		return detention.NoticeKindUpdate
+		return detentionnotice.NoticeKindUpdate
 	}
 }
 
@@ -509,7 +515,7 @@ func (s *Service) SweepNoticesDue(
 	}
 
 	result := &detentionports.NoticeSweepResult{Due: len(occurrences)}
-	policyCache := make(map[pulid.ID]*detention.DetentionPolicy, 4)
+	policyCache := make(map[pulid.ID]*detentionpolicy.DetentionPolicy, 4)
 
 	for _, occurrence := range occurrences {
 		if occurrence == nil {
@@ -567,7 +573,7 @@ func (s *Service) attachesNoticePDF(
 	ctx context.Context,
 	occurrence *detention.DetentionOccurrence,
 	tenantInfo pagination.TenantInfo,
-	governing *detention.DetentionPolicy,
+	governing *detentionpolicy.DetentionPolicy,
 ) bool {
 	if governing != nil {
 		return governing.AttachNoticePDF
@@ -584,7 +590,7 @@ func (s *Service) noticePolicy(
 	ctx context.Context,
 	occurrence *detention.DetentionOccurrence,
 	tenantInfo pagination.TenantInfo,
-) *detention.DetentionPolicy {
+) *detentionpolicy.DetentionPolicy {
 	if occurrence.DetentionPolicyID == nil || occurrence.DetentionPolicyID.IsNil() {
 		return nil
 	}
@@ -611,8 +617,8 @@ func (s *Service) cachedNoticePolicy(
 	ctx context.Context,
 	occurrence *detention.DetentionOccurrence,
 	tenantInfo pagination.TenantInfo,
-	cache map[pulid.ID]*detention.DetentionPolicy,
-) *detention.DetentionPolicy {
+	cache map[pulid.ID]*detentionpolicy.DetentionPolicy,
+) *detentionpolicy.DetentionPolicy {
 	if occurrence.DetentionPolicyID == nil || occurrence.DetentionPolicyID.IsNil() {
 		return nil
 	}
@@ -642,30 +648,30 @@ func (s *Service) markNoticeUnsendable(
 		return
 	}
 
-	s.appendEvidence(ctx, occurrence, detention.EvidenceKindNotice,
-		detention.EvidenceSourceSystem,
+	s.appendEvidence(ctx, occurrence, detentionevidence.EvidenceKindNotice,
+		detentionevidence.EvidenceSourceSystem,
 		"Automatic notice could not be sent: "+reason, now)
 }
 
 // RecordNoticeDelivery folds a provider webhook back into the claim file.
 func (s *Service) RecordNoticeDelivery(
 	ctx context.Context,
-	notice *detention.DetentionNotice,
-	status detention.NoticeDeliveryStatus,
+	notice *detentionnotice.DetentionNotice,
+	status detentionnotice.NoticeDeliveryStatus,
 	reason string,
-) (*detention.DetentionNotice, error) {
+) (*detentionnotice.DetentionNotice, error) {
 	now := s.now()
 
 	switch status {
-	case detention.NoticeDeliveryStatusDelivered:
+	case detentionnotice.NoticeDeliveryStatusDelivered:
 		notice.MarkDelivered(now)
-	case detention.NoticeDeliveryStatusOpened:
+	case detentionnotice.NoticeDeliveryStatusOpened:
 		notice.MarkOpened(now)
-	case detention.NoticeDeliveryStatusBounced:
+	case detentionnotice.NoticeDeliveryStatusBounced:
 		notice.MarkBounced(now, reason)
-	case detention.NoticeDeliveryStatusFailed:
+	case detentionnotice.NoticeDeliveryStatusFailed:
 		notice.MarkFailed(now, reason)
-	case detention.NoticeDeliveryStatusQueued, detention.NoticeDeliveryStatusSent:
+	case detentionnotice.NoticeDeliveryStatusQueued, detentionnotice.NoticeDeliveryStatusSent:
 		return notice, nil
 	}
 
@@ -675,8 +681,8 @@ func (s *Service) RecordNoticeDelivery(
 func (s *Service) appendEvidence(
 	ctx context.Context,
 	occurrence *detention.DetentionOccurrence,
-	kind detention.EvidenceKind,
-	source detention.EvidenceSource,
+	kind detentionevidence.EvidenceKind,
+	source detentionevidence.EvidenceSource,
 	summary string,
 	observedAt int64,
 ) {
@@ -684,7 +690,7 @@ func (s *Service) appendEvidence(
 		return
 	}
 
-	entry := &detention.DetentionEvidence{
+	entry := &detentionevidence.DetentionEvidence{
 		OrganizationID:        occurrence.OrganizationID,
 		BusinessUnitID:        occurrence.BusinessUnitID,
 		DetentionOccurrenceID: occurrence.ID,
@@ -708,7 +714,7 @@ func (s *Service) appendEvidence(
 // It never constructs markup from Body. The previous implementation wrapped the
 // plain text in <pre> at send time, which meant any angle bracket in a facility
 // or customer name was interpolated into the email unescaped.
-func noticeHTML(notice *detention.DetentionNotice) string {
+func noticeHTML(notice *detentionnotice.DetentionNotice) string {
 	if strings.TrimSpace(notice.BodyHTML) != "" {
 		return notice.BodyHTML
 	}
@@ -722,6 +728,6 @@ func noticeHTML(notice *detention.DetentionNotice) string {
 
 // NoticeHTMLForTest exposes the send-path HTML reconstruction so the escaping
 // guarantee can be asserted without standing up an email provider.
-func NoticeHTMLForTest(notice *detention.DetentionNotice) string {
+func NoticeHTMLForTest(notice *detentionnotice.DetentionNotice) string {
 	return noticeHTML(notice)
 }

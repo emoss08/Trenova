@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -27,16 +27,16 @@ func AccruedAmount(rate decimal.Decimal, billableSince, now int64) decimal.Decim
 	return rate.Mul(decimal.NewFromInt(now - billableSince)).Div(secondsPerHour).Round(2)
 }
 
-func accessorialTierUnit(unit accessorialcharge.RateUnit) detention.TierRateUnit {
+func accessorialTierUnit(unit accessorialcharge.RateUnit) detentionpolicy.TierRateUnit {
 	switch unit {
 	case accessorialcharge.RateUnitHour:
-		return detention.TierRateUnitHour
+		return detentionpolicy.TierRateUnitHour
 	case accessorialcharge.RateUnitDay:
-		return detention.TierRateUnitDay
+		return detentionpolicy.TierRateUnitDay
 	case accessorialcharge.RateUnitMile, accessorialcharge.RateUnitStop:
-		return detention.TierRateUnitFlat
+		return detentionpolicy.TierRateUnitFlat
 	default:
-		return detention.TierRateUnitFlat
+		return detentionpolicy.TierRateUnitFlat
 	}
 }
 
@@ -195,7 +195,7 @@ func (s *Service) defaultDetentionRate(
 		return decimal.Zero, err
 	}
 
-	return detention.HourlyRate(charge.Amount, accessorialTierUnit(charge.RateUnit)), nil
+	return detentionpolicy.HourlyRate(charge.Amount, accessorialTierUnit(charge.RateUnit)), nil
 }
 
 func (s *Service) nameCoverage(

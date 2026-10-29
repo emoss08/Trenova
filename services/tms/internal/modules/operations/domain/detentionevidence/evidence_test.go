@@ -1,26 +1,26 @@
-package detention_test
+package detentionevidence_test
 
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func buildChain(occurrenceID pulid.ID, count int) []*detention.DetentionEvidence {
-	entries := make([]*detention.DetentionEvidence, 0, count)
-	prev := detention.GenesisHash
+func buildChain(occurrenceID pulid.ID, count int) []*detentionevidence.DetentionEvidence {
+	entries := make([]*detentionevidence.DetentionEvidence, 0, count)
+	prev := detentionevidence.GenesisHash
 
 	for i := range count {
-		entry := &detention.DetentionEvidence{
+		entry := &detentionevidence.DetentionEvidence{
 			ID:                    pulid.MustNew("dte_"),
 			DetentionOccurrenceID: occurrenceID,
 			Sequence:              int32(i),
-			Kind:                  detention.EvidenceKindArrival,
-			Source:                detention.EvidenceSourceGeofence,
+			Kind:                  detentionevidence.EvidenceKindArrival,
+			Source:                detentionevidence.EvidenceSourceGeofence,
 			Summary:               "geofence crossing recorded",
 			ObservedAt:            int64(1000 + i),
 			RecordedAt:            int64(1000 + i),
@@ -37,15 +37,15 @@ func buildChain(occurrenceID pulid.ID, count int) []*detention.DetentionEvidence
 func TestEvidence_SealAndVerify(t *testing.T) {
 	t.Parallel()
 
-	entry := &detention.DetentionEvidence{
+	entry := &detentionevidence.DetentionEvidence{
 		DetentionOccurrenceID: pulid.MustNew("dto_"),
 		Sequence:              0,
-		Kind:                  detention.EvidenceKindArrival,
-		Source:                detention.EvidenceSourceTelematics,
+		Kind:                  detentionevidence.EvidenceKindArrival,
+		Source:                detentionevidence.EvidenceSourceTelematics,
 		Summary:               "arrived at facility",
 		ObservedAt:            1000,
 		RecordedAt:            1000,
-		PrevHash:              detention.GenesisHash,
+		PrevHash:              detentionevidence.GenesisHash,
 	}
 
 	entry.Seal()
@@ -72,7 +72,7 @@ func TestEvidence_IntactChainVerifies(t *testing.T) {
 
 	chain := buildChain(pulid.MustNew("dto_"), 5)
 
-	assert.Equal(t, -1, detention.VerifyChain(chain))
+	assert.Equal(t, -1, detentionevidence.VerifyChain(chain))
 }
 
 func TestEvidence_ChainDetectsMiddleTampering(t *testing.T) {
@@ -81,7 +81,7 @@ func TestEvidence_ChainDetectsMiddleTampering(t *testing.T) {
 	chain := buildChain(pulid.MustNew("dto_"), 5)
 	chain[2].Summary = "backdated arrival"
 
-	assert.Equal(t, 2, detention.VerifyChain(chain),
+	assert.Equal(t, 2, detentionevidence.VerifyChain(chain),
 		"the first broken link is reported")
 }
 
@@ -93,7 +93,7 @@ func TestEvidence_ChainDetectsResealedTampering(t *testing.T) {
 	chain[2].Summary = "backdated arrival"
 	chain[2].Seal()
 
-	assert.Equal(t, 3, detention.VerifyChain(chain),
+	assert.Equal(t, 3, detentionevidence.VerifyChain(chain),
 		"resealing a link orphans every successor, so the break still surfaces")
 }
 
@@ -103,7 +103,7 @@ func TestEvidence_ChainDetectsDeletion(t *testing.T) {
 	chain := buildChain(pulid.MustNew("dto_"), 5)
 	shortened := append(chain[:2], chain[3:]...)
 
-	assert.Equal(t, 2, detention.VerifyChain(shortened),
+	assert.Equal(t, 2, detentionevidence.VerifyChain(shortened),
 		"removing an inconvenient record breaks the chain")
 }
 
@@ -113,20 +113,20 @@ func TestEvidence_ChainDetectsReordering(t *testing.T) {
 	chain := buildChain(pulid.MustNew("dto_"), 4)
 	chain[1], chain[2] = chain[2], chain[1]
 
-	assert.NotEqual(t, -1, detention.VerifyChain(chain))
+	assert.NotEqual(t, -1, detentionevidence.VerifyChain(chain))
 }
 
 func TestEvidence_EmptyChainIsIntact(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, -1, detention.VerifyChain(nil))
-	assert.Equal(t, -1, detention.VerifyChain([]*detention.DetentionEvidence{}))
+	assert.Equal(t, -1, detentionevidence.VerifyChain(nil))
+	assert.Equal(t, -1, detentionevidence.VerifyChain([]*detentionevidence.DetentionEvidence{}))
 }
 
 func TestEvidence_NilEntryIsABrokenLink(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, 0, detention.VerifyChain([]*detention.DetentionEvidence{nil}))
+	assert.Equal(t, 0, detentionevidence.VerifyChain([]*detentionevidence.DetentionEvidence{nil}))
 }
 
 // Length-delimited hashing prevents two different field splits from colliding.
@@ -135,23 +135,23 @@ func TestEvidence_FieldBoundariesCannotCollide(t *testing.T) {
 
 	occurrenceID := pulid.MustNew("dto_")
 
-	a := &detention.DetentionEvidence{
+	a := &detentionevidence.DetentionEvidence{
 		DetentionOccurrenceID: occurrenceID,
-		Kind:                  detention.EvidenceKindArrival,
-		Source:                detention.EvidenceSourceManual,
+		Kind:                  detentionevidence.EvidenceKindArrival,
+		Source:                detentionevidence.EvidenceSourceManual,
 		Summary:               "abc",
 		ObservedAt:            1000,
 		RecordedAt:            1000,
-		PrevHash:              detention.GenesisHash,
+		PrevHash:              detentionevidence.GenesisHash,
 	}
-	b := &detention.DetentionEvidence{
+	b := &detentionevidence.DetentionEvidence{
 		DetentionOccurrenceID: occurrenceID,
-		Kind:                  detention.EvidenceKindArrival,
-		Source:                detention.EvidenceSourceManual,
+		Kind:                  detentionevidence.EvidenceKindArrival,
+		Source:                detentionevidence.EvidenceSourceManual,
 		Summary:               "ab",
 		ObservedAt:            1000,
 		RecordedAt:            1000,
-		PrevHash:              detention.GenesisHash,
+		PrevHash:              detentionevidence.GenesisHash,
 	}
 
 	assert.NotEqual(t, a.ComputeHash(), b.ComputeHash())
@@ -161,15 +161,15 @@ func TestEvidence_SourceWeighting(t *testing.T) {
 	t.Parallel()
 
 	assert.Greater(t,
-		detention.EvidenceSourceGeofence.Weight(),
-		detention.EvidenceSourceManual.Weight(),
+		detentionevidence.EvidenceSourceGeofence.Weight(),
+		detentionevidence.EvidenceSourceManual.Weight(),
 		"a geofence crossing is far more defensible than a dispatcher keystroke")
 
 	assert.Greater(t,
-		detention.EvidenceSourceEDI.Weight(),
-		detention.EvidenceSourceDriverApp.Weight())
+		detentionevidence.EvidenceSourceEDI.Weight(),
+		detentionevidence.EvidenceSourceDriverApp.Weight())
 
-	assert.Equal(t, 0, detention.EvidenceSource("Rumor").Weight())
+	assert.Equal(t, 0, detentionevidence.EvidenceSource("Rumor").Weight())
 }
 
 func TestEvidence_Validation(t *testing.T) {
@@ -177,27 +177,27 @@ func TestEvidence_Validation(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		mutate    func(*detention.DetentionEvidence)
+		mutate    func(*detentionevidence.DetentionEvidence)
 		wantField string
 	}{
 		{
 			name:      "missing occurrence",
-			mutate:    func(e *detention.DetentionEvidence) { e.DetentionOccurrenceID = pulid.Nil },
+			mutate:    func(e *detentionevidence.DetentionEvidence) { e.DetentionOccurrenceID = pulid.Nil },
 			wantField: "detentionOccurrenceId",
 		},
 		{
 			name:      "missing summary",
-			mutate:    func(e *detention.DetentionEvidence) { e.Summary = "" },
+			mutate:    func(e *detentionevidence.DetentionEvidence) { e.Summary = "" },
 			wantField: "summary",
 		},
 		{
 			name:      "unknown kind",
-			mutate:    func(e *detention.DetentionEvidence) { e.Kind = detention.EvidenceKind("Vibes") },
+			mutate:    func(e *detentionevidence.DetentionEvidence) { e.Kind = detentionevidence.EvidenceKind("Vibes") },
 			wantField: "kind",
 		},
 		{
 			name:      "unknown source",
-			mutate:    func(e *detention.DetentionEvidence) { e.Source = detention.EvidenceSource("Vibes") },
+			mutate:    func(e *detentionevidence.DetentionEvidence) { e.Source = detentionevidence.EvidenceSource("Vibes") },
 			wantField: "source",
 		},
 	}
@@ -216,4 +216,12 @@ func TestEvidence_Validation(t *testing.T) {
 			assert.Contains(t, errorFields(multiErr), tt.wantField)
 		})
 	}
+}
+
+func errorFields(multiErr *errortypes.MultiError) []string {
+	fields := make([]string, 0, len(multiErr.Errors))
+	for _, err := range multiErr.Errors {
+		fields = append(fields, err.Field)
+	}
+	return fields
 }

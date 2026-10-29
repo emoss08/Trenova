@@ -11,6 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -27,12 +31,12 @@ import (
 // OccurrenceDetail bundles an occurrence with everything needed to judge it:
 // the evidence trail, the notices sent, and the live defensibility assessment.
 type OccurrenceDetail struct {
-	Occurrence     *detention.DetentionOccurrence     `json:"occurrence"`
-	Evidence       []*detention.DetentionEvidence     `json:"evidence"`
-	Notices        []*detention.DetentionNotice       `json:"notices"`
-	Collectability detention.CollectabilityAssessment `json:"collectability"`
-	Receipt        string                             `json:"receipt"`
-	CurrentlyBillable *ClockPrice `json:"currentlyBillable,omitempty"`
+	Occurrence        *detention.DetentionOccurrence                   `json:"occurrence"`
+	Evidence          []*detentionevidence.DetentionEvidence           `json:"evidence"`
+	Notices           []*detentionnotice.DetentionNotice               `json:"notices"`
+	Collectability    detentioncollectability.CollectabilityAssessment `json:"collectability"`
+	Receipt           string                                           `json:"receipt"`
+	CurrentlyBillable *ClockPrice                                      `json:"currentlyBillable,omitempty"`
 }
 
 func (s *Service) GetOccurrenceDetail(
@@ -51,7 +55,7 @@ func (s *Service) GetOccurrenceDetail(
 		Occurrence: occurrence,
 		Evidence:   occurrence.Evidence,
 		Notices:    occurrence.Notices,
-		Collectability: detention.AssessCollectability(
+		Collectability: detentioncollectability.AssessCollectability(
 			occurrence, occurrence.Evidence,
 		),
 	}
@@ -447,13 +451,13 @@ func (s *Service) saveWaiver(
 	}
 
 	if released {
-		s.appendEvidence(ctx, saved, detention.EvidenceKindStatusChange,
-			detention.EvidenceSourceSystem,
+		s.appendEvidence(ctx, saved, detentionevidence.EvidenceKindStatusChange,
+			detentionevidence.EvidenceSourceSystem,
 			"Billing released: no standing invoice bills this charge",
 			change.Now)
 	}
-	s.appendEvidence(ctx, saved, detention.EvidenceKindWaiver,
-		detention.EvidenceSourceManual,
+	s.appendEvidence(ctx, saved, detentionevidence.EvidenceKindWaiver,
+		detentionevidence.EvidenceSourceManual,
 		fmt.Sprintf("Waived %s %s as %s: %s",
 			saved.WaivedAmount.StringFixed(2), saved.Currency, p.Reason, p.Note),
 		change.Now)
@@ -492,8 +496,8 @@ func (s *Service) Approve(
 	if note := strings.TrimSpace(p.Note); note != "" {
 		summary += ": " + note
 	}
-	s.appendEvidence(ctx, saved, detention.EvidenceKindStatusChange,
-		detention.EvidenceSourceManual, summary, change.Now)
+	s.appendEvidence(ctx, saved, detentionevidence.EvidenceKindStatusChange,
+		detentionevidence.EvidenceSourceManual, summary, change.Now)
 
 	s.audit(change.Before, saved, p.UserID, "Detention charge approved")
 	s.publishBillingHoldChange(ctx, change.Before, saved, p.UserID)
@@ -525,8 +529,8 @@ func (s *Service) Dispute(
 		return nil, err
 	}
 
-	s.appendEvidence(ctx, saved, detention.EvidenceKindDispute,
-		detention.EvidenceSourceManual,
+	s.appendEvidence(ctx, saved, detentionevidence.EvidenceKindDispute,
+		detentionevidence.EvidenceSourceManual,
 		"Customer disputed the charge: "+p.Note, now)
 
 	s.audit(original, saved, p.UserID, "Detention charge disputed")
@@ -575,8 +579,8 @@ func (s *Service) Escalate(
 		return nil, err
 	}
 
-	s.appendEvidence(ctx, saved, detention.EvidenceKindStatusChange,
-		detention.EvidenceSourceManual,
+	s.appendEvidence(ctx, saved, detentionevidence.EvidenceKindStatusChange,
+		detentionevidence.EvidenceSourceManual,
 		EscalationSummary(p.Reason), now)
 
 	s.audit(&original, saved, p.UserID, "Detention escalated: "+p.Reason)
@@ -590,14 +594,14 @@ func (s *Service) Escalate(
 // is thin. It is the artifact that turns a 45-minute argument into an
 // attachment.
 type DisputePacket struct {
-	Occurrence     *detention.DetentionOccurrence     `json:"occurrence"`
-	Snapshot       *detention.PolicySnapshot          `json:"policySnapshot"`
-	Receipt        string                             `json:"receipt"`
-	Evidence       []*detention.DetentionEvidence     `json:"evidence"`
-	Notices        []*detention.DetentionNotice       `json:"notices"`
-	Collectability detention.CollectabilityAssessment `json:"collectability"`
-	ChainVerified  bool                               `json:"chainVerified"`
-	GeneratedAt    int64                              `json:"generatedAt"`
+	Occurrence     *detention.DetentionOccurrence                   `json:"occurrence"`
+	Snapshot       *detentionpolicy.PolicySnapshot                  `json:"policySnapshot"`
+	Receipt        string                                           `json:"receipt"`
+	Evidence       []*detentionevidence.DetentionEvidence           `json:"evidence"`
+	Notices        []*detentionnotice.DetentionNotice               `json:"notices"`
+	Collectability detentioncollectability.CollectabilityAssessment `json:"collectability"`
+	ChainVerified  bool                                             `json:"chainVerified"`
+	GeneratedAt    int64                                            `json:"generatedAt"`
 }
 
 // BuildDisputePacket assembles the claim file for one occurrence.
@@ -621,7 +625,7 @@ func (s *Service) BuildDisputePacket(
 		Evidence:       detail.Evidence,
 		Notices:        detail.Notices,
 		Collectability: detail.Collectability,
-		ChainVerified:  detention.VerifyChain(detail.Evidence) == -1,
+		ChainVerified:  detentionevidence.VerifyChain(detail.Evidence) == -1,
 		GeneratedAt:    s.now(),
 	}, nil
 }

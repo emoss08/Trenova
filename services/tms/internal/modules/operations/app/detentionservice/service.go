@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -272,7 +274,7 @@ func (s *Service) computeStop(
 	ctx context.Context,
 	p computeStopParams,
 ) (*detention.DetentionOccurrence, error) {
-	matchInput := detention.MatchInput{
+	matchInput := detentionpolicy.MatchInput{
 		CustomerID:     p.shipment.CustomerID,
 		LocationID:     p.stop.LocationID,
 		ShipmentTypeID: p.shipment.ShipmentTypeID,
@@ -323,7 +325,7 @@ func (s *Service) computeStop(
 		rateUnit = contractUnit
 	}
 
-	snapshot := detention.NewPolicySnapshot(detention.SnapshotInput{
+	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
 		Policy:          policy,
 		StopType:        string(p.stop.Type),
 		FreeMinutes:     policy.FreeMinutesForStopType(p.stop.Type),
@@ -383,8 +385,8 @@ func (s *Service) computeStop(
 
 func buildOccurrence(
 	p computeStopParams,
-	policy *detention.DetentionPolicy,
-	snapshot detention.PolicySnapshot,
+	policy *detentionpolicy.DetentionPolicy,
+	snapshot detentionpolicy.PolicySnapshot,
 	computed ComputeResult,
 ) *detention.DetentionOccurrence {
 	policyID := policy.ID
@@ -471,12 +473,12 @@ func (s *Service) recordRecalculation(
 	summary := "Detention recalculated to " + saved.BillableAmount.StringFixed(2) +
 		" " + saved.Currency + " (" + string(saved.Status) + ")"
 
-	entry := &detention.DetentionEvidence{
+	entry := &detentionevidence.DetentionEvidence{
 		OrganizationID:        saved.OrganizationID,
 		BusinessUnitID:        saved.BusinessUnitID,
 		DetentionOccurrenceID: saved.ID,
-		Kind:                  detention.EvidenceKindRecalculated,
-		Source:                detention.EvidenceSourceSystem,
+		Kind:                  detentionevidence.EvidenceKindRecalculated,
+		Source:                detentionevidence.EvidenceSourceSystem,
 		Summary:               summary,
 		ObservedAt:            s.now(),
 		RecordedAt:            s.now(),

@@ -1,9 +1,9 @@
-package detention_test
+package detentionpolicy_test
 
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,28 +12,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ptr[T any](v T) *T { return &v }
-
-func validPolicy() *detention.DetentionPolicy {
-	return &detention.DetentionPolicy{
+func validPolicy() *detentionpolicy.DetentionPolicy {
+	return &detentionpolicy.DetentionPolicy{
 		Name:                    "Standard",
 		Code:                    "STD",
-		Status:                  detention.PolicyStatusActive,
-		ClockStartBasis:         detention.ClockStartBasisArrival,
-		LateArrivalRule:         detention.LateArrivalRuleNoEffect,
-		RoundingMode:            detention.RoundingModeUp,
+		Status:                  detentionpolicy.PolicyStatusActive,
+		ClockStartBasis:         detentionpolicy.ClockStartBasisArrival,
+		LateArrivalRule:         detentionpolicy.LateArrivalRuleNoEffect,
+		RoundingMode:            detentionpolicy.RoundingModeUp,
 		BillingIncrementMinutes: 15,
 		BillingFreeMinutes:      120,
-		RateSource:              detention.RateSourceAccessorial,
+		RateSource:              detentionpolicy.RateSourceAccessorial,
 		AccessorialChargeID:     pulid.MustNew("acc_"),
-		NotificationRequirement: detention.NotificationRequirementNone,
-		UnnotifiedBehavior:      detention.UnnotifiedBehaviorBill,
-		DayBoundaryMode:         detention.CapScopePerStop,
+		NotificationRequirement: detentionpolicy.NotificationRequirementNone,
+		UnnotifiedBehavior:      detentionpolicy.UnnotifiedBehaviorBill,
+		DayBoundaryMode:         detentionpolicy.CapScopePerStop,
 		Currency:                "USD",
 	}
 }
 
-func validate(p *detention.DetentionPolicy) *errortypes.MultiError {
+func validate(p *detentionpolicy.DetentionPolicy) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	p.Validate(multiErr)
 	return multiErr
@@ -58,33 +56,33 @@ func TestPolicy_SpecificityScoring(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*detention.DetentionPolicy)
+		mutate func(*detentionpolicy.DetentionPolicy)
 		want   int32
 	}{
-		{"unscoped policy scores zero", func(*detention.DetentionPolicy) {}, 0},
+		{"unscoped policy scores zero", func(*detentionpolicy.DetentionPolicy) {}, 0},
 		{
 			"location only",
-			func(p *detention.DetentionPolicy) { p.LocationID = ptr(pulid.MustNew("loc_")) },
+			func(p *detentionpolicy.DetentionPolicy) { p.LocationID = new(pulid.MustNew("loc_")) },
 			32,
 		},
 		{
 			"customer only",
-			func(p *detention.DetentionPolicy) { p.CustomerID = ptr(pulid.MustNew("cus_")) },
+			func(p *detentionpolicy.DetentionPolicy) { p.CustomerID = new(pulid.MustNew("cus_")) },
 			16,
 		},
 		{
 			"customer plus location outranks either alone",
-			func(p *detention.DetentionPolicy) {
-				p.CustomerID = ptr(pulid.MustNew("cus_"))
-				p.LocationID = ptr(pulid.MustNew("loc_"))
+			func(p *detentionpolicy.DetentionPolicy) {
+				p.CustomerID = new(pulid.MustNew("cus_"))
+				p.LocationID = new(pulid.MustNew("loc_"))
 			},
 			48,
 		},
 		{
 			"every dimension set",
-			func(p *detention.DetentionPolicy) {
-				p.LocationID = ptr(pulid.MustNew("loc_"))
-				p.CustomerID = ptr(pulid.MustNew("cus_"))
+			func(p *detentionpolicy.DetentionPolicy) {
+				p.LocationID = new(pulid.MustNew("loc_"))
+				p.CustomerID = new(pulid.MustNew("cus_"))
 				p.CommodityIDs = []pulid.ID{pulid.MustNew("cmd_")}
 				p.ServiceTypeIDs = []pulid.ID{pulid.MustNew("svt_")}
 				p.ShipmentTypeIDs = []pulid.ID{pulid.MustNew("spt_")}
@@ -114,7 +112,7 @@ func TestPolicy_Matches(t *testing.T) {
 	locationID := pulid.MustNew("loc_")
 	commodityID := pulid.MustNew("cmd_")
 
-	base := detention.MatchInput{
+	base := detentionpolicy.MatchInput{
 		CustomerID:     customerID,
 		LocationID:     locationID,
 		ShipmentTypeID: pulid.MustNew("spt_"),
@@ -147,14 +145,14 @@ func TestPolicy_Matches(t *testing.T) {
 	t.Run("inactive policy never matches", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
-		p.Status = detention.PolicyStatusInactive
+		p.Status = detentionpolicy.PolicyStatusInactive
 		assert.False(t, p.Matches(base))
 	})
 
 	t.Run("draft policy never matches", func(t *testing.T) {
 		t.Parallel()
 		p := validPolicy()
-		p.Status = detention.PolicyStatusDraft
+		p.Status = detentionpolicy.PolicyStatusDraft
 		assert.False(t, p.Matches(base))
 	})
 
@@ -199,8 +197,8 @@ func TestPolicy_EffectiveDating(t *testing.T) {
 	t.Parallel()
 
 	p := validPolicy()
-	p.EffectiveStartDate = ptr(int64(1000))
-	p.EffectiveEndDate = ptr(int64(2000))
+	p.EffectiveStartDate = new(int64(1000))
+	p.EffectiveEndDate = new(int64(2000))
 
 	assert.False(t, p.IsEffectiveAt(999), "before the window")
 	assert.True(t, p.IsEffectiveAt(1000), "the start boundary is inclusive")
@@ -214,8 +212,8 @@ func TestPolicy_FreeMinutesForStopType(t *testing.T) {
 
 	p := validPolicy()
 	p.BillingFreeMinutes = 120
-	p.PickupFreeMinutes = ptr(int32(60))
-	p.DeliveryFreeMinutes = ptr(int32(180))
+	p.PickupFreeMinutes = new(int32(60))
+	p.DeliveryFreeMinutes = new(int32(180))
 
 	assert.Equal(t, int32(60), p.FreeMinutesForStopType(shipment.StopTypePickup))
 	assert.Equal(t, int32(60), p.FreeMinutesForStopType(shipment.StopTypeSplitPickup))
@@ -233,7 +231,7 @@ func TestPolicy_PayFreeMinutesOrDefault(t *testing.T) {
 	p := validPolicy()
 	assert.Equal(t, int32(120), p.PayFreeMinutesOrDefault())
 
-	p.PayFreeMinutes = ptr(int32(90))
+	p.PayFreeMinutes = new(int32(90))
 	assert.Equal(t, int32(90), p.PayFreeMinutesOrDefault())
 }
 
@@ -242,35 +240,35 @@ func TestPolicy_ValidationRules(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		mutate    func(*detention.DetentionPolicy)
+		mutate    func(*detentionpolicy.DetentionPolicy)
 		wantField string
 	}{
 		{
 			name:      "free time above the seven day ceiling",
-			mutate:    func(p *detention.DetentionPolicy) { p.BillingFreeMinutes = 20000 },
+			mutate:    func(p *detentionpolicy.DetentionPolicy) { p.BillingFreeMinutes = 20000 },
 			wantField: "billingFreeMinutes",
 		},
 		{
 			name:      "negative free time",
-			mutate:    func(p *detention.DetentionPolicy) { p.BillingFreeMinutes = -1 },
+			mutate:    func(p *detentionpolicy.DetentionPolicy) { p.BillingFreeMinutes = -1 },
 			wantField: "billingFreeMinutes",
 		},
 		{
 			name:      "zero increment without exact rounding",
-			mutate:    func(p *detention.DetentionPolicy) { p.BillingIncrementMinutes = 0 },
+			mutate:    func(p *detentionpolicy.DetentionPolicy) { p.BillingIncrementMinutes = 0 },
 			wantField: "billingIncrementMinutes",
 		},
 		{
 			name: "expiration before effective date",
-			mutate: func(p *detention.DetentionPolicy) {
-				p.EffectiveStartDate = ptr(int64(2000))
-				p.EffectiveEndDate = ptr(int64(1000))
+			mutate: func(p *detentionpolicy.DetentionPolicy) {
+				p.EffectiveStartDate = new(int64(2000))
+				p.EffectiveEndDate = new(int64(1000))
 			},
 			wantField: "effectiveEndDate",
 		},
 		{
 			name: "shipment cap below stop cap",
-			mutate: func(p *detention.DetentionPolicy) {
+			mutate: func(p *detentionpolicy.DetentionPolicy) {
 				p.MaxChargePerStop = decimal.NewNullDecimal(decimal.NewFromInt(500))
 				p.MaxChargePerShipment = decimal.NewNullDecimal(decimal.NewFromInt(200))
 			},
@@ -278,23 +276,23 @@ func TestPolicy_ValidationRules(t *testing.T) {
 		},
 		{
 			name: "layover threshold without a layover charge",
-			mutate: func(p *detention.DetentionPolicy) {
-				p.ConvertToLayoverAtMinutes = ptr(int32(1440))
+			mutate: func(p *detentionpolicy.DetentionPolicy) {
+				p.ConvertToLayoverAtMinutes = new(int32(1440))
 			},
 			wantField: "layoverAccessorialChargeId",
 		},
 		{
 			name: "required notice that still bills when missed",
-			mutate: func(p *detention.DetentionPolicy) {
-				p.NotificationRequirement = detention.NotificationRequirementRequired
-				p.UnnotifiedBehavior = detention.UnnotifiedBehaviorBill
+			mutate: func(p *detentionpolicy.DetentionPolicy) {
+				p.NotificationRequirement = detentionpolicy.NotificationRequirementRequired
+				p.UnnotifiedBehavior = detentionpolicy.UnnotifiedBehaviorBill
 			},
 			wantField: "unnotifiedBehavior",
 		},
 		{
 			name: "notice lead longer than the free time it warns about",
-			mutate: func(p *detention.DetentionPolicy) {
-				p.NotificationRequirement = detention.NotificationRequirementAdvisory
+			mutate: func(p *detentionpolicy.DetentionPolicy) {
+				p.NotificationRequirement = detentionpolicy.NotificationRequirementAdvisory
 				p.BillingFreeMinutes = 60
 				p.NotificationLeadMinutes = 90
 			},
@@ -302,22 +300,22 @@ func TestPolicy_ValidationRules(t *testing.T) {
 		},
 		{
 			name: "tier rate source without tiers",
-			mutate: func(p *detention.DetentionPolicy) {
-				p.RateSource = detention.RateSourceTiers
+			mutate: func(p *detentionpolicy.DetentionPolicy) {
+				p.RateSource = detentionpolicy.RateSourceTiers
 			},
 			wantField: "tiers",
 		},
 		{
 			name: "org default policy carrying scope",
-			mutate: func(p *detention.DetentionPolicy) {
+			mutate: func(p *detentionpolicy.DetentionPolicy) {
 				p.IsOrgDefault = true
-				p.CustomerID = ptr(pulid.MustNew("cus_"))
+				p.CustomerID = new(pulid.MustNew("cus_"))
 			},
 			wantField: "isOrgDefault",
 		},
 		{
 			name: "auto-approve above the approval-required threshold",
-			mutate: func(p *detention.DetentionPolicy) {
+			mutate: func(p *detentionpolicy.DetentionPolicy) {
 				p.RequireApprovalOverAmount = decimal.NewNullDecimal(decimal.NewFromInt(100))
 				p.AutoApproveUnderAmount = decimal.NewNullDecimal(decimal.NewFromInt(500))
 			},
@@ -343,7 +341,7 @@ func TestPolicy_ExactRoundingAllowsZeroIncrement(t *testing.T) {
 	t.Parallel()
 
 	p := validPolicy()
-	p.RoundingMode = detention.RoundingModeExact
+	p.RoundingMode = detentionpolicy.RoundingModeExact
 	p.BillingIncrementMinutes = 0
 
 	assert.False(t, validate(p).HasErrors())
@@ -355,9 +353,9 @@ func TestPolicy_RequiresNotice(t *testing.T) {
 	p := validPolicy()
 	assert.False(t, p.RequiresNotice())
 
-	p.NotificationRequirement = detention.NotificationRequirementAdvisory
+	p.NotificationRequirement = detentionpolicy.NotificationRequirementAdvisory
 	assert.False(t, p.RequiresNotice(), "advisory notices do not gate billing")
 
-	p.NotificationRequirement = detention.NotificationRequirementRequired
+	p.NotificationRequirement = detentionpolicy.NotificationRequirementRequired
 	assert.True(t, p.RequiresNotice())
 }

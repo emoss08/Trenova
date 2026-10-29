@@ -5,17 +5,17 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -87,7 +87,7 @@ func pendingCharge() detention.DetentionOccurrence {
 		Currency:           "USD",
 		NotificationStatus: detention.NotificationStatusPending,
 		FreeTimeExpiresAt:  1_767_225_600,
-		PolicySnapshot:     &detention.PolicySnapshot{Currency: "USD"},
+		PolicySnapshot:     &detentionpolicy.PolicySnapshot{Currency: "USD"},
 		LocationName:       "Memphis DC",
 		ShipmentProNumber:  "SHP-1001",
 		Version:            4,
@@ -259,7 +259,7 @@ func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing
 	svc.customerRepo = &noticeCustomers{recipients: "ap@acme.test, ops@acme.test"}
 	svc.noticeRepo = &stubNoticeRepo{}
 	svc.policyRepo = stubPolicyRepo{
-		policy: &detention.DetentionPolicy{ID: policyID, AttachNoticePDF: true},
+		policy: &detentionpolicy.DetentionPolicy{ID: policyID, AttachNoticePDF: true},
 	}
 	svc.templates = resolver
 	svc.contextBuilder = &ContextBuilder{}

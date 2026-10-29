@@ -5,11 +5,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/emoss08/trenova/shared/intutils"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -28,7 +28,7 @@ var (
 // derived from. Nothing outside this struct may influence the result, which is
 // what makes a stored trace replayable months later during a dispute.
 type ComputeInput struct {
-	Snapshot         detention.PolicySnapshot
+	Snapshot         detentionpolicy.PolicySnapshot
 	StopType         shipment.StopType
 	ScheduleType     shipment.StopScheduleType
 	ArrivedAt        *int64
@@ -119,7 +119,7 @@ func Compute(in ComputeInput) ComputeResult {
 
 	if lateness.isLate {
 		switch snap.LateArrivalRule {
-		case detention.LateArrivalRuleForfeit:
+		case detentionpolicy.LateArrivalRuleForfeit:
 			trace.AddMinutes(detention.TraceStepLateArrival,
 				"Detention forfeited",
 				fmt.Sprintf("Arrived %d min after the appointment window", lateness.byMinutes),
@@ -131,7 +131,7 @@ func Compute(in ComputeInput) ComputeResult {
 			result.Status = detention.OccurrenceStatusNotBillable
 			finalizeTrace(trace, result)
 			return result
-		case detention.LateArrivalRuleClockFromAppointment:
+		case detentionpolicy.LateArrivalRuleClockFromAppointment:
 			if in.AppointmentStart != nil {
 				clockStart = *in.AppointmentStart
 				trace.AddTimestamp(detention.TraceStepLateArrival,
@@ -139,7 +139,7 @@ func Compute(in ComputeInput) ComputeResult {
 					"Lateness consumes the carrier's own free time",
 					"Late arrival rule: ClockFromAppointment", clockStart)
 			}
-		case detention.LateArrivalRuleReduceFreeTime:
+		case detentionpolicy.LateArrivalRuleReduceFreeTime:
 			reduced := freeMinutes - lateness.byMinutes
 			if reduced < 0 {
 				reduced = 0
@@ -149,7 +149,7 @@ func Compute(in ComputeInput) ComputeResult {
 				fmt.Sprintf("%d min granted instead of %d", reduced, freeMinutes),
 				"Late arrival rule: ReduceFreeTime", freeMinutes-reduced, true)
 			freeMinutes = reduced
-		case detention.LateArrivalRuleNoEffect:
+		case detentionpolicy.LateArrivalRuleNoEffect:
 			trace.AddMinutes(detention.TraceStepLateArrival,
 				"Late arrival noted, entitlement unaffected",
 				fmt.Sprintf("Arrived %d min late", lateness.byMinutes),
@@ -312,22 +312,22 @@ func resolveClockStart(in ComputeInput, trace *detention.CalculationTrace) (int6
 	basisDetail := "Driver arrival"
 
 	switch snap.ClockStartBasis {
-	case detention.ClockStartBasisArrival:
+	case detentionpolicy.ClockStartBasisArrival:
 		clockStart = arrival
 		basisDetail = "Driver arrival"
-	case detention.ClockStartBasisAppointment:
+	case detentionpolicy.ClockStartBasisAppointment:
 		if in.AppointmentStart != nil {
 			clockStart = *in.AppointmentStart
 			basisDetail = "Scheduled appointment, regardless of arrival"
 		}
-	case detention.ClockStartBasisLaterOfArrivalOrAppointment:
+	case detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment:
 		if in.AppointmentStart != nil && *in.AppointmentStart > arrival {
 			clockStart = *in.AppointmentStart
 			basisDetail = "Appointment, because the driver arrived early"
 		} else {
 			basisDetail = "Driver arrival, at or after the appointment"
 		}
-	case detention.ClockStartBasisEarlierOfArrivalOrAppointment:
+	case detentionpolicy.ClockStartBasisEarlierOfArrivalOrAppointment:
 		if in.AppointmentStart != nil && *in.AppointmentStart < arrival {
 			clockStart = *in.AppointmentStart
 			basisDetail = "Appointment, because it preceded arrival"
@@ -386,8 +386,8 @@ func resolveClockStop(in ComputeInput, clockStart int64) (int64, bool) {
 // applyRounding collapses raw billable minutes onto the contract's increment.
 // Rounding errors are a named cause of rejected detention invoices, so the mode
 // and increment are always contract terms rather than engine defaults.
-func applyRounding(minutes int32, mode detention.RoundingMode, increment int16) int32 {
-	if mode == detention.RoundingModeExact || increment <= 0 {
+func applyRounding(minutes int32, mode detentionpolicy.RoundingMode, increment int16) int32 {
+	if mode == detentionpolicy.RoundingModeExact || increment <= 0 {
 		return minutes
 	}
 
@@ -400,16 +400,16 @@ func applyRounding(minutes int32, mode detention.RoundingMode, increment int16) 
 	}
 
 	switch mode {
-	case detention.RoundingModeUp:
+	case detentionpolicy.RoundingModeUp:
 		return (whole + 1) * inc
-	case detention.RoundingModeDown:
+	case detentionpolicy.RoundingModeDown:
 		return whole * inc
-	case detention.RoundingModeNearest:
+	case detentionpolicy.RoundingModeNearest:
 		if remainder*2 >= inc {
 			return (whole + 1) * inc
 		}
 		return whole * inc
-	case detention.RoundingModeExact:
+	case detentionpolicy.RoundingModeExact:
 		return minutes
 	default:
 		return minutes
@@ -418,7 +418,7 @@ func applyRounding(minutes int32, mode detention.RoundingMode, increment int16) 
 
 func applyMinuteCaps(
 	rounded, freeMinutes int32,
-	snap detention.PolicySnapshot,
+	snap detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
 	current detention.CapKind,
 ) (int32, bool, detention.CapKind) {
@@ -459,10 +459,10 @@ func applyMinuteCaps(
 // multiplies the flat accessorial rate.
 func applyRate(
 	rounded int32,
-	snap detention.PolicySnapshot,
+	snap detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
 ) (decimal.Decimal, decimal.Decimal) {
-	if snap.RateSource == detention.RateSourceTiers && len(snap.Tiers) > 0 {
+	if snap.RateSource == detentionpolicy.RateSourceTiers && len(snap.Tiers) > 0 {
 		return applyTieredRate(rounded, snap, trace)
 	}
 
@@ -479,10 +479,10 @@ func applyRate(
 
 func applyTieredRate(
 	rounded int32,
-	snap detention.PolicySnapshot,
+	snap detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
 ) (decimal.Decimal, decimal.Decimal) {
-	tiers := make([]detention.TierSnapshot, len(snap.Tiers))
+	tiers := make([]detentionpolicy.TierSnapshot, len(snap.Tiers))
 	copy(tiers, snap.Tiers)
 	sort.SliceStable(
 		tiers,
@@ -513,17 +513,17 @@ func applyTieredRate(
 	return totalUnits, totalAmount
 }
 
-func unitsForMinutes(minutes int32, unit detention.TierRateUnit) decimal.Decimal {
+func unitsForMinutes(minutes int32, unit detentionpolicy.TierRateUnit) decimal.Decimal {
 	if minutes <= 0 {
 		return decimal.Zero
 	}
 
 	switch unit {
-	case detention.TierRateUnitHour:
+	case detentionpolicy.TierRateUnitHour:
 		return decimal.NewFromInt(int64(minutes)).Div(minutesPerHourDec).Round(4)
-	case detention.TierRateUnitDay:
+	case detentionpolicy.TierRateUnitDay:
 		return decimal.NewFromInt(int64(minutes)).Div(minutesPerDayDec).Round(4)
-	case detention.TierRateUnitFlat:
+	case detentionpolicy.TierRateUnitFlat:
 		return decimal.NewFromInt(1)
 	default:
 		return decimal.NewFromInt(int64(minutes)).Div(minutesPerHourDec).Round(4)
@@ -533,7 +533,7 @@ func unitsForMinutes(minutes int32, unit detention.TierRateUnit) decimal.Decimal
 type applyAmountCapsInput struct {
 	gross       decimal.Decimal
 	rounded     int32
-	snapshot    detention.PolicySnapshot
+	snapshot    detentionpolicy.PolicySnapshot
 	clockStart  int64
 	freeMins    int32
 	clockStop   int64
@@ -776,7 +776,7 @@ func resolveNotification(
 ) (detention.NotificationStatus, *int64, *int64) {
 	snap := in.Snapshot
 
-	if snap.NotificationRequirement == detention.NotificationRequirementNone {
+	if snap.NotificationRequirement == detentionpolicy.NotificationRequirementNone {
 		return detention.NotificationStatusNotRequired, nil, nil
 	}
 
@@ -802,10 +802,10 @@ func resolveNotification(
 // otherwise-valid detention claim goes uncollected.
 func applyNotificationGate(
 	result *ComputeResult,
-	snap detention.PolicySnapshot,
+	snap detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
 ) {
-	if snap.NotificationRequirement != detention.NotificationRequirementRequired {
+	if snap.NotificationRequirement != detentionpolicy.NotificationRequirementRequired {
 		return
 	}
 
@@ -824,7 +824,7 @@ func applyNotificationGate(
 	}
 
 	switch snap.UnnotifiedBehavior {
-	case detention.UnnotifiedBehaviorSuppress:
+	case detentionpolicy.UnnotifiedBehaviorSuppress:
 		trace.AddAmount(
 			detention.TraceStepNotification,
 			"Charge suppressed: notice not sent in time",
@@ -835,7 +835,7 @@ func applyNotificationGate(
 		)
 		result.BillableAmount = decimal.Zero
 		result.SuppressedByGate = true
-	case detention.UnnotifiedBehaviorFlag:
+	case detentionpolicy.UnnotifiedBehaviorFlag:
 		trace.Add(detention.TraceStep{
 			Kind:  detention.TraceStepNotification,
 			Label: "Held for review: notice not sent in time",
@@ -846,7 +846,7 @@ func applyNotificationGate(
 			Term: "Unnotified behavior: Flag",
 		})
 		result.RequiresApproval = true
-	case detention.UnnotifiedBehaviorBill:
+	case detentionpolicy.UnnotifiedBehaviorBill:
 		trace.Add(detention.TraceStep{
 			Kind:   detention.TraceStepNotification,
 			Label:  "Notice missed; billing anyway",
@@ -858,7 +858,7 @@ func applyNotificationGate(
 
 func applyApprovalThresholds(
 	result *ComputeResult,
-	snap detention.PolicySnapshot,
+	snap detentionpolicy.PolicySnapshot,
 	trace *detention.CalculationTrace,
 ) {
 	if snap.RequireApprovalOverAmount.Valid &&
@@ -877,7 +877,7 @@ func applyApprovalThresholds(
 
 func resolveStatus(
 	result *ComputeResult,
-	snap detention.PolicySnapshot,
+	snap detentionpolicy.PolicySnapshot,
 	isOpen bool,
 ) detention.OccurrenceStatus {
 	if isOpen {
@@ -930,27 +930,27 @@ func formatMinutes(minutes int32) string {
 	return fmt.Sprintf("%dh %dm", hours, rem)
 }
 
-func rateLabel(rate decimal.Decimal, unit detention.TierRateUnit) string {
+func rateLabel(rate decimal.Decimal, unit detentionpolicy.TierRateUnit) string {
 	switch unit {
-	case detention.TierRateUnitHour:
+	case detentionpolicy.TierRateUnitHour:
 		return rate.StringFixed(2) + "/hr"
-	case detention.TierRateUnitDay:
+	case detentionpolicy.TierRateUnitDay:
 		return rate.StringFixed(2) + "/day"
-	case detention.TierRateUnitFlat:
+	case detentionpolicy.TierRateUnitFlat:
 		return rate.StringFixed(2) + " flat"
 	default:
 		return rate.StringFixed(2)
 	}
 }
 
-func tierLabel(tier detention.TierSnapshot) string {
+func tierLabel(tier detentionpolicy.TierSnapshot) string {
 	if tier.Label != "" {
 		return tier.Label
 	}
 	return "Tier " + tierBandTerm(tier)
 }
 
-func tierBandTerm(tier detention.TierSnapshot) string {
+func tierBandTerm(tier detentionpolicy.TierSnapshot) string {
 	if tier.ToMinute == nil {
 		return fmt.Sprintf("%s and beyond", formatMinutes(tier.FromMinute))
 	}
@@ -971,23 +971,23 @@ func clockStopDetail(isOpen bool) string {
 	return "Driver departure"
 }
 
-func roundingDetail(mode detention.RoundingMode, increment int16) string {
-	if mode == detention.RoundingModeExact || increment <= 0 {
+func roundingDetail(mode detentionpolicy.RoundingMode, increment int16) string {
+	if mode == detentionpolicy.RoundingModeExact || increment <= 0 {
 		return "Billed to the exact minute"
 	}
 	return fmt.Sprintf("%s to the nearest %d-minute increment",
 		roundingVerb(mode), increment)
 }
 
-func roundingVerb(mode detention.RoundingMode) string {
+func roundingVerb(mode detentionpolicy.RoundingMode) string {
 	switch mode {
-	case detention.RoundingModeUp:
+	case detentionpolicy.RoundingModeUp:
 		return "Rounded up"
-	case detention.RoundingModeDown:
+	case detentionpolicy.RoundingModeDown:
 		return "Rounded down"
-	case detention.RoundingModeNearest:
+	case detentionpolicy.RoundingModeNearest:
 		return "Rounded"
-	case detention.RoundingModeExact:
+	case detentionpolicy.RoundingModeExact:
 		return "Exact"
 	default:
 		return "Rounded"
@@ -996,15 +996,15 @@ func roundingVerb(mode detention.RoundingMode) string {
 
 // tierUnitFromAccessorial maps an accessorial's rate unit onto the tier unit
 // vocabulary so a flat-rate policy and a tiered one share one code path.
-func tierUnitFromAccessorial(unit accessorialcharge.RateUnit) detention.TierRateUnit {
+func tierUnitFromAccessorial(unit accessorialcharge.RateUnit) detentionpolicy.TierRateUnit {
 	switch unit {
 	case accessorialcharge.RateUnitHour:
-		return detention.TierRateUnitHour
+		return detentionpolicy.TierRateUnitHour
 	case accessorialcharge.RateUnitDay:
-		return detention.TierRateUnitDay
+		return detentionpolicy.TierRateUnitDay
 	case accessorialcharge.RateUnitStop, accessorialcharge.RateUnitMile:
-		return detention.TierRateUnitFlat
+		return detentionpolicy.TierRateUnitFlat
 	default:
-		return detention.TierRateUnitHour
+		return detentionpolicy.TierRateUnitHour
 	}
 }

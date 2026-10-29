@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +21,7 @@ func chargeableOccurrenceFor(accessorialID pulid.ID, amount string) *detention.D
 		ID:             pulid.MustNew("dto_"),
 		Status:         detention.OccurrenceStatusPending,
 		BillableAmount: decimal.RequireFromString(amount),
-		PolicySnapshot: &detention.PolicySnapshot{
+		PolicySnapshot: &detentionpolicy.PolicySnapshot{
 			AccessorialChargeID: accessorialID,
 		},
 	}

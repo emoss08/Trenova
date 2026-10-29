@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,22 +27,22 @@ type PreviewScenario struct {
 
 // PreviewResult is what the configured terms would produce for the scenario.
 type PreviewResult struct {
-	Snapshot           detention.PolicySnapshot     `json:"policySnapshot"`
-	RawDwellMinutes    int32                        `json:"rawDwellMinutes"`
-	FreeMinutesGranted int32                        `json:"freeMinutesGranted"`
-	BillableMinutes    int32                        `json:"billableMinutes"`
-	RoundedMinutes     int32                        `json:"roundedMinutes"`
-	BillableAmount     decimal.Decimal              `json:"billableAmount"`
-	GrossAmount        decimal.Decimal              `json:"grossAmount"`
-	DriverPayAmount    decimal.NullDecimal          `json:"driverPayAmount"`
-	NetMargin          decimal.NullDecimal          `json:"netMargin"`
-	ArrivedLate        bool                         `json:"arrivedLate"`
-	CapApplied         detention.CapKind            `json:"capApplied"`
-	Status             detention.OccurrenceStatus   `json:"status"`
-	NotificationStatus detention.NotificationStatus `json:"notificationStatus"`
-	SuppressedByGate   bool                         `json:"suppressedByGate"`
-	Trace              *detention.CalculationTrace  `json:"calculationTrace"`
-	Receipt            string                       `json:"receipt"`
+	Snapshot           detentionpolicy.PolicySnapshot `json:"policySnapshot"`
+	RawDwellMinutes    int32                          `json:"rawDwellMinutes"`
+	FreeMinutesGranted int32                          `json:"freeMinutesGranted"`
+	BillableMinutes    int32                          `json:"billableMinutes"`
+	RoundedMinutes     int32                          `json:"roundedMinutes"`
+	BillableAmount     decimal.Decimal                `json:"billableAmount"`
+	GrossAmount        decimal.Decimal                `json:"grossAmount"`
+	DriverPayAmount    decimal.NullDecimal            `json:"driverPayAmount"`
+	NetMargin          decimal.NullDecimal            `json:"netMargin"`
+	ArrivedLate        bool                           `json:"arrivedLate"`
+	CapApplied         detention.CapKind              `json:"capApplied"`
+	Status             detention.OccurrenceStatus     `json:"status"`
+	NotificationStatus detention.NotificationStatus   `json:"notificationStatus"`
+	SuppressedByGate   bool                           `json:"suppressedByGate"`
+	Trace              *detention.CalculationTrace    `json:"calculationTrace"`
+	Receipt            string                         `json:"receipt"`
 }
 
 // PreviewPolicy runs the real engine against a hypothetical stop.
@@ -51,7 +52,7 @@ type PreviewResult struct {
 // loop is how carriers end up with the invoice error rate the industry has.
 func (s *Service) PreviewPolicy(
 	ctx context.Context,
-	policy *detention.DetentionPolicy,
+	policy *detentionpolicy.DetentionPolicy,
 	scenario PreviewScenario,
 	tenantInfo pagination.TenantInfo,
 ) (*PreviewResult, error) {
@@ -96,7 +97,7 @@ func (s *Service) PreviewPolicy(
 		now = *scenario.DepartedAt
 	}
 
-	snapshot := detention.NewPolicySnapshot(detention.SnapshotInput{
+	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
 		Policy:          policy,
 		StopType:        string(scenario.StopType),
 		FreeMinutes:     policy.FreeMinutesForStopType(scenario.StopType),

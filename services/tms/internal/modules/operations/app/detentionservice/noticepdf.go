@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs/detentioncontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -117,7 +118,7 @@ func noticePDFFileName(occurrence *detention.DetentionOccurrence) string {
 // gap, not a lost notice.
 func (s *Service) fileNoticePDF(
 	ctx context.Context,
-	notice *detention.DetentionNotice,
+	notice *detentionnotice.DetentionNotice,
 	occurrence *detention.DetentionOccurrence,
 	pdf *NoticePDF,
 ) {
@@ -156,7 +157,7 @@ func (s *Service) fileNoticePDF(
 // noticePDFFiling is one notice PDF on its way into document storage.
 type noticePDFFiling struct {
 	TenantInfo pagination.TenantInfo
-	Notice     *detention.DetentionNotice
+	Notice     *detentionnotice.DetentionNotice
 	Occurrence *detention.DetentionOccurrence
 	PDF        *NoticePDF
 }
@@ -298,7 +299,7 @@ func (s *Service) startNoticePDFStorage(
 // noticeActorUserID names whoever the filing is attributed to. An automatic
 // notice has no sender, and the upload session is happy with a nil user — the
 // system is the actor either way.
-func noticeActorUserID(notice *detention.DetentionNotice) pulid.ID {
+func noticeActorUserID(notice *detentionnotice.DetentionNotice) pulid.ID {
 	if notice.SentByID != nil && !notice.SentByID.IsNil() {
 		return *notice.SentByID
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -144,7 +145,7 @@ func (s *Service) withShipmentOccurrences(
 type NoticePreview struct {
 	Before     *detention.DetentionOccurrence
 	After      *detention.DetentionOccurrence
-	Kind       detention.NoticeKind
+	Kind       detentionnotice.NoticeKind
 	Recipients []string
 	Content    NoticeContent
 	Attachment string
@@ -173,7 +174,7 @@ func (s *Service) PreviewOccurrenceNotice(
 		return nil, err
 	}
 
-	sent := &detention.DetentionNotice{}
+	sent := &detentionnotice.DetentionNotice{}
 	sent.MarkSent(plan.now, occurrence.NoticeDeadlineAt, "")
 	after := before
 	applyNoticeOutcome(&after, sent)
@@ -287,7 +288,7 @@ func (s *Service) renderScheduledNotice(
 // notice's delivery says happened.
 func applyNoticeOutcome(
 	occurrence *detention.DetentionOccurrence,
-	notice *detention.DetentionNotice,
+	notice *detentionnotice.DetentionNotice,
 ) {
 	switch {
 	case notice.DeliveryStatus.IsFailure():

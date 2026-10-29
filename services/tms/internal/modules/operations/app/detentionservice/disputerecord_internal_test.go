@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -31,13 +33,13 @@ import (
 
 type listedNotices struct {
 	stubNoticeRepo
-	notices []*detention.DetentionNotice
+	notices []*detentionnotice.DetentionNotice
 }
 
 func (r *listedNotices) List(
 	context.Context,
 	*detentionports.ListDetentionNoticesRequest,
-) ([]*detention.DetentionNotice, error) {
+) ([]*detentionnotice.DetentionNotice, error) {
 	return r.notices, nil
 }
 
@@ -81,8 +83,11 @@ func newDisputeRig(t *testing.T) *disputeRig {
 	occurrence.ArrivedAt = &arrived
 	occurrence.DepartedAt = &departed
 	occurrence.BillableAmount = decimal.RequireFromString("1200")
-	occurrence.Evidence = []*detention.DetentionEvidence{
-		{Kind: detention.EvidenceKindArrival, Source: detention.EvidenceSourceGeofence},
+	occurrence.Evidence = []*detentionevidence.DetentionEvidence{
+		{
+			Kind:   detentionevidence.EvidenceKindArrival,
+			Source: detentionevidence.EvidenceSourceGeofence,
+		},
 	}
 
 	organizations := tenantportsmock.NewMockOrganizationRepository(t)
@@ -135,14 +140,14 @@ func TestDisputeRecordPrefersTheFinalNoticeThatWasSent(t *testing.T) {
 	warning := pulid.MustNew("doc_")
 	final := pulid.MustNew("doc_")
 	bounced := pulid.MustNew("doc_")
-	rig.notices.notices = []*detention.DetentionNotice{
-		{Kind: detention.NoticeKindWarning, PDFDocumentID: &warning, CreatedAt: 300},
-		{Kind: detention.NoticeKindFinal, PDFDocumentID: &final, CreatedAt: 200},
+	rig.notices.notices = []*detentionnotice.DetentionNotice{
+		{Kind: detentionnotice.NoticeKindWarning, PDFDocumentID: &warning, CreatedAt: 300},
+		{Kind: detentionnotice.NoticeKindFinal, PDFDocumentID: &final, CreatedAt: 200},
 		{
-			Kind:           detention.NoticeKindFinal,
+			Kind:           detentionnotice.NoticeKindFinal,
 			PDFDocumentID:  &bounced,
 			CreatedAt:      400,
-			DeliveryStatus: detention.NoticeDeliveryStatusBounced,
+			DeliveryStatus: detentionnotice.NoticeDeliveryStatusBounced,
 		},
 	}
 
@@ -190,8 +195,8 @@ func TestDisputeRecordRendersTheFinalNoticeAndStoresItOnTheShipment(t *testing.T
 			data, ok := req.Data.(*detentiontemplate.DetentionNoticeContext)
 
 			return ok && req.Kind == documenttemplate.KindDetentionNoticePDF &&
-				data.Kind == string(detention.NoticeKindFinal) &&
-				data.ArrivalSource == string(detention.EvidenceSourceGeofence) &&
+				data.Kind == string(detentionnotice.NoticeKindFinal) &&
+				data.ArrivalSource == string(detentionevidence.EvidenceSourceGeofence) &&
 				data.ShipmentProNumber == "SEED-DET-008"
 		},
 	)).Return(&documenttemplateports.RenderedDocument{

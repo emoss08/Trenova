@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func TestNoticeHTMLEscapesOperatorEnteredNames(t *testing.T) {
 		t.Context(),
 		&detentionservice.BuildNoticeParams{
 			Occurrence:   noticeOccurrence(),
-			Kind:         detention.NoticeKindFinal,
+			Kind:         detentionnotice.NoticeKindFinal,
 			FacilityName: `Memphis <script>alert(1)</script> DC`,
 			ShipmentRef:  `SHP-<img src=x onerror=alert(2)>`,
 			Location:     time.UTC,
@@ -56,7 +56,7 @@ func TestNoticeHTMLEscapesOperatorEnteredNames(t *testing.T) {
 func TestLegacyNoticeWithoutASnapshotIsEscapedOnSend(t *testing.T) {
 	t.Parallel()
 
-	legacy := &detention.DetentionNotice{
+	legacy := &detentionnotice.DetentionNotice{
 		Body: "Detention at Memphis <script>alert(1)</script> DC",
 	}
 

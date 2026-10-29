@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -46,14 +46,14 @@ func orderedTiers() keel.Loader {
 func (r *policyRepository) List(
 	ctx context.Context,
 	req *detentionports.ListDetentionPoliciesRequest,
-) (*pagination.ListResult[*detention.DetentionPolicy], error) {
+) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
+		func(ctx context.Context) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 			p := detentiondb.DetentionPolicies
 			q := p.Where(
-				keel.When(req.Status != "", p.Status.Eq(detention.PolicyStatus(req.Status))),
+				keel.When(req.Status != "", p.Status.Eq(detentionpolicy.PolicyStatus(req.Status))),
 				optionalIDEq(p.CustomerID, req.CustomerID),
 				optionalIDEq(p.LocationID, req.LocationID),
 			)
@@ -62,11 +62,11 @@ func (r *policyRepository) List(
 				ctx,
 				r.db.Keel(ctx),
 				q,
-				&listquery.Request[detention.DetentionPolicy]{
+				&listquery.Request[detentionpolicy.DetentionPolicy]{
 					Filter: req.Filter,
 					Shape: func(
-						q *keel.Query[*detention.DetentionPolicy],
-					) *keel.Query[*detention.DetentionPolicy] {
+						q *keel.Query[*detentionpolicy.DetentionPolicy],
+					) *keel.Query[*detentionpolicy.DetentionPolicy] {
 						return q.Load(orderedTiers())
 					},
 				},
@@ -84,16 +84,16 @@ func (r *policyRepository) List(
 func (r *policyRepository) ListConnection(
 	ctx context.Context,
 	req *detentionports.ListDetentionPolicyConnectionRequest,
-) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
+) (*pagination.CursorListResult[*detentionpolicy.DetentionPolicy], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*detentionpolicy.DetentionPolicy], error) {
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				detentiondb.DetentionPolicies.Query(),
-				&listquery.Request[detention.DetentionPolicy]{
+				&listquery.Request[detentionpolicy.DetentionPolicy]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.DetentionPolicyColumns,
@@ -112,26 +112,30 @@ func (r *policyRepository) ListConnection(
 func (r *policyRepository) GetByID(
 	ctx context.Context,
 	req *detentionports.GetDetentionPolicyByIDRequest,
-) (*detention.DetentionPolicy, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detention.DetentionPolicy, error) {
-		p := detentiondb.DetentionPolicies
-		q := p.Where(p.ID.Eq(req.DetentionPolicyID))
-		if req.IncludeTiers {
-			q = q.Load(orderedTiers())
-		}
+) (*detentionpolicy.DetentionPolicy, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*detentionpolicy.DetentionPolicy, error) {
+			p := detentiondb.DetentionPolicies
+			q := p.Where(p.ID.Eq(req.DetentionPolicyID))
+			if req.IncludeTiers {
+				q = q.Load(orderedTiers())
+			}
 
-		entity, err := q.One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error(
-				"failed to get detention policy",
-				zap.String("id", req.DetentionPolicyID.String()),
-				zap.Error(err),
-			)
-			return nil, policyErrors.Map(err, req.DetentionPolicyID.String())
-		}
+			entity, err := q.One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error(
+					"failed to get detention policy",
+					zap.String("id", req.DetentionPolicyID.String()),
+					zap.Error(err),
+				)
+				return nil, policyErrors.Map(err, req.DetentionPolicyID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 // GetResolutionCandidates returns every active policy that could apply to a
@@ -141,28 +145,35 @@ func (r *policyRepository) GetByID(
 func (r *policyRepository) GetResolutionCandidates(
 	ctx context.Context,
 	req *detentionports.GetResolutionCandidatesRequest,
-) ([]*detention.DetentionPolicy, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionPolicy, error) {
-		p := detentiondb.DetentionPolicies
-		entities, err := p.Where(
-			p.Status.Eq(detention.PolicyStatusActive),
-			keel.Or(p.CustomerID.IsNull(), p.CustomerID.Eq(req.CustomerID)),
-			keel.Or(p.LocationID.IsNull(), p.LocationID.Eq(req.LocationID)),
-		).
-			Load(orderedTiers()).
-			Order(p.Priority.Desc(), p.SpecificityScore.Desc(), p.CreatedAt.Asc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to load detention policy candidates", zap.Error(err))
-			return nil, err
-		}
+) ([]*detentionpolicy.DetentionPolicy, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*detentionpolicy.DetentionPolicy, error) {
+			p := detentiondb.DetentionPolicies
+			entities, err := p.Where(
+				p.Status.Eq(detentionpolicy.PolicyStatusActive),
+				keel.Or(p.CustomerID.IsNull(), p.CustomerID.Eq(req.CustomerID)),
+				keel.Or(p.LocationID.IsNull(), p.LocationID.Eq(req.LocationID)),
+			).
+				Load(orderedTiers()).
+				Order(p.Priority.Desc(), p.SpecificityScore.Desc(), p.CreatedAt.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to load detention policy candidates", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
-func stampTiers(entity *detention.DetentionPolicy, resetIDs bool) []*detention.DetentionPolicyTier {
-	tiers := make([]*detention.DetentionPolicyTier, 0, len(entity.Tiers))
+func stampTiers(
+	entity *detentionpolicy.DetentionPolicy,
+	resetIDs bool,
+) []*detentionpolicy.DetentionPolicyTier {
+	tiers := make([]*detentionpolicy.DetentionPolicyTier, 0, len(entity.Tiers))
 	for i, tier := range entity.Tiers {
 		if tier == nil {
 			continue
@@ -184,54 +195,66 @@ func stampTiers(entity *detention.DetentionPolicy, resetIDs bool) []*detention.D
 
 func (r *policyRepository) Create(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
-) (*detention.DetentionPolicy, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionPolicy, error) {
-		db := r.db.Keel(ctx)
-		err := detentiondb.DetentionPolicies.Create(ctx, db, entity)
-		if err == nil {
-			err = detentiondb.DetentionPolicyTiers.CreateMany(ctx, db, stampTiers(entity, false))
-		}
-		if err != nil {
-			r.l.Error("failed to create detention policy", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				policyErrors.Map(err, entity.ID.String()),
-				policyBusyMessage,
-			)
-		}
+	entity *detentionpolicy.DetentionPolicy,
+) (*detentionpolicy.DetentionPolicy, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*detentionpolicy.DetentionPolicy, error) {
+			db := r.db.Keel(ctx)
+			err := detentiondb.DetentionPolicies.Create(ctx, db, entity)
+			if err == nil {
+				err = detentiondb.DetentionPolicyTiers.CreateMany(
+					ctx,
+					db,
+					stampTiers(entity, false),
+				)
+			}
+			if err != nil {
+				r.l.Error("failed to create detention policy", zap.Error(err))
+				return nil, dberror.MapRetryableTransactionError(
+					policyErrors.Map(err, entity.ID.String()),
+					policyBusyMessage,
+				)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *policyRepository) Update(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
-) (*detention.DetentionPolicy, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionPolicy, error) {
-		db := r.db.Keel(ctx)
-		t := detentiondb.DetentionPolicyTiers
-		err := detentiondb.DetentionPolicies.Save(ctx, db, entity)
-		if err == nil {
-			_, err = t.Where(t.DetentionPolicyID.Eq(entity.ID)).Delete(ctx, db)
-		}
-		if err == nil {
-			err = t.CreateMany(ctx, db, stampTiers(entity, true))
-		}
-		if err != nil {
-			r.l.Error(
-				"failed to update detention policy",
-				zap.String("id", entity.ID.String()),
-				zap.Error(err),
-			)
-			return nil, dberror.MapRetryableTransactionError(
-				policyErrors.Map(err, entity.ID.String()),
-				policyBusyMessage,
-			)
-		}
+	entity *detentionpolicy.DetentionPolicy,
+) (*detentionpolicy.DetentionPolicy, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*detentionpolicy.DetentionPolicy, error) {
+			db := r.db.Keel(ctx)
+			t := detentiondb.DetentionPolicyTiers
+			err := detentiondb.DetentionPolicies.Save(ctx, db, entity)
+			if err == nil {
+				_, err = t.Where(t.DetentionPolicyID.Eq(entity.ID)).Delete(ctx, db)
+			}
+			if err == nil {
+				err = t.CreateMany(ctx, db, stampTiers(entity, true))
+			}
+			if err != nil {
+				r.l.Error(
+					"failed to update detention policy",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, dberror.MapRetryableTransactionError(
+					policyErrors.Map(err, entity.ID.String()),
+					policyBusyMessage,
+				)
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *policyRepository) Delete(
@@ -242,7 +265,7 @@ func (r *policyRepository) Delete(
 		err := detentiondb.DetentionPolicies.DeleteRow(
 			ctx,
 			r.db.Keel(ctx),
-			&detention.DetentionPolicy{ID: req.DetentionPolicyID},
+			&detentionpolicy.DetentionPolicy{ID: req.DetentionPolicyID},
 		)
 		if err != nil {
 			r.l.Error(
@@ -303,50 +326,54 @@ func scopeEq(
 func (r *policyRepository) FindOverlapping(
 	ctx context.Context,
 	req *detentionports.FindOverlappingDetentionPoliciesRequest,
-) ([]*detention.DetentionPolicy, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionPolicy, error) {
-		p := detentiondb.DetentionPolicies
-		preds := []keel.Pred{
-			p.Status.Eq(detention.PolicyStatusActive),
-			p.IsOrgDefault.Eq(req.IsOrgDefault),
-			excludeID(p.ID, req.ExcludeID),
-			scopeEq(p.CustomerID, req.CustomerID),
-			scopeEq(p.LocationID, req.LocationID),
-		}
-		if req.EffectiveStartDate != nil {
-			preds = append(preds, keel.Or(
-				p.EffectiveEndDate.IsNull(),
-				p.EffectiveEndDate.Gte(*req.EffectiveStartDate),
-			))
-		}
-		if req.EffectiveEndDate != nil {
-			preds = append(preds, keel.Or(
-				p.EffectiveStartDate.IsNull(),
-				p.EffectiveStartDate.Lte(*req.EffectiveEndDate),
-			))
-		}
+) ([]*detentionpolicy.DetentionPolicy, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*detentionpolicy.DetentionPolicy, error) {
+			p := detentiondb.DetentionPolicies
+			preds := []keel.Pred{
+				p.Status.Eq(detentionpolicy.PolicyStatusActive),
+				p.IsOrgDefault.Eq(req.IsOrgDefault),
+				excludeID(p.ID, req.ExcludeID),
+				scopeEq(p.CustomerID, req.CustomerID),
+				scopeEq(p.LocationID, req.LocationID),
+			}
+			if req.EffectiveStartDate != nil {
+				preds = append(preds, keel.Or(
+					p.EffectiveEndDate.IsNull(),
+					p.EffectiveEndDate.Gte(*req.EffectiveStartDate),
+				))
+			}
+			if req.EffectiveEndDate != nil {
+				preds = append(preds, keel.Or(
+					p.EffectiveStartDate.IsNull(),
+					p.EffectiveStartDate.Lte(*req.EffectiveEndDate),
+				))
+			}
 
-		entities, err := p.Where(preds...).All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to find overlapping detention policies", zap.Error(err))
-			return nil, err
-		}
+			entities, err := p.Where(preds...).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to find overlapping detention policies", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *policyRepository) SelectOptions(
 	ctx context.Context,
 	req *detentionports.DetentionPolicySelectOptionsRequest,
-) (*pagination.ListResult[*detention.DetentionPolicy], error) {
+) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
+		func(ctx context.Context) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 			p := detentiondb.DetentionPolicies
 			q := p.Pick(p.ID, p.Name, p.Code, p.Description, p.Status, p.BillingFreeMinutes).
-				Where(p.Status.Eq(detention.PolicyStatusActive)).
+				Where(p.Status.Eq(detentionpolicy.PolicyStatusActive)).
 				Order(p.Name.Asc())
 
 			return listquery.SelectOptions(

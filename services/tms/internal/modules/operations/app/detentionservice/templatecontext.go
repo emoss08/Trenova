@@ -10,6 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,7 +73,7 @@ func (b *ContextBuilder) Build(
 
 	return b.BuildFrom(ctx, &buildNoticeContextParams{
 		Occurrence: occurrence,
-		Kind:       detention.NoticeKindFinal,
+		Kind:       detentionnotice.NoticeKindFinal,
 		TenantInfo: req.TenantInfo,
 	})
 }
@@ -97,11 +100,11 @@ func (pdfContextBuilder) Kind() documenttemplate.Kind {
 // terms even if someone edits the policy in between.
 type buildNoticeContextParams struct {
 	Occurrence    *detention.DetentionOccurrence
-	Kind          detention.NoticeKind
+	Kind          detentionnotice.NoticeKind
 	FacilityName  string
 	ShipmentRef   string
 	CustomerName  string
-	ArrivalSource detention.EvidenceSource
+	ArrivalSource detentionevidence.EvidenceSource
 	TenantInfo    pagination.TenantInfo
 	Location      *time.Location
 }
@@ -153,7 +156,7 @@ func (b *ContextBuilder) BuildFrom(
 
 	// A warning fires before anything has accrued, so these stay empty rather
 	// than printing a zero a customer would read as a charge.
-	if occ.RoundedMinutes > 0 || p.Kind == detention.NoticeKindFinal {
+	if occ.RoundedMinutes > 0 || p.Kind == detentionnotice.NoticeKindFinal {
 		out.TotalTimeOnSite = formatMinutes(occ.RawDwellMinutes)
 		out.BillableTime = formatMinutes(occ.RoundedMinutes)
 		out.BillableAmount = occ.BillableAmount.StringFixed(2)
@@ -200,8 +203,8 @@ func (b *ContextBuilder) applyBranding(
 //
 // A customer disputing a tiered charge asks which band applied; showing the
 // whole schedule answers that without a phone call.
-func noticeTierRows(snap *detention.PolicySnapshot) []detentiontemplate.DetentionTierRow {
-	if snap.RateSource != detention.RateSourceTiers || len(snap.Tiers) == 0 {
+func noticeTierRows(snap *detentionpolicy.PolicySnapshot) []detentiontemplate.DetentionTierRow {
+	if snap.RateSource != detentionpolicy.RateSourceTiers || len(snap.Tiers) == 0 {
 		return nil
 	}
 

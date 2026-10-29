@@ -1,27 +1,27 @@
-package detention_test
+package detentionpolicy_test
 
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func tier(from int32, to *int32, rate string) *detention.DetentionPolicyTier {
-	return &detention.DetentionPolicyTier{
+func tier(from int32, to *int32, rate string) *detentionpolicy.DetentionPolicyTier {
+	return &detentionpolicy.DetentionPolicyTier{
 		FromMinute: from,
 		ToMinute:   to,
 		Rate:       decimal.RequireFromString(rate),
-		RateUnit:   detention.TierRateUnitHour,
+		RateUnit:   detentionpolicy.TierRateUnitHour,
 	}
 }
 
-func tieredPolicy(tiers ...*detention.DetentionPolicyTier) *detention.DetentionPolicy {
+func tieredPolicy(tiers ...*detentionpolicy.DetentionPolicyTier) *detentionpolicy.DetentionPolicy {
 	p := validPolicy()
-	p.RateSource = detention.RateSourceTiers
+	p.RateSource = detentionpolicy.RateSourceTiers
 	p.Tiers = tiers
 	return p
 }
@@ -29,12 +29,12 @@ func tieredPolicy(tiers ...*detention.DetentionPolicyTier) *detention.DetentionP
 func TestTier_SpanMinutes(t *testing.T) {
 	t.Parallel()
 
-	first := tier(0, ptr(int32(120)), "75")
+	first := tier(0, new(int32(120)), "75")
 	second := tier(120, nil, "100")
 
 	tests := []struct {
 		name          string
-		tier          *detention.DetentionPolicyTier
+		tier          *detentionpolicy.DetentionPolicyTier
 		totalBillable int32
 		want          int32
 	}{
@@ -57,7 +57,7 @@ func TestTier_SpanMinutes(t *testing.T) {
 func TestTier_Covers(t *testing.T) {
 	t.Parallel()
 
-	band := tier(60, ptr(int32(120)), "75")
+	band := tier(60, new(int32(120)), "75")
 
 	assert.False(t, band.Covers(59))
 	assert.True(t, band.Covers(60), "the lower bound is inclusive")
@@ -68,11 +68,11 @@ func TestTier_Covers(t *testing.T) {
 func TestTier_SortTiers(t *testing.T) {
 	t.Parallel()
 
-	sorted := detention.SortTiers([]*detention.DetentionPolicyTier{
+	sorted := detentionpolicy.SortTiers([]*detentionpolicy.DetentionPolicyTier{
 		tier(240, nil, "125"),
 		nil,
-		tier(0, ptr(int32(120)), "75"),
-		tier(120, ptr(int32(240)), "100"),
+		tier(0, new(int32(120)), "75"),
+		tier(120, new(int32(240)), "100"),
 	})
 
 	require.Len(t, sorted, 3, "nil entries are dropped")
@@ -85,8 +85,8 @@ func TestTier_ValidationAcceptsContiguousLadder(t *testing.T) {
 	t.Parallel()
 
 	p := tieredPolicy(
-		tier(0, ptr(int32(120)), "75"),
-		tier(120, ptr(int32(480)), "100"),
+		tier(0, new(int32(120)), "75"),
+		tier(120, new(int32(480)), "100"),
 		tier(480, nil, "125"),
 	)
 
@@ -98,57 +98,57 @@ func TestTier_ValidationRejectsBadLadders(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		tiers     []*detention.DetentionPolicyTier
+		tiers     []*detentionpolicy.DetentionPolicyTier
 		wantField string
 	}{
 		{
 			name:      "ladder does not start at zero",
-			tiers:     []*detention.DetentionPolicyTier{tier(60, nil, "75")},
+			tiers:     []*detentionpolicy.DetentionPolicyTier{tier(60, nil, "75")},
 			wantField: "tiers[0].fromMinute",
 		},
 		{
 			name: "overlapping bands",
-			tiers: []*detention.DetentionPolicyTier{
-				tier(0, ptr(int32(120)), "75"),
+			tiers: []*detentionpolicy.DetentionPolicyTier{
+				tier(0, new(int32(120)), "75"),
 				tier(90, nil, "100"),
 			},
 			wantField: "tiers[1].fromMinute",
 		},
 		{
 			name: "gap between bands leaves unbilled time",
-			tiers: []*detention.DetentionPolicyTier{
-				tier(0, ptr(int32(120)), "75"),
+			tiers: []*detentionpolicy.DetentionPolicyTier{
+				tier(0, new(int32(120)), "75"),
 				tier(180, nil, "100"),
 			},
 			wantField: "tiers[1].fromMinute",
 		},
 		{
 			name: "band ends before it starts",
-			tiers: []*detention.DetentionPolicyTier{
-				tier(0, ptr(int32(120)), "75"),
-				tier(120, ptr(int32(60)), "100"),
+			tiers: []*detentionpolicy.DetentionPolicyTier{
+				tier(0, new(int32(120)), "75"),
+				tier(120, new(int32(60)), "100"),
 			},
 			wantField: "tiers[1].toMinute",
 		},
 		{
 			name: "negative tier start",
-			tiers: []*detention.DetentionPolicyTier{
-				tier(-10, ptr(int32(120)), "75"),
+			tiers: []*detentionpolicy.DetentionPolicyTier{
+				tier(-10, new(int32(120)), "75"),
 			},
 			wantField: "tiers[0].fromMinute",
 		},
 		{
 			name: "negative rate",
-			tiers: []*detention.DetentionPolicyTier{
+			tiers: []*detentionpolicy.DetentionPolicyTier{
 				tier(0, nil, "-5"),
 			},
 			wantField: "tiers[0].rate",
 		},
 		{
 			name: "a tier after an open-ended tier",
-			tiers: []*detention.DetentionPolicyTier{
+			tiers: []*detentionpolicy.DetentionPolicyTier{
 				tier(0, nil, "75"),
-				tier(120, ptr(int32(240)), "100"),
+				tier(120, new(int32(240)), "100"),
 			},
 			wantField: "tiers",
 		},
@@ -170,7 +170,7 @@ func TestTier_ValidationRejectsInvalidRateUnit(t *testing.T) {
 	t.Parallel()
 
 	bad := tier(0, nil, "75")
-	bad.RateUnit = detention.TierRateUnit("Fortnight")
+	bad.RateUnit = detentionpolicy.TierRateUnit("Fortnight")
 
 	multiErr := validate(tieredPolicy(bad))
 
@@ -194,12 +194,12 @@ func TestTier_SnapshotRoundTripsLadder(t *testing.T) {
 	t.Parallel()
 
 	p := tieredPolicy(
-		tier(120, ptr(int32(480)), "100"),
-		tier(0, ptr(int32(120)), "75"),
+		tier(120, new(int32(480)), "100"),
+		tier(0, new(int32(120)), "75"),
 	)
 	p.ID = pulid.MustNew("dtp_")
 
-	snapshot := detention.NewPolicySnapshot(detention.SnapshotInput{
+	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
 		Policy:      p,
 		FreeMinutes: 120,
 		CapturedAt:  1000,
@@ -217,10 +217,10 @@ func TestSnapshot_OmitsTiersForFlatRatePolicies(t *testing.T) {
 	t.Parallel()
 
 	p := validPolicy()
-	p.RateSource = detention.RateSourceAccessorial
-	p.Tiers = []*detention.DetentionPolicyTier{tier(0, nil, "75")}
+	p.RateSource = detentionpolicy.RateSourceAccessorial
+	p.Tiers = []*detentionpolicy.DetentionPolicyTier{tier(0, nil, "75")}
 
-	snapshot := detention.NewPolicySnapshot(detention.SnapshotInput{
+	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
 		Policy:      p,
 		FreeMinutes: 120,
 		CapturedAt:  1000,
@@ -233,7 +233,7 @@ func TestSnapshot_OmitsTiersForFlatRatePolicies(t *testing.T) {
 func TestSnapshot_NilPolicyIsSafe(t *testing.T) {
 	t.Parallel()
 
-	snapshot := detention.NewPolicySnapshot(detention.SnapshotInput{CapturedAt: 42})
+	snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{CapturedAt: 42})
 
 	assert.Equal(t, int64(42), snapshot.CapturedAt)
 	assert.True(t, snapshot.PolicyID.IsNil())

@@ -1,9 +1,11 @@
-package detention_test
+package detentioncollectability_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,9 +15,9 @@ import (
 func strongOccurrence() *detention.DetentionOccurrence {
 	return &detention.DetentionOccurrence{
 		ID:                 pulid.MustNew("dto_"),
-		ArrivedAt:          ptr(int64(1000)),
-		DepartedAt:         ptr(int64(20000)),
-		AppointmentStart:   ptr(int64(900)),
+		ArrivedAt:          new(int64(1000)),
+		DepartedAt:         new(int64(20000)),
+		AppointmentStart:   new(int64(900)),
 		ScheduleType:       shipment.StopScheduleTypeAppointment,
 		NotificationStatus: detention.NotificationStatusSent,
 	}
@@ -24,11 +26,11 @@ func strongOccurrence() *detention.DetentionOccurrence {
 func evidenceEntry(
 	occurrenceID pulid.ID,
 	sequence int32,
-	kind detention.EvidenceKind,
-	source detention.EvidenceSource,
+	kind detentionevidence.EvidenceKind,
+	source detentionevidence.EvidenceSource,
 	prev string,
-) *detention.DetentionEvidence {
-	entry := &detention.DetentionEvidence{
+) *detentionevidence.DetentionEvidence {
+	entry := &detentionevidence.DetentionEvidence{
 		ID:                    pulid.MustNew("dte_"),
 		DetentionOccurrenceID: occurrenceID,
 		Sequence:              sequence,
@@ -43,18 +45,18 @@ func evidenceEntry(
 	return entry
 }
 
-func strongEvidence(occurrenceID pulid.ID) []*detention.DetentionEvidence {
+func strongEvidence(occurrenceID pulid.ID) []*detentionevidence.DetentionEvidence {
 	kinds := []struct {
-		kind   detention.EvidenceKind
-		source detention.EvidenceSource
+		kind   detentionevidence.EvidenceKind
+		source detentionevidence.EvidenceSource
 	}{
-		{detention.EvidenceKindArrival, detention.EvidenceSourceGeofence},
-		{detention.EvidenceKindDeparture, detention.EvidenceSourceGeofence},
-		{detention.EvidenceKindDocument, detention.EvidenceSourceDocument},
+		{detentionevidence.EvidenceKindArrival, detentionevidence.EvidenceSourceGeofence},
+		{detentionevidence.EvidenceKindDeparture, detentionevidence.EvidenceSourceGeofence},
+		{detentionevidence.EvidenceKindDocument, detentionevidence.EvidenceSourceDocument},
 	}
 
-	entries := make([]*detention.DetentionEvidence, 0, len(kinds))
-	prev := detention.GenesisHash
+	entries := make([]*detentionevidence.DetentionEvidence, 0, len(kinds))
+	prev := detentionevidence.GenesisHash
 
 	for i, k := range kinds {
 		entry := evidenceEntry(occurrenceID, int32(i), k.kind, k.source, prev)
@@ -65,25 +67,28 @@ func strongEvidence(occurrenceID pulid.ID) []*detention.DetentionEvidence {
 	return entries
 }
 
-func factorByKey(a detention.CollectabilityAssessment, key string) detention.ScoreFactor {
+func factorByKey(
+	a detentioncollectability.CollectabilityAssessment,
+	key string,
+) detentioncollectability.ScoreFactor {
 	for _, f := range a.Factors {
 		if f.Key == key {
 			return f
 		}
 	}
-	return detention.ScoreFactor{}
+	return detentioncollectability.ScoreFactor{}
 }
 
 func TestAssessCollectability_PerfectClaim(t *testing.T) {
 	t.Parallel()
 
 	occurrence := strongOccurrence()
-	assessment := detention.AssessCollectability(
+	assessment := detentioncollectability.AssessCollectability(
 		occurrence, strongEvidence(occurrence.ID),
 	)
 
-	assert.Equal(t, int16(detention.ScoreMax), assessment.Score)
-	assert.Equal(t, detention.ScoreBandStrong, assessment.Band)
+	assert.Equal(t, int16(detentioncollectability.ScoreMax), assessment.Score)
+	assert.Equal(t, detentioncollectability.ScoreBandStrong, assessment.Band)
 	assert.True(t, assessment.ChainValid)
 	assert.Contains(t, assessment.Summary, "Every evidence requirement is satisfied")
 }
@@ -91,10 +96,10 @@ func TestAssessCollectability_PerfectClaim(t *testing.T) {
 func TestAssessCollectability_NilOccurrence(t *testing.T) {
 	t.Parallel()
 
-	assessment := detention.AssessCollectability(nil, nil)
+	assessment := detentioncollectability.AssessCollectability(nil, nil)
 
 	assert.Equal(t, int16(0), assessment.Score)
-	assert.Equal(t, detention.ScoreBandAtRisk, assessment.Band)
+	assert.Equal(t, detentioncollectability.ScoreBandAtRisk, assessment.Band)
 }
 
 func TestAssessCollectability_ManualTimestampsScoreLower(t *testing.T) {
@@ -102,24 +107,31 @@ func TestAssessCollectability_ManualTimestampsScoreLower(t *testing.T) {
 
 	occurrence := strongOccurrence()
 
-	prev := detention.GenesisHash
+	prev := detentionevidence.GenesisHash
 	arrival := evidenceEntry(
-		occurrence.ID, 0, detention.EvidenceKindArrival, detention.EvidenceSourceManual, prev,
+		occurrence.ID,
+		0,
+		detentionevidence.EvidenceKindArrival,
+		detentionevidence.EvidenceSourceManual,
+		prev,
 	)
 	departure := evidenceEntry(
-		occurrence.ID, 1, detention.EvidenceKindDeparture,
-		detention.EvidenceSourceManual, arrival.Hash,
+		occurrence.ID, 1, detentionevidence.EvidenceKindDeparture,
+		detentionevidence.EvidenceSourceManual, arrival.Hash,
 	)
 	document := evidenceEntry(
-		occurrence.ID, 2, detention.EvidenceKindDocument,
-		detention.EvidenceSourceDocument, departure.Hash,
+		occurrence.ID, 2, detentionevidence.EvidenceKindDocument,
+		detentionevidence.EvidenceSourceDocument, departure.Hash,
 	)
 
-	manual := detention.AssessCollectability(
+	manual := detentioncollectability.AssessCollectability(
 		occurrence,
-		[]*detention.DetentionEvidence{arrival, departure, document},
+		[]*detentionevidence.DetentionEvidence{arrival, departure, document},
 	)
-	geofenced := detention.AssessCollectability(occurrence, strongEvidence(occurrence.ID))
+	geofenced := detentioncollectability.AssessCollectability(
+		occurrence,
+		strongEvidence(occurrence.ID),
+	)
 
 	assert.Less(t, manual.Score, geofenced.Score,
 		"a dispatcher keystroke must not score like a geofence crossing")
@@ -135,15 +147,19 @@ func TestAssessCollectability_MissingNoticeIsHeavilyPenalized(t *testing.T) {
 	occurrence := strongOccurrence()
 	occurrence.NotificationStatus = detention.NotificationStatusMissed
 
-	assessment := detention.AssessCollectability(
+	assessment := detentioncollectability.AssessCollectability(
 		occurrence, strongEvidence(occurrence.ID),
 	)
 
 	notice := factorByKey(assessment, "notice")
 	assert.Equal(t, 0, notice.Earned)
-	assert.Equal(t, detention.ScoreWeightNotice, notice.Possible)
+	assert.Equal(t, detentioncollectability.ScoreWeightNotice, notice.Possible)
 	assert.NotEmpty(t, notice.Remedy)
-	assert.Equal(t, int16(detention.ScoreMax-detention.ScoreWeightNotice), assessment.Score)
+	assert.Equal(
+		t,
+		int16(detentioncollectability.ScoreMax-detentioncollectability.ScoreWeightNotice),
+		assessment.Score,
+	)
 }
 
 func TestAssessCollectability_NoticeStatusGradations(t *testing.T) {
@@ -157,13 +173,17 @@ func TestAssessCollectability_NoticeStatusGradations(t *testing.T) {
 		{
 			"not required earns full credit",
 			detention.NotificationStatusNotRequired,
-			detention.ScoreWeightNotice,
+			detentioncollectability.ScoreWeightNotice,
 		},
-		{"sent earns full credit", detention.NotificationStatusSent, detention.ScoreWeightNotice},
+		{
+			"sent earns full credit",
+			detention.NotificationStatusSent,
+			detentioncollectability.ScoreWeightNotice,
+		},
 		{
 			"late earns partial credit",
 			detention.NotificationStatusLate,
-			detention.ScoreWeightNotice / 5,
+			detentioncollectability.ScoreWeightNotice / 5,
 		},
 		{"pending earns nothing yet", detention.NotificationStatusPending, 0},
 		{"missed earns nothing", detention.NotificationStatusMissed, 0},
@@ -177,7 +197,7 @@ func TestAssessCollectability_NoticeStatusGradations(t *testing.T) {
 			occurrence := strongOccurrence()
 			occurrence.NotificationStatus = tt.status
 
-			assessment := detention.AssessCollectability(
+			assessment := detentioncollectability.AssessCollectability(
 				occurrence, strongEvidence(occurrence.ID),
 			)
 
@@ -192,7 +212,7 @@ func TestAssessCollectability_OpenStopHasNoDeparture(t *testing.T) {
 	occurrence := strongOccurrence()
 	occurrence.DepartedAt = nil
 
-	assessment := detention.AssessCollectability(occurrence, nil)
+	assessment := detentioncollectability.AssessCollectability(occurrence, nil)
 
 	departure := factorByKey(assessment, "departure")
 	assert.Equal(t, 0, departure.Earned)
@@ -204,17 +224,21 @@ func TestAssessCollectability_MissingDocument(t *testing.T) {
 
 	occurrence := strongOccurrence()
 
-	prev := detention.GenesisHash
+	prev := detentionevidence.GenesisHash
 	arrival := evidenceEntry(
-		occurrence.ID, 0, detention.EvidenceKindArrival, detention.EvidenceSourceGeofence, prev,
+		occurrence.ID,
+		0,
+		detentionevidence.EvidenceKindArrival,
+		detentionevidence.EvidenceSourceGeofence,
+		prev,
 	)
 	departure := evidenceEntry(
-		occurrence.ID, 1, detention.EvidenceKindDeparture,
-		detention.EvidenceSourceGeofence, arrival.Hash,
+		occurrence.ID, 1, detentionevidence.EvidenceKindDeparture,
+		detentionevidence.EvidenceSourceGeofence, arrival.Hash,
 	)
 
-	assessment := detention.AssessCollectability(
-		occurrence, []*detention.DetentionEvidence{arrival, departure},
+	assessment := detentioncollectability.AssessCollectability(
+		occurrence, []*detentionevidence.DetentionEvidence{arrival, departure},
 	)
 
 	document := factorByKey(assessment, "document")
@@ -228,15 +252,15 @@ func TestAssessCollectability_BackfilledAppointmentScoresLower(t *testing.T) {
 	occurrence := strongOccurrence()
 	occurrence.ScheduleType = shipment.StopScheduleTypeOpen
 
-	assessment := detention.AssessCollectability(
+	assessment := detentioncollectability.AssessCollectability(
 		occurrence, strongEvidence(occurrence.ID),
 	)
 
 	appointment := factorByKey(assessment, "appointment")
-	assert.Equal(t, detention.ScoreWeightAppointment/2, appointment.Earned)
+	assert.Equal(t, detentioncollectability.ScoreWeightAppointment/2, appointment.Earned)
 
 	occurrence.AppointmentStart = nil
-	noAppointment := detention.AssessCollectability(
+	noAppointment := detentioncollectability.AssessCollectability(
 		occurrence, strongEvidence(occurrence.ID),
 	)
 	assert.Equal(t, 0, factorByKey(noAppointment, "appointment").Earned)
@@ -249,7 +273,7 @@ func TestAssessCollectability_BrokenChainFlagsTampering(t *testing.T) {
 	evidence := strongEvidence(occurrence.ID)
 	evidence[1].Summary = "adjusted departure"
 
-	assessment := detention.AssessCollectability(occurrence, evidence)
+	assessment := detentioncollectability.AssessCollectability(occurrence, evidence)
 
 	assert.False(t, assessment.ChainValid)
 
@@ -263,7 +287,7 @@ func TestAssessCollectability_TimestampWithoutEvidenceEntry(t *testing.T) {
 
 	occurrence := strongOccurrence()
 
-	assessment := detention.AssessCollectability(occurrence, nil)
+	assessment := detentioncollectability.AssessCollectability(occurrence, nil)
 
 	arrival := factorByKey(assessment, "arrival")
 	assert.Greater(t, arrival.Earned, 0,
@@ -278,21 +302,29 @@ func TestAssessCollectability_StrongestSourceWinsPerKind(t *testing.T) {
 
 	occurrence := strongOccurrence()
 
-	prev := detention.GenesisHash
+	prev := detentionevidence.GenesisHash
 	weak := evidenceEntry(
-		occurrence.ID, 0, detention.EvidenceKindArrival, detention.EvidenceSourceManual, prev,
+		occurrence.ID,
+		0,
+		detentionevidence.EvidenceKindArrival,
+		detentionevidence.EvidenceSourceManual,
+		prev,
 	)
 	strong := evidenceEntry(
-		occurrence.ID, 1, detention.EvidenceKindArrival,
-		detention.EvidenceSourceGeofence, weak.Hash,
+		occurrence.ID, 1, detentionevidence.EvidenceKindArrival,
+		detentionevidence.EvidenceSourceGeofence, weak.Hash,
 	)
 
-	assessment := detention.AssessCollectability(
-		occurrence, []*detention.DetentionEvidence{weak, strong},
+	assessment := detentioncollectability.AssessCollectability(
+		occurrence, []*detentionevidence.DetentionEvidence{weak, strong},
 	)
 
-	assert.Equal(t, detention.ScoreWeightArrival, factorByKey(assessment, "arrival").Earned,
-		"corroborating a manual entry with a geofence crossing should upgrade the claim")
+	assert.Equal(
+		t,
+		detentioncollectability.ScoreWeightArrival,
+		factorByKey(assessment, "arrival").Earned,
+		"corroborating a manual entry with a geofence crossing should upgrade the claim",
+	)
 }
 
 func TestBandForScore(t *testing.T) {
@@ -300,20 +332,20 @@ func TestBandForScore(t *testing.T) {
 
 	tests := []struct {
 		score int16
-		want  detention.ScoreBand
+		want  detentioncollectability.ScoreBand
 	}{
-		{100, detention.ScoreBandStrong},
-		{85, detention.ScoreBandStrong},
-		{84, detention.ScoreBandAdequate},
-		{65, detention.ScoreBandAdequate},
-		{64, detention.ScoreBandWeak},
-		{40, detention.ScoreBandWeak},
-		{39, detention.ScoreBandAtRisk},
-		{0, detention.ScoreBandAtRisk},
+		{100, detentioncollectability.ScoreBandStrong},
+		{85, detentioncollectability.ScoreBandStrong},
+		{84, detentioncollectability.ScoreBandAdequate},
+		{65, detentioncollectability.ScoreBandAdequate},
+		{64, detentioncollectability.ScoreBandWeak},
+		{40, detentioncollectability.ScoreBandWeak},
+		{39, detentioncollectability.ScoreBandAtRisk},
+		{0, detentioncollectability.ScoreBandAtRisk},
 	}
 
 	for _, tt := range tests {
-		assert.Equal(t, tt.want, detention.BandForScore(tt.score),
+		assert.Equal(t, tt.want, detentioncollectability.BandForScore(tt.score),
 			"score %d", tt.score)
 	}
 }
@@ -324,7 +356,7 @@ func TestAssessCollectability_SummaryNamesTheBiggestGap(t *testing.T) {
 	occurrence := strongOccurrence()
 	occurrence.NotificationStatus = detention.NotificationStatusMissed
 
-	assessment := detention.AssessCollectability(
+	assessment := detentioncollectability.AssessCollectability(
 		occurrence, strongEvidence(occurrence.ID),
 	)
 

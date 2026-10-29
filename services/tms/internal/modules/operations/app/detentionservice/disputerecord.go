@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -84,7 +86,7 @@ func (s *Service) sentNoticeDocument(
 		return pulid.Nil, err
 	}
 
-	var chosen *detention.DetentionNotice
+	var chosen *detentionnotice.DetentionNotice
 	for _, notice := range notices {
 		if notice.PDFDocumentID == nil || notice.PDFDocumentID.IsNil() ||
 			notice.DeliveryStatus.IsFailure() {
@@ -101,9 +103,9 @@ func (s *Service) sentNoticeDocument(
 	return *chosen.PDFDocumentID, nil
 }
 
-func betterRecord(candidate, current *detention.DetentionNotice) bool {
-	candidateFinal := candidate.Kind == detention.NoticeKindFinal
-	currentFinal := current.Kind == detention.NoticeKindFinal
+func betterRecord(candidate, current *detentionnotice.DetentionNotice) bool {
+	candidateFinal := candidate.Kind == detentionnotice.NoticeKindFinal
+	currentFinal := current.Kind == detentionnotice.NoticeKindFinal
 	if candidateFinal != currentFinal {
 		return candidateFinal
 	}
@@ -205,7 +207,7 @@ func (s *Service) renderDisputeRecord(
 
 	data, err := s.contextBuilder.BuildFrom(ctx, &buildNoticeContextParams{
 		Occurrence:    occ,
-		Kind:          detention.NoticeKindFinal,
+		Kind:          detentionnotice.NoticeKindFinal,
 		FacilityName:  occ.LocationName,
 		ShipmentRef:   occ.ShipmentProNumber,
 		ArrivalSource: arrivalSourceOf(occ),
@@ -219,9 +221,9 @@ func (s *Service) renderDisputeRecord(
 	return s.renderNoticePDF(ctx, p.TenantInfo, occ, nil, data)
 }
 
-func arrivalSourceOf(occ *detention.DetentionOccurrence) detention.EvidenceSource {
+func arrivalSourceOf(occ *detention.DetentionOccurrence) detentionevidence.EvidenceSource {
 	for _, evidence := range occ.Evidence {
-		if evidence.Kind == detention.EvidenceKindArrival {
+		if evidence.Kind == detentionevidence.EvidenceKindArrival {
 			return evidence.Source
 		}
 	}

@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -35,29 +36,29 @@ func nullMoney(v string) decimal.NullDecimal {
 
 // baseSnapshot is the industry-default contract: 2 hours free, billed hourly at
 // $75, rounded up to 15-minute increments.
-func baseSnapshot() detention.PolicySnapshot {
-	return detention.PolicySnapshot{
+func baseSnapshot() detentionpolicy.PolicySnapshot {
+	return detentionpolicy.PolicySnapshot{
 		PolicyID:                pulid.MustNew("dtp_"),
 		PolicyCode:              "STD-2HR",
 		PolicyName:              "Standard 2 Hour Free",
-		ClockStartBasis:         detention.ClockStartBasisArrival,
-		LateArrivalRule:         detention.LateArrivalRuleNoEffect,
+		ClockStartBasis:         detentionpolicy.ClockStartBasisArrival,
+		LateArrivalRule:         detentionpolicy.LateArrivalRuleNoEffect,
 		FreeMinutes:             120,
 		PayFreeMinutes:          120,
 		BillingIncrementMinutes: 15,
-		RoundingMode:            detention.RoundingModeUp,
-		RateSource:              detention.RateSourceAccessorial,
+		RoundingMode:            detentionpolicy.RoundingModeUp,
+		RateSource:              detentionpolicy.RateSourceAccessorial,
 		AccessorialCode:         "DET",
 		FlatRate:                money("75.00"),
-		FlatRateUnit:            detention.TierRateUnitHour,
-		DayBoundaryMode:         detention.CapScopePerStop,
-		NotificationRequirement: detention.NotificationRequirementNone,
-		UnnotifiedBehavior:      detention.UnnotifiedBehaviorBill,
+		FlatRateUnit:            detentionpolicy.TierRateUnitHour,
+		DayBoundaryMode:         detentionpolicy.CapScopePerStop,
+		NotificationRequirement: detentionpolicy.NotificationRequirementNone,
+		UnnotifiedBehavior:      detentionpolicy.UnnotifiedBehaviorBill,
 		Currency:                "USD",
 	}
 }
 
-func baseInput(snap detention.PolicySnapshot) detentionservice.ComputeInput {
+func baseInput(snap detentionpolicy.PolicySnapshot) detentionservice.ComputeInput {
 	return detentionservice.ComputeInput{
 		Snapshot:        snap,
 		StopType:        shipment.StopTypeDelivery,
@@ -163,43 +164,43 @@ func TestCompute_ClockStartBasis(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		basis          detention.ClockStartBasis
+		basis          detentionpolicy.ClockStartBasis
 		arrivedAt      int64
 		wantClockStart int64
 	}{
 		{
 			name:           "arrival basis ignores the appointment",
-			basis:          detention.ClockStartBasisArrival,
+			basis:          detentionpolicy.ClockStartBasisArrival,
 			arrivedAt:      baseTime,
 			wantClockStart: baseTime,
 		},
 		{
 			name:           "appointment basis ignores an early arrival",
-			basis:          detention.ClockStartBasisAppointment,
+			basis:          detentionpolicy.ClockStartBasisAppointment,
 			arrivedAt:      baseTime,
 			wantClockStart: appointment,
 		},
 		{
 			name:           "later-of picks the appointment when the driver is early",
-			basis:          detention.ClockStartBasisLaterOfArrivalOrAppointment,
+			basis:          detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment,
 			arrivedAt:      baseTime,
 			wantClockStart: appointment,
 		},
 		{
 			name:           "later-of picks arrival when the driver is on time",
-			basis:          detention.ClockStartBasisLaterOfArrivalOrAppointment,
+			basis:          detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment,
 			arrivedAt:      appointment + 10*minute,
 			wantClockStart: appointment + 10*minute,
 		},
 		{
 			name:           "earlier-of picks the appointment when it precedes arrival",
-			basis:          detention.ClockStartBasisEarlierOfArrivalOrAppointment,
+			basis:          detentionpolicy.ClockStartBasisEarlierOfArrivalOrAppointment,
 			arrivedAt:      appointment + 30*minute,
 			wantClockStart: appointment,
 		},
 		{
 			name:           "earlier-of picks arrival when the driver is early",
-			basis:          detention.ClockStartBasisEarlierOfArrivalOrAppointment,
+			basis:          detentionpolicy.ClockStartBasisEarlierOfArrivalOrAppointment,
 			arrivedAt:      baseTime,
 			wantClockStart: baseTime,
 		},
@@ -235,7 +236,7 @@ func TestCompute_LateArrivalRules(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		rule            detention.LateArrivalRule
+		rule            detentionpolicy.LateArrivalRule
 		grace           int16
 		wantLate        bool
 		wantBillableMin int32
@@ -243,28 +244,28 @@ func TestCompute_LateArrivalRules(t *testing.T) {
 	}{
 		{
 			name:            "NoEffect keeps full entitlement",
-			rule:            detention.LateArrivalRuleNoEffect,
+			rule:            detentionpolicy.LateArrivalRuleNoEffect,
 			wantLate:        true,
 			wantBillableMin: 120,
 			wantStatus:      detention.OccurrenceStatusPending,
 		},
 		{
 			name:            "Forfeit voids the charge entirely",
-			rule:            detention.LateArrivalRuleForfeit,
+			rule:            detentionpolicy.LateArrivalRuleForfeit,
 			wantLate:        true,
 			wantBillableMin: 0,
 			wantStatus:      detention.OccurrenceStatusNotBillable,
 		},
 		{
 			name:            "ReduceFreeTime subtracts the lateness",
-			rule:            detention.LateArrivalRuleReduceFreeTime,
+			rule:            detentionpolicy.LateArrivalRuleReduceFreeTime,
 			wantLate:        true,
 			wantBillableMin: 150,
 			wantStatus:      detention.OccurrenceStatusPending,
 		},
 		{
 			name:            "grace period suppresses the late finding",
-			rule:            detention.LateArrivalRuleForfeit,
+			rule:            detentionpolicy.LateArrivalRuleForfeit,
 			grace:           45,
 			wantLate:        false,
 			wantBillableMin: 120,
@@ -303,7 +304,7 @@ func TestCompute_LateArrivalClockFromAppointment(t *testing.T) {
 	departure := arrival + 3*hour
 
 	snap := baseSnapshot()
-	snap.LateArrivalRule = detention.LateArrivalRuleClockFromAppointment
+	snap.LateArrivalRule = detentionpolicy.LateArrivalRuleClockFromAppointment
 
 	in := baseInput(snap)
 	in.ArrivedAt = ptr(arrival)
@@ -327,7 +328,7 @@ func TestCompute_ReduceFreeTimeCannotGoNegative(t *testing.T) {
 	arrival := baseTime + 5*hour
 
 	snap := baseSnapshot()
-	snap.LateArrivalRule = detention.LateArrivalRuleReduceFreeTime
+	snap.LateArrivalRule = detentionpolicy.LateArrivalRuleReduceFreeTime
 
 	in := baseInput(snap)
 	in.ArrivedAt = ptr(arrival)
@@ -347,19 +348,19 @@ func TestCompute_Rounding(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		mode      detention.RoundingMode
+		mode      detentionpolicy.RoundingMode
 		increment int16
 		dwellMins int64
 		wantMins  int32
 	}{
-		{"up rounds a partial increment", detention.RoundingModeUp, 15, 130, 15},
-		{"up leaves an exact increment alone", detention.RoundingModeUp, 15, 135, 15},
-		{"down discards the partial increment", detention.RoundingModeDown, 15, 134, 0},
-		{"down keeps whole increments", detention.RoundingModeDown, 15, 150, 30},
-		{"nearest rounds up at the half", detention.RoundingModeNearest, 60, 150, 60},
-		{"nearest rounds down below the half", detention.RoundingModeNearest, 60, 149, 0},
-		{"exact bills to the minute", detention.RoundingModeExact, 0, 137, 17},
-		{"hourly increment rounds 2h10m to 3h", detention.RoundingModeUp, 60, 190, 120},
+		{"up rounds a partial increment", detentionpolicy.RoundingModeUp, 15, 130, 15},
+		{"up leaves an exact increment alone", detentionpolicy.RoundingModeUp, 15, 135, 15},
+		{"down discards the partial increment", detentionpolicy.RoundingModeDown, 15, 134, 0},
+		{"down keeps whole increments", detentionpolicy.RoundingModeDown, 15, 150, 30},
+		{"nearest rounds up at the half", detentionpolicy.RoundingModeNearest, 60, 150, 60},
+		{"nearest rounds down below the half", detentionpolicy.RoundingModeNearest, 60, 149, 0},
+		{"exact bills to the minute", detentionpolicy.RoundingModeExact, 0, 137, 17},
+		{"hourly increment rounds 2h10m to 3h", detentionpolicy.RoundingModeUp, 60, 190, 120},
 	}
 
 	for _, tt := range tests {
@@ -385,7 +386,7 @@ func TestCompute_MinimumBillableThreshold(t *testing.T) {
 
 	snap := baseSnapshot()
 	snap.MinimumBillableMinutes = 30
-	snap.RoundingMode = detention.RoundingModeExact
+	snap.RoundingMode = detentionpolicy.RoundingModeExact
 	snap.BillingIncrementMinutes = 0
 
 	t.Run("below the minimum bills nothing", func(t *testing.T) {
@@ -417,22 +418,22 @@ func TestCompute_TieredRates(t *testing.T) {
 	t.Parallel()
 
 	snap := baseSnapshot()
-	snap.RateSource = detention.RateSourceTiers
-	snap.RoundingMode = detention.RoundingModeExact
+	snap.RateSource = detentionpolicy.RateSourceTiers
+	snap.RoundingMode = detentionpolicy.RoundingModeExact
 	snap.BillingIncrementMinutes = 0
-	snap.Tiers = []detention.TierSnapshot{
+	snap.Tiers = []detentionpolicy.TierSnapshot{
 		{
 			FromMinute: 0,
 			ToMinute:   ptr(int32(120)),
 			Rate:       money("75.00"),
-			RateUnit:   detention.TierRateUnitHour,
+			RateUnit:   detentionpolicy.TierRateUnitHour,
 			Label:      "First 2 hours",
 		},
 		{
 			FromMinute: 120,
 			ToMinute:   nil,
 			Rate:       money("100.00"),
-			RateUnit:   detention.TierRateUnitHour,
+			RateUnit:   detentionpolicy.TierRateUnitHour,
 			Label:      "Beyond 2 hours",
 		},
 	}
@@ -480,13 +481,13 @@ func TestCompute_FlatTierUnit(t *testing.T) {
 	t.Parallel()
 
 	snap := baseSnapshot()
-	snap.RateSource = detention.RateSourceTiers
-	snap.Tiers = []detention.TierSnapshot{
+	snap.RateSource = detentionpolicy.RateSourceTiers
+	snap.Tiers = []detentionpolicy.TierSnapshot{
 		{
 			FromMinute: 0,
 			ToMinute:   nil,
 			Rate:       money("250.00"),
-			RateUnit:   detention.TierRateUnitFlat,
+			RateUnit:   detentionpolicy.TierRateUnitFlat,
 			Label:      "Flat detention fee",
 		},
 	}
@@ -656,7 +657,7 @@ func TestCompute_NotificationGate(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		behavior       detention.UnnotifiedBehavior
+		behavior       detentionpolicy.UnnotifiedBehavior
 		noticeSentAt   *int64
 		wantStatus     detention.NotificationStatus
 		wantSuppressed bool
@@ -665,14 +666,14 @@ func TestCompute_NotificationGate(t *testing.T) {
 	}{
 		{
 			name:         "notice sent in time bills normally",
-			behavior:     detention.UnnotifiedBehaviorSuppress,
+			behavior:     detentionpolicy.UnnotifiedBehaviorSuppress,
 			noticeSentAt: ptr(baseTime + 100*minute),
 			wantStatus:   detention.NotificationStatusSent,
 			wantAmount:   "225.00",
 		},
 		{
 			name:           "missed notice suppresses the charge",
-			behavior:       detention.UnnotifiedBehaviorSuppress,
+			behavior:       detentionpolicy.UnnotifiedBehaviorSuppress,
 			noticeSentAt:   nil,
 			wantStatus:     detention.NotificationStatusMissed,
 			wantSuppressed: true,
@@ -680,7 +681,7 @@ func TestCompute_NotificationGate(t *testing.T) {
 		},
 		{
 			name:         "missed notice flags for review",
-			behavior:     detention.UnnotifiedBehaviorFlag,
+			behavior:     detentionpolicy.UnnotifiedBehaviorFlag,
 			noticeSentAt: nil,
 			wantStatus:   detention.NotificationStatusMissed,
 			wantApproval: true,
@@ -688,7 +689,7 @@ func TestCompute_NotificationGate(t *testing.T) {
 		},
 		{
 			name:         "late notice is not a satisfied requirement",
-			behavior:     detention.UnnotifiedBehaviorFlag,
+			behavior:     detentionpolicy.UnnotifiedBehaviorFlag,
 			noticeSentAt: ptr(baseTime + 300*minute),
 			wantStatus:   detention.NotificationStatusLate,
 			wantApproval: true,
@@ -701,7 +702,7 @@ func TestCompute_NotificationGate(t *testing.T) {
 			t.Parallel()
 
 			snap := baseSnapshot()
-			snap.NotificationRequirement = detention.NotificationRequirementRequired
+			snap.NotificationRequirement = detentionpolicy.NotificationRequirementRequired
 			snap.NotificationLeadMinutes = 30
 			snap.NotificationDeadlineMinutes = 0
 			snap.UnnotifiedBehavior = tt.behavior
@@ -724,7 +725,7 @@ func TestCompute_NoticeDeadlineTimestamps(t *testing.T) {
 	t.Parallel()
 
 	snap := baseSnapshot()
-	snap.NotificationRequirement = detention.NotificationRequirementRequired
+	snap.NotificationRequirement = detentionpolicy.NotificationRequirementRequired
 	snap.NotificationLeadMinutes = 30
 	snap.NotificationDeadlineMinutes = 15
 
@@ -747,9 +748,9 @@ func TestCompute_OpenOccurrencePendingNoticeIsNotGated(t *testing.T) {
 	t.Parallel()
 
 	snap := baseSnapshot()
-	snap.NotificationRequirement = detention.NotificationRequirementRequired
+	snap.NotificationRequirement = detentionpolicy.NotificationRequirementRequired
 	snap.NotificationDeadlineMinutes = 60
-	snap.UnnotifiedBehavior = detention.UnnotifiedBehaviorSuppress
+	snap.UnnotifiedBehavior = detentionpolicy.UnnotifiedBehaviorSuppress
 
 	in := baseInput(snap)
 	in.DepartedAt = nil
@@ -771,9 +772,9 @@ func TestCompute_OpenOccurrenceWithMissedDeadlineIsSuppressed(t *testing.T) {
 	t.Parallel()
 
 	snap := baseSnapshot()
-	snap.NotificationRequirement = detention.NotificationRequirementRequired
+	snap.NotificationRequirement = detentionpolicy.NotificationRequirementRequired
 	snap.NotificationDeadlineMinutes = 0
-	snap.UnnotifiedBehavior = detention.UnnotifiedBehaviorSuppress
+	snap.UnnotifiedBehavior = detentionpolicy.UnnotifiedBehaviorSuppress
 
 	in := baseInput(snap)
 	in.DepartedAt = nil
@@ -881,19 +882,19 @@ func TestCompute_IsDeterministic(t *testing.T) {
 	t.Parallel()
 
 	snap := baseSnapshot()
-	snap.RateSource = detention.RateSourceTiers
-	snap.Tiers = []detention.TierSnapshot{
+	snap.RateSource = detentionpolicy.RateSourceTiers
+	snap.Tiers = []detentionpolicy.TierSnapshot{
 		{
 			FromMinute: 0,
 			ToMinute:   ptr(int32(60)),
 			Rate:       money("75.00"),
-			RateUnit:   detention.TierRateUnitHour,
+			RateUnit:   detentionpolicy.TierRateUnitHour,
 		},
 		{
 			FromMinute: 60,
 			ToMinute:   nil,
 			Rate:       money("110.00"),
-			RateUnit:   detention.TierRateUnitHour,
+			RateUnit:   detentionpolicy.TierRateUnitHour,
 		},
 	}
 	snap.MaxChargePerDay = nullMoney("500.00")

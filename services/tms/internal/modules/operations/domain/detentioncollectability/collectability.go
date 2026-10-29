@@ -1,6 +1,11 @@
-package detention
+package detentioncollectability
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+)
 
 // Score weights. They sum to 100 and are ordered by how often each factor
 // decides a real dispute: timestamps and the written notice carry the claim,
@@ -67,8 +72,8 @@ type CollectabilityAssessment struct {
 // document, an appointment recorded up front, and a record nobody edited after
 // the fact.
 func AssessCollectability(
-	occurrence *DetentionOccurrence,
-	evidence []*DetentionEvidence,
+	occurrence *detention.DetentionOccurrence,
+	evidence []*detentionevidence.DetentionEvidence,
 ) CollectabilityAssessment {
 	if occurrence == nil {
 		return CollectabilityAssessment{Band: ScoreBandAtRisk}
@@ -83,7 +88,7 @@ func AssessCollectability(
 			label:    "Arrival timestamp",
 			weight:   ScoreWeightArrival,
 			present:  occurrence.ArrivedAt != nil,
-			source:   index[EvidenceKindArrival],
+			source:   index[detentionevidence.EvidenceKindArrival],
 			missing:  "No arrival was recorded, so the clock has no defensible start.",
 			remedy:   "Record the arrival from telematics or the driver app.",
 			weakHint: "Confirm the arrival against a geofence crossing or gate log.",
@@ -93,7 +98,7 @@ func AssessCollectability(
 			label:    "Departure timestamp",
 			weight:   ScoreWeightDeparture,
 			present:  occurrence.DepartedAt != nil,
-			source:   index[EvidenceKindDeparture],
+			source:   index[detentionevidence.EvidenceKindDeparture],
 			missing:  "The driver has not departed, so the total is still projected.",
 			remedy:   "Record the departure to close the clock.",
 			weakHint: "Confirm the departure against a geofence crossing or POD.",
@@ -103,7 +108,7 @@ func AssessCollectability(
 		scoreAppointment(occurrence),
 	)
 
-	chainValid := VerifyChain(evidence) == -1
+	chainValid := detentionevidence.VerifyChain(evidence) == -1
 	factors = append(factors, scoreUnedited(chainValid))
 
 	total := 0
@@ -127,7 +132,7 @@ type scoreTimestampInput struct {
 	label    string
 	weight   int
 	present  bool
-	source   EvidenceSource
+	source   detentionevidence.EvidenceSource
 	missing  string
 	remedy   string
 	weakHint string
@@ -150,7 +155,7 @@ func scoreTimestamp(in scoreTimestampInput) ScoreFactor {
 	}
 
 	if in.source == "" {
-		factor.Earned = in.weight * EvidenceSourceManual.Weight() / 100
+		factor.Earned = in.weight * detentionevidence.EvidenceSourceManual.Weight() / 100
 		factor.Detail = "Recorded, but with no evidence entry naming the source."
 		factor.Remedy = in.weakHint
 		return factor
@@ -166,7 +171,7 @@ func scoreTimestamp(in scoreTimestampInput) ScoreFactor {
 	return factor
 }
 
-func scoreNotice(occurrence *DetentionOccurrence) ScoreFactor {
+func scoreNotice(occurrence *detention.DetentionOccurrence) ScoreFactor {
 	factor := ScoreFactor{
 		Key:      "notice",
 		Label:    "Customer notice",
@@ -174,23 +179,23 @@ func scoreNotice(occurrence *DetentionOccurrence) ScoreFactor {
 	}
 
 	switch occurrence.NotificationStatus {
-	case NotificationStatusNotRequired:
+	case detention.NotificationStatusNotRequired:
 		factor.Earned = ScoreWeightNotice
 		factor.Detail = "This contract does not require advance notice."
-	case NotificationStatusSent:
+	case detention.NotificationStatusSent:
 		factor.Earned = ScoreWeightNotice
 		factor.Detail = "Notice was delivered inside the contractual window."
-	case NotificationStatusPending:
+	case detention.NotificationStatusPending:
 		factor.Detail = "The notice window is open but nothing has been sent."
 		factor.Remedy = "Send the detention notice before the deadline passes."
-	case NotificationStatusLate:
+	case detention.NotificationStatusLate:
 		factor.Earned = ScoreWeightNotice / 5
 		factor.Detail = "Notice went out after the contractual deadline."
 		factor.Remedy = "Expect a challenge; attach the delivery receipt to the claim."
-	case NotificationStatusMissed:
+	case detention.NotificationStatusMissed:
 		factor.Detail = "No notice was sent inside the contractual window."
 		factor.Remedy = "Document why the notice was missed before billing."
-	case NotificationStatusFailed:
+	case detention.NotificationStatusFailed:
 		factor.Detail = "The notice bounced and never reached the customer."
 		factor.Remedy = "Correct the customer contact and resend."
 	}
@@ -198,14 +203,16 @@ func scoreNotice(occurrence *DetentionOccurrence) ScoreFactor {
 	return factor
 }
 
-func scoreDocument(index map[EvidenceKind]EvidenceSource) ScoreFactor {
+func scoreDocument(
+	index map[detentionevidence.EvidenceKind]detentionevidence.EvidenceSource,
+) ScoreFactor {
 	factor := ScoreFactor{
 		Key:      "document",
 		Label:    "Supporting document",
 		Possible: ScoreWeightDocument,
 	}
 
-	if _, ok := index[EvidenceKindDocument]; !ok {
+	if _, ok := index[detentionevidence.EvidenceKindDocument]; !ok {
 		factor.Detail = "No signed BOL or POD is attached to this occurrence."
 		factor.Remedy = "Attach the signed BOL or POD showing facility timestamps."
 		return factor
@@ -220,7 +227,7 @@ func scoreDocument(index map[EvidenceKind]EvidenceSource) ScoreFactor {
 // scoreAppointment rewards an appointment that existed before the truck showed
 // up. An appointment backfilled after arrival is the first thing a customer
 // attacks.
-func scoreAppointment(occurrence *DetentionOccurrence) ScoreFactor {
+func scoreAppointment(occurrence *detention.DetentionOccurrence) ScoreFactor {
 	factor := ScoreFactor{
 		Key:      "appointment",
 		Label:    "Scheduled appointment",
@@ -265,8 +272,13 @@ func scoreUnedited(chainValid bool) ScoreFactor {
 	return factor
 }
 
-func indexEvidence(evidence []*DetentionEvidence) map[EvidenceKind]EvidenceSource {
-	index := make(map[EvidenceKind]EvidenceSource, len(evidence))
+func indexEvidence(
+	evidence []*detentionevidence.DetentionEvidence,
+) map[detentionevidence.EvidenceKind]detentionevidence.EvidenceSource {
+	index := make(
+		map[detentionevidence.EvidenceKind]detentionevidence.EvidenceSource,
+		len(evidence),
+	)
 
 	for _, entry := range evidence {
 		if entry == nil {

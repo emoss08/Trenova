@@ -6,34 +6,35 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
-
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -179,10 +180,13 @@ func (s *DetentionSeed) loadRefs(
 		refs.timezone = loc
 	}
 
-	locs, err := locationdb.Locations.AllTenants().Pick(locationdb.Locations.ID, locationdb.Locations.Code, locationdb.Locations.Name).Where(
-		locationdb.Locations.OrganizationID.Eq(refs.orgID),
-		locationdb.Locations.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	locs, err := locationdb.Locations.AllTenants().
+		Pick(locationdb.Locations.ID, locationdb.Locations.Code, locationdb.Locations.Name).
+		Where(
+			locationdb.Locations.OrganizationID.Eq(refs.orgID),
+			locationdb.Locations.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get locations: %w", err)
 	}
@@ -190,10 +194,13 @@ func (s *DetentionSeed) loadRefs(
 		refs.locations[locs[i].Code] = locs[i]
 	}
 
-	custs, err := customerdb.Customers.AllTenants().Pick(customerdb.Customers.ID, customerdb.Customers.Code, customerdb.Customers.Name).Where(
-		customerdb.Customers.OrganizationID.Eq(refs.orgID),
-		customerdb.Customers.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	custs, err := customerdb.Customers.AllTenants().
+		Pick(customerdb.Customers.ID, customerdb.Customers.Code, customerdb.Customers.Name).
+		Where(
+			customerdb.Customers.OrganizationID.Eq(refs.orgID),
+			customerdb.Customers.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get customers: %w", err)
 	}
@@ -201,10 +208,13 @@ func (s *DetentionSeed) loadRefs(
 		refs.customers[custs[i].Code] = custs[i]
 	}
 
-	svcTypes, err := servicetypedb.ServiceTypes.AllTenants().Pick(servicetypedb.ServiceTypes.ID, servicetypedb.ServiceTypes.Code).Where(
-		servicetypedb.ServiceTypes.OrganizationID.Eq(refs.orgID),
-		servicetypedb.ServiceTypes.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	svcTypes, err := servicetypedb.ServiceTypes.AllTenants().
+		Pick(servicetypedb.ServiceTypes.ID, servicetypedb.ServiceTypes.Code).
+		Where(
+			servicetypedb.ServiceTypes.OrganizationID.Eq(refs.orgID),
+			servicetypedb.ServiceTypes.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get service types: %w", err)
 	}
@@ -212,10 +222,13 @@ func (s *DetentionSeed) loadRefs(
 		refs.serviceTypes[svcTypes[i].Code] = svcTypes[i].ID
 	}
 
-	shpTypes, err := shipmenttypedb.ShipmentTypes.AllTenants().Pick(shipmenttypedb.ShipmentTypes.ID, shipmenttypedb.ShipmentTypes.Code).Where(
-		shipmenttypedb.ShipmentTypes.OrganizationID.Eq(refs.orgID),
-		shipmenttypedb.ShipmentTypes.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	shpTypes, err := shipmenttypedb.ShipmentTypes.AllTenants().
+		Pick(shipmenttypedb.ShipmentTypes.ID, shipmenttypedb.ShipmentTypes.Code).
+		Where(
+			shipmenttypedb.ShipmentTypes.OrganizationID.Eq(refs.orgID),
+			shipmenttypedb.ShipmentTypes.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get shipment types: %w", err)
 	}
@@ -223,10 +236,13 @@ func (s *DetentionSeed) loadRefs(
 		refs.shipmentTypes[shpTypes[i].Code] = shpTypes[i].ID
 	}
 
-	charges, err := accessorialchargedb.AccessorialCharges.AllTenants().Pick(accessorialchargedb.AccessorialCharges.ID, accessorialchargedb.AccessorialCharges.Code, accessorialchargedb.AccessorialCharges.Description, accessorialchargedb.AccessorialCharges.Method, accessorialchargedb.AccessorialCharges.RateUnit, accessorialchargedb.AccessorialCharges.Amount).Where(
-		accessorialchargedb.AccessorialCharges.OrganizationID.Eq(refs.orgID),
-		accessorialchargedb.AccessorialCharges.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	charges, err := accessorialchargedb.AccessorialCharges.AllTenants().
+		Pick(accessorialchargedb.AccessorialCharges.ID, accessorialchargedb.AccessorialCharges.Code, accessorialchargedb.AccessorialCharges.Description, accessorialchargedb.AccessorialCharges.Method, accessorialchargedb.AccessorialCharges.RateUnit, accessorialchargedb.AccessorialCharges.Amount).
+		Where(
+			accessorialchargedb.AccessorialCharges.OrganizationID.Eq(refs.orgID),
+			accessorialchargedb.AccessorialCharges.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get accessorial charges: %w", err)
 	}
@@ -240,10 +256,13 @@ func (s *DetentionSeed) loadRefs(
 		}
 	}
 
-	tractors, err := tractordb.Tractors.AllTenants().Pick(tractordb.Tractors.ID, tractordb.Tractors.Code).Where(
-		tractordb.Tractors.OrganizationID.Eq(refs.orgID),
-		tractordb.Tractors.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	tractors, err := tractordb.Tractors.AllTenants().
+		Pick(tractordb.Tractors.ID, tractordb.Tractors.Code).
+		Where(
+			tractordb.Tractors.OrganizationID.Eq(refs.orgID),
+			tractordb.Tractors.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get tractors: %w", err)
 	}
@@ -251,10 +270,13 @@ func (s *DetentionSeed) loadRefs(
 		refs.tractors[tractors[i].Code] = tractors[i].ID
 	}
 
-	trailers, err := trailerdb.Trailers.AllTenants().Pick(trailerdb.Trailers.ID, trailerdb.Trailers.Code).Where(
-		trailerdb.Trailers.OrganizationID.Eq(refs.orgID),
-		trailerdb.Trailers.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	trailers, err := trailerdb.Trailers.AllTenants().
+		Pick(trailerdb.Trailers.ID, trailerdb.Trailers.Code).
+		Where(
+			trailerdb.Trailers.OrganizationID.Eq(refs.orgID),
+			trailerdb.Trailers.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get trailers: %w", err)
 	}
@@ -262,10 +284,13 @@ func (s *DetentionSeed) loadRefs(
 		refs.trailers[trailers[i].Code] = trailers[i].ID
 	}
 
-	workers, err := workerdb.Workers.AllTenants().Pick(workerdb.Workers.ID, workerdb.Workers.Email).Where(
-		workerdb.Workers.OrganizationID.Eq(refs.orgID),
-		workerdb.Workers.BusinessUnitID.Eq(refs.buID),
-	).All(ctx, db)
+	workers, err := workerdb.Workers.AllTenants().
+		Pick(workerdb.Workers.ID, workerdb.Workers.Email).
+		Where(
+			workerdb.Workers.OrganizationID.Eq(refs.orgID),
+			workerdb.Workers.BusinessUnitID.Eq(refs.buID),
+		).
+		All(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("get workers: %w", err)
 	}
@@ -341,8 +366,8 @@ func (s *DetentionSeed) loadDetentionPayRates(
 // -- Policies --
 
 type detentionPolicyDef struct {
-	policy *detention.DetentionPolicy
-	tiers  []*detention.DetentionPolicyTier
+	policy *detentionpolicy.DetentionPolicy
+	tiers  []*detentionpolicy.DetentionPolicyTier
 }
 
 //nolint:funlen // a policy library is a contract catalogue; each term is explicit
@@ -358,32 +383,32 @@ func (s *DetentionSeed) policyDefs(refs *detentionRefs) []detentionPolicyDef {
 
 	return []detentionPolicyDef{
 		{
-			policy: &detention.DetentionPolicy{
+			policy: &detentionpolicy.DetentionPolicy{
 				ID:                          pulid.MustNew("dtp_"),
 				BusinessUnitID:              refs.buID,
 				OrganizationID:              refs.orgID,
 				Name:                        "Standard detention terms",
 				Code:                        detentionPolicyStandard,
 				Description:                 "Two hours free, billed in quarter hours at the detention accessorial rate. Applies wherever no negotiated term is on file.",
-				Status:                      detention.PolicyStatusActive,
+				Status:                      detentionpolicy.PolicyStatusActive,
 				IsOrgDefault:                true,
 				Priority:                    0,
-				ClockStartBasis:             detention.ClockStartBasisLaterOfArrivalOrAppointment,
-				LateArrivalRule:             detention.LateArrivalRuleNoEffect,
+				ClockStartBasis:             detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment,
+				LateArrivalRule:             detentionpolicy.LateArrivalRuleNoEffect,
 				LateArrivalGraceMinutes:     15,
 				BillingFreeMinutes:          120,
 				PayFreeMinutes:              new(int32(120)),
 				MinimumBillableMinutes:      15,
 				BillingIncrementMinutes:     15,
-				RoundingMode:                detention.RoundingModeUp,
-				RateSource:                  detention.RateSourceAccessorial,
+				RoundingMode:                detentionpolicy.RoundingModeUp,
+				RateSource:                  detentionpolicy.RateSourceAccessorial,
 				AccessorialChargeID:         det.ID,
 				MaxChargePerDay:             decimal.NewNullDecimal(decimal.NewFromInt(900)),
-				DayBoundaryMode:             detention.CapScopePerDay,
-				NotificationRequirement:     detention.NotificationRequirementAdvisory,
+				DayBoundaryMode:             detentionpolicy.CapScopePerDay,
+				NotificationRequirement:     detentionpolicy.NotificationRequirementAdvisory,
 				NotificationLeadMinutes:     30,
 				NotificationDeadlineMinutes: 0,
-				UnnotifiedBehavior:          detention.UnnotifiedBehaviorBill,
+				UnnotifiedBehavior:          detentionpolicy.UnnotifiedBehaviorBill,
 				SendDepartureSummary:        true,
 				RequireApprovalOverAmount:   decimal.NewNullDecimal(decimal.NewFromInt(750)),
 				AutoApproveUnderAmount:      decimal.NewNullDecimal(decimal.NewFromInt(150)),
@@ -392,18 +417,18 @@ func (s *DetentionSeed) policyDefs(refs *detentionRefs) []detentionPolicyDef {
 			},
 		},
 		{
-			policy: &detention.DetentionPolicy{
+			policy: &detentionpolicy.DetentionPolicy{
 				ID:                          pulid.MustNew("dtp_"),
 				BusinessUnitID:              refs.buID,
 				OrganizationID:              refs.orgID,
 				Name:                        "Acme Manufacturing — negotiated detention",
 				Code:                        detentionPolicyAcme,
 				Description:                 "Graduated ladder with split pickup and delivery free time. Written notice is a condition of billing.",
-				Status:                      detention.PolicyStatusActive,
+				Status:                      detentionpolicy.PolicyStatusActive,
 				Priority:                    10,
 				CustomerID:                  &acmeID,
-				ClockStartBasis:             detention.ClockStartBasisLaterOfArrivalOrAppointment,
-				LateArrivalRule:             detention.LateArrivalRuleReduceFreeTime,
+				ClockStartBasis:             detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment,
+				LateArrivalRule:             detentionpolicy.LateArrivalRuleReduceFreeTime,
 				LateArrivalGraceMinutes:     15,
 				BillingFreeMinutes:          120,
 				PickupFreeMinutes:           new(int32(90)),
@@ -411,16 +436,16 @@ func (s *DetentionSeed) policyDefs(refs *detentionRefs) []detentionPolicyDef {
 				PayFreeMinutes:              new(int32(60)),
 				MinimumBillableMinutes:      30,
 				BillingIncrementMinutes:     15,
-				RoundingMode:                detention.RoundingModeUp,
-				RateSource:                  detention.RateSourceTiers,
+				RoundingMode:                detentionpolicy.RoundingModeUp,
+				RateSource:                  detentionpolicy.RateSourceTiers,
 				AccessorialChargeID:         det.ID,
 				MaxChargePerStop:            decimal.NewNullDecimal(decimal.NewFromInt(1200)),
 				MaxChargePerShipment:        decimal.NewNullDecimal(decimal.NewFromInt(2000)),
-				DayBoundaryMode:             detention.CapScopePerStop,
-				NotificationRequirement:     detention.NotificationRequirementRequired,
+				DayBoundaryMode:             detentionpolicy.CapScopePerStop,
+				NotificationRequirement:     detentionpolicy.NotificationRequirementRequired,
 				NotificationLeadMinutes:     30,
 				NotificationDeadlineMinutes: 60,
-				UnnotifiedBehavior:          detention.UnnotifiedBehaviorFlag,
+				UnnotifiedBehavior:          detentionpolicy.UnnotifiedBehaviorFlag,
 				AutoSendNotice:              true,
 				SendDepartureSummary:        true,
 				RequireApprovalOverAmount:   decimal.NewNullDecimal(decimal.NewFromInt(1000)),
@@ -428,156 +453,156 @@ func (s *DetentionSeed) policyDefs(refs *detentionRefs) []detentionPolicyDef {
 				Currency:                    "USD",
 				Comments:                    "Master agreement §7. Notice inside 60 minutes of free-time expiry is a condition precedent to the charge.",
 			},
-			tiers: []*detention.DetentionPolicyTier{
+			tiers: []*detentionpolicy.DetentionPolicyTier{
 				{
 					FromMinute: 0, ToMinute: new(int32(240)),
-					Rate: decimal.NewFromInt(60), RateUnit: detention.TierRateUnitHour,
+					Rate: decimal.NewFromInt(60), RateUnit: detentionpolicy.TierRateUnitHour,
 					Label: "First 4 hours", SortOrder: 0,
 				},
 				{
 					FromMinute: 240, ToMinute: new(int32(720)),
-					Rate: decimal.NewFromInt(85), RateUnit: detention.TierRateUnitHour,
+					Rate: decimal.NewFromInt(85), RateUnit: detentionpolicy.TierRateUnitHour,
 					Label: "Hours 4 through 12", SortOrder: 1,
 				},
 				{
 					FromMinute: 720,
-					Rate:       decimal.NewFromInt(750), RateUnit: detention.TierRateUnitDay,
+					Rate:       decimal.NewFromInt(750), RateUnit: detentionpolicy.TierRateUnitDay,
 					Label: "Beyond 12 hours", SortOrder: 2,
 				},
 			},
 		},
 		{
-			policy: &detention.DetentionPolicy{
+			policy: &detentionpolicy.DetentionPolicy{
 				ID:                          pulid.MustNew("dtp_"),
 				BusinessUnitID:              refs.buID,
 				OrganizationID:              refs.orgID,
 				Name:                        "Phoenix Cold Storage — facility terms",
 				Code:                        detentionPolicyCold,
 				Description:                 "One hour free from arrival, capped daily, converting to layover after 24 hours on site. Notice is required or the charge is suppressed.",
-				Status:                      detention.PolicyStatusActive,
+				Status:                      detentionpolicy.PolicyStatusActive,
 				Priority:                    20,
 				LocationID:                  &coldID,
-				ClockStartBasis:             detention.ClockStartBasisArrival,
-				LateArrivalRule:             detention.LateArrivalRuleNoEffect,
+				ClockStartBasis:             detentionpolicy.ClockStartBasisArrival,
+				LateArrivalRule:             detentionpolicy.LateArrivalRuleNoEffect,
 				BillingFreeMinutes:          60,
 				PayFreeMinutes:              new(int32(60)),
 				MinimumBillableMinutes:      30,
 				BillingIncrementMinutes:     30,
-				RoundingMode:                detention.RoundingModeNearest,
-				RateSource:                  detention.RateSourceAccessorial,
+				RoundingMode:                detentionpolicy.RoundingModeNearest,
+				RateSource:                  detentionpolicy.RateSourceAccessorial,
 				AccessorialChargeID:         det.ID,
 				MaxChargePerDay:             decimal.NewNullDecimal(decimal.NewFromInt(600)),
-				DayBoundaryMode:             detention.CapScopePerDay,
+				DayBoundaryMode:             detentionpolicy.CapScopePerDay,
 				ConvertToLayoverAtMinutes:   new(int32(1440)),
 				LayoverAccessorialChargeID:  &layoverCharge,
-				NotificationRequirement:     detention.NotificationRequirementRequired,
+				NotificationRequirement:     detentionpolicy.NotificationRequirementRequired,
 				NotificationLeadMinutes:     30,
 				NotificationDeadlineMinutes: 30,
-				UnnotifiedBehavior:          detention.UnnotifiedBehaviorSuppress,
+				UnnotifiedBehavior:          detentionpolicy.UnnotifiedBehaviorSuppress,
 				SendDepartureSummary:        true,
 				Currency:                    "USD",
 				Comments:                    "Facility rider. The dock refuses charges without a timestamped notice, so an unnotified stop is not worth billing.",
 			},
 		},
 		{
-			policy: &detention.DetentionPolicy{
+			policy: &detentionpolicy.DetentionPolicy{
 				ID:                        pulid.MustNew("dtp_"),
 				BusinessUnitID:            refs.buID,
 				OrganizationID:            refs.orgID,
 				Name:                      "GlobalTrade drayage — port pickups",
 				Code:                      detentionPolicyDray,
 				Description:               "Four hours free measured from the appointment. Arriving late forfeits detention entirely.",
-				Status:                    detention.PolicyStatusActive,
+				Status:                    detentionpolicy.PolicyStatusActive,
 				Priority:                  15,
 				CustomerID:                &glblID,
 				StopTypes:                 []shipment.StopType{shipment.StopTypePickup},
 				AppointmentStopsOnly:      true,
-				ClockStartBasis:           detention.ClockStartBasisAppointment,
-				LateArrivalRule:           detention.LateArrivalRuleForfeit,
+				ClockStartBasis:           detentionpolicy.ClockStartBasisAppointment,
+				LateArrivalRule:           detentionpolicy.LateArrivalRuleForfeit,
 				LateArrivalGraceMinutes:   30,
 				BillingFreeMinutes:        240,
 				PayFreeMinutes:            new(int32(180)),
 				MinimumBillableMinutes:    60,
 				BillingIncrementMinutes:   60,
-				RoundingMode:              detention.RoundingModeUp,
-				RateSource:                detention.RateSourceAccessorial,
+				RoundingMode:              detentionpolicy.RoundingModeUp,
+				RateSource:                detentionpolicy.RateSourceAccessorial,
 				AccessorialChargeID:       det.ID,
 				MaxBillableMinutesPerStop: new(int32(720)),
-				DayBoundaryMode:           detention.CapScopePerStop,
-				NotificationRequirement:   detention.NotificationRequirementNone,
-				UnnotifiedBehavior:        detention.UnnotifiedBehaviorBill,
+				DayBoundaryMode:           detentionpolicy.CapScopePerStop,
+				NotificationRequirement:   detentionpolicy.NotificationRequirementNone,
+				UnnotifiedBehavior:        detentionpolicy.UnnotifiedBehaviorBill,
 				Currency:                  "USD",
 				Comments:                  "Port terminal rider. The appointment is the clock; a missed appointment is the carrier's cost.",
 				NotificationLeadMinutes:   30,
 			},
 		},
 		{
-			policy: &detention.DetentionPolicy{
+			policy: &detentionpolicy.DetentionPolicy{
 				ID:                      pulid.MustNew("dtp_"),
 				BusinessUnitID:          refs.buID,
 				OrganizationID:          refs.orgID,
 				Name:                    "2025 legacy detention terms",
 				Code:                    detentionPolicyLegacy,
 				Description:             "Superseded terms retained so historical occurrences still explain themselves.",
-				Status:                  detention.PolicyStatusInactive,
+				Status:                  detentionpolicy.PolicyStatusInactive,
 				Priority:                0,
 				EffectiveStartDate:      new(now - 455*detentionDay),
 				EffectiveEndDate:        new(now - 90*detentionDay),
-				ClockStartBasis:         detention.ClockStartBasisArrival,
-				LateArrivalRule:         detention.LateArrivalRuleNoEffect,
+				ClockStartBasis:         detentionpolicy.ClockStartBasisArrival,
+				LateArrivalRule:         detentionpolicy.LateArrivalRuleNoEffect,
 				BillingFreeMinutes:      180,
 				PayFreeMinutes:          new(int32(180)),
 				BillingIncrementMinutes: 60,
-				RoundingMode:            detention.RoundingModeDown,
-				RateSource:              detention.RateSourceAccessorial,
+				RoundingMode:            detentionpolicy.RoundingModeDown,
+				RateSource:              detentionpolicy.RateSourceAccessorial,
 				AccessorialChargeID:     det.ID,
-				DayBoundaryMode:         detention.CapScopePerStop,
-				NotificationRequirement: detention.NotificationRequirementNone,
-				UnnotifiedBehavior:      detention.UnnotifiedBehaviorBill,
+				DayBoundaryMode:         detentionpolicy.CapScopePerStop,
+				NotificationRequirement: detentionpolicy.NotificationRequirementNone,
+				UnnotifiedBehavior:      detentionpolicy.UnnotifiedBehaviorBill,
 				Currency:                "USD",
 				Comments:                "Expired. Kept for audit of anything billed before the 2026 renegotiation.",
 				NotificationLeadMinutes: 30,
 			},
 		},
 		{
-			policy: &detention.DetentionPolicy{
+			policy: &detentionpolicy.DetentionPolicy{
 				ID:                          pulid.MustNew("dtp_"),
 				BusinessUnitID:              refs.buID,
 				OrganizationID:              refs.orgID,
 				Name:                        "2027 proposed detention terms",
 				Code:                        detentionPolicyProposed,
 				Description:                 "Draft ladder for the 2027 rate cycle. Backtest it against the last quarter before promoting it.",
-				Status:                      detention.PolicyStatusDraft,
+				Status:                      detentionpolicy.PolicyStatusDraft,
 				Priority:                    5,
-				ClockStartBasis:             detention.ClockStartBasisLaterOfArrivalOrAppointment,
-				LateArrivalRule:             detention.LateArrivalRuleReduceFreeTime,
+				ClockStartBasis:             detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment,
+				LateArrivalRule:             detentionpolicy.LateArrivalRuleReduceFreeTime,
 				LateArrivalGraceMinutes:     15,
 				BillingFreeMinutes:          60,
 				PayFreeMinutes:              new(int32(60)),
 				MinimumBillableMinutes:      15,
 				BillingIncrementMinutes:     15,
-				RoundingMode:                detention.RoundingModeUp,
-				RateSource:                  detention.RateSourceTiers,
+				RoundingMode:                detentionpolicy.RoundingModeUp,
+				RateSource:                  detentionpolicy.RateSourceTiers,
 				AccessorialChargeID:         det.ID,
 				MaxChargePerStop:            decimal.NewNullDecimal(decimal.NewFromInt(1500)),
-				DayBoundaryMode:             detention.CapScopePerStop,
-				NotificationRequirement:     detention.NotificationRequirementRequired,
+				DayBoundaryMode:             detentionpolicy.CapScopePerStop,
+				NotificationRequirement:     detentionpolicy.NotificationRequirementRequired,
 				NotificationLeadMinutes:     30,
 				NotificationDeadlineMinutes: 30,
-				UnnotifiedBehavior:          detention.UnnotifiedBehaviorFlag,
+				UnnotifiedBehavior:          detentionpolicy.UnnotifiedBehaviorFlag,
 				AutoSendNotice:              true,
 				Currency:                    "USD",
 				Comments:                    "Draft. Tighter free time and a steeper second tier; run the backtest before making it active.",
 			},
-			tiers: []*detention.DetentionPolicyTier{
+			tiers: []*detentionpolicy.DetentionPolicyTier{
 				{
 					FromMinute: 0, ToMinute: new(int32(180)),
-					Rate: decimal.NewFromInt(80), RateUnit: detention.TierRateUnitHour,
+					Rate: decimal.NewFromInt(80), RateUnit: detentionpolicy.TierRateUnitHour,
 					Label: "First 3 hours", SortOrder: 0,
 				},
 				{
 					FromMinute: 180,
-					Rate:       decimal.NewFromInt(110), RateUnit: detention.TierRateUnitHour,
+					Rate:       decimal.NewFromInt(110), RateUnit: detentionpolicy.TierRateUnitHour,
 					Label: "Beyond 3 hours", SortOrder: 1,
 				},
 			},
@@ -590,8 +615,8 @@ func (s *DetentionSeed) ensurePolicies(
 	db *keel.DB,
 	sr *seed.Run,
 	refs *detentionRefs,
-) (map[string]*detention.DetentionPolicy, error) {
-	policies := make(map[string]*detention.DetentionPolicy, 6)
+) (map[string]*detentionpolicy.DetentionPolicy, error) {
+	policies := make(map[string]*detentionpolicy.DetentionPolicy, 6)
 	created := 0
 
 	for _, def := range s.policyDefs(refs) {
@@ -634,7 +659,7 @@ func (s *DetentionSeed) findPolicy(
 	db *keel.DB,
 	refs *detentionRefs,
 	code string,
-) (*detention.DetentionPolicy, error) {
+) (*detentionpolicy.DetentionPolicy, error) {
 	policy, err := detentiondb.DetentionPolicies.AllTenants().Where(
 		detentiondb.DetentionPolicies.OrganizationID.Eq(refs.orgID),
 		detentiondb.DetentionPolicies.BusinessUnitID.Eq(refs.buID),
@@ -647,7 +672,7 @@ func (s *DetentionSeed) findPolicy(
 		return nil, fmt.Errorf("get detention policy %s: %w", code, err)
 	}
 
-	if policy.RateSource != detention.RateSourceTiers {
+	if policy.RateSource != detentionpolicy.RateSourceTiers {
 		return policy, nil
 	}
 
@@ -671,7 +696,7 @@ func (s *DetentionSeed) enablePolicyEngine(
 	ctx context.Context,
 	db *keel.DB,
 	refs *detentionRefs,
-	defaultPolicy *detention.DetentionPolicy,
+	defaultPolicy *detentionpolicy.DetentionPolicy,
 ) error {
 	if defaultPolicy == nil {
 		return errors.New("default detention policy is missing")
@@ -794,8 +819,8 @@ const (
 // which is the only reference point the contract cares about.
 type detentionNoticeDef struct {
 	offsetFromExpiry int64
-	kind             detention.NoticeKind
-	delivery         detention.NoticeDeliveryStatus
+	kind             detentionnotice.NoticeKind
+	delivery         detentionnotice.NoticeDeliveryStatus
 	failureReason    string
 	automatic        bool
 }
@@ -808,8 +833,8 @@ type detentionStopDef struct {
 	apptWindow      int64
 	arrivalOffset   int64
 	dwell           int64
-	arrivalSource   detention.EvidenceSource
-	departureSource detention.EvidenceSource
+	arrivalSource   detentionevidence.EvidenceSource
+	departureSource detentionevidence.EvidenceSource
 	document        string
 	notice          *detentionNoticeDef
 	outcome         detentionOutcome
@@ -848,17 +873,17 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "TERM-LA", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 26 * 60, apptWindow: 120, arrivalOffset: 10, dwell: 55,
-					arrivalSource:   detention.EvidenceSourceGeofence,
-					departureSource: detention.EvidenceSourceGeofence,
+					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
+					departureSource: detentionevidence.EvidenceSourceGeofence,
 				},
 				{
 					location: "DC-CHI", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 240, apptWindow: 120, arrivalOffset: 15, dwell: 0,
-					arrivalSource: detention.EvidenceSourceTelematics,
+					arrivalSource: detentionevidence.EvidenceSourceTelematics,
 					notice: &detentionNoticeDef{
-						offsetFromExpiry: -20, kind: detention.NoticeKindWarning,
-						delivery: detention.NoticeDeliveryStatusOpened, automatic: true,
+						offsetFromExpiry: -20, kind: detentionnotice.NoticeKindWarning,
+						delivery: detentionnotice.NoticeDeliveryStatusOpened, automatic: true,
 					},
 				},
 			},
@@ -874,14 +899,14 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "WH-DAL", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 30 * 60, apptWindow: 120, arrivalOffset: 5, dwell: 50,
-					arrivalSource:   detention.EvidenceSourceDriverApp,
-					departureSource: detention.EvidenceSourceDriverApp,
+					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
+					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 				{
 					location: "COLD-PHX", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 300, apptWindow: 60, arrivalOffset: 20, dwell: 0,
-					arrivalSource: detention.EvidenceSourceGeofence,
+					arrivalSource: detentionevidence.EvidenceSourceGeofence,
 				},
 			},
 		},
@@ -896,20 +921,20 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "DC-CHI", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 4 * 24 * 60, apptWindow: 120, arrivalOffset: 0, dwell: 200,
-					arrivalSource:   detention.EvidenceSourceTelematics,
-					departureSource: detention.EvidenceSourceTelematics,
+					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
+					departureSource: detentionevidence.EvidenceSourceTelematics,
 					document:        "Signed BOL captured at the dock office with in and out times",
 				},
 				{
 					location: "WH-DAL", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 3 * 24 * 60, apptWindow: 120, arrivalOffset: 20, dwell: 480,
-					arrivalSource:   detention.EvidenceSourceGeofence,
-					departureSource: detention.EvidenceSourceGeofence,
+					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
+					departureSource: detentionevidence.EvidenceSourceGeofence,
 					document:        "Signed POD showing the receiver's own arrival and release stamps",
 					notice: &detentionNoticeDef{
-						offsetFromExpiry: -15, kind: detention.NoticeKindStarted,
-						delivery: detention.NoticeDeliveryStatusDelivered,
+						offsetFromExpiry: -15, kind: detentionnotice.NoticeKindStarted,
+						delivery: detentionnotice.NoticeDeliveryStatusDelivered,
 					},
 					outcome: detentionOutcomeApprove,
 				},
@@ -926,19 +951,19 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "TERM-LA", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 9 * 24 * 60, apptWindow: 120, arrivalOffset: -10, dwell: 55,
-					arrivalSource:   detention.EvidenceSourceGeofence,
-					departureSource: detention.EvidenceSourceGeofence,
+					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
+					departureSource: detentionevidence.EvidenceSourceGeofence,
 				},
 				{
 					location: "CUST-DEN", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 8 * 24 * 60, apptWindow: 120, arrivalOffset: 5, dwell: 840,
-					arrivalSource:   detention.EvidenceSourceTelematics,
-					departureSource: detention.EvidenceSourceTelematics,
+					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
+					departureSource: detentionevidence.EvidenceSourceTelematics,
 					document:        "Gate log printout from the receiver covering both timestamps",
 					notice: &detentionNoticeDef{
-						offsetFromExpiry: 90, kind: detention.NoticeKindStarted,
-						delivery: detention.NoticeDeliveryStatusDelivered, automatic: true,
+						offsetFromExpiry: 90, kind: detentionnotice.NoticeKindStarted,
+						delivery: detentionnotice.NoticeDeliveryStatusDelivered, automatic: true,
 					},
 					outcome: detentionOutcomeBill,
 				},
@@ -955,15 +980,15 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "TERM-LA", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 6 * 24 * 60, apptWindow: 60, arrivalOffset: 150, dwell: 300,
-					arrivalSource:   detention.EvidenceSourceTelematics,
-					departureSource: detention.EvidenceSourceTelematics,
+					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
+					departureSource: detentionevidence.EvidenceSourceTelematics,
 				},
 				{
 					location: "CUST-DEN", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 5 * 24 * 60, apptWindow: 120, arrivalOffset: 10, dwell: 100,
-					arrivalSource:   detention.EvidenceSourceDriverApp,
-					departureSource: detention.EvidenceSourceDriverApp,
+					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
+					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 			},
 		},
@@ -978,18 +1003,18 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "WH-DAL", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 14 * 24 * 60, apptWindow: 120, arrivalOffset: 0, dwell: 70,
-					arrivalSource:   detention.EvidenceSourceDriverApp,
-					departureSource: detention.EvidenceSourceDriverApp,
+					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
+					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 				{
 					location: "DC-CHI", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 13 * 24 * 60, apptWindow: 120, arrivalOffset: 30, dwell: 1800,
-					arrivalSource:   detention.EvidenceSourceGeofence,
-					departureSource: detention.EvidenceSourceGeofence,
+					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
+					departureSource: detentionevidence.EvidenceSourceGeofence,
 					notice: &detentionNoticeDef{
-						offsetFromExpiry: -30, kind: detention.NoticeKindStarted,
-						delivery: detention.NoticeDeliveryStatusDelivered,
+						offsetFromExpiry: -30, kind: detentionnotice.NoticeKindStarted,
+						delivery: detentionnotice.NoticeDeliveryStatusDelivered,
 					},
 					outcome: detentionOutcomeDispute,
 					note:    "Receiver disputes the overnight hold, claiming the trailer was dropped and the tractor released at 19:00.",
@@ -1007,15 +1032,15 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "DC-CHI", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeOpen,
 					apptStartAgo: 11 * 24 * 60, apptWindow: 240, arrivalOffset: 30, dwell: 65,
-					arrivalSource:   detention.EvidenceSourceManual,
-					departureSource: detention.EvidenceSourceManual,
+					arrivalSource:   detentionevidence.EvidenceSourceManual,
+					departureSource: detentionevidence.EvidenceSourceManual,
 				},
 				{
 					location: "CUST-DEN", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeOpen,
 					apptStartAgo: 10 * 24 * 60, apptWindow: 240, arrivalOffset: 45, dwell: 240,
-					arrivalSource:   detention.EvidenceSourceManual,
-					departureSource: detention.EvidenceSourceManual,
+					arrivalSource:   detentionevidence.EvidenceSourceManual,
+					departureSource: detentionevidence.EvidenceSourceManual,
 				},
 			},
 		},
@@ -1030,19 +1055,19 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "WH-DAL", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 20 * 24 * 60, apptWindow: 120, arrivalOffset: 15, dwell: 80,
-					arrivalSource:   detention.EvidenceSourceGeofence,
-					departureSource: detention.EvidenceSourceGeofence,
+					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
+					departureSource: detentionevidence.EvidenceSourceGeofence,
 				},
 				{
 					location: "COLD-PHX", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 19 * 24 * 60, apptWindow: 60, arrivalOffset: 5, dwell: 2400,
-					arrivalSource:   detention.EvidenceSourceGeofence,
-					departureSource: detention.EvidenceSourceGeofence,
+					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
+					departureSource: detentionevidence.EvidenceSourceGeofence,
 					document:        "Cold storage gate ticket showing the trailer sat two nights",
 					notice: &detentionNoticeDef{
-						offsetFromExpiry: -25, kind: detention.NoticeKindStarted,
-						delivery: detention.NoticeDeliveryStatusOpened,
+						offsetFromExpiry: -25, kind: detentionnotice.NoticeKindStarted,
+						delivery: detentionnotice.NoticeDeliveryStatusOpened,
 					},
 					outcome: detentionOutcomeBill,
 				},
@@ -1059,18 +1084,18 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "DC-CHI", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 7 * 24 * 60, apptWindow: 120, arrivalOffset: 0, dwell: 60,
-					arrivalSource:   detention.EvidenceSourceDriverApp,
-					departureSource: detention.EvidenceSourceDriverApp,
+					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
+					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 				{
 					location: "WH-DAL", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 6 * 24 * 60, apptWindow: 120, arrivalOffset: 10, dwell: 300,
-					arrivalSource:   detention.EvidenceSourceTelematics,
-					departureSource: detention.EvidenceSourceTelematics,
+					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
+					departureSource: detentionevidence.EvidenceSourceTelematics,
 					notice: &detentionNoticeDef{
-						offsetFromExpiry: -10, kind: detention.NoticeKindStarted,
-						delivery: detention.NoticeDeliveryStatusDelivered,
+						offsetFromExpiry: -10, kind: detentionnotice.NoticeKindStarted,
+						delivery: detentionnotice.NoticeDeliveryStatusDelivered,
 					},
 					outcome:      detentionOutcomeWaive,
 					waiverReason: detention.WaiverReasonCustomerGoodwill,
@@ -1089,15 +1114,15 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "TERM-LA", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 3 * 24 * 60, apptWindow: 120, arrivalOffset: 5, dwell: 45,
-					arrivalSource:   detention.EvidenceSourceGeofence,
-					departureSource: detention.EvidenceSourceGeofence,
+					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
+					departureSource: detentionevidence.EvidenceSourceGeofence,
 				},
 				{
 					location: "DC-CHI", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 2 * 24 * 60, apptWindow: 120, arrivalOffset: 0, dwell: 120,
-					arrivalSource:   detention.EvidenceSourceGeofence,
-					departureSource: detention.EvidenceSourceGeofence,
+					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
+					departureSource: detentionevidence.EvidenceSourceGeofence,
 					document:        "Signed POD released inside the appointment window",
 				},
 			},
@@ -1113,18 +1138,18 @@ func detentionShipmentDefs() []detentionShipmentDef {
 					location: "CUST-DEN", stopType: shipment.StopTypePickup,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 16 * 24 * 60, apptWindow: 120, arrivalOffset: 10, dwell: 75,
-					arrivalSource:   detention.EvidenceSourceDriverApp,
-					departureSource: detention.EvidenceSourceDriverApp,
+					arrivalSource:   detentionevidence.EvidenceSourceDriverApp,
+					departureSource: detentionevidence.EvidenceSourceDriverApp,
 				},
 				{
 					location: "WH-DAL", stopType: shipment.StopTypeDelivery,
 					scheduleType: shipment.StopScheduleTypeAppointment,
 					apptStartAgo: 15 * 24 * 60, apptWindow: 120, arrivalOffset: 20, dwell: 420,
-					arrivalSource:   detention.EvidenceSourceTelematics,
-					departureSource: detention.EvidenceSourceTelematics,
+					arrivalSource:   detentionevidence.EvidenceSourceTelematics,
+					departureSource: detentionevidence.EvidenceSourceTelematics,
 					notice: &detentionNoticeDef{
-						offsetFromExpiry: -20, kind: detention.NoticeKindStarted,
-						delivery:      detention.NoticeDeliveryStatusBounced,
+						offsetFromExpiry: -20, kind: detentionnotice.NoticeKindStarted,
+						delivery:      detentionnotice.NoticeDeliveryStatusBounced,
 						failureReason: "550 5.1.1 recipient address rejected: user unknown",
 						automatic:     true,
 					},
@@ -1139,9 +1164,9 @@ func (s *DetentionSeed) createDetentionBook(
 	db *keel.DB,
 	sr *seed.Run,
 	refs *detentionRefs,
-	policies map[string]*detention.DetentionPolicy,
+	policies map[string]*detentionpolicy.DetentionPolicy,
 ) error {
-	candidates := make([]*detention.DetentionPolicy, 0, len(policies))
+	candidates := make([]*detentionpolicy.DetentionPolicy, 0, len(policies))
 	for _, policy := range policies {
 		candidates = append(candidates, policy)
 	}
@@ -1165,7 +1190,7 @@ func (s *DetentionSeed) createDetentionShipment(
 	db *keel.DB,
 	sr *seed.Run,
 	refs *detentionRefs,
-	candidates []*detention.DetentionPolicy,
+	candidates []*detentionpolicy.DetentionPolicy,
 	def detentionShipmentDef,
 ) (int, error) {
 	cust, ok := refs.customers[def.customer]
@@ -1358,7 +1383,7 @@ func (s *DetentionSeed) createAssignment(
 
 type createOccurrencesParams struct {
 	refs       *detentionRefs
-	candidates []*detention.DetentionPolicy
+	candidates []*detentionpolicy.DetentionPolicy
 	def        detentionShipmentDef
 	shipment   *shipment.Shipment
 	move       *shipment.ShipmentMove
@@ -1383,7 +1408,7 @@ func (s *DetentionSeed) createOccurrences(
 	for i, stop := range p.stops {
 		stopDef := p.def.stops[i]
 
-		match := detention.MatchInput{
+		match := detentionpolicy.MatchInput{
 			CustomerID:     p.shipment.CustomerID,
 			LocationID:     stop.LocationID,
 			ShipmentTypeID: p.shipment.ShipmentTypeID,
@@ -1406,7 +1431,7 @@ func (s *DetentionSeed) createOccurrences(
 				"policy %s references an accessorial the seed did not load", policy.Code)
 		}
 
-		snapshot := detention.NewPolicySnapshot(detention.SnapshotInput{
+		snapshot := detentionpolicy.NewPolicySnapshot(detentionpolicy.SnapshotInput{
 			Policy:          policy,
 			StopType:        string(stop.Type),
 			FreeMinutes:     policy.FreeMinutesForStopType(stop.Type),
@@ -1486,8 +1511,8 @@ func (s *DetentionSeed) createOccurrences(
 func buildDetentionOccurrence(
 	p createOccurrencesParams,
 	stop *shipment.Stop,
-	policy *detention.DetentionPolicy,
-	snapshot detention.PolicySnapshot,
+	policy *detentionpolicy.DetentionPolicy,
+	snapshot detentionpolicy.PolicySnapshot,
 	computed detentionservice.ComputeResult,
 ) *detention.DetentionOccurrence {
 	policyID := policy.ID
@@ -1576,7 +1601,7 @@ type persistOccurrenceParams struct {
 	refs         *detentionRefs
 	occurrence   *detention.DetentionOccurrence
 	stopDef      detentionStopDef
-	policy       *detention.DetentionPolicy
+	policy       *detentionpolicy.DetentionPolicy
 	shipment     *shipment.Shipment
 	location     *location.Location
 	customerCode string
@@ -1591,7 +1616,7 @@ func (s *DetentionSeed) persistOccurrence(
 	p persistOccurrenceParams,
 ) error {
 	entries := s.buildEvidence(p)
-	assessment := detention.AssessCollectability(p.occurrence, entries)
+	assessment := detentioncollectability.AssessCollectability(p.occurrence, entries)
 	p.occurrence.CollectabilityScore = assessment.Score
 	if len(entries) > 0 {
 		p.occurrence.EvidenceHead = entries[len(entries)-1].Hash
@@ -1698,16 +1723,19 @@ func (s *DetentionSeed) createDetentionCharge(
 // -- Evidence --
 
 type detentionEvidenceDef struct {
-	kind       detention.EvidenceKind
-	source     detention.EvidenceSource
+	kind       detentionevidence.EvidenceKind
+	source     detentionevidence.EvidenceSource
 	summary    string
 	observedAt int64
 	recordedBy *pulid.ID
 	payload    map[string]any
 }
 
+//
 //nolint:funlen // the claim file is assembled in the order the facts happened
-func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.DetentionEvidence {
+func (s *DetentionSeed) buildEvidence(
+	p persistOccurrenceParams,
+) []*detentionevidence.DetentionEvidence {
 	occ := p.occurrence
 	facility := "the facility"
 	if p.location != nil {
@@ -1719,9 +1747,13 @@ func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.De
 
 	if occ.AppointmentStart != nil {
 		defs = append(defs, detentionEvidenceDef{
-			kind:       detention.EvidenceKindAppointment,
-			source:     detention.EvidenceSourceSystem,
-			summary:    fmt.Sprintf("Appointment booked at %s for %s", facility, formatDetentionStamp(*occ.AppointmentStart, p.refs.timezone)),
+			kind:   detentionevidence.EvidenceKindAppointment,
+			source: detentionevidence.EvidenceSourceSystem,
+			summary: fmt.Sprintf(
+				"Appointment booked at %s for %s",
+				facility,
+				formatDetentionStamp(*occ.AppointmentStart, p.refs.timezone),
+			),
 			observedAt: *occ.AppointmentStart - detentionDay,
 			payload: map[string]any{
 				"windowStart":  *occ.AppointmentStart,
@@ -1733,7 +1765,7 @@ func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.De
 
 	if occ.ArrivedAt != nil {
 		defs = append(defs, detentionEvidenceDef{
-			kind:       detention.EvidenceKindArrival,
+			kind:       detentionevidence.EvidenceKindArrival,
 			source:     p.stopDef.arrivalSource,
 			summary:    fmt.Sprintf("Driver arrived at %s", facility),
 			observedAt: *occ.ArrivedAt,
@@ -1746,12 +1778,12 @@ func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.De
 
 	if p.noticeSent != nil && p.stopDef.notice != nil {
 		defs = append(defs, detentionEvidenceDef{
-			kind:       detention.EvidenceKindNotice,
-			source:     detention.EvidenceSourceSystem,
+			kind:       detentionevidence.EvidenceKindNotice,
+			source:     detentionevidence.EvidenceSourceSystem,
 			summary:    s.noticeEvidenceSummary(p),
 			observedAt: *p.noticeSent,
 			payload: map[string]any{
-				"channel":        string(detention.NoticeChannelEmail),
+				"channel":        string(detentionnotice.NoticeChannelEmail),
 				"deliveryStatus": string(p.stopDef.notice.delivery),
 				"automatic":      p.stopDef.notice.automatic,
 			},
@@ -1760,8 +1792,8 @@ func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.De
 
 	if p.stopDef.document != "" && occ.DepartedAt != nil {
 		defs = append(defs, detentionEvidenceDef{
-			kind:       detention.EvidenceKindDocument,
-			source:     detention.EvidenceSourceDocument,
+			kind:       detentionevidence.EvidenceKindDocument,
+			source:     detentionevidence.EvidenceSourceDocument,
 			summary:    p.stopDef.document,
 			observedAt: *occ.DepartedAt,
 		})
@@ -1769,9 +1801,13 @@ func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.De
 
 	if occ.DepartedAt != nil {
 		defs = append(defs, detentionEvidenceDef{
-			kind:       detention.EvidenceKindDeparture,
-			source:     p.stopDef.departureSource,
-			summary:    fmt.Sprintf("Driver departed %s after %s on site", facility, formatDetentionDuration(occ.RawDwellMinutes)),
+			kind:   detentionevidence.EvidenceKindDeparture,
+			source: p.stopDef.departureSource,
+			summary: fmt.Sprintf(
+				"Driver departed %s after %s on site",
+				facility,
+				formatDetentionDuration(occ.RawDwellMinutes),
+			),
 			observedAt: *occ.DepartedAt,
 			payload: map[string]any{
 				"capturedBy":      string(p.stopDef.departureSource),
@@ -1781,8 +1817,8 @@ func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.De
 	}
 
 	defs = append(defs, detentionEvidenceDef{
-		kind:   detention.EvidenceKindRecalculated,
-		source: detention.EvidenceSourceSystem,
+		kind:   detentionevidence.EvidenceKindRecalculated,
+		source: detentionevidence.EvidenceSourceSystem,
 		summary: fmt.Sprintf("Detention computed to %s %s (%s) under %s",
 			occ.BillableAmount.StringFixed(2), occ.Currency, occ.Status, p.policy.Code),
 		observedAt: p.now,
@@ -1797,33 +1833,42 @@ func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.De
 	switch occ.Status {
 	case detention.OccurrenceStatusApproved:
 		defs = append(defs, detentionEvidenceDef{
-			kind:       detention.EvidenceKindStatusChange,
-			source:     detention.EvidenceSourceManual,
-			summary:    "Approved for billing at " + occ.BillableAmount.StringFixed(2) + " " + occ.Currency,
+			kind:   detentionevidence.EvidenceKindStatusChange,
+			source: detentionevidence.EvidenceSourceManual,
+			summary: "Approved for billing at " + occ.BillableAmount.StringFixed(
+				2,
+			) + " " + occ.Currency,
 			observedAt: p.now,
 			recordedBy: &admin,
 		})
 	case detention.OccurrenceStatusBilled:
 		defs = append(defs, detentionEvidenceDef{
-			kind:       detention.EvidenceKindStatusChange,
-			source:     detention.EvidenceSourceSystem,
+			kind:       detentionevidence.EvidenceKindStatusChange,
+			source:     detentionevidence.EvidenceSourceSystem,
 			summary:    "Billed on shipment " + p.shipment.ProNumber,
 			observedAt: p.now,
 			recordedBy: &admin,
 		})
 	case detention.OccurrenceStatusWaived:
 		defs = append(defs, detentionEvidenceDef{
-			kind:   detention.EvidenceKindWaiver,
-			source: detention.EvidenceSourceManual,
-			summary: fmt.Sprintf("Waived %s %s (%s): %s",
-				occ.WaivedAmount.StringFixed(2), occ.Currency, p.stopDef.waiverReason, p.stopDef.note),
+			kind:   detentionevidence.EvidenceKindWaiver,
+			source: detentionevidence.EvidenceSourceManual,
+			summary: fmt.Sprintf(
+				"Waived %s %s (%s): %s",
+				occ.WaivedAmount.StringFixed(
+					2,
+				),
+				occ.Currency,
+				p.stopDef.waiverReason,
+				p.stopDef.note,
+			),
 			observedAt: p.now,
 			recordedBy: &admin,
 		})
 	case detention.OccurrenceStatusDisputed:
 		defs = append(defs, detentionEvidenceDef{
-			kind:       detention.EvidenceKindDispute,
-			source:     detention.EvidenceSourceManual,
+			kind:       detentionevidence.EvidenceKindDispute,
+			source:     detentionevidence.EvidenceSourceManual,
 			summary:    "Customer disputed the charge: " + p.stopDef.note,
 			observedAt: p.now,
 			recordedBy: &admin,
@@ -1840,12 +1885,12 @@ func (s *DetentionSeed) buildEvidence(p persistOccurrenceParams) []*detention.De
 func sealDetentionEvidence(
 	occ *detention.DetentionOccurrence,
 	defs []detentionEvidenceDef,
-) []*detention.DetentionEvidence {
-	entries := make([]*detention.DetentionEvidence, 0, len(defs))
-	prev := detention.GenesisHash
+) []*detentionevidence.DetentionEvidence {
+	entries := make([]*detentionevidence.DetentionEvidence, 0, len(defs))
+	prev := detentionevidence.GenesisHash
 
 	for i, def := range defs {
-		entry := &detention.DetentionEvidence{
+		entry := &detentionevidence.DetentionEvidence{
 			ID:                    pulid.MustNew("dte_"),
 			BusinessUnitID:        occ.BusinessUnitID,
 			OrganizationID:        occ.OrganizationID,
@@ -1917,13 +1962,13 @@ func (s *DetentionSeed) createNotice(
 	}
 
 	sentAt := *p.noticeSent
-	notice := &detention.DetentionNotice{
+	notice := &detentionnotice.DetentionNotice{
 		ID:                    pulid.MustNew("dtn_"),
 		BusinessUnitID:        p.refs.buID,
 		OrganizationID:        p.refs.orgID,
 		DetentionOccurrenceID: p.occurrence.ID,
 		Kind:                  def.kind,
-		Channel:               detention.NoticeChannelEmail,
+		Channel:               detentionnotice.NoticeChannelEmail,
 		DeliveryStatus:        def.delivery,
 		Recipients:            recipients,
 		Subject:               content.Subject,
@@ -1949,11 +1994,11 @@ func (s *DetentionSeed) createNotice(
 		notice.FailedAt = &sentAt
 		notice.FailureReason = def.failureReason
 		notice.SatisfiesRequirement = false
-	case def.delivery == detention.NoticeDeliveryStatusOpened:
+	case def.delivery == detentionnotice.NoticeDeliveryStatusOpened:
 		notice.DeliveredAt = new(sentAt + 3*detentionMinute)
 		notice.OpenedAt = new(sentAt + 11*detentionMinute)
 		notice.ProviderMessageID = "seed-" + notice.ID.String()
-	case def.delivery == detention.NoticeDeliveryStatusDelivered:
+	case def.delivery == detentionnotice.NoticeDeliveryStatusDelivered:
 		notice.DeliveredAt = new(sentAt + 2*detentionMinute)
 		notice.ProviderMessageID = "seed-" + notice.ID.String()
 	}
@@ -1969,16 +2014,16 @@ func (s *DetentionSeed) createNotice(
 
 // detentionTierUnit maps an accessorial's rate unit onto the tier vocabulary the
 // snapshot speaks, mirroring how the service freezes a flat-rate policy.
-func detentionTierUnit(unit accessorialcharge.RateUnit) detention.TierRateUnit {
+func detentionTierUnit(unit accessorialcharge.RateUnit) detentionpolicy.TierRateUnit {
 	switch unit {
 	case accessorialcharge.RateUnitHour:
-		return detention.TierRateUnitHour
+		return detentionpolicy.TierRateUnitHour
 	case accessorialcharge.RateUnitDay:
-		return detention.TierRateUnitDay
+		return detentionpolicy.TierRateUnitDay
 	case accessorialcharge.RateUnitStop, accessorialcharge.RateUnitMile:
-		return detention.TierRateUnitFlat
+		return detentionpolicy.TierRateUnitFlat
 	default:
-		return detention.TierRateUnitHour
+		return detentionpolicy.TierRateUnitHour
 	}
 }
 

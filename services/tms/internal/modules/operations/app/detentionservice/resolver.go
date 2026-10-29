@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -26,9 +26,9 @@ type CandidateVerdict struct {
 
 // Resolution is the outcome of matching a stop against every candidate policy.
 type Resolution struct {
-	Policy      *detention.DetentionPolicy `json:"-"`
-	Verdicts    []CandidateVerdict         `json:"verdicts"`
-	Explanation string                     `json:"explanation"`
+	Policy      *detentionpolicy.DetentionPolicy `json:"-"`
+	Verdicts    []CandidateVerdict               `json:"verdicts"`
+	Explanation string                           `json:"explanation"`
 }
 
 // Found reports whether any policy governs the stop.
@@ -41,11 +41,11 @@ func (r Resolution) Found() bool { return r.Policy != nil }
 // automatically beats a customer-wide one without anyone maintaining an
 // ordering by hand.
 func ResolvePolicy(
-	candidates []*detention.DetentionPolicy,
-	in detention.MatchInput,
+	candidates []*detentionpolicy.DetentionPolicy,
+	in detentionpolicy.MatchInput,
 ) Resolution {
 	verdicts := make([]CandidateVerdict, 0, len(candidates))
-	matched := make([]*detention.DetentionPolicy, 0, len(candidates))
+	matched := make([]*detentionpolicy.DetentionPolicy, 0, len(candidates))
 
 	for _, policy := range candidates {
 		if policy == nil {
@@ -101,7 +101,7 @@ func ResolvePolicy(
 }
 
 // lessSpecific reports whether a ranks below b under the precedence rules.
-func lessSpecific(a, b *detention.DetentionPolicy) bool {
+func lessSpecific(a, b *detentionpolicy.DetentionPolicy) bool {
 	if a.Priority != b.Priority {
 		return a.Priority < b.Priority
 	}
@@ -134,7 +134,10 @@ func sortVerdicts(verdicts []CandidateVerdict) {
 	})
 }
 
-func explain(winner *detention.DetentionPolicy, matched []*detention.DetentionPolicy) string {
+func explain(
+	winner *detentionpolicy.DetentionPolicy,
+	matched []*detentionpolicy.DetentionPolicy,
+) string {
 	scope := describeScope(winner)
 
 	if len(matched) == 1 {
@@ -156,7 +159,7 @@ func explain(winner *detention.DetentionPolicy, matched []*detention.DetentionPo
 	)
 }
 
-func describeScope(policy *detention.DetentionPolicy) string {
+func describeScope(policy *detentionpolicy.DetentionPolicy) string {
 	if policy.IsOrgDefault {
 		return "as the organization default"
 	}
@@ -189,8 +192,11 @@ func describeScope(policy *detention.DetentionPolicy) string {
 	return strings.Join(parts, " and ")
 }
 
-func rejectionReason(policy *detention.DetentionPolicy, in detention.MatchInput) string {
-	if policy.Status != detention.PolicyStatusActive {
+func rejectionReason(
+	policy *detentionpolicy.DetentionPolicy,
+	in detentionpolicy.MatchInput,
+) string {
+	if policy.Status != detentionpolicy.PolicyStatusActive {
 		return fmt.Sprintf("Policy status is %s", policy.Status)
 	}
 

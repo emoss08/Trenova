@@ -3,9 +3,9 @@ package detentionservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,22 +16,25 @@ var (
 	resolveLocationID = pulid.MustNew("loc_")
 )
 
-func policy(code string, mutate func(*detention.DetentionPolicy)) *detention.DetentionPolicy {
-	p := &detention.DetentionPolicy{
+func policy(
+	code string,
+	mutate func(*detentionpolicy.DetentionPolicy),
+) *detentionpolicy.DetentionPolicy {
+	p := &detentionpolicy.DetentionPolicy{
 		ID:                      pulid.MustNew("dtp_"),
 		Code:                    code,
 		Name:                    code,
-		Status:                  detention.PolicyStatusActive,
-		ClockStartBasis:         detention.ClockStartBasisArrival,
-		LateArrivalRule:         detention.LateArrivalRuleNoEffect,
-		RoundingMode:            detention.RoundingModeUp,
+		Status:                  detentionpolicy.PolicyStatusActive,
+		ClockStartBasis:         detentionpolicy.ClockStartBasisArrival,
+		LateArrivalRule:         detentionpolicy.LateArrivalRuleNoEffect,
+		RoundingMode:            detentionpolicy.RoundingModeUp,
 		BillingIncrementMinutes: 15,
 		BillingFreeMinutes:      120,
-		RateSource:              detention.RateSourceAccessorial,
+		RateSource:              detentionpolicy.RateSourceAccessorial,
 		AccessorialChargeID:     pulid.MustNew("acc_"),
-		NotificationRequirement: detention.NotificationRequirementNone,
-		UnnotifiedBehavior:      detention.UnnotifiedBehaviorBill,
-		DayBoundaryMode:         detention.CapScopePerStop,
+		NotificationRequirement: detentionpolicy.NotificationRequirementNone,
+		UnnotifiedBehavior:      detentionpolicy.UnnotifiedBehaviorBill,
+		DayBoundaryMode:         detentionpolicy.CapScopePerStop,
 		Currency:                "USD",
 		CreatedAt:               1000,
 	}
@@ -41,8 +44,8 @@ func policy(code string, mutate func(*detention.DetentionPolicy)) *detention.Det
 	return p
 }
 
-func matchInput() detention.MatchInput {
-	return detention.MatchInput{
+func matchInput() detentionpolicy.MatchInput {
+	return detentionpolicy.MatchInput{
 		CustomerID:     resolveCustomerID,
 		LocationID:     resolveLocationID,
 		ShipmentTypeID: pulid.MustNew("spt_"),
@@ -65,13 +68,13 @@ func TestResolvePolicy_NoCandidates(t *testing.T) {
 func TestResolvePolicy_OrgDefaultWins_WhenNothingElseMatches(t *testing.T) {
 	t.Parallel()
 
-	orgDefault := policy("ORG", func(p *detention.DetentionPolicy) { p.IsOrgDefault = true })
-	otherCustomer := policy("OTHER", func(p *detention.DetentionPolicy) {
+	orgDefault := policy("ORG", func(p *detentionpolicy.DetentionPolicy) { p.IsOrgDefault = true })
+	otherCustomer := policy("OTHER", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = ptr(pulid.MustNew("cus_"))
 	})
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{otherCustomer, orgDefault},
+		[]*detentionpolicy.DetentionPolicy{otherCustomer, orgDefault},
 		matchInput(),
 	)
 
@@ -82,17 +85,17 @@ func TestResolvePolicy_OrgDefaultWins_WhenNothingElseMatches(t *testing.T) {
 func TestResolvePolicy_SpecificityBeatsGeneral(t *testing.T) {
 	t.Parallel()
 
-	orgDefault := policy("ORG", func(p *detention.DetentionPolicy) { p.IsOrgDefault = true })
-	customerPolicy := policy("CUST", func(p *detention.DetentionPolicy) {
+	orgDefault := policy("ORG", func(p *detentionpolicy.DetentionPolicy) { p.IsOrgDefault = true })
+	customerPolicy := policy("CUST", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 	})
-	facilityPolicy := policy("FACILITY", func(p *detention.DetentionPolicy) {
+	facilityPolicy := policy("FACILITY", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.LocationID = &resolveLocationID
 	})
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{orgDefault, customerPolicy, facilityPolicy},
+		[]*detentionpolicy.DetentionPolicy{orgDefault, customerPolicy, facilityPolicy},
 		matchInput(),
 	)
 
@@ -106,17 +109,17 @@ func TestResolvePolicy_SpecificityBeatsGeneral(t *testing.T) {
 func TestResolvePolicy_PriorityOverridesSpecificity(t *testing.T) {
 	t.Parallel()
 
-	facilityPolicy := policy("FACILITY", func(p *detention.DetentionPolicy) {
+	facilityPolicy := policy("FACILITY", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.LocationID = &resolveLocationID
 	})
-	override := policy("OVERRIDE", func(p *detention.DetentionPolicy) {
+	override := policy("OVERRIDE", func(p *detentionpolicy.DetentionPolicy) {
 		p.IsOrgDefault = true
 		p.Priority = 100
 	})
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{facilityPolicy, override},
+		[]*detentionpolicy.DetentionPolicy{facilityPolicy, override},
 		matchInput(),
 	)
 
@@ -128,17 +131,17 @@ func TestResolvePolicy_PriorityOverridesSpecificity(t *testing.T) {
 func TestResolvePolicy_TieBreaksOnAge(t *testing.T) {
 	t.Parallel()
 
-	older := policy("OLDER", func(p *detention.DetentionPolicy) {
+	older := policy("OLDER", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.CreatedAt = 1000
 	})
-	newer := policy("NEWER", func(p *detention.DetentionPolicy) {
+	newer := policy("NEWER", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.CreatedAt = 9000
 	})
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{newer, older},
+		[]*detentionpolicy.DetentionPolicy{newer, older},
 		matchInput(),
 	)
 
@@ -150,20 +153,20 @@ func TestResolvePolicy_TieBreaksOnAge(t *testing.T) {
 func TestResolvePolicy_IsDeterministicRegardlessOfInputOrder(t *testing.T) {
 	t.Parallel()
 
-	a := policy("A", func(p *detention.DetentionPolicy) {
+	a := policy("A", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.CreatedAt = 1000
 	})
-	b := policy("B", func(p *detention.DetentionPolicy) {
+	b := policy("B", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.CreatedAt = 1000
 	})
 
 	forward := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{a, b}, matchInput(),
+		[]*detentionpolicy.DetentionPolicy{a, b}, matchInput(),
 	)
 	reverse := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{b, a}, matchInput(),
+		[]*detentionpolicy.DetentionPolicy{b, a}, matchInput(),
 	)
 
 	require.True(t, forward.Found())
@@ -175,18 +178,18 @@ func TestResolvePolicy_IsDeterministicRegardlessOfInputOrder(t *testing.T) {
 func TestResolvePolicy_EffectiveDatingExcludesExpired(t *testing.T) {
 	t.Parallel()
 
-	expired := policy("EXPIRED", func(p *detention.DetentionPolicy) {
+	expired := policy("EXPIRED", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.LocationID = &resolveLocationID
 		p.EffectiveEndDate = ptr(int64(4000))
 	})
-	current := policy("CURRENT", func(p *detention.DetentionPolicy) {
+	current := policy("CURRENT", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.EffectiveStartDate = ptr(int64(1000))
 	})
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{expired, current},
+		[]*detentionpolicy.DetentionPolicy{expired, current},
 		matchInput(),
 	)
 
@@ -198,13 +201,13 @@ func TestResolvePolicy_EffectiveDatingExcludesExpired(t *testing.T) {
 func TestResolvePolicy_NotYetEffectiveIsExcluded(t *testing.T) {
 	t.Parallel()
 
-	future := policy("FUTURE", func(p *detention.DetentionPolicy) {
+	future := policy("FUTURE", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.EffectiveStartDate = ptr(int64(9000))
 	})
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{future},
+		[]*detentionpolicy.DetentionPolicy{future},
 		matchInput(),
 	)
 
@@ -216,16 +219,16 @@ func TestResolvePolicy_NotYetEffectiveIsExcluded(t *testing.T) {
 func TestResolvePolicy_VerdictsExplainEveryCandidate(t *testing.T) {
 	t.Parallel()
 
-	winner := policy("WIN", func(p *detention.DetentionPolicy) {
+	winner := policy("WIN", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 	})
-	wrongCustomer := policy("WRONGCUST", func(p *detention.DetentionPolicy) {
+	wrongCustomer := policy("WRONGCUST", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = ptr(pulid.MustNew("cus_"))
 	})
-	inactive := policy("INACTIVE", func(p *detention.DetentionPolicy) {
-		p.Status = detention.PolicyStatusInactive
+	inactive := policy("INACTIVE", func(p *detentionpolicy.DetentionPolicy) {
+		p.Status = detentionpolicy.PolicyStatusInactive
 	})
-	appointmentOnly := policy("APPT", func(p *detention.DetentionPolicy) {
+	appointmentOnly := policy("APPT", func(p *detentionpolicy.DetentionPolicy) {
 		p.AppointmentStopsOnly = true
 	})
 
@@ -233,7 +236,7 @@ func TestResolvePolicy_VerdictsExplainEveryCandidate(t *testing.T) {
 	in.ScheduleType = shipment.StopScheduleTypeOpen
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{winner, wrongCustomer, inactive, appointmentOnly},
+		[]*detentionpolicy.DetentionPolicy{winner, wrongCustomer, inactive, appointmentOnly},
 		in,
 	)
 
@@ -260,7 +263,7 @@ func TestResolvePolicy_NilCandidatesAreSkipped(t *testing.T) {
 	t.Parallel()
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{nil, policy("OK", nil), nil},
+		[]*detentionpolicy.DetentionPolicy{nil, policy("OK", nil), nil},
 		matchInput(),
 	)
 
@@ -272,16 +275,16 @@ func TestResolvePolicy_NilCandidatesAreSkipped(t *testing.T) {
 func TestResolvePolicy_ExplanationNamesTheRunnerUp(t *testing.T) {
 	t.Parallel()
 
-	facility := policy("FACILITY", func(p *detention.DetentionPolicy) {
+	facility := policy("FACILITY", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 		p.LocationID = &resolveLocationID
 	})
-	customer := policy("CUSTOMER", func(p *detention.DetentionPolicy) {
+	customer := policy("CUSTOMER", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 	})
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{customer, facility},
+		[]*detentionpolicy.DetentionPolicy{customer, facility},
 		matchInput(),
 	)
 
@@ -295,7 +298,7 @@ func TestResolvePolicy_SingleMatchExplanation(t *testing.T) {
 	t.Parallel()
 
 	res := detentionservice.ResolvePolicy(
-		[]*detention.DetentionPolicy{policy("ONLY", nil)},
+		[]*detentionpolicy.DetentionPolicy{policy("ONLY", nil)},
 		matchInput(),
 	)
 

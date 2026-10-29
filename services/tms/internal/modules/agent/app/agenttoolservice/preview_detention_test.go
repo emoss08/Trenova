@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -26,7 +28,7 @@ func previewedCharge() *detention.DetentionOccurrence {
 		BillableAmount:     decimal.NewFromInt(425),
 		Currency:           "USD",
 		NotificationStatus: detention.NotificationStatusPending,
-		PolicySnapshot:     &detention.PolicySnapshot{Currency: "USD"},
+		PolicySnapshot:     &detentionpolicy.PolicySnapshot{Currency: "USD"},
 		LocationName:       "Memphis DC",
 		ShipmentProNumber:  "SHP-1001",
 		CustomerName:       "Acme Foods",
@@ -101,7 +103,7 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	det := &agenttoolstest.FakeDetention{Notice: &detentionservice.NoticePreview{
 		Before:     before,
 		After:      &after,
-		Kind:       detention.NoticeKindStarted,
+		Kind:       detentionnotice.NoticeKindStarted,
 		Recipients: []string{"ap@acme.test"},
 		Content: detentionservice.NoticeContent{
 			Subject:   "Detention charges started",

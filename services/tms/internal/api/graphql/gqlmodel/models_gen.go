@@ -3,6 +3,10 @@
 package gqlmodel
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
@@ -3460,7 +3464,7 @@ type DetentionClockPrice struct {
 
 type DetentionCollectability struct {
 	Score      int                     `json:"score"`
-	Band       detention.ScoreBand     `json:"band"`
+	Band       detentioncollectability.ScoreBand     `json:"band"`
 	Factors    []*DetentionScoreFactor `json:"factors"`
 	ChainValid bool                    `json:"chainValid"`
 	Summary    string                  `json:"summary"`
@@ -3497,8 +3501,8 @@ type DetentionEvidence struct {
 	ID                    string                   `json:"id"`
 	DetentionOccurrenceID string                   `json:"detentionOccurrenceId"`
 	Sequence              int                      `json:"sequence"`
-	Kind                  detention.EvidenceKind   `json:"kind"`
-	Source                detention.EvidenceSource `json:"source"`
+	Kind                  detentionevidence.EvidenceKind   `json:"kind"`
+	Source                detentionevidence.EvidenceSource `json:"source"`
 	Summary               string                   `json:"summary"`
 	ObservedAt            int                      `json:"observedAt"`
 	RecordedAt            int                      `json:"recordedAt"`
@@ -3514,9 +3518,9 @@ type DetentionNotice struct {
 	ID                    string                         `json:"id"`
 	DetentionOccurrenceID string                         `json:"detentionOccurrenceId"`
 	ThreadKey             string                         `json:"threadKey"`
-	Kind                  detention.NoticeKind           `json:"kind"`
-	Channel               detention.NoticeChannel        `json:"channel"`
-	DeliveryStatus        detention.NoticeDeliveryStatus `json:"deliveryStatus"`
+	Kind                  detentionnotice.NoticeKind           `json:"kind"`
+	Channel               detentionnotice.NoticeChannel        `json:"channel"`
+	DeliveryStatus        detentionnotice.NoticeDeliveryStatus `json:"deliveryStatus"`
 	Recipients            []string                       `json:"recipients,omitempty"`
 	Subject               string                         `json:"subject"`
 	Body                  string                         `json:"body"`
@@ -3624,7 +3628,7 @@ type DetentionPolicy struct {
 	Name                        string                            `json:"name"`
 	Code                        string                            `json:"code"`
 	Description                 string                            `json:"description"`
-	Status                      detention.PolicyStatus            `json:"status"`
+	Status                      detentionpolicy.PolicyStatus            `json:"status"`
 	IsOrgDefault                bool                              `json:"isOrgDefault"`
 	Priority                    int                               `json:"priority"`
 	SpecificityScore            int                               `json:"specificityScore"`
@@ -3637,8 +3641,8 @@ type DetentionPolicy struct {
 	AppointmentStopsOnly        bool                              `json:"appointmentStopsOnly"`
 	EffectiveStartDate          *int                              `json:"effectiveStartDate,omitempty"`
 	EffectiveEndDate            *int                              `json:"effectiveEndDate,omitempty"`
-	ClockStartBasis             detention.ClockStartBasis         `json:"clockStartBasis"`
-	LateArrivalRule             detention.LateArrivalRule         `json:"lateArrivalRule"`
+	ClockStartBasis             detentionpolicy.ClockStartBasis         `json:"clockStartBasis"`
+	LateArrivalRule             detentionpolicy.LateArrivalRule         `json:"lateArrivalRule"`
 	LateArrivalGraceMinutes     int                               `json:"lateArrivalGraceMinutes"`
 	BillingFreeMinutes          int                               `json:"billingFreeMinutes"`
 	PickupFreeMinutes           *int                              `json:"pickupFreeMinutes,omitempty"`
@@ -3646,21 +3650,21 @@ type DetentionPolicy struct {
 	PayFreeMinutes              *int                              `json:"payFreeMinutes,omitempty"`
 	MinimumBillableMinutes      int                               `json:"minimumBillableMinutes"`
 	BillingIncrementMinutes     int                               `json:"billingIncrementMinutes"`
-	RoundingMode                detention.RoundingMode            `json:"roundingMode"`
-	RateSource                  detention.RateSource              `json:"rateSource"`
+	RoundingMode                detentionpolicy.RoundingMode            `json:"roundingMode"`
+	RateSource                  detentionpolicy.RateSource              `json:"rateSource"`
 	AccessorialChargeID         string                            `json:"accessorialChargeId"`
 	Tiers                       []*DetentionPolicyTier            `json:"tiers"`
 	MaxBillableMinutesPerStop   *int                              `json:"maxBillableMinutesPerStop,omitempty"`
 	MaxChargePerStop            *string                           `json:"maxChargePerStop,omitempty"`
 	MaxChargePerDay             *string                           `json:"maxChargePerDay,omitempty"`
 	MaxChargePerShipment        *string                           `json:"maxChargePerShipment,omitempty"`
-	DayBoundaryMode             detention.CapScope                `json:"dayBoundaryMode"`
+	DayBoundaryMode             detentionpolicy.CapScope                `json:"dayBoundaryMode"`
 	ConvertToLayoverAtMinutes   *int                              `json:"convertToLayoverAtMinutes,omitempty"`
 	LayoverAccessorialChargeID  *string                           `json:"layoverAccessorialChargeId,omitempty"`
-	NotificationRequirement     detention.NotificationRequirement `json:"notificationRequirement"`
+	NotificationRequirement     detentionpolicy.NotificationRequirement `json:"notificationRequirement"`
 	NotificationLeadMinutes     int                               `json:"notificationLeadMinutes"`
 	NotificationDeadlineMinutes int                               `json:"notificationDeadlineMinutes"`
-	UnnotifiedBehavior          detention.UnnotifiedBehavior      `json:"unnotifiedBehavior"`
+	UnnotifiedBehavior          detentionpolicy.UnnotifiedBehavior      `json:"unnotifiedBehavior"`
 	AutoSendNotice              bool                              `json:"autoSendNotice"`
 	AttachNoticePDF             bool                              `json:"attachNoticePdf"`
 	SendDepartureSummary        bool                              `json:"sendDepartureSummary"`
@@ -3690,7 +3694,7 @@ type DetentionPolicyInput struct {
 	Name                        string                             `json:"name"`
 	Code                        string                             `json:"code"`
 	Description                 *string                            `json:"description,omitempty"`
-	Status                      *detention.PolicyStatus            `json:"status,omitempty"`
+	Status                      *detentionpolicy.PolicyStatus            `json:"status,omitempty"`
 	IsOrgDefault                *bool                              `json:"isOrgDefault,omitempty"`
 	Priority                    *int                               `json:"priority,omitempty"`
 	CustomerID                  *string                            `json:"customerId,omitempty"`
@@ -3702,8 +3706,8 @@ type DetentionPolicyInput struct {
 	AppointmentStopsOnly        *bool                              `json:"appointmentStopsOnly,omitempty"`
 	EffectiveStartDate          *int                               `json:"effectiveStartDate,omitempty"`
 	EffectiveEndDate            *int                               `json:"effectiveEndDate,omitempty"`
-	ClockStartBasis             *detention.ClockStartBasis         `json:"clockStartBasis,omitempty"`
-	LateArrivalRule             *detention.LateArrivalRule         `json:"lateArrivalRule,omitempty"`
+	ClockStartBasis             *detentionpolicy.ClockStartBasis         `json:"clockStartBasis,omitempty"`
+	LateArrivalRule             *detentionpolicy.LateArrivalRule         `json:"lateArrivalRule,omitempty"`
 	LateArrivalGraceMinutes     *int                               `json:"lateArrivalGraceMinutes,omitempty"`
 	BillingFreeMinutes          *int                               `json:"billingFreeMinutes,omitempty"`
 	PickupFreeMinutes           *int                               `json:"pickupFreeMinutes,omitempty"`
@@ -3711,21 +3715,21 @@ type DetentionPolicyInput struct {
 	PayFreeMinutes              *int                               `json:"payFreeMinutes,omitempty"`
 	MinimumBillableMinutes      *int                               `json:"minimumBillableMinutes,omitempty"`
 	BillingIncrementMinutes     *int                               `json:"billingIncrementMinutes,omitempty"`
-	RoundingMode                *detention.RoundingMode            `json:"roundingMode,omitempty"`
-	RateSource                  *detention.RateSource              `json:"rateSource,omitempty"`
+	RoundingMode                *detentionpolicy.RoundingMode            `json:"roundingMode,omitempty"`
+	RateSource                  *detentionpolicy.RateSource              `json:"rateSource,omitempty"`
 	AccessorialChargeID         string                             `json:"accessorialChargeId"`
 	Tiers                       []*DetentionTierInput              `json:"tiers,omitempty"`
 	MaxBillableMinutesPerStop   *int                               `json:"maxBillableMinutesPerStop,omitempty"`
 	MaxChargePerStop            *string                            `json:"maxChargePerStop,omitempty"`
 	MaxChargePerDay             *string                            `json:"maxChargePerDay,omitempty"`
 	MaxChargePerShipment        *string                            `json:"maxChargePerShipment,omitempty"`
-	DayBoundaryMode             *detention.CapScope                `json:"dayBoundaryMode,omitempty"`
+	DayBoundaryMode             *detentionpolicy.CapScope                `json:"dayBoundaryMode,omitempty"`
 	ConvertToLayoverAtMinutes   *int                               `json:"convertToLayoverAtMinutes,omitempty"`
 	LayoverAccessorialChargeID  *string                            `json:"layoverAccessorialChargeId,omitempty"`
-	NotificationRequirement     *detention.NotificationRequirement `json:"notificationRequirement,omitempty"`
+	NotificationRequirement     *detentionpolicy.NotificationRequirement `json:"notificationRequirement,omitempty"`
 	NotificationLeadMinutes     *int                               `json:"notificationLeadMinutes,omitempty"`
 	NotificationDeadlineMinutes *int                               `json:"notificationDeadlineMinutes,omitempty"`
-	UnnotifiedBehavior          *detention.UnnotifiedBehavior      `json:"unnotifiedBehavior,omitempty"`
+	UnnotifiedBehavior          *detentionpolicy.UnnotifiedBehavior      `json:"unnotifiedBehavior,omitempty"`
 	AutoSendNotice              *bool                              `json:"autoSendNotice,omitempty"`
 	AttachNoticePDF             *bool                              `json:"attachNoticePdf,omitempty"`
 	SendDepartureSummary        *bool                              `json:"sendDepartureSummary,omitempty"`
@@ -3741,7 +3745,7 @@ type DetentionPolicyTier struct {
 	FromMinute int                    `json:"fromMinute"`
 	ToMinute   *int                   `json:"toMinute,omitempty"`
 	Rate       string                 `json:"rate"`
-	RateUnit   detention.TierRateUnit `json:"rateUnit"`
+	RateUnit   detentionpolicy.TierRateUnit `json:"rateUnit"`
 	Label      string                 `json:"label"`
 	SortOrder  int                    `json:"sortOrder"`
 }
@@ -3799,7 +3803,7 @@ type DetentionTierInput struct {
 	FromMinute int                     `json:"fromMinute"`
 	ToMinute   *int                    `json:"toMinute,omitempty"`
 	Rate       string                  `json:"rate"`
-	RateUnit   *detention.TierRateUnit `json:"rateUnit,omitempty"`
+	RateUnit   *detentionpolicy.TierRateUnit `json:"rateUnit,omitempty"`
 	Label      *string                 `json:"label,omitempty"`
 	SortOrder  *int                    `json:"sortOrder,omitempty"`
 }

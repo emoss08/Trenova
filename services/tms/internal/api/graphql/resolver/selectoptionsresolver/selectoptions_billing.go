@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -289,7 +289,9 @@ func accountTypeSelectOption(entity *accounttype.AccountType) *gqlmodel.SelectOp
 	}
 }
 
-func detentionPolicySelectOptionItem(entity *detention.DetentionPolicy) selectOptionConnectionItem {
+func detentionPolicySelectOptionItem(
+	entity *detentionpolicy.DetentionPolicy,
+) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		detentionPolicySelectOption(entity),
 		entity.CreatedAt,
@@ -297,7 +299,7 @@ func detentionPolicySelectOptionItem(entity *detention.DetentionPolicy) selectOp
 	)
 }
 
-func detentionPolicySelectOption(entity *detention.DetentionPolicy) *gqlmodel.SelectOption {
+func detentionPolicySelectOption(entity *detentionpolicy.DetentionPolicy) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Name,

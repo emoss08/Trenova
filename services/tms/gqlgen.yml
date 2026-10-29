@@ -4387,31 +4387,31 @@ models:
         resolver: true
   DetentionPolicyStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.PolicyStatus
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.PolicyStatus
   DetentionClockStartBasis:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.ClockStartBasis
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.ClockStartBasis
   DetentionLateArrivalRule:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.LateArrivalRule
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.LateArrivalRule
   DetentionRoundingMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.RoundingMode
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.RoundingMode
   DetentionRateSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.RateSource
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.RateSource
   DetentionTierRateUnit:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.TierRateUnit
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.TierRateUnit
   DetentionNotificationRequirement:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.NotificationRequirement
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.NotificationRequirement
   DetentionUnnotifiedBehavior:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.UnnotifiedBehavior
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.UnnotifiedBehavior
   DetentionCapScope:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.CapScope
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.CapScope
   DetentionOccurrence:
     fields:
       calculationTrace:
@@ -4440,22 +4440,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.WaiverReason
   DetentionScoreBand:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.ScoreBand
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability.ScoreBand
   DetentionNoticeKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.NoticeKind
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice.NoticeKind
   DetentionNoticeChannel:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.NoticeChannel
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice.NoticeChannel
   DetentionNoticeDeliveryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.NoticeDeliveryStatus
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice.NoticeDeliveryStatus
   DetentionEvidenceKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.EvidenceKind
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence.EvidenceKind
   DetentionEvidenceSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.EvidenceSource
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence.EvidenceSource
   EmailProvider:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/email.Provider

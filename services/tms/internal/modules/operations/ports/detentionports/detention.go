@@ -4,6 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -45,39 +48,39 @@ type DetentionPolicyRepository interface {
 	List(
 		ctx context.Context,
 		req *ListDetentionPoliciesRequest,
-	) (*pagination.ListResult[*detention.DetentionPolicy], error)
+	) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error)
 
 	ListConnection(
 		ctx context.Context,
 		req *ListDetentionPolicyConnectionRequest,
-	) (*pagination.CursorListResult[*detention.DetentionPolicy], error)
+	) (*pagination.CursorListResult[*detentionpolicy.DetentionPolicy], error)
 
 	GetByID(
 		ctx context.Context,
 		req *GetDetentionPolicyByIDRequest,
-	) (*detention.DetentionPolicy, error)
+	) (*detentionpolicy.DetentionPolicy, error)
 
 	GetResolutionCandidates(
 		ctx context.Context,
 		req *GetResolutionCandidatesRequest,
-	) ([]*detention.DetentionPolicy, error)
+	) ([]*detentionpolicy.DetentionPolicy, error)
 
 	Create(
 		ctx context.Context,
-		entity *detention.DetentionPolicy,
-	) (*detention.DetentionPolicy, error)
+		entity *detentionpolicy.DetentionPolicy,
+	) (*detentionpolicy.DetentionPolicy, error)
 
 	Update(
 		ctx context.Context,
-		entity *detention.DetentionPolicy,
-	) (*detention.DetentionPolicy, error)
+		entity *detentionpolicy.DetentionPolicy,
+	) (*detentionpolicy.DetentionPolicy, error)
 
 	Delete(ctx context.Context, req *GetDetentionPolicyByIDRequest) error
 
 	SelectOptions(
 		ctx context.Context,
 		req *DetentionPolicySelectOptionsRequest,
-	) (*pagination.ListResult[*detention.DetentionPolicy], error)
+	) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error)
 
 	CodeExists(
 		ctx context.Context,
@@ -87,7 +90,7 @@ type DetentionPolicyRepository interface {
 	FindOverlapping(
 		ctx context.Context,
 		req *FindOverlappingDetentionPoliciesRequest,
-	) ([]*detention.DetentionPolicy, error)
+	) ([]*detentionpolicy.DetentionPolicy, error)
 }
 
 type DetentionPolicyCodeExistsRequest struct {
@@ -248,7 +251,7 @@ type ListNoticesDueRequest struct {
 }
 
 type AppendEvidenceRequest struct {
-	Entry *detention.DetentionEvidence
+	Entry *detentionevidence.DetentionEvidence
 }
 
 type ListEvidenceRequest struct {
@@ -260,12 +263,12 @@ type DetentionEvidenceRepository interface {
 	Append(
 		ctx context.Context,
 		req *AppendEvidenceRequest,
-	) (*detention.DetentionEvidence, error)
+	) (*detentionevidence.DetentionEvidence, error)
 
 	List(
 		ctx context.Context,
 		req *ListEvidenceRequest,
-	) ([]*detention.DetentionEvidence, error)
+	) ([]*detentionevidence.DetentionEvidence, error)
 
 	Head(
 		ctx context.Context,
@@ -293,8 +296,8 @@ type AttachNoticePDFDocumentRequest struct {
 type DetentionNoticeRepository interface {
 	Create(
 		ctx context.Context,
-		entity *detention.DetentionNotice,
-	) (*detention.DetentionNotice, error)
+		entity *detentionnotice.DetentionNotice,
+	) (*detentionnotice.DetentionNotice, error)
 
 	AttachPDFDocument(
 		ctx context.Context,
@@ -303,18 +306,18 @@ type DetentionNoticeRepository interface {
 
 	Update(
 		ctx context.Context,
-		entity *detention.DetentionNotice,
-	) (*detention.DetentionNotice, error)
+		entity *detentionnotice.DetentionNotice,
+	) (*detentionnotice.DetentionNotice, error)
 
 	List(
 		ctx context.Context,
 		req *ListDetentionNoticesRequest,
-	) ([]*detention.DetentionNotice, error)
+	) ([]*detentionnotice.DetentionNotice, error)
 
 	ListQueued(
 		ctx context.Context,
 		req *ListNoticesDueRequest,
-	) ([]*detention.DetentionNotice, error)
+	) ([]*detentionnotice.DetentionNotice, error)
 }
 
 // StopFact is the settled dwell history a backtest re-prices.

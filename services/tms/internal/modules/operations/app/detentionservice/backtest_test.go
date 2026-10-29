@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ import (
 // cases pin the properties the aggregation depends on.
 
 func replay(
-	snap detention.PolicySnapshot,
+	snap detentionpolicy.PolicySnapshot,
 	arrival, departure int64,
 	payRate decimal.NullDecimal,
 ) detentionservice.ComputeResult {
@@ -78,7 +79,7 @@ func TestBacktest_ForfeitTermsCollapseRevenueOnLateStops(t *testing.T) {
 
 	lenient := baseSnapshot()
 	strict := baseSnapshot()
-	strict.LateArrivalRule = detention.LateArrivalRuleForfeit
+	strict.LateArrivalRule = detentionpolicy.LateArrivalRuleForfeit
 
 	lenientResult := detentionservice.Compute(detentionservice.ComputeInput{
 		Snapshot:       lenient,
@@ -110,8 +111,8 @@ func TestBacktest_NoticeComplianceAssumptionChangesTheAnswer(t *testing.T) {
 	t.Parallel()
 
 	snap := baseSnapshot()
-	snap.NotificationRequirement = detention.NotificationRequirementRequired
-	snap.UnnotifiedBehavior = detention.UnnotifiedBehaviorSuppress
+	snap.NotificationRequirement = detentionpolicy.NotificationRequirementRequired
+	snap.UnnotifiedBehavior = detentionpolicy.UnnotifiedBehaviorSuppress
 	snap.NotificationLeadMinutes = 30
 
 	arrival := baseTime
@@ -172,19 +173,19 @@ func TestBacktest_TierChangeIsAttributableToTheLadderAlone(t *testing.T) {
 	flat := baseSnapshot()
 
 	tiered := baseSnapshot()
-	tiered.RateSource = detention.RateSourceTiers
-	tiered.Tiers = []detention.TierSnapshot{
+	tiered.RateSource = detentionpolicy.RateSourceTiers
+	tiered.Tiers = []detentionpolicy.TierSnapshot{
 		{
 			FromMinute: 0,
 			ToMinute:   ptr(int32(120)),
 			Rate:       money("75.00"),
-			RateUnit:   detention.TierRateUnitHour,
+			RateUnit:   detentionpolicy.TierRateUnitHour,
 		},
 		{
 			FromMinute: 120,
 			ToMinute:   nil,
 			Rate:       money("110.00"),
-			RateUnit:   detention.TierRateUnitHour,
+			RateUnit:   detentionpolicy.TierRateUnitHour,
 		},
 	}
 

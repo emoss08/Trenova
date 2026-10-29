@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -12,24 +13,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func hourlySnapshot() *detention.PolicySnapshot {
-	return &detention.PolicySnapshot{
+func hourlySnapshot() *detentionpolicy.PolicySnapshot {
+	return &detentionpolicy.PolicySnapshot{
 		PolicyID:                pulid.MustNew("dtp_"),
 		PolicyCode:              "STD-2HR",
 		PolicyName:              "Standard 2 Hour Free",
-		ClockStartBasis:         detention.ClockStartBasisArrival,
-		LateArrivalRule:         detention.LateArrivalRuleNoEffect,
+		ClockStartBasis:         detentionpolicy.ClockStartBasisArrival,
+		LateArrivalRule:         detentionpolicy.LateArrivalRuleNoEffect,
 		FreeMinutes:             120,
 		PayFreeMinutes:          120,
 		BillingIncrementMinutes: 15,
-		RoundingMode:            detention.RoundingModeUp,
-		RateSource:              detention.RateSourceAccessorial,
+		RoundingMode:            detentionpolicy.RoundingModeUp,
+		RateSource:              detentionpolicy.RateSourceAccessorial,
 		AccessorialCode:         "DET",
 		FlatRate:                decimal.RequireFromString("75.00"),
-		FlatRateUnit:            detention.TierRateUnitHour,
-		DayBoundaryMode:         detention.CapScopePerStop,
-		NotificationRequirement: detention.NotificationRequirementNone,
-		UnnotifiedBehavior:      detention.UnnotifiedBehaviorBill,
+		FlatRateUnit:            detentionpolicy.TierRateUnitHour,
+		DayBoundaryMode:         detentionpolicy.CapScopePerStop,
+		NotificationRequirement: detentionpolicy.NotificationRequirementNone,
+		UnnotifiedBehavior:      detentionpolicy.UnnotifiedBehaviorBill,
 		Currency:                "USD",
 	}
 }

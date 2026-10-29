@@ -19,7 +19,7 @@ type RawOccurrence = CardDetail["occurrence"];
 
 /**
  * The policy snapshot as the server stores it on the occurrence
- * (`detention.PolicySnapshot`): decimals as strings, nullable decimals as
+ * (`detentionpolicy.PolicySnapshot`): decimals as strings, nullable decimals as
  * null, and every field the engine writes, including the ones the card does
  * not read.
  */

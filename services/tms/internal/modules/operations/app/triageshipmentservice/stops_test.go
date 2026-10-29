@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,10 +34,18 @@ func TestStopTimesOf(t *testing.T) {
 		LateByMinutes:  -5,
 		RoundedMinutes: 90,
 		BillableAmount: decimal.RequireFromString("112.5"),
-		PolicySnapshot: &detention.PolicySnapshot{LateArrivalRule: detention.LateArrivalRuleForfeit},
-		Evidence: []*detention.DetentionEvidence{
-			{Kind: detention.EvidenceKind("Departure"), Source: detention.EvidenceSourceManual},
-			{Kind: detention.EvidenceKindArrival, Source: detention.EvidenceSourceTelematics},
+		PolicySnapshot: &detentionpolicy.PolicySnapshot{
+			LateArrivalRule: detentionpolicy.LateArrivalRuleForfeit,
+		},
+		Evidence: []*detentionevidence.DetentionEvidence{
+			{
+				Kind:   detentionevidence.EvidenceKind("Departure"),
+				Source: detentionevidence.EvidenceSourceManual,
+			},
+			{
+				Kind:   detentionevidence.EvidenceKindArrival,
+				Source: detentionevidence.EvidenceSourceTelematics,
+			},
 		},
 	}
 
@@ -338,7 +348,12 @@ func TestDisputedOccurrenceStaysOnTheWaivedCharge(t *testing.T) {
 		occurrences: []*detention.DetentionOccurrence{f.occurrence, later},
 	}
 
-	chosen, err := f.service.disputedOccurrence(t.Context(), pagination.TenantInfo{}, f.occurrence.ShipmentID, false)
+	chosen, err := f.service.disputedOccurrence(
+		t.Context(),
+		pagination.TenantInfo{},
+		f.occurrence.ShipmentID,
+		false,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, f.occurrence.ID, chosen.ID)
 }

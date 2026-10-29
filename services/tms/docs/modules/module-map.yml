@@ -546,6 +546,10 @@ modules:
     level: 7
     domain:
       - detention
+      - detentioncollectability
+      - detentionevidence
+      - detentionnotice
+      - detentionpolicy
       - dispatchcontrol
       - documentshipmentdraft
       - order

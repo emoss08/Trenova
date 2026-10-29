@@ -13,6 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,7 +43,9 @@ func detentionJSONMap(v any) map[string]any {
 	return result
 }
 
-func detentionTierToModel(entity *detention.DetentionPolicyTier) *gqlmodel.DetentionPolicyTier {
+func detentionTierToModel(
+	entity *detentionpolicy.DetentionPolicyTier,
+) *gqlmodel.DetentionPolicyTier {
 	if entity == nil {
 		return nil
 	}
@@ -65,7 +71,7 @@ func detentionTierToModel(entity *detention.DetentionPolicyTier) *gqlmodel.Deten
 	return model
 }
 
-func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.DetentionPolicy {
+func detentionPolicyToModel(entity *detentionpolicy.DetentionPolicy) *gqlmodel.DetentionPolicy {
 	if entity == nil {
 		return nil
 	}
@@ -148,11 +154,11 @@ func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.Detenti
 }
 
 func detentionPolicyConnectionToModel(
-	result *pagination.CursorListResult[*detention.DetentionPolicy],
+	result *pagination.CursorListResult[*detentionpolicy.DetentionPolicy],
 ) (*gqlmodel.DetentionPolicyConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *detention.DetentionPolicy, cursor string) *gqlmodel.DetentionPolicyEdge {
+		func(node *detentionpolicy.DetentionPolicy, cursor string) *gqlmodel.DetentionPolicyEdge {
 			return &gqlmodel.DetentionPolicyEdge{
 				Node:   detentionPolicyToModel(node),
 				Cursor: cursor,
@@ -176,30 +182,30 @@ func detentionPolicyFromInput(
 	input *gqlmodel.DetentionPolicyInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*detention.DetentionPolicy, error) {
+) (*detentionpolicy.DetentionPolicy, error) {
 	accessorialChargeID, err := pulid.MustParse(input.AccessorialChargeID)
 	if err != nil {
 		return nil, invalidDetentionField("accessorialChargeId")
 	}
 
-	entity := &detention.DetentionPolicy{
+	entity := &detentionpolicy.DetentionPolicy{
 		ID:                      id,
 		OrganizationID:          tenantInfo.OrgID,
 		BusinessUnitID:          tenantInfo.BuID,
 		Name:                    input.Name,
 		Code:                    input.Code,
-		Status:                  detention.PolicyStatusDraft,
-		ClockStartBasis:         detention.ClockStartBasisLaterOfArrivalOrAppointment,
-		LateArrivalRule:         detention.LateArrivalRuleNoEffect,
+		Status:                  detentionpolicy.PolicyStatusDraft,
+		ClockStartBasis:         detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment,
+		LateArrivalRule:         detentionpolicy.LateArrivalRuleNoEffect,
 		BillingFreeMinutes:      120,
 		BillingIncrementMinutes: 15,
-		RoundingMode:            detention.RoundingModeUp,
-		RateSource:              detention.RateSourceAccessorial,
+		RoundingMode:            detentionpolicy.RoundingModeUp,
+		RateSource:              detentionpolicy.RateSourceAccessorial,
 		AccessorialChargeID:     accessorialChargeID,
-		DayBoundaryMode:         detention.CapScopePerStop,
-		NotificationRequirement: detention.NotificationRequirementNone,
+		DayBoundaryMode:         detentionpolicy.CapScopePerStop,
+		NotificationRequirement: detentionpolicy.NotificationRequirementNone,
 		NotificationLeadMinutes: 30,
-		UnnotifiedBehavior:      detention.UnnotifiedBehaviorBill,
+		UnnotifiedBehavior:      detentionpolicy.UnnotifiedBehaviorBill,
 		Currency:                "USD",
 	}
 
@@ -362,12 +368,12 @@ func detentionPolicyFromInput(
 func detentionTiersFromInput(
 	inputs []*gqlmodel.DetentionTierInput,
 	tenantInfo pagination.TenantInfo,
-) ([]*detention.DetentionPolicyTier, error) {
+) ([]*detentionpolicy.DetentionPolicyTier, error) {
 	if len(inputs) == 0 {
 		return nil, nil
 	}
 
-	tiers := make([]*detention.DetentionPolicyTier, 0, len(inputs))
+	tiers := make([]*detentionpolicy.DetentionPolicyTier, 0, len(inputs))
 	for index, input := range inputs {
 		if input == nil {
 			continue
@@ -378,13 +384,13 @@ func detentionTiersFromInput(
 			return nil, err
 		}
 
-		tier := &detention.DetentionPolicyTier{
+		tier := &detentionpolicy.DetentionPolicyTier{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			FromMinute:     intutils.SafeToInt32(input.FromMinute),
 			ToMinute:       intPtrToInt32Ptr(input.ToMinute),
 			Rate:           rate,
-			RateUnit:       detention.TierRateUnitHour,
+			RateUnit:       detentionpolicy.TierRateUnitHour,
 			SortOrder:      int32(index),
 		}
 
@@ -490,7 +496,7 @@ func detentionOccurrencesToModel(
 }
 
 func detentionEvidenceToModel(
-	entity *detention.DetentionEvidence,
+	entity *detentionevidence.DetentionEvidence,
 ) *gqlmodel.DetentionEvidence {
 	if entity == nil {
 		return nil
@@ -515,7 +521,7 @@ func detentionEvidenceToModel(
 }
 
 func detentionEvidenceListToModel(
-	entities []*detention.DetentionEvidence,
+	entities []*detentionevidence.DetentionEvidence,
 ) []*gqlmodel.DetentionEvidence {
 	result := make([]*gqlmodel.DetentionEvidence, 0, len(entities))
 	for _, entity := range entities {
@@ -527,7 +533,7 @@ func detentionEvidenceListToModel(
 	return result
 }
 
-func detentionNoticeToModel(entity *detention.DetentionNotice) *gqlmodel.DetentionNotice {
+func detentionNoticeToModel(entity *detentionnotice.DetentionNotice) *gqlmodel.DetentionNotice {
 	if entity == nil {
 		return nil
 	}
@@ -559,7 +565,7 @@ func detentionNoticeToModel(entity *detention.DetentionNotice) *gqlmodel.Detenti
 }
 
 func detentionNoticesToModel(
-	entities []*detention.DetentionNotice,
+	entities []*detentionnotice.DetentionNotice,
 ) []*gqlmodel.DetentionNotice {
 	result := make([]*gqlmodel.DetentionNotice, 0, len(entities))
 	for _, entity := range entities {
@@ -572,7 +578,7 @@ func detentionNoticesToModel(
 }
 
 func detentionCollectabilityToModel(
-	assessment detention.CollectabilityAssessment,
+	assessment detentioncollectability.CollectabilityAssessment,
 ) *gqlmodel.DetentionCollectability {
 	factors := make([]*gqlmodel.DetentionScoreFactor, 0, len(assessment.Factors))
 	for _, factor := range assessment.Factors {

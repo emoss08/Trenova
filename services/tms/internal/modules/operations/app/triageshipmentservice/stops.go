@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,14 +21,14 @@ const (
 	arrivalSourceUnknown = "Not recorded"
 )
 
-var arrivalSources = map[detention.EvidenceSource]string{
-	detention.EvidenceSourceTelematics: "ELD",
-	detention.EvidenceSourceGeofence:   "Geofence",
-	detention.EvidenceSourceDriverApp:  "Driver app",
-	detention.EvidenceSourceEDI:        "EDI",
-	detention.EvidenceSourceDocument:   "Document",
-	detention.EvidenceSourceManual:     "A person",
-	detention.EvidenceSourceSystem:     "Trenova",
+var arrivalSources = map[detentionevidence.EvidenceSource]string{
+	detentionevidence.EvidenceSourceTelematics: "ELD",
+	detentionevidence.EvidenceSourceGeofence:   "Geofence",
+	detentionevidence.EvidenceSourceDriverApp:  "Driver app",
+	detentionevidence.EvidenceSourceEDI:        "EDI",
+	detentionevidence.EvidenceSourceDocument:   "Document",
+	detentionevidence.EvidenceSourceManual:     "A person",
+	detentionevidence.EvidenceSourceSystem:     "Trenova",
 }
 
 func (s *Service) disputedOccurrence(
@@ -105,7 +107,7 @@ func stopTimesOf(occurrence *detention.DetentionOccurrence) *inboundmessageports
 	}
 
 	for _, evidence := range occurrence.Evidence {
-		if evidence.Kind != detention.EvidenceKindArrival {
+		if evidence.Kind != detentionevidence.EvidenceKindArrival {
 			continue
 		}
 		if label, ok := arrivalSources[evidence.Source]; ok {
@@ -120,12 +122,12 @@ func stopTimesOf(occurrence *detention.DetentionOccurrence) *inboundmessageports
 	return out
 }
 
-func paysWhenLate(snapshot *detention.PolicySnapshot) bool {
+func paysWhenLate(snapshot *detentionpolicy.PolicySnapshot) bool {
 	if snapshot == nil {
 		return true
 	}
 
-	return snapshot.LateArrivalRule != detention.LateArrivalRuleForfeit
+	return snapshot.LateArrivalRule != detentionpolicy.LateArrivalRuleForfeit
 }
 
 func (s *Service) SettleDetention(

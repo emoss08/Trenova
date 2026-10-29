@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,7 +77,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
 // @Param status query string false "Filter by status"
-// @Success 200 {object} pagination.Response[[]detention.DetentionPolicy]
+// @Success 200 {object} pagination.Response[[]detentionpolicy.DetentionPolicy]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -106,7 +106,7 @@ func (h *Handler) list(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*detention.DetentionPolicy], error) {
+		func() (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 			return h.service.List(
 				c.Request.Context(),
 				&detentionports.ListDetentionPoliciesRequest{
@@ -125,7 +125,7 @@ func (h *Handler) list(c *gin.Context) {
 // @Tags Detention Policies
 // @Produce json
 // @Param detentionPolicyID path string true "Detention policy ID"
-// @Success 200 {object} detention.DetentionPolicy
+// @Success 200 {object} detentionpolicy.DetentionPolicy
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -163,8 +163,8 @@ func (h *Handler) get(c *gin.Context) {
 // @Tags Detention Policies
 // @Accept json
 // @Produce json
-// @Param request body detention.DetentionPolicy true "Detention policy payload"
-// @Success 201 {object} detention.DetentionPolicy
+// @Param request body detentionpolicy.DetentionPolicy true "Detention policy payload"
+// @Success 201 {object} detentionpolicy.DetentionPolicy
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -175,7 +175,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity := new(detention.DetentionPolicy)
+	entity := new(detentionpolicy.DetentionPolicy)
 	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -196,8 +196,8 @@ func (h *Handler) create(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param detentionPolicyID path string true "Detention policy ID"
-// @Param request body detention.DetentionPolicy true "Detention policy payload"
-// @Success 200 {object} detention.DetentionPolicy
+// @Param request body detentionpolicy.DetentionPolicy true "Detention policy payload"
+// @Success 200 {object} detentionpolicy.DetentionPolicy
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -215,7 +215,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	entity := new(detention.DetentionPolicy)
+	entity := new(detentionpolicy.DetentionPolicy)
 	entity.ID = policyID
 	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
@@ -271,7 +271,7 @@ func (h *Handler) delete(c *gin.Context) {
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]detention.DetentionPolicy]
+// @Success 200 {object} pagination.Response[[]detentionpolicy.DetentionPolicy]
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
@@ -284,7 +284,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*detention.DetentionPolicy], error) {
+		func() (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
 				&detentionports.DetentionPolicySelectOptionsRequest{
@@ -300,7 +300,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 // @Tags Detention Policies
 // @Produce json
 // @Param detentionPolicyID path string true "Detention policy ID"
-// @Success 200 {object} detention.DetentionPolicy
+// @Success 200 {object} detentionpolicy.DetentionPolicy
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -331,7 +331,7 @@ func (h *Handler) getOption(c *gin.Context) {
 }
 
 type previewRequest struct {
-	Policy   *detention.DetentionPolicy       `json:"policy"   binding:"required"`
+	Policy   *detentionpolicy.DetentionPolicy `json:"policy"   binding:"required"`
 	Scenario detentionservice.PreviewScenario `json:"scenario" binding:"required"`
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -295,9 +296,9 @@ func TestWatchlistUsesTheDetentionEngine(t *testing.T) {
 			{Occurrence: &detention.DetentionOccurrence{
 				ID:                occurrenceID,
 				FreeTimeExpiresAt: now.Unix() - 3600,
-				PolicySnapshot: &detention.PolicySnapshot{
+				PolicySnapshot: &detentionpolicy.PolicySnapshot{
 					FlatRate:     decimal.NewFromInt(80),
-					FlatRateUnit: detention.TierRateUnitHour,
+					FlatRateUnit: detentionpolicy.TierRateUnitHour,
 				},
 			}},
 			{Occurrence: &detention.DetentionOccurrence{FreeTimeExpiresAt: now.Unix() + 600}},

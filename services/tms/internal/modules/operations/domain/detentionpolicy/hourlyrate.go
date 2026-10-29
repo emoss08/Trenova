@@ -1,4 +1,4 @@
-package detention
+package detentionpolicy
 
 import "github.com/shopspring/decimal"
 

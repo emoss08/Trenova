@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -53,8 +55,8 @@ func (s *stubApprover) GetOccurrenceDetail(
 ) (*detentionservice.OccurrenceDetail, error) {
 	return &detentionservice.OccurrenceDetail{
 		Occurrence: s.occurrence,
-		Evidence:   []*detention.DetentionEvidence{{}, {}},
-		Collectability: detention.CollectabilityAssessment{
+		Evidence:   []*detentionevidence.DetentionEvidence{{}, {}},
+		Collectability: detentioncollectability.CollectabilityAssessment{
 			Score: 88,
 			Band:  "Strong",
 		},

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -128,13 +129,13 @@ func (s stubOccurrenceRepo) ListNoticesDue(
 
 type stubPolicyRepo struct {
 	detentionports.DetentionPolicyRepository
-	policy *detention.DetentionPolicy
+	policy *detentionpolicy.DetentionPolicy
 }
 
 func (s stubPolicyRepo) GetByID(
 	context.Context,
 	*detentionports.GetDetentionPolicyByIDRequest,
-) (*detention.DetentionPolicy, error) {
+) (*detentionpolicy.DetentionPolicy, error) {
 	return s.policy, nil
 }
 
@@ -147,12 +148,12 @@ func TestSweepNoticesDue_RaisesTheNoticesItLeavesOnTheDesk(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		policy *detention.DetentionPolicy
+		policy *detentionpolicy.DetentionPolicy
 		want   []agenttrigger.EventKind
 	}{
 		{
 			name: "a policy that leaves sending to a person wakes the desk",
-			policy: &detention.DetentionPolicy{
+			policy: &detentionpolicy.DetentionPolicy{
 				ID:             policyID,
 				AutoSendNotice: false,
 			},

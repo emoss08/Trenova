@@ -1,4 +1,4 @@
-package detention
+package detentionevidence
 
 import (
 	"context"
@@ -18,12 +18,8 @@ import (
 // GenesisHash anchors the first link of every occurrence's evidence chain.
 const GenesisHash = "0000000000000000000000000000000000000000000000000000000000000000"
 
-const (
-	// hashLength is the width of a hex-encoded SHA-256 digest.
-	hashLength = 64
-	// currencyCodeLength is the width of an ISO 4217 code.
-	currencyCodeLength = 3
-)
+// hashLength is the width of a hex-encoded SHA-256 digest.
+const hashLength = 64
 
 // DetentionEvidence is one append-only fact about an occurrence, hash-chained
 // to its predecessor. The carrier's structural credibility problem in a dispute

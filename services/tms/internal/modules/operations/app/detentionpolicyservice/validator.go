@@ -3,7 +3,7 @@ package detentionpolicyservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,21 +26,21 @@ func NewValidator(p ValidatorParams) *Validator {
 
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
+	entity *detentionpolicy.DetentionPolicy,
 ) *errortypes.MultiError {
 	return v.validate(ctx, entity, true)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
+	entity *detentionpolicy.DetentionPolicy,
 ) *errortypes.MultiError {
 	return v.validate(ctx, entity, false)
 }
 
 func (v *Validator) validate(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
+	entity *detentionpolicy.DetentionPolicy,
 	isCreate bool,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
@@ -58,7 +58,7 @@ func (v *Validator) validate(
 
 func (v *Validator) validateUniqueCode(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
+	entity *detentionpolicy.DetentionPolicy,
 	isCreate bool,
 	multiErr *errortypes.MultiError,
 ) {
@@ -93,11 +93,11 @@ func (v *Validator) validateUniqueCode(
 // and the carrier would not know which contract terms were charged.
 func (v *Validator) validateNoOverlap(
 	ctx context.Context,
-	entity *detention.DetentionPolicy,
+	entity *detentionpolicy.DetentionPolicy,
 	isCreate bool,
 	multiErr *errortypes.MultiError,
 ) {
-	if entity.Status != detention.PolicyStatusActive {
+	if entity.Status != detentionpolicy.PolicyStatusActive {
 		return
 	}
 
@@ -142,7 +142,7 @@ func (v *Validator) validateNoOverlap(
 	}
 }
 
-func tenantOf(entity *detention.DetentionPolicy) pagination.TenantInfo {
+func tenantOf(entity *detentionpolicy.DetentionPolicy) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID: entity.GetOrganizationID(),
 		BuID:  entity.GetBusinessUnitID(),

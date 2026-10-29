@@ -4,19 +4,28 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/shared/money"
-
-	"github.com/emoss08/trenova/shared/intutils"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
+)
+
+const (
+	// evidenceHeadLength is the width of the hex-encoded SHA-256 digest that
+	// heads the occurrence's evidence chain.
+	evidenceHeadLength = 64
+	// currencyCodeLength is the width of an ISO 4217 code.
+	currencyCodeLength = 3
 )
 
 // DetentionOccurrence is the detention event at exactly one stop. It is the
@@ -34,9 +43,9 @@ type DetentionOccurrence struct {
 	CustomerID     pulid.ID `keel:"customer_id"                json:"customerId"`
 	LocationID     pulid.ID `keel:"location_id"                json:"locationId"`
 
-	DetentionPolicyID *pulid.ID         `json:"detentionPolicyId" keel:"detention_policy_id"`
-	PolicySnapshot    *PolicySnapshot   `json:"policySnapshot"    keel:"policy_snapshot,jsonb"`
-	CalculationTrace  *CalculationTrace `json:"calculationTrace"  keel:"calculation_trace,jsonb"`
+	DetentionPolicyID *pulid.ID                       `json:"detentionPolicyId" keel:"detention_policy_id"`
+	PolicySnapshot    *detentionpolicy.PolicySnapshot `json:"policySnapshot"    keel:"policy_snapshot,jsonb"`
+	CalculationTrace  *CalculationTrace               `json:"calculationTrace"  keel:"calculation_trace,jsonb"`
 
 	StopType           shipment.StopType         `json:"stopType"           keel:"stop_type"`
 	ScheduleType       shipment.StopScheduleType `json:"scheduleType"       keel:"schedule_type"`
@@ -93,11 +102,11 @@ type DetentionOccurrence struct {
 	CustomerName      string `json:"customerName,omitempty"      keel:"customer_name,computed"`
 	ShipmentProNumber string `json:"shipmentProNumber,omitempty" keel:"shipment_pro_number,computed"`
 
-	BusinessUnit    *tenant.BusinessUnit `json:"-"`
-	Organization    *tenant.Organization `json:"-"`
-	DetentionPolicy *DetentionPolicy     `json:"detentionPolicy,omitempty" keel:"belongs:detention_policy_id"`
-	Evidence        []*DetentionEvidence `json:"evidence,omitempty"        keel:"many:detention_occurrence_id"`
-	Notices         []*DetentionNotice   `json:"notices,omitempty"         keel:"many:detention_occurrence_id"`
+	BusinessUnit    *tenant.BusinessUnit                   `json:"-"`
+	Organization    *tenant.Organization                   `json:"-"`
+	DetentionPolicy *detentionpolicy.DetentionPolicy       `json:"detentionPolicy,omitempty" keel:"belongs:detention_policy_id"`
+	Evidence        []*detentionevidence.DetentionEvidence `json:"evidence,omitempty"        keel:"many:detention_occurrence_id"`
+	Notices         []*detentionnotice.DetentionNotice     `json:"notices,omitempty"         keel:"many:detention_occurrence_id"`
 }
 
 func (o *DetentionOccurrence) GetID() pulid.ID { return o.ID }
@@ -201,8 +210,8 @@ func (o *DetentionOccurrence) BillingHoldReason() BillingHoldReason {
 			o.BillableAmount.GreaterThan(snap.RequireApprovalOverAmount.Decimal) {
 			return BillingHoldReasonOverApprovalThreshold
 		}
-		if snap.NotificationRequirement == NotificationRequirementRequired &&
-			snap.UnnotifiedBehavior == UnnotifiedBehaviorFlag &&
+		if snap.NotificationRequirement == detentionpolicy.NotificationRequirementRequired &&
+			snap.UnnotifiedBehavior == detentionpolicy.UnnotifiedBehaviorFlag &&
 			!o.NotificationStatus.SatisfiesRequirement() {
 			return BillingHoldReasonNoticeNotSent
 		}
@@ -374,7 +383,7 @@ func (o *DetentionOccurrence) Validate(multiErr *errortypes.MultiError) {
 				Error("Currency must be a three letter code"),
 		),
 		validation.Field(&o.EvidenceHead,
-			validation.Length(hashLength, hashLength).
+			validation.Length(evidenceHeadLength, evidenceHeadLength).
 				Error("Evidence head must be a 64 character digest"),
 		),
 		// A waiver writes off money, so the reason it was written off is part of

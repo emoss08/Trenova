@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,8 +33,8 @@ type stubNoticeRepo struct {
 
 func (r *stubNoticeRepo) Create(
 	_ context.Context,
-	entity *detention.DetentionNotice,
-) (*detention.DetentionNotice, error) {
+	entity *detentionnotice.DetentionNotice,
+) (*detentionnotice.DetentionNotice, error) {
 	return entity, nil
 }
 
@@ -46,22 +48,22 @@ func (r *stubNoticeRepo) AttachPDFDocument(
 
 func (r *stubNoticeRepo) Update(
 	_ context.Context,
-	entity *detention.DetentionNotice,
-) (*detention.DetentionNotice, error) {
+	entity *detentionnotice.DetentionNotice,
+) (*detentionnotice.DetentionNotice, error) {
 	return entity, nil
 }
 
 func (r *stubNoticeRepo) List(
 	_ context.Context,
 	_ *detentionports.ListDetentionNoticesRequest,
-) ([]*detention.DetentionNotice, error) {
+) ([]*detentionnotice.DetentionNotice, error) {
 	return nil, nil
 }
 
 func (r *stubNoticeRepo) ListQueued(
 	_ context.Context,
 	_ *detentionports.ListNoticesDueRequest,
-) ([]*detention.DetentionNotice, error) {
+) ([]*detentionnotice.DetentionNotice, error) {
 	return nil, nil
 }
 
@@ -151,7 +153,7 @@ func TestBuildNoticeSendsWithoutAPDFWhenTheDocumentRenderFails(t *testing.T) {
 
 	content, err := svc.BuildNotice(t.Context(), &BuildNoticeParams{
 		Occurrence:   occurrence,
-		Kind:         detention.NoticeKindFinal,
+		Kind:         detentionnotice.NoticeKindFinal,
 		FacilityName: "Memphis DC",
 		ShipmentRef:  "SHP-1001",
 		Location:     time.UTC,
@@ -286,9 +288,9 @@ func TestAttachesNoticePDFUsesThePolicyTheCallerAlreadyLoaded(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: occurrence.OrganizationID}
 
 	assert.True(t, svc.attachesNoticePDF(t.Context(), occurrence, tenantInfo,
-		&detention.DetentionPolicy{AttachNoticePDF: true}))
+		&detentionpolicy.DetentionPolicy{AttachNoticePDF: true}))
 	assert.False(t, svc.attachesNoticePDF(t.Context(), occurrence, tenantInfo,
-		&detention.DetentionPolicy{AttachNoticePDF: false}))
+		&detentionpolicy.DetentionPolicy{AttachNoticePDF: false}))
 
 	// No policy on the occurrence and none passed: nothing to read, nothing to
 	// attach, and no repository call to make.
