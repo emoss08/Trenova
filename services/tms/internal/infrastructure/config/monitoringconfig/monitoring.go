@@ -15,6 +15,7 @@ type Config struct {
 }
 
 const (
+	loopbackHost                       = "127.0.0.1"
 	defaultGraphQLSlowOperationAfter   = time.Second
 	defaultGraphQLMaxTrackedOperations = 2000
 )
@@ -48,7 +49,7 @@ type MetricsConfig struct {
 
 func (c *MetricsConfig) GetHost() string {
 	if strings.TrimSpace(c.Host) == "" {
-		return "127.0.0.1"
+		return loopbackHost
 	}
 	return c.Host
 }
@@ -83,7 +84,7 @@ type PprofConfig struct {
 
 func (c *PprofConfig) GetHost() string {
 	if strings.TrimSpace(c.Host) == "" {
-		return "127.0.0.1"
+		return loopbackHost
 	}
 	return c.Host
 }
@@ -116,7 +117,7 @@ func Defaults() map[string]any {
 	return map[string]any{
 		"tracing.aiSamplingRate":   defaultAISamplingRate,
 		"tracing.traceUrlTemplate": "",
-		"metrics.host":             "127.0.0.1",
+		"metrics.host":             loopbackHost,
 		"metrics.port":             9090,
 		"metrics.path":             "/internal/metricsz",
 		"health.path":              "/health",
@@ -125,7 +126,7 @@ func Defaults() map[string]any {
 		"health.checkInterval":     "30s",
 		"health.timeout":           "5s",
 		"pprof.enabled":            false,
-		"pprof.host":               "127.0.0.1",
+		"pprof.host":               loopbackHost,
 		"pprof.port":               6060,
 	}
 }

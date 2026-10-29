@@ -6,6 +6,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const labelType = "type"
+
 type Error struct {
 	metricbase.Base
 	errorsTotal     *prometheus.CounterVec
@@ -28,7 +30,7 @@ func NewError(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 			Name:      "total",
 			Help:      "Total number of errors by type and source",
 		},
-		[]string{"type", "source"},
+		[]string{labelType, "source"},
 	)
 
 	m.panicRecoveries = prometheus.NewCounter(

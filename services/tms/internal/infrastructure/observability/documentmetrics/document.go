@@ -7,6 +7,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const documentSubsystem = "document_intelligence"
+
 type Document struct {
 	metricbase.Base
 	extractionTotal          *prometheus.CounterVec
@@ -29,49 +31,49 @@ func NewDocument(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 
 	m.extractionTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
-		Subsystem: "document_intelligence",
+		Subsystem: documentSubsystem,
 		Name:      "extraction_total",
 		Help:      "Total number of document extraction outcomes",
 	}, []string{metricbase.LabelStatus, "source_kind", metricbase.LabelReason})
 
 	m.shipmentDraftTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
-		Subsystem: "document_intelligence",
+		Subsystem: documentSubsystem,
 		Name:      "shipment_draft_total",
 		Help:      "Total number of shipment draft decisions by resource type and detected kind",
 	}, []string{metricbase.LabelStatus, "resource_type", metricbase.LabelKind})
 
 	m.typeAssociationTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
-		Subsystem: "document_intelligence",
+		Subsystem: documentSubsystem,
 		Name:      "type_association_total",
 		Help:      "Total number of inferred document type association outcomes",
 	}, []string{metricbase.LabelOutcome, metricbase.LabelKind})
 
 	m.searchProjectionSync = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
-		Subsystem: "document_intelligence",
+		Subsystem: documentSubsystem,
 		Name:      "search_projection_sync_total",
 		Help:      "Total number of document search projection sync attempts",
 	}, []string{metricbase.LabelStatus})
 
 	m.searchQueryTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
-		Subsystem: "document_intelligence",
+		Subsystem: documentSubsystem,
 		Name:      "search_query_total",
 		Help:      "Total number of document intelligence search queries by backend and outcome",
 	}, []string{"backend", metricbase.LabelOutcome})
 
 	m.reconciliationQueueTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
-		Subsystem: "document_intelligence",
+		Subsystem: documentSubsystem,
 		Name:      "reconciliation_queue_total",
 		Help:      "Total number of document intelligence reconciliation queue attempts",
 	}, []string{metricbase.LabelStatus})
 
 	m.aiOutcomeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
-		Subsystem: "document_intelligence",
+		Subsystem: documentSubsystem,
 		Name:      "ai_outcome_total",
 		Help:      "Total number of AI-assisted document intelligence outcomes",
 	}, []string{metricbase.LabelOperation, metricbase.LabelStatus, metricbase.LabelOutcome})

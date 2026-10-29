@@ -12,6 +12,7 @@ import (
 
 const (
 	dbCacheSubsystem = "db_cache"
+	dbPoolSubsystem  = "db_pool"
 	rlsLabelPool     = "pool"
 	rlsLabelEvent    = "event"
 	rlsLabelOutcome  = "outcome"
@@ -95,7 +96,7 @@ func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 		m.MustRegister(
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: metricbase.Namespace,
-				Subsystem: "db_pool",
+				Subsystem: dbPoolSubsystem,
 				Name:      "open_connections",
 				Help:      "Number of established database connections.",
 			}, func() float64 {
@@ -103,7 +104,7 @@ func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: metricbase.Namespace,
-				Subsystem: "db_pool",
+				Subsystem: dbPoolSubsystem,
 				Name:      "in_use_connections",
 				Help:      "Number of database connections currently in use.",
 			}, func() float64 {
@@ -111,7 +112,7 @@ func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: metricbase.Namespace,
-				Subsystem: "db_pool",
+				Subsystem: dbPoolSubsystem,
 				Name:      "idle_connections",
 				Help:      "Number of idle database connections.",
 			}, func() float64 {
@@ -119,7 +120,7 @@ func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
 				Namespace: metricbase.Namespace,
-				Subsystem: "db_pool",
+				Subsystem: dbPoolSubsystem,
 				Name:      "wait_count_total",
 				Help:      "Total number of database connection pool waits.",
 			}, func() float64 {
@@ -127,7 +128,7 @@ func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
 				Namespace: metricbase.Namespace,
-				Subsystem: "db_pool",
+				Subsystem: dbPoolSubsystem,
 				Name:      "wait_duration_seconds_total",
 				Help:      "Total time spent waiting for database connections.",
 			}, func() float64 {
@@ -217,7 +218,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
 				Namespace: metricbase.Namespace,
-				Subsystem: "db_pool",
+				Subsystem: dbPoolSubsystem,
 				Name:      "tenant_waits_total",
 				Help:      "Total number of times work waited for one of its tenant's concurrency slots.",
 			}, func() float64 {
@@ -225,7 +226,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
 				Namespace: metricbase.Namespace,
-				Subsystem: "db_pool",
+				Subsystem: dbPoolSubsystem,
 				Name:      "read_commit_failures_total",
 				Help:      "Total number of connections closed because the reply to a read transaction's end failed.",
 			}, func() float64 {

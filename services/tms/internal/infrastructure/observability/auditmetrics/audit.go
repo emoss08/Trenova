@@ -6,6 +6,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const auditSubsystem = "audit"
+
 type Audit struct {
 	metricbase.Base
 	bufferSize        prometheus.Gauge
@@ -31,91 +33,8 @@ func NewAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 		return m
 	}
 
-	m.bufferSize = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "buffer_size",
-		Help:      "Current number of entries in the Redis audit buffer",
-	})
-
-	m.dlqSize = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "dlq_size",
-		Help:      "Current number of entries in the audit dead-letter queue",
-	})
-
-	m.bufferPushTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "buffer_push_total",
-		Help:      "Total number of audit entries pushed to buffer",
-	}, []string{"status"})
-
-	m.bufferFlushTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "buffer_flush_total",
-		Help:      "Total number of audit buffer flushes",
-	}, []string{"status"})
-
-	m.dlqPushTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "dlq_push_total",
-		Help:      "Total number of audit entries pushed to dead-letter queue",
-	})
-
-	m.dlqRetryTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "dlq_retry_total",
-		Help:      "Total number of DLQ entry retry attempts",
-	}, []string{"status"})
-
-	m.directInsertTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "direct_insert_total",
-		Help:      "Total number of critical audit entries inserted directly",
-	})
-
-	m.fallbackTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "fallback_insert_total",
-		Help:      "Total number of audit entries inserted via fallback (buffer push failed)",
-	})
-
-	m.criticalBuffered = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "critical_buffered_total",
-		Help:      "Total number of critical audit entries buffered because the direct insert failed",
-	})
-
-	m.securityEvents = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "security_event_total",
-		Help:      "Total number of security events recorded, by kind and outcome of the write",
-	}, []string{"kind", "status"})
-
-	m.flushDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "flush_duration_seconds",
-		Help:      "Duration of audit buffer flush operations in seconds",
-		Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10},
-	})
-
-	m.batchSize = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: "audit",
-		Name:      "batch_size",
-		Help:      "Size of audit batches processed",
-		Buckets:   []float64{1, 10, 50, 100, 250, 500, 1000},
-	})
+	m.newBufferMetrics()
+	m.newWriteMetrics()
 
 	m.MustRegister(
 		m.bufferSize,
@@ -133,6 +52,96 @@ func NewAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 	)
 
 	return m
+}
+
+func (m *Audit) newBufferMetrics() {
+	m.bufferSize = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "buffer_size",
+		Help:      "Current number of entries in the Redis audit buffer",
+	})
+
+	m.dlqSize = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "dlq_size",
+		Help:      "Current number of entries in the audit dead-letter queue",
+	})
+
+	m.bufferPushTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "buffer_push_total",
+		Help:      "Total number of audit entries pushed to buffer",
+	}, []string{metricbase.LabelStatus})
+
+	m.bufferFlushTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "buffer_flush_total",
+		Help:      "Total number of audit buffer flushes",
+	}, []string{metricbase.LabelStatus})
+
+	m.dlqPushTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "dlq_push_total",
+		Help:      "Total number of audit entries pushed to dead-letter queue",
+	})
+
+	m.dlqRetryTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "dlq_retry_total",
+		Help:      "Total number of DLQ entry retry attempts",
+	}, []string{metricbase.LabelStatus})
+}
+
+func (m *Audit) newWriteMetrics() {
+	m.directInsertTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "direct_insert_total",
+		Help:      "Total number of critical audit entries inserted directly",
+	})
+
+	m.fallbackTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "fallback_insert_total",
+		Help:      "Total number of audit entries inserted via fallback (buffer push failed)",
+	})
+
+	m.criticalBuffered = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "critical_buffered_total",
+		Help:      "Total number of critical audit entries buffered because the direct insert failed",
+	})
+
+	m.securityEvents = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "security_event_total",
+		Help:      "Total number of security events recorded, by kind and outcome of the write",
+	}, []string{metricbase.LabelKind, metricbase.LabelStatus})
+
+	m.flushDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "flush_duration_seconds",
+		Help:      "Duration of audit buffer flush operations in seconds",
+		Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10},
+	})
+
+	m.batchSize = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "batch_size",
+		Help:      "Size of audit batches processed",
+		Buckets:   []float64{1, 10, 50, 100, 250, 500, 1000},
+	})
 }
 
 func (m *Audit) RecordBufferPush() {

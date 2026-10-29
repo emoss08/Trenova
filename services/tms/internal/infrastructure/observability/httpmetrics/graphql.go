@@ -93,7 +93,7 @@ func NewGraphQL(
 			Name:      "operations_total",
 			Help:      "Total number of GraphQL operations executed",
 		},
-		[]string{"operation", "type", "status"},
+		[]string{"operation", labelType, "status"},
 	)
 
 	m.operationDuration = prometheus.NewHistogramVec(
@@ -104,7 +104,7 @@ func NewGraphQL(
 			Help:      "GraphQL operation execution latencies in seconds",
 			Buckets:   GraphQLDurationBuckets,
 		},
-		[]string{"operation", "type"},
+		[]string{"operation", labelType},
 	)
 
 	m.operationErrors = prometheus.NewCounterVec(
@@ -114,7 +114,7 @@ func NewGraphQL(
 			Name:      "operation_errors_total",
 			Help:      "Total number of GraphQL operations that returned errors, by error code",
 		},
-		[]string{"operation", "type", "code"},
+		[]string{"operation", labelType, "code"},
 	)
 
 	m.activeOperations = prometheus.NewGauge(
@@ -134,7 +134,7 @@ func NewGraphQL(
 			Help:      "Computed GraphQL query complexity per operation",
 			Buckets:   GraphQLCostBuckets,
 		},
-		[]string{"operation", "type"},
+		[]string{"operation", labelType},
 	)
 
 	m.rejectionsTotal = prometheus.NewCounterVec(

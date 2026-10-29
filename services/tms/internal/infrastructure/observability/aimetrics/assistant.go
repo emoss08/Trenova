@@ -24,6 +24,8 @@ var PhaseBuckets = []float64{
 	.005, .01, .025, .05, .1, .25, .5, 1, 2, 3, 5, 10, 30,
 }
 
+const subsystemAssistant = "assistant"
+
 type Assistant struct {
 	metricbase.Base
 
@@ -48,143 +50,9 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 		return m
 	}
 
-	m.turnDuration = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "turn_duration_seconds",
-			Help:      "How long an assistant turn took, end to end",
-			Buckets:   TurnDurationBuckets,
-		},
-		[]string{"outcome"},
-	)
-
-	// Separate from the duration because they answer different questions. The
-	// duration says how long the answer took; this says how long the person
-	// stared at nothing, which is what they actually experience, and what a
-	// slow worker or a backed-up queue makes worse first.
-	m.firstEvent = prometheus.NewHistogram(
-		prometheus.HistogramOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "turn_first_event_seconds",
-			Help:      "How long a reader watching a turn from its start waited for its first event",
-			Buckets:   TurnDurationBuckets,
-		},
-	)
-
-	m.turnTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "turns_total",
-			Help:      "Assistant turns by how they ended",
-		},
-		[]string{"outcome"},
-	)
-
-	m.turnsStopped = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "turns_stopped_total",
-			Help:      "Turns a person ended themselves, by whether anything had to be cancelled",
-		},
-		[]string{metricbase.LabelResult},
-	)
-
-	// The reliability figure the issue asks for: a replayed step is a write a
-	// retry would have made twice.
-	m.stepsReplayed = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "steps_replayed_total",
-			Help:      "Operations a later attempt declined to repeat, by what the ledger knew about them",
-		},
-		[]string{"owner_kind", "state"},
-	)
-
-	// The recovery figure: whether coming back to a reply actually works, and
-	// how often a reader arrives to find the stream already gone.
-	// What a trajectory costs and, more usefully, what it loses. A dropped
-	// event is invisible by design — the run carries on — so the only way it
-	// stays visible at all is here.
-	m.trajectoryEvents = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "trajectory_events_total",
-			Help:      "Trajectory events by owner kind and whether they were stored",
-		},
-		[]string{"owner_kind", metricbase.LabelResult},
-	)
-
-	// Why tool calls fail, in aggregate. Each call's verdict is on its span and
-	// its step, but nothing added them up, so a tool the models keep calling
-	// wrongly looked the same as one that worked until somebody read threads.
-	m.toolOutcomes = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "tool_outcomes_total",
-			Help:      "Agent tool calls by tool and by what became of the call",
-		},
-		[]string{"tool", "verdict", "model", "provider"},
-	)
-
-	m.guardReasks = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "guard_reasks_total",
-			Help:      "Model calls the runtime made again because a guard sent the answer back",
-		},
-		[]string{"guard", "model", "provider"},
-	)
-
-	m.streamAttached = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "stream_attach_total",
-			Help:      "Readers attaching to a turn, by what they found",
-		},
-		[]string{metricbase.LabelResult},
-	)
-
-	// The wait before the first token, part by part: preparing the turn
-	// (reads, the scope check, the context), the scope check alone, and how
-	// long a model call sat in the queue before a worker took it.
-	m.prepare = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "prepare_seconds",
-			Help:      "How long preparing a turn took, by whether the question was answered",
-			Buckets:   PhaseBuckets,
-		},
-		[]string{"outcome"},
-	)
-	m.guard = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "guard_seconds",
-			Help:      "How long the scope check took, by the stage that decided it",
-			Buckets:   PhaseBuckets,
-		},
-		[]string{"stage"},
-	)
-	m.modelCallWait = prometheus.NewHistogram(
-		prometheus.HistogramOpts{
-			Namespace: metricbase.Namespace,
-			Subsystem: "assistant",
-			Name:      "model_call_wait_seconds",
-			Help:      "How long a model call waited between being scheduled and a worker starting it",
-			Buckets:   PhaseBuckets,
-		},
-	)
+	m.newTurnMetrics()
+	m.newToolMetrics()
+	m.newPhaseMetrics()
 
 	m.MustRegister(
 		m.prepare,
@@ -202,6 +70,150 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 	)
 
 	return m
+}
+
+func (m *Assistant) newTurnMetrics() {
+	m.turnDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "turn_duration_seconds",
+			Help:      "How long an assistant turn took, end to end",
+			Buckets:   TurnDurationBuckets,
+		},
+		[]string{metricbase.LabelOutcome},
+	)
+
+	// Separate from the duration because they answer different questions. The
+	// duration says how long the answer took; this says how long the person
+	// stared at nothing, which is what they actually experience, and what a
+	// slow worker or a backed-up queue makes worse first.
+	m.firstEvent = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "turn_first_event_seconds",
+			Help:      "How long a reader watching a turn from its start waited for its first event",
+			Buckets:   TurnDurationBuckets,
+		},
+	)
+
+	m.turnTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "turns_total",
+			Help:      "Assistant turns by how they ended",
+		},
+		[]string{metricbase.LabelOutcome},
+	)
+
+	m.turnsStopped = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "turns_stopped_total",
+			Help:      "Turns a person ended themselves, by whether anything had to be cancelled",
+		},
+		[]string{metricbase.LabelResult},
+	)
+
+	// The reliability figure the issue asks for: a replayed step is a write a
+	// retry would have made twice.
+	m.stepsReplayed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "steps_replayed_total",
+			Help:      "Operations a later attempt declined to repeat, by what the ledger knew about them",
+		},
+		[]string{"owner_kind", "state"},
+	)
+}
+
+func (m *Assistant) newToolMetrics() {
+	// The recovery figure: whether coming back to a reply actually works, and
+	// how often a reader arrives to find the stream already gone.
+	// What a trajectory costs and, more usefully, what it loses. A dropped
+	// event is invisible by design — the run carries on — so the only way it
+	// stays visible at all is here.
+	m.trajectoryEvents = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "trajectory_events_total",
+			Help:      "Trajectory events by owner kind and whether they were stored",
+		},
+		[]string{"owner_kind", metricbase.LabelResult},
+	)
+
+	// Why tool calls fail, in aggregate. Each call's verdict is on its span and
+	// its step, but nothing added them up, so a tool the models keep calling
+	// wrongly looked the same as one that worked until somebody read threads.
+	m.toolOutcomes = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "tool_outcomes_total",
+			Help:      "Agent tool calls by tool and by what became of the call",
+		},
+		[]string{"tool", "verdict", "model", "provider"},
+	)
+
+	m.guardReasks = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "guard_reasks_total",
+			Help:      "Model calls the runtime made again because a guard sent the answer back",
+		},
+		[]string{"guard", "model", "provider"},
+	)
+
+	m.streamAttached = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "stream_attach_total",
+			Help:      "Readers attaching to a turn, by what they found",
+		},
+		[]string{metricbase.LabelResult},
+	)
+}
+
+func (m *Assistant) newPhaseMetrics() {
+	// The wait before the first token, part by part: preparing the turn
+	// (reads, the scope check, the context), the scope check alone, and how
+	// long a model call sat in the queue before a worker took it.
+	m.prepare = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "prepare_seconds",
+			Help:      "How long preparing a turn took, by whether the question was answered",
+			Buckets:   PhaseBuckets,
+		},
+		[]string{metricbase.LabelOutcome},
+	)
+	m.guard = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "guard_seconds",
+			Help:      "How long the scope check took, by the stage that decided it",
+			Buckets:   PhaseBuckets,
+		},
+		[]string{"stage"},
+	)
+	m.modelCallWait = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: subsystemAssistant,
+			Name:      "model_call_wait_seconds",
+			Help:      "How long a model call waited between being scheduled and a worker starting it",
+			Buckets:   PhaseBuckets,
+		},
+	)
 }
 
 // enabled is nil-safe on the receiver as well as the flag.

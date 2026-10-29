@@ -6,6 +6,12 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	temporalSubsystem         = "temporal"
+	temporalLabelActivityType = "activity_type"
+	temporalLabelWorkflowType = "workflow_type"
+)
+
 type Temporal struct {
 	metricbase.Base
 	activityDuration *prometheus.HistogramVec
@@ -30,69 +36,69 @@ func NewTemporal(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 	m.activityDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: metricbase.Namespace,
-			Subsystem: "temporal",
+			Subsystem: temporalSubsystem,
 			Name:      "activity_duration_seconds",
 			Help:      "Duration of Temporal activity executions in seconds",
 			Buckets:   metricbase.TemporalDurationBuckets,
 		},
-		[]string{"activity_type", "task_queue"},
+		[]string{temporalLabelActivityType, "task_queue"},
 	)
 
 	m.activityTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metricbase.Namespace,
-			Subsystem: "temporal",
+			Subsystem: temporalSubsystem,
 			Name:      "activity_total",
 			Help:      "Total number of Temporal activity executions",
 		},
-		[]string{"activity_type", "task_queue", "status"},
+		[]string{temporalLabelActivityType, "task_queue", "status"},
 	)
 
 	m.activityErrors = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metricbase.Namespace,
-			Subsystem: "temporal",
+			Subsystem: temporalSubsystem,
 			Name:      "activity_errors_total",
 			Help:      "Total number of Temporal activity errors",
 		},
-		[]string{"activity_type", "error_type"},
+		[]string{temporalLabelActivityType, "error_type"},
 	)
 
 	m.workflowDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: metricbase.Namespace,
-			Subsystem: "temporal",
+			Subsystem: temporalSubsystem,
 			Name:      "workflow_duration_seconds",
 			Help:      "Duration of Temporal workflow executions in seconds",
 			Buckets:   metricbase.TemporalDurationBuckets,
 		},
-		[]string{"workflow_type"},
+		[]string{temporalLabelWorkflowType},
 	)
 
 	m.workflowTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metricbase.Namespace,
-			Subsystem: "temporal",
+			Subsystem: temporalSubsystem,
 			Name:      "workflow_total",
 			Help:      "Total number of Temporal workflow executions",
 		},
-		[]string{"workflow_type", "status"},
+		[]string{temporalLabelWorkflowType, "status"},
 	)
 
 	m.workflowErrors = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metricbase.Namespace,
-			Subsystem: "temporal",
+			Subsystem: temporalSubsystem,
 			Name:      "workflow_errors_total",
 			Help:      "Total number of Temporal workflow errors",
 		},
-		[]string{"workflow_type", "error_type"},
+		[]string{temporalLabelWorkflowType, "error_type"},
 	)
 
 	m.activeActivities = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: metricbase.Namespace,
-			Subsystem: "temporal",
+			Subsystem: temporalSubsystem,
 			Name:      "active_activities",
 			Help:      "Number of Temporal activities currently being executed",
 		},
@@ -101,7 +107,7 @@ func NewTemporal(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 	m.activeWorkflows = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: metricbase.Namespace,
-			Subsystem: "temporal",
+			Subsystem: temporalSubsystem,
 			Name:      "active_workflows",
 			Help:      "Number of Temporal workflows currently being executed",
 		},
