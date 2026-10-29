@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -198,8 +199,8 @@ func (r *PerformanceReviewTemplateResolver) CadenceMonths(ctx context.Context, o
 }
 
 func (r *PerformanceReviewTemplateResolver) OpenReviewCount(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (int, error) {
-	if loaders.Available(ctx) {
-		return loaders.PerformanceReviewTemplateOpenReviewCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return workforceloaders.PerformanceReviewTemplateOpenReviewCount(ctx, obj.ID.String())
 	}
 	return r.PerformanceReviewService.CountOpenReviews(ctx, obj)
 }

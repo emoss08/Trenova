@@ -120,7 +120,7 @@ request:
 - `gqlctx.WithAuthContext` from the actor: user principal or agent principal; API keys stay
   refused, as on HTTP;
 - a fresh `gqlctx.PermissionMemo`;
-- `loaders.Factory.Attach` for the tenant;
+- `loadercore.Registry.Attach` for the tenant (each loader is built on its first use);
 - the request id, taken from the run, so logs join;
 - the `pkg/readscope` holder. `agentflow.runTool` already installs one for every tool call, and
   the adapter refuses to run without it, rather than reading the whole tenant.

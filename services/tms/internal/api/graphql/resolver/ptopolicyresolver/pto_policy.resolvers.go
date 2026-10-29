@@ -11,7 +11,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -345,8 +346,8 @@ func (r *PTOPolicyResolver) NegativeFloorDays(ctx context.Context, obj *pto.PTOP
 }
 
 func (r *PTOPolicyResolver) OpenAssignmentCount(ctx context.Context, obj *pto.PTOPolicy) (int, error) {
-	if loaders.Available(ctx) {
-		return loaders.PTOPolicyOpenAssignmentCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return workforceloaders.PTOPolicyOpenAssignmentCount(ctx, obj.ID.String())
 	}
 	return r.PtoPolicyService.CountOpenAssignments(ctx, obj)
 }

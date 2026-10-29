@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
@@ -41,7 +41,7 @@ func (r *InboundAttachmentResolver) Reading(ctx context.Context, obj *inboundmes
 		return nil, err
 	}
 
-	return loaders.InboundDocumentReadingByDocumentID(ctx, obj.DocumentID.String())
+	return documentloaders.InboundDocumentReadingByDocumentID(ctx, obj.DocumentID.String())
 }
 
 func (r *InboundMessageResolver) Actions(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Action, error) {
@@ -54,14 +54,14 @@ func (r *InboundMessageResolver) Actions(ctx context.Context, obj *inboundmessag
 
 	attachments := obj.Attachments
 	if attachments == nil {
-		loaded, err := loaders.InboundAttachmentsByMessageID(ctx, obj.ID.String())
+		loaded, err := documentloaders.InboundAttachmentsByMessageID(ctx, obj.ID.String())
 		if err != nil {
 			return nil, err
 		}
 		attachments = loaded
 	}
 
-	latest, err := loaders.InboundLatestReplyByMessageID(ctx, obj.ID.String())
+	latest, err := documentloaders.InboundLatestReplyByMessageID(ctx, obj.ID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (r *InboundMessageResolver) Replies(ctx context.Context, obj *inboundmessag
 		return nil, err
 	}
 
-	return loaders.InboundRepliesByMessageID(ctx, obj.ID.String())
+	return documentloaders.InboundRepliesByMessageID(ctx, obj.ID.String())
 }
 
 func (r *InboundMessageResolver) ReplyDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*triage.Reply, error) {
@@ -85,7 +85,7 @@ func (r *InboundMessageResolver) ReplyDraft(ctx context.Context, obj *inboundmes
 		return nil, err
 	}
 
-	return loaders.InboundReplyDraftByMessageID(ctx, obj.ID.String())
+	return documentloaders.InboundReplyDraftByMessageID(ctx, obj.ID.String())
 }
 
 func (r *InboundMessageResolver) LoadDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.LoadDraft, error) {
@@ -585,7 +585,7 @@ func (r *TriageActionResolver) Attachment(ctx context.Context, obj *triage.Actio
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.InboundAttachmentByID(ctx, obj.AttachmentID.String()))
+	return loaderfields.OptionalMatch(documentloaders.InboundAttachmentByID(ctx, obj.AttachmentID.String()))
 }
 
 func (r *TriageActionResolver) Shipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error) {
@@ -613,7 +613,7 @@ func (r *TriageActionResolver) Reply(ctx context.Context, obj *triage.Action) (*
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.InboundReplyByID(ctx, obj.ReplyID.String()))
+	return loaderfields.OptionalMatch(documentloaders.InboundReplyByID(ctx, obj.ReplyID.String()))
 }
 
 func (r *TriageActionResolver) CreatedShipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error) {
@@ -651,7 +651,7 @@ func (r *TriageStopTimesResolver) Shipment(ctx context.Context, obj *inboundmess
 		return nil, err
 	}
 
-	return loaders.ShipmentSummaryByID(ctx, obj.ShipmentID.String())
+	return documentloaders.ShipmentSummaryByID(ctx, obj.ShipmentID.String())
 }
 
 func (r *QueryResolver) InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error) {

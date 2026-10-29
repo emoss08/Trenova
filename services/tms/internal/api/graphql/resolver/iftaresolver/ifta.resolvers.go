@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/settlementloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -124,11 +125,11 @@ func (r *IFTAReturnResolver) AmendsReturn(ctx context.Context, obj *ifta.Return)
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	return loaders.IFTAReturnByID(ctx, obj.AmendsReturnID.String())
+	return settlementloaders.IFTAReturnByID(ctx, obj.AmendsReturnID.String())
 }
 
 func (r *IFTAReturnResolver) TotalMiles(ctx context.Context, obj *ifta.Return) (string, error) {

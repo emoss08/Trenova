@@ -3,7 +3,8 @@ package resolvercore
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,11 +24,11 @@ func (r *Core) AgentDefinitionAccessRoles(
 		return []*permission.Role{}, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent access loader is not configured")
 	}
 
-	return loaders.AccessRolesByAgentID(ctx, obj.ID.String())
+	return agentloaders.AccessRolesByAgentID(ctx, obj.ID.String())
 }
 
 // roleAgents reads the agents a role is granted through the request's
@@ -44,9 +45,9 @@ func (r *Core) RoleAgents(
 		return []*agentdefinition.Definition{}, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent access loader is not configured")
 	}
 
-	return loaders.AgentsByRoleID(ctx, obj.ID.String())
+	return agentloaders.AgentsByRoleID(ctx, obj.ID.String())
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -509,7 +509,7 @@ func (r *WatchtowerItemResolver) AgentWork(ctx context.Context, obj *watchtower.
 	if !obj.HasAgent() {
 		return nil, nil
 	}
-	run, err := loaderfields.OptionalMatch(loaders.AgentRunByID(ctx, obj.AgentRunID.String()))
+	run, err := loaderfields.OptionalMatch(agentloaders.AgentRunByID(ctx, obj.AgentRunID.String()))
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -58,11 +59,11 @@ func (r *Deps) DocumentTemplateVersionKind(
 		return version.Template.Kind
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return r.DocumentTemplateService.KindOf(ctx, version, tenant)
 	}
 
-	kind, err := loaders.DocumentTemplateKindByTemplateID(ctx, version.TemplateID.String())
+	kind, err := documentloaders.DocumentTemplateKindByTemplateID(ctx, version.TemplateID.String())
 	if err != nil {
 		return ""
 	}

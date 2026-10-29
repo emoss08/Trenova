@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -40,7 +40,9 @@ func (u *usersByID) GetByIDs(
 }
 
 func withUserLoader(ctx context.Context, users *usersByID) context.Context {
-	factory := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users})
+	factory := identityloaders.NewUserByIDLoaderFactory(
+		identityloaders.UserByIDLoaderFactoryParams{Repo: users},
+	)
 	return factory.Attach(ctx, pagination.TenantInfo{
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),

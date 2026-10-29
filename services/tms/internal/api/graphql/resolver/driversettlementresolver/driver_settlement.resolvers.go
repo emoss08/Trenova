@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/settlementloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -662,8 +663,8 @@ func (r *PayProfileResolver) ActiveAssignmentCount(ctx context.Context, obj *dri
 	if err != nil {
 		return 0, err
 	}
-	if loaders.Available(ctx) {
-		return loaders.PayProfileActiveAssignmentCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return settlementloaders.PayProfileActiveAssignmentCount(ctx, obj.ID.String())
 	}
 	return r.PayProfileRepo.CountActiveAssignments(ctx, resolvercore.TenantInfo(authCtx), obj.ID)
 }
@@ -1177,21 +1178,21 @@ func (r *DriverSettlementLineGroupResolver) Quantity(ctx context.Context, obj *d
 func (r *DriverSettlementLineGroupResolver) Advance(ctx context.Context, obj *driversettlement.LineGroup) (*payadvance.PayAdvance, error) {
 	id := typeutils.DerefID(obj.AdvanceID)
 	authCtx, ok := gqlctx.AuthContext(ctx)
-	if id.IsNil() || !ok || !loaders.Available(ctx) ||
+	if id.IsNil() || !ok || !loadercore.Available(ctx) ||
 		!r.HasPermission(ctx, authCtx, permission.ResourcePayAdvance, permission.OpRead) {
 		return nil, nil
 	}
-	return loaders.PayAdvanceByID(ctx, id.String())
+	return settlementloaders.PayAdvanceByID(ctx, id.String())
 }
 
 func (r *DriverSettlementLineGroupResolver) EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*payescrow.EscrowAccount, error) {
 	id := typeutils.DerefID(obj.EscrowAccountID)
 	authCtx, ok := gqlctx.AuthContext(ctx)
-	if id.IsNil() || !ok || !loaders.Available(ctx) ||
+	if id.IsNil() || !ok || !loadercore.Available(ctx) ||
 		!r.HasPermission(ctx, authCtx, permission.ResourceEscrowAccount, permission.OpRead) {
 		return nil, nil
 	}
-	return loaders.EscrowAccountByID(ctx, id.String())
+	return settlementloaders.EscrowAccountByID(ctx, id.String())
 }
 
 func (r *DriverSettlementResolver) LineSummary(ctx context.Context, obj *driversettlement.Settlement) ([]*driversettlement.LineGroup, error) {
@@ -1210,11 +1211,11 @@ func (r *DriverSettlementResolver) LoadShares(ctx context.Context, obj *driverse
 
 func (r *DriverSettlementResolver) Disputes(ctx context.Context, obj *driversettlement.Settlement) ([]*driversettlement.Dispute, error) {
 	authCtx, ok := gqlctx.AuthContext(ctx)
-	if !ok || !loaders.Available(ctx) ||
+	if !ok || !loadercore.Available(ctx) ||
 		!r.HasPermission(ctx, authCtx, permission.ResourceSettlementDispute, permission.OpRead) {
 		return []*driversettlement.Dispute{}, nil
 	}
-	return loaders.SettlementDisputesBySettlementID(ctx, obj.ID.String())
+	return settlementloaders.SettlementDisputesBySettlementID(ctx, obj.ID.String())
 }
 
 func (r *DriverSettlementResolver) SubmittedBy(ctx context.Context, obj *driversettlement.Settlement) (*tenant.User, error) {

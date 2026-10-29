@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/placesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -473,11 +474,11 @@ func (r *DetentionOccurrenceResolver) WaivedBy(ctx context.Context, obj *gqlmode
 
 func (r *DetentionOccurrenceResolver) Location(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (*location.Location, error) {
 	authCtx, ok := gqlctx.AuthContext(ctx)
-	if obj.LocationID == "" || !ok || !loaders.Available(ctx) ||
+	if obj.LocationID == "" || !ok || !loadercore.Available(ctx) ||
 		!r.HasPermission(ctx, authCtx, permission.ResourceLocation, permission.OpRead) {
 		return nil, nil
 	}
-	return loaderfields.OptionalMatch(loaders.LocationByID(ctx, obj.LocationID))
+	return loaderfields.OptionalMatch(placesloaders.LocationByID(ctx, obj.LocationID))
 }
 
 func (r *DetentionOccurrenceResolver) CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (map[string]any, error) {

@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionbatch"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -37,11 +38,11 @@ func (r *AgentRunResolver) Definition(ctx context.Context, obj *agent.AgentRun) 
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	definition, err := loaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
+	definition, err := agentloaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
 	if err != nil {
 		// A run of a retired built-in agent names a definition that is gone;
 		// the run is still worth showing.
@@ -61,11 +62,11 @@ func (r *AgentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	thread, err := loaders.ThreadAgentByID(ctx, obj.SubjectID.String())
+	thread, err := agentloaders.ThreadAgentByID(ctx, obj.SubjectID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -77,7 +78,7 @@ func (r *AgentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*
 		return nil, nil
 	}
 
-	definition, err := loaders.AgentDefinitionByID(ctx, thread.AgentDefinitionID.String())
+	definition, err := agentloaders.AgentDefinitionByID(ctx, thread.AgentDefinitionID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

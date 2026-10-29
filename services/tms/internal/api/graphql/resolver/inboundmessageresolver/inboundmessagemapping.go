@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -133,7 +133,7 @@ func (d *Deps) visibleShipment(
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.ShipmentSummaryByID(ctx, shipmentID.String()))
+	return loaderfields.OptionalMatch(documentloaders.ShipmentSummaryByID(ctx, shipmentID.String()))
 }
 
 func (r *MutationResolver) messageAction(

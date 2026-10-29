@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
@@ -320,7 +320,7 @@ func (r *TriageConflictResolver) ExistingShipment(ctx context.Context, obj *inbo
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.ShipmentSummaryByID(ctx, obj.ExistingShipmentID.String()))
+	return loaderfields.OptionalMatch(documentloaders.ShipmentSummaryByID(ctx, obj.ExistingShipmentID.String()))
 }
 
 func (r *TriageConflictResolver) ExistingFiledAt(ctx context.Context, obj *inboundmessage.Conflict) (*int, error) {
@@ -377,7 +377,7 @@ func (r *TriageRuleResolver) Mailbox(ctx context.Context, obj *triage.Rule) (*in
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.InboundMailboxByID(ctx, obj.MailboxID.String()))
+	return loaderfields.OptionalMatch(documentloaders.InboundMailboxByID(ctx, obj.MailboxID.String()))
 }
 
 func (r *TriageRuleResolver) AssigneeID(ctx context.Context, obj *triage.Rule) (*string, error) {
@@ -400,7 +400,7 @@ func (r *TriageRuleResolver) MatchesThisMonth(ctx context.Context, obj *triage.R
 		return 0, err
 	}
 
-	return loaders.TriageRuleMonthMatches(ctx, obj.ID.String())
+	return documentloaders.TriageRuleMonthMatches(ctx, obj.ID.String())
 }
 
 func (r *TriageRuleResolver) LastMatchedAt(ctx context.Context, obj *triage.Rule) (*int, error) {
@@ -415,5 +415,5 @@ func (r *TriageRuleResolver) LastMatch(ctx context.Context, obj *triage.Rule) (*
 		return nil, err
 	}
 
-	return loaders.TriageSampleByMessageID(ctx, obj.LastMessageID.String())
+	return documentloaders.TriageSampleByMessageID(ctx, obj.LastMessageID.String())
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -47,12 +47,12 @@ func handOffLoaders(
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	ctx := loaders.NewThreadAgentByIDLoaderFactory(
-		loaders.ThreadAgentByIDLoaderFactoryParams{Conversations: threads},
+	ctx := agentloaders.NewThreadAgentByIDLoaderFactory(
+		agentloaders.ThreadAgentByIDLoaderFactoryParams{Conversations: threads},
 	).Attach(t.Context(), tenant)
 
-	return loaders.NewAgentDefinitionByIDLoaderFactory(
-		loaders.AgentDefinitionByIDLoaderFactoryParams{Definitions: definitions},
+	return agentloaders.NewAgentDefinitionByIDLoaderFactory(
+		agentloaders.AgentDefinitionByIDLoaderFactoryParams{Definitions: definitions},
 	).Attach(ctx, tenant)
 }
 

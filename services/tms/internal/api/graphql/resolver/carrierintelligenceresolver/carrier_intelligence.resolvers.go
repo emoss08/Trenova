@@ -10,7 +10,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -49,7 +50,7 @@ func (r *CarrierResolver) Intelligence(ctx context.Context, obj *carrier.Carrier
 			)
 		},
 		func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			return loaders.CarrierIntelSnapshotByCarrierID(ctx, obj.ID.String())
+			return partiesloaders.CarrierIntelSnapshotByCarrierID(ctx, obj.ID.String())
 		},
 	)
 }
@@ -59,8 +60,8 @@ func (r *CarrierResolver) OpenIntelEventCount(ctx context.Context, obj *carrier.
 	if err != nil {
 		return 0, nil
 	}
-	if loaders.Available(ctx) {
-		return loaders.CarrierIntelOpenEventCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return partiesloaders.CarrierIntelOpenEventCount(ctx, obj.ID.String())
 	}
 	counts, err := r.CarrierIntelService.OpenEventCountsByCarrierIDs(
 		ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID},
@@ -77,8 +78,8 @@ func (r *CarrierResolver) MonitoringEnrollment(ctx context.Context, obj *carrier
 		return nil, nil
 	}
 	var rows []*carrierintelenrollment.CarrierMonitoringEnrollment
-	if loaders.Available(ctx) {
-		rows, err = loaders.CarrierMonitoringEnrollmentByCarrierID(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		rows, err = partiesloaders.CarrierMonitoringEnrollmentByCarrierID(ctx, obj.ID.String())
 	} else {
 		rows, err = r.CarrierIntelService.EnrollmentsByCarrierIDs(ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID})
 	}
@@ -350,7 +351,7 @@ func (r *CustomerResolver) BrokerIntelligence(ctx context.Context, obj *customer
 			)
 		},
 		func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-			return loaders.CarrierIntelSnapshotByCustomerID(ctx, obj.ID.String())
+			return partiesloaders.CarrierIntelSnapshotByCustomerID(ctx, obj.ID.String())
 		},
 	)
 }

@@ -3,7 +3,10 @@ package loaderfields
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/equipmentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/settlementloaders"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
@@ -16,11 +19,11 @@ func LoadTractor(ctx context.Context, id *pulid.ID) (*tractor.Tractor, error) {
 		return nil, nil //nolint:nilnil // an unset reference resolves to null
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil //nolint:nilnil // outside a request with loaders the relation resolves to null
 	}
 
-	return loaders.TractorByID(ctx, id.String())
+	return equipmentloaders.TractorByID(ctx, id.String())
 }
 
 func LoadJurisdiction(ctx context.Context, id *pulid.ID) (*ifta.Jurisdiction, error) {
@@ -28,11 +31,11 @@ func LoadJurisdiction(ctx context.Context, id *pulid.ID) (*ifta.Jurisdiction, er
 		return nil, nil //nolint:nilnil // an unset reference resolves to null
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil //nolint:nilnil // outside a request with loaders the relation resolves to null
 	}
 
-	return loaders.IFTAJurisdictionByID(ctx, id.String())
+	return settlementloaders.IFTAJurisdictionByID(ctx, id.String())
 }
 
 func LoadUser(ctx context.Context, id pulid.ID) (*tenant.User, error) {
@@ -40,11 +43,11 @@ func LoadUser(ctx context.Context, id pulid.ID) (*tenant.User, error) {
 		return nil, nil //nolint:nilnil // an unset reference resolves to null
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil //nolint:nilnil // outside a request with loaders the relation resolves to null
 	}
 
-	return loaders.UserByID(ctx, id.String())
+	return identityloaders.UserByID(ctx, id.String())
 }
 
 // optionalMatch reads a matched record for display. A record that is gone or
@@ -64,7 +67,7 @@ func OptionalMatch[T any](value T, err error) (T, error) {
 }
 
 func RequireLoaders(ctx context.Context) error {
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return errortypes.NewDatabaseError("Request loaders are not configured")
 	}
 

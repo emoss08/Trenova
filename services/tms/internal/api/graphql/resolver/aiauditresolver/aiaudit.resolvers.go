@@ -11,7 +11,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -49,11 +50,11 @@ func (r *AIAuditEventResolver) Agent(ctx context.Context, obj *aiaudit.AIAuditEv
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	definition, err := loaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
+	definition, err := agentloaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -98,7 +99,7 @@ func (r *AIAuditEventResolver) CostUsd(ctx context.Context, obj *aiaudit.AIAudit
 // Arguments are withheld per path at the reader's own ceiling on the tool's
 // resource, asked once per resource for the whole request.
 func (r *AIAuditEventResolver) Arguments(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error) {
-	return r.AiAuditService.ReaderArguments(ctx, obj, loaders.FieldCeilings(ctx)), nil
+	return r.AiAuditService.ReaderArguments(ctx, obj, agentloaders.FieldCeilings(ctx)), nil
 }
 
 func (r *AIAuditEventResolver) ArgumentSensitivity(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error) {
@@ -120,8 +121,8 @@ func (r *AIAuditEventResolver) AuditEntries(ctx context.Context, obj *aiaudit.AI
 		return []*audit.Entry{}, nil
 	}
 
-	entries, err := loaders.AuditEntriesByAIAuditEventID(ctx, obj.ID.String())
-	if errors.Is(err, loaders.ErrNotAttached) {
+	entries, err := agentloaders.AuditEntriesByAIAuditEventID(ctx, obj.ID.String())
+	if errors.Is(err, loadercore.ErrNotAttached) {
 		return []*audit.Entry{}, nil
 	}
 	if err != nil {

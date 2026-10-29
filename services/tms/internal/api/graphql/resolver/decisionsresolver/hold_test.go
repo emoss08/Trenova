@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -81,17 +81,17 @@ func newHoldWorld(t *testing.T, paused bool) *holdWorld {
 		shadeRun: shadeRun.ID,
 	}
 
-	ctx := loaders.NewAgentsPausedLoaderFactory(
-		loaders.AgentsPausedLoaderFactoryParams{Controls: world.controls},
+	ctx := agentloaders.NewAgentsPausedLoaderFactory(
+		agentloaders.AgentsPausedLoaderFactoryParams{Controls: world.controls},
 	).Attach(t.Context(), world.tenant)
-	ctx = loaders.NewAgentRunByIDLoaderFactory(loaders.AgentRunByIDLoaderFactoryParams{
+	ctx = agentloaders.NewAgentRunByIDLoaderFactory(agentloaders.AgentRunByIDLoaderFactoryParams{
 		Runs: &holdRuns{byID: map[pulid.ID]*agent.AgentRun{
 			liveRun.ID:  liveRun,
 			shadeRun.ID: shadeRun,
 		}},
 	}).Attach(ctx, world.tenant)
-	world.ctx = loaders.NewAgentDefinitionByIDLoaderFactory(
-		loaders.AgentDefinitionByIDLoaderFactoryParams{
+	world.ctx = agentloaders.NewAgentDefinitionByIDLoaderFactory(
+		agentloaders.AgentDefinitionByIDLoaderFactoryParams{
 			Definitions: &resolvertest.DelegateDefinitionsRepo{
 				ByID: map[pulid.ID]*agentdefinition.Definition{live.ID: live, shade.ID: shade},
 			},

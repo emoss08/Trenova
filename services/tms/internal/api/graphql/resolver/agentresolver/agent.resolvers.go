@@ -12,7 +12,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionbatch"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
@@ -127,11 +128,11 @@ func (r *AgentProposalResolver) Modifications(ctx context.Context, obj *agent.Ag
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	decisions, err := loaders.AgentDecisionsByProposalID(ctx, obj.ID.String())
+	decisions, err := agentloaders.AgentDecisionsByProposalID(ctx, obj.ID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -1001,11 +1002,11 @@ func (r *AgentPlanResolver) DecidedBy(ctx context.Context, obj *agentplan.AgentP
 }
 
 func (r *AgentPlanResolver) RunMode(ctx context.Context, obj *agentplan.AgentPlan) (agentplan.PlanRunMode, error) {
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return "", errortypes.NewBusinessError("The plan's steps cannot be read here")
 	}
 
-	steps, err := loaders.AgentPlanStepsByPlanID(ctx, obj.ID.String())
+	steps, err := agentloaders.AgentPlanStepsByPlanID(ctx, obj.ID.String())
 	if err != nil {
 		return "", err
 	}

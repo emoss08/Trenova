@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -28,7 +28,7 @@ func (r *Deps) PreviewViewer(
 		Actor: actor,
 		Reads: fieldsensitivity.NewReadAccess(r.PermissionEngine, actor),
 	}
-	viewer.Ceilings = loaders.FieldCeilings(ctx)
+	viewer.Ceilings = agentloaders.FieldCeilings(ctx)
 
 	return viewer
 }

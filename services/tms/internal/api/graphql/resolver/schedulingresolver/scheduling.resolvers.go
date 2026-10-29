@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -346,8 +347,8 @@ func (r *ShiftTemplateResolver) ActiveAssignmentCount(ctx context.Context, obj *
 	if err != nil {
 		return 0, err
 	}
-	if loaders.Available(ctx) {
-		return loaders.ShiftTemplateActiveAssignmentCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return workforceloaders.ShiftTemplateActiveAssignmentCount(ctx, obj.ID.String())
 	}
 
 	return r.SchedulingService.CountTemplateAssignments(ctx, resolvercore.TenantInfo(authCtx), obj.ID)

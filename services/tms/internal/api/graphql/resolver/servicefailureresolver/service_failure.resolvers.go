@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
@@ -120,5 +120,5 @@ func (r *ServiceFailureShipmentResolver) Customer(ctx context.Context, obj *ship
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.CustomerByID(ctx, obj.CustomerID.String()))
+	return loaderfields.OptionalMatch(partiesloaders.CustomerByID(ctx, obj.CustomerID.String()))
 }

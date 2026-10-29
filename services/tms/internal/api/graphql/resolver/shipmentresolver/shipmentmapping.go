@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/operationsloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -949,11 +950,11 @@ func (r *ShipmentResolver) loadShipmentOrder(
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Order loader is not configured")
 	}
 
-	parent, err := loaders.OrderByID(ctx, *obj.OrderID)
+	parent, err := operationsloaders.OrderByID(ctx, *obj.OrderID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

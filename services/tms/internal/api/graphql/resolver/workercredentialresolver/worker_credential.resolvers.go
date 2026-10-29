@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -360,8 +361,8 @@ func (r *WorkerCredentialTypeResolver) ProfileField(ctx context.Context, obj *wo
 func (r *WorkerCredentialTypeResolver) ActiveCredentialCount(ctx context.Context, obj *workercredential.WorkerCredentialType) (*int, error) {
 	var count int
 	var err error
-	if loaders.Available(ctx) {
-		count, err = loaders.WorkerCredentialTypeActiveCredentialCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		count, err = workforceloaders.WorkerCredentialTypeActiveCredentialCount(ctx, obj.ID.String())
 	} else {
 		count, err = r.WorkerCredentialService.CountActiveCredentials(ctx, obj)
 	}

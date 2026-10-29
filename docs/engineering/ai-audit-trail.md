@@ -318,7 +318,7 @@ operations are in `client/packages/graphql/src/operations/agent/audit.graphql`:
 | Repositories | `internal/modules/agent/adapters/postgres/aiauditrepository/` |
 | Projector, derivation, redaction, verification, retention, exports | `internal/modules/agent/app/aiauditservice/` |
 | Workflows and schedules | `internal/modules/agent/jobs/aiauditjobs/` |
-| GraphQL | `internal/api/graphql/schema/aiaudit.graphqls`, `resolver/aiaudit.resolvers.go`, `loaders/aiauditentriesloader.go` |
+| GraphQL | `internal/api/graphql/schema/aiaudit.graphqls`, `resolver/aiaudit.resolvers.go`, `loaders/agentloaders/aiauditentriesloader.go` |
 | Field sensitivity | `internal/modules/identity/app/fieldsensitivity/` |
 
 ## In the app

@@ -10,7 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -114,7 +116,7 @@ func (r *InboundMessageResolver) AttachmentCount(ctx context.Context, obj *inbou
 		return 0, err
 	}
 
-	return loaders.InboundAttachmentCount(ctx, obj.ID.String())
+	return documentloaders.InboundAttachmentCount(ctx, obj.ID.String())
 }
 
 func (r *InboundMessageResolver) Preview(ctx context.Context, obj *inboundmessage.InboundMessage) (string, error) {
@@ -144,7 +146,7 @@ func (r *InboundMessageResolver) MatchedCustomer(ctx context.Context, obj *inbou
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.CustomerByID(ctx, obj.MatchedCustomerID.String()))
+	return loaderfields.OptionalMatch(partiesloaders.CustomerByID(ctx, obj.MatchedCustomerID.String()))
 }
 
 func (r *InboundMessageResolver) NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error) {
@@ -482,7 +484,7 @@ func (r *InboundMessageResolver) ThreadCount(ctx context.Context, obj *inboundme
 		return 0, err
 	}
 
-	count, err := loaders.InboundThreadCount(ctx, obj.ThreadKey)
+	count, err := documentloaders.InboundThreadCount(ctx, obj.ThreadKey)
 	if err != nil {
 		return 0, err
 	}
@@ -543,7 +545,7 @@ func (r *InboundMessageResolver) Activity(ctx context.Context, obj *inboundmessa
 		return nil, err
 	}
 
-	return loaders.InboundActivitiesByMessageID(ctx, obj.ID.String())
+	return documentloaders.InboundActivitiesByMessageID(ctx, obj.ID.String())
 }
 
 func (r *InboundSnoozeResolver) WatchShipment(ctx context.Context, obj *inboundmessageports.SnoozeView) (*shipmentports.ShipmentSummary, error) {
@@ -558,7 +560,7 @@ func (r *InboundSnoozeResolver) DocumentTypeName(ctx context.Context, obj *inbou
 		return nil, err
 	}
 
-	name, err := loaders.DocumentTypeNameByID(ctx, obj.DocumentTypeID.String())
+	name, err := documentloaders.DocumentTypeNameByID(ctx, obj.DocumentTypeID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -948,7 +950,7 @@ func (r *TriageAssigneeResolver) User(ctx context.Context, obj *inboundmessagepo
 		return nil, err
 	}
 
-	return loaders.UserByID(ctx, obj.UserID.String())
+	return identityloaders.UserByID(ctx, obj.UserID.String())
 }
 
 func (r *TriageHandOffResolver) To(ctx context.Context, obj *inboundmessageports.HandOffResult) (*tenant.User, error) {
@@ -956,7 +958,7 @@ func (r *TriageHandOffResolver) To(ctx context.Context, obj *inboundmessageports
 		return nil, err
 	}
 
-	return loaders.UserByID(ctx, obj.ToUserID.String())
+	return identityloaders.UserByID(ctx, obj.ToUserID.String())
 }
 
 func (r *TriageSettingsResolver) OnCallUser(ctx context.Context, obj *triage.Settings) (*tenant.User, error) {
@@ -979,5 +981,5 @@ func (r *TriageViewResolver) Waiting(ctx context.Context, obj *triage.View) (int
 		return 0, err
 	}
 
-	return loaders.TriageViewWaitingCount(ctx, obj.ID.String())
+	return documentloaders.TriageViewWaitingCount(ctx, obj.ID.String())
 }

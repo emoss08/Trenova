@@ -9,7 +9,7 @@ import (
 	gqlhandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -33,34 +33,34 @@ const (
 type Params struct {
 	fx.In
 
-	Config        *config.Config
-	Logger        *zap.Logger
-	ErrorHandler  *helpers.ErrorHandler
-	LoaderFactory *loaders.Factory
-	PersistedOps  *PersistedOperationManifest
-	Server        *gqlhandler.Server
-	Metrics       *metrics.Registry
+	Config       *config.Config
+	Logger       *zap.Logger
+	ErrorHandler *helpers.ErrorHandler
+	Loaders      *loadercore.Registry
+	PersistedOps *PersistedOperationManifest
+	Server       *gqlhandler.Server
+	Metrics      *metrics.Registry
 }
 
 type Handler struct {
-	cfg           *config.Config
-	l             *zap.Logger
-	eh            *helpers.ErrorHandler
-	loaderFactory *loaders.Factory
-	persistedOps  *PersistedOperationManifest
-	server        *gqlhandler.Server
-	metrics       *metrics.GraphQL
+	cfg          *config.Config
+	l            *zap.Logger
+	eh           *helpers.ErrorHandler
+	loaders      *loadercore.Registry
+	persistedOps *PersistedOperationManifest
+	server       *gqlhandler.Server
+	metrics      *metrics.GraphQL
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		cfg:           p.Config,
-		l:             p.Logger.Named("api.graphql"),
-		eh:            p.ErrorHandler,
-		loaderFactory: p.LoaderFactory,
-		persistedOps:  p.PersistedOps,
-		server:        p.Server,
-		metrics:       p.Metrics.GraphQL,
+		cfg:          p.Config,
+		l:            p.Logger.Named("api.graphql"),
+		eh:           p.ErrorHandler,
+		loaders:      p.Loaders,
+		persistedOps: p.PersistedOps,
+		server:       p.Server,
+		metrics:      p.Metrics.GraphQL,
 	}
 }
 
@@ -107,7 +107,7 @@ func (h *Handler) handle(c *gin.Context) {
 	reqCtx = gqlctx.WithPermissionMemo(reqCtx, gqlctx.NewPermissionMemo())
 	responseStatus := gqlctx.NewResponseStatus()
 	reqCtx = gqlctx.WithResponseStatus(reqCtx, responseStatus)
-	reqCtx = h.loaderFactory.Attach(reqCtx, pagination.TenantInfo{
+	reqCtx = h.loaders.Attach(reqCtx, pagination.TenantInfo{
 		OrgID:  authCtx.OrganizationID,
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,

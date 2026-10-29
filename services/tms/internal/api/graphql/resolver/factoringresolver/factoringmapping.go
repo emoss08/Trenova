@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/billingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -25,7 +26,7 @@ func (d *Deps) factorFor(
 	ctx context.Context,
 	id pulid.ID,
 ) (*factoringcompany.FactoringCompany, error) {
-	if id.IsNil() || !loaders.Available(ctx) {
+	if id.IsNil() || !loadercore.Available(ctx) {
 		return nil, nil //nolint:nilnil // an unset factor resolves to null
 	}
 	authCtx, err := d.RequireAuth(ctx)
@@ -35,7 +36,7 @@ func (d *Deps) factorFor(
 	if !d.HasPermission(ctx, authCtx, permission.ResourceFactoringCompany, permission.OpRead) {
 		return nil, nil //nolint:nilnil // a factor the caller cannot read resolves to null
 	}
-	return loaders.FactoringCompanyByID(ctx, id.String())
+	return billingloaders.FactoringCompanyByID(ctx, id.String())
 }
 
 func agreementInputFromModel(

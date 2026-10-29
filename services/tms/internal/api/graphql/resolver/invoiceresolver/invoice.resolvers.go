@@ -10,7 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/billingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -50,8 +52,8 @@ func (r *InvoiceResolver) ShipperCustomer(ctx context.Context, obj *invoice.Invo
 		return nil, err
 	}
 
-	if loaders.Available(ctx) {
-		return loaders.CustomerByID(ctx, obj.ShipperCustomerID.String())
+	if loadercore.Available(ctx) {
+		return partiesloaders.CustomerByID(ctx, obj.ShipperCustomerID.String())
 	}
 
 	return r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
@@ -77,7 +79,7 @@ func (r *InvoiceResolver) RelatedInvoices(ctx context.Context, obj *invoice.Invo
 		return []*invoice.Invoice{}, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return []*invoice.Invoice{}, nil
 	}
 
@@ -85,7 +87,7 @@ func (r *InvoiceResolver) RelatedInvoices(ctx context.Context, obj *invoice.Invo
 	for _, id := range legIDs {
 		keys = append(keys, id.String())
 	}
-	groups, err := loaders.InvoicesByShipmentIDAll(ctx, keys)
+	groups, err := billingloaders.InvoicesByShipmentIDAll(ctx, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +147,8 @@ func (r *InvoiceResolver) ReferenceInvoice(ctx context.Context, obj *invoice.Inv
 		return nil, err
 	}
 
-	if loaders.Available(ctx) {
-		return loaders.InvoiceByID(ctx, obj.ReferenceInvoiceID.String())
+	if loadercore.Available(ctx) {
+		return billingloaders.InvoiceByID(ctx, obj.ReferenceInvoiceID.String())
 	}
 
 	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
@@ -191,11 +193,11 @@ func (r *InvoiceResolver) PaymentApplications(ctx context.Context, obj *invoice.
 		return nil, err
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return []*customerpayment.Application{}, nil
 	}
 
-	return loaders.CustomerPaymentApplicationsByInvoiceID(ctx, obj.ID.String())
+	return billingloaders.CustomerPaymentApplicationsByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceResolver) CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error) {
@@ -206,11 +208,11 @@ func (r *InvoiceResolver) CreditApplications(ctx context.Context, obj *invoice.I
 		return nil, err
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return []*customerpayment.CreditMemoApplication{}, nil
 	}
 
-	return loaders.CreditMemoApplicationsByInvoiceID(ctx, obj.ID.String())
+	return billingloaders.CreditMemoApplicationsByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceResolver) EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error) {
@@ -221,7 +223,7 @@ func (r *InvoiceResolver) EDISendPlan(ctx context.Context, obj *invoice.Invoice)
 		return nil, err
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return &invoiceports.InvoiceEDISendPlan{
 			InvoiceID: obj.ID,
 			Status:    obj.EDISendStatus,
@@ -229,7 +231,7 @@ func (r *InvoiceResolver) EDISendPlan(ctx context.Context, obj *invoice.Invoice)
 		}, nil
 	}
 
-	return loaders.InvoiceEDISendPlanByInvoiceID(ctx, obj.ID.String())
+	return billingloaders.InvoiceEDISendPlanByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceLineResolver) Quantity(ctx context.Context, obj *invoice.InvoiceLine) (string, error) {
@@ -448,11 +450,11 @@ func (r *InvoiceChargeGroupResolver) Amount(ctx context.Context, obj *invoicecha
 }
 
 func (r *InvoiceResolver) ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoicechargegroup.ChargeGroup, error) {
-	if obj.Lines != nil || !loaders.Available(ctx) {
+	if obj.Lines != nil || !loadercore.Available(ctx) {
 		return invoicechargegroup.ChargeGroups(obj.Lines), nil
 	}
 
-	loaded, err := loaders.InvoiceByID(ctx, obj.ID.String())
+	loaded, err := billingloaders.InvoiceByID(ctx, obj.ID.String())
 	if err != nil {
 		return nil, err
 	}

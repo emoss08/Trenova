@@ -3,7 +3,7 @@ package captureresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
@@ -42,7 +42,10 @@ func (r *Deps) CaptureRecord(
 	}
 
 	return loaderfields.OptionalMatch(
-		loaders.CaptureRecordLabel(ctx, loaders.CaptureRecordKey(resourceType, *id)),
+		documentloaders.CaptureRecordLabel(
+			ctx,
+			documentloaders.CaptureRecordKey(resourceType, *id),
+		),
 	)
 }
 

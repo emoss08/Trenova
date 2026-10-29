@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
@@ -138,15 +139,17 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 		}),
 	}
 
-	people := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users})
-	counts := loaders.NewInboundAttachmentCountLoaderFactory(
-		loaders.InboundAttachmentCountLoaderFactoryParams{MessageRepo: messages})
-	threads := loaders.NewInboundThreadCountLoaderFactory(
-		loaders.InboundThreadCountLoaderFactoryParams{QueueRepo: queue})
-	attachments := loaders.NewInboundAttachmentsByMessageIDLoaderFactory(
-		loaders.InboundAttachmentsByMessageIDLoaderFactoryParams{MessageRepo: messages})
-	drafts := loaders.NewInboundReplyLoaderFactory(
-		loaders.InboundReplyLoaderFactoryParams{ReplyRepo: replies})
+	people := identityloaders.NewUserByIDLoaderFactory(
+		identityloaders.UserByIDLoaderFactoryParams{Repo: users},
+	)
+	counts := documentloaders.NewInboundAttachmentCountLoaderFactory(
+		documentloaders.InboundAttachmentCountLoaderFactoryParams{MessageRepo: messages})
+	threads := documentloaders.NewInboundThreadCountLoaderFactory(
+		documentloaders.InboundThreadCountLoaderFactoryParams{QueueRepo: queue})
+	attachments := documentloaders.NewInboundAttachmentsByMessageIDLoaderFactory(
+		documentloaders.InboundAttachmentsByMessageIDLoaderFactoryParams{MessageRepo: messages})
+	drafts := documentloaders.NewInboundReplyLoaderFactory(
+		documentloaders.InboundReplyLoaderFactoryParams{ReplyRepo: replies})
 
 	return &inboxEnv{
 		admin:     admin,

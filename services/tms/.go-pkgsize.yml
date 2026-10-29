@@ -16,7 +16,6 @@ exceptions:
       package; lanes.go stays because RateAgreementRule carries its unexported lane state.
       Matching and term comparison live in rateagreementmatch and rateagreementcompare.
 debt:
-  services/tms/internal/api/graphql/loaders: 7636
   services/tms/internal/api/graphql/resolver/selectoptionsresolver: 4725
   services/tms/internal/api/graphql/resolver/shipmentresolver: 3641
   services/tms/internal/deskbench: 13871

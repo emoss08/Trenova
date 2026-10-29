@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/accountingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
@@ -44,8 +45,8 @@ func (r *JournalEntryLineResolver) GlAccount(ctx context.Context, obj *journalen
 	}
 
 	var account *glaccount.GLAccount
-	if loaders.Available(ctx) {
-		account, err = loaders.GLAccountByID(ctx, obj.GLAccountID.String())
+	if loadercore.Available(ctx) {
+		account, err = accountingloaders.GLAccountByID(ctx, obj.GLAccountID.String())
 	} else {
 		account, err = r.GlAccountRepo.GetByID(ctx, glaccountports.GetGLAccountByIDRequest{
 			ID:         obj.GLAccountID,

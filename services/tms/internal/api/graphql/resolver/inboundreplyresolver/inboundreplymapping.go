@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
@@ -33,7 +33,7 @@ func (r *TriageActionResolver) visibleShipment(
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.ShipmentSummaryByID(ctx, shipmentID.String()))
+	return loaderfields.OptionalMatch(documentloaders.ShipmentSummaryByID(ctx, shipmentID.String()))
 }
 
 func templateInput(input gqlmodel.TriageReplyTemplateInput) inboundreplyservice.TemplateInput {

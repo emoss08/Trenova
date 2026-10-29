@@ -8,7 +8,8 @@ package tenderresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/operationsloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -92,8 +93,8 @@ func (r *TenderResolver) RoutingGuide(ctx context.Context, obj *tender.Tender) (
 		return obj.RoutingGuide, nil
 	}
 
-	if loaders.Available(ctx) {
-		return loaders.RoutingGuideWithEntriesByID(ctx, obj.RoutingGuideID.String())
+	if loadercore.Available(ctx) {
+		return operationsloaders.RoutingGuideWithEntriesByID(ctx, obj.RoutingGuideID.String())
 	}
 
 	return r.RoutingGuideService.Get(ctx, tenderports.GetRoutingGuideByIDRequest{

@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -384,8 +385,8 @@ func (r *TrainingCourseResolver) PassingScore(ctx context.Context, obj *workertr
 }
 
 func (r *TrainingCourseResolver) OpenRecordCount(ctx context.Context, obj *workertraining.TrainingCourse) (int, error) {
-	if loaders.Available(ctx) {
-		return loaders.TrainingCourseOpenRecordCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return workforceloaders.TrainingCourseOpenRecordCount(ctx, obj.ID.String())
 	}
 	return r.WorkerTrainingService.CountOpenRecords(ctx, obj)
 }

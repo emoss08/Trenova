@@ -6,7 +6,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/ratingloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -110,21 +111,21 @@ func pinnedMatrix(
 	ctx context.Context,
 	pin *tarifftypes.TablePin,
 ) (*ratematrix.RateMatrix, error) {
-	if pin == nil || pin.RateMatrixID.IsNil() || !loaders.Available(ctx) {
+	if pin == nil || pin.RateMatrixID.IsNil() || !loadercore.Available(ctx) {
 		return nil, nil
 	}
-	return loaders.RateMatrixByID(ctx, pin.RateMatrixID.String())
+	return ratingloaders.RateMatrixByID(ctx, pin.RateMatrixID.String())
 }
 
 func formulaTemplateStats(
 	ctx context.Context,
 	obj *formulatemplate.FormulaTemplate,
 ) (formulatemplateports.TemplateStats, error) {
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return formulatemplateports.TemplateStats{}, errortypes.NewDatabaseError(
 			"Formula template stats loader is not configured",
 		)
 	}
 
-	return loaders.FormulaTemplateStatsByID(ctx, obj.ID.String())
+	return ratingloaders.FormulaTemplateStatsByID(ctx, obj.ID.String())
 }

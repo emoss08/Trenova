@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/settlementloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -555,8 +556,8 @@ func (r *CarrierSettlementResolver) MoveInvoices(ctx context.Context, obj *carri
 	}
 	moveIDs := carriersettlement.MoveIDs(obj.Lines)
 	matchesByMove := make(map[pulid.ID][]*carriersettlement.InvoiceMatch, len(moveIDs))
-	if len(moveIDs) > 0 && loaders.Available(ctx) {
-		groups, err := loaders.CarrierInvoiceMatchesByMoveIDs(ctx, sliceutils.Strings(moveIDs))
+	if len(moveIDs) > 0 && loadercore.Available(ctx) {
+		groups, err := settlementloaders.CarrierInvoiceMatchesByMoveIDs(ctx, sliceutils.Strings(moveIDs))
 		if err != nil {
 			return nil, err
 		}

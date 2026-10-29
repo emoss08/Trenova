@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -416,8 +417,8 @@ func (r *WorkerLeaveCaseResolver) Entries(ctx context.Context, obj *workerleave.
 		return nil, err
 	}
 
-	if loaders.Available(ctx) {
-		return loaders.WorkerLeaveEntriesByCaseID(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return workforceloaders.WorkerLeaveEntriesByCaseID(ctx, obj.ID.String())
 	}
 
 	return r.WorkerLeaveService.ListEntries(ctx, &workerleaveports.ListLeaveEntriesRequest{

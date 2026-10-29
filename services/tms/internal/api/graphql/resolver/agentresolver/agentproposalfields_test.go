@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -168,9 +168,10 @@ func newChoicesHarness(t *testing.T, granted bool) *choicesHarness {
 	}
 	h.resolver = &AgentProposalResolver{r}
 	h.fields = &AgentProposalFieldResolver{r}
-	factory := loaders.NewSubsetLabelsLoaderFactory(loaders.SubsetLabelsLoaderFactoryParams{
+	factory := agentloaders.NewSubsetLabelsLoaderFactory(agentloaders.SubsetLabelsLoaderFactoryParams{
 		Labeler: h.labeler,
-	}).WithBatchWait(choicesBatchWait)
+	}).
+		WithBatchWait(choicesBatchWait)
 	h.ctx = factory.Attach(gqlctx.WithAuthContext(t.Context(), auth), pagination.TenantInfo{
 		OrgID: auth.OrganizationID,
 		BuID:  auth.BusinessUnitID,

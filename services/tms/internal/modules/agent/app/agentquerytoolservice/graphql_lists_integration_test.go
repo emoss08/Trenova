@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/ratingloaders"
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
@@ -351,8 +351,8 @@ func convertedListCases(
 		}),
 	}
 
-	formulaStats := loaders.NewFormulaTemplateStatsLoaderFactory(
-		loaders.FormulaTemplateStatsLoaderFactoryParams{TemplateRepo: formulaTemplates})
+	formulaStats := ratingloaders.NewFormulaTemplateStatsLoaderFactory(
+		ratingloaders.FormulaTemplateStatsLoaderFactoryParams{TemplateRepo: formulaTemplates})
 	systemTyped, systemOld := boolFilter("isSystem", true)
 	parkingTyped, parkingOld := boolFilter("hasSecureParking", true)
 	retiredTyped, retiredOld := boolFilter("active", false)

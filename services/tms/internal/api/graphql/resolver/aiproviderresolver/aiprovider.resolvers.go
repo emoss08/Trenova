@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -131,11 +132,11 @@ func (r *AIProviderResolver) MonthlyCapUsd(ctx context.Context, obj *aiprovider.
 }
 
 func (r *AIProviderResolver) MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error) {
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return decimal.Zero.String(), nil
 	}
 
-	spend, err := loaders.AIProviderMonthSpend(ctx, obj.ID.String())
+	spend, err := agentloaders.AIProviderMonthSpend(ctx, obj.ID.String())
 	if err != nil {
 		return "", err
 	}

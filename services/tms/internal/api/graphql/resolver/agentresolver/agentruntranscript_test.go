@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -71,8 +71,8 @@ func (f *transcriptFixture) resolver() *AgentRunResolver {
 func (f *transcriptFixture) ctx(t *testing.T) context.Context {
 	t.Helper()
 
-	factory := loaders.NewAgentRunTranscriptByIDLoaderFactory(
-		loaders.AgentRunTranscriptByIDLoaderFactoryParams{Runs: f.runs},
+	factory := agentloaders.NewAgentRunTranscriptByIDLoaderFactory(
+		agentloaders.AgentRunTranscriptByIDLoaderFactoryParams{Runs: f.runs},
 	)
 	ctx := factory.Attach(t.Context(), f.tenant)
 

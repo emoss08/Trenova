@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -422,7 +422,7 @@ func loadCarrierSnapshot(
 ) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	var snapshots []*carrierintelsnapshot.CarrierIntelSnapshot
 	var err error
-	if loaders.Available(ctx) {
+	if loadercore.Available(ctx) {
 		snapshots, err = loader()
 	} else {
 		snapshots, err = fetch()

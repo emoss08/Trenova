@@ -6,7 +6,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -38,11 +39,11 @@ func agentRunColumns(ctx context.Context, nodePathPrefix string) []string {
 }
 
 func runTranscript(ctx context.Context, run *agent.AgentRun) (*agent.RunTranscript, error) {
-	if run.Transcript != nil || !loaders.Available(ctx) {
+	if run.Transcript != nil || !loadercore.Available(ctx) {
 		return run.Transcript, nil
 	}
 
-	loaded, err := loaders.AgentRunTranscriptByID(ctx, run.ID.String())
+	loaded, err := agentloaders.AgentRunTranscriptByID(ctx, run.ID.String())
 	switch {
 	case errortypes.IsNotFoundError(err):
 		return run.Transcript, nil
@@ -70,11 +71,11 @@ func supersededMemory(
 	ctx context.Context,
 	memory *agentmemory.Memory,
 ) (*agentmemory.Memory, error) {
-	if !loaders.Available(ctx) || !memory.Replaces() {
+	if !loadercore.Available(ctx) || !memory.Replaces() {
 		return nil, nil
 	}
 
-	loaded, err := loaders.AgentMemoryByID(ctx, memory.SupersedesID.String())
+	loaded, err := agentloaders.AgentMemoryByID(ctx, memory.SupersedesID.String())
 	switch {
 	case errortypes.IsNotFoundError(err):
 		return nil, nil
@@ -86,11 +87,11 @@ func supersededMemory(
 }
 
 func replacingMemory(ctx context.Context, memory *agentmemory.Memory) (*agentmemory.Memory, error) {
-	if !loaders.Available(ctx) || memory == nil || memory.ID.IsNil() {
+	if !loadercore.Available(ctx) || memory == nil || memory.ID.IsNil() {
 		return nil, nil
 	}
 
-	return loaders.AgentMemoryReplacement(ctx, memory.ID.String())
+	return agentloaders.AgentMemoryReplacement(ctx, memory.ID.String())
 }
 
 func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {

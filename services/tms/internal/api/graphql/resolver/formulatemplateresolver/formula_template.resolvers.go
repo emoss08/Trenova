@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/ratingloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -24,7 +24,7 @@ func (r *FormulaLibraryImportResolver) Library(ctx context.Context, obj *tarifft
 	if obj.LibraryID.IsNil() {
 		return nil, nil
 	}
-	return loaders.FormulaLibraryByID(ctx, obj.LibraryID.String())
+	return ratingloaders.FormulaLibraryByID(ctx, obj.LibraryID.String())
 }
 
 func (r *FormulaTemplateResolver) Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaInputDeclaration, error) {

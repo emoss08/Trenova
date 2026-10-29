@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -41,8 +42,8 @@ func (r *DQFFileResolver) Verifications(ctx context.Context, obj *workercomplian
 		return nil, err
 	}
 
-	if loaders.Available(ctx) {
-		return loaders.WorkerDQFVerificationsByWorkerID(ctx, obj.WorkerID.String())
+	if loadercore.Available(ctx) {
+		return workforceloaders.WorkerDQFVerificationsByWorkerID(ctx, obj.WorkerID.String())
 	}
 
 	return r.WorkerDQFService.ListVerifications(

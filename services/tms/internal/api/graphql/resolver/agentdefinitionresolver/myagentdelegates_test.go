@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -66,10 +66,12 @@ func TestMyAgentDelegates_ServesOnlyDelegatesTheReaderMayUse(t *testing.T) {
 	} {
 		repo.ByID[definition.ID] = definition
 	}
-	factory := loaders.NewUsableAgentByIDLoaderFactory(loaders.UsableAgentByIDLoaderFactoryParams{
-		Definitions: repo,
-		Permissions: &delegatePermissions{granted: []pulid.ID{payroll.ID}},
-	})
+	factory := agentloaders.NewUsableAgentByIDLoaderFactory(
+		agentloaders.UsableAgentByIDLoaderFactoryParams{
+			Definitions: repo,
+			Permissions: &delegatePermissions{granted: []pulid.ID{payroll.ID}},
+		},
+	)
 	ctx := factory.Attach(t.Context(), pagination.TenantInfo{
 		OrgID:  pulid.MustNew("org_"),
 		BuID:   pulid.MustNew("bu_"),

@@ -12,7 +12,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/operationsloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -375,8 +376,8 @@ func (r *OrderResolver) Charges(ctx context.Context, obj *order.Order) ([]*gqlmo
 		allocations := charge.Allocations
 		if allocations == nil {
 			allocations = []*shipmentdomain.ChargeAllocation{}
-			if loaders.Available(ctx) {
-				loaded, loadErr := loaders.ChargeAllocationsByOrderChargeID(ctx, charge.ID.String())
+			if loadercore.Available(ctx) {
+				loaded, loadErr := operationsloaders.ChargeAllocationsByOrderChargeID(ctx, charge.ID.String())
 				if loadErr != nil {
 					return nil, loadErr
 				}

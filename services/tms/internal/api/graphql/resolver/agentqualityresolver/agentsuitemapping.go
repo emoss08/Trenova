@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
@@ -193,11 +194,11 @@ func qualityControlFromInput(
 }
 
 func suiteRunAgentName(ctx context.Context, agentID pulid.ID) (string, error) {
-	if !loaders.Available(ctx) || agentID.IsNil() {
+	if !loadercore.Available(ctx) || agentID.IsNil() {
 		return "", nil
 	}
 
-	definition, err := loaders.AgentDefinitionByID(ctx, agentID.String())
+	definition, err := agentloaders.AgentDefinitionByID(ctx, agentID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return "", nil

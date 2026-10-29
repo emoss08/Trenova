@@ -10,7 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/accountingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/billingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -75,30 +78,30 @@ func (r *FactoringCompanyResolver) Agreements(ctx context.Context, obj *factorin
 		return nil, err
 	}
 	if !r.HasPermission(ctx, authCtx, permission.ResourceFactoringAgreement, permission.OpRead) ||
-		!loaders.Available(ctx) {
+		!loadercore.Available(ctx) {
 		return []*factoring.Agreement{}, nil
 	}
-	return loaders.FactoringAgreementsByCompanyID(ctx, obj.ID.String())
+	return billingloaders.FactoringAgreementsByCompanyID(ctx, obj.ID.String())
 }
 
 func (r *FactoringInvoiceStateResolver) Invoice(ctx context.Context, obj *factoringreadiness.InvoiceState) (*invoice.Invoice, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
-	return loaders.InvoiceByID(ctx, obj.InvoiceID.String())
+	return billingloaders.InvoiceByID(ctx, obj.InvoiceID.String())
 }
 
 func (r *FactoringInvoiceStateResolver) Customer(ctx context.Context, obj *factoringreadiness.InvoiceState) (*customer.Customer, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
-	return loaders.CustomerByID(ctx, obj.CustomerID.String())
+	return partiesloaders.CustomerByID(ctx, obj.CustomerID.String())
 }
 
 func (r *FactoringInvoiceStateResolver) FactoringCompany(ctx context.Context, obj *factoringreadiness.InvoiceState) (*factoringcompany.FactoringCompany, error) {
@@ -116,13 +119,13 @@ func (r *FactoringNoaResolver) SignedDocumentID(ctx context.Context, obj *factor
 }
 
 func (r *FactoringNoaResolver) Customer(ctx context.Context, obj *factoring.Noa) (*customer.Customer, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
-	return loaders.CustomerByID(ctx, obj.CustomerID.String())
+	return partiesloaders.CustomerByID(ctx, obj.CustomerID.String())
 }
 
 func (r *FactoringNoaResolver) FactoringCompany(ctx context.Context, obj *factoring.Noa) (*factoringcompany.FactoringCompany, error) {
@@ -140,13 +143,13 @@ func (r *InvoiceResolver) FactoringCompany(ctx context.Context, obj *invoice.Inv
 }
 
 func (r *InvoiceResolver) FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoringreadiness.InvoiceState, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
-	return loaders.FactoringStateByInvoiceID(ctx, obj.ID.String())
+	return billingloaders.FactoringStateByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *MutationResolver) CreateFactoringAgreement(ctx context.Context, input gqlmodel.FactoringAgreementInput) (*factoring.Agreement, error) {
@@ -458,7 +461,7 @@ func (r *QueryResolver) FactoringSummary(ctx context.Context) (*factoringports.S
 }
 
 func (r *FactoringInvoiceStateResolver) Submission(ctx context.Context, obj *factoringreadiness.InvoiceState) (*factoringsubmissionports.LiveItem, error) {
-	if obj == nil || obj.Verdict != factoringreadiness.VerdictSubmitted || !loaders.Available(ctx) {
+	if obj == nil || obj.Verdict != factoringreadiness.VerdictSubmitted || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	authCtx, err := r.RequireAuth(ctx)
@@ -468,7 +471,7 @@ func (r *FactoringInvoiceStateResolver) Submission(ctx context.Context, obj *fac
 	if !r.HasPermission(ctx, authCtx, permission.ResourceFactoringSubmission, permission.OpRead) {
 		return nil, nil
 	}
-	return loaders.FactoringLiveItemByInvoiceID(ctx, obj.InvoiceID.String())
+	return billingloaders.FactoringLiveItemByInvoiceID(ctx, obj.InvoiceID.String())
 }
 
 func (r *FactoringSubmissionItemResolver) PacketDocumentID(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*string, error) {
@@ -479,7 +482,7 @@ func (r *FactoringSubmissionItemResolver) PacketDocumentID(ctx context.Context, 
 }
 
 func (r *FactoringSubmissionItemResolver) Invoice(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*invoice.Invoice, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	authCtx, err := r.RequireAuth(ctx)
@@ -489,17 +492,17 @@ func (r *FactoringSubmissionItemResolver) Invoice(ctx context.Context, obj *fact
 	if !r.HasPermission(ctx, authCtx, permission.ResourceInvoice, permission.OpRead) {
 		return nil, nil
 	}
-	return loaders.InvoiceByID(ctx, obj.InvoiceID.String())
+	return billingloaders.InvoiceByID(ctx, obj.InvoiceID.String())
 }
 
 func (r *FactoringSubmissionItemResolver) Customer(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*customer.Customer, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
-	return loaders.CustomerByID(ctx, obj.CustomerID.String())
+	return partiesloaders.CustomerByID(ctx, obj.CustomerID.String())
 }
 
 func (r *FactoringSubmissionPlanResolver) AgreementID(ctx context.Context, obj *factoringsubmissionports.SubmissionPlan) (string, error) {
@@ -537,13 +540,13 @@ func (r *FactoringSubmissionResolver) Items(ctx context.Context, obj *factorings
 	if obj.Items != nil {
 		return obj.Items, nil
 	}
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return []*factoringsubmission.SubmissionItem{}, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
-	items, err := loaders.FactoringSubmissionItems(ctx, obj.ID.String())
+	items, err := billingloaders.FactoringSubmissionItems(ctx, obj.ID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -768,13 +771,13 @@ func (r *FactoringMovementResolver) InvoiceEffect(ctx context.Context, obj *fact
 }
 
 func (r *FactoringPlannedLineResolver) Account(ctx context.Context, obj *factoringledgerports.PlannedLine) (*gqlmodel.JournalEntryLineAccount, error) {
-	if obj == nil || obj.AccountID.IsNil() || !loaders.Available(ctx) {
+	if obj == nil || obj.AccountID.IsNil() || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
-	account, err := loaders.GLAccountByID(ctx, obj.AccountID.String())
+	account, err := accountingloaders.GLAccountByID(ctx, obj.AccountID.String())
 	if err != nil {
 		return nil, nil //nolint:nilerr,nilnil // fall back to the raw account id in the UI
 	}
@@ -814,7 +817,7 @@ func (r *FactoringReserveEntryResolver) FactoringCompany(ctx context.Context, ob
 }
 
 func (r *FactoringReserveEntryResolver) Invoice(ctx context.Context, obj *factoringledger.ReserveEntry) (*invoice.Invoice, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	authCtx, err := r.RequireAuth(ctx)
@@ -824,21 +827,21 @@ func (r *FactoringReserveEntryResolver) Invoice(ctx context.Context, obj *factor
 	if !r.HasPermission(ctx, authCtx, permission.ResourceInvoice, permission.OpRead) {
 		return nil, nil
 	}
-	return loaders.InvoiceByID(ctx, obj.InvoiceID.String())
+	return billingloaders.InvoiceByID(ctx, obj.InvoiceID.String())
 }
 
 func (r *FactoringReserveEntryResolver) Customer(ctx context.Context, obj *factoringledger.ReserveEntry) (*customer.Customer, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	if _, err := r.RequireAuth(ctx); err != nil {
 		return nil, err
 	}
-	return loaders.CustomerByID(ctx, obj.CustomerID.String())
+	return partiesloaders.CustomerByID(ctx, obj.CustomerID.String())
 }
 
 func (r *FactoringReserveEntryResolver) Submission(ctx context.Context, obj *factoringledger.ReserveEntry) (*factoringsubmission.Submission, error) {
-	if obj == nil || !loaders.Available(ctx) {
+	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
 	authCtx, err := r.RequireAuth(ctx)
@@ -848,7 +851,7 @@ func (r *FactoringReserveEntryResolver) Submission(ctx context.Context, obj *fac
 	if !r.HasPermission(ctx, authCtx, permission.ResourceFactoringSubmission, permission.OpRead) {
 		return nil, nil
 	}
-	return loaders.FactoringSubmissionByID(ctx, obj.SubmissionID.String())
+	return billingloaders.FactoringSubmissionByID(ctx, obj.SubmissionID.String())
 }
 
 func (r *FactoringReserveMovementPlanResolver) SubmissionID(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (string, error) {

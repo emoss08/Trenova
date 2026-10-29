@@ -10,7 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/billingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -33,11 +34,11 @@ func (r *InvoiceResolver) Disputes(ctx context.Context, obj *invoice.Invoice) ([
 		return nil, err
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return []*invoicedispute.InvoiceDispute{}, nil
 	}
 
-	return loaders.InvoiceDisputesByInvoiceID(ctx, obj.ID.String())
+	return billingloaders.InvoiceDisputesByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *InvoiceResolver) OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoicedispute.InvoiceDispute, error) {

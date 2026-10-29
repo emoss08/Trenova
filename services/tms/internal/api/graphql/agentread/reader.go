@@ -13,7 +13,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -65,14 +65,14 @@ type Params struct {
 
 	Config      *config.Config
 	Schema      Schema
-	Loaders     *loaders.Factory
+	Loaders     *loadercore.Registry
 	Permissions permissionports.PermissionEngine
 }
 
 type Reader struct {
 	exec        *executor.Executor
 	operations  map[string]Operation
-	loaders     *loaders.Factory
+	loaders     *loadercore.Registry
 	permissions permissionports.PermissionEngine
 	tracer      trace.Tracer
 }

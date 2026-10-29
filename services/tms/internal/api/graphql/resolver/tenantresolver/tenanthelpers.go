@@ -3,7 +3,8 @@ package tenantresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,11 +19,11 @@ func (r *UserResolver) currentOrganization(
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Organization loader is not configured")
 	}
 
-	return loaders.OrganizationByID(ctx, obj.CurrentOrganizationID.String())
+	return identityloaders.OrganizationByID(ctx, obj.CurrentOrganizationID.String())
 }
 
 func (r *MutationResolver) applyOrganizationCapabilities(

@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -23,11 +24,11 @@ func loadAgentRun(ctx context.Context, runID pulid.ID) (*agent.AgentRun, error) 
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	run, err := loaders.AgentRunByID(ctx, runID.String())
+	run, err := agentloaders.AgentRunByID(ctx, runID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -54,11 +55,11 @@ func loadHold(
 	ctx context.Context,
 	organizationID, runID pulid.ID,
 ) (*gqlmodel.PendingDecisionHold, error) {
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil //nolint:nilnil // without loaders nothing is known to hold it
 	}
 
-	paused, err := loaders.AgentsPaused(ctx, organizationID.String())
+	paused, err := agentloaders.AgentsPaused(ctx, organizationID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func loadRunDefinition(ctx context.Context, runID pulid.ID) (*agentdefinition.De
 		return nil, err
 	}
 
-	definition, err := loaders.AgentDefinitionByID(ctx, run.AgentDefinitionID.String())
+	definition, err := agentloaders.AgentDefinitionByID(ctx, run.AgentDefinitionID.String())
 	if err != nil && errortypes.IsNotFoundError(err) {
 		return nil, nil //nolint:nilnil // a deleted agent follows the organization's switch alone
 	}
@@ -101,11 +102,11 @@ func planHold(
 	ctx context.Context,
 	plan *agentplan.AgentPlan,
 ) (*gqlmodel.PendingDecisionHold, error) {
-	if plan.Status != agentplan.PlanStatusPending || !loaders.Available(ctx) {
+	if plan.Status != agentplan.PlanStatusPending || !loadercore.Available(ctx) {
 		return nil, nil //nolint:nilnil // a decided plan is held by nothing
 	}
 
-	hold, err := loaders.AgentPlanHold(ctx, plan.ID.String())
+	hold, err := agentloaders.AgentPlanHold(ctx, plan.ID.String())
 	if err != nil {
 		return nil, err
 	}

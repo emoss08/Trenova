@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -173,11 +174,11 @@ func (r *FuelPurchaseImportBatchResolver) Document(ctx context.Context, obj *fue
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	return loaders.DocumentByID(ctx, obj.DocumentID.String())
+	return documentloaders.DocumentByID(ctx, obj.DocumentID.String())
 }
 
 func (r *FuelPurchaseImportBatchResolver) DefaultFuelCard(ctx context.Context, obj *fuelpurchase.ImportBatch) (*fuelpurchase.FuelCard, error) {

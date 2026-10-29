@@ -73,7 +73,7 @@ set-up), keeping only delegates that person may use — the rule the turn applie
 (`ContextBuilder.delegates`): in the tenant, enabled, chat-usable, not the agent
 itself, and open to them or granted to one of their roles under
 `assistant:create`. It is read through the request's `UsableAgentByID` loader
-(`loaders/usableagentloader.go`), keyed by delegate id and built from the
+(`loaders/agentloaders/usableagentloader.go`), keyed by delegate id and built from the
 request's tenant and user: one `ListByIDs` and one `PermissionEngine.AgentsUsable`
 per batch, so a page of agents costs one query and one permission read for all
 their delegates. The chat client hands the thread agent's list to

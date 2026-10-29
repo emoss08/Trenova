@@ -10,7 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/billingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/ediloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/operationsloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -1111,11 +1114,11 @@ func (r *ShipmentResolver) ProfitabilityEstimate(ctx context.Context, obj *gqlmo
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Shipment profitability loader is not configured")
 	}
 
-	estimate, err := loaders.ShipmentProfitabilityByID(ctx, obj.ID)
+	estimate, err := billingloaders.ShipmentProfitabilityByID(ctx, obj.ID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -1131,11 +1134,11 @@ func (r *ShipmentCustomerResolver) EDIPartner(ctx context.Context, obj *gqlmodel
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("EDI partner loader is not configured")
 	}
 
-	partner, err := loaders.EDIPartnerByCustomerID(ctx, obj.ID)
+	partner, err := ediloaders.EDIPartnerByCustomerID(ctx, obj.ID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -1151,7 +1154,7 @@ func (r *ShipmentMoveResolver) JurisdictionMiles(ctx context.Context, obj *gqlmo
 		return nil, err
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return []*shipmentdomain.ShipmentMoveJurisdictionMile{}, nil
 	}
 
@@ -1159,7 +1162,7 @@ func (r *ShipmentMoveResolver) JurisdictionMiles(ctx context.Context, obj *gqlmo
 		return []*shipmentdomain.ShipmentMoveJurisdictionMile{}, nil
 	}
 
-	rows, err := loaders.ShipmentMoveJurisdictionMilesByMoveID(ctx, *obj.ID)
+	rows, err := operationsloaders.ShipmentMoveJurisdictionMilesByMoveID(ctx, *obj.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -1187,11 +1190,11 @@ func (r *ShipmentResolver) Eta(ctx context.Context, obj *gqlmodel.Shipment) (*gq
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Shipment ETA loader is not configured")
 	}
 
-	eta, err := loaders.ShipmentEtaByID(ctx, obj.ID)
+	eta, err := operationsloaders.ShipmentEtaByID(ctx, obj.ID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -41,7 +41,7 @@ func userByID(ctx context.Context, id pulid.ID) (*tenant.User, error) {
 		return nil, err
 	}
 
-	return loaderfields.OptionalMatch(loaders.UserByID(ctx, id.String()))
+	return loaderfields.OptionalMatch(identityloaders.UserByID(ctx, id.String()))
 }
 
 func timestampPtr(value int64) *int {

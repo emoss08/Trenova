@@ -5,7 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -116,11 +117,11 @@ func (r *Deps) AgentSafetyTools(
 		return []*agenttoolports.AgentToolSafety{}, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent trust loader is not configured")
 	}
 
-	trust, err := loaders.ToolTrustByAgentID(ctx, obj.Agent.ID.String())
+	trust, err := agentloaders.ToolTrustByAgentID(ctx, obj.Agent.ID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -150,11 +151,11 @@ func (r *Deps) AgentSafetyReach(
 		return nil, err
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent access loader is not configured")
 	}
 
-	granted, err := loaders.AccessRolesByAgentID(ctx, obj.Agent.ID.String())
+	granted, err := agentloaders.AccessRolesByAgentID(ctx, obj.Agent.ID.String())
 	if err != nil {
 		return nil, err
 	}

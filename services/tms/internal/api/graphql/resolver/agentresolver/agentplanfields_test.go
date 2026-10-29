@@ -5,7 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
@@ -75,7 +76,7 @@ func TestAgentPlanDecidedBy_ReadsTheDeciderThroughTheRequestsUserLoader(t *testi
 	users := &planDeciders{users: map[pulid.ID]*tenant.User{
 		deciderID: {ID: deciderID, Name: "Elena Ruiz"},
 	}}
-	ctx := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users}).
+	ctx := identityloaders.NewUserByIDLoaderFactory(identityloaders.UserByIDLoaderFactoryParams{Repo: users}).
 		Attach(t.Context(), tenantInfo)
 
 	got, err := planFieldsResolver().DecidedBy(ctx, &agentplan.AgentPlan{DecidedByUserID: &deciderID})
@@ -92,7 +93,7 @@ func TestAgentPlanDecidedBy_ADeciderTheReaderCannotSeeIsNull(t *testing.T) {
 
 	deciderID := pulid.MustNew("usr_")
 	users := &planDeciders{users: map[pulid.ID]*tenant.User{}}
-	ctx := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users}).
+	ctx := identityloaders.NewUserByIDLoaderFactory(identityloaders.UserByIDLoaderFactoryParams{Repo: users}).
 		Attach(t.Context(), planFieldsTenant())
 
 	got, err := planFieldsResolver().DecidedBy(ctx, &agentplan.AgentPlan{DecidedByUserID: &deciderID})
@@ -104,7 +105,7 @@ func TestAgentPlanDecidedBy_AWaitingPlanHasNoDecider(t *testing.T) {
 	t.Parallel()
 
 	users := &planDeciders{}
-	ctx := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users}).
+	ctx := identityloaders.NewUserByIDLoaderFactory(identityloaders.UserByIDLoaderFactoryParams{Repo: users}).
 		Attach(t.Context(), planFieldsTenant())
 
 	got, err := planFieldsResolver().DecidedBy(ctx, &agentplan.AgentPlan{})
@@ -137,8 +138,8 @@ func TestAgentPlanRunMode_ReadsEachPlansStepsThroughTheRequestsLoader(t *testing
 			TargetID:       pulid.MustNew("inv_"),
 		},
 	}}
-	ctx := loaders.NewAgentPlanStepsByPlanIDLoaderFactory(
-		loaders.AgentPlanStepsByPlanIDLoaderFactoryParams{Proposals: lister},
+	ctx := agentloaders.NewAgentPlanStepsByPlanIDLoaderFactory(
+		agentloaders.AgentPlanStepsByPlanIDLoaderFactoryParams{Proposals: lister},
 	).Attach(t.Context(), tenantInfo)
 
 	type result struct {

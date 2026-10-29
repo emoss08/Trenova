@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/settlementloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -146,8 +146,10 @@ func TestDisputesAreReadOnlyForSomeoneWhoMayReadSettlementDisputes(t *testing.T)
 	repo := &disputesBySettlement{disputes: map[pulid.ID][]*driversettlement.Dispute{
 		settlementID: {dispute},
 	}}
-	factory := loaders.NewSettlementDisputesBySettlementIDLoaderFactory(
-		loaders.SettlementDisputesBySettlementIDLoaderFactoryParams{SettlementDisputeRepo: repo},
+	factory := settlementloaders.NewSettlementDisputesBySettlementIDLoaderFactory(
+		settlementloaders.SettlementDisputesBySettlementIDLoaderFactoryParams{
+			SettlementDisputeRepo: repo,
+		},
 	)
 	ctx := factory.Attach(signedIn(t.Context()), cardTenant)
 	obj := &driversettlement.Settlement{ID: settlementID}
@@ -173,9 +175,11 @@ func TestAnAdvanceIsReadOnlyForSomeoneWhoMayReadPayAdvances(t *testing.T) {
 
 	advanceID := pulid.MustNew("padv_")
 	advance := &payadvance.PayAdvance{ID: advanceID, AmountMinor: 30000, RecoveredMinor: 20000}
-	factory := loaders.NewPayAdvanceByIDLoaderFactory(loaders.PayAdvanceByIDLoaderFactoryParams{
-		PayAdvanceRepo: &advancesByID{advances: []*payadvance.PayAdvance{advance}},
-	})
+	factory := settlementloaders.NewPayAdvanceByIDLoaderFactory(
+		settlementloaders.PayAdvanceByIDLoaderFactoryParams{
+			PayAdvanceRepo: &advancesByID{advances: []*payadvance.PayAdvance{advance}},
+		},
+	)
 	ctx := factory.Attach(signedIn(t.Context()), cardTenant)
 	group := &driversettlement.LineGroup{AdvanceID: &advanceID}
 

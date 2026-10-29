@@ -6,7 +6,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -61,8 +62,8 @@ func (r *Core) subsetLabels(
 	for idx := range field.Choices {
 		ids[idx] = field.Choices[idx].ID
 	}
-	labels, err := loaders.SubsetLabels(ctx, loaders.SubsetLabelsKey(resource, ids))
-	if errors.Is(err, loaders.ErrNotAttached) {
+	labels, err := agentloaders.SubsetLabels(ctx, agentloaders.SubsetLabelsKey(resource, ids))
+	if errors.Is(err, loadercore.ErrNotAttached) {
 		return nil
 	}
 	if err != nil {

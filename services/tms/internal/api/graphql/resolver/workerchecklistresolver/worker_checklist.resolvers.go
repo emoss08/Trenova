@@ -9,7 +9,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/workforceloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -324,8 +325,8 @@ func (r *WorkerChecklistProgressResolver) Complete(ctx context.Context, obj *wor
 }
 
 func (r *WorkerChecklistTemplateResolver) OpenChecklistCount(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplate) (int, error) {
-	if loaders.Available(ctx) {
-		return loaders.WorkerChecklistTemplateOpenChecklistCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return workforceloaders.WorkerChecklistTemplateOpenChecklistCount(ctx, obj.ID.String())
 	}
 	return r.WorkerChecklistService.CountOpenChecklistsForTemplate(ctx, obj)
 }

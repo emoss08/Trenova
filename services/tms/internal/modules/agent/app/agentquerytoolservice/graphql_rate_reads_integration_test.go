@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/ratingloaders"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -272,10 +272,10 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		Logger: logger,
 		Repo:   agreementRepo,
 	})
-	laneCounts := loaders.NewRateAgreementLaneCountLoaderFactory(
-		loaders.RateAgreementLaneCountLoaderFactoryParams{AgreementRepo: agreementRepo})
-	laneRows := loaders.NewRateAgreementLanesLoaderFactory(
-		loaders.RateAgreementLanesLoaderFactoryParams{AgreementRepo: agreementRepo})
+	laneCounts := ratingloaders.NewRateAgreementLaneCountLoaderFactory(
+		ratingloaders.RateAgreementLaneCountLoaderFactoryParams{AgreementRepo: agreementRepo})
+	laneRows := ratingloaders.NewRateAgreementLanesLoaderFactory(
+		ratingloaders.RateAgreementLanesLoaderFactoryParams{AgreementRepo: agreementRepo})
 	withLaneLoaders := func(tenant *rateTenant) *rateTenant {
 		tenant.ctx = laneRows.Attach(laneCounts.Attach(tenant.ctx, tenant.info), tenant.info)
 		return tenant

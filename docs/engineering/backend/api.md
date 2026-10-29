@@ -50,19 +50,32 @@ Resolver packages never import each other; shared code goes in `resolvercore` on
   `actorutil.FromAuthContext(authCtx)`, and call the same service method an agent tool calls
   (`trailerresolver/trailer.resolvers.go`).
 - **Per-parent reads go through a dataloader**, never a single-ID getter from an object-type
-  resolver. Loaders live in `internal/api/graphql/loaders` (`batchByIDFunc`, `batchCountFunc`,
-  `batchGroupFunc`) over a repository `...ByIDs` method. Register the factory in
-  `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`, add its field to `set` and its
-  accessor and `Attach` to `loaders/access.go`; resolvers read through the accessors
-  (`loaders.Available(ctx)`, `loaders.CustomerByID(ctx, id)`). No exported type or function in
-  `loaders` mentions `dataloadgen.Loader`. A per-parent count goes through one too, and every field that shows it
+  resolver. A loader lives in the package of the module that owns what it reads
+  (`internal/api/graphql/loaders/<module>loaders`: `agentloaders`, `billingloaders`,
+  `partiesloaders`, …) and batches through `loadercore` (`BatchByIDFunc`, `BatchCountFunc`,
+  `BatchGroupFunc`) over a repository `...ByIDs` method. Loaders are built lazily, per request:
+  the request holds only the factories (`loadercore.Registry.Attach` in the handler and the
+  agent reader), and a loader is built the first time a resolver of that request asks for it, so
+  a request builds only the loaders it uses and no package names every loader. A loader file
+  holds the factory (its fx constructor names the ports it reads through), the constructor
+  `newXLoader(f, tenantInfo)`, a package-level `var xKey = loadercore.NewKey(newXLoader)`, the
+  accessor (`func XByID(ctx, key) (T, error) { return loadercore.Load(ctx, xKey, key) }`, or
+  `LoadAll`/`LoadThunk`) and the factory's `Attach` (`loadercore.Attach(ctx, tenantInfo, f)`,
+  which tests use to attach just that loader). Register the factory constructor in
+  `loaderSources(...)` in `bootstrap/modules/api/graphql.go`, which puts it in the
+  `loadercore.SourceGroup` fx group the registry reads; a factory missing there answers
+  `loadercore.ErrNotAttached` at runtime. Resolvers read through the accessors
+  (`loadercore.Available(ctx)`, `partiesloaders.CustomerByID(ctx, id)`), and no exported type
+  or function mentions `dataloadgen.Loader`. A per-request value that is not a loader (the
+  reader's field ceilings, `agentloaders.FieldCeilings`) uses the same key with
+  `loadercore.Get`. A per-parent count goes through one too, and every field that shows it
   (`laneCount`, `laneCountExact`) reads the same loader, so they share one read: the repository
   counts every requested parent in one statement, a lateral `LIMIT` capping each at its share of
   `pagination.ExactTotalUpTo` (`ExactTotalUpTo / parents`, at least 100), and estimates only the
   parents past their cap (`rateagreementrepository.CountLiveLanes`). A stored count suits only a
   figure that does not depend on the clock; lane liveness does, so lanes are counted at read. A
-  per-parent list with an argument (`lanes(first:)`) loads through `batchFirstFunc`: the key
-  carries the argument (`firstKey(id, first)`), each distinct `first` is one read for every parent
+  per-parent list with an argument (`lanes(first:)`) loads through `BatchFirstFunc`: the key
+  carries the argument (`FirstKey(id, first)`), each distinct `first` is one read for every parent
   asking it, and the repository reads them in one statement, `id IN (SELECT child.id FROM parents
   CROSS JOIN LATERAL (… ORDER BY … LIMIT first))`, bounded by parents times `first`
   (`rateagreementrepository.ListFirstLanes`). It counts nothing; a total is its own field on the
