@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *service) PreviewUpdateCharges(
+func (s *Service) PreviewUpdateCharges(
 	ctx context.Context,
 	req *billingqueueports.UpdateChargesRequest,
 	actor *permissionports.RequestActor,
@@ -29,7 +29,7 @@ func (s *service) PreviewUpdateCharges(
 // and a split by amount the edit leaves stale is refused or converted. A
 // rate or formula change reprices through the rating engine, which writes,
 // so only the write may make one.
-func (s *service) planChargeUpdate(
+func (s *Service) planChargeUpdate(
 	ctx context.Context,
 	req *billingqueueports.UpdateChargesRequest,
 	actor *permissionports.RequestActor,
@@ -41,7 +41,7 @@ func (s *service) planChargeUpdate(
 // planChargeUpdateFrom is planChargeUpdate for a caller that may also edit an
 // item still waiting for review. Settling a check from the item edits its
 // charges before anyone has started the review, and that edit is the review.
-func (s *service) planChargeUpdateFrom(
+func (s *Service) planChargeUpdateFrom(
 	ctx context.Context,
 	req *billingqueueports.UpdateChargesRequest,
 	actor *permissionports.RequestActor,
@@ -136,7 +136,7 @@ func (s *service) planChargeUpdateFrom(
 	}, nil
 }
 
-func (s *service) applyRateChange(
+func (s *Service) applyRateChange(
 	ctx context.Context,
 	shp *shipment.Shipment,
 	req *billingqueueports.UpdateChargesRequest,

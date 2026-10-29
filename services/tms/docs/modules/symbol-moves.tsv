@@ -19202,3 +19202,4 @@ github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.Syst
 github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.SystemAgentKeyDispatchAssignment	github.com/emoss08/trenova/internal/infrastructure/postgres/referenceseed.SystemAgentKeyDispatchAssignment
 github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.SystemAgentKeys	github.com/emoss08/trenova/internal/infrastructure/postgres/referenceseed.SystemAgentKeys
 github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap.TemplateStarterKinds	github.com/emoss08/trenova/internal/infrastructure/postgres/referenceseed.TemplateStarterKinds
+github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice.ReleaseTarget	github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereviewservice.ReleaseTarget

@@ -1,4 +1,4 @@
-package billingqueueservice
+package billingqueuereadiness
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueactivity"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
@@ -23,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,27 +32,51 @@ import (
 	"go.uber.org/zap"
 )
 
+type Params struct {
+	Logger         *zap.Logger
+	Activity       *billingqueueactivity.Recorder
+	ReviewRepo     billingqueueports.BillingQueueReviewRepository
+	DocumentRepo   documentports.DocumentRepository
+	OccurrenceRepo detentionports.DetentionOccurrenceRepository
+	AgreementRepo  rateagreementports.RateAgreementRepository
+	InvoiceRepo    invoiceports.InvoiceRepository
+}
+
+// Reviewer reads what a biller checks before an item is invoiced: the
+// charges against the rate con, the paperwork, detention evidence and the
+// issues those raise.
+type Reviewer struct {
+	l              *zap.Logger
+	activity       *billingqueueactivity.Recorder
+	reviewRepo     billingqueueports.BillingQueueReviewRepository
+	documentRepo   documentports.DocumentRepository
+	occurrenceRepo detentionports.DetentionOccurrenceRepository
+	agreementRepo  rateagreementports.RateAgreementRepository
+	invoiceRepo    invoiceports.InvoiceRepository
+}
+
+func New(p Params) *Reviewer {
+	return &Reviewer{
+		l:              p.Logger,
+		activity:       p.Activity,
+		reviewRepo:     p.ReviewRepo,
+		documentRepo:   p.DocumentRepo,
+		occurrenceRepo: p.OccurrenceRepo,
+		agreementRepo:  p.AgreementRepo,
+		invoiceRepo:    p.InvoiceRepo,
+	}
+}
+
 const podCode = documenttype.CodePOD
 
-// driverNotifier is the driver portal's notification path, which is how the
-// item asks a driver for paperwork.
-type driverNotifier interface {
-	Notify(ctx context.Context, req *drivernotificationservice.DriverNotification)
-}
-
-func notifierOrNil(svc *drivernotificationservice.Service) driverNotifier {
-	if svc == nil {
-		return nil
-	}
-
-	return svc
-}
+// shipmentDocumentResource is the bucket a shipment's paperwork is filed under.
+const shipmentDocumentResource = "shipment"
 
 // attachReview fills the item's review: the charges against the rate con, the
 // paperwork, the terms and the invoice, the issues the checks raised, and the
 // five checks themselves. A part that cannot be read is logged and left out
 // rather than failing the read, the way the shipment details already are.
-func (s *service) attachReview(
+func (s *Reviewer) Attach(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -71,7 +95,7 @@ func (s *service) attachReview(
 		Charges:      facts.charges,
 		POD:          facts.pod,
 		Terms:        facts.terms,
-		ShipmentRef:  shipmentRef(item.Shipment),
+		ShipmentRef:  ShipmentRef(item.Shipment),
 		CustomerName: facts.customerName,
 	})
 	review.Invoice = facts.invoice
@@ -97,7 +121,7 @@ type reviewFacts struct {
 	findings     billingqueuereview.FindingInput
 }
 
-func (s *service) reviewFacts(
+func (s *Reviewer) reviewFacts(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -114,11 +138,11 @@ func (s *service) reviewFacts(
 	facts.charges = s.chargeReview(ctx, item, tenantInfo, occurrences)
 	facts.dwells = detentionDwells(item, occurrences)
 	facts.invoice = s.invoiceRef(ctx, item, tenantInfo)
-	facts.terms = termsFor(item.BillToCustomer, facts.invoice)
+	facts.terms = TermsFor(item.BillToCustomer, facts.invoice)
 
 	docs := s.shipmentDocuments(ctx, item, tenantInfo)
 	required := requiredDocumentTypes(item.BillToCustomer)
-	facts.pod = podState(item.Shipment, docs, required)
+	facts.pod = PODState(item.Shipment, docs, required)
 	facts.documents = documentTiles(docs, required)
 
 	if s.reviewRepo != nil && item.ShipmentID.IsNotNil() {
@@ -154,7 +178,7 @@ func (s *service) reviewFacts(
 	}
 	facts.findings = billingqueuereview.FindingInput{
 		CustomerName:     facts.customerName,
-		ShipmentRef:      shipmentRef(item.Shipment),
+		ShipmentRef:      ShipmentRef(item.Shipment),
 		Charges:          facts.charges,
 		POD:              facts.pod,
 		Detention:        facts.dwells,
@@ -172,7 +196,7 @@ func (s *service) reviewFacts(
 // storedIssues syncs what the checks find now onto the stored issues while
 // the item is still under review, then returns all of them. Once the item is
 // past review its issues are history and are only read.
-func (s *service) storedIssues(
+func (s *Reviewer) storedIssues(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -210,11 +234,11 @@ func (s *service) storedIssues(
 
 	events := make([]*billingqueueevent.ItemEvent, 0, len(result.Raised)+len(result.Cleared))
 	for _, issue := range append(result.Raised, result.Reopened...) {
-		events = append(events, s.newEvent(ctx, item, billingqueueevent.EventIssueRaised,
+		events = append(events, s.activity.NewEvent(ctx, item, billingqueueevent.EventIssueRaised,
 			"Flagged: "+issue.Summary, nil, map[string]any{"issueId": issue.ID.String()}))
 	}
 	for _, issue := range result.Cleared {
-		events = append(events, s.newEvent(ctx, item, billingqueueevent.EventIssueCleared,
+		events = append(events, s.activity.NewEvent(ctx, item, billingqueueevent.EventIssueCleared,
 			"Cleared: "+issue.Summary, nil, map[string]any{"issueId": issue.ID.String()}))
 	}
 	if len(events) > 0 {
@@ -226,31 +250,7 @@ func (s *service) storedIssues(
 	return result.Issues
 }
 
-// syncReview reads an item the way the review does, which is what raises its
-// issues. Transfers and charge edits call it so the queue's badges are right
-// before anybody opens the item.
-func (s *service) syncReview(
-	ctx context.Context,
-	itemID pulid.ID,
-	tenantInfo pagination.TenantInfo,
-) {
-	if s.reviewRepo == nil {
-		return
-	}
-	if _, err := s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
-		ItemID:                itemID,
-		TenantInfo:            tenantInfo,
-		ExpandShipmentDetails: true,
-	}); err != nil {
-		s.l.Warn(
-			"failed to check billing queue item",
-			zap.String("billingQueueItemId", itemID.String()),
-			zap.Error(err),
-		)
-	}
-}
-
-func (s *service) guardOpenIssues(
+func (s *Reviewer) GuardOpenIssues(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -273,7 +273,7 @@ func (s *service) guardOpenIssues(
 	)
 }
 
-func (s *service) shipmentOccurrences(
+func (s *Reviewer) shipmentOccurrences(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -305,7 +305,7 @@ func (s *service) shipmentOccurrences(
 // rating for freight, the contract's accessorial schedule, the fuel program,
 // the detention policy. A line nothing on the rate con explains expects
 // nothing, which is what flags it.
-func (s *service) chargeReview(
+func (s *Reviewer) chargeReview(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -405,7 +405,7 @@ func (s *service) chargeReview(
 	return review
 }
 
-func (s *service) ratingAgreement(
+func (s *Reviewer) ratingAgreement(
 	ctx context.Context,
 	shp *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
@@ -675,7 +675,7 @@ func eldTimes(evidence []*detentionevidence.DetentionEvidence) (arrived, departe
 	return arrived, departed
 }
 
-func (s *service) invoiceRef(
+func (s *Reviewer) invoiceRef(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -720,7 +720,7 @@ func (s *service) invoiceRef(
 // termsFor is how the bill-to pays: its payment term, and when this invoice
 // falls due — the invoice's own date once there is one, otherwise as if it
 // were invoiced today.
-func termsFor(cus *customer.Customer, inv *billingqueue.InvoiceRef) *billingqueue.BillingTerms {
+func TermsFor(cus *customer.Customer, inv *billingqueue.InvoiceRef) *billingqueue.BillingTerms {
 	terms := &billingqueue.BillingTerms{Recipients: []string{}}
 	if cus == nil {
 		return terms
@@ -754,7 +754,7 @@ func creditHoldOf(cus *customer.Customer) (bool, string) {
 	return profile.BlocksBilling(), profile.CreditHoldReason
 }
 
-func (s *service) shipmentDocuments(
+func (s *Reviewer) shipmentDocuments(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -765,7 +765,7 @@ func (s *service) shipmentDocuments(
 	docs, err := s.documentRepo.GetByResourceID(ctx, &documentports.GetDocumentsByResourceRequest{
 		TenantInfo:          tenantInfo,
 		ResourceID:          item.ShipmentID.String(),
-		ResourceType:        shipmentResourceType,
+		ResourceType:        shipmentDocumentResource,
 		IncludeDocumentType: true,
 	})
 	if err != nil {
@@ -799,7 +799,7 @@ func requiredDocumentTypes(cus *customer.Customer) []*documenttype.DocumentType 
 // whether it is on file, and whether it is signed. A POD whose signature
 // nobody has read yet counts as on file; only one known to be unsigned is
 // flagged.
-func podState(
+func PODState(
 	shp *shipment.Shipment,
 	docs []*document.Document,
 	required []*documenttype.DocumentType,
@@ -998,7 +998,7 @@ func issueEffectKind(issue *billingqueue.Issue) billingqueue.EffectKind {
 	return ""
 }
 
-func shipmentRef(shp *shipment.Shipment) string {
+func ShipmentRef(shp *shipment.Shipment) string {
 	if shp == nil {
 		return "this shipment"
 	}
@@ -1012,7 +1012,7 @@ func shipmentRef(shp *shipment.Shipment) string {
 	}
 }
 
-func userName(user *tenant.User) string {
+func UserName(user *tenant.User) string {
 	if user == nil || user.Name == "" {
 		return "a biller"
 	}

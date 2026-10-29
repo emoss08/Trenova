@@ -1,27 +1,55 @@
-package billingqueueservice
+package billingqueueactivity
 
 import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"go.uber.org/zap"
 )
+
+type Params struct {
+	Logger     *zap.Logger
+	ReviewRepo billingqueueports.BillingQueueReviewRepository
+	UserRepo   tenantports.UserRepository
+	Realtime   realtimeports.RealtimeService
+}
+
+// Recorder keeps a billing queue item's activity: the events on its
+// timeline and the invalidations that refresh it on screen.
+type Recorder struct {
+	l          *zap.Logger
+	reviewRepo billingqueueports.BillingQueueReviewRepository
+	userRepo   tenantports.UserRepository
+	realtime   realtimeports.RealtimeService
+}
+
+func New(p Params) *Recorder {
+	return &Recorder{
+		l:          p.Logger,
+		reviewRepo: p.ReviewRepo,
+		userRepo:   p.UserRepo,
+		realtime:   p.Realtime,
+	}
+}
 
 type systemEventsKey struct{}
 
 // systemEvents marks what follows as the system's own doing: a transfer, a
 // default biller from the customer's profile. The request still carries the
 // person whose action set it off, but the activity should not say they did it.
-func systemEvents(ctx context.Context) context.Context {
+func SystemEvents(ctx context.Context) context.Context {
 	return context.WithValue(ctx, systemEventsKey{}, true)
 }
 
@@ -32,7 +60,7 @@ func isSystemEvent(ctx context.Context) bool {
 
 // newEvent is one activity line attributed to whoever acted: the system when
 // nobody did or the system acted on their behalf, an agent, or the person.
-func (s *service) newEvent(
+func (s *Recorder) NewEvent(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	kind billingqueueevent.EventKind,
@@ -67,7 +95,7 @@ func (s *service) newEvent(
 	return event
 }
 
-func (s *service) personName(ctx context.Context, actor *permissionports.RequestActor) string {
+func (s *Recorder) personName(ctx context.Context, actor *permissionports.RequestActor) string {
 	if s.userRepo == nil {
 		return ""
 	}
@@ -87,7 +115,7 @@ func (s *service) personName(ctx context.Context, actor *permissionports.Request
 
 // recordEvent writes one activity line. Activity is a record of what already
 // happened, so failing to write it never undoes the action itself.
-func (s *service) recordEvent(
+func (s *Recorder) RecordEvent(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	kind billingqueueevent.EventKind,
@@ -100,7 +128,7 @@ func (s *service) recordEvent(
 	}
 	if err := s.reviewRepo.CreateEvents(
 		ctx,
-		s.newEvent(ctx, item, kind, text, actor, payload),
+		s.NewEvent(ctx, item, kind, text, actor, payload),
 	); err != nil {
 		s.l.Warn("failed to record billing queue activity",
 			zap.String("billingQueueItemId", item.ID.String()),
@@ -111,7 +139,7 @@ func (s *service) recordEvent(
 }
 
 // recordStatusEvent says in words what a status change did.
-func (s *service) recordStatusEvent(
+func (s *Recorder) RecordStatusEvent(
 	ctx context.Context,
 	previous, updated *billingqueue.BillingQueueItem,
 	created *invoiceports.CreateInvoiceFromBillingQueueResult,
@@ -129,18 +157,18 @@ func (s *service) recordStatusEvent(
 		if created != nil && created.Invoice == nil {
 			text = "Approved onto the customer's statement"
 		}
-		s.recordEvent(ctx, updated, billingqueueevent.EventApproved, text, actor, nil)
+		s.RecordEvent(ctx, updated, billingqueueevent.EventApproved, text, actor, nil)
 	case billingqueue.StatusOnHold:
 		text := "Put on hold"
 		if updated.HoldReasonCode != nil {
 			text += " · " + updated.HoldReasonCode.Phrase()
 		}
-		s.recordEvent(ctx, updated, billingqueueevent.EventHeld, text, actor, nil)
+		s.RecordEvent(ctx, updated, billingqueueevent.EventHeld, text, actor, nil)
 	case billingqueue.StatusPosted:
 		// Posting from the item writes its own line with the invoice number.
 	default:
 		if previous.Status == billingqueue.StatusOnHold {
-			s.recordEvent(
+			s.RecordEvent(
 				ctx,
 				updated,
 				billingqueueevent.EventReleased,
@@ -154,7 +182,7 @@ func (s *service) recordStatusEvent(
 			updated.Status == billingqueue.StatusInReview {
 			return
 		}
-		s.recordEvent(ctx, updated, billingqueueevent.EventStatusChanged,
+		s.RecordEvent(ctx, updated, billingqueueevent.EventStatusChanged,
 			"Moved to "+statusWords(updated.Status), actor, nil)
 	}
 }
@@ -172,55 +200,26 @@ func statusWords(status billingqueue.Status) string {
 	}
 }
 
-func (s *service) ListActivity(
+func (s *Recorder) PublishInvalidation(
 	ctx context.Context,
-	req *billingqueueports.ListBillingQueueActivityRequest,
-) (*billingqueueports.BillingQueueEventPage, error) {
-	if s.reviewRepo == nil {
-		return nil, errortypes.NewBusinessError("Billing queue activity is unavailable")
-	}
-	if _, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
-		ItemID:     req.ItemID,
-		TenantInfo: req.TenantInfo,
-	}); err != nil {
-		return nil, err
-	}
-
-	return s.reviewRepo.ListEvents(ctx, &billingqueueports.ListBillingQueueEventsRequest{
-		TenantInfo: req.TenantInfo,
-		ItemID:     req.ItemID,
-		Limit:      req.Limit,
-		BeforeAt:   req.BeforeAt,
-		BeforeID:   req.BeforeID,
+	entity *billingqueue.BillingQueueItem,
+	actor kernelports.AuditActor,
+	action string,
+	payload any,
+) {
+	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+		ActorUserID:    actor.UserID,
+		ActorType:      actor.PrincipalType,
+		ActorID:        actor.PrincipalID,
+		ActorAPIKeyID:  actor.APIKeyID,
+		Resource:       permission.ResourceBillingQueue.String(),
+		Action:         action,
+		RecordID:       entity.ID,
+		Entity:         payload,
 	})
-}
-
-func (s *service) Neighbors(
-	ctx context.Context,
-	req *billingqueueports.GetBillingQueueNeighborsRequest,
-) (*billingqueueports.BillingQueueNeighbors, error) {
-	if s.reviewRepo == nil {
-		return nil, errortypes.NewBusinessError("The billing queue's order is unavailable")
+	if err != nil {
+		s.l.Warn("failed to publish billing queue invalidation", zap.Error(err))
 	}
-
-	return s.reviewRepo.GetNeighbors(ctx, req)
-}
-
-// maxSummaries bounds a summaries read to a page of the queue table.
-const maxSummaries = 200
-
-func (s *service) Summaries(
-	ctx context.Context,
-	req *billingqueueports.ListBillingQueueSummariesRequest,
-) ([]*billingqueueports.BillingQueueItemSummary, error) {
-	if s.reviewRepo == nil {
-		return nil, errortypes.NewBusinessError("Billing queue summaries are unavailable")
-	}
-	if len(req.ItemIDs) > maxSummaries {
-		return nil, errortypes.NewValidationError(
-			"ids", errortypes.ErrInvalid, "Ask for at most 200 items at a time",
-		)
-	}
-
-	return s.reviewRepo.ListSummaries(ctx, req)
 }

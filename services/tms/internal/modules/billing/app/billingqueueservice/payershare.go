@@ -15,7 +15,7 @@ import (
 // attachPayerShare fills the item's view of its own bill. It needs the shipment
 // with charges and allocations already loaded; names for payers the shipment does
 // not already carry are fetched in one lookup.
-func (s *service) attachPayerShare(
+func (s *Service) attachPayerShare(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -38,7 +38,7 @@ func (s *service) attachPayerShare(
 	return nil
 }
 
-func (s *service) payerNames(
+func (s *Service) payerNames(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,

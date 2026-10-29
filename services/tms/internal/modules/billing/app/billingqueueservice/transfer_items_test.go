@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueactivity"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -98,6 +100,24 @@ func testValidator() *Validator {
 	}
 }
 
+// wired gives a queue built field by field the activity recorder and the
+// reviewer NewService builds from the same dependencies.
+func wired(s *Service) *Service {
+	s.activity = billingqueueactivity.New(billingqueueactivity.Params{
+		Logger:     s.l,
+		ReviewRepo: s.reviewRepo,
+		UserRepo:   s.userRepo,
+		Realtime:   s.realtime,
+	})
+	s.readiness = billingqueuereadiness.New(billingqueuereadiness.Params{
+		Logger:      s.l,
+		Activity:    s.activity,
+		ReviewRepo:  s.reviewRepo,
+		InvoiceRepo: s.invoiceRepo,
+	})
+	return s
+}
+
 func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 	t.Parallel()
 
@@ -142,7 +162,7 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Twice()
 
-	svc := &service{
+	svc := wired(&Service{
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
@@ -152,7 +172,7 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 		auditService: audit,
 		realtime:     realtime,
 		validator:    testValidator(),
-	}
+	})
 
 	result, err := svc.TransferToBillingItems(
 		t.Context(),
@@ -225,7 +245,7 @@ func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
 		Return(true, nil).
 		Once()
 
-	svc := &service{l: zap.NewNop(), repo: repo, shipmentRepo: shipmentRepo}
+	svc := wired(&Service{l: zap.NewNop(), repo: repo, shipmentRepo: shipmentRepo})
 
 	result, err := svc.TransferToBillingItems(
 		t.Context(),
@@ -254,7 +274,7 @@ func TestTransferToBillingItemsRequiresAReadyToInvoiceShipment(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
 
-	svc := &service{l: zap.NewNop(), shipmentRepo: shipmentRepo}
+	svc := wired(&Service{l: zap.NewNop(), shipmentRepo: shipmentRepo})
 
 	_, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID: shp.ID,
@@ -270,7 +290,7 @@ func TestTransferToBillingItemsRequiresAReadyToInvoiceShipment(t *testing.T) {
 func TestShouldAutoApprove(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{}
+	svc := wired(&Service{})
 	intel := pulid.MustNew("cus_")
 	amd := pulid.MustNew("cus_")
 
@@ -346,7 +366,7 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	svc := &service{
+	svc := wired(&Service{
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
@@ -356,7 +376,7 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 		auditService: audit,
 		realtime:     realtime,
 		validator:    testValidator(),
-	}
+	})
 
 	result, err := svc.TransferToBillingItems(
 		t.Context(),
@@ -385,7 +405,7 @@ func transferringService(
 	shp *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
 	shipmentRepo *shipmentportsmock.MockShipmentRepository,
-) *service {
+) *Service {
 	t.Helper()
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
@@ -412,7 +432,7 @@ func transferringService(
 		}).
 		Twice()
 
-	return &service{
+	return wired(&Service{
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
@@ -422,7 +442,7 @@ func transferringService(
 		auditService: &mocks.NoopAuditService{},
 		realtime:     &mocks.NoopRealtimeService{},
 		validator:    testValidator(),
-	}
+	})
 }
 
 func transferActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {

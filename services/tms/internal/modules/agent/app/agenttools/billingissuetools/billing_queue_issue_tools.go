@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -219,7 +220,7 @@ func planRelease(
 	if err != nil {
 		return nil, err
 	}
-	target, err := billingqueueservice.ReleaseTarget(item)
+	target, err := billingqueuereviewservice.ReleaseTarget(item)
 	if err != nil {
 		return nil, err
 	}

@@ -43,7 +43,7 @@ type reassignPlan struct {
 // the shipment is still in review. Payers who gain a share get a queue item;
 // payers left with nothing have theirs canceled; everyone else's allocated
 // total is refreshed.
-func (s *service) ReassignCharge(
+func (s *Service) ReassignCharge(
 	ctx context.Context,
 	req *billingqueueports.ReassignChargeRequest,
 	actor *permissionports.RequestActor,
@@ -61,7 +61,7 @@ func (s *service) ReassignCharge(
 	return s.reassignmentResult(ctx, item, plan, created, canceled, req, actor)
 }
 
-func (s *service) PreviewReassignCharge(
+func (s *Service) PreviewReassignCharge(
 	ctx context.Context,
 	req *billingqueueports.ReassignChargeRequest,
 	actor *permissionports.RequestActor,
@@ -81,7 +81,7 @@ func (s *service) PreviewReassignCharge(
 	}, nil
 }
 
-func (s *service) planReassignCharge(
+func (s *Service) planReassignCharge(
 	ctx context.Context,
 	req *billingqueueports.ReassignChargeRequest,
 	actor *permissionports.RequestActor,
@@ -168,7 +168,7 @@ func validateReassignRequest(
 	return nil
 }
 
-func (s *service) planReassignment(
+func (s *Service) planReassignment(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	req *billingqueueports.ReassignChargeRequest,
@@ -407,7 +407,7 @@ func reconcileQueueItems(
 	return toCreate, toCancel
 }
 
-func (s *service) applyReassignment(
+func (s *Service) applyReassignment(
 	ctx context.Context,
 	plan *reassignPlan,
 	req *billingqueueports.ReassignChargeRequest,
@@ -478,7 +478,7 @@ func (s *service) applyReassignment(
 	return created, canceled, nil
 }
 
-func (s *service) reassignmentResult(
+func (s *Service) reassignmentResult(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	plan *reassignPlan,
@@ -496,7 +496,7 @@ func (s *service) reassignmentResult(
 	for _, entity := range created {
 		s.autoAssignDefaultBiller(ctx, entity, entity.BillToCustomerID, req.TenantInfo, actor)
 		s.logAction(entity, auditActor, permission.OpCreate, nil, entity, comment)
-		s.publishInvalidation(ctx, entity, auditActor, "created", entity)
+		s.activity.PublishInvalidation(ctx, entity, auditActor, "created", entity)
 		result.CreatedItemIDs = append(result.CreatedItemIDs, entity.ID)
 	}
 	for _, entity := range canceled {
@@ -508,12 +508,12 @@ func (s *service) reassignmentResult(
 			entity,
 			comment+". "+reassignCancelReason,
 		)
-		s.publishInvalidation(ctx, entity, auditActor, "updated", entity)
+		s.activity.PublishInvalidation(ctx, entity, auditActor, "updated", entity)
 		result.CanceledItemIDs = append(result.CanceledItemIDs, entity.ID)
 	}
 	if !containsID(result.CanceledItemIDs, item.ID) {
 		s.logAction(item, auditActor, permission.OpUpdate, nil, nil, comment)
-		s.publishInvalidation(ctx, item, auditActor, "updated", item)
+		s.activity.PublishInvalidation(ctx, item, auditActor, "updated", item)
 	}
 
 	reloaded, err := s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{

@@ -1,4 +1,4 @@
-package billingqueueservice
+package billingqueuereadiness
 
 import (
 	"testing"
@@ -92,7 +92,7 @@ func TestPODFindingFollowsTheSignatureStatus(t *testing.T) {
 			doc := podDocument(docType, tc.status, at)
 			required := []*documenttype.DocumentType{docType}
 
-			pod := podState(nil, []*document.Document{doc}, required)
+			pod := PODState(nil, []*document.Document{doc}, required)
 
 			assert.True(t, pod.Required)
 			assert.True(t, pod.Present)
@@ -136,7 +136,7 @@ func TestPODFindingPrefersASignedCopyOverAnUnsignedOne(t *testing.T) {
 		{unsigned, signed},
 		{signed, unsigned},
 	} {
-		pod := podState(nil, docs, required)
+		pod := PODState(nil, docs, required)
 
 		assert.True(t, pod.Signed)
 		assert.False(t, pod.Unsigned)
@@ -148,28 +148,4 @@ func TestPODFindingPrefersASignedCopyOverAnUnsignedOne(t *testing.T) {
 		assert.Equal(t, signed.ID, tiles[0].DocumentID)
 		assert.Equal(t, billingqueue.DocumentStateOK, tiles[0].State)
 	}
-}
-
-func TestNeedsSignatureReadsOnlyCurrentRequiredPODs(t *testing.T) {
-	t.Parallel()
-
-	required := podDocument(podType(true), document.SignatureStatusUnknown, nil)
-	assert.True(t, needsSignature(required))
-
-	notRequired := podDocument(podType(false), document.SignatureStatusUnknown, nil)
-	assert.False(t, needsSignature(notRequired))
-
-	old := podDocument(podType(true), document.SignatureStatusUnknown, nil)
-	old.IsCurrentVersion = false
-	assert.False(t, needsSignature(old))
-
-	rejected := podDocument(podType(true), document.SignatureStatusUnknown, nil)
-	rejected.Status = document.StatusRejected
-	assert.False(t, needsSignature(rejected))
-
-	untyped := podDocument(podType(true), document.SignatureStatusUnknown, nil)
-	untyped.DocumentType = nil
-	assert.False(t, needsSignature(untyped))
-
-	assert.False(t, needsSignature(nil))
 }

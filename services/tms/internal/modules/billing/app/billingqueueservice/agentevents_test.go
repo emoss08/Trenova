@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -22,7 +23,7 @@ import (
 func statusChangeFixture(
 	t *testing.T,
 	from billingqueue.Status,
-) (*service, *agenteventstest.Recorder, *billingqueue.BillingQueueItem, pagination.TenantInfo) {
+) (*Service, *agenteventstest.Recorder, *billingqueue.BillingQueueItem, pagination.TenantInfo) {
 	t.Helper()
 
 	tenantInfo := pagination.TenantInfo{
@@ -63,7 +64,7 @@ func statusChangeFixture(
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	recorder := &agenteventstest.Recorder{}
-	svc := &service{
+	svc := wired(&Service{
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
@@ -72,7 +73,7 @@ func statusChangeFixture(
 		realtime:     realtime,
 		validator:    testValidator(),
 		agentEvents:  recorder,
-	}
+	})
 
 	return svc, recorder, item, tenantInfo
 }
@@ -140,4 +141,27 @@ func TestUpdateStatus_DoesNotPublishForOtherTransitions(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Empty(t, recorder.Published())
+}
+
+// Approving an item a biller has but nobody started reviewing starts the
+// review on the way: it used to be refused from the item.
+func TestApproveFromReadyForReviewStartsTheReview(t *testing.T) {
+	t.Parallel()
+
+	svc, _, item, tenantInfo := statusChangeFixture(t, billingqueue.StatusReadyForReview)
+
+	approved, err := svc.UpdateStatus(
+		t.Context(),
+		&billingqueueports.UpdateBillingQueueStatusRequest{
+			ItemID:     item.ID,
+			NewStatus:  billingqueue.StatusApproved,
+			TenantInfo: tenantInfo,
+		},
+		userActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, billingqueue.StatusApproved, approved.Status)
+	assert.NotNil(t, approved.ReviewStartedAt)
+	assert.NotNil(t, approved.ReviewCompletedAt)
 }

@@ -32,7 +32,7 @@ type holdFixture struct {
 	repo       *billingqueueportsmock.MockBillingQueueRepository
 	invoices   *invoiceportsmock.MockInvoiceService
 	detention  *detentionportsmock.MockDetentionBillingService
-	svc        *service
+	svc        *Service
 }
 
 func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
@@ -66,7 +66,7 @@ func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	f.svc = &service{
+	f.svc = wired(&Service{
 		l:                zap.NewNop(),
 		db:               passthroughDB{},
 		repo:             f.repo,
@@ -76,7 +76,7 @@ func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
 		validator:        testValidator(),
 		detentionBilling: f.detention,
 		shipmentRepo:     unheldShipments(t),
-	}
+	})
 
 	return f
 }

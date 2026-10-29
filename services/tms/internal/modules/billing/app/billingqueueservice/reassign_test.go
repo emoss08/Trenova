@@ -248,7 +248,7 @@ func TestReassignRows_KeepsTheIdentityOfARowAlreadyOnTheCharge(t *testing.T) {
 
 type reassignHarness struct {
 	f            *splitShipment
-	svc          *service
+	svc          *Service
 	repo         *billingqueueportsmock.MockBillingQueueRepository
 	shipmentRepo *shipmentportsmock.MockShipmentRepository
 	customerRepo *customerportsmock.MockCustomerRepository
@@ -272,7 +272,7 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	h.svc = &service{
+	h.svc = wired(&Service{
 		l:                    zap.NewNop(),
 		db:                   passthroughDB{},
 		repo:                 h.repo,
@@ -284,7 +284,7 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 		auditService:         audit,
 		realtime:             realtime,
 		validator:            testValidator(),
-	}
+	})
 
 	h.invoiceRepo.EXPECT().
 		ListByShipmentIDs(mock.Anything, mock.Anything).

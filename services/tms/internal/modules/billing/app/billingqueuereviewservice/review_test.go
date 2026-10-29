@@ -1,10 +1,11 @@
-package billingqueueservice
+package billingqueuereviewservice
 
 import (
 	"context"
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -195,7 +197,7 @@ func (m *memoryReview) eventTexts() []string {
 // fee added by hand, queued for its customer, with the repositories it is
 // read and written through kept in step like a database would.
 type reviewWorld struct {
-	svc      *service
+	deps     billingqueueservice.Params
 	review   *memoryReview
 	tenant   pagination.TenantInfo
 	actor    *permissionports.RequestActor
@@ -267,7 +269,7 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 	w := &reviewWorld{
 		review:   &memoryReview{},
 		tenant:   tenantInfo,
-		actor:    userActor(tenantInfo),
+		actor:    reviewActor(tenantInfo),
 		item:     item,
 		shp:      shp,
 		lumperID: lumperID,
@@ -352,21 +354,62 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 	users.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.User{ID: tenantInfo.UserID, Name: "Avery Lane"}, nil).Maybe()
 
-	w.svc = &service{
-		l:            zap.NewNop(),
-		db:           passthroughDB{},
-		repo:         repo,
-		shipmentRepo: shipments,
-		customerRepo: customers,
-		invoiceRepo:  invoices,
-		userRepo:     users,
-		auditService: audit,
-		realtime:     realtime,
-		validator:    testValidator(),
-		reviewRepo:   w.review,
+	w.deps = billingqueueservice.Params{
+		Logger:       zap.NewNop(),
+		DB:           reviewTx{},
+		Repo:         repo,
+		ShipmentRepo: shipments,
+		CustomerRepo: customers,
+		InvoiceRepo:  invoices,
+		UserRepo:     users,
+		AuditService: audit,
+		Realtime:     realtime,
+		Validator:    billingqueueservice.NewValidator(billingqueueservice.ValidatorParams{}),
+		ReviewRepo:   w.review,
 	}
 
 	return w
+}
+
+// queue is the billing queue over the world's dependencies as they stand.
+func (w *reviewWorld) queue() *billingqueueservice.Service {
+	return billingqueueservice.NewService(w.deps)
+}
+
+// reviews is the review over the world's dependencies as they stand.
+func (w *reviewWorld) reviews() *Service {
+	return New(Params{
+		Logger:       w.deps.Logger,
+		Queue:        w.queue(),
+		Repo:         w.deps.Repo,
+		ShipmentRepo: w.deps.ShipmentRepo,
+		CustomerRepo: w.deps.CustomerRepo,
+		UserRepo:     w.deps.UserRepo,
+		InvoiceRepo:  w.deps.InvoiceRepo,
+		InvoiceSvc:   w.deps.InvoiceSvc,
+		Realtime:     w.deps.Realtime,
+		ReviewRepo:   w.deps.ReviewRepo,
+	}).(*Service)
+}
+
+type reviewTx struct{}
+
+func (reviewTx) Transact(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context) error,
+) error {
+	return fn(ctx)
+}
+
+func reviewActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
+		PrincipalID:    tenantInfo.UserID,
+		UserID:         tenantInfo.UserID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	}
 }
 
 func syncTotals(t *testing.T, shp *shipment.Shipment) {
@@ -385,7 +428,7 @@ func syncTotals(t *testing.T, shp *shipment.Shipment) {
 
 func (w *reviewWorld) read(t *testing.T) *billingqueue.BillingQueueItem {
 	t.Helper()
-	item, err := w.svc.GetByID(t.Context(), &billingqueueports.GetBillingQueueItemByIDRequest{
+	item, err := w.queue().GetByID(t.Context(), &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                w.item.ID,
 		TenantInfo:            w.tenant,
 		ExpandShipmentDetails: true,
@@ -441,11 +484,12 @@ func TestReviewRaisesTheLumperFeeOnceAndHoldsApproval(t *testing.T) {
 		w.review.eventTexts(),
 	)
 
-	_, err := w.svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
-		ItemID:     w.item.ID,
-		NewStatus:  billingqueue.StatusApproved,
-		TenantInfo: w.tenant,
-	}, w.actor)
+	_, err := w.queue().
+		UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
+			ItemID:     w.item.ID,
+			NewStatus:  billingqueue.StatusApproved,
+			TenantInfo: w.tenant,
+		}, w.actor)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Settle the flagged check first")
 }
@@ -456,9 +500,10 @@ func TestResolveKeepSettlesTheCheckAndUndoReopensIt(t *testing.T) {
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	issueID := checkOf(w.read(t), billingqueue.CheckCharges).IssueID
 
-	item, err := w.svc.ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, OptionKey: "keep", TenantInfo: w.tenant,
-	}, w.actor)
+	item, err := w.reviews().
+		ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, OptionKey: "keep", TenantInfo: w.tenant,
+		}, w.actor)
 	require.NoError(t, err)
 
 	charges := checkOf(item, billingqueue.CheckCharges)
@@ -468,7 +513,7 @@ func TestResolveKeepSettlesTheCheckAndUndoReopensIt(t *testing.T) {
 	assert.True(t, item.Review.Ready)
 	assert.False(t, lineOf(item, "Lumper fee").Flagged)
 
-	item, err = w.svc.UndoIssue(t.Context(), &billingqueueports.UndoBillingQueueIssueRequest{
+	item, err = w.reviews().UndoIssue(t.Context(), &billingqueueports.UndoBillingQueueIssueRequest{
 		ItemID: w.item.ID, IssueID: issueID, TenantInfo: w.tenant,
 	}, w.actor)
 	require.NoError(t, err)
@@ -486,9 +531,10 @@ func TestResolveDropRemovesTheChargeAndUndoRestoresIt(t *testing.T) {
 	w := newReviewWorld(t, billingqueue.StatusReadyForReview)
 	issueID := checkOf(w.read(t), billingqueue.CheckCharges).IssueID
 
-	item, err := w.svc.ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, OptionKey: "drop", TenantInfo: w.tenant,
-	}, w.actor)
+	item, err := w.reviews().
+		ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, OptionKey: "drop", TenantInfo: w.tenant,
+		}, w.actor)
 	require.NoError(t, err)
 
 	assert.Empty(t, w.shp.AdditionalCharges, "the charge left the shipment")
@@ -500,7 +546,7 @@ func TestResolveDropRemovesTheChargeAndUndoRestoresIt(t *testing.T) {
 	assert.True(t, item.Review.Charges.Difference.IsZero())
 	assert.Equal(t, "Lumper fee removed", checkOf(item, billingqueue.CheckCharges).Detail)
 
-	item, err = w.svc.UndoIssue(t.Context(), &billingqueueports.UndoBillingQueueIssueRequest{
+	item, err = w.reviews().UndoIssue(t.Context(), &billingqueueports.UndoBillingQueueIssueRequest{
 		ItemID: w.item.ID, IssueID: issueID, TenantInfo: w.tenant,
 	}, w.actor)
 	require.NoError(t, err)
@@ -523,34 +569,12 @@ func TestResolveRefusesAnAgent(t *testing.T) {
 	t.Parallel()
 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
-	_, err := w.svc.ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: pulid.MustNew("bqis_"), OptionKey: "keep", TenantInfo: w.tenant,
-	}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAgent, PrincipalID: pulid.MustNew("agt_")})
+	_, err := w.reviews().
+		ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: pulid.MustNew("bqis_"), OptionKey: "keep", TenantInfo: w.tenant,
+		}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAgent, PrincipalID: pulid.MustNew("agt_")})
 
 	require.Error(t, err)
-}
-
-// Approving an item a biller has but nobody started reviewing starts the
-// review on the way: it used to be refused from the item.
-func TestApproveFromReadyForReviewStartsTheReview(t *testing.T) {
-	t.Parallel()
-
-	svc, _, item, tenantInfo := statusChangeFixture(t, billingqueue.StatusReadyForReview)
-
-	approved, err := svc.UpdateStatus(
-		t.Context(),
-		&billingqueueports.UpdateBillingQueueStatusRequest{
-			ItemID:     item.ID,
-			NewStatus:  billingqueue.StatusApproved,
-			TenantInfo: tenantInfo,
-		},
-		userActor(tenantInfo),
-	)
-
-	require.NoError(t, err)
-	assert.Equal(t, billingqueue.StatusApproved, approved.Status)
-	assert.NotNil(t, approved.ReviewStartedAt)
-	assert.NotNil(t, approved.ReviewCompletedAt)
 }
 
 func TestHoldRecordsItsReasonAndReleaseReturnsWhereItWas(t *testing.T) {
@@ -559,12 +583,13 @@ func TestHoldRecordsItsReasonAndReleaseReturnsWhereItWas(t *testing.T) {
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	reason := billingqueue.HoldReasonCustomerDispute
 
-	held, err := w.svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
-		ItemID:         w.item.ID,
-		NewStatus:      billingqueue.StatusOnHold,
-		HoldReasonCode: &reason,
-		TenantInfo:     w.tenant,
-	}, w.actor)
+	held, err := w.queue().
+		UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
+			ItemID:         w.item.ID,
+			NewStatus:      billingqueue.StatusOnHold,
+			HoldReasonCode: &reason,
+			TenantInfo:     w.tenant,
+		}, w.actor)
 	require.NoError(t, err)
 	require.NotNil(t, held.HoldReasonCode)
 	assert.Equal(t, billingqueue.HoldReasonCustomerDispute, *held.HoldReasonCode)
@@ -572,7 +597,7 @@ func TestHoldRecordsItsReasonAndReleaseReturnsWhereItWas(t *testing.T) {
 	assert.Equal(t, billingqueue.StatusInReview, *held.StatusBeforeHold)
 	assert.NotNil(t, held.HeldAt)
 
-	released, err := w.svc.Release(t.Context(), &billingqueueports.BillingQueueItemRequest{
+	released, err := w.reviews().Release(t.Context(), &billingqueueports.BillingQueueItemRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 	require.NoError(t, err)
@@ -590,9 +615,10 @@ func TestHoldRefusesAReasonItDoesNotKnow(t *testing.T) {
 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	reason := billingqueue.HoldReasonCode("Lunch")
-	_, err := w.svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
-		ItemID: w.item.ID, NewStatus: billingqueue.StatusOnHold, HoldReasonCode: &reason, TenantInfo: w.tenant,
-	}, w.actor)
+	_, err := w.queue().
+		UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
+			ItemID: w.item.ID, NewStatus: billingqueue.StatusOnHold, HoldReasonCode: &reason, TenantInfo: w.tenant,
+		}, w.actor)
 
 	require.Error(t, err)
 }
@@ -601,7 +627,7 @@ func TestReleaseRefusesAnItemNotOnHold(t *testing.T) {
 	t.Parallel()
 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
-	_, err := w.svc.Release(t.Context(), &billingqueueports.BillingQueueItemRequest{
+	_, err := w.reviews().Release(t.Context(), &billingqueueports.BillingQueueItemRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 
@@ -633,10 +659,10 @@ func TestPostPostsTheItemsInvoiceAndSaysWhereItWent(t *testing.T) {
 			posted.Status = invoice.StatusPosted
 			return &posted, nil
 		})
-	w.svc.invoiceRepo = invoices
-	w.svc.invoiceSvc = invoiceSvc
+	w.deps.InvoiceRepo = invoices
+	w.deps.InvoiceSvc = invoiceSvc
 
-	result, err := w.svc.Post(t.Context(), &billingqueueports.BillingQueueItemRequest{
+	result, err := w.reviews().Post(t.Context(), &billingqueueports.BillingQueueItemRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 
@@ -651,9 +677,9 @@ func TestPostRefusesAnItemNotYetApproved(t *testing.T) {
 	t.Parallel()
 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
-	w.svc.invoiceSvc = invoiceportsmock.NewMockInvoiceService(t)
+	w.deps.InvoiceSvc = invoiceportsmock.NewMockInvoiceService(t)
 
-	_, err := w.svc.Post(t.Context(), &billingqueueports.BillingQueueItemRequest{
+	_, err := w.reviews().Post(t.Context(), &billingqueueports.BillingQueueItemRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 
@@ -666,7 +692,7 @@ func TestApproveIfReadyLeavesAnItemThatStillNeedsAPerson(t *testing.T) {
 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 
-	result, err := w.svc.ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
+	result, err := w.reviews().ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 
@@ -682,7 +708,7 @@ func TestApproveIfReadySkipsAnItemSomebodyHeld(t *testing.T) {
 
 	w := newReviewWorld(t, billingqueue.StatusOnHold)
 
-	result, err := w.svc.ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
+	result, err := w.reviews().ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 
@@ -709,9 +735,9 @@ func TestApproveIfReadyMakesTheApproverTheBillerWhenThatIsAllItWaitsOn(t *testin
 		Return(map[pulid.ID][]*invoice.Invoice{}, nil).Maybe()
 	invoices.EXPECT().GetByBillingQueueItemID(mock.Anything, mock.Anything).
 		Return(&invoice.Invoice{ID: pulid.MustNew("inv_"), Number: "INV-24101"}, nil)
-	w.svc.invoiceRepo = invoices
+	w.deps.InvoiceRepo = invoices
 
-	result, err := w.svc.ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
+	result, err := w.reviews().ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant, AssignApprover: true,
 	}, w.actor)
 
@@ -729,7 +755,7 @@ func TestApproveIfReadyDoesNotAssignAnItemThatAlsoNeedsSomethingElse(t *testing.
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	w.unassigned()
 
-	result, err := w.svc.ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
+	result, err := w.reviews().ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant, AssignApprover: true,
 	}, w.actor)
 
@@ -747,7 +773,7 @@ func TestApproveIfReadyLeavesAnUnassignedItemWhenNotAskedToAssign(t *testing.T) 
 	syncTotals(t, w.shp)
 	w.item.AllocatedTotalAmount = w.shp.TotalChargeAmount.Decimal
 
-	result, err := w.svc.ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
+	result, err := w.reviews().ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{
 		ItemID: w.item.ID, TenantInfo: w.tenant,
 	}, w.actor)
 

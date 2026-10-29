@@ -1,4 +1,4 @@
-package billingqueueservice
+package billingqueuereviewservice
 
 import (
 	"context"
@@ -14,9 +14,10 @@ import (
 const (
 	podRedetectShipmentLimit = 500
 	podRedetectDocumentLimit = 200
+	podDocumentResource      = "shipment"
 )
 
-func (s *service) RedetectPODSignatures(
+func (s *Service) RedetectPODSignatures(
 	ctx context.Context,
 	req *billingqueueports.RedetectPODSignaturesRequest,
 	actor *permissionports.RequestActor,
@@ -39,10 +40,13 @@ func (s *service) RedetectPODSignatures(
 		)
 	}
 
-	shipmentIDs, err := s.repo.ListOpenShipmentIDs(ctx, &billingqueueports.ListOpenShipmentIDsRequest{
-		TenantInfo: req.TenantInfo,
-		Limit:      podRedetectShipmentLimit,
-	})
+	shipmentIDs, err := s.repo.ListOpenShipmentIDs(
+		ctx,
+		&billingqueueports.ListOpenShipmentIDsRequest{
+			TenantInfo: req.TenantInfo,
+			Limit:      podRedetectShipmentLimit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +60,15 @@ func (s *service) RedetectPODSignatures(
 	for _, id := range shipmentIDs {
 		resourceIDs = append(resourceIDs, id.String())
 	}
-	docs, err := s.documentRepo.GetByResourceIDs(ctx, &documentports.GetDocumentsByResourceIDsRequest{
-		TenantInfo:          req.TenantInfo,
-		ResourceType:        shipmentResourceType,
-		ResourceIDs:         resourceIDs,
-		IncludeDocumentType: true,
-	})
+	docs, err := s.documentRepo.GetByResourceIDs(
+		ctx,
+		&documentports.GetDocumentsByResourceIDsRequest{
+			TenantInfo:          req.TenantInfo,
+			ResourceType:        podDocumentResource,
+			ResourceIDs:         resourceIDs,
+			IncludeDocumentType: true,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

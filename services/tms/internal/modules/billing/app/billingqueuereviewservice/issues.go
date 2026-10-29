@@ -1,9 +1,10 @@
-package billingqueueservice
+package billingqueuereviewservice
 
 import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
@@ -42,12 +43,12 @@ func errPersonDecides() error {
 
 // reviewedItem reads the item the way the review shows it, which is also
 // what every settlement re-checks against.
-func (s *service) reviewedItem(
+func (s *Service) reviewedItem(
 	ctx context.Context,
 	itemID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*billingqueue.BillingQueueItem, error) {
-	return s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
+	return s.queue.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                itemID,
 		TenantInfo:            tenantInfo,
 		ExpandShipmentDetails: true,
@@ -58,7 +59,7 @@ func (s *service) reviewedItem(
 // option does: billing a charge as it stands, taking it off, repricing it, or
 // billing without the paperwork. Asking the driver is the one option that
 // does not settle anything; the paperwork arriving does.
-func (s *service) ResolveIssue(
+func (s *Service) ResolveIssue(
 	ctx context.Context,
 	req *billingqueueports.ResolveBillingQueueIssueRequest,
 	actor *permissionports.RequestActor,
@@ -102,14 +103,14 @@ func (s *service) ResolveIssue(
 		return nil, err
 	}
 
-	s.recordEvent(ctx, item, billingqueueevent.EventIssueResolved, option.Done, actor,
+	s.activity.RecordEvent(ctx, item, billingqueueevent.EventIssueResolved, option.Done, actor,
 		map[string]any{"issueId": issue.ID.String(), "option": option.Key})
-	s.publishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
+	s.activity.PublishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
 
 	return s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
 }
 
-func (s *service) PlanResolveIssue(
+func (s *Service) PlanResolveIssue(
 	ctx context.Context,
 	req *billingqueueports.ResolveBillingQueueIssueRequest,
 ) (*billingqueueports.IssueSettlementPlan, error) {
@@ -129,7 +130,7 @@ func (s *service) PlanResolveIssue(
 
 	switch settle.option.Effect.Kind { //nolint:exhaustive // keep and accept change no charge
 	case billingqueue.EffectRequest:
-		pod := podState(settle.item.Shipment, nil, nil)
+		pod := billingqueuereadiness.PODState(settle.item.Shipment, nil, nil)
 		plan.AsksDriver = s.drivers != nil && pod.DriverID.IsNotNil()
 		plan.DriverName = pod.DriverName
 		plan.DriverMessageTitle, plan.DriverMessage = paperworkRequest(settle.item)
@@ -150,7 +151,7 @@ type issueSettlement struct {
 	option *billingqueue.IssueOption
 }
 
-func (s *service) settleableIssue(
+func (s *Service) settleableIssue(
 	ctx context.Context,
 	req *billingqueueports.ResolveBillingQueueIssueRequest,
 ) (*issueSettlement, error) {
@@ -188,7 +189,7 @@ func (s *service) settleableIssue(
 	return &issueSettlement{item: item, issue: issue, option: option}, nil
 }
 
-func (s *service) undoableIssue(
+func (s *Service) undoableIssue(
 	ctx context.Context,
 	req *billingqueueports.UndoBillingQueueIssueRequest,
 ) (*issueSettlement, error) {
@@ -219,7 +220,7 @@ func (s *service) undoableIssue(
 
 // UndoIssue takes a settlement back: the charge it removed or repriced is put
 // back as it was, and the issue is open again.
-func (s *service) UndoIssue(
+func (s *Service) UndoIssue(
 	ctx context.Context,
 	req *billingqueueports.UndoBillingQueueIssueRequest,
 	actor *permissionports.RequestActor,
@@ -268,14 +269,20 @@ func (s *service) UndoIssue(
 		return nil, err
 	}
 
-	s.recordEvent(ctx, item, billingqueueevent.EventIssueUndone, "Undid: "+lowerFirst(done), actor,
-		map[string]any{"issueId": issue.ID.String()})
-	s.publishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
+	s.activity.RecordEvent(
+		ctx,
+		item,
+		billingqueueevent.EventIssueUndone,
+		"Undid: "+lowerFirst(done),
+		actor,
+		map[string]any{"issueId": issue.ID.String()},
+	)
+	s.activity.PublishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
 
 	return s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
 }
 
-func (s *service) PlanUndoIssue(
+func (s *Service) PlanUndoIssue(
 	ctx context.Context,
 	req *billingqueueports.UndoBillingQueueIssueRequest,
 ) (*billingqueueports.IssueSettlementPlan, error) {
@@ -309,7 +316,7 @@ func (s *service) PlanUndoIssue(
 // applyChargeEffect makes an option's charge edit through the same path a
 // biller's own charge edit takes, and returns the charge as it was so undo
 // can put it back.
-func (s *service) applyChargeEffect(
+func (s *Service) applyChargeEffect(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	effect billingqueue.IssueEffect,
@@ -322,11 +329,11 @@ func (s *service) applyChargeEffect(
 	}
 
 	snapshot := &billingqueue.EffectSnapshot{Charge: chargeSnapshot(edit.before, item)}
-	if _, err = s.updateCharges(ctx, &billingqueueports.UpdateChargesRequest{
+	if _, err = s.queue.SettleCharges(ctx, &billingqueueports.UpdateChargesRequest{
 		ItemID:            item.ID,
 		AdditionalCharges: edit.charges,
 		TenantInfo:        tenantInfo,
-	}, actor, true); err != nil {
+	}, actor); err != nil {
 		return nil, err
 	}
 
@@ -336,7 +343,7 @@ func (s *service) applyChargeEffect(
 // restoreCharge puts a charge back the way the snapshot recorded it, and
 // returns the id it has now: the same row for a repriced charge, a new one
 // for a charge that had been removed.
-func (s *service) restoreCharge(
+func (s *Service) restoreCharge(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	kind billingqueue.EffectKind,
@@ -349,11 +356,11 @@ func (s *service) restoreCharge(
 		return pulid.Nil, err
 	}
 
-	if _, err = s.updateCharges(ctx, &billingqueueports.UpdateChargesRequest{
+	if _, err = s.queue.SettleCharges(ctx, &billingqueueports.UpdateChargesRequest{
 		ItemID:            item.ID,
 		AdditionalCharges: edit.charges,
 		TenantInfo:        tenantInfo,
-	}, actor, true); err != nil {
+	}, actor); err != nil {
 		return pulid.Nil, err
 	}
 	if edit.before != nil {
@@ -511,14 +518,14 @@ func chargeSnapshot(
 // requestPaperwork asks the shipment's driver to send a signed POD through
 // the driver portal, and records that it was asked. The issue stays open:
 // it settles when the signed copy is filed, or when a person bills without it.
-func (s *service) requestPaperwork(
+func (s *Service) requestPaperwork(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	issue *billingqueue.Issue,
 	actor *permissionports.RequestActor,
 	tenantInfo pagination.TenantInfo,
 ) (*billingqueue.BillingQueueItem, error) {
-	pod := podState(item.Shipment, nil, nil)
+	pod := billingqueuereadiness.PODState(item.Shipment, nil, nil)
 	title, message := paperworkRequest(item)
 	if s.drivers != nil && pod.DriverID.IsNotNil() {
 		s.drivers.Notify(ctx, &drivernotificationservice.DriverNotification{
@@ -548,22 +555,22 @@ func (s *service) requestPaperwork(
 	if who == "" {
 		who = "the driver"
 	}
-	s.recordEvent(ctx, item, billingqueueevent.EventDocumentRequested,
+	s.activity.RecordEvent(ctx, item, billingqueueevent.EventDocumentRequested,
 		"Asked "+who+" for a signed POD", actor,
 		map[string]any{"issueId": issue.ID.String()})
-	s.publishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
+	s.activity.PublishInvalidation(ctx, item, actor.AuditActor(), "updated", item)
 
 	return s.reviewedItem(ctx, item.ID, tenantInfo)
 }
 
 func paperworkRequest(item *billingqueue.BillingQueueItem) (title, message string) {
-	ref := shipmentRef(item.Shipment)
+	ref := billingqueuereadiness.ShipmentRef(item.Shipment)
 	return "Signed POD needed for " + ref,
 		"Billing needs the receiver's signed POD for " + ref + ". Please send it from the app."
 }
 
 // Release takes an item off hold and back to where the hold found it.
-func (s *service) Release(
+func (s *Service) Release(
 	ctx context.Context,
 	req *billingqueueports.BillingQueueItemRequest,
 	actor *permissionports.RequestActor,
@@ -580,7 +587,7 @@ func (s *service) Release(
 		return nil, err
 	}
 
-	return s.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
+	return s.queue.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     req.ItemID,
 		NewStatus:  target,
 		TenantInfo: req.TenantInfo,
@@ -607,7 +614,7 @@ func ReleaseTarget(item *billingqueue.BillingQueueItem) (billingqueue.Status, er
 // Post posts the invoice approval made for the item, which sends it to the
 // customer and cannot be undone. An item approved onto a statement has no
 // invoice of its own to post.
-func (s *service) Post(
+func (s *Service) Post(
 	ctx context.Context,
 	req *billingqueueports.BillingQueueItemRequest,
 	actor *permissionports.RequestActor,
@@ -681,7 +688,7 @@ func (s *service) Post(
 			IncludeEmailProfile:   true,
 		},
 	}); cusErr == nil && cus != nil {
-		terms := termsFor(cus, nil)
+		terms := billingqueuereadiness.TermsFor(cus, nil)
 		result.Recipients = terms.Recipients
 		if len(terms.Recipients) > 0 && cus.BillingProfile != nil &&
 			cus.BillingProfile.AutoSendInvoiceOnGeneration && cus.BillingProfile.EmailInvoiceEnabled {
@@ -694,9 +701,9 @@ func (s *service) Post(
 		if result.SentTo != "" {
 			text += " · emailed to " + result.SentTo
 		}
-		s.recordEvent(ctx, updated, billingqueueevent.EventPosted, text, actor,
+		s.activity.RecordEvent(ctx, updated, billingqueueevent.EventPosted, text, actor,
 			map[string]any{"invoiceId": posted.ID.String(), "invoiceNumber": posted.Number})
-		s.publishInvalidation(ctx, updated, actor.AuditActor(), "updated", updated)
+		s.activity.PublishInvalidation(ctx, updated, actor.AuditActor(), "updated", updated)
 	}
 
 	return result, nil
@@ -704,7 +711,7 @@ func (s *service) Post(
 
 // ApproveIfReady approves an item only if, read fresh, every check passes.
 // It never approves on the strength of what a table showed a few seconds ago.
-func (s *service) ApproveIfReady(
+func (s *Service) ApproveIfReady(
 	ctx context.Context,
 	req *billingqueueports.ApproveIfReadyRequest,
 	actor *permissionports.RequestActor,
@@ -714,7 +721,7 @@ func (s *service) ApproveIfReady(
 		return nil, err
 	}
 	if req.AssignApprover && onlyWantsBiller(item) && actor != nil && actor.UserID.IsNotNil() {
-		if _, err = s.AssignBiller(ctx, &billingqueueports.AssignBillerRequest{
+		if _, err = s.queue.AssignBiller(ctx, &billingqueueports.AssignBillerRequest{
 			ItemID:     req.ItemID,
 			BillerID:   actor.UserID,
 			TenantInfo: req.TenantInfo,
@@ -742,7 +749,7 @@ func (s *service) ApproveIfReady(
 		return result, nil
 	}
 
-	approved, err := s.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
+	approved, err := s.queue.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     req.ItemID,
 		NewStatus:  billingqueue.StatusApproved,
 		TenantInfo: req.TenantInfo,

@@ -16,7 +16,7 @@ import (
 // billed. So the shipment stops counting as auto-rated, and the difference
 // between what the contract charged and what the invoice will say is recorded
 // where the rate leakage report reads it.
-func (s *service) rerateShipment(
+func (s *Service) rerateShipment(
 	ctx context.Context,
 	shp *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,

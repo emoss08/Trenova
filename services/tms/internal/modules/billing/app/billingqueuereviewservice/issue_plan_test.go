@@ -1,4 +1,4 @@
-package billingqueueservice
+package billingqueuereviewservice
 
 import (
 	"testing"
@@ -20,9 +20,10 @@ func TestPlanResolveIssueShowsTheChargeADropRemovesAndWritesNothing(t *testing.T
 	issueID := checkOf(w.read(t), billingqueue.CheckCharges).IssueID
 	events := len(w.review.eventTexts())
 
-	plan, err := w.svc.PlanResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, OptionKey: "drop", TenantInfo: w.tenant,
-	})
+	plan, err := w.reviews().
+		PlanResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, OptionKey: "drop", TenantInfo: w.tenant,
+		})
 	require.NoError(t, err)
 
 	require.NotNil(t, plan.Option)
@@ -43,19 +44,22 @@ func TestPlanResolveIssueRefusesWhatResolveRefuses(t *testing.T) {
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	issueID := checkOf(w.read(t), billingqueue.CheckCharges).IssueID
 
-	_, err := w.svc.PlanResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, OptionKey: "ratecon", TenantInfo: w.tenant,
-	})
+	_, err := w.reviews().
+		PlanResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, OptionKey: "ratecon", TenantInfo: w.tenant,
+		})
 	require.Error(t, err, "the lumper check offers no rate con choice")
 
-	_, err = w.svc.ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, OptionKey: "keep", TenantInfo: w.tenant,
-	}, w.actor)
+	_, err = w.reviews().
+		ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, OptionKey: "keep", TenantInfo: w.tenant,
+		}, w.actor)
 	require.NoError(t, err)
 
-	_, err = w.svc.PlanResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, OptionKey: "drop", TenantInfo: w.tenant,
-	})
+	_, err = w.reviews().
+		PlanResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, OptionKey: "drop", TenantInfo: w.tenant,
+		})
 	require.Error(t, err, "a settled check cannot be settled again")
 }
 
@@ -64,15 +68,17 @@ func TestPlanUndoIssueShowsTheRemovedChargeComingBack(t *testing.T) {
 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	issueID := checkOf(w.read(t), billingqueue.CheckCharges).IssueID
-	_, err := w.svc.ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, OptionKey: "drop", TenantInfo: w.tenant,
-	}, w.actor)
+	_, err := w.reviews().
+		ResolveIssue(t.Context(), &billingqueueports.ResolveBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, OptionKey: "drop", TenantInfo: w.tenant,
+		}, w.actor)
 	require.NoError(t, err)
 	require.Empty(t, w.shp.AdditionalCharges)
 
-	plan, err := w.svc.PlanUndoIssue(t.Context(), &billingqueueports.UndoBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, TenantInfo: w.tenant,
-	})
+	plan, err := w.reviews().
+		PlanUndoIssue(t.Context(), &billingqueueports.UndoBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, TenantInfo: w.tenant,
+		})
 	require.NoError(t, err)
 
 	assert.Nil(t, plan.ChargeBefore, "the charge is not on the shipment now")
@@ -88,9 +94,10 @@ func TestPlanUndoIssueRefusesACheckNobodySettled(t *testing.T) {
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	issueID := checkOf(w.read(t), billingqueue.CheckCharges).IssueID
 
-	_, err := w.svc.PlanUndoIssue(t.Context(), &billingqueueports.UndoBillingQueueIssueRequest{
-		ItemID: w.item.ID, IssueID: issueID, TenantInfo: w.tenant,
-	})
+	_, err := w.reviews().
+		PlanUndoIssue(t.Context(), &billingqueueports.UndoBillingQueueIssueRequest{
+			ItemID: w.item.ID, IssueID: issueID, TenantInfo: w.tenant,
+		})
 	require.Error(t, err)
 }
 

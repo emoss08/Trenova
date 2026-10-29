@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueapprovalservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/collectionservice"
@@ -61,6 +62,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -158,8 +160,9 @@ func SharedOptions() fx.Option {
 			invoicedisputeservice.New,
 			latechargeservice.New,
 			func(s *invoicerunservice.Service) invoicerunports.InvoiceRunSweeper { return s },
-			billingqueueservice.New,
-			billingqueueservice.NewReview,
+			billingqueueservice.NewService,
+			func(s *billingqueueservice.Service) billingqueueports.BillingQueueService { return s },
+			billingqueuereviewservice.New,
 			billingqueueapprovalservice.New,
 			invoiceservice.NewContextBuilder,
 			fx.Annotate(
