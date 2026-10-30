@@ -433,6 +433,11 @@ volume generator, not the query: give the table the rows and status mix producti
 - **A computed time** (a move's completion: its last stop time, else its last change) is found
   through index ranges on its inputs first (`movecompletion.Candidates`), then computed exactly
   for those candidates.
+- **An existence check over a common condition** (`EXISTS`, or a `LIMIT 1` with no order) is
+  planned for its first row, which a sequential scan returns soonest when most rows match. Ask for
+  the row an index orders first instead, `(SELECT col … ORDER BY col LIMIT 1) IS NOT NULL` over an
+  index on the tenant and that column, so the index path is the cheapest first row
+  (`accountsreceivablerepository.GetBalanceOverview`).
 - **A balance as of a past date** walks back from the stored balance through the changes after
   the window start, read by an index on (tenant, creation time), instead of summing every change
   ever made ("History in one pass" in [scale.md](scale.md)).
@@ -650,7 +655,9 @@ application would: service failures where a stop arrived past its window and the
 moves and a share of open ones (`tendervolume`), a position and HOS state per crewed tractor and a
 geofence event per driver stop visit (`telematicsvolume`), ETAs for the open stops of tracked
 shipments (`stopetavolume`), and capture batches for the paperwork of shipments delivered inside
-the tenant's capture retention (`capturevolume`). A new phase is appended after its dependencies,
+the tenant's capture retention (`capturevolume`). `billingvolume` settles invoices the way a
+carrier's receivables age (most paid by 30 days past due, under 2% left after 90) and holds a
+quarter of those still unpaid two weeks past due under an open dispute. A new phase is appended after its dependencies,
 so the faker stream, and with it every earlier table, stays the same for a seed. When an entity
 gains a required relation or a derived row the application always writes (as every shipment gets an auto-order), generate it
 there too; write an optional relation only in the states where the application would have written
