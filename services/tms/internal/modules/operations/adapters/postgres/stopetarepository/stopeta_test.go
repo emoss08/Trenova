@@ -52,7 +52,7 @@ func TestTrackedShipmentsQueryReadsTheShipmentsByID(t *testing.T) {
 		stopeta.TrackedShipmentStatuses(),
 	))
 
-	assert.Contains(t, sql, `s."id" IN (`)
+	assert.Contains(t, sql, `s."id" = ANY($`)
 	assert.Contains(t, sql, `s."status" IN (`)
 	assert.NotContains(t, sql, "ORDER BY")
 	assert.Contains(t, sql, "LIMIT 2")

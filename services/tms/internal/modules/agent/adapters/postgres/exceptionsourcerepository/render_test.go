@@ -86,7 +86,7 @@ func TestExhaustedTendersQuery_ContinuesAfterTheLastTenderRead(t *testing.T) {
 	))
 
 	assert.Contains(t, sql, `ROW(t."created_at", t."id") > ROW($`)
-	assert.Contains(t, sql, `t."shipment_id" IN (`)
+	assert.Contains(t, sql, `t."shipment_id" = ANY($`)
 	assert.Contains(t, sql, "LIMIT 10")
 	assert.Contains(t, args, int64(42))
 	assert.Contains(t, args, "tnd_1")
@@ -100,7 +100,7 @@ func TestUncoveredMovesQuery(t *testing.T) {
 		[]pulid.ID{"smv_1", "smv_2"},
 	))
 
-	assert.Contains(t, sql, `sm."id" IN (`)
+	assert.Contains(t, sql, `sm."id" = ANY($`)
 	assert.Contains(t, sql, `sm."status" = 'New'`)
 	assert.Contains(t, sql, `JOIN "shipments"`)
 	assert.NotContains(t, sql, "ORDER BY")
