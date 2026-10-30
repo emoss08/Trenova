@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
@@ -42,6 +44,40 @@ func withEntries(
 	return q.Load(jr.OriginalJournalEntry(), jr.ReversalJournalEntry())
 }
 
+func (r *repository) attachEntries(
+	ctx context.Context,
+	reversals []*journalreversal.Reversal,
+) error {
+	ids := make([]pulid.ID, 0, 2*len(reversals))
+	for _, reversal := range reversals {
+		ids = append(ids, reversal.OriginalJournalEntryID)
+		if reversal.ReversalJournalEntryID.IsNotNil() {
+			ids = append(ids, reversal.ReversalJournalEntryID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+
+	je := journalentrydb.JournalEntries
+	entries, err := je.Where(je.ID.In(ids...)).All(ctx, r.db.Keel(ctx))
+	if err != nil {
+		r.l.Error("failed to load reversed journal entries", zap.Error(err))
+		return err
+	}
+
+	byID := make(map[pulid.ID]*journalentry.JournalEntry, len(entries))
+	for _, entry := range entries {
+		byID[entry.ID] = entry
+	}
+	for _, reversal := range reversals {
+		reversal.OriginalJournalEntry = byID[reversal.OriginalJournalEntryID]
+		reversal.ReversalJournalEntry = byID[reversal.ReversalJournalEntryID]
+	}
+
+	return nil
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *journalreversalports.ListJournalReversalsRequest,
@@ -51,16 +87,23 @@ func (r *repository) List(
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*journalreversal.Reversal], error) {
 			jr := journalreversaldb.Reversals
-			return listquery.List(
+			result, err := listquery.List(
 				ctx,
 				r.db.Keel(ctx),
 				jr.Query(),
 				&listquery.Request[journalreversal.Reversal]{
 					Filter: req.Filter,
-					Shape:  withEntries,
 					Then:   []keel.Order{jr.CreatedAt.Desc()},
 				},
 			)
+			if err != nil {
+				return nil, err
+			}
+			if err = r.attachEntries(ctx, result.Items); err != nil {
+				return nil, err
+			}
+
+			return result, nil
 		},
 	)
 }
@@ -80,11 +123,13 @@ func (r *repository) ListConnection(
 				&listquery.Request[journalreversal.Reversal]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape:  withEntries,
 				},
 			)
 			if err != nil {
 				r.l.Error("failed to list journal reversals", zap.Error(err))
+				return nil, err
+			}
+			if err = r.attachEntries(ctx, result.Items); err != nil {
 				return nil, err
 			}
 
