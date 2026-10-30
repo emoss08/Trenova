@@ -94,16 +94,14 @@ func (r *repository) List(
 				sf.Where(keel.When(req.ShipmentID.IsNotNil(), sf.ShipmentID.Eq(req.ShipmentID))),
 				&listquery.Request[servicefailure.ServiceFailure]{
 					Filter: req.Filter,
-					Shape: func(
-						q *keel.Query[*servicefailure.ServiceFailure],
-					) *keel.Query[*servicefailure.ServiceFailure] {
-						return q.Load(listLoads()...)
-					},
-					Then: []keel.Order{sf.CreatedAt.Desc()},
+					Then:   []keel.Order{sf.CreatedAt.Desc()},
 				},
 			)
 			if err != nil {
 				return nil, fmt.Errorf("list service failures: %w", err)
+			}
+			if err = r.attachRelations(ctx, result.Items); err != nil {
+				return nil, err
 			}
 
 			return result, nil
@@ -133,21 +131,51 @@ func (r *repository) ListConnection(
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.ServiceFailureColumns,
-					Shape: func(
-						q *keel.Query[*servicefailure.ServiceFailure],
-					) *keel.Query[*servicefailure.ServiceFailure] {
-						return q.Load(listLoads()...)
-					},
 				},
 			)
 			if err != nil {
 				r.l.Error("failed to list service failures", zap.Error(err))
 				return nil, err
 			}
+			if err = r.attachRelations(ctx, result.Items); err != nil {
+				return nil, err
+			}
 
 			return result, nil
 		},
 	)
+}
+
+func (r *repository) attachRelations(
+	ctx context.Context,
+	items []*servicefailure.ServiceFailure,
+) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	ids := make([]pulid.ID, 0, len(items))
+	for _, item := range items {
+		ids = append(ids, item.ID)
+	}
+
+	sf := servicefailuredb.ServiceFailures
+	loaded, err := sf.Where(sf.ID.In(ids...)).Load(listLoads()...).All(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return fmt.Errorf("load service failure relations: %w", err)
+	}
+
+	byID := make(map[pulid.ID]*servicefailure.ServiceFailure, len(loaded))
+	for _, entity := range loaded {
+		byID[entity.ID] = entity
+	}
+	for i, item := range items {
+		if entity, ok := byID[item.ID]; ok {
+			items[i] = entity
+		}
+	}
+
+	return nil
 }
 
 func (r *repository) GetByID(
