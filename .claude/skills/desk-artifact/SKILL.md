@@ -203,8 +203,8 @@ Several of these fail CI on code that compiles and passes every test.
 ## 8. Gates, PR and green
 
 1. **Go:** run the touched packages' tests, `golangci-lint run --new-from-rev=origin/master`,
-   `go vet`, and `go build ./...`. Also run the `Deterministic` agent-evals steps when you
-   touched record kinds or tools.
+   `go vet`, and `go build ./...`. Also run the agent eval gates (`agentprompt`,
+   `agentevalgate`, `agentruntime`, `agentredteam`) when you touched record kinds or tools.
 2. **Client:**
    - `pnpm --filter @trenova/web typecheck`;
    - `oxlint` on the changed folders;
@@ -233,8 +233,8 @@ Several of these fail CI on code that compiles and passes every test.
   messages for each case.
 - A card check named the purchase's tractor for a worker-only card. Name only what the record
   actually holds.
-- Adding a record kind left the agent tool catalog golden stale, which turned the
-  `Deterministic` check red.
+- Adding a record kind left the agent tool catalog golden stale, which turned
+  Unit Tests red.
 - The mock API missing an endpoint the app calls (`/assistant/agents/:id/commands/`) put an
   error toast on every screenshot.
 - A plan has no "proposing tool"; the runtime opens it. Read how a record comes to exist

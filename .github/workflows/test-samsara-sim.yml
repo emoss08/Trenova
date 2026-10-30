@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-      - main
-      - develop
-      - "claude/**"
     paths:
       - "dev/samsara-sim/**"
       - "shared/**"
@@ -15,13 +12,16 @@ on:
   pull_request:
     branches:
       - master
-      - main
-      - develop
     paths:
       - "dev/samsara-sim/**"
       - "shared/**"
       - "dev/compose.yml"
       - ".github/workflows/test-samsara-sim.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   smoke:

@@ -106,9 +106,9 @@ starter element with a numeric X12 type uses the same helpers in `templates/base
 
 `task rust:wasm-edi` builds the module (profile `wasm`, `-Os`, the shared reproducible build in
 `services/scripts/wasm-module.sh`) and installs `services/tms/pkg/x12/edi.wasm` with its
-`.sha256`; `task rust:wasm-edi-check` fails when the committed copy differs. The `wasm-edi` job
-in `rust.yml` runs the check and clippy for `wasm32-unknown-unknown`; the fuzz job runs the
-three targets. The Go host's tests run with the TMS.
+`.sha256`; `task rust:wasm-edi-check` fails when the committed copy differs. The WebAssembly
+modules job in `rust.yml` runs the check and clippy for `wasm32-unknown-unknown`; the fuzz job
+runs the three targets. The Go host's tests run with the TMS.
 
 ## The rules that bite
 

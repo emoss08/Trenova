@@ -1,34 +1,28 @@
 name: Assay Index
 
-# Keeps the shared coverage index warm. Every push to a protected branch
-# refreshes the index at that commit and saves it to the actions cache, where
-# pull-request runs of the Assay Dogfood workflow restore it read-only.
+# Keeps the shared coverage index warm. A nightly run on master refreshes the
+# index at that commit and saves it to the actions cache, where pull-request
+# runs of the Assay Dogfood workflow restore it read-only.
 #
 # The index validates per package: a record built here stays usable for any
 # later merge-base as long as that package (and its dependency closure) is
 # unchanged, and index.Build reuses fingerprint-valid records, so this job is
-# incremental — a typical push re-collects only the packages the push touched.
+# incremental — a run re-collects only the packages changed since the last one.
 #
 # assay is built with -buildvcs=false so its cache identity comes from the
 # binary's content instead of the commit it was built at; a vcs-stamped build
 # would invalidate the whole index on every push.
 
 on:
-  push:
-    branches:
-      - master
-      - main
-      - develop
-    paths:
-      - "services/**"
-      - "shared/**"
-      - "go.work"
-      - "go.work.sum"
+  schedule:
+    - cron: "23 4 * * *"
   workflow_dispatch:
 
+# A run takes about 36 minutes; a second one queues behind it rather than
+# throwing the first away.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read

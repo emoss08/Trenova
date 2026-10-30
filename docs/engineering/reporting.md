@@ -528,8 +528,8 @@ GOFLAGS=-tags=nomsgpack go test ./internal/infrastructure/reportengine/... \
 ```
 
 Then `task i18n` and `task i18n-check` from the root, and `pnpm --filter @trenova/graphql codegen`
-from `client/` after a change to `report.graphqls`. `task keel-gen-check` and the `Codegen Checks`
-job ([generated-artifacts.md](generated-artifacts.md)) fail when a generated file is stale.
+from `client/` after a change to `report.graphqls`. `task keel-gen-check` and the codegen steps of
+the Go `Lint` job ([generated-artifacts.md](generated-artifacts.md)) fail when a generated file is stale.
 
 | Test | Fails when |
 |---|---|

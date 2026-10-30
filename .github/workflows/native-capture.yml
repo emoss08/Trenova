@@ -28,9 +28,6 @@ on:
   push:
     branches:
       - master
-      - main
-      - develop
-      - "claude/**"
     tags:
       - "capture-v*"
     paths:
@@ -43,8 +40,6 @@ on:
   pull_request:
     branches:
       - master
-      - main
-      - develop
     paths:
       - "desktop/capture/**"
       - "services/crates/imaging-core/**"
@@ -64,7 +59,7 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.version }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.version }}
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.version == '' }}
 
 permissions:

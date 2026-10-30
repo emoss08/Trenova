@@ -4,20 +4,20 @@ on:
   push:
     branches:
       - master
-      - main
-      - develop
-      - "claude/**"
     paths:
       - "tools/extraction-finetune/**"
       - ".github/workflows/test-ml.yml"
   pull_request:
     branches:
       - master
-      - main
-      - develop
     paths:
       - "tools/extraction-finetune/**"
       - ".github/workflows/test-ml.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

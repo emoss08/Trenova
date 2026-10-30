@@ -11,8 +11,8 @@ covers how to build a resource; this covers what breaks afterwards.
 
 ## Run the whole gate locally
 
-`Codegen Checks` in `.github/workflows/test-tms.yml` is seven independent regeneration steps, plus the GraphQL schema-diff
-and migration base-branch steps. All paths are relative to `services/tms`:
+The `Lint` job in `.github/workflows/test-tms.yml` runs seven independent regeneration steps after golangci-lint,
+archlint and pkgsizelint, plus the GraphQL schema-diff and migration base-branch steps. All paths are relative to `services/tms`:
 
 ```bash
 go run ./internal/api/graphql/gqlexec/gen                           # same as `task gqlgen`; see "GraphQL server code" below
@@ -158,7 +158,9 @@ contract" in [agent-write-coverage.md](agent-write-coverage.md).
 
 ## Agent prompt and tool snapshots
 
-The `Deterministic` job of `.github/workflows/agent-evals.yml` compares what a model is shown
+The agent eval gates (`agentprompt`, `agentevalgate`, `agentruntime`, `agentredteam`) run with
+every other package in the `Unit Tests` job of `.github/workflows/test-tms.yml`, which writes
+their ranking and red-team results to the run summary. They compare what a model is shown
 against checked-in fixtures, so **changing a prompt, a starter template, a tool's description,
 schema or policy, or adding or removing a tool means refreshing them**:
 
@@ -211,7 +213,7 @@ skips when floors, pgvector or the fixture are missing.
 A tool description edit can also move `find_tools` ranking below its floors
 (`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no
 longer find their tool. Fix the description rather than the floor. The flag goes after the
-package. The job also runs the prompt-injection red-team suite; see
+package. Unit Tests also runs the prompt-injection red-team suite; see
 [agent-evals.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-evals.md) for what it proves and its known gaps.
 
 ## GraphQL server code
@@ -239,7 +241,7 @@ package. The job also runs the prompt-injection red-team suite; see
 ## Agent GraphQL reads
 
 `go run ./internal/api/graphql/agentread/gen` is the last step of `task gqlgen` and of the
-`GraphQL server generated code` step in `Codegen Checks`. It writes the agent read executor
+`GraphQL server generated code` step in the `Lint` job of `test-tms.yml`. It writes the agent read executor
 (`internal/api/graphql/agentread/executor_gen.go`) and the tool bindings
 (`internal/modules/agent/app/querytools/graphqlread/graphqlreads_gen.go`) from
 `agentread/reads.yml`, the persisted operations and the generated executor. It fails, naming the
@@ -290,7 +292,7 @@ pnpm --filter @trenova/web access:generate   # client/apps/web: writes pkg/pagea
 cd services/tms && go run ./internal/api/graphql/gqlext/refgen   # writes manifest_gen.json and viewwords_gen.go
 ```
 
-`access:check` (the GraphQL Codegen job in `test-client.yml`) fails when a route, a page's
+`access:check` (the Checks job in `test-client.yml`) fails when a route, a page's
 imports or a REST call it makes changed what a screen runs; `TestPageAccessManifestIsGenerated`
 and `TestViewWordsAreGenerated` (`internal/api/pagemanifest`, under `task test`) fail when the
 manifest or the words are stale. So **adding a page, importing a GraphQL wrapper or a query
@@ -349,7 +351,7 @@ names; `keel_verify_integration_test.go` fails when a model and the migrated sch
 
 `services/tms/pkg/productguide/catalog_gen.json` is built from the web app's router,
 navigation, page headers and record-link registry plus `docs/product-guide/**.md`, and the
-server embeds it. `pnpm --filter @trenova/web guide:check` (the GraphQL Codegen job in
+server embeds it. `pnpm --filter @trenova/web guide:check` (the Checks job in
 `test-client.yml`) fails when:
 
 - a routed page has no guide — adding a page means writing its guide;
