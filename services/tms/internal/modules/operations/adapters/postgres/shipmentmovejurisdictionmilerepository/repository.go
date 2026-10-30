@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/movecompletion"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -133,7 +134,7 @@ func (r *repository) ListUnattributedMoves(
 				return nil, errortypes.NewBusinessError("Period start must be before period end")
 			}
 
-			mc := completedMovesWithoutBreakdown()
+			mc := completedMovesWithoutBreakdown(req.Start, req.End)
 			inPeriod := []keel.Pred{
 				mc.Col(completedAt).Gte(req.Start),
 				mc.Col(completedAt).Lt(req.End),
@@ -178,7 +179,7 @@ func (r *repository) ListUnattributedMoves(
 	)
 }
 
-func completedMovesWithoutBreakdown() *keel.CTETable {
+func completedMovesWithoutBreakdown(start, end int64) *keel.CTETable {
 	sm := shipmentdb.ShipmentMoves
 	st := shipmentdb.Stops
 	jm := shipmentdb.ShipmentMoveJurisdictionMiles
@@ -186,6 +187,7 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 	body := sm.LeftJoin(st, st.ShipmentMoveID.EqCol(sm.ID)).
 		Where(
 			sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
+			movecompletion.Candidate(sm, start, end),
 			sm.Distance.Gt(0),
 			keel.NotExists(jm.Where(jm.ShipmentMoveID.EqCol(sm.ID))),
 		).
@@ -198,8 +200,7 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 					sm.Distance.Div(keel.Float64(kilometersPerMile)),
 				).
 				Else(sm.Distance),
-			keel.Int64Of(st.ActualDeparture.Coalesce(st.ActualArrival).Max()).
-				Coalesce(sm.UpdatedAt),
+			movecompletion.At(sm, st),
 		)
 
 	return keel.CTE(

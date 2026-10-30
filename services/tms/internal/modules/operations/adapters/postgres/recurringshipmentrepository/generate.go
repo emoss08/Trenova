@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentgraph"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
@@ -738,6 +739,9 @@ func (r *repository) materializeOccurrence(
 		return nil, err
 	}
 	if err = shipmentdb.ShipmentCommodities.CreateMany(ctx, db, generated.Commodities); err != nil {
+		return nil, err
+	}
+	if err = shipmentprojection.Refresh(ctx, db, generated.ID); err != nil {
 		return nil, err
 	}
 

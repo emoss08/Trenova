@@ -90,7 +90,7 @@ func movesWithDetails() keel.Loader {
 	a := m.Assignment()
 	ca := m.CarrierAssignment()
 
-	return m.Order(m.Sequence.Asc()).Load(
+	return m.Order(m.Sequence.Asc()).LoadStrategy(keel.LoadPerLevel).Load(
 		orderedStopsWithLocation(m.Stops()),
 		a.Where(a.ArchivedAt.IsNull()).
 			Load(a.Tractor(), a.Trailer(), a.PrimaryWorker(), a.SecondaryWorker()),

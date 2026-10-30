@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
@@ -170,64 +171,142 @@ func (r *repository) ListAttention(
 	req *stopetaports.ListAttentionRequest,
 ) ([]*stopetaports.AttentionStop, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*stopetaports.AttentionStop, error) {
-		rows, err := r.attentionRows(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		if len(rows) == 0 {
-			return []*stopetaports.AttentionStop{}, nil
-		}
+		limit := boundedLimit(req.Limit, defaultAttentionLimit, maxAttentionLimit)
+		out := make([]*stopetaports.AttentionStop, 0)
 
-		stopIDs := make([]pulid.ID, 0, len(rows))
-		for _, row := range rows {
-			stopIDs = append(stopIDs, row.StopID)
-		}
-		meta, err := r.stopMeta(ctx, stopIDs)
-		if err != nil {
-			return nil, err
-		}
-
-		out := make([]*stopetaports.AttentionStop, 0, len(rows))
-		for _, row := range rows {
-			item := &stopetaports.AttentionStop{ETA: row}
-			if m, ok := meta[row.StopID]; ok {
-				item.ProNumber = m.ProNumber
-				item.OwnerID = m.OwnerID
-				item.StopType = m.StopType
-				item.LocationName = m.LocationName
-				item.City = m.City
-				item.StateCode = m.StateCode
+		var after *stopeta.StopETA
+		for len(out) < limit {
+			rows, err := attentionQuery(req, after, limit).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("list stop etas needing attention: %w", err)
 			}
-			out = append(out, item)
+			if len(rows) == 0 {
+				break
+			}
+
+			kept, err := r.onTrackedShipments(ctx, rows, req.Statuses)
+			if err != nil {
+				return nil, err
+			}
+			items, err := r.withStopDetails(ctx, kept[:min(len(kept), limit-len(out))])
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, items...)
+
+			if len(rows) < limit {
+				break
+			}
+			after = rows[len(rows)-1]
 		}
+
 		return out, nil
 	})
 }
 
-func (r *repository) attentionRows(
-	ctx context.Context,
+func attentionQuery(
 	req *stopetaports.ListAttentionRequest,
-) ([]*stopeta.StopETA, error) {
+	after *stopeta.StopETA,
+	limit int,
+) *keel.Query[*stopeta.StopETA] {
 	e := stopetadb.StopETAs
-	sp := shipmentdb.Shipments
 
-	q := e.Join(sp, sp.ID.EqCol(e.ShipmentID)).Where(
+	q := e.Where(
 		e.Verdict.In(stopeta.VerdictAtRisk, stopeta.VerdictLate),
 		e.Arrived.IsFalse(),
-		sp.Status.In(req.Statuses...),
+		keel.When(len(req.ShipmentIDs) > 0, e.ShipmentID.In(req.ShipmentIDs...)),
 	)
-	if len(req.ShipmentIDs) > 0 {
-		q = q.Where(e.ShipmentID.In(req.ShipmentIDs...))
+	if after != nil {
+		q = q.Where(keel.Tuple(e.ShipmentID, e.MoveSequence, e.StopSequence).Gt(
+			keel.Tuple(after.ShipmentID.String(), after.MoveSequence, after.StopSequence),
+		))
 	}
 
-	entities, err := q.
-		Order(e.ShipmentID.Asc(), e.MoveSequence.Asc(), e.StopSequence.Asc()).
-		Limit(boundedLimit(req.Limit, defaultAttentionLimit, maxAttentionLimit)).
-		List(ctx, r.db.Keel(ctx))
-	if err != nil {
-		return nil, fmt.Errorf("list stop etas needing attention: %w", err)
+	return q.Order(e.ShipmentID.Asc(), e.MoveSequence.Asc(), e.StopSequence.Asc()).Limit(limit)
+}
+
+func trackedShipmentsQuery(
+	shipmentIDs []pulid.ID,
+	statuses []shipmentvocab.Status,
+) *keel.Query[*shipment.Shipment] {
+	sp := shipmentdb.Shipments
+
+	return sp.Pick(sp.ID).
+		Where(sp.ID.In(shipmentIDs...), sp.Status.In(statuses...)).
+		Limit(len(shipmentIDs))
+}
+
+func (r *repository) onTrackedShipments(
+	ctx context.Context,
+	rows []*stopeta.StopETA,
+	statuses []shipmentvocab.Status,
+) ([]*stopeta.StopETA, error) {
+	shipmentIDs := make([]pulid.ID, 0, len(rows))
+	seen := make(map[pulid.ID]struct{}, len(rows))
+	for _, row := range rows {
+		if _, ok := seen[row.ShipmentID]; ok {
+			continue
+		}
+		seen[row.ShipmentID] = struct{}{}
+		shipmentIDs = append(shipmentIDs, row.ShipmentID)
 	}
-	return entities, nil
+
+	tracked, err := keel.Into[pulid.ID](
+		ctx,
+		r.db.Keel(ctx),
+		trackedShipmentsQuery(shipmentIDs, statuses),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list tracked shipments of stop etas: %w", err)
+	}
+
+	live := make(map[pulid.ID]struct{}, len(tracked))
+	for _, id := range tracked {
+		live[id] = struct{}{}
+	}
+
+	kept := make([]*stopeta.StopETA, 0, len(rows))
+	for _, row := range rows {
+		if _, ok := live[row.ShipmentID]; ok {
+			kept = append(kept, row)
+		}
+	}
+
+	return kept, nil
+}
+
+func (r *repository) withStopDetails(
+	ctx context.Context,
+	rows []*stopeta.StopETA,
+) ([]*stopetaports.AttentionStop, error) {
+	if len(rows) == 0 {
+		return nil, nil
+	}
+
+	stopIDs := make([]pulid.ID, 0, len(rows))
+	for _, row := range rows {
+		stopIDs = append(stopIDs, row.StopID)
+	}
+	meta, err := r.stopMeta(ctx, stopIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*stopetaports.AttentionStop, 0, len(rows))
+	for _, row := range rows {
+		item := &stopetaports.AttentionStop{ETA: row}
+		if m, ok := meta[row.StopID]; ok {
+			item.ProNumber = m.ProNumber
+			item.OwnerID = m.OwnerID
+			item.StopType = m.StopType
+			item.LocationName = m.LocationName
+			item.City = m.City
+			item.StateCode = m.StateCode
+		}
+		out = append(out, item)
+	}
+
+	return out, nil
 }
 
 type stopMetaRow struct {

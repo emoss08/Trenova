@@ -465,10 +465,11 @@ func closeEntriesFor(
 
 	je := journalentrydb.JournalEntries
 	entries, err := je.Where(
+		je.ReferenceType.Eq("FiscalYear"),
 		je.ReferenceID.Eq(fiscalYearID.String()),
 		je.EntryType.In(journalentry.EntryTypeClosing, journalentry.EntryTypeOpening),
 		je.ReversedByID.IsNull(),
-	).Order(je.EntryNumber.Asc()).Limit(10).List(ctx, f.db)
+	).Order(je.EntryNumber.Asc()).All(ctx, f.db)
 	require.NoError(t, err)
 
 	return entries

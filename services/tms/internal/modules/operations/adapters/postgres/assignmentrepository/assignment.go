@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -441,8 +442,28 @@ func (r *repository) Create(
 			return nil, assignmentErrors.Map(err, entity.ID.String())
 		}
 
-		return r.get(ctx, entity.ID)
+		return r.getAndRefresh(ctx, entity.ID)
 	})
+}
+
+func (r *repository) getAndRefresh(
+	ctx context.Context,
+	id pulid.ID,
+) (*shipment.Assignment, error) {
+	entity, err := r.get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = shipmentprojection.RefreshMoves(
+		ctx,
+		r.db.Keel(ctx),
+		entity.ShipmentMoveID,
+	); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
 }
 
 func (r *repository) Update(
@@ -467,7 +488,7 @@ func (r *repository) Update(
 			)
 		}
 
-		return r.get(ctx, entity.ID)
+		return r.getAndRefresh(ctx, entity.ID)
 	})
 }
 
@@ -491,6 +512,6 @@ func (r *repository) Unassign(
 			return nil, err
 		}
 
-		return r.get(ctx, entity.ID)
+		return r.getAndRefresh(ctx, entity.ID)
 	})
 }

@@ -44,7 +44,8 @@ func TestSummaries_ReadEachRecordOnceWithItsLaneStatusAndMeasures(t *testing.T) 
 	require.NotEmpty(t, shipments, "the development seed should hold shipments")
 	carriers, err := carrierdb.Carriers.Limit(2).List(ctx, db)
 	require.NoError(t, err)
-	entries, err := journalentrydb.JournalEntries.Limit(2).List(ctx, db)
+	je := journalentrydb.JournalEntries
+	entries, err := je.Order(je.AccountingDate.Desc(), je.ID.Desc()).Limit(2).List(ctx, db)
 	require.NoError(t, err)
 
 	refs := map[permission.Resource][]pulid.ID{}

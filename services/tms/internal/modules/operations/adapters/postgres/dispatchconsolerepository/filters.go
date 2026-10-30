@@ -113,11 +113,24 @@ func boardMoves() *moveQuery {
 	q := sm.
 		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 		LeftJoin(cus, cus.ID.EqCol(sp.CustomerID)).
-		LeftJoin(asn, asn.ShipmentMoveID.EqCol(sm.ID), asn.ArchivedAt.IsNull()).
-		LeftJoin(ca,
-			ca.ShipmentMoveID.EqCol(sm.ID),
-			ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
-		)
+		LeftJoinLateral(asn.
+			Pick(
+				asn.ID,
+				asn.PrimaryWorkerID,
+				asn.TractorID,
+				asn.TrailerID,
+				asn.AckStatus,
+				asn.CreatedAt,
+			).
+			Where(asn.ShipmentMoveID.EqCol(sm.ID), asn.ArchivedAt.IsNull()).
+			Limit(1)).
+		LeftJoinLateral(ca.
+			Pick(ca.ID, ca.CarrierID, ca.TotalCost, ca.CreatedAt).
+			Where(
+				ca.ShipmentMoveID.EqCol(sm.ID),
+				ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
+			).
+			Limit(1))
 	q = joinEdge(q, origin, sm.ID)
 
 	return joinEdge(q, destination, sm.ID)

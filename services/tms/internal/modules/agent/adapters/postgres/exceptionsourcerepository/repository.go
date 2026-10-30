@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 )
@@ -26,8 +27,6 @@ const (
 	maxLimit     = 2000
 
 	newerTenderAlias     = "newer_tnd"
-	latestStopAlias      = "last_stp"
-	latestMoveAlias      = "last_smv"
 	shipmentResourceType = "shipment"
 )
 
@@ -79,7 +78,7 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 	ust := loc.State()
 	cutoff := stp.ScheduledWindowEnd.Coalesce(stp.ScheduledWindowStart)
 
-	return stp.Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
+	q := stp.Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
 		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
 		LeftJoin(loc, loc.ID.EqCol(stp.LocationID)).
 		Pick(
@@ -103,25 +102,11 @@ func missedStopsQuery(req *watchtowerports.ListMissedStopsRequest) *keel.Query[*
 			cutoff.Lt(req.ClosedBefore),
 			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
 		).
-		Order(cutoff.Asc(), stp.ID.Asc()).
-		Limit(boundedLimit(req.Limit))
-}
-
-func lastDeliveryQuery(sp *shipmentdb.ShipmentsTable) *keel.Query[*shipment.Stop] {
-	stp := shipmentdb.Stops.As(latestStopAlias)
-	sm := shipmentdb.ShipmentMoves.As(latestMoveAlias)
-
-	return stp.Pick(stp.ActualArrival).
-		Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
-		Where(
-			sm.ShipmentID.EqCol(sp.ID),
-			sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
-			stp.Type.In(shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery),
-			stp.Status.Ne(shipmentvocab.StopStatusCanceled),
-			stp.ActualArrival.IsNotNull(),
-		).
-		Order(sm.Sequence.Desc(), stp.Sequence.Desc()).
-		Limit(1)
+		Order(cutoff.Asc(), stp.ID.Asc())
+	if len(req.ShipmentIDs) > 0 {
+		return q
+	}
+	return q.Limit(boundedLimit(req.Limit))
 }
 
 func podOnFile(sp *shipmentdb.ShipmentsTable) keel.Pred {
@@ -138,16 +123,15 @@ func podOnFile(sp *shipmentdb.ShipmentsTable) keel.Pred {
 
 func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
-	delivered := shipmentdb.Stops.As(latestStopAlias).ActualArrival
+	delivered := sp.LastDeliveryArrivalAt
 
-	return sp.JoinLateral(lastDeliveryQuery(sp)).
-		Pick(
-			sp.ID,
-			sp.ProNumber,
-			sp.OwnerID,
-			sp.Customer().Name.Coalesce(""),
-			delivered,
-		).
+	return sp.Pick(
+		sp.ID,
+		sp.ProNumber,
+		sp.OwnerID,
+		sp.Customer().Name.Coalesce(""),
+		delivered,
+	).
 		Where(
 			sp.Status.In(deliveredShipmentStatuses()...),
 			delivered.Lt(req.DeliveredBefore),
@@ -159,12 +143,26 @@ func missingPODsQuery(req *watchtowerports.ListMissingPODsRequest) *keel.Query[*
 		Limit(boundedLimit(req.Limit))
 }
 
+type exhaustedTenderRow struct {
+	TenderID    pulid.ID
+	MoveID      pulid.ID
+	CreatedAt   int64
+	ExhaustedAt int64
+}
+
+type uncoveredMoveRow struct {
+	MoveID     pulid.ID
+	ShipmentID pulid.ID
+	ProNumber  string
+	OwnerID    pulid.ID
+}
+
 func exhaustedTendersQuery(
 	req *watchtowerports.ListExhaustedTendersRequest,
+	after *exhaustedTenderRow,
+	limit int,
 ) *keel.Query[*tender.Tender] {
 	tc := tenderdb.Tenders
-	sm := shipmentdb.ShipmentMoves
-	sp := shipmentdb.Shipments
 	ca := shipmentdb.CarrierAssignments
 	newer := tenderdb.Tenders.As(newerTenderAlias)
 
@@ -173,30 +171,47 @@ func exhaustedTendersQuery(
 		keel.Tuple(newer.CreatedAt, newer.ID).Gt(keel.Tuple(tc.CreatedAt, tc.ID)),
 	)
 	covered := ca.Where(
-		ca.ShipmentMoveID.EqCol(sm.ID),
+		ca.ShipmentMoveID.EqCol(tc.ShipmentMoveID),
 		ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 	)
 
-	return tc.Join(sm, sm.ID.EqCol(tc.ShipmentMoveID)).
-		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
-		Pick(
-			tc.ID,
-			sm.ID,
-			sp.ID,
-			sp.ProNumber,
-			sp.OwnerID,
-			tc.ExhaustedAt.Coalesce(tc.UpdatedAt),
-		).
+	q := tc.Pick(
+		tc.ID,
+		tc.ShipmentMoveID,
+		tc.CreatedAt,
+		tc.ExhaustedAt.Coalesce(tc.UpdatedAt),
+	).
 		Where(
 			tc.Status.Eq(tender.StatusExhausted),
-			sm.Status.Eq(shipmentvocab.MoveStatusNew),
-			sp.Status.In(openShipmentStatuses()...),
 			keel.NotExists(newerTender),
 			keel.NotExists(covered),
+			keel.When(len(req.ShipmentIDs) > 0, tc.ShipmentID.In(req.ShipmentIDs...)),
+		)
+	if after != nil {
+		q = q.Where(keel.Tuple(tc.CreatedAt, tc.ID).Gt(
+			keel.Tuple(after.CreatedAt, after.TenderID.String()),
+		))
+	}
+
+	return q.Order(tc.CreatedAt.Asc(), tc.ID.Asc()).Limit(limit)
+}
+
+func uncoveredMovesQuery(
+	req *watchtowerports.ListExhaustedTendersRequest,
+	moveIDs []pulid.ID,
+) *keel.Query[*shipment.ShipmentMove] {
+	sm := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+
+	return sm.Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+		Pick(sm.ID, sp.ID, sp.ProNumber, sp.OwnerID).
+		Where(
+			sm.ID.In(moveIDs...),
+			sm.Status.Eq(shipmentvocab.MoveStatusNew),
+			sp.Status.In(openShipmentStatuses()...),
 			keel.When(len(req.ShipmentIDs) > 0, sp.ID.In(req.ShipmentIDs...)),
 		).
-		Order(tc.CreatedAt.Asc(), tc.ID.Asc()).
-		Limit(boundedLimit(req.Limit))
+		Limit(len(moveIDs))
 }
 
 func (r *repository) ListMissedStops(
@@ -212,7 +227,7 @@ func (r *repository) ListMissedStops(
 		if err != nil {
 			return nil, fmt.Errorf("list missed stops: %w", err)
 		}
-		return sliceutils.Pointers(rows), nil
+		return sliceutils.Pointers(rows[:min(len(rows), boundedLimit(req.Limit))]), nil
 	})
 }
 
@@ -241,15 +256,79 @@ func (r *repository) ListExhaustedTenders(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*watchtowerports.ExhaustedTender, error) {
-			rows, err := keel.Into[watchtowerports.ExhaustedTender](
-				ctx,
-				r.db.Keel(ctx),
-				exhaustedTendersQuery(req),
-			)
-			if err != nil {
-				return nil, fmt.Errorf("list exhausted tenders: %w", err)
+			limit := boundedLimit(req.Limit)
+			out := make([]*watchtowerports.ExhaustedTender, 0)
+
+			var after *exhaustedTenderRow
+			for len(out) < limit {
+				page, err := keel.Into[exhaustedTenderRow](
+					ctx,
+					r.db.Keel(ctx),
+					exhaustedTendersQuery(req, after, limit),
+				)
+				if err != nil {
+					return nil, fmt.Errorf("list exhausted tenders: %w", err)
+				}
+				if len(page) == 0 {
+					break
+				}
+
+				moves, err := r.uncoveredMoves(ctx, req, page)
+				if err != nil {
+					return nil, err
+				}
+				for _, row := range page {
+					move, ok := moves[row.MoveID]
+					if !ok {
+						continue
+					}
+					out = append(out, &watchtowerports.ExhaustedTender{
+						TenderID:    row.TenderID,
+						MoveID:      row.MoveID,
+						ShipmentID:  move.ShipmentID,
+						ProNumber:   move.ProNumber,
+						OwnerID:     move.OwnerID,
+						ExhaustedAt: row.ExhaustedAt,
+					})
+					if len(out) == limit {
+						break
+					}
+				}
+
+				if len(page) < limit {
+					break
+				}
+				after = &page[len(page)-1]
 			}
-			return sliceutils.Pointers(rows), nil
+
+			return out, nil
 		},
 	)
+}
+
+func (r *repository) uncoveredMoves(
+	ctx context.Context,
+	req *watchtowerports.ListExhaustedTendersRequest,
+	page []exhaustedTenderRow,
+) (map[pulid.ID]uncoveredMoveRow, error) {
+	moveIDs := make([]pulid.ID, 0, len(page))
+	for _, row := range page {
+		moveIDs = append(moveIDs, row.MoveID)
+	}
+
+	rows, err := keel.Into[uncoveredMoveRow](
+		ctx,
+		r.db.Keel(ctx),
+		uncoveredMovesQuery(req, moveIDs),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list moves of exhausted tenders: %w", err)
+	}
+
+	out := make(map[pulid.ID]uncoveredMoveRow, len(rows))
+	for _, row := range rows {
+		out[row.MoveID] = row
+	}
+
+	return out, nil
 }

@@ -59,6 +59,7 @@ type ServiceFailure struct {
 	CreatedAt             int64                  `json:"createdAt"             keel:"created_at,autocreate"`
 	UpdatedAt             int64                  `json:"updatedAt"             keel:"updated_at,autoupdate"`
 	SearchVector          string                 `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
+	LocationID            pulid.ID               `json:"-"                     keel:"location_id,readonly,noselect"`
 
 	ReasonCode   *ReasonCode            `json:"reasonCode,omitempty"   keel:"belongs:reason_code_id"`
 	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     keel:"belongs:shipment_id"`

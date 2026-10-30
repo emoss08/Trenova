@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -1570,6 +1571,14 @@ func (s *ShipmentSeed) createShipments(
 	err = shipmentdb.AdditionalCharges.CreateMany(ctx, db, sliceutils.Pointers(allCharges))
 	if err != nil {
 		return fmt.Errorf("insert additional charges: %w", err)
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(allShipments))
+	for i := range allShipments {
+		shipmentIDs = append(shipmentIDs, allShipments[i].ID)
+	}
+	if err = shipmentprojection.RefreshAcrossTenants(ctx, db, shipmentIDs...); err != nil {
+		return fmt.Errorf("refresh shipment projections: %w", err)
 	}
 
 	return nil

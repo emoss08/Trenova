@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/pkg/movecompletion"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/shopspring/decimal"
@@ -54,15 +55,17 @@ func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSo
 	smjm := shipmentdb.ShipmentMoveJurisdictionMiles
 	me := iftadb.JurisdictionMileageEntries
 
-	completedAt := keel.Int64Of(stp.ActualDeparture.Coalesce(stp.ActualArrival).Max()).
-		Coalesce(sm.UpdatedAt)
+	completedAt := movecompletion.At(sm, stp)
 
 	inp := keel.CTE(
 		inputMovesCTE,
 		[]string{"id", "loaded", "distance", "completed_at"},
 		sm.LeftJoin(stp, stp.ShipmentMoveID.EqCol(sm.ID)).
 			Pick(sm.ID, sm.Loaded, inMiles(sm.Distance, sm.DistanceUnits), completedAt).
-			Where(sm.Status.Eq(shipmentvocab.MoveStatusCompleted)).
+			Where(
+				sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
+				movecompletion.Candidate(sm, req.Start, req.End),
+			).
 			Group(sm.ID, sm.Loaded, sm.Distance, sm.DistanceUnits, sm.UpdatedAt).
 			Having(completedAt.Gte(req.Start), completedAt.Lt(req.End)),
 	)

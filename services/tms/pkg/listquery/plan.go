@@ -15,10 +15,11 @@ type plan struct {
 }
 
 type field struct {
-	expr  keel.DynExpr
-	col   *schema.Column
-	base  bool
-	index int32
+	expr   keel.DynExpr
+	col    *schema.Column
+	base   bool
+	column bool
+	index  int32
 }
 
 func newPlan[T any](q *keel.Query[*T], computed map[string]keel.Expr) *plan {
@@ -38,10 +39,11 @@ func (p *plan) resolve(name string) (field, bool) {
 			return p.resolveComputed(name)
 		}
 		return field{
-			expr:  keel.DynOf(p.baseColumn(index)),
-			col:   &p.cat.Table.Columns[index],
-			base:  true,
-			index: index,
+			expr:   keel.DynOf(p.baseColumn(index)),
+			col:    &p.cat.Table.Columns[index],
+			base:   true,
+			column: true,
+			index:  index,
 		}, true
 	}
 
@@ -65,7 +67,7 @@ func (p *plan) resolve(name string) (field, bool) {
 		return field{}, false
 	}
 
-	return field{expr: expr, col: col, index: index}, true
+	return field{expr: expr, col: col, column: true, index: index}, true
 }
 
 func (p *plan) resolveComputed(name string) (field, bool) {
@@ -87,4 +89,17 @@ func (p *plan) TableRef() *keel.Ref {
 
 func (f field) enum() bool {
 	return len(f.col.Enum) > 0
+}
+
+func (f field) enumColumn() bool {
+	return f.column && f.enum()
+}
+
+func (f field) declares(value string) bool {
+	for _, e := range f.col.Enum {
+		if e.Value == value {
+			return true
+		}
+	}
+	return false
 }

@@ -133,8 +133,10 @@ func (r *repository) ListBoardMoves(
 				keel.When(!filter.IncludeCovered, ca.ID.IsNull()),
 				keel.When(filter.LateAt > 0, lateAt(filter.LateAt)),
 			).
-			Order(boardOrder(filter)...).
-			Limit(boardLimit(filter.Limit))
+			Order(boardOrder(filter)...)
+		if !boundedByMoveIDs(filter) {
+			q = q.Limit(boardLimit(filter.Limit))
+		}
 		if filter.Offset > 0 {
 			q = q.Offset(filter.Offset)
 		}
@@ -146,6 +148,12 @@ func (r *repository) ListBoardMoves(
 
 		return pointers(rows), nil
 	})
+}
+
+func boundedByMoveIDs(filter *dispatchboardports.DispatchBoardFilter) bool {
+	return len(filter.MoveIDs) > 0 &&
+		filter.Offset == 0 &&
+		len(filter.MoveIDs) <= boardLimit(filter.Limit)
 }
 
 // boardOrder is the board's order: by pickup window, or, for a reader that

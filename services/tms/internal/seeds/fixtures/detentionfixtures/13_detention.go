@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -1293,6 +1294,10 @@ func (s *DetentionSeed) createDetentionShipment(
 	}
 
 	if err := s.createAssignment(ctx, db, sr, refs, def, move.ID); err != nil {
+		return 0, err
+	}
+
+	if err := shipmentprojection.RefreshAcrossTenants(ctx, db, shp.ID); err != nil {
 		return 0, err
 	}
 

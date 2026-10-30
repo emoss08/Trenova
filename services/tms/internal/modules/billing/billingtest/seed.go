@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,11 +64,18 @@ func SeededTenant(t *testing.T, ctx context.Context, db *keel.DB) *Tenant {
 	info := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID, UserID: user.ID}
 	ctx = dbscope.WithTenant(ctx, info.DBTenant())
 
+	cus := customerdb.Customers
+	customerID, err := keel.IntoOne[pulid.ID](ctx, db, cus.
+		Pick(cus.ID.Min()).
+		Where(seedtest.CustomersWithShipmentsWithoutReceivables()))
+	require.NoError(t, err)
+	require.True(t, customerID.IsNotNil(), "a seeded customer should have shipments and no receivables")
+
 	sp := shipmentdb.Shipments
 	shipment, err := keel.IntoOne[Shipment](ctx, db, sp.
 		Pick(sp.ID, sp.CustomerID, sp.ProNumber, sp.BOL.Coalesce("")).
-		Where(seedtest.ShipmentsWithoutReceivables()).
-		Order(sp.ID.Asc()).
+		Where(sp.CustomerID.Eq(customerID)).
+		Order(sp.CreatedAt.Desc(), sp.ID.Desc()).
 		Limit(1))
 	require.NoError(t, err)
 

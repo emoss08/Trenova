@@ -222,14 +222,7 @@ func activityWindowPredicate(opts *shipmentports.ShipmentOptions) keel.Pred {
 }
 
 func UnassignedPredicate() keel.Pred {
-	m := shipmentdb.Shipments.Moves()
-	a := m.Assignment()
-
-	return m.None(
-		m.Status.Ne(shipmentvocab.MoveStatusCanceled),
-		a.ArchivedAt.IsNull(),
-		a.Status.Ne(shipmentvocab.AssignmentStatusCanceled),
-	)
+	return shipmentdb.Shipments.HasActiveAssignment.IsFalse()
 }
 
 func Scope(

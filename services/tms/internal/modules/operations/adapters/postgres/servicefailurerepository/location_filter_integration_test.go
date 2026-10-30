@@ -129,3 +129,52 @@ func TestListConnection_NarrowsToFailuresAtTheLocationAsked(t *testing.T) {
 	require.NotNil(t, everywhere.TotalCount)
 	assert.Greater(t, *everywhere.TotalCount, *result.TotalCount)
 }
+
+func TestListConnection_FollowsAStopToItsNewLocation(t *testing.T) {
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	st := shipmentdb.Stops
+	first, err := st.AllTenants().Order(st.ID.Asc()).First(dbscope.WithSystem(ctx, "test"), db)
+	require.NoError(t, err)
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: first.OrganizationID,
+		BusinessUnitID: first.BusinessUnitID,
+	})
+
+	candidates, err := st.Order(st.ID.Asc()).Limit(200).List(ctx, db)
+	require.NoError(t, err)
+	stops := atDistinctLocations(candidates, 2)
+	require.Len(t, stops, 2, "the development seed should hold stops at two locations")
+
+	moved := recordFailureAt(ctx, t, db, stops[0])
+	from, to := stops[0].LocationID, stops[1].LocationID
+	_, err = st.Where(st.ID.Eq(stops[0].ID)).Update(ctx, db, st.LocationID.To(to))
+	require.NoError(t, err)
+
+	repo := servicefailurerepository.New(servicefailurerepository.Params{
+		DB:     postgres.NewTestConnection(db),
+		Logger: zap.NewNop(),
+	})
+	tenant := pagination.TenantInfo{OrgID: stops[0].OrganizationID, BuID: stops[0].BusinessUnitID}
+	atLocation := func(location pulid.ID) map[pulid.ID]bool {
+		t.Helper()
+		result, listErr := repo.ListConnection(
+			ctx,
+			&servicefailureports.ListServiceFailureConnectionRequest{
+				Filter:     &pagination.QueryOptions{TenantInfo: tenant},
+				Cursor:     pagination.CursorInfo{Limit: 100},
+				LocationID: &location,
+			},
+		)
+		require.NoError(t, listErr)
+		found := make(map[pulid.ID]bool, len(result.Items))
+		for _, failure := range result.Items {
+			found[failure.ID] = true
+		}
+		return found
+	}
+
+	assert.True(t, atLocation(to)[moved], "the failure moves with its stop")
+	assert.False(t, atLocation(from)[moved], "the failure leaves the stop's old location")
+}

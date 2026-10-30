@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -284,13 +285,15 @@ func systemContext(ctx context.Context) context.Context {
 	return dbscope.WithSystem(ctx, "seedtest")
 }
 
-func ShipmentsWithoutReceivables() keel.Pred {
+func CustomersWithShipmentsWithoutReceivables() keel.Pred {
+	c := customerdb.Customers
 	s := shipmentdb.Shipments
 	inv := invoicedb.Invoices
 	cle := customerledgerdb.CustomerLedgerEntries
 
 	return keel.And(
-		keel.Not(keel.Exists(inv.Where(inv.CustomerID.EqCol(s.CustomerID)))),
-		keel.Not(keel.Exists(cle.Where(cle.CustomerID.EqCol(s.CustomerID)))),
+		keel.Exists(s.Where(s.CustomerID.EqCol(c.ID))),
+		keel.Not(keel.Exists(inv.Where(inv.CustomerID.EqCol(c.ID)))),
+		keel.Not(keel.Exists(cle.Where(cle.CustomerID.EqCol(c.ID)))),
 	)
 }

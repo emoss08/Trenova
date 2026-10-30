@@ -151,8 +151,9 @@ type ListCandidateInvoicesRequest struct {
 
 type ListCustomerInvoiceIDsRequest struct {
 	TenantInfo         pagination.TenantInfo `json:"-"`
-	CustomerIDs        []pulid.ID            `json:"customerIds"`
+	CustomerID         pulid.ID              `json:"customerId"`
 	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
+	AfterInvoiceID     pulid.ID              `json:"afterInvoiceId"`
 	Limit              int                   `json:"limit"`
 }
 

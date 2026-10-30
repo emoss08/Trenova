@@ -39,7 +39,7 @@ func TestRepairJournalsWritesTheMissingDriverPaymentJournal(t *testing.T) {
 			&settlement.PaidAt,
 		)
 	}, `SELECT id, organization_id, business_unit_id, paid_at FROM driver_settlements
-		WHERE status = 'Paid' AND paid_journal_batch_id IS NULL LIMIT 1`))
+		WHERE status = 'Paid' AND paid_journal_batch_id IS NULL ORDER BY id LIMIT 1`))
 	require.True(t, settlement.ID.IsNotNil())
 
 	_, err := keel.Exec(ctx, db,

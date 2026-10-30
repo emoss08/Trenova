@@ -221,6 +221,46 @@ func TestListAttention_ReturnsUnarrivedRiskOnTrackedShipmentsWithStopDetails(t *
 	assert.Empty(t, stops, "a finished shipment is not at risk")
 }
 
+func TestListAttention_ReadsPastRowsOfShipmentsNoLongerTracked(t *testing.T) {
+	h := newHarness(t)
+	other := createShipment(
+		t,
+		h.ctx,
+		h.db,
+		h.fixture,
+		h.tenant,
+		"ETA-3",
+		shipmentvocab.StatusInTransit,
+	)
+	otherStop := other.Moves[0].Stops[1]
+	otherRow := h.row(otherStop, stopeta.VerdictAtRisk, 1_000)
+	otherRow.ShipmentID = other.Shipment.ID
+	otherRow.ShipmentMoveID = other.Moves[0].ID
+	otherRow.MoveSequence = other.Moves[0].Sequence
+	require.NoError(t, h.repo.ReplaceForShipments(h.ctx, &stopetaports.ReplaceForShipmentsRequest{
+		TenantInfo:  h.tenant,
+		ShipmentIDs: []pulid.ID{other.Shipment.ID},
+		Rows:        []*stopeta.StopETA{otherRow},
+	}))
+	h.replace(t, h.row(h.move.Stops[1], stopeta.VerdictLate, 1_000))
+
+	finished, tracked := h.shipment.ID, otherStop.ID
+	if other.Shipment.ID < h.shipment.ID {
+		finished, tracked = other.Shipment.ID, h.move.Stops[1].ID
+	}
+	setStatus(t, h.ctx, h.db, finished, shipmentvocab.StatusCompleted)
+
+	stops, err := h.repo.ListAttention(h.ctx, &stopetaports.ListAttentionRequest{
+		TenantInfo: h.tenant,
+		Statuses:   stopeta.TrackedShipmentStatuses(),
+		Limit:      1,
+	})
+	require.NoError(t, err)
+	require.Len(t, stops, 1, "a page of a finished shipment's rows is read past, not returned short")
+	assert.Equal(t, tracked, stops[0].ETA.StopID)
+	assert.NotEmpty(t, stops[0].ProNumber)
+}
+
 func TestListTrackedShipmentIDs_IncludesActiveShipmentsAndLeftoverRows(t *testing.T) {
 	h := newHarness(t)
 	h.replace(t, h.row(h.move.Stops[1], stopeta.VerdictOnTime, 1_000))

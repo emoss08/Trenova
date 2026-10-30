@@ -496,12 +496,33 @@ func TestInvoiceStateProjection(t *testing.T) {
 	customerInvoices, err := env.states.ListCustomerInvoiceIDs(
 		env.ctx,
 		&factoringports.ListCustomerInvoiceIDsRequest{
-			TenantInfo:  env.tenantInfo,
-			CustomerIDs: []pulid.ID{env.customerID},
+			TenantInfo: env.tenantInfo,
+			CustomerID: env.customerID,
 		},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{factored.ID}, customerInvoices)
+
+	factorInvoices, err := env.states.ListCustomerInvoiceIDs(
+		env.ctx,
+		&factoringports.ListCustomerInvoiceIDsRequest{
+			TenantInfo:         env.tenantInfo,
+			FactoringCompanyID: factor.ID,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{factored.ID}, factorInvoices)
+
+	afterLast, err := env.states.ListCustomerInvoiceIDs(
+		env.ctx,
+		&factoringports.ListCustomerInvoiceIDsRequest{
+			TenantInfo:     env.tenantInfo,
+			CustomerID:     env.customerID,
+			AfterInvoiceID: factored.ID,
+		},
+	)
+	require.NoError(t, err)
+	assert.Empty(t, afterLast)
 }
 
 func TestSetInvoiceOverrideKeepsTheReasonOnlyWhileExcluded(t *testing.T) {

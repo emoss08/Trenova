@@ -1,6 +1,8 @@
 package accountsreceivablerepository
 
 import (
+	"math"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
@@ -11,9 +13,16 @@ import (
 )
 
 const (
-	colPeriodEnd = "period_end"
-	colInvoiceID = "invoice_id"
-	colDueDate   = "due_date"
+	colPeriodEnd  = "period_end"
+	colInvoiceID  = "invoice_id"
+	colDueDate    = "due_date"
+	colSettledAt  = "settled_at"
+	colReleasedAt = "released_at"
+	colAmount     = "amount"
+	colChangedAt  = "changed_at"
+	colDelta      = "delta"
+	colOpenNow    = "open_now_minor"
+	openEnded     = int64(math.MaxInt64)
 )
 
 type openAsOfWindow struct {
@@ -52,10 +61,10 @@ func (w openAsOfWindow) build() openAsOf {
 		keel.Int64(w.asOf).Sub(seriesN.Mul(keel.Int64(w.step))),
 	))
 
-	moved := w.movedInvoices()
-	candidates := w.candidates(moved)
-	settlements := settlementsOf(candidates)
-	changes := changesOf(candidates, settlements)
+	events := w.settlementEvents()
+	candidates := w.candidates(events)
+	moves := w.movesOf(candidates, events)
+	changes := w.changesOf(candidates, moves)
 	segments := segmentsOf(changes)
 	items := w.openItems(segments)
 
@@ -63,9 +72,9 @@ func (w openAsOfWindow) build() openAsOf {
 		ctes: []*keel.CTETable{
 			series,
 			points,
-			moved,
+			events,
 			candidates,
-			settlements,
+			moves,
 			changes,
 			segments,
 			items,
@@ -75,115 +84,154 @@ func (w openAsOfWindow) build() openAsOf {
 	}
 }
 
-func (w openAsOfWindow) movedInvoices() *keel.CTETable {
+func (w openAsOfWindow) settlementEvents() *keel.CTETable {
 	start := w.start()
-	applied := customerpaymentdb.Applications.As("cpa")
-	reversedApp := customerpaymentdb.Applications.As("cpa")
+	cpa := customerpaymentdb.Applications.As("cpa")
+	cp := customerpaymentdb.Payments.As("cp")
 	reversed := customerpaymentdb.Payments.As("cp")
-	memo := customerpaymentdb.CreditMemoApplications.As("cma")
-	ledger := customerledgerdb.CustomerLedgerEntries.As("cle")
+	reversedApp := customerpaymentdb.Applications.As("cpa")
+	cma := customerpaymentdb.CreditMemoApplications.As("cma")
+	unapplied := customerpaymentdb.CreditMemoApplications.As("cma")
+	cle := customerledgerdb.CustomerLedgerEntries.As("cle")
 
-	return keel.CTE("moved", []string{colInvoiceID}, keel.Union(
-		applied.Pick(applied.InvoiceID).Where(applied.CreatedAt.Gt(start)),
-		reversed.
-			Join(reversedApp, reversedApp.CustomerPaymentID.EqCol(reversed.ID)).
-			Pick(reversedApp.InvoiceID).
-			Where(reversed.ReversedAt.Gt(start)),
-		memo.Pick(memo.InvoiceID).Where(memo.CreatedAt.Gt(start)),
-		memo.Pick(memo.InvoiceID).Where(memo.UnappliedAt.Gt(start)),
-		ledger.
-			Pick(ledger.RelatedInvoiceID).
-			Where(
-				ledger.SourceObjectType.Eq(customerledger.SourceFactoringItem),
-				ledger.RelatedInvoiceID.IsNotNull(),
-				ledger.CreatedAt.Gt(start),
-			),
-	))
+	return keel.CTE(
+		"events",
+		[]string{colInvoiceID, colSettledAt, colReleasedAt, colAmount},
+		keel.UnionAll(
+			cpa.
+				Join(cp, cp.ID.EqCol(cpa.CustomerPaymentID)).
+				Pick(
+					cpa.InvoiceID,
+					cpa.CreatedAt,
+					cp.ReversedAt,
+					cpa.AppliedAmountMinor.Add(cpa.ShortPayAmountMinor),
+				).
+				Where(cpa.CreatedAt.Gt(start), cpa.CreatedAt.Lte(openEnded)),
+			reversed.
+				Join(reversedApp, reversedApp.CustomerPaymentID.EqCol(reversed.ID)).
+				Pick(
+					reversedApp.InvoiceID,
+					reversedApp.CreatedAt,
+					reversed.ReversedAt,
+					reversedApp.AppliedAmountMinor.Add(reversedApp.ShortPayAmountMinor),
+				).
+				Where(
+					reversed.ReversedAt.Gt(start),
+					reversed.ReversedAt.Lte(openEnded),
+					reversedApp.CreatedAt.Lte(start),
+				),
+			cma.
+				Pick(cma.InvoiceID, cma.CreatedAt, cma.UnappliedAt, cma.AppliedAmountMinor).
+				Where(cma.CreatedAt.Gt(start), cma.CreatedAt.Lte(openEnded)),
+			unapplied.
+				Pick(
+					unapplied.InvoiceID,
+					unapplied.CreatedAt,
+					unapplied.UnappliedAt,
+					unapplied.AppliedAmountMinor,
+				).
+				Where(
+					unapplied.UnappliedAt.Gt(start),
+					unapplied.UnappliedAt.Lte(openEnded),
+					unapplied.CreatedAt.Lte(start),
+				),
+			cle.
+				Pick(cle.RelatedInvoiceID, cle.CreatedAt, keel.NullInt64(), cle.AmountMinor.Neg()).
+				Where(
+					cle.SourceObjectType.EqCol(keel.ConstText(customerledger.SourceFactoringItem)),
+					cle.RelatedInvoiceID.IsNotNull(),
+					cle.CreatedAt.Gt(start),
+					cle.CreatedAt.Lte(openEnded),
+				),
+		),
+	)
 }
 
-func (w openAsOfWindow) candidates(moved *keel.CTETable) *keel.CTETable {
+func (w openAsOfWindow) candidates(events *keel.CTETable) *keel.CTETable {
 	open := invoicedb.Invoices.As("inv")
 	touched := invoicedb.Invoices.As("inv")
 	return keel.CTE(
 		"candidates",
-		[]string{"id", "invoice_date", colDueDate, "total_amount_minor"},
+		[]string{"id", "invoice_date", colDueDate, "total_amount_minor", colOpenNow},
 		keel.Union(
 			open.
-				Pick(open.ID, open.InvoiceDate, open.DueDate, open.TotalAmountMinor).
+				Pick(
+					open.ID,
+					open.InvoiceDate,
+					open.DueDate,
+					open.TotalAmountMinor,
+					receivablesql.OpenMinor(open),
+				).
 				Where(open.InvoiceDate.Lte(w.asOf), receivablesql.Open(open)),
 			touched.
-				Join(moved, moved.Col(colInvoiceID).EqCol(touched.ID)).
-				Pick(touched.ID, touched.InvoiceDate, touched.DueDate, touched.TotalAmountMinor).
+				Join(events, events.Col(colInvoiceID).EqCol(touched.ID)).
+				Pick(
+					touched.ID,
+					touched.InvoiceDate,
+					touched.DueDate,
+					touched.TotalAmountMinor,
+					receivablesql.OpenMinor(touched),
+				).
 				Where(receivablesql.Receivable(touched), touched.InvoiceDate.Lte(w.asOf)),
 		),
 	)
 }
 
-func settlementsOf(candidates *keel.CTETable) *keel.CTETable {
+func (w openAsOfWindow) movesOf(candidates, events *keel.CTETable) *keel.CTETable {
+	start := w.start()
 	id := candidates.Col("id")
 	due := candidates.Col(colDueDate)
-	cpa := customerpaymentdb.Applications.As("cpa")
-	cp := customerpaymentdb.Payments.As("cp")
-	cma := customerpaymentdb.CreditMemoApplications.As("cma")
-	cle := customerledgerdb.CustomerLedgerEntries.As("cle")
+	invoiceDate := candidates.Col("invoice_date")
+	settledAt := keel.Int64Of(events.Col(colSettledAt))
+	releasedAt := events.Col(colReleasedAt)
+	releasedOn := settledAt.Greatest(keel.Int64Of(releasedAt))
+	amount := keel.Int64Of(events.Col(colAmount))
+	onCandidate := func() keel.Pred { return id.EqCol(events.Col(colInvoiceID)) }
 
 	return keel.CTE(
-		"settlements",
-		[]string{colInvoiceID, colDueDate, "settled_at", "released_at", "amount"},
+		"moves",
+		[]string{colInvoiceID, colDueDate, colChangedAt, colDelta},
 		keel.UnionAll(
-			cpa.
-				Join(candidates, id.EqCol(cpa.InvoiceID)).
-				Join(cp, cp.ID.EqCol(cpa.CustomerPaymentID)).
-				Pick(
-					id,
-					due,
-					cpa.CreatedAt,
-					cp.ReversedAt,
-					cpa.AppliedAmountMinor.Add(cpa.ShortPayAmountMinor),
-				),
-			cma.
-				Join(candidates, id.EqCol(cma.InvoiceID)).
-				Pick(id, due, cma.CreatedAt, cma.UnappliedAt, cma.AppliedAmountMinor),
-			cle.
-				Join(
-					candidates,
-					id.EqCol(cle.RelatedInvoiceID),
-					cle.SourceObjectType.Eq(customerledger.SourceFactoringItem),
-				).
-				Pick(id, due, cle.CreatedAt, keel.NullInt64(), cle.AmountMinor.Neg()),
+			candidates.Query().
+				Pick(id, due, invoiceDate, candidates.Col("total_amount_minor")).
+				Where(invoiceDate.Gt(start)),
+			events.Query().
+				Join(candidates, onCandidate()).
+				Pick(id, due, settledAt, amount.Neg()).
+				Where(settledAt.Gt(start)),
+			events.Query().
+				Join(candidates, onCandidate()).
+				Pick(id, due, releasedOn, amount).
+				Where(releasedAt.IsNotNull(), releasedOn.Gt(start)),
 		),
 	)
 }
 
-func changesOf(candidates, settlements *keel.CTETable) *keel.CTETable {
-	settledAt := settlements.Col("settled_at")
-	releasedAt := settlements.Col("released_at")
-	amount := settlements.Col("amount")
+func (w openAsOfWindow) changesOf(candidates, moves *keel.CTETable) *keel.CTETable {
+	start := keel.Int64(w.start())
 
 	return keel.CTE(
 		"changes",
-		[]string{colInvoiceID, colDueDate, "changed_at", "delta"},
+		[]string{colInvoiceID, colDueDate, colChangedAt, colDelta},
 		keel.UnionAll(
 			candidates.Query().Pick(
 				candidates.Col("id"),
 				candidates.Col(colDueDate),
-				candidates.Col("invoice_date"),
-				candidates.Col("total_amount_minor"),
+				start,
+				candidates.Col(colOpenNow),
 			),
-			settlements.Query().Pick(
-				settlements.Col(colInvoiceID),
-				settlements.Col(colDueDate),
-				settledAt,
-				keel.Int64Of(amount).Neg(),
+			moves.Query().Pick(
+				moves.Col(colInvoiceID),
+				moves.Col(colDueDate),
+				moves.Col(colChangedAt),
+				moves.Col(colDelta),
 			),
-			settlements.Query().
-				Pick(
-					settlements.Col(colInvoiceID),
-					settlements.Col(colDueDate),
-					keel.Int64Of(settledAt).Greatest(keel.Int64Of(releasedAt)),
-					amount,
-				).
-				Where(releasedAt.IsNotNull()),
+			moves.Query().Pick(
+				moves.Col(colInvoiceID),
+				moves.Col(colDueDate),
+				start,
+				keel.Int64Of(moves.Col(colDelta)).Neg(),
+			),
 		),
 	)
 }
@@ -191,7 +239,7 @@ func changesOf(candidates, settlements *keel.CTETable) *keel.CTETable {
 func segmentsOf(changes *keel.CTETable) *keel.CTETable {
 	id := changes.Col(colInvoiceID)
 	due := changes.Col(colDueDate)
-	changedAt := changes.Col("changed_at")
+	changedAt := changes.Col(colChangedAt)
 	window := keel.NamedWindow("w")
 
 	return keel.CTE(
@@ -203,7 +251,7 @@ func segmentsOf(changes *keel.CTETable) *keel.CTETable {
 				due,
 				changedAt,
 				keel.Lead(changedAt, 1, nil).OverWindow(window),
-				keel.Sum(keel.Sum(changes.Col("delta"))).OverWindow(window),
+				keel.Sum(keel.Sum(changes.Col(colDelta))).OverWindow(window),
 			).
 			Group(id, due, changedAt).
 			Window("w", keel.PartitionBy(id).OrderBy(changedAt.Asc())),

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -129,16 +130,20 @@ func (g *billingPhase) seedBilling(ctx context.Context) error {
 
 	for begin := 0; begin < len(records); begin += bilChunkSize {
 		chunk := records[begin:min(begin+bilChunkSize, len(records))]
-		rows, buildErr := g.bilBuild(ctx, setup, chunk)
+		rows, disputes, buildErr := g.bilBuild(ctx, setup, chunk)
 		if buildErr != nil {
 			return buildErr
 		}
 		if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-			return g.Write(ctx, tx, rows)
+			if writeErr := g.Write(ctx, tx, rows); writeErr != nil {
+				return writeErr
+			}
+			return g.bilWriteDisputes(ctx, tx, disputes)
 		}); err != nil {
 			return err
 		}
 		g.bilCount(rows)
+		g.Report.Add("Invoice disputes", len(disputes))
 		g.Progress("billing", min(begin+bilChunkSize, len(records)), len(records))
 	}
 
@@ -170,7 +175,7 @@ func (g *billingPhase) bilBuild(
 	ctx context.Context,
 	setup *ledgervolume.Setup,
 	chunk []*volumegen.ShipmentRecord,
-) (*ledgervolume.Rows, error) {
+) (*ledgervolume.Rows, []*invoicedispute.InvoiceDispute, error) {
 	rows := &ledgervolume.Rows{Balances: make(map[ledgervolume.BalanceKey]*ledgervolume.Balance)}
 
 	slots := make([]volumegen.NumberSlot, len(chunk))
@@ -179,7 +184,7 @@ func (g *billingPhase) bilBuild(
 	}
 	numbers, err := g.Numbers.Allocate(ctx, sequenceconfig.SequenceTypeInvoice, slots)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	invoices := make([]*invoice.Invoice, 0, len(chunk))
@@ -206,24 +211,25 @@ func (g *billingPhase) bilBuild(
 	if setup.PostInvoices {
 		for _, inv := range invoices {
 			if err = g.PostInvoice(setup, rows, inv, pulid.Nil, queued[inv.ID]); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 		if err = g.bilCreditMemos(ctx, setup, rows, invoices, owners); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
+	var disputes []*invoicedispute.InvoiceDispute
 	if setup.PostPayments {
-		if err = g.bilPayments(setup, rows, invoices, owners); err != nil {
-			return nil, err
+		if disputes, err = g.bilPayments(setup, rows, invoices, owners); err != nil {
+			return nil, nil, err
 		}
 	}
 
 	if err = g.Materialize(ctx, rows); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return rows, nil
+	return rows, disputes, nil
 }
 
 func (g *billingPhase) bilClamp(at, floor int64) int64 {
@@ -820,15 +826,15 @@ func (g *billingPhase) bilPlanPayment(inv *invoice.Invoice) *ledgervolume.Paymen
 	var full, partial float64
 	switch {
 	case overdueDays < 0:
-		full, partial = 0.18, 0.02
+		full, partial = 0.22, 0.03
 	case overdueDays <= 30:
-		full, partial = 0.55, 0.08
+		full, partial = 0.72, 0.08
 	case overdueDays <= 60:
-		full, partial = 0.74, 0.08
+		full, partial = 0.90, 0.04
 	case overdueDays <= 90:
-		full, partial = 0.84, 0.06
+		full, partial = 0.95, 0.02
 	default:
-		full, partial = 0.93, 0.03
+		full, partial = 0.985, 0.01
 	}
 
 	roll := g.Fake.Float()
@@ -863,15 +869,19 @@ func (g *billingPhase) bilPayments(
 	rows *ledgervolume.Rows,
 	invoices []*invoice.Invoice,
 	owners map[pulid.ID]*volumegen.CustomerRecord,
-) error {
+) ([]*invoicedispute.InvoiceDispute, error) {
 	groups := make(map[string]*bilPaymentGroup)
+	var disputes []*invoicedispute.InvoiceDispute
 	for _, inv := range invoices {
-		plan := g.bilPlanPayment(inv)
-		if plan == nil {
-			continue
-		}
 		cus := owners[inv.ID]
 		if cus == nil {
+			continue
+		}
+		plan := g.bilPlanPayment(inv)
+		if dispute := g.bilDispute(inv, plan); dispute != nil {
+			disputes = append(disputes, dispute)
+		}
+		if plan == nil {
 			continue
 		}
 		key := fmt.Sprintf("%s|%d", cus.ID, plan.Date/bilWeek)
@@ -895,12 +905,12 @@ func (g *billingPhase) bilPayments(
 		for begin := 0; begin < len(group.plans); begin += bilMaxApplications {
 			plans := group.plans[begin:min(begin+bilMaxApplications, len(group.plans))]
 			if err := g.Payment(setup, rows, group.customer, group.date, plans); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 
-	return nil
+	return disputes, nil
 }
 
 func (g *billingPhase) bilCount(rows *ledgervolume.Rows) {

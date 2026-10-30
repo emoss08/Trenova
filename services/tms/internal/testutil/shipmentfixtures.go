@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -152,6 +153,9 @@ func CreateShipmentGraph(
 		move.Stops = stops
 		moves = append(moves, move)
 	}
+
+	err = shipmentprojection.Refresh(tenantContext(ctx, tenantInfo), db, shipmentEntity.ID)
+	require.NoError(t, err)
 
 	return &ShipmentGraph{
 		Shipment: shipmentEntity,

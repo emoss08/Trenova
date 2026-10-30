@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -71,8 +72,9 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 		BusinessUnitID: held.BusinessUnitID,
 	})
 
-	orders, err := keel.Into[shipmentports.OrderReferenceMatch](tenantCtx, db,
-		orderReferenceQuery("77Q-4182", orderReferenceLimit(0)))
+	matcher := NewOrderReferenceMatcher(ListReadParams{DB: postgres.NewTestConnection(db)})
+	orders, err := matcher.MatchOrderReferences(tenantCtx,
+		&shipmentports.MatchOrderReferencesRequest{Query: "77Q-4182"})
 	require.NoError(t, err)
 	require.Len(t, orders, 1)
 	assert.Equal(t, orderID, orders[0].OrderID)
@@ -142,8 +144,8 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 	})
-	foreign, err := keel.Into[shipmentports.OrderReferenceMatch](otherTenant, db,
-		orderReferenceQuery("77Q-4182", orderReferenceLimit(0)))
+	foreign, err := matcher.MatchOrderReferences(otherTenant,
+		&shipmentports.MatchOrderReferencesRequest{Query: "77Q-4182"})
 	require.NoError(t, err)
 	assert.Empty(t, foreign, "another tenant never reads this order")
 }

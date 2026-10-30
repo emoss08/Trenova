@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -682,6 +683,9 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 	}
 	if err := shipmentdb.Stops.CreateMany(ctx, db, stops); err != nil {
 		return nil, fmt.Errorf("insert stops: %w", err)
+	}
+	if err := shipmentprojection.RefreshAcrossTenants(ctx, db, shp.ID); err != nil {
+		return nil, err
 	}
 
 	return shp, nil

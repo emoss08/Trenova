@@ -101,10 +101,11 @@ func (r *repository) GetBalanceOverview(
 			buckets := invoiceAgingBuckets(inv, req.AsOfDate)
 			rec, err := keel.IntoOne[balanceOverviewRecord](ctx, r.db.Keel(ctx), inv.
 				Pick(
-					keel.Exists(posted.Where(
-						receivablesql.ReceivableBillType(posted),
-						posted.PostedAt.IsNotNull(),
-					)),
+					keel.Int64Of(keel.Scalar(posted.
+						Pick(posted.InvoiceDate).
+						Where(receivablesql.ReceivableBillType(posted), posted.PostedAt.IsNotNull()).
+						Order(posted.InvoiceDate.Asc()).
+						Limit(1))).IsNotNull(),
 					orZero(open.Sum()),
 					orZero(amountWhen(overdue, open).Sum()),
 					orZero(keel.Scalar(cp.
@@ -429,7 +430,10 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 	reservedInv := invoicedb.Invoices.As("reserved_inv")
 	advanceAt := fs.SentAt.Add(agr.FundingDays.Mul(keel.Int64(secondsPerDay))).
 		Greatest(keel.Int64(req.AsOfDate))
-	releaseAt := reservedInv.DueDate.Greatest(keel.Int64(req.AsOfDate))
+	reservedDue := keel.Int64Of(keel.Scalar(reservedInv.
+		Pick(reservedInv.DueDate).
+		Where(reservedInv.ID.EqCol(reserved.InvoiceID))))
+	releaseAt := reservedDue.Greatest(keel.Int64(req.AsOfDate))
 
 	return weeks.Query().With(weeks).
 		Pick(
@@ -464,10 +468,9 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 			)),
 			orZero(keel.Scalar(reserved.
 				Pick(reserved.ReserveMinor.Sum()).
-				Join(reservedInv, reservedInv.ID.EqCol(reserved.InvoiceID)).
 				Where(
 					reserved.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
-					reservedInv.DueDate.IsNotNull(),
+					reservedDue.IsNotNull(),
 					inWeek(releaseAt),
 				))),
 			weekStart.GteExpr(keel.Int64(req.AsOfDate)),

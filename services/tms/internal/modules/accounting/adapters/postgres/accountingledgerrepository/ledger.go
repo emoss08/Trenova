@@ -308,9 +308,17 @@ func (s *ledgerSource) ListActiveAccounts(
 		s.db,
 		func(ctx context.Context) ([]journalentryports.LedgerAccount, error) {
 			jel := journalentrydb.JournalEntryLines
-			ids, err := keel.Into[pulid.ID](ctx, s.db.Keel(ctx), postedLines(
-				&postedLinesFilter{from: req.Since},
-			).Group(jel.GLAccountID).Pick(jel.GLAccountID))
+			gla := glaccountdb.GLAccounts
+			posted := postedLines(&postedLinesFilter{from: req.Since}).
+				Pick(jel.JournalEntryID).
+				Where(jel.GLAccountID.EqCol(gla.ID)).
+				Order(jel.JournalEntryID.Desc()).
+				Limit(1)
+			ids, err := keel.Into[pulid.ID](
+				ctx,
+				s.db.Keel(ctx),
+				gla.Pick(gla.ID).JoinLateral(posted),
+			)
 			if err != nil {
 				s.l.Error("failed to list accounts with posted lines", zap.Error(err))
 				return nil, fmt.Errorf("list accounts with posted lines: %w", err)

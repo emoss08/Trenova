@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentgraph"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -887,8 +888,11 @@ func (r *repository) insertGraph(
 	); err != nil {
 		return err
 	}
+	if err := shipmentdb.ShipmentCommodities.CreateMany(ctx, db, graph.Commodities); err != nil {
+		return err
+	}
 
-	return shipmentdb.ShipmentCommodities.CreateMany(ctx, db, graph.Commodities)
+	return shipmentprojection.Refresh(ctx, db, shipmentIDsFromEntities(graph.Shipments)...)
 }
 
 func (r *repository) PlanDuplicate(

@@ -7,11 +7,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -336,6 +338,26 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	assert.Contains(t, search("77120"), b.ID, "a code on a page finds its stack")
 	assert.Contains(t, search(dev.MachineName), b.ID, "the computer that sent it finds a stack")
 	assert.NotContains(t, search("7_120"), b.ID, "search terms are matched literally")
+	routedTo := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, ti),
+		ti,
+		testutil.ShipmentGraphParams{
+			BOL:        "BOL-CAP-1",
+			ProNumber:  "PRO-CAP-77",
+			ShipmentID: pulid.MustNew("shp_"),
+		},
+	)
+	assert.NotContains(t, search("pro-cap-77"), b.ID, "no document is routed to the shipment yet")
+	ci := capturedb.CaptureItems
+	_, err = ci.Where(ci.ID.Eq(its[0].ID)).
+		Update(ctx, db, ci.SuggestedID.To(routedTo.Shipment.ID))
+	require.NoError(t, err)
+	assert.Contains(t, search("pro-cap-77"), b.ID, "a shipment a page was routed to finds its stack")
+	assert.Contains(t, search("BOL-CAP"), b.ID, "the shipment's BOL finds the stack")
+	assert.NotContains(t, search("PRO-CAP-78"), b.ID)
 	outside, err := batches.ListCursor(ctx, &captureports.ListCaptureBatchesRequest{
 		Filter:      &pagination.QueryOptions{TenantInfo: ti},
 		Cursor:      cursor,

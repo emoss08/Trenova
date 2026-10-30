@@ -15,6 +15,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -151,4 +152,25 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, snapshot)
 	assert.NotEmpty(t, snapshot.CustomerName)
+}
+
+func TestARBalanceOverviewWithoutPostedReceivables(t *testing.T) {
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
+	defer cleanup()
+
+	repo := NewAnalytics(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+
+	overview, err := repo.GetBalanceOverview(
+		ctx,
+		customerledgerports.GetARAnalyticsRequest{
+			TenantInfo: tenantInfo,
+			AsOfDate:   time.Now().UTC().Unix(),
+		},
+	)
+	require.NoError(t, err)
+	assert.False(t, overview.HasInvoiced)
+	assert.Zero(t, overview.TotalOpenMinor)
+	assert.Zero(t, overview.OpenInvoiceCount)
 }

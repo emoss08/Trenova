@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/deskbench"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -102,7 +103,7 @@ func (d *Database) RunStatements(
 			}
 		}
 
-		return nil
+		return shipmentprojection.RefreshTenant(ctx, db)
 	})
 }
 

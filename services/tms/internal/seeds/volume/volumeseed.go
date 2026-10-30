@@ -8,13 +8,18 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/seeds/volume/adjustmentvolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/billingvolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/capturevolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/cashvolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/factoringvolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/fuelvolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/masterdatavolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/payrollvolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/servicefailurevolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/settlementvolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/shipmentvolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/stopetavolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/telematicsvolume"
+	"github.com/emoss08/trenova/internal/seeds/volume/tendervolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 )
@@ -74,6 +79,11 @@ func Run(ctx context.Context, db *keel.DB, opts volumegen.Options) (*volumegen.R
 		{name: "driver payroll", run: payrollvolume.Seed},
 		{name: "fuel and IFTA", run: fuelvolume.Seed},
 		{name: "cash, collections and accounting", run: cashvolume.Seed},
+		{name: "service failures", run: servicefailurevolume.Seed},
+		{name: "carrier tenders", run: tendervolume.Seed},
+		{name: "telematics", run: telematicsvolume.Seed},
+		{name: "stop ETAs", run: stopetavolume.Seed},
+		{name: "document capture", run: capturevolume.Seed},
 	}
 	for _, phase := range phases {
 		phaseStart := time.Now()

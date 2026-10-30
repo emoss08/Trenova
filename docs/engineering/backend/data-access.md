@@ -217,8 +217,10 @@ struct.
   column that is not JSON, an array, bytea or a `tsvector`. `relation.field` resolves through a
   to-one relation (belongs, one or pick) the entity lists as `Queryable` in
   `GetPostgresSearchConfig().Relationships`, and joins it with its tenant condition. Values are
-  converted to the column's kind and bound; enums compare as text; `contains`/`startswith`/`endswith`
-  escape `%` and `_`. A filter it cannot apply is skipped. Search uses the entity's `tsvector`
+  converted to the column's kind and bound; an enum column's equality and `in` compare the column
+  itself with its declared values written as constants (an undeclared value matches nothing), so
+  an index on it serves the filter and the list's count, while its patterns compare its text;
+  `contains`/`startswith`/`endswith` escape `%` and `_`. A filter it cannot apply is skipped. Search uses the entity's `tsvector`
   column under the `simple` and `english` configurations (`websearch` plus prefix matching while
   typing), or its configured searchable fields with `ILIKE`. Never build a `WHERE` or `ORDER BY`
   from input.
@@ -402,7 +404,88 @@ locally. A finding is fixed with the index the query needs, a constant that reac
 or an enum column's value), or a query whose order an index gives. A count or report over a
 tenant's rows gets an index bounded by its `WHERE` (tenant, status, time range) and a sargable
 range: a bucketed or computed timestamp (`created_at / 86400 * 86400 >= $1`, `$now - arrival > $2`)
-is rewritten as a range on the column itself.
+is rewritten as a range on the column itself. A finding on a table the volume set leaves near-empty
+(the planner scans and sorts a handful of rows, which production never would) is fixed in the
+volume generator, not the query: give the table the rows and status mix production holds.
+
+- **Write a partial index's predicate as the query writes it.** keel renders `IsTrue()` and
+  `IsFalse()` as `IS TRUE` and `IS FALSE`, which Postgres does not prove from `= true` or
+  `NOT col`, so an index for those reads says `WHERE "is_posted" IS TRUE`.
+- **A sort of an aggregate** (a top-N card) is `ORDER BY … LIMIT` over the grouped rows: the guard
+  judges it by the rows the `Aggregate` returns, not the tables it reads, since no index can order
+  an aggregate. A grouping wide enough to cross the threshold still fails, and is fixed by
+  narrowing the groups (a window, a filter) or keeping a rollup.
+- **A cap over an OR of conditions** no one index serves (open, or changed, delivered or
+  documented since a time) finds its candidates with a `UNION` of branches, one index range per
+  condition, then sorts the union under the `LIMIT`. The guard judges that sort by the rows the
+  union's dedup step (`Unique`, `HashAggregate`, `SetOp`) returns, which the ranges bound
+  (`customertrackingrepository.candidateShipmentsQuery`).
+- **A window open above** (`updated_at >= $1`) reads as a third of the table to a generic plan,
+  which then scans the heap rather than the index. Close it at `math.MaxInt64` (`<= $2`): a
+  generic plan reads a range closed on both sides as 0.5% of the table, and a custom plan reads
+  the real bound, so the rows are the same.
+- **A full-text match ordered by another column** (newest first) has no index that gives both.
+  Read the match through the GIN index with a cap and no `ORDER BY`, order it in Go when it fits
+  under the cap, and read newest first only when the match is broader, with `CustomPlan` so the
+  planner weighs that term: a common one walks the recency index, a rare one sorts its matches
+  (`shipmentlistreadrepository.MatchOrderReferences`).
+- **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
+  page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
+  guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.
+- **A computed time** (a move's completion: its last stop time, else its last change) is found
+  through index ranges on its inputs first, then computed exactly for those candidates. Bind the
+  candidates as `id = ANY(ARRAY(<union of ranges>))` (`movecompletion.Candidate`), not a join: a
+  generic plan prices an array of unknown length at a few keys and fetches the rows by primary
+  key, where a join to the union is hashed against a scan of the whole table.
+- **An existence check over a common condition** (`EXISTS`, or a `LIMIT 1` with no order) is
+  planned for its first row, which a sequential scan returns soonest when most rows match. Ask for
+  the row an index orders first instead, `(SELECT col … ORDER BY col LIMIT 1) IS NOT NULL` over an
+  index on the tenant and that column, so the index path is the cheapest first row
+  (`accountsreceivablerepository.GetBalanceOverview`).
+- **A bounded set joined to a child that grows with history** (the board's open moves to their
+  live assignment) is hashed against a scan of every child row once the set outgrows a few
+  hundred rows. When a unique partial index holds at most one live child per parent, read it in
+  a `LEFT JOIN LATERAL (… LIMIT 1)`, which the planner cannot flatten, so each parent probes that
+  index by key (`dispatchconsolerepository.boardMoves`); the parent set itself comes from a
+  partial covering index over its statuses.
+  The same lateral read with an order an index gives and `Limit(1)` replaces an `EXISTS` per
+  parent, which the planner turns into a semi-join it may hash over every child row: each parent
+  walks an index on (tenant, parent key, order) and stops at its first match
+  (`accountingledgerrepository.ListActiveAccounts`).
+- **A page of a small table that loads to-one relations from a large one** sorts the joined rows
+  when the small table's few rows make a sort cheaper than its index, so the sort reads the large
+  table. Page without the loads and read the related rows by the page's keys in a second statement
+  (`journalreversalrepository.attachEntries`).
+- **A balance as of a past date** walks back from the stored balance through the changes after
+  the window start, read by an index on (tenant, creation time), instead of summing every change
+  ever made ("History in one pass" in [scale.md](scale.md)).
+- **A value derived from child rows that a list filters, counts or sorts by** (a shipment's last
+  delivered arrival, whether it has a live assignment) is a stored column on the parent, tagged
+  `readonly,noselect` so no `Save` overwrites it, recomputed by one set-based `UPDATE` in the
+  transaction of every write to its inputs and backfilled in its migration
+  (`shipmentprojection.Refresh`, which keeps `version` and `updated_at`). Call the refresh from the
+  repository method that writes the child rows, never from a service, so every caller is covered.
+- **A column copied from one related row that a list filters by** (a service failure's stop
+  location) is stored on the child, tagged `readonly,noselect`, and kept by triggers: a `BEFORE
+  INSERT` on the child reads it by key, and an `AFTER UPDATE OF col … WHEN (OLD.col IS DISTINCT
+  FROM NEW.col)` on the source pushes a change to its children by an indexed key
+  (`20261231023061_service_failure_location.sql`). A one-row copy has no set to recompute, and the
+  trigger covers every writer, seeds and fixtures included; derivations over many child rows stay
+  in the repository refresh above.
+- **A page whose filter needs a large parent** (unarrived ETAs on live shipments, exhausted tenders
+  on uncovered moves) sorts above the join whenever the planner hashes the parent, and no index
+  orders a join. Read the page from the child's own ordered partial index, check the parents of
+  that page by id in a second read, and continue the keyset from the page's last row until the
+  page fills or the index runs out, so the result is exactly the joined page
+  (`stopetarepository.ListAttention`, `exceptionsourcerepository.ListExhaustedTenders`).
+- **A per-row check across related rows inside an `OR`** (a search that matches a stack's target
+  or routed shipments) must not be an `EXISTS`: Postgres may plan it as a hashed `ANY` over every
+  related row the term matches, a scan of the related table. A scalar subquery is never hashed, so
+  `(SELECT match … WHERE id = outer.ref) IS TRUE`, or `(SELECT count(*) … JOIN … ON id = …) > 0`
+  for several rows, stays a lookup by id per outer row (`capturerepository.searchBatches`).
+- **More than eight joined relations** split a pipelined load's semi-join from its joins
+  (`join_collapse_limit`), so the joins are planned without the parent filter: such a level loads
+  with `keel.LoadPerLevel` (`shipmentrepository.movesWithDetails`).
 
 ## Migrations
 
@@ -601,8 +684,18 @@ back-dated row's `updated_at` assigns `volumegen.KeepUpdated(h)`. `volumegen` ho
 every phase shares (its options, faker, numberer, tenant references, records and stores);
 `ledgervolume` posts journals and writes the AR rows several phases produce; each phase
 (`masterdatavolume`, `shipmentvolume`, `billingvolume`, …) is a package with one `Seed`
-function, and `volume.Run` calls them in order. When an entity gains a required relation
-or a derived row the application always writes (as every shipment gets an auto-order), generate it
+function, and `volume.Run` calls them in order. The operational phases derive their rows from
+the generated shipments (each move's `StopRecord`s carry its windows and actuals) as the
+application would: service failures where a stop arrived past its window and the tenant's grace
+(`servicefailurevolume`), tenders, offers and state-lane routing guides for most carrier-covered
+moves and a share of open ones (`tendervolume`), a position and HOS state per crewed tractor and a
+geofence event per driver stop visit (`telematicsvolume`), ETAs for the open stops of tracked
+shipments (`stopetavolume`), and capture batches for the paperwork of shipments delivered inside
+the tenant's capture retention (`capturevolume`). `billingvolume` settles invoices the way a
+carrier's receivables age (most paid by 30 days past due, under 2% left after 90) and holds a
+quarter of those still unpaid two weeks past due under an open dispute. A new phase is appended after its dependencies,
+so the faker stream, and with it every earlier table, stays the same for a seed. When an entity
+gains a required relation or a derived row the application always writes (as every shipment gets an auto-order), generate it
 there too; write an optional relation only in the states where the application would have written
 it (a billing queue item only once a shipment is ready to invoice, a draft invoice only once the
 item is approved, an email only for a customer with an email profile).
