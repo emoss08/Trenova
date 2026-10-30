@@ -391,6 +391,7 @@ var serviceFailuresTable = schema.Table{
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
+		{Name: "location_id", Quoted: `"location_id"`, Field: "LocationID", Kind: schema.KindString, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Location ID`},
 	},
 	Relations: []schema.Relation{
 		{Name: "ReasonCode", Alias: "rc", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Reason Code`, JSON: `reasonCode`},
@@ -462,6 +463,7 @@ type ServiceFailuresTable struct {
 	CreatedAt             keel.Int64Col
 	UpdatedAt             keel.Int64Col
 	SearchVector          keel.TSVectorCol
+	LocationID            keelkinds.PulidIDCol
 }
 
 // ServiceFailures references the service_failures table.
@@ -501,6 +503,7 @@ var ServiceFailures = &ServiceFailuresTable{
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 31}},
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 32}},
 	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 33}},
+	LocationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 34}}},
 }
 
 // BuildServiceFailures builds the handle of service_failures for ref. Generated relation and alias methods call it.
@@ -541,6 +544,7 @@ func BuildServiceFailures(r *keel.Ref) *ServiceFailuresTable {
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
 		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
 		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 33}},
+		LocationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
 	}
 }
 
@@ -674,6 +678,8 @@ func ptrServiceFailure(p unsafe.Pointer, c int32) any {
 		return &r.UpdatedAt
 	case 33:
 		return &r.SearchVector
+	case 34:
+		return (*string)(unsafe.Pointer(&r.LocationID))
 	}
 	return nil
 }
@@ -791,6 +797,8 @@ func valueServiceFailure(p unsafe.Pointer, c int32) any {
 		return r.UpdatedAt
 	case 33:
 		return r.SearchVector
+	case 34:
+		return string(r.LocationID)
 	}
 	return nil
 }

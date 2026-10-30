@@ -122,7 +122,7 @@ func (r *repository) ListConnection(
 			sf := servicefailuredb.ServiceFailures
 			q := sf.Where(
 				optionalEq(sf.ShipmentID, req.ShipmentID),
-				optionalEq(sf.Stop().LocationID, req.LocationID),
+				optionalEq(sf.LocationID, req.LocationID),
 			)
 
 			result, err := listquery.Connection(
