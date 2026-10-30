@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	candidatesCTE = "completion_candidates"
-	candidateID   = "id"
 	candidateStop = "done_stop"
 	candidateMove = "done_move"
 )
@@ -18,21 +16,17 @@ func At(sm *shipmentdb.ShipmentMovesTable, stp *shipmentdb.StopsTable) keel.Int6
 		Coalesce(sm.UpdatedAt)
 }
 
-func Candidates(start, end int64) *keel.CTETable {
+func Candidate(sm *shipmentdb.ShipmentMovesTable, start, end int64) keel.Pred {
 	stp := shipmentdb.Stops.As(candidateStop)
-	sm := shipmentdb.ShipmentMoves.As(candidateMove)
+	done := shipmentdb.ShipmentMoves.As(candidateMove)
 	touched := stp.ActualDeparture.Coalesce(stp.ActualArrival)
 
-	return keel.CTE(candidatesCTE, []string{candidateID}, keel.Union(
+	return sm.ID.InArray(keel.StringArrayOf(keel.ArrayOf(keel.Union(
 		stp.Pick(stp.ShipmentMoveID).Where(touched.Gte(start), touched.Lt(end)),
-		sm.Pick(sm.ID).Where(
-			sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
-			sm.UpdatedAt.Gte(start),
-			sm.UpdatedAt.Lt(end),
+		done.Pick(done.ID).Where(
+			done.Status.Eq(shipmentvocab.MoveStatusCompleted),
+			done.UpdatedAt.Gte(start),
+			done.UpdatedAt.Lt(end),
 		),
-	))
-}
-
-func ID(candidates *keel.CTETable) keel.AnyCol {
-	return candidates.Col(candidateID)
+	))))
 }

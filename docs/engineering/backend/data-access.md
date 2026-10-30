@@ -431,8 +431,10 @@ volume generator, not the query: give the table the rows and status mix producti
   page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
   guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.
 - **A computed time** (a move's completion: its last stop time, else its last change) is found
-  through index ranges on its inputs first (`movecompletion.Candidates`), then computed exactly
-  for those candidates.
+  through index ranges on its inputs first, then computed exactly for those candidates. Bind the
+  candidates as `id = ANY(ARRAY(<union of ranges>))` (`movecompletion.Candidate`), not a join: a
+  generic plan prices an array of unknown length at a few keys and fetches the rows by primary
+  key, where a join to the union is hashed against a scan of the whole table.
 - **An existence check over a common condition** (`EXISTS`, or a `LIMIT 1` with no order) is
   planned for its first row, which a sequential scan returns soonest when most rows match. Ask for
   the row an index orders first instead, `(SELECT col … ORDER BY col LIMIT 1) IS NOT NULL` over an

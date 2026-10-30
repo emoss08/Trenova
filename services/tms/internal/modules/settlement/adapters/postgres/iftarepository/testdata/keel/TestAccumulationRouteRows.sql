@@ -1,17 +1,16 @@
-WITH completion_candidates (id) AS ((
-  SELECT done_stop.shipment_move_id
-  FROM stops done_stop
-  WHERE done_stop.business_unit_id = $7 AND done_stop.organization_id = $8 AND coalesce(done_stop.actual_departure, done_stop.actual_arrival) >= $9 AND coalesce(done_stop.actual_departure, done_stop.actual_arrival) < $10
-) UNION (
-  SELECT done_move.id
-  FROM shipment_moves done_move
-  WHERE done_move.business_unit_id = $7 AND done_move.organization_id = $8 AND done_move.status = 'Completed' AND done_move.updated_at >= $11 AND done_move.updated_at < $12
-)), inp (id, loaded, distance, completed_at) AS (
+WITH inp (id, loaded, distance, completed_at) AS (
   SELECT sm.id, sm.loaded, CASE WHEN sm.distance_units = $13 THEN (sm.distance / $14::double precision) ELSE sm.distance END, coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at)
   FROM shipment_moves sm
-  JOIN completion_candidates cc ON cc.id = sm.id
   LEFT JOIN stops s ON s.business_unit_id = $7 AND s.organization_id = $8 AND s.shipment_move_id = sm.id
-  WHERE sm.business_unit_id = $7 AND sm.organization_id = $8 AND sm.status = 'Completed'
+  WHERE sm.business_unit_id = $7 AND sm.organization_id = $8 AND sm.status = 'Completed' AND (sm.id = ANY(ARRAY((
+    SELECT done_stop.shipment_move_id
+    FROM stops done_stop
+    WHERE done_stop.business_unit_id = $7 AND done_stop.organization_id = $8 AND coalesce(done_stop.actual_departure, done_stop.actual_arrival) >= $9 AND coalesce(done_stop.actual_departure, done_stop.actual_arrival) < $10
+  ) UNION (
+    SELECT done_move.id
+    FROM shipment_moves done_move
+    WHERE done_move.business_unit_id = $7 AND done_move.organization_id = $8 AND done_move.status = 'Completed' AND done_move.updated_at >= $11 AND done_move.updated_at < $12
+  ))))
   GROUP BY sm.id, sm.loaded, sm.distance, sm.distance_units, sm.updated_at
   HAVING coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) >= $15 AND coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) < $16
 ), jm (shipment_move_id, country_code, jurisdiction_code, loaded, move_distance, miles) AS (

@@ -134,14 +134,14 @@ func (r *repository) ListUnattributedMoves(
 				return nil, errortypes.NewBusinessError("Period start must be before period end")
 			}
 
-			candidates, mc := completedMovesWithoutBreakdown(req.Start, req.End)
+			mc := completedMovesWithoutBreakdown(req.Start, req.End)
 			inPeriod := []keel.Pred{
 				mc.Col(completedAt).Gte(req.Start),
 				mc.Col(completedAt).Lt(req.End),
 			}
 
 			totals, err := keel.IntoOne[unattributedTotals](ctx, r.db.Keel(ctx), mc.Query().
-				With(candidates, mc).
+				With(mc).
 				Pick(
 					keel.Count(),
 					keel.CastNumeric(keel.NumericOf(mc.Col(completedMoveMiles).Sum()).Coalesce(0)).
@@ -163,7 +163,7 @@ func (r *repository) ListUnattributedMoves(
 			}
 
 			ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), mc.Query().
-				With(candidates, mc).
+				With(mc).
 				Pick(mc.Col(completedMoveID)).
 				Where(inPeriod...).
 				Order(mc.Col(completedMoveID).Asc()).
@@ -179,16 +179,15 @@ func (r *repository) ListUnattributedMoves(
 	)
 }
 
-func completedMovesWithoutBreakdown(start, end int64) (candidates, completed *keel.CTETable) {
+func completedMovesWithoutBreakdown(start, end int64) *keel.CTETable {
 	sm := shipmentdb.ShipmentMoves
 	st := shipmentdb.Stops
 	jm := shipmentdb.ShipmentMoveJurisdictionMiles
-	candidates = movecompletion.Candidates(start, end)
 
-	body := sm.Join(candidates, movecompletion.ID(candidates).EqCol(sm.ID)).
-		LeftJoin(st, st.ShipmentMoveID.EqCol(sm.ID)).
+	body := sm.LeftJoin(st, st.ShipmentMoveID.EqCol(sm.ID)).
 		Where(
 			sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
+			movecompletion.Candidate(sm, start, end),
 			sm.Distance.Gt(0),
 			keel.NotExists(jm.Where(jm.ShipmentMoveID.EqCol(sm.ID))),
 		).
@@ -204,7 +203,7 @@ func completedMovesWithoutBreakdown(start, end int64) (candidates, completed *ke
 			movecompletion.At(sm, st),
 		)
 
-	return candidates, keel.CTE(
+	return keel.CTE(
 		completedMovesCTE,
 		[]string{completedMoveID, completedMoveMiles, completedAt},
 		body,

@@ -1,17 +1,16 @@
-WITH completion_candidates (id) AS ((
-  SELECT done_stop.shipment_move_id
-  FROM stops done_stop
-  WHERE done_stop.business_unit_id = $2 AND done_stop.organization_id = $3 AND coalesce(done_stop.actual_departure, done_stop.actual_arrival) >= $5 AND coalesce(done_stop.actual_departure, done_stop.actual_arrival) < $6
-) UNION (
-  SELECT done_move.id
-  FROM shipment_moves done_move
-  WHERE done_move.business_unit_id = $2 AND done_move.organization_id = $3 AND done_move.status = 'Completed' AND done_move.updated_at >= $7 AND done_move.updated_at < $8
-)), inp (id, loaded, distance, completed_at) AS (
+WITH inp (id, loaded, distance, completed_at) AS (
   SELECT sm.id, sm.loaded, CASE WHEN sm.distance_units = $9 THEN (sm.distance / $10::double precision) ELSE sm.distance END, coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at)
   FROM shipment_moves sm
-  JOIN completion_candidates cc ON cc.id = sm.id
   LEFT JOIN stops s ON s.business_unit_id = $2 AND s.organization_id = $3 AND s.shipment_move_id = sm.id
-  WHERE sm.business_unit_id = $2 AND sm.organization_id = $3 AND sm.status = 'Completed'
+  WHERE sm.business_unit_id = $2 AND sm.organization_id = $3 AND sm.status = 'Completed' AND (sm.id = ANY(ARRAY((
+    SELECT done_stop.shipment_move_id
+    FROM stops done_stop
+    WHERE done_stop.business_unit_id = $2 AND done_stop.organization_id = $3 AND coalesce(done_stop.actual_departure, done_stop.actual_arrival) >= $5 AND coalesce(done_stop.actual_departure, done_stop.actual_arrival) < $6
+  ) UNION (
+    SELECT done_move.id
+    FROM shipment_moves done_move
+    WHERE done_move.business_unit_id = $2 AND done_move.organization_id = $3 AND done_move.status = 'Completed' AND done_move.updated_at >= $7 AND done_move.updated_at < $8
+  ))))
   GROUP BY sm.id, sm.loaded, sm.distance, sm.distance_units, sm.updated_at
   HAVING coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) >= $11 AND coalesce(max(coalesce(s.actual_departure, s.actual_arrival)), sm.updated_at) < $12
 )
