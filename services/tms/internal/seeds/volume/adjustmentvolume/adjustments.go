@@ -258,7 +258,7 @@ func (g *adjustmentPhase) adjCollect() *adjPools {
 		inv := r.Invoice
 		if inv == nil || inv.Status != invoice.StatusPosted || inv.IsCreditMemo() ||
 			inv.BillType != billingqueue.BillTypeInvoice || len(inv.Lines) == 0 ||
-			inv.FactoringCompanyID != nil {
+			inv.FactoringCompanyID != nil || inv.DisputeStatus == invoice.DisputeStatusDisputed {
 			continue
 		}
 		switch inv.SettlementStatus {
@@ -470,7 +470,10 @@ func (g *adjustmentPhase) adjSettleOutcome(setup *adjSetup, p *adjPlan) *adjPlan
 			p.outcome = adjOutcomePending
 		} else {
 			p.decideBy = approver
-			p.decideAt = min(p.submitAt+g.Fake.Between64(30*volumegen.Minute, 4*volumegen.Day), now-20*volumegen.Minute)
+			p.decideAt = min(
+				p.submitAt+g.Fake.Between64(30*volumegen.Minute, 4*volumegen.Day),
+				now-20*volumegen.Minute,
+			)
 			p.decideAt = max(p.decideAt, p.submitAt+volumegen.Minute)
 		}
 	}
@@ -801,8 +804,10 @@ func (g *adjustmentPhase) adjPreview(
 			case invoiceadjustmentcontrol.CustomerCreditBalancePolicyAllowUnappliedCredit:
 				switch control.OverCreditPolicy {
 				case invoiceadjustmentcontrol.OverCreditPolicyBlock:
-					fail("creditTotalAmount",
-						"Adjustment would create unapplied customer credit because of payment state")
+					fail(
+						"creditTotalAmount",
+						"Adjustment would create unapplied customer credit because of payment state",
+					)
 				case invoiceadjustmentcontrol.OverCreditPolicyAllowWithApproval:
 					pv.approval = true
 				}
@@ -1046,10 +1051,12 @@ func (g *adjustmentPhase) adjFailItem(
 	if inv.AppliedAmountMinor > 0 {
 		req.kind = invoiceadjustment.KindFullReversal
 		req.credit = nil
-		item.ErrorMessage = adjErrorText([]adjFieldError{{
-			"invoiceId",
-			"Unapply the customer payments and credit memos on this invoice before reversing it in full",
-		}})
+		item.ErrorMessage = adjErrorText([]adjFieldError{
+			{
+				"invoiceId",
+				"Unapply the customer payments and credit memos on this invoice before reversing it in full",
+			},
+		})
 	} else {
 		line := inv.Lines[0]
 		over := line.Amount.Abs().Add(g.Fake.Money(25, 400))
@@ -1896,40 +1903,76 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	if err := g.Write(ctx, tx, rows.bil); err != nil {
 		return err
 	}
-	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustments.Handle, rows.adjustments,
+	if err := ledgervolume.Insert(
+		ctx,
+		tx,
+		invoiceadjustmentdb.InvoiceAdjustments.Handle,
+		rows.adjustments,
 		func(r *invoiceadjustment.InvoiceAdjustment) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
-		}, false); err != nil {
+		},
+		false,
+	); err != nil {
 		return err
 	}
-	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentLines.Handle, rows.lines,
+	if err := ledgervolume.Insert(
+		ctx,
+		tx,
+		invoiceadjustmentdb.InvoiceAdjustmentLines.Handle,
+		rows.lines,
 		func(r *invoiceadjustment.InvoiceAdjustmentLine) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
-		}, false); err != nil {
+		},
+		false,
+	); err != nil {
 		return err
 	}
-	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentSnapshots.Handle, rows.snapshots,
+	if err := ledgervolume.Insert(
+		ctx,
+		tx,
+		invoiceadjustmentdb.InvoiceAdjustmentSnapshots.Handle,
+		rows.snapshots,
 		func(r *invoiceadjustment.InvoiceAdjustmentSnapshot) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt}
-		}, true); err != nil {
+		},
+		true,
+	); err != nil {
 		return err
 	}
-	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions.Handle, rows.exceptions,
+	if err := ledgervolume.Insert(
+		ctx,
+		tx,
+		invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions.Handle,
+		rows.exceptions,
 		func(r *invoiceadjustment.InvoiceAdjustmentReconciliationException) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
-		}, false); err != nil {
+		},
+		false,
+	); err != nil {
 		return err
 	}
-	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentBatches.Handle, rows.batches,
+	if err := ledgervolume.Insert(
+		ctx,
+		tx,
+		invoiceadjustmentdb.InvoiceAdjustmentBatches.Handle,
+		rows.batches,
 		func(r *invoiceadjustment.InvoiceAdjustmentBatch) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
-		}, false); err != nil {
+		},
+		false,
+	); err != nil {
 		return err
 	}
-	if err := ledgervolume.Insert(ctx, tx, invoiceadjustmentdb.InvoiceAdjustmentBatchItems.Handle, rows.batchItems,
+	if err := ledgervolume.Insert(
+		ctx,
+		tx,
+		invoiceadjustmentdb.InvoiceAdjustmentBatchItems.Handle,
+		rows.batchItems,
 		func(r *invoiceadjustment.InvoiceAdjustmentBatchItem) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
-		}, false); err != nil {
+		},
+		false,
+	); err != nil {
 		return err
 	}
 	if err := g.adjUpdateSources(ctx, tx, rows); err != nil {
@@ -2093,25 +2136,31 @@ func (g *adjustmentPhase) adjApplyReversals(ctx context.Context, tx *keel.DB, ro
 	}
 	sh := shipmentdb.Shipments
 	restored := keel.Unnest("d", []string{"id", "at"}, shipments, ats)
-	if _, err := sh.With(restored).Join(restored, restored.Col("id").EqCol(sh.ID)).Where(keel.True()).Update(
-		ctx,
-		tx,
-		sh.Status.To(shipmentvocab.StatusCompleted),
-		sh.BilledAt.ToNull(),
-		sh.RateLocked.To(false),
-		sh.BillingTransferStatus.To(shipmentvocab.BillingTransferStatus(billingqueue.StatusCanceled)),
-		sh.UpdatedAt.ToExpr(restored.Col("at")),
-	); err != nil {
+	if _, err := sh.With(restored).
+		Join(restored, restored.Col("id").EqCol(sh.ID)).
+		Where(keel.True()).
+		Update(
+			ctx,
+			tx,
+			sh.Status.To(shipmentvocab.StatusCompleted),
+			sh.BilledAt.ToNull(),
+			sh.RateLocked.To(false),
+			sh.BillingTransferStatus.To(shipmentvocab.BillingTransferStatus(billingqueue.StatusCanceled)),
+			sh.UpdatedAt.ToExpr(restored.Col("at")),
+		); err != nil {
 		return fmt.Errorf("restore reversed shipments: %w", err)
 	}
 	o := orderdb.Orders
 	reopened := keel.Unnest("d", []string{"id", "at"}, orders, ats)
-	if _, err := o.With(reopened).Join(reopened, reopened.Col("id").EqCol(o.ID)).Where(keel.True()).Update(
-		ctx,
-		tx,
-		o.Status.To(order.StatusCompleted),
-		o.UpdatedAt.ToExpr(reopened.Col("at")),
-	); err != nil {
+	if _, err := o.With(reopened).
+		Join(reopened, reopened.Col("id").EqCol(o.ID)).
+		Where(keel.True()).
+		Update(
+			ctx,
+			tx,
+			o.Status.To(order.StatusCompleted),
+			o.UpdatedAt.ToExpr(reopened.Col("at")),
+		); err != nil {
 		return fmt.Errorf("restore reversed orders: %w", err)
 	}
 	return nil
