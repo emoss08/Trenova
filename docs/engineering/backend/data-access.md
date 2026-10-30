@@ -217,8 +217,10 @@ struct.
   column that is not JSON, an array, bytea or a `tsvector`. `relation.field` resolves through a
   to-one relation (belongs, one or pick) the entity lists as `Queryable` in
   `GetPostgresSearchConfig().Relationships`, and joins it with its tenant condition. Values are
-  converted to the column's kind and bound; enums compare as text; `contains`/`startswith`/`endswith`
-  escape `%` and `_`. A filter it cannot apply is skipped. Search uses the entity's `tsvector`
+  converted to the column's kind and bound; an enum column's equality and `in` compare the column
+  itself with its declared values written as constants (an undeclared value matches nothing), so
+  an index on it serves the filter and the list's count, while its patterns compare its text;
+  `contains`/`startswith`/`endswith` escape `%` and `_`. A filter it cannot apply is skipped. Search uses the entity's `tsvector`
   column under the `simple` and `english` configurations (`websearch` plus prefix matching while
   typing), or its configured searchable fields with `ILIKE`. Never build a `WHERE` or `ORDER BY`
   from input.
@@ -446,6 +448,14 @@ volume generator, not the query: give the table the rows and status mix producti
   a `LEFT JOIN LATERAL (… LIMIT 1)`, which the planner cannot flatten, so each parent probes that
   index by key (`dispatchconsolerepository.boardMoves`); the parent set itself comes from a
   partial covering index over its statuses.
+  The same lateral read with an order an index gives and `Limit(1)` replaces an `EXISTS` per
+  parent, which the planner turns into a semi-join it may hash over every child row: each parent
+  walks an index on (tenant, parent key, order) and stops at its first match
+  (`accountingledgerrepository.ListActiveAccounts`).
+- **A page of a small table that loads to-one relations from a large one** sorts the joined rows
+  when the small table's few rows make a sort cheaper than its index, so the sort reads the large
+  table. Page without the loads and read the related rows by the page's keys in a second statement
+  (`journalreversalrepository.attachEntries`).
 - **A balance as of a past date** walks back from the stored balance through the changes after
   the window start, read by an index on (tenant, creation time), instead of summing every change
   ever made ("History in one pass" in [scale.md](scale.md)).
