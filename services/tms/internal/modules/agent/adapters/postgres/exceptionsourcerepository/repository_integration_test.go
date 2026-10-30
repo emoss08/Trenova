@@ -294,3 +294,25 @@ func TestListExhaustedTendersOnlyForStillUncoveredMoves(t *testing.T) {
 	assert.Equal(t, h.now-600, rows[0].ExhaustedAt)
 	assert.Equal(t, h.data.User.ID, rows[0].OwnerID)
 }
+
+func TestListExhaustedTendersReadsPastPagesOfCoveredMoves(t *testing.T) {
+	h := newHarness(t)
+
+	assigned := h.shipment(t, "TND-4", shipmentvocab.StatusAssigned)
+	h.tender(t, assigned, tender.StatusExhausted, h.now-1200)
+	h.exec(t, `UPDATE shipment_moves SET status = $1 WHERE id = $2`,
+		string(shipmentvocab.MoveStatusAssigned), assigned.Moves[0].ID.String())
+
+	open := h.shipment(t, "TND-5", shipmentvocab.StatusNew)
+	exhausted := h.tender(t, open, tender.StatusExhausted, h.now-600)
+
+	rows, err := h.reader.ListExhaustedTenders(h.ctx, &watchtowerports.ListExhaustedTendersRequest{
+		TenantInfo: h.tenant,
+		Limit:      1,
+	})
+	require.NoError(t, err)
+	require.Len(t, rows, 1, "an older tender on a covered move does not use up the page")
+	assert.Equal(t, exhausted.ID, rows[0].TenderID)
+	assert.Equal(t, open.Shipment.ID, rows[0].ShipmentID)
+	assert.Equal(t, "PRO-TND-5", rows[0].ProNumber)
+}
