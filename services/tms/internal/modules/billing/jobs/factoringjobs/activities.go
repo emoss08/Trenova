@@ -15,7 +15,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const maxTargetInvoices = 5000
+const (
+	maxTargetInvoices = 5000
+	targetInvoicePage = 1000
+)
 
 type SweepResult struct {
 	OrganizationsProcessed int                           `json:"organizationsProcessed"`
@@ -94,33 +97,45 @@ func (a *Activities) resolveInvoices(
 	targets *factoringports.EvaluationTargets,
 ) ([]pulid.ID, error) {
 	ids := append(make([]pulid.ID, 0, len(targets.InvoiceIDs)), targets.InvoiceIDs...)
-	if len(targets.CustomerIDs) > 0 {
-		found, err := a.states.ListCustomerInvoiceIDs(
-			ctx,
-			&factoringports.ListCustomerInvoiceIDsRequest{
-				TenantInfo:  tenant,
-				CustomerIDs: targets.CustomerIDs,
-				Limit:       maxTargetInvoices,
-			},
-		)
+	for _, customerID := range targets.CustomerIDs {
+		found, err := a.targetedInvoices(ctx, &factoringports.ListCustomerInvoiceIDsRequest{
+			TenantInfo: tenant,
+			CustomerID: customerID,
+		})
 		if err != nil {
 			return nil, err
 		}
 		ids = append(ids, found...)
 	}
 	for _, factorID := range targets.FactoringCompanyIDs {
-		found, err := a.states.ListCustomerInvoiceIDs(
-			ctx,
-			&factoringports.ListCustomerInvoiceIDsRequest{
-				TenantInfo:         tenant,
-				FactoringCompanyID: factorID,
-				Limit:              maxTargetInvoices,
-			},
-		)
+		found, err := a.targetedInvoices(ctx, &factoringports.ListCustomerInvoiceIDsRequest{
+			TenantInfo:         tenant,
+			FactoringCompanyID: factorID,
+		})
 		if err != nil {
 			return nil, err
 		}
 		ids = append(ids, found...)
+	}
+	return ids, nil
+}
+
+func (a *Activities) targetedInvoices(
+	ctx context.Context,
+	req *factoringports.ListCustomerInvoiceIDsRequest,
+) ([]pulid.ID, error) {
+	var ids []pulid.ID
+	for len(ids) < maxTargetInvoices {
+		req.Limit = min(targetInvoicePage, maxTargetInvoices-len(ids))
+		page, err := a.states.ListCustomerInvoiceIDs(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, page...)
+		if len(page) < req.Limit {
+			break
+		}
+		req.AfterInvoiceID = page[len(page)-1]
 	}
 	return ids, nil
 }

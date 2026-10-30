@@ -334,23 +334,11 @@ func (r *invoiceStateRepository) ListCustomerInvoiceIDs(
 	req *factoringports.ListCustomerInvoiceIDsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		if len(req.CustomerIDs) == 0 && req.FactoringCompanyID.IsNil() {
+		if req.CustomerID.IsNil() && req.FactoringCompanyID.IsNil() {
 			return nil, nil
 		}
 
-		inv := invoicedb.Invoices
-		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), inv.
-			Pick(inv.ID).
-			Where(
-				openFactoredInvoices(inv),
-				keel.When(len(req.CustomerIDs) > 0, inv.CustomerID.In(req.CustomerIDs...)),
-				keel.When(
-					req.FactoringCompanyID.IsNotNil(),
-					inv.FactoringCompanyID.Eq(req.FactoringCompanyID),
-				),
-			).
-			Order(inv.ID.Asc()).
-			Limit(boundedLimit(req.Limit, maxCandidateBatch)))
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), targetedInvoices(req))
 		if err != nil {
 			return nil, err
 		}
@@ -360,6 +348,25 @@ func (r *invoiceStateRepository) ListCustomerInvoiceIDs(
 
 		return ids, nil
 	})
+}
+
+func targetedInvoices(
+	req *factoringports.ListCustomerInvoiceIDsRequest,
+) *keel.Query[*invoice.Invoice] {
+	inv := invoicedb.Invoices
+
+	return inv.Pick(inv.ID).
+		Where(
+			openFactoredInvoices(inv),
+			keel.When(req.CustomerID.IsNotNil(), inv.CustomerID.Eq(req.CustomerID)),
+			keel.When(
+				req.FactoringCompanyID.IsNotNil(),
+				inv.FactoringCompanyID.Eq(req.FactoringCompanyID),
+			),
+			keel.When(req.AfterInvoiceID.IsNotNil(), inv.ID.Gt(req.AfterInvoiceID)),
+		).
+		Order(inv.ID.Asc()).
+		Limit(boundedLimit(req.Limit, maxCandidateBatch))
 }
 
 type verdictRow struct {
