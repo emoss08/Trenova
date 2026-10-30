@@ -440,6 +440,12 @@ volume generator, not the query: give the table the rows and status mix producti
   the row an index orders first instead, `(SELECT col … ORDER BY col LIMIT 1) IS NOT NULL` over an
   index on the tenant and that column, so the index path is the cheapest first row
   (`accountsreceivablerepository.GetBalanceOverview`).
+- **A bounded set joined to a child that grows with history** (the board's open moves to their
+  live assignment) is hashed against a scan of every child row once the set outgrows a few
+  hundred rows. When a unique partial index holds at most one live child per parent, read it in
+  a `LEFT JOIN LATERAL (… LIMIT 1)`, which the planner cannot flatten, so each parent probes that
+  index by key (`dispatchconsolerepository.boardMoves`); the parent set itself comes from a
+  partial covering index over its statuses.
 - **A balance as of a past date** walks back from the stored balance through the changes after
   the window start, read by an index on (tenant, creation time), instead of summing every change
   ever made ("History in one pass" in [scale.md](scale.md)).
