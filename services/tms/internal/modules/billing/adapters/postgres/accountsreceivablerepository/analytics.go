@@ -101,10 +101,11 @@ func (r *repository) GetBalanceOverview(
 			buckets := invoiceAgingBuckets(inv, req.AsOfDate)
 			rec, err := keel.IntoOne[balanceOverviewRecord](ctx, r.db.Keel(ctx), inv.
 				Pick(
-					keel.Exists(posted.Where(
-						receivablesql.ReceivableBillType(posted),
-						posted.PostedAt.IsNotNull(),
-					)),
+					keel.Int64Of(keel.Scalar(posted.
+						Pick(posted.InvoiceDate).
+						Where(receivablesql.ReceivableBillType(posted), posted.PostedAt.IsNotNull()).
+						Order(posted.InvoiceDate.Asc()).
+						Limit(1))).IsNotNull(),
 					orZero(open.Sum()),
 					orZero(amountWhen(overdue, open).Sum()),
 					orZero(keel.Scalar(cp.
