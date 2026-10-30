@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -218,7 +219,6 @@ func searchBatches(term string) keel.Pred {
 	user := tenantdb.Users
 	page := capturedb.CapturePages
 	item := capturedb.CaptureItems
-	sp := shipmentdb.Shipments
 	shipmentType := permission.ResourceShipment.String()
 	codes := keel.Rows(
 		"code",
@@ -227,12 +227,6 @@ func searchBatches(term string) keel.Pred {
 			Coalesce(keel.JSONBuildArray()).
 			Concat(keel.JSONBOf(page.Markers.Path("readCodes")).Coalesce(keel.JSONBuildArray())).
 			ArrayElementsText(),
-	)
-
-	routed := keel.UnionAll(
-		item.Pick(item.FiledID).Where(item.BatchID.EqCol(b.ID), item.FiledType.Eq(shipmentType)),
-		item.Pick(item.SuggestedID).
-			Where(item.BatchID.EqCol(b.ID), item.SuggestedType.Eq(shipmentType)),
 	)
 
 	return keel.Or(
@@ -250,15 +244,39 @@ func searchBatches(term string) keel.Pred {
 			page.BatchID.EqCol(b.ID),
 			keel.StringOf(codes.Col("code")).ILike(pattern),
 		)),
-		keel.And(
-			b.TargetType.Eq(shipmentType),
-			keel.Exists(sp.Pick(sp.ID).Where(
-				sp.ID.EqCol(b.TargetID),
-				shipmentNumberMatches(sp, term),
-			)),
-		),
-		keel.Exists(sp.Pick(sp.ID).Where(sp.ID.InQuery(routed), shipmentNumberMatches(sp, term))),
+		keel.And(b.TargetType.Eq(shipmentType), targetShipmentMatches(term)),
+		routedShipmentMatches(item.FiledType, item.FiledID, term),
+		routedShipmentMatches(item.SuggestedType, item.SuggestedID, term),
 	)
+}
+
+func targetShipmentMatches(term string) keel.Pred {
+	b := capturedb.CaptureBatches
+	sp := shipmentdb.Shipments
+
+	return keel.BoolOf(keel.Scalar(
+		sp.Pick(shipmentNumberMatches(sp, term)).Where(sp.ID.EqCol(b.TargetID)),
+	)).IsTrue()
+}
+
+func routedShipmentMatches(
+	targetType keel.StringCol,
+	targetID keelkinds.PulidIDCol,
+	term string,
+) keel.Pred {
+	b := capturedb.CaptureBatches
+	item := capturedb.CaptureItems
+	sp := shipmentdb.Shipments
+
+	return keel.Int64Of(keel.Scalar(
+		item.Join(sp, sp.ID.EqCol(targetID)).
+			Pick(keel.Count()).
+			Where(
+				item.BatchID.EqCol(b.ID),
+				targetType.Eq(permission.ResourceShipment.String()),
+				shipmentNumberMatches(sp, term),
+			),
+	)).Gt(0)
 }
 
 func shipmentNumberMatches(sp *shipmentdb.ShipmentsTable, term string) keel.Pred {
