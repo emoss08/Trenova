@@ -156,6 +156,14 @@ var shipmentCopyPlan = map[string]fieldPlan{
 	"Version":          {intentionallyDropped, "optimistic-lock counter starts at zero on insert"},
 	"CreatedAt":        {intentionallyDropped, "stamped by the database default on insert"},
 	"UpdatedAt":        {intentionallyDropped, "stamped by the database default on insert"},
+	"LastDeliveryArrivalAt": {
+		intentionallyDropped,
+		"readonly projection, recomputed from the duplicate's own stops by shipmentprojection",
+	},
+	"HasActiveAssignment": {
+		intentionallyDropped,
+		"readonly projection, recomputed from the duplicate's own assignments by shipmentprojection",
+	},
 
 	"BusinessUnit":    {intentionallyDropped, "relation, hydrated on read"},
 	"Organization":    {intentionallyDropped, "relation, hydrated on read"},
