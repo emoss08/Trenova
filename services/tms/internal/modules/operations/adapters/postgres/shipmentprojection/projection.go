@@ -17,6 +17,8 @@ const (
 	assignedMoveAlias = "prj_asm"
 	assignmentAlias   = "prj_a"
 	touchedMoveAlias  = "prj_tsm"
+
+	tenantRefreshBatch = 1000
 )
 
 type tenancy bool
@@ -64,7 +66,29 @@ func RefreshMoves(ctx context.Context, db *keel.DB, moveIDs ...pulid.ID) error {
 }
 
 func RefreshTenant(ctx context.Context, db *keel.DB) error {
-	return refresh(ctx, db, keel.True(), scopedTenant)
+	var after pulid.ID
+	for {
+		ids, err := keel.Into[pulid.ID](ctx, db, tenantPage(after))
+		if err != nil {
+			return fmt.Errorf("page shipments to refresh: %w", err)
+		}
+		if err = Refresh(ctx, db, ids...); err != nil {
+			return err
+		}
+		if len(ids) < tenantRefreshBatch {
+			return nil
+		}
+		after = ids[len(ids)-1]
+	}
+}
+
+func tenantPage(after pulid.ID) *keel.Query[*shipment.Shipment] {
+	sp := shipmentdb.Shipments
+
+	return sp.Pick(sp.ID).
+		Where(keel.When(!after.IsNil(), sp.ID.Gt(after))).
+		Order(sp.ID.Asc()).
+		Limit(tenantRefreshBatch)
 }
 
 func shipmentsOfMoves(moveIDs []pulid.ID) *keel.Query[*shipment.ShipmentMove] {

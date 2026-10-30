@@ -3,7 +3,6 @@ package shipmentprojection
 import (
 	"testing"
 
-	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -79,13 +78,28 @@ func TestRefreshQuery_AcrossTenantsCorrelatesEveryTableByTenant(t *testing.T) {
 	assert.NotContains(t, sql, `s."organization_id" = $`)
 }
 
-func TestRefreshQuery_ForTheTenantChangesOnlyRowsThatDiffer(t *testing.T) {
+func TestRefreshQuery_ChangesOnlyRowsThatDiffer(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, refreshQuery(keel.True(), scopedTenant))
+	sql, _ := keeltest.Render(
+		t,
+		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), scopedTenant),
+	)
 
-	assert.Contains(t, sql, `s."business_unit_id" = $1 AND s."organization_id" = $2 AND TRUE AND (`)
 	assert.Contains(t, sql, ` OR s."has_active_assignment" IS DISTINCT FROM EXISTS (`)
+}
+
+func TestTenantPage_WalksTheTenantsShipmentsByIDInBatches(t *testing.T) {
+	t.Parallel()
+
+	first, _ := keeltest.Render(t, tenantPage(""))
+	assert.Contains(t, first, `s."business_unit_id" = $1 AND s."organization_id" = $2`)
+	assert.Contains(t, first, `ORDER BY s."id" ASC LIMIT 1000`)
+	assert.NotContains(t, first, `s."id" >`)
+
+	next, args := keeltest.Render(t, tenantPage(pulid.ID("shp_9")))
+	assert.Contains(t, next, `s."id" > $`)
+	assert.Contains(t, args, "shp_9")
 }
 
 func TestRefresh_SkipsAnEmptyTarget(t *testing.T) {

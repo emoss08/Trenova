@@ -127,6 +127,19 @@ func TestRefresh_StoresTheArrivalOfTheLastDeliveredStopBySequence(t *testing.T) 
 	assert.Nil(t, h.read(t).LastDeliveryArrivalAt)
 }
 
+func TestRefreshTenant_RefreshesEveryShipmentOfTheTenant(t *testing.T) {
+	h := newHarness(t)
+
+	h.arrive(t, h.graph.Moves[0].Stops[1], 7_000)
+	h.assign(t, h.graph.Moves[1])
+	require.NoError(t, shipmentprojection.RefreshTenant(h.ctx, h.db))
+
+	got := h.read(t)
+	require.NotNil(t, got.LastDeliveryArrivalAt)
+	assert.Equal(t, int64(7_000), *got.LastDeliveryArrivalAt)
+	assert.True(t, got.HasActiveAssignment)
+}
+
 func TestRefresh_IgnoresPickupArrivals(t *testing.T) {
 	h := newHarness(t)
 
