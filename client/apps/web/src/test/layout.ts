@@ -42,3 +42,30 @@ export function stubLayout(height = 320, width = 480): () => void {
     }
   };
 }
+
+/**
+ * jsdom has no `Element.scrollTo`, so a virtualizer asked to scroll a row into view does
+ * nothing. This moves `scrollTop` and fires the scroll event a browser would, so the
+ * window follows exactly as it does on screen.
+ */
+export function stubScrollTo(): () => void {
+  const proto = HTMLElement.prototype;
+  const previous = Object.getOwnPropertyDescriptor(proto, "scrollTo");
+  Object.defineProperty(proto, "scrollTo", {
+    configurable: true,
+    writable: true,
+    value(this: HTMLElement, options?: ScrollToOptions) {
+      if (options?.top === undefined) return;
+      this.scrollTop = options.top;
+      this.dispatchEvent(new Event("scroll"));
+    },
+  });
+
+  return () => {
+    if (previous) {
+      Object.defineProperty(proto, "scrollTo", previous);
+    } else {
+      Reflect.deleteProperty(proto, "scrollTo");
+    }
+  };
+}

@@ -363,6 +363,11 @@ func commoditySelectOption(entity *commodity.Commodity) *gqlmodel.SelectOption {
 		ID:          entity.ID.String(),
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Description),
+		Meta: map[string]any{
+			"hazardousMaterialId": entity.HazardousMaterialID.String(),
+			"stackable":           entity.Stackable,
+			"fragile":             entity.Fragile,
+		},
 	}
 }
 

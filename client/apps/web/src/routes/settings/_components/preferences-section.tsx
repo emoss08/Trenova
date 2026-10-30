@@ -42,6 +42,7 @@ type DisplayValues = {
   sidebar: "open" | "folded";
   reduceMotion: boolean;
   vimKeys: boolean;
+  formatOnSave: boolean;
   codeLigatures: boolean;
 };
 
@@ -189,6 +190,7 @@ function useDisplayRows() {
   const sidebarCollapsed = useNavigationStore((state) => state.sidebarCollapsed);
   const reduceMotion = useMotionPreferenceStore((state) => state.reduceMotion);
   const vimKeys = useEditorPreferenceStore((state) => state.vimKeys);
+  const formatOnSave = useEditorPreferenceStore((state) => state.formatOnSave);
   const codeLigatures = useEditorPreferenceStore((state) => state.codeLigatures);
   const form = useForm<DisplayValues>({
     defaultValues: {
@@ -196,6 +198,7 @@ function useDisplayRows() {
       sidebar: sidebarCollapsed ? "folded" : "open",
       reduceMotion,
       vimKeys,
+      formatOnSave,
       codeLigatures,
     },
   });
@@ -209,6 +212,7 @@ function useDisplayRows() {
       useNavigationStore.getState().setSidebarCollapsed(next.sidebar === "folded");
       useMotionPreferenceStore.getState().setReduceMotion(next.reduceMotion);
       useEditorPreferenceStore.getState().setVimKeys(next.vimKeys);
+      useEditorPreferenceStore.getState().setFormatOnSave(next.formatOnSave);
       useEditorPreferenceStore.getState().setCodeLigatures(next.codeLigatures);
     },
   });
@@ -262,6 +266,17 @@ function useDisplayRows() {
             label={t("Vim keys in the formula editor")}
             description={t(
               "Normal, insert and visual modes with AstroNvim's keys: jj or jk leaves insert mode and Space is the leader.",
+            )}
+            className="p-0"
+          />
+        </SettingsRow>
+        <SettingsRow id="format-on-save">
+          <SwitchField
+            control={form.control}
+            name="formatOnSave"
+            label={t("Format on save")}
+            description={t(
+              "Saving a tariff or library in the formula editor formats its source first. A file with syntax errors is saved as written.",
             )}
             className="p-0"
           />

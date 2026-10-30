@@ -1,28 +1,18 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { Label } from "@trenova/shared/components/ui/label";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps, GenericSelectOption } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Checkbox } from "../animate-ui/components/base/checkbox";
-import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 
 type MultiCheckboxFieldProps<T extends FieldValues, TValue extends string> = FormControlProps<T> & {
   label: string;
   description?: string;
   options: ReadonlyArray<GenericSelectOption<TValue>>;
-  /**
-   * What clearing the last choice stores: null, which the server reads as a
-   * wildcard, or an empty list for a field where none chosen means none.
-   */
   emptyAs?: "null" | "array";
 };
 
-/**
- * A checkbox group bound to an array field. For small, fixed option sets where
- * an async multi-select would be overkill and every choice should stay visible.
- * An empty selection is stored as null so the server treats it as a wildcard.
- * A disabled option shows its description as the reason it cannot be chosen.
- */
 export function MultiCheckboxField<T extends FieldValues, TValue extends string>({
   name,
   control,
@@ -74,7 +64,8 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
                     className={cn(
                       "border-input bg-field flex items-center gap-2 rounded-md border px-2.5 py-2",
                       "transition-[border-color,box-shadow] duration-200 ease-in-out",
-                      checked && "border-foreground ring-foreground/10 ring-2",
+                      checked &&
+                        "border-info bg-info-subtle text-info-foreground ring-info/20 ring-2 dark:text-info-foreground",
                       unavailable && "bg-sunken opacity-60",
                     )}
                   >

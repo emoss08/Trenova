@@ -1,12 +1,12 @@
 "use client";
 
-import { useT } from "@trenova/shared/i18n/use-t";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { useT } from "@trenova/shared/i18n/use-t";
 import * as React from "react";
 
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
-import { XCloseIcon } from "@trenova/shared/components/icons";
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -113,7 +113,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
+        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-card p-4 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}

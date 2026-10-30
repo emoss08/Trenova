@@ -203,7 +203,15 @@ func (r *repository) SelectOptions(
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*commodity.Commodity], error) {
 			c := commoditydb.Commodities
-			q := c.Pick(c.ID, c.Name, c.HazardousMaterialID, c.FreightClass).
+			q := c.Pick(
+				c.ID,
+				c.Name,
+				c.Description,
+				c.HazardousMaterialID,
+				c.FreightClass,
+				c.Stackable,
+				c.Fragile,
+			).
 				Where(c.Status.Eq(domaintypes.StatusActive))
 
 			return listquery.SelectOptions(

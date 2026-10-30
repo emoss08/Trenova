@@ -42,8 +42,6 @@ export function ConsoleCenterPane({
 }) {
   const { mode, urgencyFocus } = useDispatchView();
 
-  // The chunk downloads alongside the board query rather than after it, so a slow query
-  // never hides a still-pending import.
   useEffect(() => preloadCenterView(mode), [mode]);
 
   return (
@@ -61,8 +59,6 @@ export function ConsoleCenterPane({
           </Suspense>
         </div>
       ) : isLoading ? (
-        // The timeline reads an empty driver list as "nothing to plan"; while the board is
-        // still in flight that is a lie, so the skeleton stands in until it resolves.
         <DispatchTimelineSkeleton />
       ) : (
         <Suspense fallback={<DispatchTimelineSkeleton />}>

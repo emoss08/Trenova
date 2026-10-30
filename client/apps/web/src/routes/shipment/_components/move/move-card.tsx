@@ -1,38 +1,10 @@
-import { STOP_TYPE_LABELS } from "@trenova/shared/lib/stop-type";
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@trenova/shared/components/ui/dropdown-menu";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { formatSplitDateTime } from "@trenova/shared/lib/date";
-import { getProfile, getRule, RULE_KEYS } from "@trenova/shared/lib/capability";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
 import { CarrierTrackingLink } from "@/components/carrier-assignment/carrier-tracking-link";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
-import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
+import { fieldErrorMessages } from "@/lib/form-errors";
 import { shipment } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
-import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
-import type {
-  CarrierAssignment,
-  MoveStatus,
-  Shipment,
-  ShipmentMove,
-  Stop,
-  StopActualAction,
-  StopEta,
-  StopStatus,
-  StopType,
-} from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownIcon,
@@ -48,9 +20,38 @@ import {
   UserX01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { createElement, useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
+import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { getProfile, getRule, RULE_KEYS } from "@trenova/shared/lib/capability";
+import { formatSplitDateTime } from "@trenova/shared/lib/date";
+import { STOP_TYPE_LABELS } from "@trenova/shared/lib/stop-type";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import type {
+  CarrierAssignment,
+  MoveStatus,
+  Shipment,
+  ShipmentMove,
+  Stop,
+  StopActualAction,
+  StopEta,
+  StopStatus,
+  StopType,
+} from "@trenova/shared/types/shipment";
+import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
+import { createElement, useState } from "react";
+import { useFormContext, useFormState, useWatch } from "react-hook-form";
 import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";
@@ -69,11 +70,9 @@ export function MoveCard({
 }) {
   const t = useT();
 
-  const {
-    control,
-    setValue,
-    formState: { errors },
-  } = useFormContext<Shipment>();
+  const { control, setValue } = useFormContext<Shipment>();
+  // Only this move's stops' errors, so an error elsewhere in the shipment does not redraw it.
+  const { errors } = useFormState({ control, name: `moves.${moveIndex}.stops` });
   const queryClient = useQueryClient();
   const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
   const moveRemovalRule = getRule(getProfile(shipmentUIPolicy), RULE_KEYS.moveRemoval);
@@ -103,10 +102,6 @@ export function MoveCard({
   const hasAssignment = hasDriverAssignment || hasCarrierAssignment;
   const isTerminal = move?.status === "Completed" || move?.status === "Canceled";
   const canRemove = !hasId || allowPersistedMoveRemoval;
-  // Naming the actual source matters: removal can be denied by the mode profile's
-  // dispatch.moveRemoval rule or by the organization's shipment control, and an
-  // operator who reads "shipment control" while the profile is what denied it
-  // goes looking in the wrong settings page.
   const removalBlockedReason = moveRemovalRule
     ? t("Move removal is blocked by the {0} profile", moveRemovalRule.provenance.profileName)
     : t("Move removal is disabled by shipment control");
@@ -302,12 +297,8 @@ export function MoveCard({
               !isLast && stopHasInfo(stop) && (nextStop ? stopHasInfo(nextStop) : false);
 
             const stopErrs = moveErrors?.[stopIdx];
-            const stopHasErrors = !!(stopErrs && Object.keys(stopErrs).length > 0);
-            const stopErrorMessages = stopHasErrors
-              ? Object.entries(stopErrs as Record<string, { message?: string }>)
-                  .filter(([key]) => key !== "ref" && key !== "root")
-                  .map(([field, err]) => `${field}: ${err?.message ?? "invalid"}`)
-              : [];
+            const stopErrorMessages = stopErrs ? fieldErrorMessages(stopErrs) : [];
+            const stopHasErrors = stopErrorMessages.length > 0;
 
             const priorStopsDeparted = stops
               .slice(0, stopIdx)
@@ -422,6 +413,7 @@ export function MoveCard({
     </div>
   );
 }
+
 const moveStatusConfig: Record<
   MoveStatus,
   {

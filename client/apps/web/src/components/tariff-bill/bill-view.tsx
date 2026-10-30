@@ -1,6 +1,6 @@
+import { AnnotationIcon, Flag01Icon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
-import { AnnotationIcon, Flag01Icon } from "@trenova/shared/components/icons";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatTariffMoney, formatTariffValue } from "@trenova/shared/lib/tariff-value";
@@ -57,7 +57,7 @@ function adjustmentLabel(kind: TariffLineKind, freight: boolean, t: TranslateFn)
  * That a charge's own minimum or maximum set its amount, and what it came to before: the reason
  * its quantity times its rate no longer make its amount.
  */
-function limitText(
+export function tariffLimitText(
   limit: TariffLineLimit,
   t: TranslateFn,
   currency: string | null | undefined,
@@ -109,7 +109,7 @@ function LineRow({ line, converted, currency, onSelectRange }: LineRowProps) {
         )}
         {line.limit && (
           <span data-limit={line.limit.kind} className="text-foreground-muted text-xs tabular-nums">
-            {limitText(line.limit, t, currency)}
+            {tariffLimitText(line.limit, t, currency)}
           </span>
         )}
       </span>
@@ -216,7 +216,7 @@ export function BillView({
   };
 
   return (
-    <section aria-label={t("Bill")} className={cn("flex flex-col gap-3", className)}>
+    <section aria-label={t("Bill")} className={cn("flex flex-col gap-1", className)}>
       {bill.lines.length === 0 ? (
         <p className="text-foreground-muted text-sm">{t("This rating billed no charges.")}</p>
       ) : (

@@ -2,6 +2,7 @@ import { FieldRow, type FieldLayout } from "@/components/fields/field-components
 import { useElementWidth } from "@trenova/shared/hooks/use-element-width";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { PlusIcon, RefreshCcw01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -92,8 +93,10 @@ type InheritanceCopy = {
   placeholder: string;
   /** Where an unset value comes from, for a record or list that describes it in its own words. */
   source: "agreement" | "inherited" | "default" | null;
-  /** What the reset button says, or null when there is nothing to go back to. */
+  /** What the reset button is called, or null when there is nothing to go back to. */
   reset: string | null;
+  /** What resetting does, in a sentence, for the reset button's tooltip. */
+  resetHint: string | null;
 };
 
 function inheritanceCopy(
@@ -112,23 +115,32 @@ function inheritanceCopy(
           placeholder: t("Agreement: {0}", shown),
           source: "agreement",
           reset: t("Use the agreement's value"),
+          resetHint: t("Clears this value so it uses the agreement's, {0}.", shown),
         }
       : {
           placeholder: t("Inherits {0}", shown),
           source: "inherited",
           reset: t("Use the inherited value"),
+          resetHint: t("Clears this value so it inherits {0}.", shown),
         };
   }
   if (declaration.default !== undefined) {
+    const shown = formatTariffValue(declaration.default, t, { currency });
     return {
-      placeholder: t("Default: {0}", formatTariffValue(declaration.default, t, { currency })),
+      placeholder: t("Default: {0}", shown),
       source: "default",
       reset: t("Use the default"),
+      resetHint: t("Clears this value so the tariff uses its default, {0}.", shown),
     };
   }
   return requireUnset
-    ? { placeholder: t("Required"), source: null, reset: null }
-    : { placeholder: t("Not set"), source: null, reset: t("Leave unset") };
+    ? { placeholder: t("Required"), source: null, reset: null, resetHint: null }
+    : {
+        placeholder: t("Not set"),
+        source: null,
+        reset: t("Leave unset"),
+        resetHint: t("Clears this value and leaves it unset."),
+      };
 }
 
 /**
@@ -183,6 +195,40 @@ export function TariffInputsFields({
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * The small control beside a set input's label that clears it back to what it inherits: an
+ * icon named for what it does, with a tooltip saying what the input falls back to.
+ */
+function ResetToInherited({
+  label,
+  hint,
+  onReset,
+}: {
+  label: string;
+  hint: string;
+  onReset: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            type="button"
+            variant="quiet"
+            size="icon-xs"
+            aria-label={label}
+            className="-my-1"
+            onClick={onReset}
+          />
+        }
+      >
+        <RefreshCcw01Icon className="size-3" />
+      </TooltipTrigger>
+      <TooltipContent>{hint}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -285,17 +331,12 @@ function TariffInputField({
   const description = rowDescription(declaration, doc, bounds, onReveal);
 
   const reset =
-    isSet && copy.reset && !disabled ? (
-      <Button
-        type="button"
-        variant="ghost"
-        size="xs"
-        className="text-muted-foreground mt-1 h-6 gap-1 self-start px-1.5"
-        onClick={() => setValue(path, undefined, { shouldDirty: true, shouldValidate: true })}
-      >
-        <RefreshCcw01Icon className="size-3" />
-        {copy.reset}
-      </Button>
+    isSet && copy.reset && copy.resetHint && !disabled ? (
+      <ResetToInherited
+        label={copy.reset}
+        hint={copy.resetHint}
+        onReset={() => setValue(path, undefined, { shouldDirty: true, shouldValidate: true })}
+      />
     ) : null;
 
   if (isComplex(declaration.descriptor)) {
@@ -318,23 +359,21 @@ function TariffInputField({
   }
 
   return (
-    <>
-      <TariffScalarField
-        path={path}
-        type={declaration.descriptor}
-        typeText={declaration.type}
-        label={label}
-        description={description}
-        layout={layout}
-        placeholder={copy.placeholder}
-        currency={currency}
-        disabled={disabled}
-        empty={undefined}
-        inheritedBool={typeof fallback === "boolean" ? fallback : undefined}
-        oneOf={choices}
-      />
-      {reset && (layout === "inline" ? <FieldRow>{reset}</FieldRow> : reset)}
-    </>
+    <TariffScalarField
+      path={path}
+      type={declaration.descriptor}
+      typeText={declaration.type}
+      label={label}
+      labelAction={reset}
+      description={description}
+      layout={layout}
+      placeholder={copy.placeholder}
+      currency={currency}
+      disabled={disabled}
+      empty={undefined}
+      inheritedBool={typeof fallback === "boolean" ? fallback : undefined}
+      oneOf={choices}
+    />
   );
 }
 
@@ -380,16 +419,14 @@ function TariffComplexInput({
       : declaration.descriptor;
   const isSet = value !== undefined && value !== null;
 
-  const status = (
+  const status = isSet ? null : (
     <div className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1">
-      {isSet ? null : (
-        <p className="text-muted-foreground text-xs">
-          {fallback === undefined || source === null
-            ? placeholder
-            : unsetComplexText(source, describeComplex(fallback, type, t, currency), t)}
-        </p>
-      )}
-      {!isSet && !disabled && (
+      <p className="text-muted-foreground text-xs">
+        {fallback === undefined || source === null
+          ? placeholder
+          : unsetComplexText(source, describeComplex(fallback, type, t, currency), t)}
+      </p>
+      {!disabled && (
         <Button
           type="button"
           variant="outline"
@@ -404,19 +441,21 @@ function TariffComplexInput({
           {t("Set here")}
         </Button>
       )}
-      {reset}
     </div>
   );
 
   return (
     <section className="flex flex-col gap-2" aria-label={label}>
       {layout === "inline" ? (
-        <FieldRow label={label} description={description}>
+        <FieldRow label={label} labelAction={reset} description={description}>
           {status}
         </FieldRow>
       ) : (
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium">{label}</span>
+          <span className="flex items-center gap-1">
+            <span className="text-xs font-medium">{label}</span>
+            {reset}
+          </span>
           {typeof description === "string" ? (
             <span className="text-muted-foreground text-2xs">{description}</span>
           ) : (

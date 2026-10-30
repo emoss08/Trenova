@@ -1,12 +1,13 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { toneVar } from "@/components/kpi/tone";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { shipment } from "@/lib/queries/shipment";
-import { formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
-import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
-import { toneVar } from "@/components/kpi/tone";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
 import { MarginPill } from "./margin-pill";
 import { ProfitabilityBreakdownPopover } from "./profitability-breakdown-popover";
 
@@ -19,11 +20,6 @@ function StatCell({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
-/**
- * The shipment's cost estimate against its revenue. Every figure in it is the margin or works
- * it out, so a reader without the margins field group is told it is withheld and nothing is
- * asked of the server.
- */
 export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
   const t = useT();
   const marginsVisible = useProtectedFieldAccess("Margins");
@@ -36,7 +32,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
 
   if (!marginsVisible) {
     return (
-      <div className="border-border bg-muted/40 flex items-center justify-between gap-2 rounded-md border p-2">
+      <div className="border-border bg-card flex items-center justify-between gap-2 rounded-md border p-2">
         <span className="text-xs text-muted-foreground font-medium">
           {t("Profitability estimate")}
         </span>
@@ -47,7 +43,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
 
   if (isLoading) {
     return (
-      <div className="border-border bg-muted/40 grid grid-cols-2 gap-3 rounded-md border p-2 sm:grid-cols-4">
+      <div className="border-border bg-card grid grid-cols-2 gap-3 rounded-md border p-2 sm:grid-cols-4">
         <Skeleton className="h-9 w-full" />
         <Skeleton className="h-9 w-full" />
         <Skeleton className="h-9 w-full" />
@@ -66,20 +62,18 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
   const profitTone = getMarginTone(marginPct ?? (profit < 0 ? -1 : targetPct), targetPct);
 
   return (
-    <div className="border-border bg-muted/40 rounded-md border p-2">
+    <div className="border-border bg-card rounded-md border p-2">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs text-muted-foreground font-medium">
           {t("Profitability estimate")}
         </span>
         <ProfitabilityBreakdownPopover
           shipmentId={shipmentId}
+          align="center"
           trigger={
-            <button
-              type="button"
-              className="text-2xs text-primary cursor-pointer font-medium hover:underline"
-            >
+            <Button type="button" variant="link" className="text-2xs">
               {t("View breakdown")}
-            </button>
+            </Button>
           }
         />
       </div>

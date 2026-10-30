@@ -47,6 +47,27 @@ describe("useTariffEditorBinding before the editor has loaded", () => {
     expect(source).toBe('tariff "New name"\ncharge "A" = $1\n');
   });
 
+  it("writes the formatted source to the form", () => {
+    let source = 'tariff "t"\nlet a=1+2\n';
+    const { result } = renderHook(() =>
+      useTariffEditorBinding({ read: () => source, write: (next) => (source = next) }),
+    );
+    result.current.formatSource(rulesSync());
+    expect(source).toBe('tariff "t"\nlet a = 1 + 2\n');
+  });
+
+  it("leaves a source with syntax errors, or one already formatted, unwritten", () => {
+    const write = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ text }) => useTariffEditorBinding({ read: () => text, write }),
+      { initialProps: { text: 'tariff "t"\nlet a = 1 +\n' } },
+    );
+    result.current.formatSource(rulesSync());
+    rerender({ text: 'tariff "t"\nlet a = 1 + 2\n' });
+    result.current.formatSource(rulesSync());
+    expect(write).not.toHaveBeenCalled();
+  });
+
   it("keeps the same functions from render to render", () => {
     const { result, rerender } = renderHook(
       ({ text }) => useTariffEditorBinding({ read: () => text, write: () => undefined }),
@@ -203,6 +224,27 @@ describe("useTariffEditorBinding with the editor", () => {
     expect(write).not.toHaveBeenCalled();
     undo(view);
     expect(view.state.doc.toString()).toBe('tariff "Old"\n');
+    view.destroy();
+  });
+
+  it("formats as one undoable change, leaving focus where it is", () => {
+    const write = vi.fn();
+    const view = new EditorView({
+      state: EditorState.create({ doc: 'tariff "t"\nlet a=1+2\n', extensions: [history()] }),
+      parent: document.body,
+    });
+    const { result } = renderHook(() =>
+      useTariffEditorBinding({ read: () => view.state.doc.toString(), write }),
+    );
+    result.current.setEditorView(view);
+
+    result.current.formatSource(rulesSync());
+
+    expect(view.state.doc.toString()).toBe('tariff "t"\nlet a = 1 + 2\n');
+    expect(view.hasFocus).toBe(false);
+    expect(write).not.toHaveBeenCalled();
+    undo(view);
+    expect(view.state.doc.toString()).toBe('tariff "t"\nlet a=1+2\n');
     view.destroy();
   });
 });

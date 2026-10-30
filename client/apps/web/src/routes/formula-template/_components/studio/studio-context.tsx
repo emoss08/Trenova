@@ -7,6 +7,7 @@ import {
   useTariffWorkbench,
 } from "@/components/tariff-studio/use-tariff-workbench";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { hasMaterialChange } from "@/lib/formula-template-material";
 import { formulaTemplate } from "@/lib/queries/formula-template";
@@ -153,6 +154,7 @@ type StudioActionsValue = StudioProps & {
   closeDefinition: () => void;
   /** The editor as it is, saved or not, in the shape Nova's calls read. */
   draftContent: () => FormulaDraftContent;
+  /** Saves the template, formatting a changed source first when the person asked for that. */
   save: () => void;
   /** The preview's sample input values. */
   previewInputs: UseFormReturn<PreviewInputsForm>;
@@ -309,10 +311,11 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     }
   }, []);
 
-  const { setEditorView, reveal, applyFix, appendToSource, applyEdit } = useTariffEditorBinding({
-    read: () => form.getValues("source") ?? "",
-    write: (next) => form.setValue("source", next, { shouldDirty: true, shouldValidate: true }),
-  });
+  const { setEditorView, reveal, applyFix, appendToSource, applyEdit, formatSource } =
+    useTariffEditorBinding({
+      read: () => form.getValues("source") ?? "",
+      write: (next) => form.setValue("source", next, { shouldDirty: true, shouldValidate: true }),
+    });
 
   const setName = useCallback(
     (name: string) => applyEdit(tariffSetName(rules, form.getValues("source") ?? "", name).change),
@@ -332,7 +335,17 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     };
   }, [form, template]);
 
-  const save = useCallback(() => onSave(), [onSave]);
+  // Format on save only reshapes a source the save already changes: on an approved template a
+  // rename or a description edit stays what it is instead of becoming a new version to approve.
+  const save = useCallback(() => {
+    if (
+      useEditorPreferenceStore.getState().formatOnSave &&
+      (template === null || hasMaterialChange(rules, template, form.getValues()))
+    ) {
+      formatSource(rules);
+    }
+    onSave();
+  }, [onSave, template, rules, form, formatSource]);
   const [unsavedNovaKey] = useState(() => nanoid());
 
   const { isSubmitting, onTemplateChanged } = props;

@@ -1,10 +1,5 @@
 import { cva } from "class-variance-authority";
 
-/**
- * What every sized button shares: centred content, the control radius, label
- * type, the press, and a 16px icon unless the icon names its own size. The
- * bare size leaves all of it out, for a control that draws its own shape.
- */
 const shape =
   "justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap ui-press [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
@@ -22,11 +17,9 @@ export const buttonVariants = cva(
           "bg-surface-active/70 text-secondary-foreground hover:bg-surface-active active:bg-border",
         ghost: "hover:bg-surface-hover hover:text-accent-foreground active:bg-surface-active",
         ghostInvert: "bg-accent hover:bg-surface-hover hover:text-accent-foreground",
-        /** A ghost that rests quieter than the text around it and comes up to it on hover. */
         quiet:
           "text-muted-foreground hover:bg-surface-hover hover:text-foreground active:bg-surface-active",
         link: "text-brand underline-offset-4 hover:underline active:scale-100",
-        /** No fill and no colour of its own: the control's classes say how it looks. */
         bare: "",
       },
       size: {

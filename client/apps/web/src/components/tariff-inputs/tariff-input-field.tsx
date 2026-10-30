@@ -43,6 +43,8 @@ export type TariffScalarFieldProps = {
   /** The type as the tariff wrote it (`Money/pallet`), for the unit a folded count shows. */
   typeText?: string;
   label?: string;
+  /** A small control beside the label, such as the one that clears the value back to its default. */
+  labelAction?: React.ReactNode;
   description?: React.ReactNode;
   /** Where a labelled field puts its label: above the control, or in a column beside it. */
   layout?: FieldLayout;
@@ -138,6 +140,7 @@ function TariffNumberField({
   type,
   typeText,
   label,
+  labelAction,
   description,
   layout,
   placeholder,
@@ -171,6 +174,7 @@ function TariffNumberField({
       name={path as Path<FieldValues>}
       codec={codec}
       label={label}
+      labelAction={labelAction}
       description={description ?? undefined}
       layout={layout}
       placeholder={placeholder ?? ""}
@@ -188,6 +192,7 @@ function TariffQuantityField({
   path,
   type,
   label,
+  labelAction,
   description,
   layout,
   placeholder,
@@ -241,6 +246,7 @@ function TariffQuantityField({
       name={path as Path<FieldValues>}
       codec={codec}
       label={label}
+      labelAction={labelAction}
       description={description ?? undefined}
       layout={layout}
       placeholder={placeholder ?? ""}
@@ -262,6 +268,7 @@ function TariffQuantityField({
 function TariffBoolField({
   path,
   label,
+  labelAction,
   description,
   layout,
   ariaLabel,
@@ -291,14 +298,19 @@ function TariffBoolField({
         const error = fieldState.error?.message;
         if (layout === "inline") {
           return (
-            <FieldRow label={label} description={describe(description)}>
+            <FieldRow label={label} labelAction={labelAction} description={describe(description)}>
               <div className="flex h-7 items-center">{toggle}</div>
               {error && <p className="text-danger-foreground text-2xs">{error}</p>}
             </FieldRow>
           );
         }
         return (
-          <FieldWrapper label={label} description={description} error={error}>
+          <FieldWrapper
+            label={label}
+            labelAction={labelAction}
+            description={description}
+            error={error}
+          >
             <div className="flex h-7 items-center">{toggle}</div>
           </FieldWrapper>
         );
@@ -317,6 +329,7 @@ function describe(description: React.ReactNode): React.ReactNode {
 function TariffTextField({
   path,
   label,
+  labelAction,
   description,
   layout,
   placeholder,
@@ -331,7 +344,9 @@ function TariffTextField({
         control={control}
         name={path as Path<FieldValues>}
         label={label}
+        labelAction={labelAction}
         description={description ?? undefined}
+        layout={layout}
         placeholder={placeholder ?? ""}
         options={oneOf.map((value) => ({ label: value, value }))}
         isReadOnly={disabled}
@@ -343,6 +358,7 @@ function TariffTextField({
       control={control}
       name={path as Path<FieldValues>}
       label={label}
+      labelAction={labelAction}
       description={description ?? undefined}
       layout={layout}
       placeholder={placeholder}
@@ -355,6 +371,7 @@ function TariffTextField({
 function TariffTextListField({
   path,
   label,
+  labelAction,
   description,
   layout,
   placeholder,
@@ -365,6 +382,7 @@ function TariffTextListField({
       control={control}
       name={path as Path<FieldValues>}
       label={label ?? ""}
+      labelAction={labelAction}
       description={description ?? undefined}
       layout={layout}
       placeholder={placeholder}
@@ -376,6 +394,7 @@ function TariffEnumField({
   path,
   type,
   label,
+  labelAction,
   description,
   layout,
   placeholder,
@@ -392,6 +411,7 @@ function TariffEnumField({
       control={control}
       name={path as Path<FieldValues>}
       label={label}
+      labelAction={labelAction}
       description={description ?? undefined}
       layout={layout}
       placeholder={placeholder ?? ""}
@@ -418,6 +438,7 @@ function wallClock(text: string): string {
 function TariffDateField({
   path,
   label,
+  labelAction,
   description,
   layout,
   ariaLabel,
@@ -436,6 +457,7 @@ function TariffDateField({
           <FieldWrapper
             name={path}
             label={label}
+            labelAction={labelAction}
             description={description ?? undefined}
             error={fieldState.error?.message}
             layout={layout}
@@ -473,6 +495,7 @@ function TariffDateField({
 function TariffTimeField({
   path,
   label,
+  labelAction,
   description,
   layout,
   ariaLabel,
@@ -492,6 +515,7 @@ function TariffTimeField({
             name={path}
             htmlFor={path}
             label={label}
+            labelAction={labelAction}
             description={description ?? undefined}
             error={fieldState.error?.message}
             layout={layout}

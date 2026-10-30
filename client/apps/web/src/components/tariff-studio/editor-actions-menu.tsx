@@ -1,14 +1,17 @@
 import { promoteToInput } from "@/components/formula-editor/tariff-actions";
 import { goToDefinitionAtCursor, startRename } from "@/components/formula-editor/tariff-navigate";
 import { findReferences } from "@/components/formula-editor/tariff-references";
+import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
 import type { EditorView } from "@codemirror/view";
 import { DotsHorizontalIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
@@ -21,7 +24,8 @@ type EditorCommand = (view: EditorView) => boolean;
 /**
  * The editor's menu: the language commands that act at the cursor, with their keys, for a person
  * who reaches for a menu rather than a shortcut. Each runs on the editor with the cursor where the
- * person left it, and the editor keeps focus afterwards (or rename's field takes it).
+ * person left it, and the editor keeps focus afterwards (or rename's field takes it). An editor
+ * that can be edited also offers Format on save, the same choice as Settings → Preferences.
  */
 export function EditorActionsMenu({
   view,
@@ -36,6 +40,8 @@ export function EditorActionsMenu({
 }) {
   const t = useT();
   const mac = isMacPlatform();
+  const formatOnSave = useEditorPreferenceStore((state) => state.formatOnSave);
+  const setFormatOnSave = useEditorPreferenceStore((state) => state.setFormatOnSave);
   const run = (command: EditorCommand) => {
     const editor = view();
     if (!editor) return;
@@ -90,6 +96,18 @@ export function EditorActionsMenu({
             </>
           )}
         </DropdownMenuGroup>
+        {!readOnly && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem
+              checked={formatOnSave}
+              onCheckedChange={setFormatOnSave}
+              closeOnClick={false}
+            >
+              {t("Format on save")}
+            </DropdownMenuCheckboxItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

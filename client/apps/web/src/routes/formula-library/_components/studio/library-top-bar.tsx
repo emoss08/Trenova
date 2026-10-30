@@ -36,7 +36,7 @@ import { StatusLabel } from "./status-label";
 
 function SaveControl() {
   const t = useT();
-  const { mode, dirty, isSubmitting, onSave } = useLibraryStudio();
+  const { mode, dirty, isSubmitting, save } = useLibraryStudio();
 
   if (mode === "edit" && !dirty && !isSubmitting) {
     return (
@@ -51,7 +51,7 @@ function SaveControl() {
     <Button
       type="button"
       size="sm"
-      onClick={onSave}
+      onClick={save}
       isLoading={isSubmitting}
       loadingText={mode === "create" ? t("Creating…") : t("Saving…")}
       className="gap-2"

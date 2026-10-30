@@ -16,6 +16,8 @@ type TextChipsFieldProps<T extends FieldValues> = {
   control: Control<T>;
   name: FieldPath<T>;
   label?: string;
+  /** A small control beside the label. */
+  labelAction?: React.ReactNode;
   description?: React.ReactNode;
   placeholder?: string;
   rules?: RegisterOptions<T, FieldPath<T>>;
@@ -35,6 +37,7 @@ export function TextChipsField<T extends FieldValues>({
   control,
   name,
   label,
+  labelAction,
   description,
   placeholder,
   rules,
@@ -82,6 +85,7 @@ export function TextChipsField<T extends FieldValues>({
           <FieldWrapper
             name={name}
             label={label}
+            labelAction={labelAction}
             required={!!rules?.required}
             description={description}
             error={draftError ?? fieldState.error?.message}

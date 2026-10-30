@@ -8,6 +8,7 @@ import { factoring as factoringQueries, invalidateFactoringQueries } from "@/lib
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LinkExternal01Icon, Send01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { FormControl } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { dateToUnixTimestamp, formatUnixDate } from "@trenova/shared/lib/date";
@@ -48,7 +49,11 @@ export function CustomerFactoringNoa() {
     );
   }
 
-  return <NoaStatus customerId={customerId} factoringCompanyId={factoringCompanyId} />;
+  return (
+    <FormControl>
+      <NoaStatus customerId={customerId} factoringCompanyId={factoringCompanyId} />
+    </FormControl>
+  );
 }
 
 function NoaStatus({

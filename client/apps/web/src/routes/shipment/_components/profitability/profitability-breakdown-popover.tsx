@@ -1,17 +1,17 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { toneVar } from "@/components/kpi/tone";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { shipment } from "@/lib/queries/shipment";
 import { useQuery } from "@tanstack/react-query";
 import type { ShipmentProfitabilityQuery } from "@trenova/graphql/generated/graphql";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
-import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
 
 const sourceBadges: Record<string, { label: string; className: string }> = {
@@ -41,7 +41,7 @@ export function ProfitabilityBreakdownPopover({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger render={<button>{trigger}</button>} />
-      <PopoverContent align={align} className="w-80 space-y-3">
+      <PopoverContent align={align} sideOffset={10} className="w-80 space-y-3">
         {isLoading || data === undefined ? (
           <BreakdownSkeleton />
         ) : data === null ? (

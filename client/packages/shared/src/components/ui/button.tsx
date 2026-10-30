@@ -1,6 +1,6 @@
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { type VariantProps } from "class-variance-authority";
 import { Kbd, kbdOnSolidClassName } from "./kbd";
 import { Spinner } from "./spinner";
@@ -9,11 +9,9 @@ export type ButtonProps = ButtonPrimitive.Props &
   VariantProps<typeof buttonVariants> & {
     isLoading?: boolean;
     loadingText?: string;
-    /** The keys that press it, shown inside it, such as "N" or "Ctrl+S". */
     shortcut?: string;
   };
 
-/** The fills a plain key would vanish against. */
 const SOLID_VARIANTS = new Set<ButtonProps["variant"]>(["default", "destructive"]);
 
 function Button({

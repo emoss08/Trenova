@@ -1,59 +1,54 @@
-import { ChargePayerControl } from "@/components/billing/charge-payer-control";
-import { RatingReviewHold } from "@/components/billing/rating-review-hold";
-import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CustomerAutocompleteField,
   FormulaTemplateAutocompleteField,
   OrderAutocompleteField,
 } from "@/components/autocomplete-fields";
+import { ChargePayerControl } from "@/components/billing/charge-payer-control";
+import { RatingReviewHold } from "@/components/billing/rating-review-hold";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { freightTermsChoices } from "@/lib/choices";
-import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
-import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { useShipmentAutoRate } from "@/hooks/use-shipment-auto-rate";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
+import { freightTermsChoices } from "@/lib/choices";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import { customer as customerQueries } from "@/lib/queries/customer";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
+import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CapabilityFields,
   type FieldDescriptor,
 } from "@trenova/shared/components/capability-form-section";
+import { AlertTriangleIcon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useRules } from "@trenova/shared/hooks/use-rules";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { getProfile } from "@trenova/shared/lib/capability";
-import { allocationRemainders } from "@trenova/shared/rules/allocation";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { allocationRemainders } from "@trenova/shared/rules/allocation";
 import type { CreditStatus } from "@trenova/shared/types/customer";
 import type {
   ContractRate,
   GetPreviousRatesRequest,
   Shipment,
 } from "@trenova/shared/types/shipment";
-import { AlertTriangleIcon, ShieldAlertIcon } from "@trenova/shared/components/icons";
+import { readStoredTariffBill, readStoredTariffChoices } from "@trenova/shared/types/tariff-form";
 import type React from "react";
 import { useEffect, useRef } from "react";
-import { Link } from "react-router";
-import { BillView } from "@/components/tariff-bill/bill-view";
-import { ChoicesView } from "@/components/tariff-bill/choices-view";
-import { readStoredTariffBill, readStoredTariffChoices } from "@trenova/shared/types/tariff-form";
-import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useShipmentDefaultPayer } from "./use-shipment-default-payer";
 import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
 import { AutoRateDialog } from "./auto-rate-dialog";
 import { BillingByPayerCard } from "./billing-by-payer-card";
 import { PreviousRatesButton } from "./previous-rates-dialog";
 import { ProfitabilitySummary } from "./profitability/profitability-summary";
+import { RatingBreakdownPopover } from "./rating-breakdown-popover";
 import { ShipmentTariffInputs } from "./shipment-tariff-inputs";
-import { WhyThisRate } from "./why-this-rate";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { useShipmentDefaultPayer } from "./use-shipment-default-payer";
 
 function Inner({ children }: { children: React.ReactNode }) {
   const t = useT();
@@ -277,23 +272,52 @@ function ChargeSummaryRow({
   );
 }
 
+/**
+ * Who priced the shipment on its last rating: the contract and its rule when one did, otherwise
+ * the tariff. Null before the shipment has been rated.
+ */
+function ratingSourceText(
+  ratingDetail: Shipment["ratingDetail"],
+  t: ReturnType<typeof useT>,
+): string | null {
+  if (!ratingDetail) return null;
+  // The contract leads, since that is what somebody reading an invoice recognises.
+  const source = ratingDetail.agreementName || ratingDetail.formulaTemplateName;
+  return ratingDetail.ruleLabel
+    ? t("{0} — {1}", source, ratingDetail.ruleLabel)
+    : t("Billed by {0}", source || t("the tariff"));
+}
+
+/**
+ * The shipment's charges as they stand, with what the last rating needs from a person in place:
+ * why the tariff refused, or the review it asked for before the shipment bills. The rating's
+ * breakdown, and why its contract won, open from the icon beside the title, so the card stays
+ * a summary.
+ */
 function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error: string | null }) {
   const t = useT();
 
   const { control } = useFormContext<Shipment>();
+  const shipmentId = useWatch({ control, name: "id" });
   const otherChargeAmount = useWatch({ control, name: "otherChargeAmount" });
   const totalChargeAmount = useWatch({ control, name: "totalChargeAmount" });
   const freightChargeAmount = useWatch({ control, name: "freightChargeAmount" });
   const freightAllocations = useWatch({ control, name: "freightAllocations" });
+  const ratingDetail = useWatch({ control, name: "ratingDetail" });
+
   const defaultPayer = useShipmentDefaultPayer();
   const rules = useRules();
   const freightTotal = freightChargeAmount ?? 0;
   const [freightSplit] = allocationRemainders(rules, {
     charges: [{ kind: "Freight", total: freightTotal, allocations: freightAllocations }],
   });
+  // A shipment read over GraphQL reaches the form unparsed, so the stored bill is read here.
+  const bill = readStoredTariffBill(ratingDetail?.bill);
+  const choices = readStoredTariffChoices(ratingDetail?.choices);
+  const source = ratingSourceText(ratingDetail, t);
 
   return (
-    <div className="bg-muted/50 relative mt-3 overflow-hidden rounded-lg border p-2">
+    <div className="bg-card relative mt-3 overflow-hidden rounded-lg border p-2">
       {isCalculating && (
         <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[2px]">
           <TextShimmer as="span" className="text-sm font-medium" duration={1.5}>
@@ -309,14 +333,42 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
           </div>
         </div>
       )}
-      <div className="mb-3">
-        <span className="text-xs font-medium">{t("Charge summary")}</span>
-        <p className="text-2xs text-muted-foreground mt-0.5">
-          {t(
-            "Automatically calculated based on the rating method, freight charges, and any additional accessorial charges.",
-          )}
-        </p>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium">{t("Charge summary")}</span>
+            {ratingDetail && bill ? (
+              <RatingBreakdownPopover
+                shipmentId={shipmentId}
+                ratingDetail={ratingDetail}
+                bill={bill}
+                choices={choices}
+              />
+            ) : null}
+          </div>
+          <p className="text-2xs text-muted-foreground">
+            {source ??
+              t(
+                "Automatically calculated based on the rating method, freight charges, and any additional accessorial charges.",
+              )}
+          </p>
+        </div>
+        <AutoRateDialog />
       </div>
+      {ratingDetail?.refusal ? (
+        <Alert variant="destructive" size="sm" className="mb-3">
+          <AlertTriangleIcon />
+          <AlertTitle>{t("The tariff refused to rate this shipment")}</AlertTitle>
+          <AlertDescription>{ratingDetail.refusal}</AlertDescription>
+        </Alert>
+      ) : null}
+      {ratingDetail && bill && shipmentId ? (
+        <ShipmentRatingReview
+          shipmentId={shipmentId}
+          reasons={bill.reviews.map((review) => review.text)}
+          ratingDetail={ratingDetail}
+        />
+      ) : null}
       <div className="space-y-2">
         <ChargeSummaryRow
           label={t("Freight charges")}
@@ -461,98 +513,6 @@ function RateDepartureReason() {
           "This shipment no longer charges what its rate agreement says. The reason is kept with the rating history and shown on the rate leakage report.",
         )}
       />
-    </div>
-  );
-}
-
-/**
- * The bill the shipment was last rated to, line by line: each freight and accessorial charge
- * with its quantity and rate, the notes and any adjustment, and what each `best` or `worst`
- * chose with every option's subtotal, from the tariff version that ran.
- */
-function RatingBillCard() {
-  const t = useT();
-
-  const { control } = useFormContext<Shipment>();
-  const ratingDetail = useWatch({ control, name: "ratingDetail" });
-  const shipmentId = useWatch({ control, name: "id" });
-  // A shipment read over GraphQL reaches the form unparsed, so the stored bill is read here.
-  const bill = readStoredTariffBill(ratingDetail?.bill);
-  const choices = readStoredTariffChoices(ratingDetail?.choices);
-
-  if (!ratingDetail || (!bill && !ratingDetail.refusal)) {
-    return null;
-  }
-
-  // The contract that priced the shipment leads, since that is what somebody
-  // reading an invoice recognises; the tariff's own name follows it.
-  const source = ratingDetail.agreementName || ratingDetail.formulaTemplateName;
-
-  return (
-    <div className="bg-muted/50 mt-3 rounded-lg border p-2">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <div className="flex w-full flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-row items-center gap-1">
-              <span className="text-xs font-medium">{t("Bill")}</span>
-              <AutoRateDialog />
-            </div>
-            <WhyThisRate shipmentId={shipmentId} />
-          </div>
-          <p className="text-2xs text-muted-foreground mt-0.5">
-            {ratingDetail.ruleLabel
-              ? t("{0} — {1}", source, ratingDetail.ruleLabel)
-              : t("Billed by {0}", source || t("the tariff"))}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {ratingDetail.versionNumber ? (
-            <Badge variant="neutral" appearance="outline" className="text-2xs font-mono">
-              {t("v{0}", ratingDetail.versionNumber)}
-            </Badge>
-          ) : null}
-          {ratingDetail.formulaTemplateId && (
-            <Link
-              to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
-              className="text-2xs text-primary hover:underline"
-            >
-              {t("Open tariff")}
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {ratingDetail.refusal ? (
-        <Alert variant="destructive" size="sm">
-          <AlertTriangleIcon className="size-4" />
-          <AlertTitle>{t("The tariff refused to rate this shipment")}</AlertTitle>
-          <AlertDescription>{ratingDetail.refusal}</AlertDescription>
-        </Alert>
-      ) : null}
-      {bill && shipmentId ? (
-        <ShipmentRatingReview
-          shipmentId={shipmentId}
-          reasons={bill.reviews.map((review) => review.text)}
-          ratingDetail={ratingDetail}
-        />
-      ) : null}
-      {bill ? <BillView bill={bill} currency={bill.currency || undefined} /> : null}
-      {choices.length > 0 && (
-        <ChoicesView
-          choices={choices}
-          currency={bill?.currency || undefined}
-          className="mt-3 border-t pt-2"
-        />
-      )}
-      {(ratingDetail.skipped ?? []).length > 0 && (
-        <p className="text-2xs text-muted-foreground mt-2">
-          {t(
-            "{0, plural, one {Not added again, since the tariff billed it:} other {Not added again, since the tariff billed them:}} {1}",
-            ratingDetail.skipped?.length ?? 0,
-            (ratingDetail.skipped ?? []).map((skip) => skip.code).join(", "),
-          )}
-        </p>
-      )}
     </div>
   );
 }
@@ -731,7 +691,6 @@ export default function ShipmentBillingDetails() {
 
       <ChargeSummary isCalculating={isCalculating} error={totalsError} />
       <BillingByPayerCard />
-      <RatingBillCard />
       <RateDepartureReason />
     </Inner>
   );

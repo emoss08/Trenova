@@ -1,16 +1,16 @@
 "use no memo";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { allocationPayerLabel } from "@/components/billing/charge-payer-chip";
 import { ChargeSplitDialog } from "@/components/billing/charge-split-dialog";
 import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import { selectOptionMetaString } from "@/lib/select-option-meta";
+import { SplitIcon, User01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DecimalInput } from "@trenova/shared/rules/wire";
 import type { ChargeAllocation } from "@trenova/shared/types/shipment";
-import { SplitIcon, User01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { type FieldValues, useForm, useFormContext, useWatch } from "react-hook-form";
 
@@ -33,11 +33,6 @@ export type ChargePayerControlProps = {
   className?: string;
 };
 
-/**
- * Who pays one charge, and the one place to change it. The common case is a
- * single pick: the whole charge goes to that customer. Sharing a charge between
- * payers is a step further in, through the split editor.
- */
 export function ChargePayerControl({
   name,
   chargeAmount,

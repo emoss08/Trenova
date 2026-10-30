@@ -1,12 +1,12 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { AddressField } from "@/components/fields/address-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { statusChoices, statusUpdatePreferenceChoices } from "@/lib/choices";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -208,7 +208,7 @@ export function CustomerForm() {
           "How long this customer's brokered loads may go without word from the carrier before they are raised",
         )}
       >
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <NumberField
               control={control}
@@ -232,7 +232,7 @@ export function CustomerForm() {
           "How much slack under a stop's window counts as at risk for this customer's loads",
         )}
       >
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <NumberField
               control={control}
@@ -277,7 +277,7 @@ export function CustomerForm() {
               )}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <NumberField
               control={control}
               name="consolidationPriority"
@@ -304,6 +304,7 @@ export function CustomerForm() {
               name="statusUpdatePreference"
               label={t("Send status updates")}
               options={statusUpdatePreferenceChoices}
+              placeholder={t("Select a preference")}
               description={t(
                 "The customer update desk emails these as each stop is reached or left. A customer set to Nothing is never emailed about a stop.",
               )}

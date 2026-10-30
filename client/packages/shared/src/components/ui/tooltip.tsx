@@ -1,5 +1,5 @@
-import { cn } from "@trenova/shared/lib/utils";
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
+import { cn } from "@trenova/shared/lib/utils";
 
 function TooltipProvider({ delay = 0, ...props }: TooltipPrimitive.Provider.Props) {
   return <TooltipPrimitive.Provider data-slot="tooltip-provider" delay={delay} {...props} />;
@@ -13,8 +13,14 @@ function Tooltip({ delay, ...props }: TooltipPrimitive.Root.Props & { delay?: nu
   );
 }
 
-function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
+function TooltipTrigger({ className, ...props }: TooltipPrimitive.Trigger.Props) {
+  return (
+    <TooltipPrimitive.Trigger
+      className={cn("cursor-help", className)}
+      data-slot="tooltip-trigger"
+      {...props}
+    />
+  );
 }
 
 function TooltipContent({

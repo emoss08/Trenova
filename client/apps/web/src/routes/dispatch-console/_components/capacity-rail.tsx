@@ -1,10 +1,19 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { HosClockGauges } from "@/components/hos/hos-clock-gauges";
+import { SectionPanel } from "@/components/section-panel";
+import { VirtualRows, type VirtualRowsHandle } from "@/components/virtual-rows";
 import type { DispatchBoardDriver } from "@/lib/graphql/dispatch-console";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
+import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@trenova/shared/components/ui/select";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { GripVerticalIcon, SearchLgIcon } from "@trenova/shared/components/icons";
@@ -19,6 +28,9 @@ import {
   type CapacityFilter,
 } from "./dispatch-vocabulary";
 import { useDispatchRail } from "./url-state";
+
+// Name, context line and the HOS clocks; a blocking reason adds a line, measured once mounted.
+const DRIVER_ROW_ESTIMATE_PX = 84;
 
 function DriverRow({
   driver,
@@ -110,7 +122,7 @@ function DriverRow({
         }
       }}
       className={cn(
-        "group grid w-full grid-cols-[12px_minmax(0,1fr)] items-center gap-x-1.5 border-b px-2 py-2 text-left transition-colors last:border-b-0",
+        "group grid w-full grid-cols-[12px_minmax(0,1fr)] items-center gap-x-1.5 px-2 py-2 text-left transition-colors",
         isSelected ? "bg-muted" : "hover:bg-muted/50",
         isDragging && "opacity-40",
         showDropHint && "bg-brand/10",
@@ -174,6 +186,39 @@ function DriverRow({
   );
 }
 
+/**
+ * One availability lens. In the list it carries its driver count; on the closed trigger it
+ * is the label alone, since the panel header already states how many drivers are shown.
+ */
+function CapacityFilterOption({
+  option,
+  count,
+}: {
+  option: (typeof CAPACITY_FILTERS)[number];
+  count?: number;
+}) {
+  const t = useT();
+  const isListed = count !== undefined;
+
+  return (
+    <span className="flex min-w-0 flex-1 items-center gap-1.5">
+      {(option.availability || isListed) && (
+        <span
+          aria-hidden
+          className={cn(
+            "size-1.5 shrink-0 rounded-full",
+            option.availability ? availabilityMeta(option.availability).dotClass : "bg-transparent",
+          )}
+        />
+      )}
+      <span className="truncate">{t(option.label)}</span>
+      {isListed && (
+        <span className="text-muted-foreground ml-auto pl-3 text-2xs tabular-nums">{count}</span>
+      )}
+    </span>
+  );
+}
+
 export function CapacityRail({
   drivers,
   isLoading,
@@ -230,69 +275,103 @@ export function CapacityRail({
     return result;
   }, [drivers]);
 
+  const isNarrowed = filter !== "all" || search.trim() !== "";
+
+  // Only the rows near the viewport are mounted, so a driver selected elsewhere is
+  // scrolled to rather than left on a row that may not exist yet.
+  const listRef = useRef<VirtualRowsHandle>(null);
+  useEffect(() => {
+    if (selectedWorkerId) listRef.current?.scrollToKey(selectedWorkerId);
+  }, [selectedWorkerId]);
+
   return (
-    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
-      <header className="flex flex-col gap-2 border-b p-2">
+    <SectionPanel
+      title={t("Capacity")}
+      hint={<span className="tabular-nums">{t("{0} of {1}", visible.length, drivers.length)}</span>}
+      className="min-h-0"
+    >
+      <div className="flex items-center gap-1.5 border-b p-2">
         <Input
           value={search}
           onChange={(event) => setDriverSearch(event.target.value)}
-          placeholder={t("Search driver, tractor, fleet")}
+          placeholder={t("Search drivers")}
           leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
-          className="h-8 pl-7 text-xs"
+          inputContainerClassName="min-w-0 flex-1"
+          className="text-xs md:text-xs"
           aria-label={t("Search drivers by name, tractor code, or fleet")}
         />
-        <div className="flex flex-wrap gap-1">
-          {CAPACITY_FILTERS.map((option) => {
-            const count = counts.get(option.id) ?? 0;
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setCapacityFilter(option.id)}
-                className={cn(
-                  "rounded-badge border px-2 py-0.5 text-xs font-medium transition-colors",
-                  filter === option.id
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted",
-                )}
-              >
-                {t(option.label)} {count > 0 && <span className="tabular-nums">{count}</span>}
-              </button>
-            );
-          })}
-        </div>
-      </header>
-
-      <div className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <span className="text-muted-foreground text-xs font-semibold">{t("Capacity")}</span>
-        <span className="text-muted-foreground text-2xs tabular-nums">
-          {t("{0} of {1}", visible.length, drivers.length)}
-        </span>
+        <Select
+          value={filter}
+          onValueChange={(next) => {
+            if (next) setCapacityFilter(next as CapacityFilter);
+          }}
+        >
+          <SelectTrigger
+            className="shrink-0 text-xs"
+            aria-label={t("Filter drivers by availability")}
+          >
+            <SelectValue>
+              {(value: CapacityFilter) => {
+                const option =
+                  CAPACITY_FILTERS.find((candidate) => candidate.id === value) ??
+                  CAPACITY_FILTERS[0];
+                return <CapacityFilterOption option={option} />;
+              }}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent align="end" className="min-w-32 p-1">
+            {CAPACITY_FILTERS.map((option) => (
+              <SelectItem key={option.id} value={option.id} className="h-6 py-0 text-xs">
+                <CapacityFilterOption option={option} count={counts.get(option.id) ?? 0} />
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <ScrollArea
-        className="min-h-0 flex-1"
-        viewportClassName="min-h-0"
-        maskVariant="card"
-        maskHeight={18}
-      >
-        {isLoading ? (
+      {isLoading ? (
+        <div className="min-h-0 flex-1 overflow-hidden">
           <CapacityRailRowsSkeleton />
-        ) : visible.length === 0 ? (
-          <p className="text-muted-foreground p-4 text-center text-xs">
-            {t("No drivers match this view.")}
-          </p>
-        ) : (
-          visible.map((driver) => (
-            <DriverRow
-              key={driver.workerId}
-              driver={driver}
-              isSelected={selectedWorkerId === driver.workerId}
-              onSelect={onSelectDriver}
-            />
-          ))
-        )}
-      </ScrollArea>
-    </section>
+        </div>
+      ) : (
+        <VirtualRows
+          rows={visible.map((driver) => ({
+            key: driver.workerId,
+            render: () => (
+              <DriverRow
+                driver={driver}
+                isSelected={selectedWorkerId === driver.workerId}
+                onSelect={onSelectDriver}
+              />
+            ),
+          }))}
+          handleRef={listRef}
+          mask="card"
+          maskHeight={18}
+          className="min-h-0 flex-1"
+          rowClassName="border-b"
+          estimateSize={DRIVER_ROW_ESTIMATE_PX}
+          empty={
+            <div className="flex flex-col items-center gap-2 p-4">
+              <p className="text-muted-foreground text-center text-xs">
+                {t("No drivers match this view.")}
+              </p>
+              {isNarrowed && (
+                <Button
+                  variant="outline"
+                  size="xs"
+                  onClick={() => {
+                    setCapacityFilter("all");
+                    setDriverSearch("");
+                  }}
+                >
+                  {t("Clear filters")}
+                </Button>
+              )}
+            </div>
+          }
+        />
+      )}
+    </SectionPanel>
   );
 }

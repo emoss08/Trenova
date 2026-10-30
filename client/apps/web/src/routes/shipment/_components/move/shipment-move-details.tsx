@@ -1,13 +1,13 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
+import { shipment } from "@/lib/queries/shipment";
+import { useQuery } from "@tanstack/react-query";
 import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
+import { PlusIcon } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { TruckIcon } from "@trenova/shared/components/ui/truck";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { getProfile, isMoveRemovalAllowed } from "@trenova/shared/lib/capability";
-import { shipment } from "@/lib/queries/shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { useQuery } from "@tanstack/react-query";
-import { PlusIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { MoveEditDialog } from "../shipment-move-edit-dialog";
@@ -91,10 +91,6 @@ export default function ShipmentMoveDetails() {
         description={t("Execution legs and stop sequences for this shipment")}
         action={
           <div className="flex items-center gap-1.5">
-            {/* Three rules name `moves` — move removal, permit lead time and curfew
-                conflict — and the pickup date that drives the latter two is edited
-                in a modal that covers the Load Envelope panel. The explainer
-                self-hides when no rule applies. */}
             <CapabilityExplainer profile={profile} field="moves" />
             <Button type="button" variant="outline" size="xxs" onClick={handleAddMove}>
               <PlusIcon className="size-3" />

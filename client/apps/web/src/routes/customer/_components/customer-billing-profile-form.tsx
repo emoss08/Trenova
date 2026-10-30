@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import {
   DocumentTypeMultiSelectField,
   FactoringCompanyAutocompleteField,
@@ -6,12 +5,12 @@ import {
   GLAccountAutocompleteField,
   UserAutocompleteField,
 } from "@/components/autocomplete-fields";
+import { MemoEntryButton } from "@/components/billing/memo-entry-button";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   billingCycleChoices,
   creditStatusChoices,
@@ -25,13 +24,14 @@ import {
   invoiceSplitKeyChoices,
   timezoneChoices,
 } from "@/lib/choices";
-import { BillingSchedulePreview } from "./billing-schedule-preview";
-import { CreditExposureSummary } from "./credit-exposure-summary";
-import { CustomerFactoringNoa } from "./customer-factoring-noa";
-import { MemoEntryButton } from "@/components/billing/memo-entry-button";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { BillingSchedulePreview } from "./billing-schedule-preview";
+import { CreditExposureSummary } from "./credit-exposure-summary";
+import { CustomerFactoringNoa } from "./customer-factoring-noa";
 
 export function CustomerBillingProfileForm() {
   const t = useT();
@@ -96,7 +96,7 @@ export function CustomerBillingProfileForm() {
   );
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <FormSection
         title={t("Payment terms")}
         description={t("How long this customer has to pay, and in what currency")}
@@ -107,13 +107,14 @@ export function CustomerBillingProfileForm() {
               control={control}
               name="billingProfile.paymentTerm"
               label={t("Payment term")}
+              placeholder={t("Select a term")}
               description={t(
                 "The number of days this customer has to pay after an invoice is issued. Overrides the organization default when set.",
               )}
               options={customerPaymentTermChoices}
             />
           </FormControl>
-          <FormControl cols="full">
+          <FormControl>
             <SelectField
               control={control}
               name="billingProfile.billingCurrency"
@@ -121,6 +122,7 @@ export function CustomerBillingProfileForm() {
               description={t(
                 "Currency used on all invoices for this customer. Determines how amounts are formatted and displayed on billing documents.",
               )}
+              placeholder={t("Select a currency")}
               options={currencyChoices}
             />
           </FormControl>
@@ -147,6 +149,7 @@ export function CustomerBillingProfileForm() {
               control={control}
               name="billingProfile.creditStatus"
               label={t("Credit status")}
+              placeholder={t("Select a status")}
               description={t(
                 "With the credit limit enforced, 'Hold' and 'Suspended' stop new shipments from being booked for this customer. A status you set here stays until someone changes it.",
               )}
@@ -164,24 +167,26 @@ export function CustomerBillingProfileForm() {
               )}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <CreditExposureSummary />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <SwitchField
               control={control}
               name="billingProfile.enforceCreditLimit"
               label={t("Enforce credit limit")}
+              outlined
               description={t(
                 "Turns on credit control for this customer: a 'Hold' or 'Suspended' status stops new shipments from being booked for them.",
               )}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <SwitchField
               control={control}
               name="billingProfile.autoCreditHold"
               label={t("Auto credit hold")}
+              outlined
               description={t(
                 "Put the customer on hold when open receivables go over the credit limit, warn at 90% of it, and lift the hold once they are paid back under. An automatic hold stops new shipments but not billing.",
               )}
@@ -214,6 +219,7 @@ export function CustomerBillingProfileForm() {
               control={control}
               name="billingProfile.invoiceNumberFormat"
               label={t("Invoice number format")}
+              placeholder={t("Select a format")}
               description={t(
                 "How invoice numbers are generated. 'Custom Prefix' prepends a customer-specific string; 'PO Based' uses the customer's PO number as the invoice identifier.",
               )}
@@ -264,7 +270,7 @@ export function CustomerBillingProfileForm() {
               )}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <SwitchField
               control={control}
               name="billingProfile.sendStatements"
@@ -281,6 +287,7 @@ export function CustomerBillingProfileForm() {
                 control={control}
                 name="billingProfile.emailInvoiceEnabled"
                 label={t("Email invoices")}
+                outlined
                 description={t(
                   "Invoices may be emailed to this customer. Auto-send after posting needs this on.",
                 )}
@@ -289,6 +296,7 @@ export function CustomerBillingProfileForm() {
                 control={control}
                 name="billingProfile.ediInvoiceEnabled"
                 label={t("EDI invoices (210)")}
+                outlined
                 description={
                   ediPartner
                     ? t("Posted invoices are sent to {0} as an EDI 210.", ediPartner.name)
@@ -301,7 +309,7 @@ export function CustomerBillingProfileForm() {
           </FormControl>
           {customerId ? (
             <FormControl cols="full">
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3 bg-card">
                 <div>
                   <p className="text-xs font-medium">{t("Memos")}</p>
                   <p className="text-muted-foreground text-2xs">
@@ -322,6 +330,7 @@ export function CustomerBillingProfileForm() {
               control={control}
               name="billingProfile.revenueAccountId"
               label={t("Revenue account")}
+              placeholder={t("Select a revenue account")}
               description={t(
                 "GL account where revenue from this customer's shipments is posted. Overrides the organization default revenue account.",
               )}
@@ -333,6 +342,7 @@ export function CustomerBillingProfileForm() {
               control={control}
               name="billingProfile.arAccountId"
               label={t("Accounts receivable")}
+              placeholder={t("Select an AR account")}
               description={t(
                 "GL account for tracking this customer's outstanding invoices. Overrides the organization default AR account.",
               )}
@@ -344,6 +354,7 @@ export function CustomerBillingProfileForm() {
               control={control}
               name="billingProfile.documentTypes"
               label={t("Required document types")}
+              placeholder={t("Select document types")}
               description={t(
                 "Documents that must be attached before an invoice can be generated (e.g., signed BOL, proof of delivery). Missing documents will block billing.",
               )}
@@ -351,7 +362,6 @@ export function CustomerBillingProfileForm() {
           </FormControl>
         </FormGroup>
       </FormSection>
-
       <FormSection
         title={t("Billing schedule")}
         description={t("How this customer's shipments turn into invoices, and how often")}
@@ -362,13 +372,13 @@ export function CustomerBillingProfileForm() {
               control={control}
               name="billingProfile.invoiceDelivery"
               label={t("Invoice delivery")}
+              placeholder={t("Select delivery method")}
               description={t(
                 "Whether this customer gets an invoice per shipment, per order, or one statement covering a billing period.",
               )}
               options={invoiceDeliveryChoices}
             />
           </FormControl>
-
           {isConsolidated && (
             <div className="flex flex-col gap-4 pl-4 border-l">
               <FormGroup cols={2}>
@@ -463,7 +473,6 @@ export function CustomerBillingProfileForm() {
               </FormGroup>
             </div>
           )}
-
           <BillingSchedulePreview schedule={schedulePreview} />
         </FormGroup>
       </FormSection>
@@ -550,6 +559,7 @@ export function CustomerBillingProfileForm() {
               control={control}
               name="billingProfile.fuelSurchargeMode"
               label={t("Fuel billing")}
+              placeholder={t("Select a mode")}
               options={customerFuelSurchargeModeChoices}
               description={t("Choose how fuel costs are recovered from this customer.")}
             />
@@ -589,9 +599,7 @@ export function CustomerBillingProfileForm() {
               )}
             />
           </FormControl>
-          <FormControl>
-            <CustomerFactoringNoa />
-          </FormControl>
+          <CustomerFactoringNoa />
         </FormGroup>
       </FormSection>
       <FormSection
@@ -748,6 +756,7 @@ export function CustomerBillingProfileForm() {
           <FormControl>
             <UserAutocompleteField
               control={control}
+              placeholder={t("Select a biller")}
               name="billingProfile.defaultBillerId"
               label={t("Default biller")}
               description={t(

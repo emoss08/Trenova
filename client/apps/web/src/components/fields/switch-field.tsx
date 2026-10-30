@@ -1,15 +1,15 @@
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
+import { Label } from "@trenova/shared/components/ui/label";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 import { cn } from "@trenova/shared/lib/utils";
+import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 import type { FormControlProps, WarningProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import type { SwitchProps } from "../animate-ui/components/base/switch";
 import { RecommendedBadge } from "../recommended-badge";
-import { Label } from "@trenova/shared/components/ui/label";
-import { Switch } from "@trenova/shared/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { InfoCircleIcon } from "@trenova/shared/components/icons";
-import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
-import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   label: string;
@@ -21,7 +21,6 @@ type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   readOnly?: boolean;
   warning?: WarningProps;
   tooltip?: React.ReactNode;
-  /** Marks after the label, such as an "Urgent" or "Required" badge. */
   badges?: React.ReactNode;
 };
 

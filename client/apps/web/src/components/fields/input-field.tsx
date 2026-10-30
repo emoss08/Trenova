@@ -6,6 +6,8 @@ import { FieldWrapper, type FieldLayout } from "./field-components";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
   label?: React.ReactNode;
+  /** A small control beside the label. */
+  labelAction?: React.ReactNode;
   description?: React.ReactNode;
   inputClassProps?: string;
   hideLabel?: boolean;
@@ -17,6 +19,7 @@ export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps & FormC
 
 export function InputField<T extends FieldValues>({
   label,
+  labelAction,
   name,
   control,
   rules,
@@ -40,6 +43,7 @@ export function InputField<T extends FieldValues>({
           <FieldWrapper
             name={name}
             label={label}
+            labelAction={labelAction}
             required={!!rules?.required}
             description={description}
             error={fieldState.error?.message}

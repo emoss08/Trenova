@@ -125,6 +125,19 @@ the rules for when a save may run live in one place. A new key goes in `TARIFF_V
 with a test in `__tests__/tariff-vim.test.ts`, which presses keys through `Vim.handleKey` on a
 mounted editor.
 
+### Format on save
+
+A person can have a save format the source first, from the editor's menu (`EditorActionsMenu`,
+Format on save) or Settings → Preferences. It is off by default and kept on the device beside Vim
+keys (`useEditorPreferenceStore.formatOnSave`). Each Studio's context owns its one `save`, which
+the Save button, Ctrl+S and `:w` all reach; it formats through the editor binding's
+`formatSource` (one undoable change, focus left where it is; written to the form before the
+editor has loaded) and then saves. A file with syntax errors is saved as written, with no toast,
+since its problems are already listed. It formats only a save that already changes the source:
+in the template studio a material change (`hasMaterialChange`), so renaming an approved template
+never becomes a new version to approve; in the library studio a source that differs from the
+saved one.
+
 `unlessUnanswered` wraps every assisting call. A request the module refuses is a caller bug, so it
 is logged once per operation for the developer, but it never breaks typing: the editor carries on
 as if the operation had nothing to offer. A trap or any other failure still throws.
@@ -156,7 +169,7 @@ The template studio (`routes/formula-template/_components/studio/`) and the libr
   `coverage` warning listing those regions; the submit dialogs show it beside the server's checks
   where the server sends no `coverage` row (`withLiveChecks`), each region a link into the source.
 - `SourceStatusBar` carries the editor's menu (`EditorActionsMenu`: Go to definition, Find
-  references, Rename and, in a tariff, Promote to input, each with its key).
+  references, Rename and, in a tariff, Promote to input, each with its key, then Format on save).
 - `ChoicesView` (`components/tariff-bill/`) draws what each `best` or `worst` chose: the preview's
   `choices` (the module's wire form) under the bill, and the shipment's
   `ratingDetail.choices` (GraphQL, read by `readStoredTariffChoices`) on its billing card.

@@ -1,8 +1,8 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useFormContext } from "react-hook-form";
 
@@ -71,7 +71,7 @@ export function CustomerEmailProfileForm() {
         title={t("Attachments & content")}
         description={t("Control the invoice attachment format and email body content")}
       >
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <InputField
               control={control}
@@ -96,7 +96,6 @@ export function CustomerEmailProfileForm() {
           </FormControl>
         </FormGroup>
       </FormSection>
-
       <FormSection title={t("Delivery options")} description={t("Email content preferences")}>
         <FormGroup cols={1}>
           <FormControl className="min-h-[3em]">
@@ -107,6 +106,7 @@ export function CustomerEmailProfileForm() {
               description={t(
                 "Append a detailed breakdown of each shipment (origin, destination, dates, charges) in the email body below the invoice summary.",
               )}
+              outlined
               position="left"
             />
           </FormControl>
@@ -115,6 +115,7 @@ export function CustomerEmailProfileForm() {
               control={control}
               name="emailProfile.readReceipt"
               label={t("Request read receipt")}
+              outlined
               description={t(
                 "Ask the recipient's email client for a read confirmation and track when the email is opened. Many mail servers ignore read receipt requests, so opens are the more reliable signal.",
               )}

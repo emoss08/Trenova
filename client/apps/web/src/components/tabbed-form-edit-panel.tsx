@@ -1,25 +1,27 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Form } from "@trenova/shared/components/ui/form";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
-import { OverflowTabsList } from "@trenova/shared/components/ui/overflow-tabs-list";
-import { Tabs, TabsContent } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
+import { Dialog } from "@base-ui/react/dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
+import { XCloseIcon } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { OverflowTabsList } from "@trenova/shared/components/ui/overflow-tabs-list";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
+import { Tabs, TabsContent } from "@trenova/shared/components/ui/tabs";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { createFieldRegistry, FormFieldsProvider } from "@trenova/shared/lib/form-field-registry";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
-import { Dialog } from "@base-ui/react/dialog";
-import { useQueryClient } from "@tanstack/react-query";
-import { XCloseIcon } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
 import {
   Suspense,
@@ -30,15 +32,13 @@ import {
   type LazyExoticComponent,
 } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { ComponentLoader } from "@trenova/shared/components/component-loader";
-import { FormCopyButton } from "./form-copy-button";
 import {
   FormPanelFooter,
   PanelDirtyTracker,
   usePanelCloseGuard,
   type ChangeFields,
 } from "./form-changes";
-import { createFieldRegistry, FormFieldsProvider } from "@trenova/shared/lib/form-field-registry";
+import { FormCopyButton } from "./form-copy-button";
 import { FormSaveDock } from "./form-save-dock";
 
 const PANEL_SIZES = {

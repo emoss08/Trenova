@@ -70,6 +70,7 @@ const FIXED_ENTRIES: readonly SettingsIndexEntry[] = [
   { label: "Sidebar", section: "preferences", row: "sidebar" },
   { label: "Reduce motion", section: "preferences", row: "motion" },
   { label: "Vim keys · code editor", section: "preferences", row: "vim-keys" },
+  { label: "Format on save · code editor", section: "preferences", row: "format-on-save" },
   { label: "Ligatures · code editor", section: "preferences", row: "code-ligatures" },
   { label: "Assistant · Nova · AI", section: "preferences", row: "assistant" },
   { label: "Desktop notifications", section: "notifications", row: "desktop" },

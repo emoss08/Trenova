@@ -647,11 +647,18 @@ const shipmentCommodityBaseSchema = z.object({
   heightFeet: decimalStringSchema,
 });
 
+/**
+ * The commodity a shipment line names: the whole record when the shipment was read, or what the
+ * picker knew when someone just chose it (its name, description and handling flags). Only the
+ * name is certain, so every other field is read as possibly absent.
+ */
+export type ShipmentLineCommodity = Partial<Commodity> & Pick<Commodity, "name">;
+
 export const shipmentCommoditySchema = z.object({
   ...tenantInfoSchema.shape,
   id: optionalStringSchema,
   ...shipmentCommodityBaseSchema.shape,
-  commodity: z.custom<Commodity>().nullish(),
+  commodity: z.custom<ShipmentLineCommodity>().nullish(),
 });
 export type ShipmentCommodity = z.infer<typeof shipmentCommoditySchema>;
 

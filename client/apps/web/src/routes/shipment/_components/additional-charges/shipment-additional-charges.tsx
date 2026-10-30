@@ -1,20 +1,9 @@
 "use no memo";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { ChargePayerControl } from "@/components/billing/charge-payer-control";
 import { EmptyState } from "@/components/empty-state";
 import { detention } from "@/lib/queries/detention";
 import { OccurrenceDetailSheet } from "@/routes/detention-desk/_components/occurrence-detail-sheet";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@trenova/shared/components/ui/button";
-import { FormSection } from "@trenova/shared/components/ui/form";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { useRules } from "@trenova/shared/hooks/use-rules";
-import { allocationRemainders, chargeTotals } from "@trenova/shared/rules/allocation";
-import { additionalChargeForAllocation } from "@trenova/shared/rules/allocation-form";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
-import type { DetentionOccurrence } from "@trenova/shared/types/detention";
-import type { Shipment } from "@trenova/shared/types/shipment";
 import {
   AlertTriangleIcon,
   BoxesIcon,
@@ -26,15 +15,26 @@ import {
   Trash01Icon,
   Truck01Icon,
 } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { allocationRemainders, chargeTotals } from "@trenova/shared/rules/allocation";
+import { additionalChargeForAllocation } from "@trenova/shared/rules/allocation-form";
+import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
+import type { DetentionOccurrence } from "@trenova/shared/types/detention";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { useShipmentDefaultPayer } from "../use-shipment-default-payer";
 import {
   DetentionChargeAction,
   DetentionChargeLabel,
   DetentionChargeUnit,
 } from "./detention-charge-cell";
 import { FuelSurchargeAuditPopover } from "./fuel-surcharge-audit-popover";
-import { useShipmentDefaultPayer } from "../use-shipment-default-payer";
 import { AdditionalChargeDialog } from "./shipment-additional-charges-dialog";
 
 const NO_OCCURRENCES: DetentionOccurrence[] = [];
@@ -202,7 +202,7 @@ export default function AdditionalChargesSection() {
         }
       >
         {fields.length > 0 ? (
-          <div className="rounded-lg border">
+          <div className="rounded-lg border border-border bg-card">
             <div className="border-border text-xs text-muted-foreground grid grid-cols-10 gap-2 border-b px-4 py-2">
               <span className="col-span-4">{t("Charge")}</span>
               <span className="col-span-2">{t("Unit")}</span>

@@ -18,6 +18,7 @@ import {
   tariffInputValuesSchema,
   type TariffBillLine,
   type TariffChoice,
+  type TariffInputValues,
   type TariffWireNumber,
   type TariffWireQuantity,
 } from "./tariff";
@@ -276,4 +277,13 @@ export const storedTariffChoicesSchema: z.ZodType<TariffChoice[], unknown> = z
 export function readStoredTariffChoices(value: unknown): TariffChoice[] {
   const parsed = storedTariffChoicesSchema.safeParse(value);
   return parsed.success ? parsed.data : [];
+}
+
+/**
+ * The input values a record's rating ran with, each a wire value; empty when there are none or
+ * they do not read.
+ */
+export function readStoredTariffInputs(value: unknown): TariffInputValues {
+  const parsed = tariffInputValuesSchema.safeParse(value ?? {});
+  return parsed.success ? parsed.data : {};
 }

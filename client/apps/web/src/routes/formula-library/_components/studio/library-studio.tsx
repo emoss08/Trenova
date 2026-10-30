@@ -293,7 +293,7 @@ function LibraryStudioLayout({
     library,
     dirty,
     isSubmitting,
-    onSave,
+    save,
     setTab,
     tab,
     stacked,
@@ -337,7 +337,7 @@ function LibraryStudioLayout({
     () => ({
       save: () => {
         if (isSubmitting) return;
-        if (mode === "create" || dirty) onSave();
+        if (mode === "create" || dirty) save();
       },
       search: () => {
         setTab("reference");
@@ -346,7 +346,7 @@ function LibraryStudioLayout({
       tests: () => setTab("tests"),
       nova: () => setTab(tab === "nova" && railOpen ? "tests" : "nova"),
     }),
-    [isSubmitting, mode, dirty, onSave, setTab, tab, railOpen],
+    [isSubmitting, mode, dirty, save, setTab, tab, railOpen],
   );
   useStudioShortcuts(shortcuts);
 

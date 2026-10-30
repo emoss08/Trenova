@@ -1,6 +1,6 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { describeBillingSchedule, type BillingSchedule } from "@/lib/billing-schedule";
 import { ReceiptTextIcon } from "@trenova/shared/components/icons";
+import { useT } from "@trenova/shared/i18n/use-t";
 
 /**
  * States the configured schedule as a sentence.
@@ -13,7 +13,7 @@ export function BillingSchedulePreview({ schedule }: { schedule: BillingSchedule
   const t = useT();
 
   return (
-    <div className="bg-muted/40 flex items-start gap-3 rounded-lg border p-3">
+    <div className="bg-card flex items-start gap-3 rounded-lg border p-3">
       <ReceiptTextIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
       <div>
         <p className="text-muted-foreground text-xs font-medium">{t("This customer is billed")}</p>

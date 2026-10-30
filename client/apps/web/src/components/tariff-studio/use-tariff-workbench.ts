@@ -1,3 +1,4 @@
+import { formatTariffDocument } from "@/components/formula-editor/tariff-format";
 import { applyTariffFix } from "@/components/formula-editor/tariff-lint";
 import { isTestItem } from "@/lib/tariff-outline";
 import { revealRange } from "@/components/formula-editor/tariff-navigate";
@@ -5,6 +6,7 @@ import { checkTariffSource } from "@/components/formula-editor/tariff-service";
 import type { EditorView } from "@codemirror/view";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
+import { tariffFormat } from "@trenova/shared/rules/tariff";
 import type {
   TariffChange,
   TariffCheckResult,
@@ -90,6 +92,11 @@ export type TariffEditorBinding = {
    * without taking focus, so it can be undone; a run of such edits in a row is one undo step.
    */
   applyEdit: (change: TariffChange) => void;
+  /**
+   * Formats the source in the one canonical style, through the editor so it can be undone and
+   * without taking focus; a file with syntax errors is left as written.
+   */
+  formatSource: (rules: RulesRuntime) => void;
 };
 
 /**
@@ -175,8 +182,22 @@ export function useTariffEditorBinding({
     [readSource, writeSource],
   );
 
+  const formatSource = useCallback(
+    (rules: RulesRuntime) => {
+      const view = editorView.current;
+      if (view) {
+        formatTariffDocument(view, rules);
+        return;
+      }
+      const current = readSource();
+      const { formatted } = tariffFormat(rules, current);
+      if (formatted !== null && formatted !== current) writeSource(formatted);
+    },
+    [readSource, writeSource],
+  );
+
   return useMemo(
-    () => ({ setEditorView, reveal, applyFix, appendToSource, applyEdit }),
-    [setEditorView, reveal, applyFix, appendToSource, applyEdit],
+    () => ({ setEditorView, reveal, applyFix, appendToSource, applyEdit, formatSource }),
+    [setEditorView, reveal, applyFix, appendToSource, applyEdit, formatSource],
   );
 }

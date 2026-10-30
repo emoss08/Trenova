@@ -16,13 +16,13 @@ import {
   type CustomerTrackingSettings,
 } from "@/types/customer-tracking";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link01Icon, Mail01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 
@@ -110,8 +110,12 @@ function CustomerTrackingSettingsForm({
   const save = handleSubmit((values) => mutateAsync(values));
 
   return (
-    <div className="flex flex-col gap-4">
-      <SectionPanel title={t("Tracking link")} icon={<Link01Icon />}>
+    <div className="flex flex-col">
+      <SectionPanel
+        title={t("Tracking link")}
+        icon={<Link01Icon />}
+        className="bg-transparent border-none"
+      >
         <FormGroup cols={1} className="p-3">
           <FormControl>
             <SwitchField
@@ -136,7 +140,7 @@ function CustomerTrackingSettingsForm({
               emptyAs="array"
             />
           </FormControl>
-          <FormControl className="max-w-[300px]">
+          <FormControl cols="full">
             <NumberField
               control={control}
               name="linkTtlDays"
@@ -148,8 +152,11 @@ function CustomerTrackingSettingsForm({
           </FormControl>
         </FormGroup>
       </SectionPanel>
-
-      <SectionPanel title={t("Status emails")} icon={<Mail01Icon />}>
+      <SectionPanel
+        title={t("Status emails")}
+        icon={<Mail01Icon />}
+        className="bg-transparent border-none"
+      >
         <FormGroup cols={1} className="p-3">
           <p className="text-muted-foreground text-xs">
             {t(
@@ -162,6 +169,7 @@ function CustomerTrackingSettingsForm({
               name="notifyPickedUp"
               label={t("Picked up")}
               description={t("When the load leaves its first pickup.")}
+              outlined
               readOnly={!canEdit}
             />
           </FormControl>
@@ -170,6 +178,7 @@ function CustomerTrackingSettingsForm({
               control={control}
               name="notifyDelayed"
               label={t("Delayed")}
+              outlined
               description={t(
                 "When a stop's projected arrival falls behind its appointment, with the new arrival time.",
               )}
@@ -181,6 +190,7 @@ function CustomerTrackingSettingsForm({
               control={control}
               name="notifyDelivered"
               label={t("Delivered")}
+              outlined
               description={t("When the load leaves its last delivery.")}
               readOnly={!canEdit}
             />
@@ -190,6 +200,7 @@ function CustomerTrackingSettingsForm({
               control={control}
               name="notifyPodReady"
               label={t("Proof of delivery ready")}
+              outlined
               description={t("When the proof of delivery is filed on the shipment.")}
               readOnly={!canEdit}
             />
@@ -199,6 +210,7 @@ function CustomerTrackingSettingsForm({
               control={control}
               name="includeLink"
               label={t("Include a tracking link in each email")}
+              outlined
               readOnly={!canEdit}
             />
           </FormControl>
@@ -216,7 +228,6 @@ function CustomerTrackingSettingsForm({
           </FormControl>
         </FormGroup>
       </SectionPanel>
-
       {canEdit && (
         <div className="flex justify-end gap-2">
           <Button

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -29,4 +30,34 @@ func TestShipmentSelectOptionMapper(t *testing.T) {
 		shipmentEntity.CreatedAt,
 		shipmentSelectOptionItem(shipmentEntity).Cursor.At,
 	)
+}
+
+func TestCommoditySelectOptionMapper(t *testing.T) {
+	t.Parallel()
+
+	hazmatID := pulid.MustNew("hm_")
+	commodityEntity := &commodity.Commodity{
+		ID:                  pulid.MustNew("com_"),
+		Name:                "Lithium batteries",
+		Description:         "Boxed cells",
+		HazardousMaterialID: hazmatID,
+		Stackable:           true,
+		Fragile:             false,
+	}
+	option := commoditySelectOption(commodityEntity)
+	assert.Equal(t, "Lithium batteries", option.Label)
+	assert.Equal(t, "Boxed cells", *option.Description)
+	assert.Equal(t, hazmatID.String(), option.Meta["hazardousMaterialId"])
+	assert.Equal(t, true, option.Meta["stackable"])
+	assert.Equal(t, false, option.Meta["fragile"])
+}
+
+func TestCommoditySelectOptionMapperWithoutHazmat(t *testing.T) {
+	t.Parallel()
+
+	option := commoditySelectOption(&commodity.Commodity{
+		ID:   pulid.MustNew("com_"),
+		Name: "Paper rolls",
+	})
+	assert.Equal(t, "", option.Meta["hazardousMaterialId"])
 }

@@ -7,14 +7,17 @@ import type { TariffInputDeclaration } from "@trenova/shared/types/tariff";
 import { MemoryRouter } from "react-router";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import ShipmentBillingDetails from "../shipment-billing-details";
 
-const { getBillingProfile, getUIPolicy, getDeclaredInputs, approveRating } = vi.hoisted(() => ({
-  getBillingProfile: vi.fn(),
-  getUIPolicy: vi.fn(),
-  getDeclaredInputs: vi.fn(),
-  approveRating: vi.fn(),
-}));
+const { getBillingProfile, getUIPolicy, getDeclaredInputs, approveRating, getAppliedQuote } =
+  vi.hoisted(() => ({
+    getBillingProfile: vi.fn(),
+    getUIPolicy: vi.fn(),
+    getDeclaredInputs: vi.fn(),
+    approveRating: vi.fn(),
+    getAppliedQuote: vi.fn(),
+  }));
 
 vi.mock("@/lib/graphql/shipment", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -29,6 +32,7 @@ vi.mock("@/services/api", () => ({
     shipmentService: { getUIPolicy },
     customerService: { getBillingProfile },
     formulaTemplateService: { getDeclaredInputs },
+    rateQuoteService: { getAppliedForShipment: getAppliedQuote },
   },
 }));
 vi.mock("@/components/autocomplete-fields", () => ({
@@ -49,7 +53,6 @@ vi.mock("@/hooks/use-shipment-totals-preview", () => ({
 }));
 vi.mock("../profitability/profitability-summary", () => ({ ProfitabilitySummary: () => null }));
 vi.mock("../previous-rates-dialog", () => ({ PreviousRatesButton: () => null }));
-vi.mock("../why-this-rate", () => ({ WhyThisRate: () => null }));
 vi.mock("../auto-rate-dialog", () => ({ AutoRateDialog: () => null }));
 vi.mock("../billing-by-payer-card", () => ({ BillingByPayerCard: () => null }));
 vi.mock("../additional-charges/fuel-surcharge-change-dialog", () => ({
@@ -105,6 +108,7 @@ const RATED: Partial<Shipment> = {
     versionNumber: 4,
     agreementName: "Acme 2026",
     ruleLabel: "Dallas to Chicago",
+    inputs: { rate: { $q: "2.35", u: "$/mi" } },
     bill: {
       currency: "USD",
       lines: [
@@ -136,6 +140,14 @@ const RATED: Partial<Shipment> = {
   } as unknown as Shipment["ratingDetail"],
 };
 
+async function openBreakdown() {
+  await userEvent.click(await screen.findByRole("button", { name: "Rating breakdown" }));
+}
+
+async function openSection(name: RegExp) {
+  await userEvent.click(await screen.findByRole("button", { name }));
+}
+
 function VersionProbe() {
   const { watch } = useFormContext<Shipment>();
   return <output aria-label="version">{String(watch("version") ?? "")}</output>;
@@ -159,16 +171,82 @@ function Harness({ values }: { values: Partial<Shipment> }) {
 }
 
 describe("ShipmentBillingDetails on a tariff", () => {
-  it("shows the last rating's bill line by line with the contract that priced it", async () => {
+  it("names the contract that priced the shipment and keeps its bill out of the card", async () => {
     getDeclaredInputs.mockResolvedValue(DECLARATIONS);
     render(<Harness values={RATED} />);
+
+    expect(await screen.findByText("Acme 2026 — Dallas to Chicago")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rating breakdown" })).toBeInTheDocument();
+    expect(screen.queryByText("Linehaul")).not.toBeInTheDocument();
+  });
+
+  it("opens the last rating's bill line by line, with its tariff version", async () => {
+    getDeclaredInputs.mockResolvedValue(DECLARATIONS);
+    render(<Harness values={RATED} />);
+
+    await openBreakdown();
 
     expect(await screen.findByText("Linehaul")).toBeInTheDocument();
     expect(screen.getByText("812 mi × $2.35/mi")).toBeInTheDocument();
     expect(screen.getByText("Extra drops")).toBeInTheDocument();
     expect(screen.getByText("XDROP")).toBeInTheDocument();
-    expect(screen.getByText("Acme 2026 — Dallas to Chicago")).toBeInTheDocument();
     expect(screen.getByText("v4")).toBeInTheDocument();
+    const bill = screen.getByRole("region", { name: "Bill" });
+    const freight = within(bill).getByRole("region", { name: "Freight" });
+    expect(within(freight).getByText("Linehaul")).toBeInTheDocument();
+    expect(within(freight).getAllByText("$1,908.20")).toHaveLength(2);
+    const accessorials = within(bill).getByRole("region", { name: "Accessorials" });
+    expect(within(accessorials).getByText("Extra drops")).toBeInTheDocument();
+    expect(within(accessorials).getAllByText("$75.00")).toHaveLength(2);
+    expect(within(bill).getByText("$1,983.20")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open tariff" })).toHaveAttribute(
+      "href",
+      formulaTemplateRoutes.edit("ft_dry_van"),
+    );
+  });
+
+  it("lists the input values the rating ran with", async () => {
+    getDeclaredInputs.mockResolvedValue(DECLARATIONS);
+    render(<Harness values={RATED} />);
+
+    await openBreakdown();
+    await openSection(/^Inputs it ran with/);
+
+    const inputs = await screen.findByLabelText("Inputs it ran with");
+    expect(within(inputs).getByText("Rate")).toBeInTheDocument();
+    expect(within(inputs).getByText("$2.35/mi")).toBeInTheDocument();
+  });
+
+  it("asks for the contract's reasoning only once its row opens", async () => {
+    getDeclaredInputs.mockResolvedValue(DECLARATIONS);
+    getAppliedQuote.mockResolvedValue(null);
+    const ratingDetail = {
+      ...(RATED.ratingDetail as object),
+      rateQuoteId: "rqt_1",
+    } as unknown as Shipment["ratingDetail"];
+    render(<Harness values={{ ...RATED, ratingDetail }} />);
+
+    await screen.findByText("Acme 2026 — Dallas to Chicago");
+    expect(getAppliedQuote).not.toHaveBeenCalled();
+
+    await openBreakdown();
+    expect(await screen.findByText("Linehaul")).toBeInTheDocument();
+    expect(getAppliedQuote).not.toHaveBeenCalled();
+
+    await openSection(/^Why this contract/);
+
+    await waitFor(() => expect(getAppliedQuote).toHaveBeenCalledWith("shp_1"));
+  });
+
+  it("asks for no contract reasoning for a rating no contract priced", async () => {
+    getDeclaredInputs.mockResolvedValue(DECLARATIONS);
+    render(<Harness values={RATED} />);
+
+    await openBreakdown();
+
+    expect(await screen.findByText("Linehaul")).toBeInTheDocument();
+    expect(getAppliedQuote).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /^Why this contract/ })).not.toBeInTheDocument();
   });
 
   it("shows what each choice kept, with every option's subtotal or refusal", async () => {
@@ -197,6 +275,8 @@ describe("ShipmentBillingDetails on a tariff", () => {
     } as unknown as Shipment["ratingDetail"];
     render(<Harness values={{ ...RATED, ratingDetail }} />);
 
+    await openBreakdown();
+    await openSection(/^Choices/);
     const choices = await screen.findByRole("region", { name: "Choices" });
     expect(within(choices).getByText("Chose Flat")).toBeInTheDocument();
     expect(within(choices).getByText("Lowest wins")).toBeInTheDocument();
@@ -214,8 +294,9 @@ describe("ShipmentBillingDetails on a tariff", () => {
   it("shows no choices for a rating that made none", async () => {
     getDeclaredInputs.mockResolvedValue(DECLARATIONS);
     render(<Harness values={RATED} />);
+    await openBreakdown();
     expect(await screen.findByText("Linehaul")).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Choices" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Choices/ })).not.toBeInTheDocument();
   });
 
   it("edits the shipment's own input values for its tariff in place of a base rate", async () => {
@@ -229,7 +310,7 @@ describe("ShipmentBillingDetails on a tariff", () => {
     expect(getDeclaredInputs).toHaveBeenCalledWith("ft_dry_van", null, expect.anything());
   });
 
-  it("says why the tariff refused to rate, in its author's words, in place of a bill", async () => {
+  it("says on the card why the tariff refused to rate, with no bill to open", async () => {
     getDeclaredInputs.mockResolvedValue(DECLARATIONS);
     render(
       <Harness
@@ -246,7 +327,7 @@ describe("ShipmentBillingDetails on a tariff", () => {
 
     expect(await screen.findByText("The tariff refused to rate this shipment")).toBeInTheDocument();
     expect(screen.getByText("This rate needs the shipment's weight")).toBeInTheDocument();
-    expect(screen.queryByText("Linehaul")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Rating breakdown" })).not.toBeInTheDocument();
   });
 
   it("says which charges were left to the tariff", async () => {
@@ -263,17 +344,23 @@ describe("ShipmentBillingDetails on a tariff", () => {
       />,
     );
 
+    await openBreakdown();
     expect(
       await screen.findByText("Not added again, since the tariff billed it: FSC"),
     ).toBeInTheDocument();
   });
 
-  it("shows no bill for a shipment that has not been rated", async () => {
+  it("offers no breakdown for a shipment that has not been rated", async () => {
     getDeclaredInputs.mockResolvedValue(DECLARATIONS);
     render(<Harness values={{ ...RATED, ratingDetail: null }} />);
 
     await screen.findByText("Paid per loaded mile");
-    expect(screen.queryByText("Linehaul")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Rating breakdown" })).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Automatically calculated based on the rating method, freight charges, and any additional accessorial charges.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("asks for a rating method before it can show any inputs", () => {
@@ -329,7 +416,7 @@ describe("ShipmentBillingDetails on a tariff", () => {
     getDeclaredInputs.mockResolvedValue(DECLARATIONS);
     render(<Harness values={RATED} />);
 
-    expect(await screen.findByText("Linehaul")).toBeInTheDocument();
+    expect(await screen.findByText("Acme 2026 — Dallas to Chicago")).toBeInTheDocument();
     expect(screen.queryByTestId("rating-review-hold")).not.toBeInTheDocument();
     expect(screen.queryByTestId("rating-review-approved")).not.toBeInTheDocument();
   });

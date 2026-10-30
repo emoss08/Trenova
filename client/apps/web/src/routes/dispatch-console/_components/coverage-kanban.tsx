@@ -1,10 +1,6 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { VirtualRows, type VirtualRowsHandle } from "@/components/virtual-rows";
 import type { DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import { useDroppable } from "@dnd-kit/core";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
 import {
   AlertTriangleIcon,
   Building07Icon,
@@ -12,8 +8,14 @@ import {
   Send01Icon,
   Snowflake01Icon,
 } from "@trenova/shared/components/icons";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { ScrollArea, ScrollBar } from "@trenova/shared/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useNow } from "@trenova/shared/hooks/use-now";
-import { useMemo } from "react";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
+import { useEffect, useMemo, useRef } from "react";
 import { CoverageKanbanSkeleton } from "./console-skeletons";
 import {
   URGENCY_ORDER,
@@ -24,6 +26,9 @@ import {
   type UrgencyBucket,
 } from "./dispatch-vocabulary";
 import { formatOfferCountdown, tenderChipMeta, type TenderChipTone } from "./tender-vocabulary";
+
+// A card with one row of badges, plus the gap above it.
+const MOVE_CARD_ESTIMATE_PX = 114;
 
 const TENDER_CHIP_VARIANT: Record<TenderChipTone, "info" | "success" | "warning"> = {
   info: "info",
@@ -91,6 +96,26 @@ function MoveCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="truncate font-mono text-xs font-semibold">{move.proNumber}</span>
+          {/* A reefer reads from the mark alone; its range sits behind it so the badge row
+              never wraps to a second line and makes the card taller. */}
+          {move.temperatureMin != null && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span
+                    role="img"
+                    aria-label={t("Reefer {0}–{1}°F", move.temperatureMin, move.temperatureMax)}
+                    className="text-info-foreground flex shrink-0 cursor-help"
+                  >
+                    <Snowflake01Icon className="size-3" aria-hidden />
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {t("Reefer {0}–{1}°F", move.temperatureMin, move.temperatureMax)}
+              </TooltipContent>
+            </Tooltip>
+          )}
           {move.moveCount > 1 && (
             <Badge
               variant="neutral"
@@ -147,12 +172,6 @@ function MoveCard({
             {t("Hazmat")}
           </Badge>
         )}
-        {move.temperatureMin != null && (
-          <Badge variant="info" className="h-4 rounded-md px-1 text-3xs">
-            <Snowflake01Icon className="mr-0.5 size-2.5" aria-hidden />
-            {t("{0}–{1}°F", move.temperatureMin, move.temperatureMax)}
-          </Badge>
-        )}
         {move.hasActiveHold && (
           <Badge variant="danger" className="h-4 rounded-md px-1 text-3xs">
             <AlertTriangleIcon className="mr-0.5 size-2.5" aria-hidden />
@@ -199,8 +218,15 @@ function UrgencyColumn({
 
   const meta = urgencyMeta(bucket);
 
+  // Only the cards near the viewport are mounted, so a selection made elsewhere (the
+  // keyboard, a drop) is scrolled to rather than left on a card that may not exist yet.
+  const listRef = useRef<VirtualRowsHandle>(null);
+  useEffect(() => {
+    if (selectedMoveId) listRef.current?.scrollToKey(selectedMoveId);
+  }, [selectedMoveId]);
+
   return (
-    <div className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1">
+    <div className="bg-muted/30 flex min-h-60 w-64 max-w-md shrink-0 grow flex-col rounded-md border">
       <header
         className="flex items-center gap-1.5 border-b px-2 py-1.5"
         title={t(meta.description)}
@@ -209,29 +235,31 @@ function UrgencyColumn({
         <span className="text-xs font-semibold">{t(meta.label)}</span>
         <span className="text-muted-foreground ml-auto text-2xs tabular-nums">{moves.length}</span>
       </header>
-      <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
-        <div className="flex flex-col gap-1.5 p-1.5">
-          {moves.map((move) => (
+      <VirtualRows
+        rows={moves.map((move) => ({
+          key: move.moveId,
+          render: () => (
             <MoveCard
-              key={move.moveId}
               move={move}
               isSelected={selectedMoveId === move.moveId}
               onSelect={onSelectMove}
             />
-          ))}
-          {moves.length === 0 && (
-            <p className="text-muted-foreground py-6 text-center text-xs">{t("Nothing here.")}</p>
-          )}
-        </div>
-      </ScrollArea>
+          ),
+        }))}
+        handleRef={listRef}
+        mask="card"
+        className="min-h-0 flex-1"
+        rowClassName="px-1.5 pt-1.5"
+        estimateSize={MOVE_CARD_ESTIMATE_PX}
+        footer={<div className="h-1.5" aria-hidden />}
+        empty={
+          <p className="text-muted-foreground py-6 text-center text-xs">{t("Nothing here.")}</p>
+        }
+      />
     </div>
   );
 }
 
-/**
- * Grouping by urgency is the triage a dispatcher performs anyway. Doing it for them means
- * the queue that is already broken is the one they see first.
- */
 export function CoverageKanban({
   moves,
   isLoading,
@@ -254,16 +282,21 @@ export function CoverageKanban({
   }
 
   return (
-    <div className="flex h-full min-h-0 gap-2 overflow-x-auto">
-      {visibleBuckets.map((bucket) => (
-        <UrgencyColumn
-          key={bucket}
-          bucket={bucket}
-          moves={grouped.get(bucket) ?? []}
-          selectedMoveId={selectedMoveId}
-          onSelectMove={onSelectMove}
-        />
-      ))}
-    </div>
+    <ScrollArea className="h-full" maskVariant="card">
+      {/* Columns share the width on a wide screen and never drop below a usable width on a
+          narrow one, where the row overflows into the horizontal scroll instead. */}
+      <div className="flex h-full gap-2 pb-3">
+        {visibleBuckets.map((bucket) => (
+          <UrgencyColumn
+            key={bucket}
+            bucket={bucket}
+            moves={grouped.get(bucket) ?? []}
+            selectedMoveId={selectedMoveId}
+            onSelectMove={onSelectMove}
+          />
+        ))}
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   );
 }

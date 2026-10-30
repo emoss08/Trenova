@@ -62,6 +62,8 @@ type VirtualRowsProps = {
   mask?: ScrollAreaMaskVariant;
   /** Classes on the masks, such as an inset that keeps a pinned heading clear of the top fade. */
   maskClassName?: string;
+  /** How far the masks fade in, in pixels; a dense list takes a shorter fade. */
+  maskHeight?: number;
 };
 
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
@@ -99,6 +101,7 @@ export function VirtualRows({
   footer,
   mask,
   maskClassName,
+  maskHeight,
 }: VirtualRowsProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const setScrollElement = useCallback(
@@ -206,6 +209,7 @@ export function VirtualRows({
         viewportRef={setScrollElement}
         maskVariant={mask}
         maskClassName={maskClassName}
+        maskHeight={maskHeight}
         className={className}
         viewportClassName="overscroll-contain"
       >

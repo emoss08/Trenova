@@ -57,6 +57,8 @@ export function FieldDescription({
 
 type FieldWrapperProps = {
   label?: React.ReactNode;
+  /** A small control beside the label, such as one that clears the value back to what it inherits. */
+  labelAction?: React.ReactNode;
   description?: string | React.ReactNode;
   warning?: WarningProps;
   required?: boolean;
@@ -90,6 +92,7 @@ export type FieldLayout = "stacked" | "inline";
  */
 export function FieldRow({
   label,
+  labelAction,
   required,
   description,
   htmlFor,
@@ -97,6 +100,8 @@ export function FieldRow({
   children,
 }: {
   label?: React.ReactNode;
+  /** A small control beside the label. */
+  labelAction?: React.ReactNode;
   required?: boolean;
   description?: React.ReactNode;
   /** The control's id, so the label names it. */
@@ -109,7 +114,14 @@ export function FieldRow({
       className={cn("grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-x-4", className)}
     >
       <div className="flex min-w-0 flex-col gap-1 pt-2">
-        <FieldLabel label={label} required={required} htmlFor={htmlFor} className="text-sm" />
+        {label && labelAction ? (
+          <div className="flex min-w-0 items-center gap-1">
+            <FieldLabel label={label} required={required} htmlFor={htmlFor} className="text-sm" />
+            {labelAction}
+          </div>
+        ) : (
+          <FieldLabel label={label} required={required} htmlFor={htmlFor} className="text-sm" />
+        )}
         {description}
       </div>
       <div className="flex min-w-0 flex-col gap-0.5">{children}</div>
@@ -145,7 +157,7 @@ export function FieldLabel({
 }
 
 function FieldWrapperInner({ children }: { children: React.ReactNode }) {
-  return <div className="mb-0.5 flex items-center">{children}</div>;
+  return <div className="mb-0.5 flex items-center gap-1">{children}</div>;
 }
 
 function FieldWrapperDescriptionInner({ children }: { children: React.ReactNode }) {
@@ -154,6 +166,7 @@ function FieldWrapperDescriptionInner({ children }: { children: React.ReactNode 
 
 export function FieldWrapper({
   label,
+  labelAction,
   description,
   warning,
   required,
@@ -183,6 +196,7 @@ export function FieldWrapper({
     return (
       <FieldRow
         label={label}
+        labelAction={labelAction}
         required={required}
         htmlFor={htmlFor}
         className={className}
@@ -203,6 +217,7 @@ export function FieldWrapper({
       {label && (
         <FieldWrapperInner>
           <FieldLabel label={label} required={required} htmlFor={htmlFor} />
+          {labelAction}
         </FieldWrapperInner>
       )}
       {control}

@@ -1,5 +1,5 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { CAPACITY_FILTERS, URGENCY_ORDER } from "./dispatch-vocabulary";
+import { URGENCY_ORDER } from "./dispatch-vocabulary";
 import {
   BAR_HEIGHT_PX,
   RAIL_WIDTH_PX,
@@ -15,7 +15,6 @@ import {
  * never shifts between "loading the code" and "loading the data".
  */
 
-const RAIL_CHIP_WIDTHS = ["w-9", "w-14", "w-18", "w-16", "w-16", "w-18"] as const;
 const CAPACITY_ROW_COUNT = 8;
 const KANBAN_CARD_COUNTS = [4, 3, 3, 2, 2] as const;
 const TIMELINE_ROW_COUNT = 9;
@@ -78,21 +77,14 @@ export function CapacityRailRowsSkeleton() {
 export function CapacityRailSkeleton() {
   return (
     <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
-      <header className="flex flex-col gap-2 border-b p-2">
-        <Skeleton className="h-8 w-full rounded-md" />
-        <div className="flex flex-wrap gap-1">
-          {CAPACITY_FILTERS.map((filter, index) => (
-            <Skeleton
-              key={filter.id}
-              className={`h-5 rounded-badge ${RAIL_CHIP_WIDTHS[index] ?? "w-14"}`}
-            />
-          ))}
-        </div>
+      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-2.5 w-12" />
       </header>
 
-      <div className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <Skeleton className="h-2.5 w-16" />
-        <Skeleton className="h-2.5 w-12" />
+      <div className="flex items-center gap-1.5 border-b p-2">
+        <Skeleton className="h-7 min-w-0 flex-1 rounded-md" />
+        <Skeleton className="h-7 w-16 shrink-0 rounded-md" />
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
@@ -104,11 +96,11 @@ export function CapacityRailSkeleton() {
 
 export function CoverageKanbanSkeleton() {
   return (
-    <div className="flex h-full min-h-0 gap-2 overflow-hidden">
+    <div className="flex h-full min-h-0 gap-2 overflow-hidden pb-3">
       {URGENCY_ORDER.map((bucket, index) => (
         <div
           key={bucket}
-          className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1"
+          className="bg-muted/30 flex min-h-60 w-64 max-w-md shrink-0 grow flex-col rounded-md border"
         >
           <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
             <Skeleton className="size-1.5 rounded-full" />

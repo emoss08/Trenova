@@ -83,7 +83,6 @@ vi.mock("@/hooks/use-shipment-totals-preview", () => ({
 }));
 vi.mock("../profitability/profitability-summary", () => ({ ProfitabilitySummary: () => null }));
 vi.mock("../previous-rates-dialog", () => ({ PreviousRatesButton: () => null }));
-vi.mock("../why-this-rate", () => ({ WhyThisRate: () => null }));
 vi.mock("../auto-rate-dialog", () => ({ AutoRateDialog: () => null }));
 vi.mock("../additional-charges/fuel-surcharge-change-dialog", () => ({
   FuelSurchargeChangeDialog: () => null,

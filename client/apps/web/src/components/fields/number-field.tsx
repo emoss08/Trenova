@@ -18,6 +18,8 @@ type BaseNumberFieldProps = {
   /** Maps a value that is not a plain number or decimal text in and out of the field. */
   codec?: NumberFieldCodec;
   label?: React.ReactNode;
+  /** A small control beside the label. */
+  labelAction?: React.ReactNode;
   description?: React.ReactNode;
   layout?: FieldLayout;
   /** Drawn beside the input at its height, such as a unit select. */
@@ -111,6 +113,7 @@ function NumberFieldImpl<T extends FieldValues>({
   control,
   description,
   label,
+  labelAction,
   className,
   inputClassName,
   placeholder = "Enter Valid Number",
@@ -190,6 +193,7 @@ function NumberFieldImpl<T extends FieldValues>({
           <FieldWrapper
             name={name}
             label={label}
+            labelAction={labelAction}
             description={description}
             required={!!rules?.required}
             error={fieldState.error?.message}

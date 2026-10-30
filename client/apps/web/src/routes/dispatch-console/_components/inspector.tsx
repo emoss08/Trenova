@@ -3,6 +3,8 @@ import { CapabilityGate } from "@/components/capability-gate";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { VerifyEquipmentDialog } from "@/components/carrier-assignment/verify-equipment-dialog";
 import { PermissionGate } from "@/components/permission-gate";
+import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
+import { usePermission } from "@/hooks/use-permission";
 import { isTypingTarget } from "@/lib/dom";
 import type {
   DispatchBoardDriver,
@@ -37,21 +39,28 @@ import type { DispatchActions } from "./use-dispatch-actions";
 
 const CANDIDATE_STALE_MS = 30_000;
 const MAX_HOTKEY_RANK = 9;
+// Header, metrics line, two findings and the actions; an expanded row is measured once open.
+const CANDIDATE_ROW_ESTIMATE_PX = 132;
+const MATCH_ROW_ESTIMATE_PX = 76;
+const NO_EXPANDED = new Set<string>();
 
 function CandidateRow({
   candidate,
   rank,
+  expanded,
+  onToggleExpanded,
   onAssign,
   isAssigning,
 }: {
   candidate: DispatchCandidate;
   rank: number;
+  expanded: boolean;
+  onToggleExpanded: (workerId: string) => void;
   onAssign: (candidate: DispatchCandidate) => void;
   isAssigning: boolean;
 }) {
   const t = useT();
 
-  const [expanded, setExpanded] = useState(false);
   const verdict = verdictMeta(candidate.verdict);
   const missingTractor = !candidate.tractorId;
 
@@ -98,7 +107,7 @@ function CandidateRow({
           size="sm"
           variant="outline"
           className="h-6 px-2 text-2xs"
-          onClick={() => setExpanded((value) => !value)}
+          onClick={() => onToggleExpanded(candidate.workerId)}
         >
           {expanded ? t("Hide detail") : t("Why this score")}
         </Button>
@@ -108,7 +117,7 @@ function CandidateRow({
           disabled={candidate.blocked || missingTractor || isAssigning}
           title={
             missingTractor && !candidate.blocked
-              ? "This driver has no tractor assigned; assign one before dispatching."
+              ? t("This driver has no tractor assigned; assign one before dispatching.")
               : undefined
           }
           onClick={() => onAssign(candidate)}
@@ -251,6 +260,18 @@ function MoveInspector({
   const t = useT();
 
   const [includeBlocked, setIncludeBlocked] = useState(false);
+  // Rows scroll out of the virtual window and unmount, so which ones are open lives here
+  // rather than in each row; it belongs to one move and resets when the move changes.
+  const [expanded, setExpanded] = useState<{ moveId: string; workerIds: ReadonlySet<string> }>({
+    moveId: move.moveId,
+    workerIds: NO_EXPANDED,
+  });
+  const expandedWorkerIds = expanded.moveId === move.moveId ? expanded.workerIds : NO_EXPANDED;
+  const toggleExpanded = (workerId: string) => {
+    const next = new Set(expandedWorkerIds);
+    if (!next.delete(workerId)) next.add(workerId);
+    setExpanded({ moveId: move.moveId, workerIds: next });
+  };
   const openCarrierAssign = useDispatchConsoleStore((s) => s.openCarrierAssign);
   const openTender = useDispatchConsoleStore((s) => s.openTender);
   const capabilities = useOrgCapabilities();
@@ -261,6 +282,14 @@ function MoveInspector({
     capabilities,
     OrganizationCapability.AssetOperations,
   );
+  const { allowed: canAssignCarrier } = usePermission(Resource.ShipmentMove, Operation.Assign);
+  const { allowed: canTender } = usePermission(Resource.Tender, Operation.Create);
+  // The carrier paths get a row of their own: sharing one with the candidate count left
+  // the count wrapping beside three buttons in a 320px pane.
+  const showsCarrierPaths =
+    hasOrganizationCapability(capabilities, OrganizationCapability.Brokerage) &&
+    !move.isCovered &&
+    (canAssignCarrier || canTender);
   const isCarrierCovered = move.coverageType === "carrier";
   // A carrier-covered move cannot take a driver on top; the carrier assignment has to be
   // canceled first, so driver assignment is held off rather than allowed to fail.
@@ -294,6 +323,54 @@ function MoveInspector({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [candidates, hotkeysEnabled, assignLocked, canRankDrivers, onAssign]);
 
+  const tenderHistory = (
+    <CapabilityGate capability={OrganizationCapability.Brokerage}>
+      <TenderHistory
+        shipmentId={move.shipmentId}
+        isTendering={actions.isTendering}
+        onBounceTender={actions.bounceTender}
+      />
+    </CapabilityGate>
+  );
+
+  // An organization that ranks drivers always has rows here (placeholders, the ranking, or
+  // the line saying there is none), so the list and the tender history under it stay
+  // mounted through a reload; one that ranks none shows the history alone.
+  const candidateRows: VirtualRow[] = !canRankDrivers
+    ? []
+    : isLoading
+      ? Array.from({ length: 5 }, (_, index) => ({
+          key: `placeholder-${index}`,
+          render: () => <Skeleton className="h-24 rounded-md" />,
+        }))
+      : candidates.length === 0
+        ? [
+            {
+              key: "none",
+              render: () => (
+                <p className="text-muted-foreground px-1 py-6 text-center text-xs">
+                  {t(
+                    "No eligible driver for this move. {0}",
+                    !includeBlocked ? ` ${t("Show ineligible drivers to see why.")}` : "",
+                  )}
+                </p>
+              ),
+            },
+          ]
+        : candidates.map((candidate, index) => ({
+            key: candidate.workerId,
+            render: () => (
+              <CandidateRow
+                candidate={candidate}
+                rank={index + 1}
+                expanded={expandedWorkerIds.has(candidate.workerId)}
+                onToggleExpanded={toggleExpanded}
+                onAssign={onAssign}
+                isAssigning={assignLocked}
+              />
+            ),
+          }));
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-0.5 border-b px-2.5 py-2">
@@ -316,99 +393,70 @@ function MoveInspector({
         </CapabilityGate>
       )}
 
-      <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
-        {canRankDrivers && (
-          <span className="text-muted-foreground text-xs">
-            {t("{0} candidates", candidates.length)}
-          </span>
-        )}
-        <div className="ml-auto flex items-center gap-1.5">
-          <CapabilityGate capability={OrganizationCapability.Brokerage}>
-            {!move.isCovered && (
-              <PermissionGate resource={Resource.ShipmentMove} operation={Operation.Assign}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-6 px-2 text-2xs"
-                  disabled={isAssigning}
-                  onClick={() => openCarrierAssign(move)}
-                >
-                  <Building07Icon className="size-3" aria-hidden />
-                  {t("Assign to carrier")}
-                </Button>
-              </PermissionGate>
-            )}
-            {!move.isCovered && (
-              <PermissionGate resource={Resource.Tender} operation={Operation.Create}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-6 px-2 text-2xs"
-                  disabled={isAssigning}
-                  onClick={() => openTender(move)}
-                >
-                  <Send01Icon className="size-3" aria-hidden />
-                  {t("Tender to carriers")}
-                </Button>
-              </PermissionGate>
-            )}
-          </CapabilityGate>
-          {canRankDrivers && (
+      {showsCarrierPaths && (
+        <div className="flex items-center gap-1.5 border-b px-2.5 py-1.5">
+          {canAssignCarrier && (
             <Button
               size="sm"
               variant="outline"
-              className="h-6 px-2 text-2xs"
-              onClick={() => setIncludeBlocked((value) => !value)}
+              className="h-6 flex-1 px-2 text-2xs"
+              disabled={isAssigning}
+              onClick={() => openCarrierAssign(move)}
             >
-              {includeBlocked ? t("Hide ineligible") : t("Show ineligible")}
+              <Building07Icon className="size-3" aria-hidden />
+              {t("Assign to carrier")}
+            </Button>
+          )}
+          {canTender && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 flex-1 px-2 text-2xs"
+              disabled={isAssigning}
+              onClick={() => openTender(move)}
+            >
+              <Send01Icon className="size-3" aria-hidden />
+              {t("Tender to carriers")}
             </Button>
           )}
         </div>
-      </div>
+      )}
 
-      <ScrollArea
-        className="min-h-0 flex-1"
-        viewportClassName="min-h-0"
-        maskVariant="card"
-        maskHeight={18}
-      >
-        <div className="flex flex-col gap-1.5 p-2">
-          {canRankDrivers && (
-            <>
-              {isLoading
-                ? Array.from({ length: 5 }, (_, index) => (
-                    <Skeleton key={index} className="h-24 rounded-md" />
-                  ))
-                : candidates.map((candidate, index) => (
-                    <CandidateRow
-                      key={candidate.workerId}
-                      candidate={candidate}
-                      rank={index + 1}
-                      onAssign={onAssign}
-                      isAssigning={assignLocked}
-                    />
-                  ))}
-              {!isLoading && candidates.length === 0 && (
-                <p className="text-muted-foreground px-1 py-6 text-center text-xs">
-                  {t(
-                    "No eligible driver for this move. {0}",
-                    !includeBlocked ? ` ${t("Show ineligible drivers to see why.")}` : "",
-                  )}
-                </p>
-              )}
-            </>
-          )}
-
-          <CapabilityGate capability={OrganizationCapability.Brokerage}>
-            <TenderHistory
-              shipmentId={move.shipmentId}
-              className="mt-2"
-              isTendering={actions.isTendering}
-              onBounceTender={actions.bounceTender}
-            />
-          </CapabilityGate>
+      {canRankDrivers && (
+        <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
+          <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap tabular-nums">
+            {t("{0, plural, one {# candidate} other {# candidates}}", candidates.length)}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-2xs"
+            onClick={() => setIncludeBlocked((value) => !value)}
+          >
+            {includeBlocked ? t("Hide ineligible") : t("Show ineligible")}
+          </Button>
         </div>
-      </ScrollArea>
+      )}
+
+      <VirtualRows
+        rows={candidateRows}
+        mask="card"
+        maskHeight={18}
+        className="min-h-0 flex-1"
+        rowClassName="px-2 pt-1.5"
+        estimateSize={CANDIDATE_ROW_ESTIMATE_PX}
+        footer={<div className="p-2">{tenderHistory}</div>}
+        empty={
+          <ScrollArea
+            className="min-h-0 flex-1"
+            viewportClassName="min-h-0"
+            maskVariant="card"
+            maskHeight={18}
+          >
+            <div className="p-2">{tenderHistory}</div>
+          </ScrollArea>
+        }
+      />
     </div>
   );
 }
@@ -470,6 +518,27 @@ function DriverInspector({
 
   const matches = data ?? [];
 
+  const matchRows: VirtualRow[] = isLoading
+    ? Array.from({ length: 4 }, (_, index) => ({
+        key: `placeholder-${index}`,
+        render: () => <Skeleton className="h-16 rounded-md" />,
+      }))
+    : matches.length === 0
+      ? [
+          {
+            key: "none",
+            render: () => (
+              <p className="text-muted-foreground px-1 py-6 text-center text-xs">
+                {t("No open moves suit this driver right now.")}
+              </p>
+            ),
+          },
+        ]
+      : matches.map((match) => ({
+          key: match.move.moveId,
+          render: () => <DriverMatchRow match={match} onSelectMove={onSelectMove} />,
+        }));
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-0.5 border-b px-2.5 py-2">
@@ -510,27 +579,15 @@ function DriverInspector({
         {t("Best fit ({0})", matches.length)}
       </span>
 
-      <ScrollArea
-        className="min-h-0 flex-1"
-        viewportClassName="min-h-0"
-        maskVariant="card"
+      <VirtualRows
+        rows={matchRows}
+        mask="card"
         maskHeight={18}
-      >
-        <div className="flex flex-col gap-1.5 p-2">
-          {isLoading
-            ? Array.from({ length: 4 }, (_, index) => (
-                <Skeleton key={index} className="h-16 rounded-md" />
-              ))
-            : matches.map((match) => (
-                <DriverMatchRow key={match.move.moveId} match={match} onSelectMove={onSelectMove} />
-              ))}
-          {!isLoading && matches.length === 0 && (
-            <p className="text-muted-foreground px-1 py-6 text-center text-xs">
-              {t("No open moves suit this driver right now.")}
-            </p>
-          )}
-        </div>
-      </ScrollArea>
+        className="min-h-0 flex-1"
+        rowClassName="px-2 pt-1.5"
+        estimateSize={MATCH_ROW_ESTIMATE_PX}
+        footer={<div className="h-2" aria-hidden />}
+      />
     </div>
   );
 }

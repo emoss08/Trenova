@@ -29,6 +29,8 @@ export type BaseSelectFieldProps = {
   options?: SelectOption[];
   groups?: SelectOptionGroup[];
   label?: string;
+  /** A small control beside the label. */
+  labelAction?: React.ReactNode;
   description?: React.ReactNode;
   isReadOnly?: boolean;
   isBoolean?: boolean;
@@ -47,6 +49,7 @@ type SelectFieldProps<T extends FieldValues> = BaseSelectFieldProps & FormContro
 
 export function SelectField<T extends FieldValues>({
   label,
+  labelAction,
   description,
   name,
   control,
@@ -137,6 +140,7 @@ export function SelectField<T extends FieldValues>({
           <FieldWrapper
             name={name}
             label={label}
+            labelAction={labelAction}
             description={description}
             warning={warning}
             required={!!rules?.required}

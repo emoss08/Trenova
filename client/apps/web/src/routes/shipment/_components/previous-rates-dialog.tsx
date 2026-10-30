@@ -1,4 +1,6 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { apiService } from "@/services/api";
+import { useQuery } from "@tanstack/react-query";
+import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -8,13 +10,11 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
-import { apiService } from "@/services/api";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { GetPreviousRatesRequest, PreviousRateSummary } from "@trenova/shared/types/shipment";
-import { useQuery } from "@tanstack/react-query";
-import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
 type PreviousRatesDialogProps = {
@@ -139,6 +139,7 @@ export function PreviousRatesButton({
         type="button"
         size="xxxs"
         className="text-2xs"
+        variant="link"
         disabled={disabled || !canFetch}
         onClick={() => setOpen(true)}
       >

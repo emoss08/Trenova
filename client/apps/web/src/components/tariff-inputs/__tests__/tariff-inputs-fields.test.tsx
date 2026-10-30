@@ -221,6 +221,30 @@ describe("TariffInputsFields", () => {
     expect(values()).toEqual({});
   });
 
+  it("puts the reset beside a set input's label and says on hover what it falls back to", async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness declarations={[minimumCharge]} initial={{ minimumCharge: { $q: "500", u: "$" } }} />,
+    );
+
+    const reset = screen.getByRole("button", { name: "Use the default" });
+    expect(screen.getByText("Minimum charge").parentElement).toContainElement(reset);
+
+    await user.hover(reset);
+    expect(
+      await screen.findByText("Clears this value so the tariff uses its default, $450.00."),
+    ).toBeInTheDocument();
+
+    await user.click(reset);
+    expect(values()).toEqual({});
+  });
+
+  it("offers no reset for an input left to its default", () => {
+    render(<Harness declarations={[minimumCharge]} />);
+
+    expect(screen.queryByRole("button", { name: "Use the default" })).not.toBeInTheDocument();
+  });
+
   it("keeps a stored value's own unit when its amount is edited", async () => {
     const user = userEvent.setup();
     render(<Harness declarations={[rate]} initial={{ rate: { $q: "1.4", u: "$/km" } }} />);

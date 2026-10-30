@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,8 +8,8 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import React, { useState } from "react";
 import { Link, type LinkProps } from "react-router";
 

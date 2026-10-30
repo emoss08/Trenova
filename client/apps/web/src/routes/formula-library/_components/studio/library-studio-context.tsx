@@ -9,6 +9,7 @@ import {
 } from "@/components/tariff-studio/use-tariff-workbench";
 import { useStudioRail } from "@/components/tariff-studio/use-studio-rail";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import type { FormulaLibraryRecord } from "@/lib/graphql/formula-library";
 import { useRules } from "@trenova/shared/hooks/use-rules";
@@ -55,6 +56,8 @@ type LibraryStudioValue = LibraryStudioProps &
     setNovaBusy: (busy: boolean) => void;
     unsavedNovaKey: string;
     highlight: TariffRange | null;
+    /** Saves the library, formatting a changed source first when the person asked for that. */
+    save: () => void;
     setHighlight: (range: TariffRange | null) => void;
     definition: TariffDefinitionTarget | null;
     openDefinition: (target: TariffDefinitionTarget) => void;
@@ -100,6 +103,13 @@ export function LibraryStudioProvider({
     read: () => form.getValues("source") ?? "",
     write: (next) => form.setValue("source", next, { shouldDirty: true, shouldValidate: true }),
   });
+
+  const { formatSource } = binding;
+  const save = useCallback(() => {
+    const changed = library === null || (form.getValues("source") ?? "") !== library.source;
+    if (useEditorPreferenceStore.getState().formatOnSave && changed) formatSource(rules);
+    onSave();
+  }, [library, form, formatSource, rules, onSave]);
 
   const renamed = mode === "edit" && library !== null && (name ?? "").trim() !== library.name;
   const material =
@@ -183,6 +193,7 @@ export function LibraryStudioProvider({
       setNovaBusy,
       unsavedNovaKey,
       highlight,
+      save,
       setHighlight,
       definition,
       openDefinition,
@@ -213,6 +224,7 @@ export function LibraryStudioProvider({
       novaBusy,
       unsavedNovaKey,
       highlight,
+      save,
       definition,
       openDefinition,
       closeDefinition,

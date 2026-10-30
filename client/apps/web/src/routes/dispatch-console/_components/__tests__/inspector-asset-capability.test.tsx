@@ -1,6 +1,8 @@
-import type { DispatchBoardMove } from "@/lib/graphql/dispatch-console";
+import type { DispatchBoardMove, DispatchCandidate } from "@/lib/graphql/dispatch-console";
+import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
@@ -11,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Inspector } from "../inspector";
 import type { DispatchActions } from "../use-dispatch-actions";
 
-const candidatesQueryFn = vi.hoisted(() => vi.fn(async () => []));
+const candidatesQueryFn = vi.hoisted(() => vi.fn(async (): Promise<DispatchCandidate[]> => []));
 
 vi.mock("@/lib/queries/dispatch-console", () => ({
   dispatchConsoleQueries: {
@@ -29,6 +31,51 @@ vi.mock("@/lib/queries/dispatch-console", () => ({
     }),
   },
 }));
+
+// Fields as the candidates query selects them (DispatchCandidate in dispatch_console.graphqls).
+function candidate(index: number, workerName: string): DispatchCandidate {
+  return {
+    workerId: `wrk_${index}`,
+    workerName,
+    tractorId: `trc_${index}`,
+    trailerId: null,
+    moveId: "smv_1",
+    score: 82,
+    verdict: "feasible",
+    blocked: false,
+    deadheadMiles: 14,
+    estimatedDriveMs: 9_000_000,
+    projectedArrival: 1_720_003_600,
+    minutesOfSlack: 45,
+    driveRemainingMs: 28_800_000,
+    shiftRemainingMs: 36_000_000,
+    cycleRemainingMs: 180_000_000,
+    projectedTimeAvailable: 0,
+    hosStrategy: "currentClocks",
+    hosRestStartDeadline: 0,
+    hosProjectedDriveMs: 19_800_000,
+    hosProjectedShiftMs: 27_000_000,
+    hosProjectedCycleMs: 171_000_000,
+    findings: [],
+    factors: [],
+  } as DispatchCandidate;
+}
+
+// The virtual list's scroll element: row wrapper, then the sized body, then the list
+// wrapper, then the viewport that scrolls.
+function scrollerOf(rowText: string): HTMLElement {
+  const row = screen.getByText(rowText).closest<HTMLElement>("[data-index]");
+  const scroller = row?.parentElement?.parentElement?.parentElement;
+  if (!scroller) throw new Error(`no scroll element above ${rowText}`);
+  return scroller;
+}
+
+function scrollTo(scroller: HTMLElement, top: number) {
+  act(() => {
+    scroller.scrollTop = top;
+    scroller.dispatchEvent(new Event("scroll"));
+  });
+}
 
 const hybrid: OrganizationCapabilities = {
   brokerageEnabled: true,
@@ -130,14 +177,20 @@ function renderInspector() {
   );
 }
 
+// The candidate list is virtualized, and jsdom lays nothing out: without a size no row
+// would mount.
+let restoreLayout = () => {};
+
 describe("Inspector driver ranking is hidden when the organization owns no trucks", () => {
   beforeEach(() => {
+    restoreLayout = stubLayout(320);
     candidatesQueryFn.mockClear();
     usePermissionStore.getState().clearPermissions();
     useAuthStore.setState({ user: null, isAuthenticated: false });
   });
 
   afterEach(() => {
+    restoreLayout();
     cleanup();
     usePermissionStore.getState().clearPermissions();
     useAuthStore.setState({ user: null, isAuthenticated: false });
@@ -151,6 +204,40 @@ describe("Inspector driver ranking is hidden when the organization owns no truck
     expect(await screen.findByText("0 candidates")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Show ineligible" })).toBeInTheDocument();
     expect(await screen.findByText(/No eligible driver for this move/)).toBeInTheDocument();
+  });
+
+  it("counts a single ranked driver in the singular", async () => {
+    signIn(hybrid);
+    candidatesQueryFn.mockResolvedValueOnce([candidate(1, "Ana Ruiz")]);
+
+    renderInspector();
+
+    expect(await screen.findByText("1 candidate")).toBeInTheDocument();
+    expect(screen.getByText("Ana Ruiz")).toBeInTheDocument();
+  });
+
+  it("keeps a candidate's score detail open after it scrolls out of view and back", async () => {
+    signIn(hybrid);
+    candidatesQueryFn.mockResolvedValueOnce(
+      Array.from({ length: 30 }, (_, index) =>
+        candidate(index, `Driver ${String(index).padStart(2, "0")}`),
+      ),
+    );
+    const user = userEvent.setup();
+
+    renderInspector();
+
+    await screen.findByText("Driver 00");
+    await user.click(screen.getAllByRole("button", { name: "Why this score" })[0]);
+    expect(screen.getAllByRole("button", { name: "Hide detail" })).toHaveLength(1);
+
+    const scroller = scrollerOf("Driver 00");
+    scrollTo(scroller, 25 * 320);
+    await waitFor(() => expect(screen.queryByText("Driver 00")).toBeNull());
+
+    scrollTo(scroller, 0);
+    await screen.findByText("Driver 00");
+    expect(screen.getAllByRole("button", { name: "Hide detail" })).toHaveLength(1);
   });
 
   it("hides the candidate list and its controls from a brokerage", () => {

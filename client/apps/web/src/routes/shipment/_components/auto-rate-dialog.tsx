@@ -1,6 +1,7 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { BillView } from "@/components/tariff-bill/bill-view";
 import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -10,15 +11,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
+import { toast } from "@trenova/shared/components/ui/toast";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { storedChargesBill } from "@trenova/shared/lib/tariff-lines";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ContractRate, Shipment } from "@trenova/shared/types/shipment";
+import { readStoredTariffBill } from "@trenova/shared/types/tariff-form";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "@trenova/shared/components/ui/toast";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
-import { BillView } from "@/components/tariff-bill/bill-view";
-import { storedChargesBill } from "@trenova/shared/lib/tariff-lines";
-import { readStoredTariffBill } from "@trenova/shared/types/tariff-form";
 
 /**
  * Re-rates a shipment from its contract, on request.
@@ -94,10 +94,9 @@ export function AutoRateDialog() {
 
   return (
     <>
-      <Button type="button" size="xxxs" onClick={() => setOpen(true)}>
+      <Button type="button" variant="link" size="xxxs" onClick={() => setOpen(true)}>
         <span className="text-2xs">{t("Re-apply rate")}</span>
       </Button>
-
       <ConfirmDialog
         open={open}
         onOpenChange={setOpen}
