@@ -455,6 +455,24 @@ volume generator, not the query: give the table the rows and status mix producti
   transaction of every write to its inputs and backfilled in its migration
   (`shipmentprojection.Refresh`, which keeps `version` and `updated_at`). Call the refresh from the
   repository method that writes the child rows, never from a service, so every caller is covered.
+- **A column copied from one related row that a list filters by** (a service failure's stop
+  location) is stored on the child, tagged `readonly,noselect`, and kept by triggers: a `BEFORE
+  INSERT` on the child reads it by key, and an `AFTER UPDATE OF col … WHEN (OLD.col IS DISTINCT
+  FROM NEW.col)` on the source pushes a change to its children by an indexed key
+  (`20261231023061_service_failure_location.sql`). A one-row copy has no set to recompute, and the
+  trigger covers every writer, seeds and fixtures included; derivations over many child rows stay
+  in the repository refresh above.
+- **A page whose filter needs a large parent** (unarrived ETAs on live shipments, exhausted tenders
+  on uncovered moves) sorts above the join whenever the planner hashes the parent, and no index
+  orders a join. Read the page from the child's own ordered partial index, check the parents of
+  that page by id in a second read, and continue the keyset from the page's last row until the
+  page fills or the index runs out, so the result is exactly the joined page
+  (`stopetarepository.ListAttention`, `exceptionsourcerepository.ListExhaustedTenders`).
+- **A per-row check across related rows inside an `OR`** (a search that matches a stack's target
+  or routed shipments) must not be an `EXISTS`: Postgres may plan it as a hashed `ANY` over every
+  related row the term matches, a scan of the related table. A scalar subquery is never hashed, so
+  `(SELECT match … WHERE id = outer.ref) IS TRUE`, or `(SELECT count(*) … JOIN … ON id = …) > 0`
+  for several rows, stays a lookup by id per outer row (`capturerepository.searchBatches`).
 - **More than eight joined relations** split a pipelined load's semi-join from its joins
   (`join_collapse_limit`), so the joins are planned without the parent filter: such a level loads
   with `keel.LoadPerLevel` (`shipmentrepository.movesWithDetails`).
