@@ -310,12 +310,14 @@ func (s *ledgerSource) ListActiveAccounts(
 			jel := journalentrydb.JournalEntryLines
 			gla := glaccountdb.GLAccounts
 			posted := postedLines(&postedLinesFilter{from: req.Since}).
-				Pick(jel.ID).
-				Where(jel.GLAccountID.EqCol(gla.ID))
+				Pick(jel.JournalEntryID).
+				Where(jel.GLAccountID.EqCol(gla.ID)).
+				Order(jel.JournalEntryID.Desc()).
+				Limit(1)
 			ids, err := keel.Into[pulid.ID](
 				ctx,
 				s.db.Keel(ctx),
-				gla.Pick(gla.ID).Where(keel.Exists(posted)),
+				gla.Pick(gla.ID).JoinLateral(posted),
 			)
 			if err != nil {
 				s.l.Error("failed to list accounts with posted lines", zap.Error(err))
