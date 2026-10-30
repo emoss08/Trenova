@@ -1,6 +1,8 @@
 package accountsreceivablerepository
 
 import (
+	"math"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
@@ -20,6 +22,7 @@ const (
 	colChangedAt  = "changed_at"
 	colDelta      = "delta"
 	colOpenNow    = "open_now_minor"
+	openEnded     = int64(math.MaxInt64)
 )
 
 type openAsOfWindow struct {
@@ -103,7 +106,7 @@ func (w openAsOfWindow) settlementEvents() *keel.CTETable {
 					cp.ReversedAt,
 					cpa.AppliedAmountMinor.Add(cpa.ShortPayAmountMinor),
 				).
-				Where(cpa.CreatedAt.Gt(start)),
+				Where(cpa.CreatedAt.Gt(start), cpa.CreatedAt.Lte(openEnded)),
 			reversed.
 				Join(reversedApp, reversedApp.CustomerPaymentID.EqCol(reversed.ID)).
 				Pick(
@@ -112,10 +115,14 @@ func (w openAsOfWindow) settlementEvents() *keel.CTETable {
 					reversed.ReversedAt,
 					reversedApp.AppliedAmountMinor.Add(reversedApp.ShortPayAmountMinor),
 				).
-				Where(reversed.ReversedAt.Gt(start), reversedApp.CreatedAt.Lte(start)),
+				Where(
+					reversed.ReversedAt.Gt(start),
+					reversed.ReversedAt.Lte(openEnded),
+					reversedApp.CreatedAt.Lte(start),
+				),
 			cma.
 				Pick(cma.InvoiceID, cma.CreatedAt, cma.UnappliedAt, cma.AppliedAmountMinor).
-				Where(cma.CreatedAt.Gt(start)),
+				Where(cma.CreatedAt.Gt(start), cma.CreatedAt.Lte(openEnded)),
 			unapplied.
 				Pick(
 					unapplied.InvoiceID,
@@ -123,13 +130,18 @@ func (w openAsOfWindow) settlementEvents() *keel.CTETable {
 					unapplied.UnappliedAt,
 					unapplied.AppliedAmountMinor,
 				).
-				Where(unapplied.UnappliedAt.Gt(start), unapplied.CreatedAt.Lte(start)),
+				Where(
+					unapplied.UnappliedAt.Gt(start),
+					unapplied.UnappliedAt.Lte(openEnded),
+					unapplied.CreatedAt.Lte(start),
+				),
 			cle.
 				Pick(cle.RelatedInvoiceID, cle.CreatedAt, keel.NullInt64(), cle.AmountMinor.Neg()).
 				Where(
 					cle.SourceObjectType.EqCol(keel.ConstText(customerledger.SourceFactoringItem)),
 					cle.RelatedInvoiceID.IsNotNull(),
 					cle.CreatedAt.Gt(start),
+					cle.CreatedAt.Lte(openEnded),
 				),
 		),
 	)
