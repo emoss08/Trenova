@@ -64,14 +64,31 @@ func TestFilters_RenderTypedPredicates(t *testing.T) {
 			args:  []any{"TRK-1"},
 		},
 		{
-			name: "equality on an enum compares its text",
+			name: "equality on an enum compares the column with its declared value",
 			filter: domaintypes.FieldFilter{
 				Field:    "status",
 				Operator: dbtype.OpEqual,
 				Value:    "Available",
 			},
-			where: `(CAST(t."status" AS text) = $3)`,
-			args:  []any{"Available"},
+			where: `(t."status" = 'Available')`,
+		},
+		{
+			name: "equality on an enum with an undeclared value matches nothing",
+			filter: domaintypes.FieldFilter{
+				Field:    "status",
+				Operator: dbtype.OpEqual,
+				Value:    "Retired",
+			},
+			where: `NOT (TRUE)`,
+		},
+		{
+			name: "inequality on an enum with an undeclared value matches every set value",
+			filter: domaintypes.FieldFilter{
+				Field:    "status",
+				Operator: dbtype.OpNotEqual,
+				Value:    "Retired",
+			},
+			where: `(t."status" IS NOT NULL)`,
 		},
 		{
 			name: "a JSON number on an integer column binds an integer",
@@ -156,14 +173,31 @@ func TestFilters_RenderTypedPredicates(t *testing.T) {
 			args:  []any{"%20%"},
 		},
 		{
-			name: "in on an enum binds one text array",
+			name: "in on an enum lists its declared values in declared order",
 			filter: domaintypes.FieldFilter{
 				Field:    "status",
 				Operator: dbtype.OpIn,
-				Value:    []any{"Available", "OutOfService"},
+				Value:    []any{"OutOfService", "Retired", "Available", "OutOfService"},
 			},
-			where: `(CAST(t."status" AS text) = ANY($3))`,
-			args:  []any{[]string{"Available", "OutOfService"}},
+			where: `(t."status" IN ('Available', 'OutOfService'))`,
+		},
+		{
+			name: "not in on an enum drops undeclared values",
+			filter: domaintypes.FieldFilter{
+				Field:    "status",
+				Operator: dbtype.OpNotIn,
+				Value:    []any{"Retired", "Available"},
+			},
+			where: `(t."status" NOT IN ('Available'))`,
+		},
+		{
+			name: "in on an enum with no declared value matches nothing",
+			filter: domaintypes.FieldFilter{
+				Field:    "status",
+				Operator: dbtype.OpIn,
+				Value:    []any{"Retired"},
+			},
+			where: `NOT (TRUE)`,
 		},
 		{
 			name: "not in on an integer binds one integer array",

@@ -1,6 +1,7 @@
 package listquery
 
 import (
+	"slices"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -133,6 +134,9 @@ func (p *plan) equality(fd field, op dbtype.Operator, value any) (keel.Pred, boo
 	if s, isString := value.(string); isString && s == "" {
 		return nil, true
 	}
+	if fd.enumColumn() {
+		return enumEquality(fd, op, value)
+	}
 
 	text := fd.enum() || !scalarKind(fd)
 	expr := fd.expr
@@ -155,6 +159,25 @@ func (p *plan) equality(fd field, op dbtype.Operator, value any) (keel.Pred, boo
 	}
 
 	return expr.Eq(v), true
+}
+
+func enumEquality(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
+	raw, ok := listvalue.ToText(value)
+	if !ok {
+		return nil, false
+	}
+
+	label, _ := raw.(string)
+	switch {
+	case fd.declares(label) && op == dbtype.OpNotEqual:
+		return fd.expr.Ne(label), true
+	case fd.declares(label):
+		return fd.expr.Eq(label), true
+	case op == dbtype.OpNotEqual:
+		return fd.expr.IsNotNull(), true
+	default:
+		return keel.Not(keel.True()), true
+	}
 }
 
 func scalarKind(fd field) bool {
@@ -230,6 +253,10 @@ func pattern(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
 }
 
 func membership(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
+	if fd.enumColumn() {
+		return enumMembership(fd, op, value)
+	}
+
 	text := fd.enum() || !scalarKind(fd)
 	expr := fd.expr
 	if text {
@@ -251,6 +278,32 @@ func membership(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
 	}
 
 	return expr.In(list), true
+}
+
+func enumMembership(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
+	list, ok := listvalue.ConvertList(listvalue.KindText, value)
+	if !ok {
+		return nil, false
+	}
+
+	values, _ := list.([]string)
+	labels := make([]string, 0, len(values))
+	for _, e := range fd.col.Enum {
+		if slices.Contains(values, e.Value) {
+			labels = append(labels, e.Value)
+		}
+	}
+
+	switch {
+	case len(labels) > 0 && op == dbtype.OpNotIn:
+		return fd.expr.NotIn(labels), true
+	case len(labels) > 0:
+		return fd.expr.In(labels), true
+	case op == dbtype.OpNotIn:
+		return nil, true
+	default:
+		return keel.Not(keel.True()), true
+	}
 }
 
 func dateRange(fd field, value any) (keel.Pred, bool) {
