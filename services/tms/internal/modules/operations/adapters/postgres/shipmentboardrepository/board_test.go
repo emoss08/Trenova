@@ -126,8 +126,9 @@ func TestStageSummaryReadsTheScopedShipments(t *testing.T) {
 	sp := shipmentdb.Shipments
 	sql, args := keeltest.Render(t, q.Group(sp.StageRank).Pick(sp.StageRank, revenueSum()))
 	assert.Contains(t, sql, `GROUP BY s."stage_rank"`)
-	assert.Contains(t, sql, `coalesce(sum(s."total_charge_amount"), $4)`)
-	assert.Contains(t, args, "New")
+	assert.Contains(t, sql, `coalesce(sum(s."total_charge_amount"), $3)`)
+	assert.Contains(t, sql, `s."status" = 'New'`)
+	assert.NotContains(t, args, "New")
 
 	_, err = scoped(nil)
 	require.ErrorIs(t, err, ErrScopeMissing)

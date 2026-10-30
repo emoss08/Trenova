@@ -230,5 +230,6 @@ func TestWorkerSearchConfig_ProfileFilterJoinsAndQualifies(t *testing.T) {
 	assert.Contains(t, sql, `"worker_profiles"`)
 	assert.Contains(t, sql, `"training_health"`)
 	assert.Contains(t, sql, `"worker_id"`, "the profile join hangs off the worker row")
-	assert.Contains(t, args, string(worker.TrainingHealthOverdue))
+	assert.Contains(t, sql, `"training_health" = 'Overdue'`)
+	assert.NotContains(t, args, string(worker.TrainingHealthOverdue))
 }
