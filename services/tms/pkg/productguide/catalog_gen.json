@@ -1,5 +1,5 @@
 {
-  "version": "sha256:dfd8ddc35056028d1a9f3d0804060f6cf994c352ab7b915db2dc5ebb4394f987",
+  "version": "sha256:8673a2b67dee6c21d40a74d5d7043d11066ae8a78c5b29bd055732a09834e991",
   "modules": [
     {
       "id": "home",
@@ -7797,7 +7797,7 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.",
             "Save any changes, then select **Submit for review**.",
-            "Check the readiness list, choose a reviewer, edit the note Nova drafts (or select **Rewrite**), and select **Submit**.",
+            "Check the readiness list and choose a reviewer. Nova drafts the note for the reviewer from the change and a backtest; edit it, or write your own without waiting. A draft that finishes after you start writing never replaces your words: select **Use Nova's draft** to take it instead. **Rewrite** asks Nova for a fresh draft. Then select **Submit**.",
             "A reviewer sees what changed since the approved version, the libraries it pins and what the change does to recent freight, then selects **Approve** to activate it or **Request changes** to send it back to the author with a comment. **Reject and archive** is under **More actions**."
           ]
         },

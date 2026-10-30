@@ -123,7 +123,7 @@ Keywords: AI tariff, generate tariff, explain tariff, fix tariff
 Keywords: approve tariff, activate template, submit template, reviewer note
 1. Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.
 2. Save any changes, then select **Submit for review**.
-3. Check the readiness list, choose a reviewer, edit the note Nova drafts (or select **Rewrite**), and select **Submit**.
+3. Check the readiness list and choose a reviewer. Nova drafts the note for the reviewer from the change and a backtest; edit it, or write your own without waiting. A draft that finishes after you start writing never replaces your words: select **Use Nova's draft** to take it instead. **Rewrite** asks Nova for a fresh draft. Then select **Submit**.
 4. A reviewer sees what changed since the approved version, the libraries it pins and what the change does to recent freight, then selects **Approve** to activate it or **Request changes** to send it back to the author with a comment. **Reject and archive** is under **More actions**.
 
 ### Adopt a newer rate matrix version

@@ -134213,6 +134213,15 @@
       "apps/web/components"
     ]
   },
+  "Keep my note": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Keep notes under 2000 characters": {
     "sites": 1,
     "scope": [
@@ -174468,6 +174477,15 @@
       "go/other"
     ]
   },
+  "Nova drafted a note while you were writing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Nova drafted the library": {
     "sites": 1,
     "scope": [
@@ -174567,6 +174585,15 @@
       "routes/inbox"
     ]
   },
+  "Nova is drafting a note from the change and the backtest. Write your own if you'd rather.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Nova is drafting the load…": {
     "sites": 1,
     "scope": [
@@ -174601,15 +174628,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Nova is reading the change and the backtest…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Nova learns from it": {
@@ -302360,6 +302378,15 @@
       "go/other"
     ]
   },
+  "Use Nova's draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Use Trimble PC*Miler Route Reports for mileage calculations.": {
     "sites": 1,
     "scope": [
@@ -351760,12 +351787,11 @@
     ]
   },
   "{0} not found within your organization": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql",
       "go/other"
     ]
   },

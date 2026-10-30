@@ -17,11 +17,15 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { FormulaTemplate, ReadinessCheck } from "@trenova/shared/types/formula-template";
+import type {
+  FormulaTemplate,
+  ReadinessCheck,
+  ReviewNoteResponse,
+} from "@trenova/shared/types/formula-template";
 import type { ReadinessSourceLink } from "@/components/tariff-studio/readiness-view";
 import { CheckIcon, Send01Icon } from "@trenova/shared/components/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { ReadinessPanel } from "../../readiness-panel";
 import { NovaButton } from "@/components/tariff-studio/nova-button";
@@ -52,7 +56,8 @@ function initials(name: string): string {
  * Sending the saved template to review: what review will check, who should
  * look, a note for them that Nova drafts from the change and the backtest,
  * and what the change does to recent freight. Submit waits on every blocking
- * check, the same ones the server enforces.
+ * check, the same ones the server enforces, but never on Nova: the person can
+ * write the note and submit while the draft is still on its way.
  */
 export function SubmitReviewDialog({
   open,
@@ -74,8 +79,14 @@ export function SubmitReviewDialog({
   const templateId = template.id ?? "";
   const [ready, setReady] = useState<boolean | null>(null);
   const [reviewerId, setReviewerId] = useState<string | null>(null);
-  const [note, setNote] = useState("");
+  // What the person will send, and a draft Nova finished after they started writing: a draft
+  // fills an empty note, but never replaces words someone typed while Nova was working.
+  const [note, setNote] = useState<{ text: string; offered: string | null }>({
+    text: "",
+    offered: null,
+  });
   const [noteError, setNoteError] = useState<string | null>(null);
+  const draftRequest = useRef<AbortController | null>(null);
 
   const reviewers = useQuery({
     ...formulaTemplate.reviewers(templateId),
@@ -87,10 +98,30 @@ export function SubmitReviewDialog({
     staleTime: 30_000,
   });
 
-  const draft = useMutation({
-    mutationFn: () => apiService.formulaTemplateService.draftReviewNote(templateId),
+  const draft = useMutation<ReviewNoteResponse | null, Error, { replace: boolean }>({
+    mutationFn: async () => {
+      draftRequest.current?.abort();
+      const request = new AbortController();
+      draftRequest.current = request;
+      try {
+        return await apiService.formulaTemplateService.draftReviewNote(templateId, {
+          signal: request.signal,
+        });
+      } catch (error) {
+        if (request.signal.aborted) return null;
+        throw error;
+      }
+    },
     onMutate: () => setNoteError(null),
-    onSuccess: (response) => setNote(response.note.slice(0, MAX_NOTE)),
+    onSuccess: (response, { replace }) => {
+      if (!response) return;
+      const drafted = response.note.slice(0, MAX_NOTE);
+      setNote((current) =>
+        replace || current.text.trim() === ""
+          ? { text: drafted, offered: null }
+          : { ...current, offered: drafted },
+      );
+    },
     onError: (error) =>
       setNoteError(
         describeApiError(error, t("Nova could not draft the note. Write one yourself.")),
@@ -102,7 +133,7 @@ export function SubmitReviewDialog({
   if (open !== seenOpen) {
     setSeenOpen(open);
     if (!open) {
-      setNote("");
+      setNote({ text: "", offered: null });
       setReviewerId(null);
       setReady(null);
       setNoteError(null);
@@ -110,7 +141,9 @@ export function SubmitReviewDialog({
   }
 
   useEffect(() => {
-    if (open) drafting();
+    if (!open) return;
+    drafting({ replace: false });
+    return () => draftRequest.current?.abort();
   }, [open, drafting]);
 
   const firstReviewer = reviewers.data?.[0];
@@ -121,7 +154,7 @@ export function SubmitReviewDialog({
       apiService.formulaTemplateService.submit(templateId, {
         comment: "",
         reviewerId: reviewerId ?? undefined,
-        reviewerNote: note.trim(),
+        reviewerNote: note.text.trim(),
       }),
     onSuccess: async () => {
       const reviewer = reviewers.data?.find((person) => person.id === reviewerId);
@@ -216,7 +249,7 @@ export function SubmitReviewDialog({
                   <NovaButton
                     busy={draft.isPending}
                     disabled={draft.isPending}
-                    onClick={() => draft.mutate()}
+                    onClick={() => draft.mutate({ replace: true })}
                   >
                     {draft.isPending ? t("Writing…") : t("Rewrite")}
                   </NovaButton>
@@ -225,19 +258,55 @@ export function SubmitReviewDialog({
                 {t("Note for the reviewer")}
               </Label>
               <Textarea
-                value={draft.isPending ? "" : note}
-                onChange={(event) => setNote(event.target.value.slice(0, MAX_NOTE))}
-                disabled={draft.isPending}
+                value={note.text}
+                onChange={(event) =>
+                  setNote((current) => ({
+                    ...current,
+                    text: event.target.value.slice(0, MAX_NOTE),
+                  }))
+                }
                 minRows={4}
                 maxRows={10}
                 aria-label={t("Note for the reviewer")}
                 placeholder={
                   draft.isPending
-                    ? t("Nova is reading the change and the backtest…")
+                    ? t(
+                        "Nova is drafting a note from the change and the backtest. Write your own if you'd rather.",
+                      )
                     : t("What changed and what it does to charges")
                 }
-                className={cn(draft.isPending && "ui-shimmer")}
+                className={cn(draft.isPending && note.text === "" && "ui-shimmer")}
               />
+              {note.offered !== null && (
+                <Alert size="sm">
+                  <AlertDescription className="flex flex-wrap items-center gap-2">
+                    <span className="flex-1">
+                      {t("Nova drafted a note while you were writing.")}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      onClick={() =>
+                        setNote((current) => ({
+                          text: current.offered ?? current.text,
+                          offered: null,
+                        }))
+                      }
+                    >
+                      {t("Use Nova's draft")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => setNote((current) => ({ ...current, offered: null }))}
+                    >
+                      {t("Keep my note")}
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
               {noteError && (
                 <Alert variant="warning" size="sm">
                   <AlertDescription>{noteError}</AlertDescription>
@@ -264,7 +333,7 @@ export function SubmitReviewDialog({
           <Button
             type="button"
             className="gap-1.5"
-            disabled={blocked || ready === null || draft.isPending}
+            disabled={blocked || ready === null}
             isLoading={submit.isPending}
             onClick={() => submit.mutate()}
           >
