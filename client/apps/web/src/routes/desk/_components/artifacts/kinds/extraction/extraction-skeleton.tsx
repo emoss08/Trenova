@@ -7,7 +7,7 @@ import {
   RecordCardSkeleton,
   SkeletonBar,
 } from "../../skeletons/record-card-skeleton";
-import { LETTER_ASPECT } from "./page-geometry";
+import { LETTER_ASPECT } from "@/lib/document-reading/page-geometry";
 
 /** Where the text lines of a page stand, as shares of its width. */
 const PAGE_LINES = [72, 64, 80, 40, 76, 58, 69, 33, 74, 61, 78, 45, 70, 55, 66, 38, 75, 60];

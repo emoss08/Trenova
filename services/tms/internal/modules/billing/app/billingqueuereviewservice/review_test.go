@@ -156,7 +156,7 @@ func (m *memoryReview) CountOpenIssues(
 	defer m.mu.Unlock()
 	count := m.open
 	for _, issue := range m.issues {
-		if issue.ItemID == itemID && issue.IsOpen() {
+		if issue.ItemID == itemID && issue.IsOpen() && !issue.Code.IsSuggestion() {
 			count++
 		}
 	}

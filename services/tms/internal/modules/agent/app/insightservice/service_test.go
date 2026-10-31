@@ -3,10 +3,12 @@ package insightservice
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -64,6 +66,8 @@ func (d *stubDetector) Detect(
 
 type stubRepo struct {
 	replaced    []insightports.ReplaceDetectorFindingsRequest
+	narrated    []*insight.Insight
+	applied     []insightports.InsightNarration
 	active      []*insight.Insight
 	byID        *insight.Insight
 	history     []*insight.Insight
@@ -94,6 +98,38 @@ func (r *stubRepo) ReplaceDetectorFindings(
 	r.replaced = append(r.replaced, req)
 
 	return insightports.ReplaceDetectorFindingsResult{Created: len(req.Insights)}, nil
+}
+
+func (r *stubRepo) ListNarrated(
+	context.Context,
+	insightports.ListNarratedInsightsRequest,
+) ([]*insight.Insight, error) {
+	return r.narrated, nil
+}
+
+func (r *stubRepo) GetByIDs(
+	_ context.Context,
+	req insightports.GetInsightsByIDsRequest,
+) ([]*insight.Insight, error) {
+	out := make([]*insight.Insight, 0, len(req.IDs))
+	for _, request := range r.replaced {
+		for _, entity := range request.Insights {
+			if slices.Contains(req.IDs, entity.ID) {
+				out = append(out, entity)
+			}
+		}
+	}
+
+	return out, nil
+}
+
+func (r *stubRepo) ApplyNarrations(
+	_ context.Context,
+	req insightports.ApplyInsightNarrationsRequest,
+) (int, error) {
+	r.applied = append(r.applied, req.Narrations...)
+
+	return len(req.Narrations), nil
 }
 
 func (r *stubRepo) ListActive(
@@ -164,32 +200,22 @@ func (p *stubPermissions) Check(
 // narration path is covered in its own package.
 func silentNarrator() *narrator.Service {
 	return narrator.New(narrator.Params{
-		Logger:     zap.NewNop(),
-		Completion: failingCompletion{},
+		Logger: zap.NewNop(),
+		Nova:   failingNova{},
 	})
 }
 
-type failingCompletion struct{}
+type failingNova struct{}
 
-func (failingCompletion) CompleteStructured(
+func (failingNova) Available(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+	return false, nil
+}
+
+func (failingNova) Run(
 	context.Context,
-	*llmports.StructuredCompletionRequest,
+	*llmports.NovaTask,
+	any,
 ) (*llmports.StructuredCompletionResult, error) {
-	return nil, llmports.ErrNoProviderConfigured
-}
-
-func (failingCompletion) CompleteChat(
-	context.Context,
-	*llmports.ChatCompletionRequest,
-) (*llmports.ChatCompletionResult, error) {
-	return nil, llmports.ErrNoProviderConfigured
-}
-
-func (failingCompletion) StreamChat(
-	context.Context,
-	*llmports.ChatCompletionRequest,
-	llmports.ChatStreamSink,
-) (*llmports.ChatCompletionResult, error) {
 	return nil, llmports.ErrNoProviderConfigured
 }
 
@@ -1038,21 +1064,3 @@ func svc(repo *stubRepo, ds ...detector.Detector) *Service {
 // These two satisfy the completion port; this stub runs every call inline and
 // never defers one, so a submission carries its answer and there is no handle
 // to poll.
-func (f failingCompletion) SubmitBackground(
-	ctx context.Context,
-	req *llmports.StructuredCompletionRequest,
-) (*llmports.BackgroundSubmission, error) {
-	result, err := f.CompleteStructured(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return &llmports.BackgroundSubmission{Result: result}, nil
-}
-
-func (f failingCompletion) PollBackground(
-	context.Context,
-	*llmports.BackgroundPollRequest,
-) (*llmports.BackgroundOutcome, error) {
-	return nil, errors.New("this completion runs inline and issues no handle to poll")
-}

@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn() }));
 
-vi.mock("@trenova/shared/lib/api", () => ({
-  api: { get: mocks.get, put: mocks.put },
-  withCsrfHeader: vi.fn(),
-}));
+vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
+  return { ...actual, api: { get: mocks.get, put: mocks.put } };
+});
 
 import { AssistantService, assistantTranscriptUrl } from "./assistant";
 

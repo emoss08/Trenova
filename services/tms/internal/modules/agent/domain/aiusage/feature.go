@@ -20,6 +20,13 @@ const (
 	FeatureAgentProfile                = Feature("AgentProfile")
 	FeatureAgentRecommendation         = Feature("AgentRecommendation")
 	FeatureConversationChapters        = Feature("ConversationChapters")
+	FeatureBillingQueueReview          = Feature("BillingQueueReview")
+	FeatureBillingQueueBrief           = Feature("BillingQueueBrief")
+	FeatureBillingQueueSearch          = Feature("BillingQueueSearch")
+	FeaturePaperworkReading            = Feature("PaperworkReading")
+	FeatureInboundMail                 = Feature("InboundMail")
+	FeaturePaletteAnswer               = Feature("PaletteAnswer")
+	FeatureInsightNarration            = Feature("InsightNarration")
 )
 
 func AllFeatures() []Feature {
@@ -39,6 +46,13 @@ func AllFeatures() []Feature {
 		FeatureAgentProfile,
 		FeatureAgentRecommendation,
 		FeatureConversationChapters,
+		FeatureBillingQueueReview,
+		FeatureBillingQueueBrief,
+		FeatureBillingQueueSearch,
+		FeaturePaperworkReading,
+		FeatureInboundMail,
+		FeaturePaletteAnswer,
+		FeatureInsightNarration,
 	}
 }
 

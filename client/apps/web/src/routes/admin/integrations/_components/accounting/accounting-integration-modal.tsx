@@ -1,4 +1,3 @@
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { usePermission } from "@/hooks/use-permission";
 import { useAccountingMappingSummary } from "@/hooks/use-accounting-mapping-summary";
@@ -12,7 +11,6 @@ import {
 import type { IntegrationSetupStep } from "@/lib/integration-setup";
 import { accountingSync } from "@/lib/queries/accounting-sync";
 import { useQuery } from "@tanstack/react-query";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -34,6 +32,7 @@ import { AccountingModeStep } from "./accounting-mode-step";
 import { AccountingStartDateStep } from "./accounting-start-date-step";
 import { accountingVendor, type AccountingVendor } from "./accounting-vendors";
 import { useAccountingConnectionActions } from "./use-accounting-connection";
+import { ThemedLogo } from "../shared/integration-connect-header";
 
 type AccountingIntegrationModalProps = {
   vendor: AccountingVendor;
@@ -51,14 +50,13 @@ export function AccountingIntegrationModal({
   onReviewed,
 }: AccountingIntegrationModalProps) {
   const t = useT();
-  const { theme } = useTheme();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="lg" className="flex max-h-[90vh] flex-col overflow-hidden">
         <DialogHeader className="flex flex-row items-center gap-3 pr-8">
-          <LazyImage
-            src={theme === "dark" ? vendor.logoDark : vendor.logoLight}
+          <ThemedLogo
+            logo={{ light: vendor.logoLight, dark: vendor.logoDark }}
             alt={t("{0} logo", vendor.name)}
             className="h-7 max-w-28 object-contain"
           />

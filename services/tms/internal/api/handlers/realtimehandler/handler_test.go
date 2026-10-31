@@ -8,10 +8,12 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -99,15 +101,54 @@ const (
 	authUser authMode = iota
 	authPortal
 	authAPIKey
+	authSession
 )
 
 var (
 	testUserID = pulid.MustNew("usr_")
 	testBUID   = pulid.MustNew("bu_")
 	testOrgID  = pulid.MustNew("org_")
+
+	testSessionID = pulid.MustNew("ses_")
 )
 
+type stubLiveness struct {
+	mu    sync.Mutex
+	ended bool
+}
+
+func (l *stubLiveness) Ended(_ context.Context, sessionIDs []pulid.ID) ([]pulid.ID, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if !l.ended {
+		return nil, nil
+	}
+	return sessionIDs, nil
+}
+
+func (l *stubLiveness) end() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.ended = true
+}
+
 func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engine {
+	t.Helper()
+
+	return newTestRouterWithSessions(
+		t,
+		gateway,
+		mode,
+		sessionwatch.NewWatch(&stubLiveness{}, time.Minute, zap.NewNop()),
+	)
+}
+
+func newTestRouterWithSessions(
+	t *testing.T,
+	gateway *stubGateway,
+	mode authMode,
+	sessions *sessionwatch.Watch,
+) *gin.Engine {
 	t.Helper()
 
 	gin.SetMode(gin.TestMode)
@@ -127,6 +168,7 @@ func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engin
 			middleware.PermissionMiddlewareParams{PermissionEngine: engine, ErrorHandler: eh},
 		),
 		RealtimeConfig: &cfg.Realtime,
+		Sessions:       sessions,
 		Logger:         zap.NewNop(),
 	})
 
@@ -145,6 +187,13 @@ func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engin
 			})
 		case authUser:
 			authctx.SetAuthContext(c, testUserID, testBUID, testOrgID)
+		case authSession:
+			authctx.SetSessionAuthContext(c, authctx.SessionAuthContextParams{
+				SessionID:      testSessionID,
+				UserID:         testUserID,
+				BusinessUnitID: testBUID,
+				OrganizationID: testOrgID,
+			})
 		}
 		c.Next()
 	})
@@ -176,7 +225,7 @@ func TestStream_WritesPreludeLiveFramesAndCloseReason(t *testing.T) {
 	router := newTestRouter(t, gateway, authUser)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/realtime/stream/?presence=users", nil)
-	req.Header.Set(lastEventIDHeader, "3.99-0")
+	req.Header.Set(helpers.LastEventIDHeader, "3.99-0")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -199,6 +248,51 @@ func TestStream_WritesPreludeLiveFramesAndCloseReason(t *testing.T) {
 	assert.False(t, gateway.opened.Portal)
 	assert.Equal(t, "3.99-0", gateway.opened.LastEventID)
 	assert.True(t, stream.closed)
+}
+
+func TestStream_ClosesOnceItsSessionEnds(t *testing.T) {
+	t.Parallel()
+
+	stream := &stubStream{
+		id:     "rtc_1",
+		frames: make(chan realtimeports.RealtimeFrame),
+	}
+	liveness := &stubLiveness{}
+	sessions := sessionwatch.NewWatch(liveness, time.Minute, zap.NewNop())
+	router := newTestRouterWithSessions(t, &stubGateway{stream: stream}, authSession, sessions)
+
+	w := httptest.NewRecorder()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/v1/realtime/stream/", nil))
+	}()
+
+	sessions.Sweep(t.Context())
+	select {
+	case <-done:
+		t.Fatal("the stream closed while its session still held")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	liveness.end()
+	deadline := time.After(5 * time.Second)
+	for {
+		sessions.Sweep(t.Context())
+		select {
+		case <-done:
+			assert.Contains(
+				t,
+				w.Body.String(),
+				"event: close\ndata: {\"reason\":\"session_ended\"}",
+			)
+			assert.True(t, stream.closed)
+			return
+		case <-deadline:
+			t.Fatal("the stream outlived its session")
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
 }
 
 func TestStream_PortalUsersAreMarked(t *testing.T) {

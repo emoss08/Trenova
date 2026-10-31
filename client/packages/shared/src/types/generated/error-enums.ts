@@ -31,6 +31,7 @@ export const ErrorCode = z.enum([
   "NOT_IMPLEMENTED",
   "QUOTA_EXCEEDED",
   "PLAN_RESTRICTED",
+  "SESSION_CONTEXT_STALE",
 ]);
 
 export type ErrorCode = z.infer<typeof ErrorCode>;
@@ -50,6 +51,7 @@ export const ProblemType = z.enum([
   "internal-error",
   "quota-exceeded",
   "plan-restricted",
+  "session-context-stale",
 ]);
 
 export type ProblemType = z.infer<typeof ProblemType>;

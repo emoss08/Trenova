@@ -19,6 +19,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [reporting](reporting.md) | the report catalog, a reportable model or field, `reportaccess`, the report engine or its limits, runs, schedules, exports, the report GraphQL surface or agent report tools | a relation from a reportable model to one that is not needs `noreport` or startup fails; every reportable model needs a row in `reportaccess/kinds.go`; after a tag change run `task keel-gen`, then `go generate ./internal/infrastructure/reportengine/...` |
 | [reference-views](reference-views.md) | showing another kind's record on a screen, a GraphQL type carrying one, the page access manifest, what a report may use | a linked record shows its reference view; more needs `@requiresRead(kind:)`; a page or import change regenerates the manifest (`access:generate`, then refgen); report access is decided only by `reportaccess` |
 | [record-kinds](record-kinds.md) | a kind of record, any table keyed by kind | the permission registry owns the list; never a hand-kept list of kind names |
+| [session-context](session-context.md) | the session's person or organization, signing in or out, switching organization, a transport, stream or raw `fetch` to the API, an endpoint that returns the caller's own user | every first-party request sends `withSessionHeaders`; a response carrying the caller's user goes through `respondWithSelf`; a new way to end a session calls `announceSignedOut` |
 | [security-audit](security-audit.md) | a mutation that changes who can do what, a new way to read a document, a cross-tenant refusal, deleting audit rows | `SecurityAuditor.RecordChange` after commit; `auth_events`/`audit_entries` are append-only |
 | [idempotency](idempotency.md) | the middleware, `pkg/idempotency`, a write that must be safe to retry | a 5xx or transient GraphQL error releases the key |
 | [realtime](realtime.md) | `realtimeservice`, `realtimebroker`, the stream endpoint, the browser client, presence | publish with `PublishResourceInvalidation`; `AudienceUserID` for one person |
@@ -49,6 +50,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 
 | Doc | Read before changing |
 |---|---|
+| [nova-harness](nova-harness.md) | any Nova work that is not a Desk conversation: a new background AI task, its prompt, schema, files, tools or batching; moving an existing feature onto the harness |
 | [agent-runtime](agent-runtime.md) | `agentruntime/`, `assistantservice/`, `jobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs}`; reflection ("Learning from the work") |
 | [agent-tool-conventions](agent-tool-conventions.md) | adding, renaming or merging a tool, or rewriting its description (no aliases on rename) |
 | [agent-write-coverage](agent-write-coverage.md) | any new mutation or write route: it needs a tool, an exemption or a `pending` entry in `writecoverage.yml` |

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/runstream"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -67,7 +68,7 @@ func (w *Workflows) AgentDryRunWorkflow(
 	ctx workflow.Context,
 	payload *assistantcontract.AgentDryRunPayload,
 ) error {
-	stream, err := agentflow.HostStream(ctx)
+	stream, err := runstream.Host(ctx)
 	if err != nil {
 		return err
 	}
@@ -81,7 +82,7 @@ func (w *Workflows) AgentDryRunWorkflow(
 
 func (w *Workflows) dryRun(
 	ctx workflow.Context,
-	stream *agentflow.Stream,
+	stream *runstream.Stream,
 	payload *assistantcontract.AgentDryRunPayload,
 ) temporaltype.StreamItem {
 	var a *Activities

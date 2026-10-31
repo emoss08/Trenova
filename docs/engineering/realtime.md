@@ -59,6 +59,17 @@ or reset.
   TTL are only safety nets.
 - **Large entities.** An event whose encoded entity is larger than
   `maxEntityBytes` is sent without it; the reader refetches instead of patching.
+- **Sweeps publish once.** Every connected reader in a tenant hears every event,
+  so an event costs readers × events requests. A scheduled sweep, reconcile or
+  backfill that may touch many records publishes one `bulk_<action>` event with no
+  record ID when it finishes, never one per record (the watchtower sweeps publish
+  `watchtower`/`bulk_swept`). Per-record events are for writes a person or a
+  single source event makes.
+- **Stored text does not tell the time.** A projection a sweep rewrites (a
+  watchtower item's title, summary and facts) is a function of its source record,
+  never of the clock: "closed 3h 12m ago" changes on every run, makes every item
+  count as changed and turns each sweep into a rewrite of the whole feed. Carry the
+  instant as a fact or deadline and let the browser say how long ago it was.
 - **Portal readers** (drivers in Dash) receive an event not addressed to them
   without `entity` and `fields`: they learn that a kind of record changed, never
   what it now says.
@@ -123,7 +134,7 @@ an `id:`.
 | `presence` | someone joined or left a scope this connection is in | `{scope, action, userId, connectionId, name}` |
 | `typing` | someone in a joined scope is typing | `{scope, userId, name, stop}` |
 | `heartbeat` | every `heartbeatInterval` | `{}` |
-| `close` | the server is ending the stream | `{reason: rotate \| shutdown \| overflow}` |
+| `close` | the server is ending the stream | `{reason: rotate \| shutdown \| overflow \| session_ended}` |
 
 **Resuming.** The client sends the id of the last event it *applied* as
 `Last-Event-ID`. The replica replays that tenant's entries after the cursor from
@@ -140,7 +151,12 @@ buffer (`subscriberBuffer`) fills is closed with `overflow` instead of being
 waited on, so one slow browser cannot hold up everyone else on the replica; it
 resumes from its cursor. Shutdown drains every stream with `close: shutdown`
 through `http.Server.RegisterOnShutdown`, so readers move to another replica
-while this one finishes. Per-replica limits (`maxConnections`,
+while this one finishes. A stream whose session ends (signed out, revoked, evicted, idle
+or past its age) is closed with `session_ended` within `sessionCheckInterval`: each replica
+keeps the sessions behind its open streams in `sessionwatch.Watch` and, once per interval,
+asks Redis in pipelined batches which of them have ended (`sessionports.SessionLiveness`,
+reading only each session's three timestamps). A reply it cannot read keeps the stream open,
+so a misread can only leave a stream running until its rotation, never close everyone's. Per-replica limits (`maxConnections`,
 `maxConnectionsPerUser`) answer `429` with `Retry-After`.
 
 Keep the stream out of anything that buffers. The timeout middleware skips
@@ -219,7 +235,9 @@ app and Dash reach the stream. It reads the stream with `fetch` (not
 
 - Backoff with full jitter up to 30s after a failure, a short spread after
   `rotate` or `shutdown`, and an immediate retry when the browser comes back
-  online. `401`/`403` stop it for good, and `429` honours `Retry-After`.
+  online. `401`/`403` stop it for good, and `429` honours `Retry-After`. A `401`, or a
+  `session_ended` close, also emits `REALTIME_SESSION_ENDED_EVENT`, and the web app and Dash
+  end the session in the tab as they would for any 401.
 - A watchdog aborts a stream that has been silent for 2.5 heartbeats, whatever
   the socket says.
 - Joins are reference-counted per scope and re-sent on every new connection;
@@ -236,6 +254,12 @@ app and Dash reach the stream. It reads the stream with `fetch` (not
 The web app handles events in `hooks/use-realtime-connection.ts`
 (`RESOURCE_QUERY_KEY_MAP` decides what each resource invalidates) and refetches
 its core keys on `reset`.
+
+A handler that answers an event with its own reads (the watchtower patcher in
+`lib/watchtower-realtime.ts`) sends its invalidations through the connection's
+`enqueueInvalidation`, so they share its coalescing and one-refetch-per-second
+throttle. It reads per record only while the screen that shows those records is
+mounted, and past a small burst it refetches the list once instead.
 
 `ACTIVE_ONLY_RESOURCES` marks resources whose events refetch only the queries a
 screen is showing; the rest are marked stale and refetch when next opened.

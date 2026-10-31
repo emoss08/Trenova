@@ -39,5 +39,8 @@ type BatchRunner interface {
 	Batches(provider *aiprovider.Provider) bool
 	SubmitBatch(ctx context.Context, call *Call, requests []BatchRequest) (*BatchSubmission, error)
 	PollBatch(ctx context.Context, call *Call, id string) (*BatchProgress, error)
+	// CancelBatch stops a batch's requests that have not run; the batch
+	// then ends with what had already run.
+	CancelBatch(ctx context.Context, call *Call, id string) error
 	ReadBatch(ctx context.Context, call *Call, id string, each func(*BatchItem) error) error
 }

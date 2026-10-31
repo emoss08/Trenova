@@ -41,7 +41,7 @@ const (
 	// first appears.
 	EventCritical = "watchtower.critical"
 
-	bulkResolvedAction = "bulk_resolved"
+	bulkSweptAction = "bulk_swept"
 )
 
 type Params struct {

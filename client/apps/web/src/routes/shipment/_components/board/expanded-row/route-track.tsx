@@ -5,19 +5,30 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { useIsTruncated } from "@trenova/shared/hooks/use-is-truncated";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { formatToUserTimezone, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
+import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { useEtaDelta } from "../cells/eta-cell";
 
 const time = (value: number | null | undefined) =>
   value ? formatToUserTimezone(value, { showTimeZone: false, showSeconds: false }) : "—";
 
-function windowText(stop: Stop | null) {
+/** Half the truck marker's width, so its centre never comes closer than this to either end. */
+const TRUCK_HALF_WIDTH = "0.625rem";
+
+/** Where the truck marker's centre sits: at the progress, but never over either end's dot. */
+export function truckLeft(percent: number): string {
+  return `clamp(${TRUCK_HALF_WIDTH}, ${percent}%, calc(100% - ${TRUCK_HALF_WIDTH}))`;
+}
+
+/** The stop's appointment: its window's start, then its end's time of day when it has one. */
+export function windowText(stop: Stop | null, t: TranslateFn): string {
   if (!stop?.scheduledWindowStart) return "";
   const start = time(stop.scheduledWindowStart);
-  return stop.scheduledWindowEnd
-    ? `${start}–${time(stop.scheduledWindowEnd).split(" ").at(-1)}`
+  const end = stop.scheduledWindowEnd;
+  return end && end > stop.scheduledWindowStart
+    ? t("{0} – {1}", start, formatUnixTime(end))
     : start;
 }
 
@@ -34,12 +45,13 @@ function Endpoint({
   statusClassName?: string;
   align: "start" | "end";
 }) {
+  const t = useT();
   return (
     <div className={cn("flex min-w-0 flex-col gap-0.5", align === "end" && "items-end text-right")}>
       <span className="text-muted-foreground text-xs">{label}</span>
       <span className="truncate text-sm font-medium">{stop?.location?.name ?? "—"}</span>
       <span className="text-muted-foreground truncate text-xs">
-        {[stop?.location?.city, windowText(stop)].filter(Boolean).join(" · ")}
+        {[stop?.location?.city, windowText(stop, t)].filter(Boolean).join(" · ")}
       </span>
       <span className={cn("text-xs font-medium", statusClassName)}>{status}</span>
     </div>
@@ -105,15 +117,19 @@ export function RouteTrack({ shipment }: { shipment: Shipment }) {
             style={{ width: `${progress.percent}%` }}
           />
           {late ? (
+            // The stretch the load will not cover in time: from the truck to the delivery, never
+            // past it.
             <span
-              className="absolute -top-[3px] h-1.5 w-12 rounded-sm bg-[repeating-linear-gradient(135deg,var(--danger)_0_3px,transparent_3px_6px)] opacity-60"
-              style={{ left: `${progress.percent}%` }}
+              data-testid="route-late-hatch"
+              className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-sm bg-[repeating-linear-gradient(135deg,var(--danger)_0_3px,transparent_3px_6px)] opacity-60"
+              style={{ left: `${progress.percent}%`, right: 0 }}
             />
           ) : null}
           {moving ? (
             <span
+              data-testid="route-truck"
               className="absolute top-1/2 grid size-5 -translate-x-1/2 -translate-y-1/2 place-items-center"
-              style={{ left: `${progress.percent}%` }}
+              style={{ left: truckLeft(progress.percent) }}
             >
               <span
                 className={cn(

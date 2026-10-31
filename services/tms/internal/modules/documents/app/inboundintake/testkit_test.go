@@ -1,6 +1,7 @@
 package inboundintake
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -108,7 +109,7 @@ func (t *testService) intake() *Service {
 	})
 	processing := inboundprocessing.New(inboundprocessing.Params{
 		ActivityRepo:  t.activityRepo,
-		Completion:    t.completion,
+		Nova:          agenttest.NovaRunner(t.completion),
 		Events:        t.events,
 		Hints:         t.hints,
 		Indexer:       t.indexer,

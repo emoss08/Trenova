@@ -8,6 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceassembly"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepacket"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -523,10 +524,16 @@ func (s *Service) buildInvoiceEntity(
 	}
 
 	invoiceDate := p.InvoiceDate
+	if invoiceDate == 0 && p.Anchor.InvoiceDate != nil {
+		invoiceDate = *p.Anchor.InvoiceDate
+	}
 	if invoiceDate == 0 {
 		invoiceDate = timeutils.NowUnix()
 	}
 	paymentTerm := invoiceassembly.ResolvePaymentTerm(p.Customer, p.Control)
+	if term := invoice.PaymentTerm(p.Anchor.PaymentTerm); term.IsValid() {
+		paymentTerm = term
+	}
 	if paymentTerm == "" {
 		paymentTerm = invoice.PaymentTermNet30
 	}
@@ -568,6 +575,9 @@ func (s *Service) buildInvoiceEntity(
 		IsSplitBill:        p.IsSplitBill,
 		Lines:              lines,
 		RatingNotes:        invoicelines.RatingNotes(p.Legs...),
+		PONumber:           p.Anchor.PONumber,
+		Memo:               p.Anchor.InvoiceMemo,
+		Attachments:        packetAttachments(s.packetDocuments(ctx, p.Anchor)),
 	}
 
 	invoiceassembly.ApplyInvoiceDetail(entity, p.Customer)
@@ -890,4 +900,46 @@ func (s *Service) shouldAutoPost(
 
 func (s *Service) resolveAutoPost(cus *customer.Customer) bool {
 	return cus != nil && cus.BillingProfile != nil && cus.BillingProfile.AutoBill
+}
+
+// packetDocuments are the documents an item's invoice carries: the biller's pick,
+// or, when they picked none, every document satisfying one of the customer's
+// required types, which is what the queue shows as the packet.
+func (s *Service) packetDocuments(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+) []pulid.ID {
+	if item == nil {
+		return nil
+	}
+	if len(item.PacketDocumentIDs) > 0 {
+		return item.PacketDocumentIDs
+	}
+	if s.readiness == nil || item.ShipmentID.IsNil() {
+		return nil
+	}
+	readiness, err := s.readiness.GetBillingReadiness(ctx, item.ShipmentID, pagination.TenantInfo{
+		OrgID: item.OrganizationID,
+		BuID:  item.BusinessUnitID,
+	})
+	if err != nil {
+		s.l.Warn("could not read the documents a packet requires; the invoice carries none",
+			zap.String("billingQueueItemId", item.ID.String()), zap.Error(err))
+		return nil
+	}
+
+	return invoicepacket.RequiredDocumentIDs(readiness)
+}
+
+func packetAttachments(documentIDs []pulid.ID) []*invoice.Attachment {
+	if len(documentIDs) == 0 {
+		return nil
+	}
+
+	out := make([]*invoice.Attachment, 0, len(documentIDs))
+	for _, documentID := range documentIDs {
+		out = append(out, &invoice.Attachment{DocumentID: documentID, Selected: true})
+	}
+
+	return out
 }

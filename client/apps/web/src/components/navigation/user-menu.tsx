@@ -1,5 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LanguageSubmenu } from "@/components/navigation/language-submenu";
+import { useState } from "react";
+import { LanguageDialog } from "@/components/navigation/language-dialog";
+import { LearnMoreSubmenu } from "@/components/navigation/learn-more-submenu";
+import { ThemeSubmenu } from "@/components/navigation/theme-submenu";
+import { hotkeyLabel } from "@/config/keybinds.config";
+import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import {
   DropdownMenu,
@@ -8,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useSignOut } from "@/hooks/use-sign-out";
@@ -16,8 +22,10 @@ import { useNavigate } from "react-router";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import {
   ChevronSelectorVerticalIcon,
+  Keyboard01Icon,
   LogOut01Icon,
   Settings01Icon,
+  Translate01Icon,
 } from "@trenova/shared/components/icons";
 
 /**
@@ -30,6 +38,8 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
   const user = useAuthStore((s) => s.user);
   const signOut = useSignOut();
   const navigate = useNavigate();
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const openDialog = useAppDialogsStore((state) => state.openDialog);
 
   const displayName = user?.name ?? user?.username ?? "User";
 
@@ -108,9 +118,30 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <DropdownMenuItem
               title={t("Settings")}
               startContent={<Settings01Icon className="size-4" />}
+              endContent={
+                <DropdownMenuShortcut>
+                  {hotkeyLabel("general", "user-settings")}
+                </DropdownMenuShortcut>
+              }
               onClick={() => void navigate(settingsPath())}
             />
-            <LanguageSubmenu />
+            <ThemeSubmenu />
+            <DropdownMenuItem
+              title={t("Language")}
+              startContent={<Translate01Icon className="size-4" />}
+              onClick={() => setLanguageOpen(true)}
+            />
+            <DropdownMenuItem
+              title={t("Keyboard shortcuts")}
+              startContent={<Keyboard01Icon className="size-4" />}
+              endContent={
+                <DropdownMenuShortcut>
+                  {hotkeyLabel("general", "keyboard-shortcuts")}
+                </DropdownMenuShortcut>
+              }
+              onClick={() => openDialog("shortcuts")}
+            />
+            <LearnMoreSubmenu />
             <DropdownMenuSeparator />
             <DropdownMenuItem
               title={t("Log out")}
@@ -120,6 +151,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+      <LanguageDialog open={languageOpen} onOpenChange={setLanguageOpen} />
     </>
   );
 }

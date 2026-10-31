@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 const (
@@ -51,13 +50,10 @@ func (s *Access) ReadRecordWith(
 	if !ok || len(s.PermittedTools(ctx, actor, []string{name})) != 1 {
 		return nil, false
 	}
-	schema := tool.ParamSchema()
-	param, ok := recordIDParam(schema)
+	params, ok := agenttoolports.RecordIDParams(tool.ParamSchema(), id)
 	if !ok {
 		return nil, false
 	}
-
-	params := map[string]any{param: recordIDArgument(schema, param, id)}
 	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
@@ -69,36 +65,4 @@ func (s *Access) ReadRecordWith(
 	}
 
 	return &RecordRead{Tool: name, Params: params, Data: data}, true
-}
-
-func recordIDArgument(schema map[string]any, param, id string) any {
-	properties, _ := schema[toolschema.KeyProperties].(map[string]any)
-	property, _ := properties[param].(map[string]any)
-	if kind, _ := property[toolschema.KeyType].(string); kind == toolschema.TypeArray {
-		return []any{id}
-	}
-
-	return id
-}
-
-func recordIDParam(schema map[string]any) (string, bool) {
-	if required, _ := schema[toolschema.KeyRequired].([]string); len(required) == 1 {
-		return required[0], true
-	}
-
-	properties, _ := schema[toolschema.KeyProperties].(map[string]any)
-	found := ""
-	for name, raw := range properties {
-		property, _ := raw.(map[string]any)
-		items, _ := property[toolschema.KeyItems].(map[string]any)
-		if toolschema.RecordOf(property) == "" && toolschema.RecordOf(items) == "" {
-			continue
-		}
-		if found != "" {
-			return "", false
-		}
-		found = name
-	}
-
-	return found, found != ""
 }

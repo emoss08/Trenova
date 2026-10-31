@@ -18,6 +18,7 @@ type BaseNumberFieldProps = {
   /** Maps a value that is not a plain number or decimal text in and out of the field. */
   codec?: NumberFieldCodec;
   label?: React.ReactNode;
+  hideLabel?: boolean;
   /** A small control beside the label. */
   labelAction?: React.ReactNode;
   description?: React.ReactNode;
@@ -41,8 +42,11 @@ type BaseNumberFieldProps = {
   prefix?: string;
   suffix?: string;
   min?: number;
+  /** The largest value: typing past it is refused, and stepping stops at it. */
   max?: number;
   step?: number;
+  /** Draws the increment and decrement buttons; off for a narrow cell in a table row. */
+  stepper?: boolean;
 };
 
 /**
@@ -113,6 +117,7 @@ function NumberFieldImpl<T extends FieldValues>({
   control,
   description,
   label,
+  hideLabel,
   labelAction,
   className,
   inputClassName,
@@ -131,6 +136,7 @@ function NumberFieldImpl<T extends FieldValues>({
   min,
   max,
   step = 1,
+  stepper = true,
   valueType,
   codec,
   ...props
@@ -193,6 +199,7 @@ function NumberFieldImpl<T extends FieldValues>({
           <FieldWrapper
             name={name}
             label={label}
+            hideLabel={hideLabel}
             labelAction={labelAction}
             description={description}
             required={!!rules?.required}
@@ -214,6 +221,11 @@ function NumberFieldImpl<T extends FieldValues>({
                     }
                     field.onChange(asString ? values.value : (values.floatValue ?? null));
                   }}
+                  isAllowed={
+                    max === undefined
+                      ? undefined
+                      : (values) => values.floatValue === undefined || values.floatValue <= max
+                  }
                   onBlur={field.onBlur}
                   getInputRef={field.ref}
                   decimalScale={decimalScale}
@@ -243,7 +255,7 @@ function NumberFieldImpl<T extends FieldValues>({
                     "ui-focus-ring",
                     props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
                     fieldState.invalid && fieldInvalidClass,
-                    sideText ? "pr-16" : "pr-12",
+                    !stepper ? (sideText ? "pr-10" : "pr-2") : sideText ? "pr-16" : "pr-12",
                     className,
                     inputClassName,
                   )}
@@ -255,26 +267,28 @@ function NumberFieldImpl<T extends FieldValues>({
                       {sideText}
                     </div>
                   )}
-                  <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
-                    <button
-                      type="button"
-                      aria-label={t("Increment")}
-                      className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
-                      disabled={props.disabled || props.readOnly}
-                      onClick={() => stepBy(step, max, "max")}
-                    >
-                      <ChevronUpIcon className="h-3 w-3" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={t("Decrement")}
-                      className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
-                      disabled={props.disabled || props.readOnly}
-                      onClick={() => stepBy(-step, min, "min")}
-                    >
-                      <ChevronDownIcon className="h-3 w-3" />
-                    </button>
-                  </div>
+                  {stepper ? (
+                    <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
+                      <button
+                        type="button"
+                        aria-label={t("Increment")}
+                        className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
+                        disabled={props.disabled || props.readOnly}
+                        onClick={() => stepBy(step, max, "max")}
+                      >
+                        <ChevronUpIcon className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t("Decrement")}
+                        className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
+                        disabled={props.disabled || props.readOnly}
+                        onClick={() => stepBy(-step, min, "min")}
+                      >
+                        <ChevronDownIcon className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
               {endAddon}

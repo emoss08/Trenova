@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
@@ -320,7 +321,7 @@ func newFixture(completion llmports.CompletionService) *fixture {
 		QuickFilters:  f.basis,
 		Organizations: stubOrgs{timezone: "America/Chicago"},
 		Suggestions:   f.candidates,
-		Completion:    completion,
+		Nova:          agenttest.NovaRunner(completion),
 		Logger:        zap.NewNop(),
 		Now:           func() time.Time { return time.Unix(1_791_000_000, 0) },
 	})

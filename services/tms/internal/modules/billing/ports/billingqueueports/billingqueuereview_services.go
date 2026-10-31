@@ -77,6 +77,16 @@ type ApproveIfReadyResult struct {
 // itself: settling what its checks raised, holding and releasing it, posting
 // its invoice, its activity, and its place in the queue.
 type BillingQueueReviewService interface {
+	ApplyBulkAction(
+		ctx context.Context,
+		req *ApplyBulkActionRequest,
+		actor *permissionports.RequestActor,
+	) error
+	Recheck(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		itemID pulid.ID,
+	) (*RecheckResult, error)
 	ResolveIssue(
 		ctx context.Context,
 		req *ResolveBillingQueueIssueRequest,
@@ -160,9 +170,8 @@ type StartBillingQueueApprovalRequest struct {
 	TenantInfo     pagination.TenantInfo
 	ItemIDs        []pulid.ID
 	IdempotencyKey string
-	// AssignApprover: the person agreed to become the biller of the picked
-	// items that have none.
-	AssignApprover bool
+	Action         billingapprovalrun.RunAction
+	Params         billingapprovalrun.RunParams
 }
 
 type BillingQueueApprovalRunRequest struct {

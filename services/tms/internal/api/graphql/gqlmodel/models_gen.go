@@ -1754,6 +1754,16 @@ type BillingQueueAssignInput struct {
 	BillerID string `json:"billerId"`
 }
 
+// The open issue a list row leads with, and how many are open.
+type BillingQueueHeadline struct {
+	Code     string `json:"code"`
+	CheckKey string `json:"checkKey"`
+	Summary  string `json:"summary"`
+	Open     int    `json:"open"`
+	// The issue waits on someone other than the biller.
+	Waiting bool `json:"waiting"`
+}
+
 type BillingQueueItem struct {
 	ID             string  `json:"id"`
 	OrganizationID string  `json:"organizationId"`
@@ -1793,6 +1803,43 @@ type BillingQueueItem struct {
 	Shipment          *Shipment      `json:"shipment,omitempty"`
 	AssignedBiller    *tenant.User   `json:"assignedBiller,omitempty"`
 	CanceledBy        *tenant.User   `json:"canceledBy,omitempty"`
+	// Where the item sits in the queue's working order; the server keeps it current.
+	Lane           billingqueue.Lane            `json:"lane"`
+	HoldReasonCode *billingqueue.HoldReasonCode `json:"holdReasonCode,omitempty"`
+	// The customer's PO number printed on the invoice.
+	PoNumber string `json:"poNumber"`
+	// What Nova made of the item after the checks ran. It never blocks approval.
+	AgentVerdict    *billingqueue.AgentVerdict `json:"agentVerdict,omitempty"`
+	AgentSummary    *string                    `json:"agentSummary,omitempty"`
+	AgentReviewedAt *int                       `json:"agentReviewedAt,omitempty"`
+	// The open issue a list row leads with. Set on items read through billingQueueItems.
+	Headline *BillingQueueHeadline `json:"headline,omitempty"`
+}
+
+type BillingQueueItemConnection struct {
+	Edges      []*BillingQueueItemEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type BillingQueueItemEdge struct {
+	Node   *BillingQueueItem `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
+type BillingQueueItemsFilterInput struct {
+	// The lanes to include; empty includes every lane.
+	Lanes []billingqueue.Lane `json:"lanes,omitempty"`
+	// Include items whose invoice already posted.
+	IncludePosted *bool `json:"includePosted,omitempty"`
+	// Smallest amount, in the bill-to's currency.
+	MinAmount *string `json:"minAmount,omitempty"`
+	// Largest amount, in the bill-to's currency.
+	MaxAmount *string `json:"maxAmount,omitempty"`
+	// Only items queued before this time.
+	CreatedBefore *int `json:"createdBefore,omitempty"`
 }
 
 // The invoice an item posted as, and where it went.
@@ -7431,6 +7478,10 @@ type RateAgreementAccessorial struct {
 	MaxAmount           *string `json:"maxAmount,omitempty"`
 	// The Tariff condition a shipment meets for the charge to apply; empty applies always.
 	Condition string `json:"condition"`
+	// The accessorial charge's code, such as DET.
+	ChargeCode string `json:"chargeCode"`
+	// The accessorial charge's description, such as Detention.
+	ChargeDescription string `json:"chargeDescription"`
 }
 
 type RateAgreementConnection struct {
@@ -7451,6 +7502,8 @@ type RateAgreementFuelBinding struct {
 	ID                     string `json:"id"`
 	FuelSurchargeProgramID string `json:"fuelSurchargeProgramId"`
 	Waived                 bool   `json:"waived"`
+	// The fuel surcharge program's name.
+	ProgramName string `json:"programName"`
 }
 
 // One priced lane of a rate agreement: where it applies, when, and the tariff

@@ -54,6 +54,9 @@ server:
       - X-CSRF-Token
       - Last-Event-ID
       - Idempotency-Key
+      - X-Trenova-User-Id
+      - X-Trenova-Organization-Id
+      - X-Trenova-Business-Unit-Id
     exposeHeaders:
       - X-Request-Id
       - Idempotent-Replayed

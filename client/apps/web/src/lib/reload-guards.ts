@@ -28,3 +28,22 @@ export function reloadIsSafe(): boolean {
   }
   return true;
 }
+
+let leavingRegardless = false;
+
+/**
+ * Loads `destination` without stopping for the work the page holds: the session that work
+ * belonged to has ended or someone else holds it now, so nothing on the page can be saved,
+ * and on a shared computer the next person must not be asked whether to keep the last one's
+ * screen. The browser's leave-page prompt stands aside for this one page load. A reload the
+ * person chooses is not this: it goes through the prompt like any other.
+ */
+export function leaveRegardlessOfWork(destination: string): void {
+  leavingRegardless = true;
+  window.location.assign(destination);
+}
+
+/** Whether the page is being left on purpose, past any unsaved work. */
+export function isLeavingRegardlessOfWork(): boolean {
+  return leavingRegardless;
+}

@@ -2,24 +2,31 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ApiRequestError } from "@trenova/shared/lib/api";
-import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
+import type { BillingIssue, BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { MemoryRouter } from "react-router";
+import { clearPermissions, seedPermissions } from "@/test/permissions";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BillingQueueChargesTab } from "../billing-queue-charges-tab";
 import { ACME_SHARE_JSON, DETENTION_ID, queueItem } from "./split-shipment-fixture";
 
-const { updateCharges, reassignCharge } = vi.hoisted(() => ({
+const { updateCharges, reassignCharge, resolveIssue } = vi.hoisted(() => ({
   updateCharges: vi.fn(),
   reassignCharge: vi.fn(),
+  resolveIssue: vi.fn(),
 }));
 
 vi.mock("@/services/api", () => ({
-  apiService: { billingQueueService: { updateCharges, reassignCharge } },
+  apiService: { billingQueueService: { updateCharges, reassignCharge, resolveIssue } },
 }));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
-vi.mock("../billing-queue-charge-dialog", () => ({ BillingQueueChargeDialog: () => null }));
+const { fetchGraphQLSelectOptions } = vi.hoisted(() => ({
+  fetchGraphQLSelectOptions: vi.fn(),
+}));
+vi.mock("@/lib/graphql/select-options", () => ({ fetchGraphQLSelectOptions }));
 vi.mock("../billing-queue-rerate-dialog", () => ({ BillingQueueRerateDialog: () => null }));
 vi.mock("../billing-queue-reassign-charge-dialog", () => ({
   BillingQueueReassignChargeDialog: ({
@@ -34,16 +41,19 @@ vi.mock("../billing-queue-reassign-charge-dialog", () => ({
 afterEach(cleanup);
 beforeEach(() => {
   vi.clearAllMocks();
+  fetchGraphQLSelectOptions.mockResolvedValue({ count: 0, results: [] });
 });
 
 function renderTab(item: BillingQueueItem) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <NuqsTestingAdapter>
-      <QueryClientProvider client={client}>
-        <BillingQueueChargesTab item={item} />
-      </QueryClientProvider>
-    </NuqsTestingAdapter>,
+    <MemoryRouter>
+      <NuqsTestingAdapter>
+        <QueryClientProvider client={client}>
+          <BillingQueueChargesTab item={item} />
+        </QueryClientProvider>
+      </NuqsTestingAdapter>
+    </MemoryRouter>,
   );
 }
 
@@ -280,5 +290,394 @@ describe("BillingQueueChargesTab safe edits", () => {
     await user.click(await screen.findByRole("button", { name: "Change payer for Detention Fee" }));
 
     expect(await screen.findByText("Reassigning Detention Fee")).toBeInTheDocument();
+  });
+});
+
+describe("BillingQueueChargesTab editing a line in place", () => {
+  it("says nothing changed until the rate does, then what the change does to the line", async () => {
+    const user = userEvent.setup();
+    renderTab(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+
+    expect(screen.getByText("No change yet")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save line" })).toBeDisabled();
+
+    const rate = screen.getByRole("textbox", { name: "Rate" });
+    await user.clear(rate);
+    await user.type(rate, "1200");
+
+    expect(
+      screen.getByText("+$45.62 against the saved line; the invoice total updates when you save"),
+    ).toBeInTheDocument();
+
+    await user.clear(rate);
+    await user.type(rate, "1000");
+    expect(
+      screen.getByText("−$154.38 against the saved line; the invoice total updates when you save"),
+    ).toBeInTheDocument();
+  });
+
+  it("saves the line with its charge, quantity and rate", async () => {
+    const user = userEvent.setup();
+    updateCharges.mockResolvedValueOnce(queueItem({ payer: "acme" }));
+    renderTab(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    const quantity = screen.getByRole("textbox", { name: "Quantity" });
+    await user.clear(quantity);
+    await user.type(quantity, "2");
+    await user.click(screen.getByRole("button", { name: "Save line" }));
+
+    await waitFor(() => expect(updateCharges).toHaveBeenCalledTimes(1));
+    expect(updateCharges.mock.calls[0]).toEqual([
+      "bqi_acme",
+      {
+        additionalCharges: [
+          {
+            id: DETENTION_ID,
+            accessorialChargeId: "acc_det",
+            method: "Flat",
+            amount: 1154.38,
+            unit: 2,
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("refuses a quantity under one without saving", async () => {
+    const user = userEvent.setup();
+    renderTab(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    const quantity = screen.getByRole("textbox", { name: "Quantity" });
+    await user.clear(quantity);
+    await user.type(quantity, "0");
+    await user.click(screen.getByRole("button", { name: "Save line" }));
+
+    expect(await screen.findByText("Must be at least 1")).toBeInTheDocument();
+    expect(updateCharges).not.toHaveBeenCalled();
+  });
+
+  it("opens the split between payers from the row, on a shipment with more than one", async () => {
+    const user = userEvent.setup();
+    renderTab(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    await user.click(screen.getByRole("button", { name: "Split between payers" }));
+
+    expect(await screen.findByText("Reassigning Detention Fee")).toBeInTheDocument();
+  });
+
+  it("moves the whole line to the payer picked, after saving nothing else", async () => {
+    const user = userEvent.setup();
+    fetchGraphQLSelectOptions.mockResolvedValue({
+      count: 2,
+      results: [
+        { id: "cus_acme", label: "Acme Foods", description: null, meta: null },
+        { id: "cus_peak", label: "Peak Logistics", description: null, meta: null },
+      ],
+    });
+    reassignCharge.mockResolvedValueOnce({
+      item: queueItem({ payer: "acme" }),
+      items: [],
+      createdItemIds: [],
+      canceledItemIds: [],
+    });
+    renderTab(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    const [, payer] = screen.getAllByRole("combobox");
+    await user.click(payer!);
+    await user.click(await screen.findByRole("option", { name: /Peak Logistics/u }));
+
+    expect(screen.getByText("Moves the line to Peak Logistics when you save")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Save line" }));
+
+    await waitFor(() => expect(reassignCharge).toHaveBeenCalledTimes(1));
+    expect(updateCharges).not.toHaveBeenCalled();
+    expect(reassignCharge.mock.calls[0]).toEqual([
+      "bqi_acme",
+      {
+        chargeKind: "Accessorial",
+        additionalChargeId: DETENTION_ID,
+        allocations: [
+          { billToCustomerId: "cus_peak", method: "Percent", percent: "100", amount: null },
+        ],
+      },
+    ]);
+  });
+});
+
+describe("BillingQueueChargesTab adding a line in place", () => {
+  const accessorials = {
+    count: 1,
+    results: [
+      {
+        id: "acc_lump",
+        label: "LUMP",
+        description: "Lumper",
+        meta: { method: "Flat", amount: 185 },
+      },
+    ],
+  };
+
+  it("adds a line under the charges, priced from the accessorial chosen", async () => {
+    const user = userEvent.setup();
+    fetchGraphQLSelectOptions.mockResolvedValue(accessorials);
+    updateCharges.mockResolvedValueOnce(queueItem({ payer: "acme" }));
+    renderTab(queueItem({ payer: "acme" }));
+
+    await user.click(screen.getByRole("button", { name: "Add charge" }));
+    const row = screen.getByRole("row", { name: "New charge line" });
+    expect(within(row).getByText("Choose the accessorial this line bills")).toBeInTheDocument();
+    expect(within(row).getByRole("button", { name: "Add line" })).toBeEnabled();
+
+    const [accessorial] = within(row).getAllByRole("combobox");
+    await user.click(accessorial!);
+    await user.click(await screen.findByRole("option", { name: /LUMP/u }));
+
+    expect(within(row).getByText("Adds $185.00 to the bill when you add it")).toBeInTheDocument();
+    await user.click(within(row).getByRole("button", { name: "Add line" }));
+
+    await waitFor(() => expect(updateCharges).toHaveBeenCalledTimes(1));
+    expect(updateCharges.mock.calls[0]![1].additionalCharges.at(-1)).toEqual({
+      accessorialChargeId: "acc_lump",
+      method: "Flat",
+      unit: 1,
+      amount: 185,
+    });
+    expect(reassignCharge).not.toHaveBeenCalled();
+  });
+
+  it("moves a line added from another payer's bill to that payer once it is added", async () => {
+    const user = userEvent.setup();
+    fetchGraphQLSelectOptions.mockResolvedValue(accessorials);
+    const peak = queueItem({ payer: "peak" });
+    const lumper = {
+      id: "ac_lump",
+      accessorialChargeId: "acc_lump",
+      method: "Flat",
+      amount: 185,
+      unit: 1,
+      isSystemGenerated: false,
+      accessorialCharge: { id: "acc_lump", code: "LUMP", description: "Lumper" },
+    };
+    updateCharges.mockResolvedValueOnce({
+      ...peak,
+      shipment: {
+        ...peak.shipment!,
+        additionalCharges: [...(peak.shipment!.additionalCharges ?? []), lumper],
+      },
+    });
+    reassignCharge.mockResolvedValueOnce({
+      item: peak,
+      items: [],
+      createdItemIds: [],
+      canceledItemIds: [],
+    });
+    renderTab(peak);
+
+    await user.click(screen.getByRole("button", { name: "Add charge" }));
+    const row = screen.getByRole("row", { name: "New charge line" });
+    const [accessorial] = within(row).getAllByRole("combobox");
+    await user.click(accessorial!);
+    await user.click(await screen.findByRole("option", { name: /LUMP/u }));
+    await user.click(within(row).getByRole("button", { name: "Add line" }));
+
+    await waitFor(() => expect(reassignCharge).toHaveBeenCalledTimes(1));
+    expect(reassignCharge.mock.calls[0]).toEqual([
+      "bqi_peak",
+      {
+        chargeKind: "Accessorial",
+        additionalChargeId: "ac_lump",
+        allocations: [
+          { billToCustomerId: "cus_peak", method: "Percent", percent: "100", amount: null },
+        ],
+      },
+    ]);
+  });
+
+  it("refuses a line with no accessorial or rate", async () => {
+    const user = userEvent.setup();
+    renderTab(queueItem({ payer: "peak" }));
+
+    await user.click(screen.getByRole("button", { name: "Add charge" }));
+    await user.click(screen.getByRole("button", { name: "Add line" }));
+
+    expect(await screen.findAllByText("Required")).not.toHaveLength(0);
+    expect(updateCharges).not.toHaveBeenCalled();
+  });
+
+  it("discards the new line", async () => {
+    const user = userEvent.setup();
+    renderTab(queueItem({ payer: "peak" }));
+
+    await user.click(screen.getByRole("button", { name: "Add charge" }));
+    await user.click(screen.getByRole("button", { name: "Discard new line" }));
+
+    expect(screen.queryByRole("row", { name: "New charge line" })).not.toBeInTheDocument();
+  });
+});
+
+// A receipt the shipment carries that no charge bills, as the review raises it: Nova's
+// when Nova read the receipt, a rule's when a person entered it.
+function unbilled(
+  id: string,
+  source: BillingIssue["source"],
+  label: string,
+  amount: string,
+  reasoning: string,
+): BillingIssue {
+  return {
+    id,
+    itemId: "bqi_acme",
+    checkKey: "charges",
+    code: "UnbilledAccessorial",
+    subjectKey: `doc_${id}`,
+    summary: `${label} $${amount} isn't billed`,
+    reasoning,
+    source,
+    flaggedChargeId: null,
+    options: [
+      {
+        key: "add",
+        label: `Bill it · $${amount}`,
+        amount: Number(amount),
+        done: `${label} billed`,
+        effect: {
+          kind: "add",
+          accessorialChargeId: `acc_${id}`,
+          label,
+          amount: Number(amount),
+          basis: "From the receipt",
+        },
+      },
+      {
+        key: "skip",
+        label: "Not billable",
+        amount: null,
+        done: `${label} marked not billable`,
+        effect: { kind: "accept" },
+      },
+    ],
+    resolutionKey: null,
+    resolutionText: null,
+    resolvedById: null,
+    resolvedAt: null,
+    requestedAt: null,
+    undoable: false,
+    createdAt: 1_800_000_000,
+  } as unknown as BillingIssue;
+}
+
+describe("BillingQueueChargesTab charges the shipment does not bill", () => {
+  const lumper = unbilled(
+    "lump",
+    "Agent",
+    "Lumper",
+    "185.00",
+    "Receipt LMP-5521 for $185.00 is on the shipment, but no lumper charge bills it.",
+  );
+  const scale = unbilled(
+    "scale",
+    "Deterministic",
+    "Scale ticket",
+    "12.00",
+    "A receipt for $12.00 is on the shipment, but no scale ticket charge bills it.",
+  );
+  const withUnbilled = (): BillingQueueItem =>
+    ({
+      ...queueItem({ payer: "acme" }),
+      review: {
+        checks: [],
+        issues: [lumper, scale],
+        needsCount: 0,
+        ready: true,
+        blocker: "",
+        documents: [],
+        billerName: "",
+      },
+    }) as unknown as BillingQueueItem;
+
+  it("names each one with who found it, why, and the line that would bill it", () => {
+    renderTab(withUnbilled());
+
+    expect(screen.getByRole("img", { name: "Nova found this" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "A rule found this" })).toBeInTheDocument();
+    expect(screen.getByText("Lumper").parentElement).toHaveTextContent(
+      "Lumper $185.00 isn't billed",
+    );
+    expect(screen.getByText("$185.00")).toHaveClass("font-mono");
+    expect(
+      screen.getByText(
+        "Receipt LMP-5521 for $185.00 is on the shipment, but no lumper charge bills it.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add $185.00" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Add $12.00" })).toBeEnabled();
+    expect(screen.getAllByRole("button", { name: "Not billable" })).toHaveLength(2);
+  });
+
+  it("bills the line, or marks it not billable, through the issue it settles", async () => {
+    const user = userEvent.setup();
+    resolveIssue.mockResolvedValue(queueItem({ payer: "acme" }));
+    renderTab(withUnbilled());
+
+    await user.click(screen.getByRole("button", { name: "Add $185.00" }));
+    await waitFor(() => expect(resolveIssue).toHaveBeenCalledWith("bqi_acme", "lump", "add"));
+
+    await user.click(screen.getAllByRole("button", { name: "Not billable" })[1]!);
+    await waitFor(() => expect(resolveIssue).toHaveBeenCalledWith("bqi_acme", "scale", "skip"));
+  });
+});
+
+describe("BillingQueueChargesTab rated by", () => {
+  beforeEach(() => {
+    seedPermissions({
+      [Resource.RateAgreement]: Operation.Read,
+      [Resource.FormulaTemplate]: Operation.Read,
+    });
+  });
+  afterEach(clearPermissions);
+
+  it("names the rate agreement that priced the shipment, opening its terms in place", () => {
+    renderTab({
+      ...queueItem({ payer: "acme" }),
+      ratedBy: { kind: "Agreement", id: "ra_2041", code: "RA-2041", name: "Acme 2026" },
+    });
+
+    const trigger = screen.getByRole("button", { name: "RA-2041 · Acme 2026" });
+    expect(trigger.closest("span")).toHaveTextContent("Rated by RA-2041 · Acme 2026");
+    expect(screen.queryByRole("link", { name: "RA-2041 · Acme 2026" })).not.toBeInTheDocument();
+  });
+
+  it("names the formula template when no contract priced it", () => {
+    renderTab({
+      ...queueItem({ payer: "acme" }),
+      ratedBy: { kind: "Template", id: "ft_permile", code: null, name: "Per mile" },
+    });
+
+    expect(screen.getByRole("button", { name: "Per mile" })).toBeInTheDocument();
+  });
+
+  it("names a contract the biller cannot read without opening its terms", () => {
+    seedPermissions({ [Resource.FormulaTemplate]: Operation.Read });
+    renderTab({
+      ...queueItem({ payer: "acme" }),
+      ratedBy: { kind: "Agreement", id: "ra_2041", code: "RA-2041", name: "Acme 2026" },
+    });
+
+    expect(screen.queryByRole("button", { name: "RA-2041 · Acme 2026" })).not.toBeInTheDocument();
+    expect(
+      screen.getByText("RA-2041 · Acme 2026").closest("[data-slot=locked-reference]"),
+    ).not.toBeNull();
+  });
+
+  it("names nothing when nothing priced the shipment", () => {
+    renderTab(queueItem({ payer: "acme" }));
+
+    expect(screen.queryByText(/Rated by/u)).not.toBeInTheDocument();
   });
 });

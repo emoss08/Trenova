@@ -142,9 +142,12 @@ type RunRequest struct {
 	Task        aitask.Task
 	System      string
 	UserContent string
-	Schema      map[string]any
-	SchemaName  string
-	MaxTokens   int
+	// Files are documents the user message carries, sent as themselves to a
+	// model that reads files.
+	Files      []llmports.MessageFile
+	Schema     map[string]any
+	SchemaName string
+	MaxTokens  int
 	// PreferredProviderID asks for one configured provider first, subject to the
 	// same task and trust checks as any other candidate.
 	PreferredProviderID pulid.ID
@@ -549,11 +552,12 @@ func (s *Engine) CallFor(
 		APIKey:                   apiKey,
 		Client:                   s.ClientFor(provider),
 		ServerCredentialsAllowed: s.AI.ServerCloudCredentialsAllowed(),
+		Files:                    s.FileSource(req.TenantInfo),
 		Request: &modeladapter.Request{
 			// A provider that cannot enforce the schema on the wire is given it in
 			// the prompt instead, so every candidate sees the same requirements.
 			System:       StructuredSystem(req, provider.StructuredOutputMode),
-			Messages:     modeladapter.UserMessage(req.UserContent),
+			Messages:     structuredMessages(req),
 			OutputSchema: req.Schema,
 			SchemaName:   req.SchemaName,
 			MaxTokens:    maxTokens,

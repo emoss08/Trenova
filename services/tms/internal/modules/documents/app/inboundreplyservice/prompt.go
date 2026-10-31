@@ -2,12 +2,11 @@ package inboundreplyservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -26,7 +25,7 @@ const (
 	replySchemaName     = "triage_reply"
 )
 
-const replySystemPrompt = `You draft email replies for a freight carrier's operations team. A person reads
+const replySystemPrompt = `Your task: draft an email reply for a freight carrier's operations team. A person reads
 every draft before it is sent, so write what they would send.
 
 Write only the body: a short greeting with the sender's first name when you know it, two to
@@ -163,22 +162,20 @@ func (s *Service) writeReply(
 	req *DraftReplyRequest,
 	mc *messageContext,
 ) (string, error) {
-	result, err := s.nova.Complete(ctx, req.Mode, &llmports.StructuredCompletionRequest{
-		TenantInfo:   req.TenantInfo,
-		System:       replySystemPrompt,
+	var payload replyPayload
+	result, err := s.nova.Run(ctx, &llmports.NovaTask{
+		Instructions: replySystemPrompt,
 		Context:      replyContextSections(mc),
-		OutputSchema: replySchema(),
+		Schema:       replySchema(),
 		SchemaName:   replySchemaName,
 		MaxTokens:    replyMaxTokens,
-		Attribution:  aiusageports.AIUsageAttribution{UserID: req.UserID},
-	})
-	if err != nil {
+		TenantInfo:   req.TenantInfo,
+		UserID:       req.UserID,
+	}, &payload)
+	if err != nil && !errors.Is(err, llmports.ErrOutsideSchema) {
 		return "", err
 	}
-
-	var payload replyPayload
-	if err = sonic.UnmarshalString(strings.TrimSpace(result.Text), &payload); err != nil ||
-		strings.TrimSpace(payload.Body) == "" {
+	if err != nil || strings.TrimSpace(payload.Body) == "" {
 		s.l.Warn("a drafted reply could not be read",
 			zap.String("messageId", mc.message.ID.String()),
 			zap.String("model", result.ModelIdentifier),

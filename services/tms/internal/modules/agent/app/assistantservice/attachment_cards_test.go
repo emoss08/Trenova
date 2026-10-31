@@ -178,26 +178,6 @@ func TestShowAttachments_AFileWithNoDraftShowsNoCard(t *testing.T) {
 	assert.Empty(t, repo.Upserts)
 }
 
-// The palette answers with nothing beside it, so it keeps no card.
-func TestShowAttachments_KeepsNoCardWhereTheAnswerIsReadAlone(t *testing.T) {
-	t.Parallel()
-
-	documentID := pulid.MustNew("doc_")
-	svc, repo := cardService(&draftReader{draft: readDraft(documentID)})
-	thread := deskThread()
-	thread.Origin = conversation.ThreadOriginAsk
-
-	svc.showAttachments(
-		t.Context(),
-		thread,
-		assistanttest.Actor(),
-		assistanttest.Actor().TenantInfo(),
-		[]agentturn.RuntimeAttachment{{DocumentID: documentID.String()}},
-	)
-
-	assert.Empty(t, repo.Upserts)
-}
-
 /*
 The card the attachment opened and the card the agent opens by reading the draft
 are one artifact: reading a draft that has not changed points the reply at the

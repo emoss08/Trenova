@@ -702,7 +702,7 @@ async function checkRuntimeOutputs() {
 // type, and it needs one dynamic import per catalog so the bundler can split each into its
 // own chunk. Generating both keeps locales.json the only place a language is added.
 async function localeModule(locales, bundleNames) {
-  const { names, regions } = await loadLocales();
+  const { names } = await loadLocales();
   const quoted = locales.map((l) => `"${l}"`).join(", ");
 
   const loaders = locales
@@ -728,12 +728,6 @@ export const DEFAULT_LOCALE: Locale = "en";
 
 export const LOCALE_NAMES: Record<Locale, string> = {
 ${locales.map((l) => `  "${l}": ${JSON.stringify(names[l] ?? l)},`).join("\n")}
-};
-
-// A flag is a country, not a language. These name the region each translation is written
-// for, and exist to pick the switcher's flag alone - never to infer a locale from.
-export const LOCALE_REGIONS: Record<Locale, string> = {
-${locales.map((l) => `  "${l}": ${JSON.stringify((regions ?? {})[l] ?? "")},`).join("\n")}
 };
 
 // Every locale's strings are split into the same bundles (i18n/tools/bundles.mjs): "core"

@@ -1,7 +1,6 @@
 import { usePermission } from "@/hooks/use-permission";
 import { carrierIntelSettings } from "@/lib/queries/carrier-intel-settings";
 import { useQuery } from "@tanstack/react-query";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -15,7 +14,6 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/u
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { TableSheetProps } from "@trenova/shared/types/data-table";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { useState } from "react";
 import type { CarrierIntelSettingsTab } from "./carrier-intel-settings-schema";
@@ -26,6 +24,7 @@ import {
   type CarrierIntelVendor,
 } from "./carrier-intelligence-vendors";
 import { CarrierIntelConnectionTab } from "./connection-tab";
+import { ThemedLogo } from "../shared/integration-connect-header";
 
 type ModalTab = "connection" | CarrierIntelSettingsTab;
 
@@ -57,7 +56,6 @@ export function CarrierIntelligenceModal({
   onOpenChange,
 }: TableSheetProps & { vendor: CarrierIntelVendor }) {
   const t = useT();
-  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<ModalTab>("connection");
 
   const { allowed: canRead, isLoading: permissionsLoading } = usePermission(
@@ -80,20 +78,17 @@ export function CarrierIntelligenceModal({
   }
 
   const close = () => onOpenChange(false);
-  const logo = theme === "dark" ? (vendor.logoDark ?? vendor.logoLight) : vendor.logoLight;
   const isSettingsTab = activeTab !== "connection";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="xl" className="flex max-h-[90vh] flex-col overflow-hidden">
         <DialogHeader className="flex flex-row items-center gap-3 pr-8">
-          {logo ? (
-            <LazyImage
-              src={logo}
-              alt={t("{0} logo", vendor.name)}
-              className="h-8 max-w-24 object-contain"
-            />
-          ) : null}
+          <ThemedLogo
+            logo={{ light: vendor.logoLight, dark: vendor.logoDark }}
+            alt={t("{0} logo", vendor.name)}
+            className="h-8 max-w-24 object-contain"
+          />
           <div className="min-w-0 space-y-0.5">
             <DialogTitle>{vendor.headline}</DialogTitle>
             <DialogDescription className="text-xs">

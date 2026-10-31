@@ -89,7 +89,7 @@ export function NotificationSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       {tooltipSide ? (
         <Tooltip>
-          <TooltipTrigger render={trigger} />
+          <TooltipTrigger className="cursor-pointer" render={trigger} />
           <TooltipContent side={tooltipSide} sideOffset={10}>
             {label}
           </TooltipContent>

@@ -4,7 +4,6 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 )
 
@@ -13,16 +12,6 @@ var _ aicorrectionports.ExtractionContract = Contract{}
 type Contract struct{}
 
 func NewContract() aicorrectionports.ExtractionContract { return Contract{} }
-
-func (Contract) CompletionRequest(
-	fileName string,
-	pages []documentaiextractionports.AIDocumentPage,
-) *llmports.StructuredCompletionRequest {
-	return newExtractCall(&documentaiextractionports.AIExtractRequest{
-		FileName: fileName,
-		Pages:    pages,
-	}).request()
-}
 
 func (Contract) PageLimit() int { return extractPageLimit }
 

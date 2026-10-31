@@ -1,10 +1,14 @@
 package assistantjobs
 
 import (
+	"slices"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/palettejobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/paperworkjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/worker"
 	"go.uber.org/fx"
@@ -35,6 +39,8 @@ type RegistryParams struct {
 	Activities *Activities
 	Flow       *agentflow.Activities
 	Chapters   *chapterjobs.Activities
+	Paperwork  *paperworkjobs.Activities
+	Palette    *palettejobs.Activities
 	Workflows  *Workflows
 	Logger     *zap.Logger
 }
@@ -45,11 +51,11 @@ type RegistryParams struct {
 func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 	return registry.NewComposedRegistry(registry.ComposedParams{
 		Config:     &DomainConfig,
-		Activities: []any{p.Activities, p.Flow, p.Chapters},
+		Activities: []any{p.Activities, p.Flow, p.Chapters, p.Paperwork, p.Palette},
 		Register: func(w worker.ActivityRegistry) {
 			agentflow.RegisterDynamic(w, p.Flow)
 		},
-		Workflows: append([]registry.WorkflowDefinition{
+		Workflows: slices.Concat([]registry.WorkflowDefinition{
 			{
 				Name:        assistantcontract.AssistantTurnWorkflowName,
 				Fn:          p.Workflows.AssistantTurnWorkflow,
@@ -65,7 +71,7 @@ func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 				Fn:          p.Workflows.ConversationCompactionWorkflow,
 				Description: "Summarize the older part of a conversation so it fits its model's window",
 			},
-		}, chapterjobs.Workflows()...),
+		}, chapterjobs.Workflows(), paperworkjobs.Workflows(), palettejobs.Workflows()),
 		Logger: p.Logger,
 	})
 }

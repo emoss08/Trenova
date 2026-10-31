@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -20,7 +21,6 @@ import (
 )
 
 const (
-	lastEventIDHeader  = "Last-Event-ID"
 	retryAfterSeconds  = 5
 	shipmentCommentsNS = "shipment-comments:"
 	viewNS             = "view:"
@@ -34,6 +34,7 @@ type Params struct {
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	RealtimeConfig       *realtimeconfig.Config
+	Sessions             *sessionwatch.Watch
 	Logger               *zap.Logger
 }
 
@@ -42,6 +43,7 @@ type Handler struct {
 	eh          *helpers.ErrorHandler
 	pm          *middleware.PermissionMiddleware
 	maxLifetime time.Duration
+	sessions    *sessionwatch.Watch
 	l           *zap.Logger
 }
 
@@ -51,6 +53,7 @@ func New(p Params) *Handler {
 		eh:          p.ErrorHandler,
 		pm:          p.PermissionMiddleware,
 		maxLifetime: p.RealtimeConfig.GetMaxStreamLifetime(),
+		sessions:    p.Sessions,
 		l:           p.Logger.Named("handler.realtime"),
 	}
 }
@@ -122,7 +125,7 @@ func (h *Handler) stream(c *gin.Context) {
 		UserID:         authCtx.UserID,
 		Portal:         authCtx.IsPortalUser,
 		JoinUsers:      c.Query("presence") == realtimeports.RealtimeScopeUsers,
-		LastEventID:    cursorFrom(c),
+		LastEventID:    helpers.EventCursor(c),
 	})
 	if err != nil {
 		if errortypes.IsRateLimitError(err) {
@@ -150,6 +153,9 @@ func (h *Handler) stream(c *gin.Context) {
 	rotate := time.NewTimer(timeutils.Jittered(h.maxLifetime))
 	defer rotate.Stop()
 
+	sessionEnded, stopWatching := h.sessions.Watch(authCtx.SessionID)
+	defer stopWatching()
+
 	frames := rt.Frames()
 	for {
 		select {
@@ -157,6 +163,9 @@ func (h *Handler) stream(c *gin.Context) {
 			return
 		case <-rotate.C:
 			h.emitClose(stream, realtimeports.RealtimeCloseRotate)
+			return
+		case <-sessionEnded:
+			h.emitClose(stream, realtimeports.RealtimeCloseSessionEnded)
 			return
 		case frame, ok := <-frames:
 			if !ok {
@@ -393,15 +402,4 @@ func scopeRequest(c *gin.Context, connectionID, scope string) *realtimeports.Rea
 		ConnectionID:   connectionID,
 		Scope:          scope,
 	}
-}
-
-// cursorFrom reads where the reader left off. The header is what a browser's
-// reader sends after a dropped connection; the query parameter serves a client
-// that cannot set headers on the request that opens the stream.
-func cursorFrom(c *gin.Context) string {
-	if cursor := c.GetHeader(lastEventIDHeader); cursor != "" {
-		return cursor
-	}
-
-	return c.Query("lastEventId")
 }

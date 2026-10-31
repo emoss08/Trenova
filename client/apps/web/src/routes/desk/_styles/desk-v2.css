@@ -4659,6 +4659,13 @@ button.dk-dx-c:hover {
   gap: 6px;
   margin-top: 9px;
 }
+.dk-bi-issue {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dsk-fg);
+  text-wrap: pretty;
+}
 .dk-bi-av {
   width: 18px;
   height: 18px;

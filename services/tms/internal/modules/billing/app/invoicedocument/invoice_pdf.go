@@ -215,10 +215,14 @@ func shipmentPDFRows(
 		if summary == nil {
 			continue
 		}
+		po := summary.PONumber
+		if entity.PONumber != "" && len(summaries) == 1 {
+			po = entity.PONumber
+		}
 		rows = append(rows, invoicePDFShipmentRow{
 			ProNumber:   summary.ProNumber,
 			BOL:         summary.BOL,
-			PONumber:    summary.PONumber,
+			PONumber:    po,
 			ServiceDate: UnixDatePtr(summary.ServiceDate),
 			Origin:      cityState(summary.OriginCity, summary.OriginState),
 			Destination: cityState(summary.DestinationCity, summary.DestinationState),

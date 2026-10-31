@@ -44,14 +44,14 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
-			ID:            DeleteStaleAskThreadsScheduleID,
-			Description:   "Remove quick questions nobody kept once they have gone quiet for a month",
+			ID:            AssistantRetentionScheduleID,
+			Description:   "Remove unsaved formula conversations and old palette question records",
 			Spec:          schedule.Cron("30 4 * * *"),
-			Workflow:      DeleteStaleAskThreadsWorkflow,
+			Workflow:      AssistantRetentionWorkflow,
 			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
-				"purpose": DeleteStaleAskThreadsScheduleID,
+				"purpose": AssistantRetentionScheduleID,
 			},
 		},
 		{

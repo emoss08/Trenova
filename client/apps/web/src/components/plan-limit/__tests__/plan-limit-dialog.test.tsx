@@ -3,8 +3,8 @@ import { PLAN_LIMIT_QUIET_MS, decidePlanLimit, usePlanLimitStore } from "@/store
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ApiRequestError, api, clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
+import { isExplainedError } from "@trenova/shared/lib/explained-errors";
 import {
-  isExplainedPlanLimitError,
   planLimitFromError,
   setPlanLimitHandler,
   type PlanLimitNotice,
@@ -221,7 +221,7 @@ describe("PlanLimitDialogHost", () => {
     });
 
     expect(error).toBeInstanceOf(ApiRequestError);
-    expect(isExplainedPlanLimitError(error)).toBe(true);
+    expect(isExplainedError(error)).toBe(true);
     expect(await screen.findByText("Customers limit reached")).toBeInTheDocument();
     expect(screen.getByText("Customers: 8 of 8 used (Free demo).")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "View plan & usage" })).toBeInTheDocument();

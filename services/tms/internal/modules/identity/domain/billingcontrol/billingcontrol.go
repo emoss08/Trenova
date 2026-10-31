@@ -55,11 +55,15 @@ type BillingControl struct {
 	RequireRateOverrideReason  bool                       `json:"requireRateOverrideReason"  keel:"require_rate_override_reason"`
 	EnforceMarginFloor         bool                       `json:"enforceMarginFloor"         keel:"enforce_margin_floor"`
 
+	QueueAutoApproveMode      QueueAutoApproveMode `json:"queueAutoApproveMode"      keel:"queue_auto_approve_mode"`
+	QueueAutoApproveMaxAmount decimal.NullDecimal  `json:"queueAutoApproveMaxAmount" keel:"queue_auto_approve_max_amount"`
+	QueueAgentReviewEnabled   bool                 `json:"queueAgentReviewEnabled"   keel:"queue_agent_review_enabled"`
+
 	// LateChargeAssessmentMode says whether the nightly run previews or raises
 	// late-charge debit memos; the rate and grace live on each customer.
 	LateChargeAssessmentMode LateChargeAssessmentMode `json:"lateChargeAssessmentMode" keel:"late_charge_assessment_mode"`
 	// LateChargeMinimumAmount is the smallest total a run will bill a customer.
-	LateChargeMinimumAmount decimal.Decimal `json:"lateChargeMinimumAmount" keel:"late_charge_minimum_amount"`
+	LateChargeMinimumAmount decimal.Decimal `json:"lateChargeMinimumAmount"  keel:"late_charge_minimum_amount"`
 
 	// PaymentRemindersEnabled emails customers about their overdue invoices on
 	// the days past due in PaymentReminderDays, one reminder per step.
@@ -133,6 +137,9 @@ func (bc *BillingControl) BeforeCreate(_ context.Context) error {
 	if bc.LateChargeAssessmentMode == "" {
 		bc.LateChargeAssessmentMode = LateChargeAssessmentModeDisabled
 	}
+	if bc.QueueAutoApproveMode == "" {
+		bc.QueueAutoApproveMode = QueueAutoApproveModeOff
+	}
 
 	return nil
 }
@@ -150,6 +157,7 @@ const MaxMonthlyStatementDay = 28
 
 func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
 	bc.validatePaymentReminderDays(multiErr)
+	bc.validateQueueAutoApprove(multiErr)
 	if bc.MonthlyStatementDay < 0 || bc.MonthlyStatementDay > MaxMonthlyStatementDay {
 		multiErr.Add("monthlyStatementDay", errortypes.ErrInvalid,
 			"Choose a day between 1 and 28, so it falls in every month")
@@ -244,4 +252,38 @@ func (bc *BillingControl) GetOrganizationID() pulid.ID {
 
 func (bc *BillingControl) GetBusinessUnitID() pulid.ID {
 	return bc.BusinessUnitID
+}
+
+func (bc *BillingControl) validateQueueAutoApprove(multiErr *errortypes.MultiError) {
+	if bc.QueueAutoApproveMode != "" && !bc.QueueAutoApproveMode.IsValid() {
+		multiErr.Add(
+			"queueAutoApproveMode",
+			errortypes.ErrInvalid,
+			"Choose how the queue approves on its own",
+		)
+	}
+	if bc.QueueAutoApproveMaxAmount.Valid && !bc.QueueAutoApproveMaxAmount.Decimal.IsPositive() {
+		multiErr.Add(
+			"queueAutoApproveMaxAmount",
+			errortypes.ErrInvalid,
+			"The amount cap must be greater than zero, or left empty for no cap",
+		)
+	}
+}
+
+func (bc *BillingControl) AutoApproves(total decimal.Decimal, agentAgrees bool) bool {
+	switch bc.QueueAutoApproveMode {
+	case QueueAutoApproveModeWhenChecksClear:
+	case QueueAutoApproveModeWhenAgentAgrees:
+		if !agentAgrees {
+			return false
+		}
+	case QueueAutoApproveModeOff:
+		return false
+	default:
+		return false
+	}
+
+	return !bc.QueueAutoApproveMaxAmount.Valid ||
+		total.LessThanOrEqual(bc.QueueAutoApproveMaxAmount.Decimal)
 }

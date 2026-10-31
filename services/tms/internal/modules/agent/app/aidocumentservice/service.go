@@ -34,7 +34,8 @@ type Params struct {
 	Logger       *zap.Logger
 	AIConfig     *aiconfig.Config
 	Metrics      *metrics.Registry
-	Completion   llmports.CompletionService
+	Nova         llmports.TaskRunner
+	Deferrer     llmports.TaskDeferrer
 	Availability llmports.ProviderAvailability `optional:"true"`
 	Plans        platformplanports.PlanService `optional:"true"`
 }
@@ -43,7 +44,8 @@ type Service struct {
 	logger       *zap.Logger
 	cfg          *aiconfig.Config
 	metrics      *metrics.Registry
-	completion   llmports.CompletionService
+	nova         llmports.TaskRunner
+	deferrer     llmports.TaskDeferrer
 	availability llmports.ProviderAvailability
 	plans        platformplanports.PlanService
 }
@@ -53,7 +55,8 @@ func New(p Params) documentaiextractionports.AIDocumentService {
 		logger:       p.Logger.Named("service.ai-document"),
 		cfg:          p.AIConfig,
 		metrics:      p.Metrics,
-		completion:   p.Completion,
+		nova:         p.Nova,
+		deferrer:     p.Deferrer,
 		availability: p.Availability,
 		plans:        p.Plans,
 	}
@@ -261,10 +264,7 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 		return nil, err
 	}
 
-	request := call.request()
-	request.MaxTokens = s.cfg.GetExtractionMaxTokens()
-
-	submission, err := s.completion.SubmitBackground(ctx, request)
+	submission, err := s.deferrer.Defer(ctx, call.novaTask(s.cfg.GetExtractionMaxTokens()))
 	if err != nil {
 		s.recordAIUsage(call.metric, false, failureOutcome(err))
 		return nil, err
@@ -322,7 +322,7 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 		)
 	}
 
-	outcome, err := s.completion.PollBackground(ctx, &llmports.BackgroundPollRequest{
+	outcome, err := s.deferrer.Collect(ctx, &llmports.BackgroundPollRequest{
 		TenantInfo:  req.TenantInfo,
 		ProviderID:  req.ProviderID,
 		Handle:      req.ResponseID,

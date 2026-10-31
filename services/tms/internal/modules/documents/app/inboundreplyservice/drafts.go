@@ -28,7 +28,6 @@ type DraftReplyRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 	MessageID  pulid.ID
-	Mode       triagenova.Mode
 }
 
 type DraftPlan struct {
@@ -153,7 +152,6 @@ func (s *Service) DraftReply(ctx context.Context, req *DraftReplyRequest) (*tria
 func (s *Service) DraftReplyFor(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
-	mode triagenova.Mode,
 ) (*triage.Reply, error) {
 	if message.Attachments == nil {
 		attachments, err := s.messages.ListAttachments(ctx, message.ID, tenantOf(message))
@@ -166,7 +164,6 @@ func (s *Service) DraftReplyFor(
 	return s.draftReplyFor(ctx, message, &DraftReplyRequest{
 		TenantInfo: tenantOf(message),
 		MessageID:  message.ID,
-		Mode:       mode,
 	})
 }
 
@@ -178,7 +175,7 @@ func (s *Service) PlanDraftReply(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.canDraft(message, req.Mode); err != nil {
+	if err = s.canDraft(ctx, message); err != nil {
 		return nil, err
 	}
 
@@ -193,8 +190,12 @@ func (s *Service) PlanDraftReply(
 	return &DraftPlan{Message: message, Current: current, Draft: draft}, nil
 }
 
-func (s *Service) canDraft(message *inboundmessage.InboundMessage, mode triagenova.Mode) error {
-	if !s.nova.Available(mode) {
+func (s *Service) canDraft(ctx context.Context, message *inboundmessage.InboundMessage) error {
+	available, err := s.nova.Available(ctx, tenantOf(message))
+	if err != nil {
+		return err
+	}
+	if !available {
 		return triagenova.ErrUnavailable
 	}
 	if message.Mailbox == nil {
@@ -209,7 +210,7 @@ func (s *Service) draftReplyFor(
 	message *inboundmessage.InboundMessage,
 	req *DraftReplyRequest,
 ) (*triage.Reply, error) {
-	if err := s.canDraft(message, req.Mode); err != nil {
+	if err := s.canDraft(ctx, message); err != nil {
 		return nil, err
 	}
 

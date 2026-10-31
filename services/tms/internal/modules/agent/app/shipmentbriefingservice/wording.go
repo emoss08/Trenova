@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,17 +56,17 @@ func (s *Service) wordSuggestions(
 
 	narration, ok := shipmentnarration.Narrate[wordingDraft](
 		ctx,
-		s.completion,
+		s.nova,
 		s.l,
-		&llmports.StructuredCompletionRequest{
+		&llmports.NovaTask{
 			TenantInfo:   tenantInfo,
-			Task:         aitask.TaskOperationalInsights,
-			System:       wordingSystemPrompt,
+			Name:         aitask.TaskOperationalInsights,
+			Instructions: wordingSystemPrompt,
 			Context:      wordingContext(items),
-			OutputSchema: wordingSchema(),
+			Schema:       wordingSchema(),
 			SchemaName:   wordingSchemaName,
 			MaxTokens:    maxWordingOutputTokens,
-			Attribution:  aiusageports.AIUsageAttribution{UserID: tenantInfo.UserID},
+			UserID:       tenantInfo.UserID,
 		},
 	)
 	if !ok {

@@ -1,28 +1,21 @@
 import type { RichTag } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
-import trenovaLogo from "@/assets/logo.webp";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import type { ConfigFieldSpec, UpdateIntegrationConfigRequest } from "@/types/integration";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
+import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { FormControl } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { type Control, Controller } from "react-hook-form";
+import { IntegrationConnectHeader } from "./integration-connect-header";
 
 export type SpecIntegrationControl = Control<UpdateIntegrationConfigRequest>;
 
@@ -267,40 +260,15 @@ export function SpecIntegrationFooter({
 }
 
 export function SpecIntegrationHeader({ vendor }: { vendor: SpecIntegrationVendor }) {
-  const t = useT();
-  const { theme } = useTheme();
-  const logo = theme === "dark" ? (vendor.logoDark ?? vendor.logoLight) : vendor.logoLight;
-
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
-        <LazyImage src={trenovaLogo} className="size-8" />
-        <div className="flex items-center justify-center gap-1">
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-        </div>
-        {logo ? (
-          <LazyImage
-            src={logo}
-            alt={t("{0} logo", vendor.name)}
-            className="h-8 max-w-24 object-contain"
-          />
-        ) : (
-          <span className="bg-muted text-foreground/80 flex size-8 items-center justify-center rounded-md text-xs font-semibold">
-            {vendor.name.slice(0, 2).toUpperCase()}
-          </span>
-        )}
-      </div>
-      <DialogHeader>
-        <DialogTitle>{vendor.headline}</DialogTitle>
-        <DialogDescription>
-          {vendor.docs((label) => (
-            <ExternalLink href={vendor.docsUrl}>{label}</ExternalLink>
-          ))}
-        </DialogDescription>
-      </DialogHeader>
-    </div>
+    <IntegrationConnectHeader
+      name={vendor.name}
+      logo={{ light: vendor.logoLight, dark: vendor.logoDark }}
+      title={vendor.headline}
+      description={vendor.docs((label) => (
+        <ExternalLink href={vendor.docsUrl}>{label}</ExternalLink>
+      ))}
+    />
   );
 }
 

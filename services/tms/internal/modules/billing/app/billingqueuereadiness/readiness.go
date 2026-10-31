@@ -189,6 +189,8 @@ func (s *Reviewer) reviewFacts(
 		CreditHold:       creditHold,
 		CreditHoldReason: holdReason,
 		PayerShareError:  shareError,
+		UnbilledReceipts: unbilledReceipts(item, docs),
+		MissingPONumber:  missingPONumber(item),
 	}
 
 	return facts
@@ -1079,4 +1081,53 @@ func UserName(user *tenant.User) string {
 	}
 
 	return user.Name
+}
+
+func unbilledReceipts(
+	item *billingqueue.BillingQueueItem,
+	docs []*document.Document,
+) []*billingqueuereview.UnbilledReceipt {
+	if item.Shipment == nil || item.BillType != billingqueue.BillTypeInvoice {
+		return nil
+	}
+
+	billed := make(map[pulid.ID]struct{}, len(item.Shipment.AdditionalCharges))
+	for _, charge := range item.Shipment.AdditionalCharges {
+		if charge != nil {
+			billed[charge.AccessorialChargeID] = struct{}{}
+		}
+	}
+
+	out := make([]*billingqueuereview.UnbilledReceipt, 0)
+	for _, doc := range docs {
+		facts := doc.DeliveryFacts
+		if !facts.BillsCharge() {
+			continue
+		}
+		if _, ok := billed[facts.ChargeID]; ok {
+			continue
+		}
+		out = append(out, &billingqueuereview.UnbilledReceipt{
+			DocumentID:          doc.ID,
+			Reference:           facts.Reference,
+			AccessorialChargeID: facts.ChargeID,
+			Label:               facts.ChargeLabel,
+			Amount:              facts.Amount.Decimal,
+			ReadByNova:          facts.Source == document.FactsSourceAgent,
+		})
+	}
+
+	return out
+}
+
+func missingPONumber(item *billingqueue.BillingQueueItem) bool {
+	if item.BillType != billingqueue.BillTypeInvoice || strings.TrimSpace(item.PONumber) != "" {
+		return false
+	}
+	cus := item.BillToCustomer
+	if cus == nil || cus.BillingProfile == nil {
+		return false
+	}
+
+	return cus.BillingProfile.RequirePONumber
 }

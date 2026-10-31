@@ -192,7 +192,7 @@ func (t *Turn) Frame(frame assistantstreamports.TurnStreamFrame) {
 		}
 	case assistantstreamports.AssistantEventMessage, assistantstreamports.AssistantEventDone,
 		assistantstreamports.AssistantEventAccepted, assistantstreamports.AssistantEventTurn,
-		assistantstreamports.AssistantEventThread, assistantstreamports.AssistantEventContext,
+		assistantstreamports.AssistantEventContext,
 		assistantstreamports.AssistantEventArtifact:
 		t.flush()
 	default:

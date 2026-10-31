@@ -26,7 +26,7 @@ const (
 	reviewNoteMaxTokens = 1500
 )
 
-const reviewNoteSystem = "You are the formula assistant in Trenova's Formula Studio. Draft a " +
+const reviewNoteSystem = "Your task: in Formula Studio, draft a " +
 	"note from the author to the person who will review this formula template: at most 120 " +
 	"words of plain prose, first what changed since the last approved version and why it " +
 	"matters, then what re-rating recent shipments showed, when a backtest is given. Write " +

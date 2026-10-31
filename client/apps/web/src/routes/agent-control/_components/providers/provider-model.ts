@@ -44,6 +44,8 @@ const TASK_ORDER: readonly AITask[] = [
   "InboundClassification",
   "AccountingMapping",
   "RemittanceExtraction",
+  "PaperworkReading",
+  "PaletteAnswer",
   "EvaluationJudge",
   "Embedding",
   "General",

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueueprojection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
@@ -99,7 +100,7 @@ func (r *repository) SyncIssues(
 
 			now := timeutils.NowUnix()
 			for _, issue := range existing {
-				if !issue.IsOpen() || issue.Source != billingqueue.IssueSourceDeterministic {
+				if !issue.IsOpen() {
 					continue
 				}
 				if _, ok := found[issue.FindingKey()]; ok {
@@ -114,6 +115,10 @@ func (r *repository) SyncIssues(
 					return nil, err
 				}
 				result.Cleared = append(result.Cleared, issue)
+			}
+
+			if err = billingqueueprojection.MarkChecked(ctx, r.db.Keel(ctx), now, req.ItemID); err != nil {
+				return nil, err
 			}
 
 			result.Issues, err = r.ListIssues(ctx, req.TenantInfo, req.ItemID)
@@ -170,11 +175,12 @@ func refreshFinding(current, finding *billingqueue.Issue) {
 	current.Options = finding.Options
 	current.FlaggedChargeID = finding.FlaggedChargeID
 	current.CheckKey = finding.CheckKey
+	current.Source = finding.Source
 }
 
 func findingChanged(current, finding *billingqueue.Issue) bool {
 	if current.Summary != finding.Summary || current.Reasoning != finding.Reasoning ||
-		len(current.Options) != len(finding.Options) {
+		current.Source != finding.Source || len(current.Options) != len(finding.Options) {
 		return true
 	}
 	for i := range current.Options {
@@ -212,6 +218,7 @@ func (r *repository) UpdateIssue(
 		err := iss.Save(ctx, r.db.Keel(ctx), issue,
 			iss.CheckKey,
 			iss.SubjectKey,
+			iss.Source,
 			iss.Summary,
 			iss.Reasoning,
 			iss.FlaggedChargeID,
@@ -227,6 +234,9 @@ func (r *repository) UpdateIssue(
 		if err != nil {
 			return nil, issueErrors.Map(err, issue.ID.String())
 		}
+		if err = billingqueueprojection.Refresh(ctx, r.db.Keel(ctx), issue.ItemID); err != nil {
+			return nil, err
+		}
 
 		return issue, nil
 	})
@@ -239,8 +249,11 @@ func (r *repository) CountOpenIssues(
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		iss := billingqueuedb.Issues
-		n, err := iss.Where(iss.ItemID.Eq(itemID), iss.ResolutionKey.IsNull()).
-			Count(ctx, r.db.Keel(ctx))
+		n, err := iss.Where(
+			iss.ItemID.Eq(itemID),
+			iss.ResolutionKey.IsNull(),
+			iss.Code.NotIn(billingqueue.SuggestionIssueCodes()...),
+		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, err
 		}
@@ -469,7 +482,7 @@ type summaryRow struct {
 	HoldReasonCode       *billingqueue.HoldReasonCode
 	AssignedBillerID     *pulid.ID
 	AllocatedTotalAmount decimal.Decimal
-	OpenChecks           int
+	OpenIssues           int
 }
 
 func (r *repository) ListSummaries(
@@ -491,7 +504,7 @@ func (r *repository) ListSummaries(
 			}
 
 			for _, row := range rows {
-				needs := row.OpenChecks
+				needs := row.OpenIssues
 				if row.AssignedBillerID == nil || row.AssignedBillerID.IsNil() {
 					needs++
 				}
@@ -502,7 +515,7 @@ func (r *repository) ListSummaries(
 					HoldReasonCode:       row.HoldReasonCode,
 					AssignedBillerID:     row.AssignedBillerID,
 					AllocatedTotalAmount: row.AllocatedTotalAmount,
-					OpenChecks:           row.OpenChecks,
+					OpenIssues:           row.OpenIssues,
 					NeedsCount:           needs,
 					Ready:                billingqueuereview.IsReviewable(row.Status) && needs == 0,
 				})
@@ -516,9 +529,10 @@ func (r *repository) ListSummaries(
 func itemSummaries(itemIDs []pulid.ID) *keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 	iss := billingqueuedb.Issues
-	open := keel.Scalar(iss.Pick(iss.CheckKey.CountDistinct()).Where(
+	open := keel.Scalar(iss.Pick(iss.ID.Count()).Where(
 		iss.ItemID.EqCol(bq.ID),
 		iss.ResolutionKey.IsNull(),
+		iss.Code.NotIn(billingqueue.SuggestionIssueCodes()...),
 	))
 
 	return bq.Pick(

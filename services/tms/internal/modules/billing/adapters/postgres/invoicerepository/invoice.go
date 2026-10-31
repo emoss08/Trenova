@@ -473,6 +473,18 @@ func (r *repository) Create(
 			}
 		}
 
+		if len(entity.Attachments) > 0 {
+			for idx, attachment := range entity.Attachments {
+				attachment.InvoiceID = entity.ID
+				attachment.OrganizationID = entity.OrganizationID
+				attachment.BusinessUnitID = entity.BusinessUnitID
+				attachment.SortOrder = idx + 1
+			}
+			if err := invoicedb.Attachments.CreateMany(ctx, db, entity.Attachments); err != nil {
+				return nil, attachmentErrors.Map(err, entity.ID.String())
+			}
+		}
+
 		return r.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: tenantInfo(entity),

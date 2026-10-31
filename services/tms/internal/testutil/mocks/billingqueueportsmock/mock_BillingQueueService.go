@@ -21,10 +21,19 @@ func NewMockBillingQueueService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockBillingQueueService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockBillingQueueService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -77,8 +86,8 @@ type MockBillingQueueService_AssignBiller_Call struct {
 
 // AssignBiller is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.AssignBillerRequest
-//   - actor *services.RequestActor
+//   - req *billingqueueports.AssignBillerRequest
+//   - actor *permissionports.RequestActor
 func (_e *MockBillingQueueService_Expecter) AssignBiller(ctx any, req any, actor any) *MockBillingQueueService_AssignBiller_Call {
 	return &MockBillingQueueService_AssignBiller_Call{Call: _e.mock.On("AssignBiller", ctx, req, actor)}
 }
@@ -112,6 +121,69 @@ func (_c *MockBillingQueueService_AssignBiller_Call) Return(billingQueueItem *bi
 }
 
 func (_c *MockBillingQueueService_AssignBiller_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.AssignBillerRequest, actor *permissionports.RequestActor) (*billingqueue.BillingQueueItem, error)) *MockBillingQueueService_AssignBiller_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CheckBiller provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) CheckBiller(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error {
+	ret := _mock.Called(ctx, tenantInfo, billerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckBiller")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r0 = returnFunc(ctx, tenantInfo, billerID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockBillingQueueService_CheckBiller_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckBiller'
+type MockBillingQueueService_CheckBiller_Call struct {
+	*mock.Call
+}
+
+// CheckBiller is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - billerID pulid.ID
+func (_e *MockBillingQueueService_Expecter) CheckBiller(ctx any, tenantInfo any, billerID any) *MockBillingQueueService_CheckBiller_Call {
+	return &MockBillingQueueService_CheckBiller_Call{Call: _e.mock.On("CheckBiller", ctx, tenantInfo, billerID)}
+}
+
+func (_c *MockBillingQueueService_CheckBiller_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID)) *MockBillingQueueService_CheckBiller_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_CheckBiller_Call) Return(err error) *MockBillingQueueService_CheckBiller_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_CheckBiller_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error) *MockBillingQueueService_CheckBiller_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -151,7 +223,7 @@ type MockBillingQueueService_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetBillingQueueItemByIDRequest
+//   - req *billingqueueports.GetBillingQueueItemByIDRequest
 func (_e *MockBillingQueueService_Expecter) GetByID(ctx any, req any) *MockBillingQueueService_GetByID_Call {
 	return &MockBillingQueueService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -219,7 +291,7 @@ type MockBillingQueueService_GetStats_Call struct {
 
 // GetStats is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetBillingQueueStatsRequest
+//   - req *billingqueueports.GetBillingQueueStatsRequest
 func (_e *MockBillingQueueService_Expecter) GetStats(ctx any, req any) *MockBillingQueueService_GetStats_Call {
 	return &MockBillingQueueService_GetStats_Call{Call: _e.mock.On("GetStats", ctx, req)}
 }
@@ -287,7 +359,7 @@ type MockBillingQueueService_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListBillingQueueItemsRequest
+//   - req *billingqueueports.ListBillingQueueItemsRequest
 func (_e *MockBillingQueueService_Expecter) List(ctx any, req any) *MockBillingQueueService_List_Call {
 	return &MockBillingQueueService_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -316,6 +388,222 @@ func (_c *MockBillingQueueService_List_Call) Return(listResult *pagination.ListR
 }
 
 func (_c *MockBillingQueueService_List_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListBillingQueueItemsRequest) (*pagination.ListResult[*billingqueue.BillingQueueItem], error)) *MockBillingQueueService_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListConnection provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) ListConnection(ctx context.Context, req *billingqueueports.ListBillingQueueItemsRequest) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListConnection")
+	}
+
+	var r0 *pagination.CursorListResult[*billingqueue.BillingQueueItem]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListBillingQueueItemsRequest) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListBillingQueueItemsRequest) *pagination.CursorListResult[*billingqueue.BillingQueueItem]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*billingqueue.BillingQueueItem])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ListBillingQueueItemsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockBillingQueueService_ListConnection_Call struct {
+	*mock.Call
+}
+
+// ListConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.ListBillingQueueItemsRequest
+func (_e *MockBillingQueueService_Expecter) ListConnection(ctx any, req any) *MockBillingQueueService_ListConnection_Call {
+	return &MockBillingQueueService_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
+}
+
+func (_c *MockBillingQueueService_ListConnection_Call) Run(run func(ctx context.Context, req *billingqueueports.ListBillingQueueItemsRequest)) *MockBillingQueueService_ListConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.ListBillingQueueItemsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.ListBillingQueueItemsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*billingqueue.BillingQueueItem], err error) *MockBillingQueueService_ListConnection_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListBillingQueueItemsRequest) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error)) *MockBillingQueueService_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewReassignCharge provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) PreviewReassignCharge(ctx context.Context, req *billingqueueports.ReassignChargeRequest, actor *permissionports.RequestActor) (*billingqueueports.ReassignChargePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewReassignCharge")
+	}
+
+	var r0 *billingqueueports.ReassignChargePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ReassignChargeRequest, *permissionports.RequestActor) (*billingqueueports.ReassignChargePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ReassignChargeRequest, *permissionports.RequestActor) *billingqueueports.ReassignChargePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*billingqueueports.ReassignChargePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ReassignChargeRequest, *permissionports.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_PreviewReassignCharge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewReassignCharge'
+type MockBillingQueueService_PreviewReassignCharge_Call struct {
+	*mock.Call
+}
+
+// PreviewReassignCharge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.ReassignChargeRequest
+//   - actor *permissionports.RequestActor
+func (_e *MockBillingQueueService_Expecter) PreviewReassignCharge(ctx any, req any, actor any) *MockBillingQueueService_PreviewReassignCharge_Call {
+	return &MockBillingQueueService_PreviewReassignCharge_Call{Call: _e.mock.On("PreviewReassignCharge", ctx, req, actor)}
+}
+
+func (_c *MockBillingQueueService_PreviewReassignCharge_Call) Run(run func(ctx context.Context, req *billingqueueports.ReassignChargeRequest, actor *permissionports.RequestActor)) *MockBillingQueueService_PreviewReassignCharge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.ReassignChargeRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.ReassignChargeRequest)
+		}
+		var arg2 *permissionports.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*permissionports.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_PreviewReassignCharge_Call) Return(reassignChargePreview *billingqueueports.ReassignChargePreview, err error) *MockBillingQueueService_PreviewReassignCharge_Call {
+	_c.Call.Return(reassignChargePreview, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_PreviewReassignCharge_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ReassignChargeRequest, actor *permissionports.RequestActor) (*billingqueueports.ReassignChargePreview, error)) *MockBillingQueueService_PreviewReassignCharge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewUpdateCharges provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) PreviewUpdateCharges(ctx context.Context, req *billingqueueports.UpdateChargesRequest, actor *permissionports.RequestActor) (*billingqueueports.ChargeUpdatePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewUpdateCharges")
+	}
+
+	var r0 *billingqueueports.ChargeUpdatePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.UpdateChargesRequest, *permissionports.RequestActor) (*billingqueueports.ChargeUpdatePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.UpdateChargesRequest, *permissionports.RequestActor) *billingqueueports.ChargeUpdatePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*billingqueueports.ChargeUpdatePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.UpdateChargesRequest, *permissionports.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_PreviewUpdateCharges_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewUpdateCharges'
+type MockBillingQueueService_PreviewUpdateCharges_Call struct {
+	*mock.Call
+}
+
+// PreviewUpdateCharges is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.UpdateChargesRequest
+//   - actor *permissionports.RequestActor
+func (_e *MockBillingQueueService_Expecter) PreviewUpdateCharges(ctx any, req any, actor any) *MockBillingQueueService_PreviewUpdateCharges_Call {
+	return &MockBillingQueueService_PreviewUpdateCharges_Call{Call: _e.mock.On("PreviewUpdateCharges", ctx, req, actor)}
+}
+
+func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) Run(run func(ctx context.Context, req *billingqueueports.UpdateChargesRequest, actor *permissionports.RequestActor)) *MockBillingQueueService_PreviewUpdateCharges_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.UpdateChargesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.UpdateChargesRequest)
+		}
+		var arg2 *permissionports.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*permissionports.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) Return(chargeUpdatePreview *billingqueueports.ChargeUpdatePreview, err error) *MockBillingQueueService_PreviewUpdateCharges_Call {
+	_c.Call.Return(chargeUpdatePreview, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.UpdateChargesRequest, actor *permissionports.RequestActor) (*billingqueueports.ChargeUpdatePreview, error)) *MockBillingQueueService_PreviewUpdateCharges_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -355,8 +643,8 @@ type MockBillingQueueService_ReassignCharge_Call struct {
 
 // ReassignCharge is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.ReassignChargeRequest
-//   - actor *services.RequestActor
+//   - req *billingqueueports.ReassignChargeRequest
+//   - actor *permissionports.RequestActor
 func (_e *MockBillingQueueService_Expecter) ReassignCharge(ctx any, req any, actor any) *MockBillingQueueService_ReassignCharge_Call {
 	return &MockBillingQueueService_ReassignCharge_Call{Call: _e.mock.On("ReassignCharge", ctx, req, actor)}
 }
@@ -384,12 +672,80 @@ func (_c *MockBillingQueueService_ReassignCharge_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockBillingQueueService_ReassignCharge_Call) Return(v0 *billingqueueports.ReassignChargeResult, err error) *MockBillingQueueService_ReassignCharge_Call {
-	_c.Call.Return(v0, err)
+func (_c *MockBillingQueueService_ReassignCharge_Call) Return(reassignChargeResult *billingqueueports.ReassignChargeResult, err error) *MockBillingQueueService_ReassignCharge_Call {
+	_c.Call.Return(reassignChargeResult, err)
 	return _c
 }
 
 func (_c *MockBillingQueueService_ReassignCharge_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ReassignChargeRequest, actor *permissionports.RequestActor) (*billingqueueports.ReassignChargeResult, error)) *MockBillingQueueService_ReassignCharge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Recommendations provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) Recommendations(ctx context.Context, req *billingqueueports.ListRecommendationsRequest) ([]*billingqueueports.Recommendation, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Recommendations")
+	}
+
+	var r0 []*billingqueueports.Recommendation
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListRecommendationsRequest) ([]*billingqueueports.Recommendation, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListRecommendationsRequest) []*billingqueueports.Recommendation); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*billingqueueports.Recommendation)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ListRecommendationsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_Recommendations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Recommendations'
+type MockBillingQueueService_Recommendations_Call struct {
+	*mock.Call
+}
+
+// Recommendations is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.ListRecommendationsRequest
+func (_e *MockBillingQueueService_Expecter) Recommendations(ctx any, req any) *MockBillingQueueService_Recommendations_Call {
+	return &MockBillingQueueService_Recommendations_Call{Call: _e.mock.On("Recommendations", ctx, req)}
+}
+
+func (_c *MockBillingQueueService_Recommendations_Call) Run(run func(ctx context.Context, req *billingqueueports.ListRecommendationsRequest)) *MockBillingQueueService_Recommendations_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.ListRecommendationsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.ListRecommendationsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_Recommendations_Call) Return(recommendations []*billingqueueports.Recommendation, err error) *MockBillingQueueService_Recommendations_Call {
+	_c.Call.Return(recommendations, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_Recommendations_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListRecommendationsRequest) ([]*billingqueueports.Recommendation, error)) *MockBillingQueueService_Recommendations_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -429,8 +785,8 @@ type MockBillingQueueService_TransferToBilling_Call struct {
 
 // TransferToBilling is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.TransferToBillingRequest
-//   - actor *services.RequestActor
+//   - req *billingqueueports.TransferToBillingRequest
+//   - actor *permissionports.RequestActor
 func (_e *MockBillingQueueService_Expecter) TransferToBilling(ctx any, req any, actor any) *MockBillingQueueService_TransferToBilling_Call {
 	return &MockBillingQueueService_TransferToBilling_Call{Call: _e.mock.On("TransferToBilling", ctx, req, actor)}
 }
@@ -503,8 +859,8 @@ type MockBillingQueueService_TransferToBillingItems_Call struct {
 
 // TransferToBillingItems is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.TransferToBillingRequest
-//   - actor *services.RequestActor
+//   - req *billingqueueports.TransferToBillingRequest
+//   - actor *permissionports.RequestActor
 func (_e *MockBillingQueueService_Expecter) TransferToBillingItems(ctx any, req any, actor any) *MockBillingQueueService_TransferToBillingItems_Call {
 	return &MockBillingQueueService_TransferToBillingItems_Call{Call: _e.mock.On("TransferToBillingItems", ctx, req, actor)}
 }
@@ -532,8 +888,8 @@ func (_c *MockBillingQueueService_TransferToBillingItems_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockBillingQueueService_TransferToBillingItems_Call) Return(v0 *billingqueueports.TransferToBillingResult, err error) *MockBillingQueueService_TransferToBillingItems_Call {
-	_c.Call.Return(v0, err)
+func (_c *MockBillingQueueService_TransferToBillingItems_Call) Return(transferToBillingResult *billingqueueports.TransferToBillingResult, err error) *MockBillingQueueService_TransferToBillingItems_Call {
+	_c.Call.Return(transferToBillingResult, err)
 	return _c
 }
 
@@ -577,8 +933,8 @@ type MockBillingQueueService_UpdateCharges_Call struct {
 
 // UpdateCharges is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.UpdateChargesRequest
-//   - actor *services.RequestActor
+//   - req *billingqueueports.UpdateChargesRequest
+//   - actor *permissionports.RequestActor
 func (_e *MockBillingQueueService_Expecter) UpdateCharges(ctx any, req any, actor any) *MockBillingQueueService_UpdateCharges_Call {
 	return &MockBillingQueueService_UpdateCharges_Call{Call: _e.mock.On("UpdateCharges", ctx, req, actor)}
 }
@@ -612,6 +968,80 @@ func (_c *MockBillingQueueService_UpdateCharges_Call) Return(billingQueueItem *b
 }
 
 func (_c *MockBillingQueueService_UpdateCharges_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.UpdateChargesRequest, actor *permissionports.RequestActor) (*billingqueue.BillingQueueItem, error)) *MockBillingQueueService_UpdateCharges_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateInvoiceDetails provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) UpdateInvoiceDetails(ctx context.Context, req *billingqueueports.UpdateInvoiceDetailsRequest, actor *permissionports.RequestActor) (*billingqueue.BillingQueueItem, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateInvoiceDetails")
+	}
+
+	var r0 *billingqueue.BillingQueueItem
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.UpdateInvoiceDetailsRequest, *permissionports.RequestActor) (*billingqueue.BillingQueueItem, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.UpdateInvoiceDetailsRequest, *permissionports.RequestActor) *billingqueue.BillingQueueItem); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*billingqueue.BillingQueueItem)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.UpdateInvoiceDetailsRequest, *permissionports.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_UpdateInvoiceDetails_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateInvoiceDetails'
+type MockBillingQueueService_UpdateInvoiceDetails_Call struct {
+	*mock.Call
+}
+
+// UpdateInvoiceDetails is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.UpdateInvoiceDetailsRequest
+//   - actor *permissionports.RequestActor
+func (_e *MockBillingQueueService_Expecter) UpdateInvoiceDetails(ctx any, req any, actor any) *MockBillingQueueService_UpdateInvoiceDetails_Call {
+	return &MockBillingQueueService_UpdateInvoiceDetails_Call{Call: _e.mock.On("UpdateInvoiceDetails", ctx, req, actor)}
+}
+
+func (_c *MockBillingQueueService_UpdateInvoiceDetails_Call) Run(run func(ctx context.Context, req *billingqueueports.UpdateInvoiceDetailsRequest, actor *permissionports.RequestActor)) *MockBillingQueueService_UpdateInvoiceDetails_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.UpdateInvoiceDetailsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.UpdateInvoiceDetailsRequest)
+		}
+		var arg2 *permissionports.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*permissionports.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_UpdateInvoiceDetails_Call) Return(billingQueueItem *billingqueue.BillingQueueItem, err error) *MockBillingQueueService_UpdateInvoiceDetails_Call {
+	_c.Call.Return(billingQueueItem, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_UpdateInvoiceDetails_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.UpdateInvoiceDetailsRequest, actor *permissionports.RequestActor) (*billingqueue.BillingQueueItem, error)) *MockBillingQueueService_UpdateInvoiceDetails_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -651,8 +1081,8 @@ type MockBillingQueueService_UpdateStatus_Call struct {
 
 // UpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.UpdateBillingQueueStatusRequest
-//   - actor *services.RequestActor
+//   - req *billingqueueports.UpdateBillingQueueStatusRequest
+//   - actor *permissionports.RequestActor
 func (_e *MockBillingQueueService_Expecter) UpdateStatus(ctx any, req any, actor any) *MockBillingQueueService_UpdateStatus_Call {
 	return &MockBillingQueueService_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req, actor)}
 }
@@ -686,217 +1116,6 @@ func (_c *MockBillingQueueService_UpdateStatus_Call) Return(billingQueueItem *bi
 }
 
 func (_c *MockBillingQueueService_UpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.UpdateBillingQueueStatusRequest, actor *permissionports.RequestActor) (*billingqueue.BillingQueueItem, error)) *MockBillingQueueService_UpdateStatus_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// PreviewUpdateCharges provides a mock function for the type MockBillingQueueService
-func (_mock *MockBillingQueueService) PreviewUpdateCharges(ctx context.Context, req *billingqueueports.UpdateChargesRequest, actor *permissionports.RequestActor) (*billingqueueports.ChargeUpdatePreview, error) {
-	ret := _mock.Called(ctx, req, actor)
-
-	if len(ret) == 0 {
-		panic("no return value specified for PreviewUpdateCharges")
-	}
-
-	var r0 *billingqueueports.ChargeUpdatePreview
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.UpdateChargesRequest, *permissionports.RequestActor) (*billingqueueports.ChargeUpdatePreview, error)); ok {
-		return returnFunc(ctx, req, actor)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.UpdateChargesRequest, *permissionports.RequestActor) *billingqueueports.ChargeUpdatePreview); ok {
-		r0 = returnFunc(ctx, req, actor)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*billingqueueports.ChargeUpdatePreview)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.UpdateChargesRequest, *permissionports.RequestActor) error); ok {
-		r1 = returnFunc(ctx, req, actor)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockBillingQueueService_PreviewUpdateCharges_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewUpdateCharges'
-type MockBillingQueueService_PreviewUpdateCharges_Call struct {
-	*mock.Call
-}
-
-// PreviewUpdateCharges is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *services.UpdateChargesRequest
-//   - actor *services.RequestActor
-func (_e *MockBillingQueueService_Expecter) PreviewUpdateCharges(ctx any, req any, actor any) *MockBillingQueueService_PreviewUpdateCharges_Call {
-	return &MockBillingQueueService_PreviewUpdateCharges_Call{Call: _e.mock.On("PreviewUpdateCharges", ctx, req, actor)}
-}
-
-func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) Run(run func(ctx context.Context, req *billingqueueports.UpdateChargesRequest, actor *permissionports.RequestActor)) *MockBillingQueueService_PreviewUpdateCharges_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *billingqueueports.UpdateChargesRequest
-		if args[1] != nil {
-			arg1 = args[1].(*billingqueueports.UpdateChargesRequest)
-		}
-		var arg2 *permissionports.RequestActor
-		if args[2] != nil {
-			arg2 = args[2].(*permissionports.RequestActor)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) Return(result *billingqueueports.ChargeUpdatePreview, err error) *MockBillingQueueService_PreviewUpdateCharges_Call {
-	_c.Call.Return(result, err)
-	return _c
-}
-
-func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.UpdateChargesRequest, actor *permissionports.RequestActor) (*billingqueueports.ChargeUpdatePreview, error)) *MockBillingQueueService_PreviewUpdateCharges_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// PreviewReassignCharge provides a mock function for the type MockBillingQueueService
-func (_mock *MockBillingQueueService) PreviewReassignCharge(ctx context.Context, req *billingqueueports.ReassignChargeRequest, actor *permissionports.RequestActor) (*billingqueueports.ReassignChargePreview, error) {
-	ret := _mock.Called(ctx, req, actor)
-
-	if len(ret) == 0 {
-		panic("no return value specified for PreviewReassignCharge")
-	}
-
-	var r0 *billingqueueports.ReassignChargePreview
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ReassignChargeRequest, *permissionports.RequestActor) (*billingqueueports.ReassignChargePreview, error)); ok {
-		return returnFunc(ctx, req, actor)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ReassignChargeRequest, *permissionports.RequestActor) *billingqueueports.ReassignChargePreview); ok {
-		r0 = returnFunc(ctx, req, actor)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*billingqueueports.ReassignChargePreview)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ReassignChargeRequest, *permissionports.RequestActor) error); ok {
-		r1 = returnFunc(ctx, req, actor)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockBillingQueueService_PreviewReassignCharge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewReassignCharge'
-type MockBillingQueueService_PreviewReassignCharge_Call struct {
-	*mock.Call
-}
-
-// PreviewReassignCharge is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *services.ReassignChargeRequest
-//   - actor *services.RequestActor
-func (_e *MockBillingQueueService_Expecter) PreviewReassignCharge(ctx any, req any, actor any) *MockBillingQueueService_PreviewReassignCharge_Call {
-	return &MockBillingQueueService_PreviewReassignCharge_Call{Call: _e.mock.On("PreviewReassignCharge", ctx, req, actor)}
-}
-
-func (_c *MockBillingQueueService_PreviewReassignCharge_Call) Run(run func(ctx context.Context, req *billingqueueports.ReassignChargeRequest, actor *permissionports.RequestActor)) *MockBillingQueueService_PreviewReassignCharge_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *billingqueueports.ReassignChargeRequest
-		if args[1] != nil {
-			arg1 = args[1].(*billingqueueports.ReassignChargeRequest)
-		}
-		var arg2 *permissionports.RequestActor
-		if args[2] != nil {
-			arg2 = args[2].(*permissionports.RequestActor)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockBillingQueueService_PreviewReassignCharge_Call) Return(reassignChargePreview *billingqueueports.ReassignChargePreview, err error) *MockBillingQueueService_PreviewReassignCharge_Call {
-	_c.Call.Return(reassignChargePreview, err)
-	return _c
-}
-
-func (_c *MockBillingQueueService_PreviewReassignCharge_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ReassignChargeRequest, actor *permissionports.RequestActor) (*billingqueueports.ReassignChargePreview, error)) *MockBillingQueueService_PreviewReassignCharge_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CheckBiller provides a mock function for the type MockBillingQueueService
-func (_mock *MockBillingQueueService) CheckBiller(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error {
-	ret := _mock.Called(ctx, tenantInfo, billerID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CheckBiller")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
-		r0 = returnFunc(ctx, tenantInfo, billerID)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockBillingQueueService_CheckBiller_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckBiller'
-type MockBillingQueueService_CheckBiller_Call struct {
-	*mock.Call
-}
-
-// CheckBiller is a helper method to define mock.On call
-//   - ctx context.Context
-//   - tenantInfo pagination.TenantInfo
-//   - billerID pulid.ID
-func (_e *MockBillingQueueService_Expecter) CheckBiller(ctx any, tenantInfo any, billerID any) *MockBillingQueueService_CheckBiller_Call {
-	return &MockBillingQueueService_CheckBiller_Call{Call: _e.mock.On("CheckBiller", ctx, tenantInfo, billerID)}
-}
-
-func (_c *MockBillingQueueService_CheckBiller_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID)) *MockBillingQueueService_CheckBiller_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 pagination.TenantInfo
-		if args[1] != nil {
-			arg1 = args[1].(pagination.TenantInfo)
-		}
-		var arg2 pulid.ID
-		if args[2] != nil {
-			arg2 = args[2].(pulid.ID)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockBillingQueueService_CheckBiller_Call) Return(err error) *MockBillingQueueService_CheckBiller_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockBillingQueueService_CheckBiller_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error) *MockBillingQueueService_CheckBiller_Call {
 	_c.Call.Return(run)
 	return _c
 }

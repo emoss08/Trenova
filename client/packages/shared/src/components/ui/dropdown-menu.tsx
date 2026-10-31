@@ -113,6 +113,9 @@ function DropdownMenuLabel({
   );
 }
 
+const dropdownMenuItemClassName =
+  "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent not-data-[variant=destructive]:focus:**:text-accent-foreground data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-danger-subtle data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-danger-subtle data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive";
+
 type DropdownMenuItemProps = Omit<MenuPrimitive.Item.Props, "title" | "children"> & {
   title: string;
   inset?: boolean;
@@ -142,7 +145,7 @@ function DropdownMenuItem({
       data-inset={inset}
       data-color={color}
       className={cn(
-        "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent not-data-[variant=destructive]:focus:**:text-accent-foreground data-[inset]:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-danger-subtle data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-danger-subtle data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive",
+        dropdownMenuItemClassName,
         inset && "pl-8",
         color && statusColors[color],
         className,
@@ -160,6 +163,36 @@ function DropdownMenuItem({
       </span>
       {endContent && <span className="ml-auto flex items-center">{endContent}</span>}
     </MenuPrimitive.Item>
+  );
+}
+
+/**
+ * A menu row that is a link: a real anchor, so it opens in a new tab, copies
+ * and shows its address like any link, and closes the menu once followed.
+ */
+function DropdownMenuLinkItem({
+  className,
+  title,
+  startContent,
+  endContent,
+  closeOnClick = true,
+  ...props
+}: Omit<MenuPrimitive.LinkItem.Props, "title" | "children"> & {
+  title: string;
+  startContent?: React.ReactNode;
+  endContent?: React.ReactNode;
+}) {
+  return (
+    <MenuPrimitive.LinkItem
+      data-slot="dropdown-menu-link-item"
+      className={cn(dropdownMenuItemClassName, "cursor-pointer", className)}
+      closeOnClick={closeOnClick}
+      {...props}
+    >
+      {startContent && <span className="mr-2 flex items-center">{startContent}</span>}
+      <span className="text-sm">{title}</span>
+      {endContent && <span className="ml-auto flex items-center pl-3">{endContent}</span>}
+    </MenuPrimitive.LinkItem>
   );
 }
 
@@ -286,7 +319,7 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
     <span
       data-slot="dropdown-menu-shortcut"
       className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground group-focus/dropdown-menu-item:text-accent-foreground",
+        "ml-auto text-xs text-muted-foreground group-focus/dropdown-menu-item:text-accent-foreground",
         className,
       )}
       {...props}
@@ -305,6 +338,7 @@ export {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuLinkItem,
   DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,

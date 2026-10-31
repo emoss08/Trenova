@@ -11,6 +11,5 @@ func threadsOf(s *Service) *assistantthreads.Service {
 		Conversations: s.conversations,
 		Definitions:   s.definitions,
 		Permissions:   s.permissions,
-		Queries:       s.queries,
 	})
 }

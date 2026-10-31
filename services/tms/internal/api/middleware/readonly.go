@@ -18,7 +18,6 @@ const graphQLPath = "/graphql"
 
 var readOnlyWriteAllowedPaths = map[string]struct{}{
 	graphQLPath:                                                        {},
-	"/api/v1/auth/logout":                                              {},
 	"/api/v1/users/me/change-password":                                 {},
 	"/api/v1/users/me/switch-organization":                             {},
 	"/api/v1/users/me/settings":                                        {},
@@ -60,8 +59,6 @@ var readOnlyWriteAllowedPaths = map[string]struct{}{
 }
 
 var expiredAllowedPaths = map[string]struct{}{
-	"/api/v1/auth/logout":                  {},
-	"/api/v1/auth/csrf":                    {},
 	"/api/v1/users/me":                     {},
 	"/api/v1/users/me/organizations":       {},
 	"/api/v1/users/me/switch-organization": {},

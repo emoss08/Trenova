@@ -13,6 +13,11 @@ import (
 type ListBillingQueueItemsRequest struct {
 	Filter        *pagination.QueryOptions `json:"filter"`
 	IncludePosted bool                     `json:"includePosted"`
+	Lanes         []billingqueue.Lane      `json:"lanes"`
+	MinAmount     decimal.NullDecimal      `json:"minAmount"`
+	MaxAmount     decimal.NullDecimal      `json:"maxAmount"`
+	CreatedBefore *int64                   `json:"createdBefore"`
+	Cursor        pagination.CursorInfo    `json:"-"`
 }
 
 type GetBillingQueueItemByIDRequest struct {
@@ -23,6 +28,29 @@ type GetBillingQueueItemByIDRequest struct {
 
 type GetBillingQueueStatsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
+	DayStart   int64                 `json:"dayStart"`
+}
+
+type GetBillingQueuePulseRequest struct {
+	TenantInfo  pagination.TenantInfo
+	DayStart    int64
+	WindowStart int64
+	PriorStart  int64
+}
+
+type BillingQueueLaneStat struct {
+	Lane  billingqueue.Lane `json:"lane"`
+	Count int               `json:"count"`
+	Total decimal.Decimal   `json:"total"`
+}
+
+type BillingQueuePulse struct {
+	OldestWaitingAt          *int64              `json:"oldestWaitingAt"`
+	DeliveryToInvoiceDays    decimal.NullDecimal `json:"deliveryToInvoiceDays"`
+	PriorDeliveryToInvoice   decimal.NullDecimal `json:"priorDeliveryToInvoiceDays"`
+	ApprovedTodayCount       int                 `json:"approvedTodayCount"`
+	ApprovedTodayTotal       decimal.Decimal     `json:"approvedTodayTotal"`
+	MedianReviewSecondsToday *int64              `json:"medianReviewSecondsToday"`
 }
 
 // MarkPostedForInvoiceRequest sweeps the billing-queue items an invoice actually
@@ -154,6 +182,10 @@ type BillingQueueRepository interface {
 		ctx context.Context,
 		req *ListBillingQueueItemsRequest,
 	) (*pagination.ListResult[*billingqueue.BillingQueueItem], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListBillingQueueItemsRequest,
+	) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error)
 	GetByID(
 		ctx context.Context,
 		req *GetBillingQueueItemByIDRequest,
@@ -198,8 +230,46 @@ type BillingQueueRepository interface {
 		ctx context.Context,
 		req *CountHeldForPeriodRequest,
 	) ([]*HeldForPeriod, error)
-	GetStatusCounts(
+	GetLaneStats(
 		ctx context.Context,
-		req *GetBillingQueueStatsRequest,
-	) (map[billingqueue.Status]int, error)
+		tenantInfo pagination.TenantInfo,
+	) ([]*BillingQueueLaneStat, error)
+	GetPulse(ctx context.Context, req *GetBillingQueuePulseRequest) (*BillingQueuePulse, error)
+	ListRecommendations(
+		ctx context.Context,
+		req *ListRecommendationsRequest,
+	) ([]*Recommendation, error)
+	RecordAgentReview(ctx context.Context, req *RecordAgentReviewRequest) error
+	ListOpenIssueCounts(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*OpenIssueCount, error)
+	ListAgentConcerns(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		limit int,
+	) ([]*AgentConcern, error)
+	RecentCustomerInvoices(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		customerID pulid.ID,
+		limit int,
+	) ([]*RecentInvoice, error)
+	ListUnreviewedItems(ctx context.Context, req *ListUnreviewedItemsRequest) ([]*UnreviewedItem, error)
+	// ListNovaBacklogTenants names the organizations with items Nova has not
+	// reviewed, across every organization.
+	ListNovaBacklogTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
+	GetBrief(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*billingqueue.QueueBrief, error)
+	SaveBrief(ctx context.Context, brief *billingqueue.QueueBrief) error
+	UpdateInvoiceDetails(
+		ctx context.Context,
+		entity *billingqueue.BillingQueueItem,
+	) (*billingqueue.BillingQueueItem, error)
+	ListRecheckCandidates(
+		ctx context.Context,
+		req *ListRecheckCandidatesRequest,
+	) ([]*RecheckCandidate, error)
 }

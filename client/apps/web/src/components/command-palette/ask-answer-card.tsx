@@ -83,6 +83,7 @@ export function AskAnswerCard({
   onAsk,
   onStop,
   onContinue,
+  canContinue,
   onCopy,
   onFollowUp,
   onPeek,
@@ -96,6 +97,8 @@ export function AskAnswerCard({
   onAsk: () => void;
   onStop: () => void;
   onContinue: () => void;
+  /** The question reached Nova, so it can be carried into the Desk even unanswered. */
+  canContinue: boolean;
   onCopy: () => void;
   onFollowUp: () => void;
   onPeek: (record: AssistantEntityRef | null) => void;
@@ -222,9 +225,17 @@ export function AskAnswerCard({
       {phase === "error" && (
         <div className="flex flex-col items-start gap-2">
           {turn.error && <p className="text-foreground-muted text-base">{turn.error}</p>}
-          <Button type="button" size="xs" variant="outline" tabIndex={-1} onClick={onAsk}>
-            {t("Ask again")}
-          </Button>
+          <div className="flex gap-1">
+            <Button type="button" size="xs" variant="outline" tabIndex={-1} onClick={onAsk}>
+              {t("Ask again")}
+            </Button>
+            {canContinue && (
+              <Button type="button" size="xs" variant="ghost" tabIndex={-1} onClick={onContinue}>
+                <LayoutAlt02Icon className="size-3.5" />
+                {t("Continue in Desk")}
+              </Button>
+            )}
+          </div>
         </div>
       )}
 

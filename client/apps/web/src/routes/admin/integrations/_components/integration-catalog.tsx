@@ -1,7 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Card,
@@ -52,6 +50,7 @@ import { accountingVendors } from "./accounting/accounting-vendors";
 import { PostmarkIntegrationModal } from "./postmark/postmark-integration-modal";
 import { ResendIntegrationModal } from "./resend/resend-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
+import { type IntegrationLogo, ThemedLogo } from "./shared/integration-connect-header";
 
 function getProviderMonogram(name: string): string {
   const trimmed = name.trim();
@@ -128,11 +127,11 @@ function groupCatalogItemsByCategory(items: IntegrationCatalogItem[]): CatalogCa
 type CatalogItemCardProps = {
   item: IntegrationCatalogItem;
   canConfigure: boolean;
-  logoURL: string;
+  logo: IntegrationLogo;
   onOpen: (type: string) => void;
 };
 
-function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCardProps) {
+function CatalogItemCard({ item, canConfigure, logo, onOpen }: CatalogItemCardProps) {
   const t = useT();
 
   const logoSize = getCatalogLogoSize(item.type);
@@ -171,10 +170,11 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
                 logoSize?.containerClassName,
               )}
             >
-              {logoURL ? (
-                <LazyImage
-                  src={logoURL}
+              {logo.light || logo.dark ? (
+                <ThemedLogo
+                  logo={logo}
                   alt={t("{0} logo", item.name)}
+                  loading="lazy"
                   className={cn("size-24 object-contain", logoSize?.imageClassName)}
                 />
               ) : (
@@ -214,7 +214,6 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
 export function IntegrationCatalogCard() {
   const t = useT();
 
-  const { theme } = useTheme();
   const [searchParams, setSearchParams] = useQueryStates(integrationCatalogSearchParamsParser);
 
   const catalogQuery = useQuery({
@@ -375,17 +374,17 @@ export function IntegrationCatalogCard() {
                   </div>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {group.items.map((item) => {
-                      const logoURL =
-                        theme === "dark"
-                          ? item.logoDarkUrl || item.logoLightUrl || item.logoUrl
-                          : item.logoLightUrl || item.logoDarkUrl || item.logoUrl;
-
                       return (
                         <CatalogItemCard
                           key={item.type}
                           item={item}
                           canConfigure={hasModal(item.type)}
-                          logoURL={logoURL}
+                          logo={{
+                            light:
+                              item.logoLightUrl || item.logoDarkUrl || item.logoUrl || undefined,
+                            dark:
+                              item.logoDarkUrl || item.logoLightUrl || item.logoUrl || undefined,
+                          }}
                           onOpen={openModal}
                         />
                       );

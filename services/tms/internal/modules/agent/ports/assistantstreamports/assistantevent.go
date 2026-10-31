@@ -64,11 +64,6 @@ const AssistantEventArtifactRemoved = "artifact_removed"
 
 const AssistantEventDone = "done"
 
-// AssistantEventThread names the conversation a quick question was
-// answered on, before the turn begins, so the reader can keep it even
-// when the answer fails partway.
-const AssistantEventThread = "thread"
-
 // AssistantEventTurn names the turn producing a reply, before the reply
 // begins. A reader keeps it so a dropped connection can be rejoined
 // rather than restarted.

@@ -1,10 +1,15 @@
+import { EmptyState } from "@/components/empty-state";
 import { shipment } from "@/lib/queries/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
-import { PlusIcon } from "@trenova/shared/components/icons";
+import {
+  MarkerPin01Icon,
+  PlusIcon,
+  RouteIcon,
+  Truck01Icon,
+} from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
-import { TruckIcon } from "@trenova/shared/components/ui/truck";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getProfile, isMoveRemovalAllowed } from "@trenova/shared/lib/capability";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -15,6 +20,11 @@ import { MoveCard } from "./move-card";
 
 type MoveDialogState = { open: false } | { open: true; moveIndex: number; isNew: boolean };
 
+/**
+ * The shipment's moves, each a compact card of its route and coverage, with adding, editing and
+ * removing a move. Removal follows the server's rule: always for an unsaved shipment, and past
+ * that as the mode profile (or, without one, the organisation's setting) allows.
+ */
 export default function ShipmentMoveDetails() {
   const t = useT();
 
@@ -30,12 +40,8 @@ export default function ShipmentMoveDetails() {
     keyName: "fieldId",
   });
 
-  const [moveDialog, setMoveDialog] = useState<MoveDialogState>({
-    open: false,
-  });
-  const { data: shipmentUIPolicy } = useQuery({
-    ...shipment.uiPolicy(),
-  });
+  const [moveDialog, setMoveDialog] = useState<MoveDialogState>({ open: false });
+  const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
   const profile = getProfile(shipmentUIPolicy);
   // An unsaved shipment has no persisted moves to detach history from, so removal
   // is always allowed there. Past that, the decision has to match the server's:
@@ -53,6 +59,7 @@ export default function ShipmentMoveDetails() {
     }
     setMoveDialog({ open: false });
   }
+
   function handleAddMove() {
     const newIndex = moveFields.length;
     appendMove({
@@ -88,14 +95,16 @@ export default function ShipmentMoveDetails() {
     <>
       <FormSection
         title={t("Move details")}
-        description={t("Execution legs and stop sequences for this shipment")}
+        description={t("Each leg's route and who covers it")}
         action={
           <div className="flex items-center gap-1.5">
             <CapabilityExplainer profile={profile} field="moves" />
-            <Button type="button" variant="outline" size="xxs" onClick={handleAddMove}>
-              <PlusIcon className="size-3" />
-              {t("Add move")}
-            </Button>
+            {moveFields.length > 0 && (
+              <Button type="button" variant="outline" size="xxs" onClick={handleAddMove}>
+                <PlusIcon className="size-3" />
+                {t("Add move")}
+              </Button>
+            )}
           </div>
         }
       >
@@ -114,23 +123,13 @@ export default function ShipmentMoveDetails() {
           />
         ))}
         {moveFields.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center">
-            <TruckIcon className="text-muted-foreground/40 mb-2 size-6" />
-            <p className="text-muted-foreground text-sm font-medium">{t("No moves yet")}</p>
-            <p className="text-muted-foreground/70 mt-0.5 text-xs">
-              {t("Add a move to define the route for this shipment")}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              className="mt-3"
-              onClick={handleAddMove}
-            >
-              <PlusIcon className="size-3" />
-              {t("Add first move")}
-            </Button>
-          </div>
+          <EmptyState
+            className="rounded-lg border p-4"
+            title={t("No moves yet")}
+            description={t("Add a move to define the route for this shipment")}
+            icons={[MarkerPin01Icon, RouteIcon, Truck01Icon]}
+            action={{ label: t("Add first move"), onClick: handleAddMove, icon: PlusIcon }}
+          />
         )}
       </FormSection>
       <MoveEditDialog

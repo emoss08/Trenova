@@ -1636,6 +1636,8 @@ enum AITask {
   General
   InboundClassification
   OperationalInsights
+  PaletteAnswer
+  PaperworkReading
   QueryCompose
   RemittanceExtraction
   ScopeClassification
@@ -1841,12 +1843,19 @@ enum AIUsageFeature {
   AgentRecommendation
   AgentReflection
   AgentTurn
+  BillingQueueBrief
+  BillingQueueReview
+  BillingQueueSearch
   ConversationChapters
   DocumentIntelligenceExtract
   DocumentIntelligenceRoute
   FactoringRemittanceExtract
   FormulaExplain
   FormulaGenerate
+  InboundMail
+  InsightNarration
+  PaletteAnswer
+  PaperworkReading
   ShipmentImportChat
   TableQuery
 }
@@ -7364,6 +7373,12 @@ enum BillType {
   Invoice
 }
 
+"""What Nova made of an item it reviewed."""
+enum BillingQueueAgentVerdict {
+  Agrees
+  Concern
+}
+
 input BillingQueueAssignInput {
   billerId: ID!
 }
@@ -7381,6 +7396,16 @@ enum BillingQueueExceptionReasonCode {
   WeightDiscrepancy
 }
 
+"""The open issue a list row leads with, and how many are open."""
+type BillingQueueHeadline {
+  checkKey: String!
+  code: String!
+  open: Int!
+  summary: String!
+  """The issue waits on someone other than the biller."""
+  waiting: Boolean!
+}
+
 """Why a biller set an item aside."""
 enum BillingQueueHoldReasonCode {
   CustomerDispute
@@ -7393,6 +7418,12 @@ type BillingQueueItem {
   Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended.
   """
   adjustmentContext: JSON!
+  agentReviewedAt: Timestamp
+  agentSummary: String
+  """
+  What Nova made of the item after the checks ran. It never blocks approval.
+  """
+  agentVerdict: BillingQueueAgentVerdict
   """This payer's share of the shipment's charges."""
   allocatedTotalAmount: Decimal!
   assignedBiller: User
@@ -7410,11 +7441,22 @@ type BillingQueueItem {
   createdAt: Timestamp!
   exceptionNotes: String!
   exceptionReasonCode: BillingQueueExceptionReasonCode
+  """
+  The open issue a list row leads with. Set on items read through billingQueueItems.
+  """
+  headline: BillingQueueHeadline
+  holdReasonCode: BillingQueueHoldReasonCode
   id: ID!
   isAdjustmentOrigin: Boolean!
+  """
+  Where the item sits in the queue's working order; the server keeps it current.
+  """
+  lane: BillingQueueLane!
   number: String!
   orderId: ID
   organizationId: ID!
+  """The customer's PO number printed on the invoice."""
+  poNumber: String!
   rebillStrategy: String
   requiresReplacementReview: Boolean!
   rerateVariancePercent: Decimal!
@@ -7429,6 +7471,52 @@ type BillingQueueItem {
   status: BillingQueueStatus!
   updatedAt: Timestamp!
   version: Int!
+}
+
+type BillingQueueItemConnection {
+  edges: [BillingQueueItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type BillingQueueItemEdge {
+  cursor: String!
+  node: BillingQueueItem!
+}
+
+input BillingQueueItemsFilterInput {
+  """Only items queued before this time."""
+  createdBefore: Timestamp
+  """Include items whose invoice already posted."""
+  includePosted: Boolean = false
+  """The lanes to include; empty includes every lane."""
+  lanes: [BillingQueueLane!]
+  """Largest amount, in the bill-to's currency."""
+  maxAmount: Decimal
+  """Smallest amount, in the bill-to's currency."""
+  minAmount: Decimal
+}
+
+"""Where an item sits in the queue's working order."""
+enum BillingQueueLane {
+  """Approved and waiting to post."""
+  Approved
+  """Its checks have not run yet."""
+  Checking
+  """Posted or canceled."""
+  Closed
+  """On hold or sent back to operations."""
+  Held
+  """A check needs the biller."""
+  NeedsYou
+  """Every check is clear."""
+  Ready
+  """Waiting on a driver, an approver or credit."""
+  Waiting
 }
 
 """The invoice an item posted as, and where it went."""
@@ -25410,6 +25498,10 @@ type Query {
   benefitEnrollments(limit: Int, openOnly: Boolean, planId: ID, statuses: [BenefitEnrollmentStatus!]): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
   benefitPlan(id: ID!): BenefitPlan!
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
+  """
+  The queue's items, oldest first, a page at a time. Each row carries the issue it leads with.
+  """
+  billingQueueItems(filter: BillingQueueItemsFilterInput, input: DataTableConnectionInput!): BillingQueueItemConnection!
   billingTransferRun(id: ID!): BillingTransferRun!
   billingTransferRunItems(filter: BillingTransferRunItemsFilterInput, input: DataTableConnectionInput!, runId: ID!): BillingTransferRunItemConnection!
   briefing(id: ID!): Briefing!
@@ -26636,6 +26728,10 @@ type RateAgreementAccessorial {
   accessorialChargeId: ID!
   amount: Decimal!
   autoApply: Boolean!
+  """The accessorial charge's code, such as DET."""
+  chargeCode: String!
+  """The accessorial charge's description, such as Detention."""
+  chargeDescription: String!
   """
   The Tariff condition a shipment meets for the charge to apply; empty applies always.
   """
@@ -26669,6 +26765,8 @@ type RateAgreementEdge {
 type RateAgreementFuelBinding {
   fuelSurchargeProgramId: ID!
   id: ID!
+  """The fuel surcharge program's name."""
+  programName: String!
   waived: Boolean!
 }
 

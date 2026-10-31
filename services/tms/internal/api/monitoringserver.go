@@ -3,12 +3,12 @@ package api
 
 import (
 	"context"
-	"encoding/json" //nolint:depguard // this is fine
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -271,7 +271,7 @@ func (s *MonitoringServer) writeJSON(
 ) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
+	if err := sonic.ConfigDefault.NewEncoder(w).Encode(payload); err != nil {
 		s.logger.Warn("failed to write monitoring response", zap.Error(err))
 	}
 }

@@ -175,7 +175,9 @@ export function BillingBulkBar({
 
   const start = useApiMutation({
     mutationFn: ({ itemIds, assignMe }: { itemIds: string[]; assignMe: boolean }) =>
-      apiService.billingQueueService.startBulkApprove(itemIds, crypto.randomUUID(), assignMe),
+      apiService.billingQueueService.startBulk("Approve", itemIds, crypto.randomUUID(), {
+        assignApprover: assignMe,
+      }),
     resourceName: "BillingQueueItem",
     onSuccess: (run) => {
       setAsking(false);
@@ -185,7 +187,7 @@ export function BillingBulkBar({
     },
   });
   const cancel = useApiMutation({
-    mutationFn: (runId: string) => apiService.billingQueueService.undoBulkApprove(runId),
+    mutationFn: (runId: string) => apiService.billingQueueService.undoBulk(runId),
     resourceName: "BillingQueueItem",
     onSettled: () => {
       setUndo(null);
@@ -196,7 +198,7 @@ export function BillingBulkBar({
   // After the window, the run's results arrive over the event stream; items
   // that could not be approved are said once.
   const { data: run } = useQuery({
-    ...billingQueue.approvalRun(undo?.runId ?? ""),
+    ...billingQueue.bulkRun(undo?.runId ?? ""),
     enabled: undo !== null && !counting,
   });
   const announced = useRef(new Set<string>());

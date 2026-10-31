@@ -58,6 +58,18 @@ type BillingQueueItem struct {
 	RequiresReplacementReview bool                 `json:"requiresReplacementReview" keel:"requires_replacement_review"`
 	RerateVariancePercent     decimal.Decimal      `json:"rerateVariancePercent"     keel:"rerate_variance_percent"`
 	AdjustmentContext         map[string]any       `json:"adjustmentContext"         keel:"adjustment_context,jsonb"`
+	Lane                      Lane                 `json:"lane"                      keel:"lane,readonly"`
+	CheckedAt                 *int64               `json:"checkedAt"                 keel:"checked_at,readonly"`
+	PONumber                  string               `json:"poNumber"                  keel:"po_number,nullzero"`
+	InvoiceMemo               string               `json:"invoiceMemo"               keel:"invoice_memo,nullzero"`
+	PaymentTerm               string               `json:"paymentTerm"               keel:"payment_term,nullzero"`
+	InvoiceDate               *int64               `json:"invoiceDate"               keel:"invoice_date"`
+	PacketDocumentIDs         []pulid.ID           `json:"packetDocumentIds"         keel:"packet_document_ids,jsonb"`
+	AgentVerdict              *AgentVerdict        `json:"agentVerdict"              keel:"agent_verdict"`
+	AgentSummary              string               `json:"agentSummary"              keel:"agent_summary,nullzero"`
+	AgentReviewedAt           *int64               `json:"agentReviewedAt"           keel:"agent_reviewed_at"`
+	AgentReads                []AgentRead          `json:"agentReads"                keel:"agent_reads,jsonb"`
+	AgentReviewHash           string               `json:"-"                         keel:"agent_review_hash,nullzero"`
 	Version                   int64                `json:"version"                   keel:"version,version"`
 	CreatedAt                 int64                `json:"createdAt"                 keel:"created_at,autocreate"`
 	UpdatedAt                 int64                `json:"updatedAt"                 keel:"updated_at,autoupdate"`
@@ -72,6 +84,10 @@ type BillingQueueItem struct {
 	// when the item is read with its shipment details.
 	PayerShare *PayerShare `json:"payerShare,omitempty"`
 
+	// RatedBy is what priced the item's shipment, filled when the item is read
+	// with its shipment details.
+	RatedBy *RatedBy `json:"ratedBy,omitempty"`
+
 	// DetentionHolds are the detention charges on the shipment still waiting
 	// on an approver, filled when the item is read with its shipment details.
 	// While any is listed the item cannot be approved.
@@ -79,9 +95,7 @@ type BillingQueueItem struct {
 
 	RatingReviewHold *RatingReviewHold `json:"ratingReviewHold,omitempty"`
 
-	// PONumber is the customer's purchase order, from the item's order. It is
-	// read with the item rather than stored on it.
-	PONumber string `json:"poNumber,omitempty" keel:"po_number,computed"`
+	Headline *Headline `json:"headline,omitempty"`
 
 	// Review is everything a biller reads to decide the item, filled when the
 	// item is read with its shipment details.
@@ -130,12 +144,19 @@ func (b *BillingQueueItem) BeforeCreate(ctx context.Context) error {
 	if b.BillType == "" {
 		b.BillType = BillTypeInvoice
 	}
+	if b.PacketDocumentIDs == nil {
+		b.PacketDocumentIDs = []pulid.ID{}
+	}
 
 	return nil
 }
 
 func (b *BillingQueueItem) GetID() pulid.ID {
 	return b.ID
+}
+
+func (b *BillingQueueItem) GetCreatedAt() int64 {
+	return b.CreatedAt
 }
 
 func (b *BillingQueueItem) GetOrganizationID() pulid.ID {

@@ -1,16 +1,18 @@
-import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
+import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
+
+type Statused = { status: BillingQueueStatus };
 
 /** The selected items each bulk action can act on. */
-export type BulkEligibility = {
+export type BulkEligibility<T extends Statused> = {
   /** Not yet decided: can be approved, assigned or canceled. */
-  open: BillingQueueItem[];
-  approvable: BillingQueueItem[];
-  holdable: BillingQueueItem[];
+  open: T[];
+  approvable: T[];
+  holdable: T[];
   /** Approved and waiting for their invoice to be posted. */
-  postable: BillingQueueItem[];
+  postable: T[];
 };
 
-const DECIDED = new Set<BillingQueueItem["status"]>(["Approved", "Posted", "Canceled"]);
+const DECIDED = new Set<BillingQueueStatus>(["Approved", "Posted", "Canceled"]);
 
 /**
  * Splits a selection by what can be done to each item, so a bulk action only
@@ -19,8 +21,8 @@ const DECIDED = new Set<BillingQueueItem["status"]>(["Approved", "Posted", "Canc
  * The server checks each item again; this only keeps requests that are sure
  * to be refused from being sent.
  */
-export function bulkEligibility(items: readonly BillingQueueItem[]): BulkEligibility {
-  const result: BulkEligibility = { open: [], approvable: [], holdable: [], postable: [] };
+export function bulkEligibility<T extends Statused>(items: readonly T[]): BulkEligibility<T> {
+  const result: BulkEligibility<T> = { open: [], approvable: [], holdable: [], postable: [] };
 
   for (const item of items) {
     if (item.status === "Approved") {

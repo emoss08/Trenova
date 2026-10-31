@@ -143,7 +143,6 @@ func TestProfile_OnlyAConversationWithAPersonReachesBeyondItsAgent(t *testing.T)
 		"delegated": func(req *agentruntimeports.RunRequest) {
 			req.Delegation = &agentruntimeports.Delegation{ParentAgentID: billing.ID}
 		},
-		"inline":    func(req *agentruntimeports.RunRequest) { req.Inline = true },
 		"no thread": func(req *agentruntimeports.RunRequest) { req.ThreadID = pulid.Nil },
 	}
 	for name, change := range cases {

@@ -113,4 +113,15 @@ describe("ending or changing a session", () => {
     await waitFor(() => expect(calls).toEqual(["clear cache", "navigate /"]));
     expect(mocks.setUser).toHaveBeenCalledWith({ id: "usr_1", currentOrganizationId: "org_2" });
   });
+
+  it("confirms the new organization before reading its permissions", async () => {
+    const { result } = renderHook(() => useSwitchOrganization(), { wrapper });
+
+    act(() => result.current.mutate({ organizationId: "org_2" }));
+
+    await waitFor(() => expect(mocks.fetchManifest).toHaveBeenCalledTimes(1));
+    expect(mocks.setUser.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.fetchManifest.mock.invocationCallOrder[0],
+    );
+  });
 });

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingscore"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingtargets"
@@ -34,7 +33,7 @@ type Params struct {
 	References  accountingmappingports.AccountingReferenceObjectRepository
 	Mappings    accountingmappingports.AccountingMappingRepository
 	Sessions    accountingconnectionports.AccountingSessionProvider
-	Completion  llmports.CompletionService `optional:"true"`
+	Nova        llmports.TaskRunner `optional:"true"`
 	Kit         *accountingmappingkit.Kit
 	Catalog     *accountingmappingtargets.Catalog
 }
@@ -45,7 +44,7 @@ type Service struct {
 	references  accountingmappingports.AccountingReferenceObjectRepository
 	mappings    accountingmappingports.AccountingMappingRepository
 	sessions    accountingconnectionports.AccountingSessionProvider
-	completion  llmports.CompletionService
+	nova        llmports.TaskRunner
 	kit         *accountingmappingkit.Kit
 	catalog     *accountingmappingtargets.Catalog
 }
@@ -58,7 +57,7 @@ func New(p Params) *Service {
 		references:  p.References,
 		mappings:    p.Mappings,
 		sessions:    p.Sessions,
-		completion:  p.Completion,
+		nova:        p.Nova,
 		kit:         p.Kit,
 		catalog:     p.Catalog,
 	}
@@ -72,7 +71,7 @@ func (s *Service) ModelPass(
 	connectionID pulid.ID,
 	mappingIDs []pulid.ID,
 ) (int, error) {
-	if s.completion == nil || len(mappingIDs) == 0 {
+	if s.nova == nil || len(mappingIDs) == 0 {
 		return 0, nil
 	}
 	if len(mappingIDs) > maxModelTargets {
@@ -126,30 +125,30 @@ func (s *Service) runModelBatch(
 	connectionID pulid.ID,
 	batch *modelBatch,
 ) ([]*accountingmapping.AccountingMapping, bool, error) {
-	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
-		TenantInfo:   tenantInfo,
-		Task:         aitask.TaskAccountingMapping,
-		System:       modelSystemPrompt,
+	var reply modelReply
+	_, err := s.nova.Run(ctx, &llmports.NovaTask{
+		Name:         aitask.TaskAccountingMapping,
+		Feature:      aiusage.FeatureAccountingMapping,
+		Instructions: modelSystemPrompt,
 		Context:      batch.context(),
-		OutputSchema: modelSchema(),
+		Schema:       modelSchema(),
 		SchemaName:   modelSchemaName,
 		MaxTokens:    modelMaxTokens,
-		Attribution: aiusageports.AIUsageAttribution{
+		TenantInfo:   tenantInfo,
+		Attribution: &aiusageports.AIUsageAttribution{
 			Feature: aiusage.FeatureAccountingMapping,
 			Subject: aiusage.Subject{
 				Type: aiusage.SubjectTypeAccountingConnection,
 				ID:   connectionID.String(),
 			},
 		},
-	})
-	if err != nil {
-		return nil, false, err
-	}
-
-	var reply modelReply
-	if err = sonic.UnmarshalString(result.Text, &reply); err != nil {
+	}, &reply)
+	if errors.Is(err, llmports.ErrOutsideSchema) {
 		s.l.Warn("the mapping model's reply could not be read", zap.Error(err))
 		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, err
 	}
 
 	for _, row := range batch.rows {

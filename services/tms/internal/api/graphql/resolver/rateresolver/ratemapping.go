@@ -292,6 +292,9 @@ func rateAgreementCardToModel(
 			FuelSurchargeProgramID: binding.FuelSurchargeProgramID.String(),
 			Waived:                 binding.Waived,
 		}
+		if binding.Program != nil {
+			model.FuelBinding.ProgramName = binding.Program.Name
+		}
 	}
 	if current != nil {
 		model.CurrentVersion = &gqlmodel.RateAgreementVersion{
@@ -325,6 +328,10 @@ func rateAgreementAccessorialToModel(
 	if entity.FreeUnits != nil {
 		units := int(*entity.FreeUnits)
 		model.FreeUnits = &units
+	}
+	if charge := entity.AccessorialCharge; charge != nil {
+		model.ChargeCode = charge.Code
+		model.ChargeDescription = charge.Description
 	}
 
 	return model

@@ -1,3 +1,4 @@
+import { announceSignedIn } from "@trenova/shared/lib/session-context";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import {
   redirect,
@@ -11,13 +12,16 @@ import {
  * 401) goes to the login form. A check that could not reach a verdict — a rate limit, a
  * server error, a dropped connection — leaves a working session standing mid-navigation, so
  * the page's own queries retry, and on a cold load, where nothing proves a session, throws
- * the original failure to the route's error boundary, which presents it with a retry.
+ * the original failure to the route's error boundary, which presents it with a retry. A
+ * session that passes has reached the app, so a tab still on a sign-in page is told it can
+ * follow.
  */
 export async function requireSession(loginPath: string): Promise<Response | null> {
   const session = await useAuthStore.getState().checkSession();
 
   switch (session.status) {
     case "signed_in":
+      announceSignedIn();
       return null;
     case "signed_out":
       return redirect(loginPath);

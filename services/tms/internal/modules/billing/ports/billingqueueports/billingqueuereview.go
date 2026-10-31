@@ -90,8 +90,8 @@ type BillingQueueItemSummary struct {
 	HoldReasonCode       *billingqueue.HoldReasonCode `json:"holdReasonCode"`
 	AssignedBillerID     *pulid.ID                    `json:"assignedBillerId"`
 	AllocatedTotalAmount decimal.Decimal              `json:"allocatedTotalAmount"`
-	// OpenChecks is how many of the four issue-backed checks wait on an issue.
-	OpenChecks int  `json:"-"`
+	// OpenIssues is how many issues wait on a person.
+	OpenIssues int  `json:"-"`
 	NeedsCount int  `json:"needsCount"`
 	Ready      bool `json:"ready"`
 }

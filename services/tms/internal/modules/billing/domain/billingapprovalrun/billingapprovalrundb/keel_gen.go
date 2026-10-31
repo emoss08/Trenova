@@ -28,9 +28,11 @@ var approvalRunsTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "requested_by_id", Quoted: `"requested_by_id"`, Field: "RequestedByID", Kind: schema.KindString, Flags: 0, Label: `Requested By ID`, JSON: `requestedById`},
 		{Name: "idempotency_key", Quoted: `"idempotency_key"`, Field: "IdempotencyKey", Kind: schema.KindString, Flags: 0, Label: `Idempotency Key`, JSON: `idempotencyKey`},
+		{Name: "action", Quoted: `"action"`, Field: "Action", Kind: schema.KindString, Flags: 0, Label: `Action`, JSON: `action`, Enum: enumRunAction[:]},
+		{Name: "params", Quoted: `"params"`, Field: "Params", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Params`, JSON: `params`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumApprovalRunStatus[:]},
 		{Name: "total_count", Quoted: `"total_count"`, Field: "TotalCount", Kind: schema.KindInt64, Flags: 0, Label: `Total Count`, JSON: `totalCount`},
-		{Name: "approved_count", Quoted: `"approved_count"`, Field: "ApprovedCount", Kind: schema.KindInt64, Flags: 0, Label: `Approved Count`, JSON: `approvedCount`},
+		{Name: "succeeded_count", Quoted: `"succeeded_count"`, Field: "SucceededCount", Kind: schema.KindInt64, Flags: 0, Label: `Succeeded Count`, JSON: `succeededCount`},
 		{Name: "failed_count", Quoted: `"failed_count"`, Field: "FailedCount", Kind: schema.KindInt64, Flags: 0, Label: `Failed Count`, JSON: `failedCount`},
 		{Name: "skipped_count", Quoted: `"skipped_count"`, Field: "SkippedCount", Kind: schema.KindInt64, Flags: 0, Label: `Skipped Count`, JSON: `skippedCount`},
 		{Name: "commit_at", Quoted: `"commit_at"`, Field: "CommitAt", Kind: schema.KindInt64, Flags: 0, Label: `Commit At`, JSON: `commitAt`},
@@ -50,14 +52,14 @@ var approvalRunsTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
 	Returning:  nil,
-	Version:    18,
+	Version:    20,
 	AutoID:     0,
-	AutoCreate: 19,
-	AutoUpdate: 20,
+	AutoCreate: 21,
+	AutoUpdate: 22,
 	IDPrefix:   "bqar_",
 	New:        newApprovalRun,
 	NewN:       newNApprovalRun,
@@ -77,9 +79,11 @@ type ApprovalRunsTable struct {
 	OrganizationID      keelkinds.PulidIDCol
 	RequestedByID       keelkinds.PulidIDCol
 	IdempotencyKey      keel.StringCol
+	Action              RunActionCol
+	Params              keel.JSONBCol
 	Status              ApprovalRunStatusCol
 	TotalCount          keel.Int64Col
-	ApprovedCount       keel.Int64Col
+	SucceededCount      keel.Int64Col
 	FailedCount         keel.Int64Col
 	SkippedCount        keel.Int64Col
 	CommitAt            keel.Int64Col
@@ -103,22 +107,24 @@ var ApprovalRuns = &ApprovalRunsTable{
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 2}}},
 	RequestedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 3}}},
 	IdempotencyKey:      keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 4}},
-	Status:              ApprovalRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 5}}},
-	TotalCount:          keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 6}},
-	ApprovedCount:       keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 7}},
-	FailedCount:         keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 8}},
-	SkippedCount:        keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 9}},
-	CommitAt:            keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 10}},
-	FailureMessage:      keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 11}},
-	CancelRequestedAt:   keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 12}},
-	CancelRequestedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 13}}},
-	TemporalWorkflowID:  keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 14}},
-	TemporalRunID:       keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 15}},
-	StartedAt:           keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 16}},
-	CompletedAt:         keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 17}},
-	Version:             keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 18}},
-	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 19}},
-	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 20}},
+	Action:              RunActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 5}}},
+	Params:              keel.JSONBCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 6}},
+	Status:              ApprovalRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 7}}},
+	TotalCount:          keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 8}},
+	SucceededCount:      keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 9}},
+	FailedCount:         keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 10}},
+	SkippedCount:        keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 11}},
+	CommitAt:            keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 12}},
+	FailureMessage:      keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 13}},
+	CancelRequestedAt:   keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 14}},
+	CancelRequestedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 15}}},
+	TemporalWorkflowID:  keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 16}},
+	TemporalRunID:       keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 17}},
+	StartedAt:           keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 18}},
+	CompletedAt:         keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 19}},
+	Version:             keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 20}},
+	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 21}},
+	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 22}},
 }
 
 // BuildApprovalRuns builds the handle of billingqueue_approval_runs for ref. Generated relation and alias methods call it.
@@ -130,22 +136,24 @@ func BuildApprovalRuns(r *keel.Ref) *ApprovalRunsTable {
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		RequestedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		IdempotencyKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Status:              ApprovalRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		TotalCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		ApprovedCount:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		FailedCount:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		SkippedCount:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		CommitAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		FailureMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		CancelRequestedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		CancelRequestedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		TemporalWorkflowID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		TemporalRunID:       keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		StartedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CompletedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		Action:              RunActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Params:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
+		Status:              ApprovalRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		TotalCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		SucceededCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		FailedCount:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		SkippedCount:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		CommitAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		FailureMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		CancelRequestedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		CancelRequestedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		TemporalWorkflowID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		TemporalRunID:       keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
+		StartedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CompletedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 	}
 }
 
@@ -187,36 +195,40 @@ func ptrApprovalRun(p unsafe.Pointer, c int32) any {
 	case 4:
 		return &r.IdempotencyKey
 	case 5:
-		return (*string)(unsafe.Pointer(&r.Status))
+		return (*string)(unsafe.Pointer(&r.Action))
 	case 6:
-		return (*int64)(unsafe.Pointer(&r.TotalCount))
+		return &r.Params
 	case 7:
-		return (*int64)(unsafe.Pointer(&r.ApprovedCount))
+		return (*string)(unsafe.Pointer(&r.Status))
 	case 8:
-		return (*int64)(unsafe.Pointer(&r.FailedCount))
+		return (*int64)(unsafe.Pointer(&r.TotalCount))
 	case 9:
-		return (*int64)(unsafe.Pointer(&r.SkippedCount))
+		return (*int64)(unsafe.Pointer(&r.SucceededCount))
 	case 10:
-		return &r.CommitAt
+		return (*int64)(unsafe.Pointer(&r.FailedCount))
 	case 11:
-		return &r.FailureMessage
+		return (*int64)(unsafe.Pointer(&r.SkippedCount))
 	case 12:
-		return &r.CancelRequestedAt
+		return &r.CommitAt
 	case 13:
-		return (**string)(unsafe.Pointer(&r.CancelRequestedByID))
+		return &r.FailureMessage
 	case 14:
-		return &r.TemporalWorkflowID
+		return &r.CancelRequestedAt
 	case 15:
-		return &r.TemporalRunID
+		return (**string)(unsafe.Pointer(&r.CancelRequestedByID))
 	case 16:
-		return &r.StartedAt
+		return &r.TemporalWorkflowID
 	case 17:
-		return &r.CompletedAt
+		return &r.TemporalRunID
 	case 18:
-		return &r.Version
+		return &r.StartedAt
 	case 19:
-		return &r.CreatedAt
+		return &r.CompletedAt
 	case 20:
+		return &r.Version
+	case 21:
+		return &r.CreatedAt
+	case 22:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -236,57 +248,61 @@ func valueApprovalRun(p unsafe.Pointer, c int32) any {
 	case 4:
 		return r.IdempotencyKey
 	case 5:
-		return string(r.Status)
+		return string(r.Action)
 	case 6:
-		return int64(r.TotalCount)
+		return r.Params
 	case 7:
-		return int64(r.ApprovedCount)
+		return string(r.Status)
 	case 8:
-		return int64(r.FailedCount)
+		return int64(r.TotalCount)
 	case 9:
-		return int64(r.SkippedCount)
+		return int64(r.SucceededCount)
 	case 10:
-		return r.CommitAt
+		return int64(r.FailedCount)
 	case 11:
+		return int64(r.SkippedCount)
+	case 12:
+		return r.CommitAt
+	case 13:
 		if r.FailureMessage == "" {
 			return nil
 		}
 		return r.FailureMessage
-	case 12:
+	case 14:
 		if r.CancelRequestedAt == nil {
 			return nil
 		}
 		return *r.CancelRequestedAt
-	case 13:
+	case 15:
 		if r.CancelRequestedByID == nil {
 			return nil
 		}
 		return string(*r.CancelRequestedByID)
-	case 14:
+	case 16:
 		if r.TemporalWorkflowID == "" {
 			return nil
 		}
 		return r.TemporalWorkflowID
-	case 15:
+	case 17:
 		if r.TemporalRunID == "" {
 			return nil
 		}
 		return r.TemporalRunID
-	case 16:
+	case 18:
 		if r.StartedAt == nil {
 			return nil
 		}
 		return *r.StartedAt
-	case 17:
+	case 19:
 		if r.CompletedAt == nil {
 			return nil
 		}
 		return *r.CompletedAt
-	case 18:
-		return r.Version
-	case 19:
-		return r.CreatedAt
 	case 20:
+		return r.Version
+	case 21:
+		return r.CreatedAt
+	case 22:
 		return r.UpdatedAt
 	}
 	return nil
@@ -523,11 +539,12 @@ var enumApprovalFailureCode = [...]schema.EnumValue{
 	{Value: `OnHold`, Label: `Approval Failure On Hold`},
 	{Value: `Undone`, Label: `Approval Failure Undone`},
 	{Value: `Unexpected`, Label: `Approval Failure Unexpected`},
+	{Value: `NotApplicable`, Label: `Approval Failure Not Applies`},
 }
 
 var enumApprovalItemStatus = [...]schema.EnumValue{
 	{Value: `Pending`, Label: `Approval Item Pending`},
-	{Value: `Approved`, Label: `Approval Item Approved`},
+	{Value: `Succeeded`, Label: `Approval Item Succeeded`},
 	{Value: `Failed`, Label: `Approval Item Failed`},
 	{Value: `Skipped`, Label: `Approval Item Skipped`},
 }
@@ -538,6 +555,16 @@ var enumApprovalRunStatus = [...]schema.EnumValue{
 	{Value: `Completed`, Label: `Approval Run Completed`},
 	{Value: `Undone`, Label: `Approval Run Undone`, Doc: `ApprovalRunUndone was taken back inside the window and wrote nothing.`},
 	{Value: `Failed`, Label: `Approval Run Failed`},
+}
+
+var enumRunAction = [...]schema.EnumValue{
+	{Value: `Approve`, Label: `Approve`},
+	{Value: `Post`, Label: `Post`},
+	{Value: `Hold`, Label: `Hold`},
+	{Value: `Assign`, Label: `Assign`},
+	{Value: `Cancel`, Label: `Cancel`},
+	{Value: `RequestPaperwork`, Label: `Request Paperwork`},
+	{Value: `ResolveIssue`, Label: `Resolve Issue`},
 }
 
 // ApprovalFailureCodeCol is a column of billingapprovalrun.ApprovalFailureCode values.
@@ -648,5 +675,34 @@ func (c ApprovalRunStatusCol) In(vs ...billingapprovalrun.ApprovalRunStatus) kee
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c ApprovalRunStatusCol) NotIn(vs ...billingapprovalrun.ApprovalRunStatus) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// RunActionCol is a column of billingapprovalrun.RunAction values.
+type RunActionCol struct{ keel.StringCol }
+
+func (c RunActionCol) Eq(v billingapprovalrun.RunAction) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c RunActionCol) Ne(v billingapprovalrun.RunAction) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c RunActionCol) Gt(v billingapprovalrun.RunAction) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c RunActionCol) Gte(v billingapprovalrun.RunAction) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c RunActionCol) Lt(v billingapprovalrun.RunAction) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c RunActionCol) Lte(v billingapprovalrun.RunAction) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c RunActionCol) IsDistinctFrom(v billingapprovalrun.RunAction) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c RunActionCol) Between(lo, hi billingapprovalrun.RunAction) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c RunActionCol) To(v billingapprovalrun.RunAction) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c RunActionCol) In(vs ...billingapprovalrun.RunAction) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c RunActionCol) NotIn(vs ...billingapprovalrun.RunAction) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

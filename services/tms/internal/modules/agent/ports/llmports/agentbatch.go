@@ -42,6 +42,12 @@ type BatchStatusRequest struct {
 	BatchID    string
 }
 
+type BatchCancelRequest struct {
+	TenantInfo pagination.TenantInfo
+	ProviderID pulid.ID
+	BatchID    string
+}
+
 type BatchStatus struct {
 	Ended      bool
 	RawStatus  string
@@ -66,6 +72,8 @@ type BatchItemResult struct {
 	Result         *StructuredCompletionResult
 	FailureCode    string
 	FailureMessage string
+	// NotRun is a request the batch never ran: canceled or expired.
+	NotRun bool
 }
 
 func (r *BatchItemResult) Succeeded() bool {
@@ -75,6 +83,9 @@ func (r *BatchItemResult) Succeeded() bool {
 type BatchCompletionService interface {
 	SubmitBatch(ctx context.Context, req *BatchCompletionRequest) (*BatchHandle, error)
 	BatchStatus(ctx context.Context, req *BatchStatusRequest) (*BatchStatus, error)
+	// CancelBatch stops the requests that have not run; the batch then ends
+	// with the results of those that had.
+	CancelBatch(ctx context.Context, req *BatchCancelRequest) error
 	BatchResults(
 		ctx context.Context,
 		req *BatchResultsRequest,

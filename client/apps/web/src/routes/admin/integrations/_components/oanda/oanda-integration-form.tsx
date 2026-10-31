@@ -2,20 +2,12 @@ const oandaLogoLight = "/integrations/logos/oanada-light.svg";
 const oandaLogoDark = "/integrations/logos/oanada-dark.svg";
 
 import { useT } from "@trenova/shared/i18n/use-t";
-import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SelectField } from "@/components/fields/select-field";
 import { InputField } from "@/components/fields/input-field";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
+import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -27,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { IntegrationConnectHeader } from "../shared/integration-connect-header";
 
 const INTEGRATION_TYPE = "OANDAExchangeRates";
 
@@ -206,29 +199,19 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
 function OANDAExchangeRatesFormHeader() {
   const t = useT();
 
-  const { theme } = useTheme();
-  const logo = theme === "dark" ? oandaLogoDark : oandaLogoLight;
-
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
-        <LazyImage src={trenovaLogo} className="size-8" />
-        <div className="flex items-center justify-center gap-1">
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-        </div>
-        <LazyImage src={logo} alt={t("OANDA logo")} className="h-8 max-w-24 object-contain" />
-      </div>
-      <DialogHeader>
-        <DialogTitle>{t("Connect with OANDA exchange rates")}</DialogTitle>
-        <DialogDescription>
+    <IntegrationConnectHeader
+      name="OANDA"
+      logo={{ light: oandaLogoLight, dark: oandaLogoDark }}
+      title={t("Connect with OANDA exchange rates")}
+      description={
+        <>
           {t("Midpoint is used by default for quotes.")}{" "}
           <ExternalLink href="https://www.oanda.com/foreign-exchange-data-services/en/exchange-rates-api/">
             {t("OANDA FXDS")}
           </ExternalLink>
-        </DialogDescription>
-      </DialogHeader>
-    </div>
+        </>
+      }
+    />
   );
 }

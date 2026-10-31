@@ -52,12 +52,43 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Name:        billingqueuecontract.BulkApprovalWorkflowName,
 			Fn:          BulkApprovalWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
-			Description: "Approve several billing queue items after an undo window",
+			Description: "Apply one action to several billing queue items after an undo window",
+		},
+		{
+			Name:        billingqueuecontract.RecheckWorkflowName,
+			Fn:          BillingQueueRecheckWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Run the billing checks on a queue item after it changes",
+		},
+		{
+			Name:        billingqueuecontract.RecheckSweepWorkflowName,
+			Fn:          BillingQueueRecheckSweepWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Re-run the billing checks on queue items whose checks are missing or stale",
+		},
+		{
+			Name:        billingqueuecontract.BriefWorkflowName,
+			Fn:          BillingQueueBriefWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Write the billing queue's brief after it changes",
+		},
+		{
+			Name:        billingqueuecontract.NovaGenerationWorkflowName,
+			Fn:          BillingQueueNovaGenerationWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Write the reviews a billing queue is missing, in bulk, then its brief",
+		},
+		{
+			Name:        NovaGenerationSweepWorkflowName,
+			Fn:          BillingQueueNovaGenerationSweepWorkflow,
+			TaskQueue:   temporaltype.TaskQueueBilling.String(),
+			Description: "Start Nova's bulk generation for every billing queue with unreviewed items",
 		},
 	}
 }
 
-// BulkApprovalWorkflow approves a run's items once its undo window has passed.
+// BulkApprovalWorkflow applies a run's action to its items once its undo
+// window has passed; an action that cannot be undone starts at once.
 //
 // The window is a durable timer, so a worker restart inside it neither loses
 // the undo nor approves early. Undo arrives as a signal, but the run row is
@@ -74,19 +105,24 @@ func BulkApprovalWorkflow(
 ) (*ApprovalRunResult, error) {
 	var a *Activities
 
-	undoCh := workflow.GetSignalChannel(ctx, billingqueuecontract.UndoSignalName)
-	timerCtx, cancelTimer := workflow.WithCancel(ctx)
-	timer := workflow.NewTimer(timerCtx, billingapprovalrun.ApprovalUndoWindowSeconds*time.Second)
-
 	undone := false
-	selector := workflow.NewSelector(ctx)
-	selector.AddFuture(timer, func(workflow.Future) {})
-	selector.AddReceive(undoCh, func(c workflow.ReceiveChannel, _ bool) {
-		c.Receive(ctx, nil)
-		undone = true
-	})
-	selector.Select(ctx)
-	cancelTimer()
+	if payload.Action.Undoable() {
+		undoCh := workflow.GetSignalChannel(ctx, billingqueuecontract.UndoSignalName)
+		timerCtx, cancelTimer := workflow.WithCancel(ctx)
+		timer := workflow.NewTimer(
+			timerCtx,
+			billingapprovalrun.ApprovalUndoWindowSeconds*time.Second,
+		)
+
+		selector := workflow.NewSelector(ctx)
+		selector.AddFuture(timer, func(workflow.Future) {})
+		selector.AddReceive(undoCh, func(c workflow.ReceiveChannel, _ bool) {
+			c.Receive(ctx, nil)
+			undone = true
+		})
+		selector.Select(ctx)
+		cancelTimer()
+	}
 
 	if undone {
 		return finalize(
@@ -122,14 +158,15 @@ func BulkApprovalWorkflow(
 
 	itemCtx := workflow.WithActivityOptions(ctx, itemActivityOptions)
 	for _, itemID := range itemIDs {
-		itemPayload := &ApproveItemPayload{
-			BasePayload:    payload.BasePayload,
-			RunID:          payload.RunID,
-			ItemID:         itemID,
-			AssignApprover: payload.AssignApprover,
+		itemPayload := &ApplyRunItemPayload{
+			BasePayload: payload.BasePayload,
+			RunID:       payload.RunID,
+			ItemID:      itemID,
+			Action:      payload.Action,
+			Params:      payload.Params,
 		}
-		var result *ApproveItemResult
-		err := workflow.ExecuteActivity(itemCtx, a.ApproveQueueItemActivity, itemPayload).
+		var result *ApplyRunItemResult
+		err := workflow.ExecuteActivity(itemCtx, a.ApplyRunItemActivity, itemPayload).
 			Get(itemCtx, &result)
 		if err == nil {
 			continue

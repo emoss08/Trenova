@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/runstream"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
@@ -129,7 +130,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 	ctx workflow.Context,
 	payload *assistantcontract.AssistantTurnPayload,
 ) (*assistantcontract.AssistantTurnResult, error) {
-	stream, err := agentflow.HostStream(ctx)
+	stream, err := runstream.Host(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +178,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 // of what is saved.
 func (w *Workflows) answer(
 	ctx workflow.Context,
-	stream *agentflow.Stream,
+	stream *runstream.Stream,
 	payload *assistantcontract.AssistantTurnPayload,
 ) *FinishTurnInput {
 	finish := &FinishTurnInput{Payload: payload}
@@ -232,7 +233,7 @@ func (w *Workflows) answer(
 // to follow it.
 func announceNext(
 	ctx workflow.Context,
-	stream *agentflow.Stream,
+	stream *runstream.Stream,
 	payload *assistantcontract.AssistantTurnPayload,
 	next *assistantturnports.QueuedTurn,
 ) {
@@ -284,7 +285,7 @@ func rejectionDetails(err error) map[string]string {
 // (the palette, an import or formula page) where it was asked.
 func (w *Workflows) notifyUnseen(
 	ctx workflow.Context,
-	stream *agentflow.Stream,
+	stream *runstream.Stream,
 	finish *FinishTurnInput,
 	ending *TurnEnding,
 ) {
@@ -347,7 +348,7 @@ func (w *Workflows) closeRecord(
 // cues the compaction again.
 func (w *Workflows) compactIfFull(
 	ctx workflow.Context,
-	stream *agentflow.Stream,
+	stream *runstream.Stream,
 	payload *assistantcontract.AssistantTurnPayload,
 	ending *TurnEnding,
 ) {

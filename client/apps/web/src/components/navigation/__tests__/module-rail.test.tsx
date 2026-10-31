@@ -98,6 +98,35 @@ describe("the module rail", () => {
     expect(billingTile).toContainElement(screen.getByLabelText("7 items need attention"));
   });
 
+  it("shows the pointer, not the help cursor, on tiles that carry a tooltip", () => {
+    const { unmount } = renderRail(false);
+    const tile = screen.getByRole("link", { name: "Billing" });
+    expect(tile).toHaveAttribute("data-slot", "tooltip-trigger");
+    expect(tile).toHaveClass("cursor-pointer");
+    expect(tile).not.toHaveClass("cursor-help");
+    unmount();
+
+    renderRail(true);
+    const search = screen.getByRole("button", { name: "Search" });
+    expect(search).toHaveAttribute("data-slot", "tooltip-trigger");
+    expect(search).toHaveClass("cursor-pointer");
+    expect(search).not.toHaveClass("cursor-help");
+  });
+
+  it("lights a hovered module tile with the rail's shared hover background", () => {
+    const { container } = renderRail(false);
+    const nav = screen.getByRole("navigation", { name: "Modules" });
+    const glide = nav.querySelector('[data-slot="rail-glide"]');
+    expect(glide).toHaveAttribute("data-state", "hidden");
+
+    fireEvent.pointerOver(screen.getByRole("link", { name: "Billing" }));
+
+    expect(glide).toHaveAttribute("data-state", "shown");
+    expect(container.querySelectorAll('[data-slot="rail-glide"][data-state="shown"]')).toHaveLength(
+      1,
+    );
+  });
+
   it("opens a module's pages on hover only while the panel is folded", () => {
     const { unmount } = renderRail(false);
     expect(screen.getByRole("link", { name: "Billing" })).not.toHaveAttribute(

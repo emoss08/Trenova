@@ -25,13 +25,12 @@ func NewPasswordChangeMiddleware(errorHandler *helpers.ErrorHandler) *PasswordCh
 }
 
 // allowedPaths are the only things a session in this state may reach: the endpoint
-// that resolves it, the one that tells the client who it is (so the app can render the
-// change screen at all), and the way out.
+// that resolves it, and the one that tells the client who it is (so the app can render
+// the change screen at all). Signing out and the CSRF token are public routes, which
+// this middleware never sees.
 var allowedPaths = []string{
 	"/api/v1/users/me/change-password/",
 	"/api/v1/users/me/",
-	"/api/v1/auth/logout",
-	"/api/v1/auth/csrf",
 }
 
 func (m *PasswordChangeMiddleware) RequireCurrentPassword() gin.HandlerFunc {

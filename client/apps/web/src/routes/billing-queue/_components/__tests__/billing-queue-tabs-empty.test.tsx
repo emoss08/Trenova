@@ -52,6 +52,9 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
 vi.mock("@/components/audit-alert", () => ({ AuditAlert: () => null }));
+vi.mock("@/components/image", () => ({
+  LazyImage: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
+}));
 vi.mock("@/hooks/shipment-comments/use-new-comments-pill", () => ({
   useNewCommentsPill: () => ({ unseenCount: 0, clearUnseen: vi.fn() }),
 }));
@@ -212,5 +215,44 @@ describe("activity tab", () => {
     renderWithin(<AuditTab resourceId="shp_1" />);
 
     expect(await heading("暂无活动记录")).toBeInTheDocument();
+  });
+});
+
+describe("billing queue documents tab rows", () => {
+  const paper = (id: string, previewStatus: string, name: string) => ({
+    id,
+    lineageId: `lin_${id}`,
+    documentTypeId: null,
+    documentType: null,
+    originalName: name,
+    fileName: name,
+    fileType: "application/pdf",
+    fileSize: 48_100,
+    status: "Active",
+    signatureStatus: "NotRequired",
+    previewStatus,
+    isCurrentVersion: true,
+    createdAt: Math.floor(Date.now() / 1000) - 3600,
+  });
+
+  it("shows each document's first page once the server has drawn it, and a blank page until then", async () => {
+    mocks.documents.mockResolvedValue([
+      paper("doc_ratecon", "Ready", "ratecon.pdf"),
+      paper("doc_pod", "Pending", "pod.pdf"),
+    ]);
+    mocks.readiness.mockResolvedValue(null);
+    renderWithin(
+      <BillingQueueDocumentsTab
+        shipmentId="shp_1"
+        selectedDocumentId={null}
+        onDocumentSelect={vi.fn()}
+        isEditable={false}
+      />,
+    );
+
+    await screen.findByText("ratecon.pdf");
+    const pages = document.querySelectorAll("img");
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.getAttribute("src")).toContain("/documents/doc_ratecon/preview/");
   });
 });

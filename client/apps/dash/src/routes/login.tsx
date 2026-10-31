@@ -1,3 +1,4 @@
+import { useFollowSignInElsewhere } from "@trenova/shared/hooks/use-follow-sign-in-elsewhere";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
 import { signOutNoticeFrom } from "@trenova/shared/lib/sign-out-notice";
@@ -18,6 +19,10 @@ export function DashLoginPage() {
   const signOutNotice = signOutNoticeFrom(searchParams);
   const login = useAuthStore((state) => state.login);
   const verifyMFA = useAuthStore((state) => state.verifyMFA);
+
+  // Signing in in another tab finishes this tab's sign-in too.
+  useFollowSignInElsewhere(() => void navigate("/dash", { replace: true }));
+
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [challenge, setChallenge] = useState<MFAChallenge | null>(null);

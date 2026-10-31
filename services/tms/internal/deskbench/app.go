@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -86,6 +87,7 @@ type deps struct {
 	PriceReference   aiproviderports.ModelPriceReference `optional:"true"`
 	ActionTools      agenttoolports.AgentToolRegistry
 	Shipments        shipmentserviceports.ShipmentLifecycleService
+	Palette          paletteports.PaletteService
 }
 
 type Bench struct {

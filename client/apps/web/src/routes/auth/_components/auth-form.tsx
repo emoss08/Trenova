@@ -1,3 +1,4 @@
+import { useFollowSignInElsewhere } from "@trenova/shared/hooks/use-follow-sign-in-elsewhere";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import { handleMutationError } from "@/hooks/use-api-mutation";
@@ -156,6 +157,9 @@ export function AuthForm({
     // expired without signing out, before the app loads for the new one.
     void clearSessionCache().then(() => navigate("/", { replace: true }));
   }, [navigate]);
+
+  // Signing in in another tab finishes this tab's sign-in too.
+  useFollowSignInElsewhere(handleHandoff);
 
   return (
     <>

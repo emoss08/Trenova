@@ -23,6 +23,7 @@
   "Currency used for every monetary amount on this order and its invoices.": "此訂單及其發票上所有金額所使用的幣別。",
   "Detach leg": "分離航段",
   "Detach leg {0}?": "要分離航段 {0} 嗎？",
+  "Edit charge": "編輯費用",
   "Every remaining active leg will be canceled and the order will derive to Canceled. This cannot be undone. A reason is required.": "所有剩餘的有效航段都會取消，訂單狀態將推導為「已取消」。此操作無法復原，且必須填寫原因。",
   "Failed to add charge": "無法新增費用",
   "Failed to add legs": "無法新增航段",

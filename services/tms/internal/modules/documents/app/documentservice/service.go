@@ -72,6 +72,7 @@ type Params struct {
 	AuditService         auditports.AuditService
 	ContentGate          contentscanports.Gate
 	DocumentIntelligence documentports.DocumentContentService
+	Paperwork            documentports.PaperworkReadRequester `optional:"true"`
 	SearchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	WorkflowStarter      kernelports.WorkflowStarter
 	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
@@ -100,6 +101,7 @@ type Service struct {
 	auditService         auditports.AuditService
 	contentGate          contentscanports.Gate
 	documentIntelligence documentports.DocumentContentService
+	paperwork            documentports.PaperworkReadRequester
 	searchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	workflowStarter      kernelports.WorkflowStarter
 	usageProvider        platformcatalogports.UsageProvider
@@ -144,6 +146,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		auditService:         p.AuditService,
 		contentGate:          p.ContentGate,
 		documentIntelligence: documentIntelligence,
+		paperwork:            p.Paperwork,
 		searchProjection:     searchProjection,
 		workflowStarter:      workflowStarter,
 		usageProvider:        p.UsageProvider,
@@ -236,6 +239,7 @@ func (s *Service) Upload(
 			"Invalid processing profile",
 		)
 	}
+	processingProfile = document.ProcessingProfileFor(processingProfile, req.ResourceType)
 
 	if multiErr := s.validator.ValidateFile(req.File); multiErr != nil {
 		return nil, multiErr
@@ -449,6 +453,9 @@ func (s *Service) storeUpload(
 
 	if s.thumbnailGenerator.SupportsThumbnail(contentType) {
 		s.startThumbnailWorkflow(ctx, log, createdDoc)
+	}
+	if s.paperwork != nil {
+		s.paperwork.RequestRead(ctx, createdDoc, req.TenantInfo.UserID)
 	}
 	if createdDoc.ProcessingProfile.SupportsIntelligence() {
 		enqueueErr := s.documentIntelligence.EnqueueExtraction(

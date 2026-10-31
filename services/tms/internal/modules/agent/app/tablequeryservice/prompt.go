@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
-const systemPrompt = `You turn a question about a table into filters on that table.
+const systemPrompt = `Your task: turn a question about a table into filters on that table.
 
 You are given one entity, the fields it can be narrowed by, and what each field
 accepts. Name only those fields and only the operators listed for each one.

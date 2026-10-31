@@ -39,6 +39,7 @@ import (
 var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	workflowstarter.New,
 	workflowstarter.NewSignalStarter,
+	workflowstarter.NewResults,
 	newDetectorRegistry,
 	newBriefingSources,
 	crossref.VisibleRecordSources,

@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -83,6 +84,7 @@ type Params struct {
 	DocumentRepo   documentports.DocumentRepository               `optional:"true"`
 	OccurrenceRepo detentionports.DetentionOccurrenceRepository   `optional:"true"`
 	AgreementRepo  rateagreementports.RateAgreementRepository     `optional:"true"`
+	Rechecks       billingqueueports.RecheckRequester             `optional:"true"`
 }
 
 type Service struct {
@@ -111,9 +113,14 @@ type Service struct {
 	agentEvents          agenteventports.AgentEventPublisher
 	watchtower           watchtowerports.WatchtowerProjector
 	reviewRepo           billingqueueports.BillingQueueReviewRepository
+	rechecks             billingqueueports.RecheckRequester
+	documentRepo         documentports.DocumentRepository
+	agreements           rateagreementports.RateAgreementRepository
 	activity             *billingqueueactivity.Recorder
 	readiness            *billingqueuereadiness.Reviewer
 }
+
+const pulseWindowSeconds = 7 * 24 * 60 * 60
 
 var _ billingqueueports.BillingQueueService = (*Service)(nil)
 
@@ -162,6 +169,9 @@ func NewService(p Params) *Service {
 		agentEvents:          p.AgentEvents,
 		watchtower:           p.Watchtower,
 		reviewRepo:           p.ReviewRepo,
+		rechecks:             p.Rechecks,
+		documentRepo:         p.DocumentRepo,
+		agreements:           p.AgreementRepo,
 		activity:             activity,
 		readiness: billingqueuereadiness.New(&billingqueuereadiness.Params{
 			Logger:         l,
@@ -180,6 +190,13 @@ func (s *Service) List(
 	req *billingqueueports.ListBillingQueueItemsRequest,
 ) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
 	return s.repo.List(ctx, req)
+}
+
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *billingqueueports.ListBillingQueueItemsRequest,
+) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error) {
+	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
@@ -213,6 +230,7 @@ func (s *Service) GetByID(
 	}
 	item.DetentionHolds = billingqueue.NewDetentionHolds(holds)
 	item.RatingReviewHold = billingqueue.NewRatingReviewHold(item)
+	item.RatedBy = s.ratedBy(ctx, item, req.TenantInfo)
 	s.readiness.Attach(ctx, item, req.TenantInfo)
 
 	return item, nil
@@ -341,27 +359,39 @@ func (s *Service) GetStats(
 		)
 	}
 
-	counts, err := s.repo.GetStatusCounts(ctx, req)
+	lanes, err := s.repo.GetLaneStats(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	total := 0
-	for _, c := range counts {
-		total += c
+	stats := &billingqueueports.BillingQueueStats{Lanes: lanes, OpenTotal: decimal.Zero}
+	for _, lane := range lanes {
+		stats.OpenCount += lane.Count
+		stats.OpenTotal = stats.OpenTotal.Add(lane.Total)
+	}
+	if req.DayStart <= 0 {
+		return stats, nil
 	}
 
-	return &billingqueueports.BillingQueueStats{
-		ReadyForReview: counts[billingqueue.StatusReadyForReview],
-		InReview:       counts[billingqueue.StatusInReview],
-		Approved:       counts[billingqueue.StatusApproved],
-		Posted:         counts[billingqueue.StatusPosted],
-		OnHold:         counts[billingqueue.StatusOnHold],
-		Exception:      counts[billingqueue.StatusException],
-		SentBackToOps:  counts[billingqueue.StatusSentBackToOps],
-		Canceled:       counts[billingqueue.StatusCanceled],
-		Total:          total,
-	}, nil
+	windowStart := timeutils.NowUnix() - pulseWindowSeconds
+	stats.Pulse, err = s.repo.GetPulse(ctx, &billingqueueports.GetBillingQueuePulseRequest{
+		TenantInfo:  req.TenantInfo,
+		DayStart:    req.DayStart,
+		WindowStart: windowStart,
+		PriorStart:  windowStart - pulseWindowSeconds,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return stats, nil
+}
+
+func (s *Service) Recommendations(
+	ctx context.Context,
+	req *billingqueueports.ListRecommendationsRequest,
+) ([]*billingqueueports.Recommendation, error) {
+	return s.repo.ListRecommendations(ctx, req)
 }
 
 // TransferToBilling queues a shipment for billing and returns the primary
@@ -1257,5 +1287,8 @@ func (s *Service) syncReview(
 			zap.String("billingQueueItemId", itemID.String()),
 			zap.Error(err),
 		)
+	}
+	if s.rechecks != nil {
+		s.rechecks.RequestRecheck(ctx, tenantInfo, itemID)
 	}
 }

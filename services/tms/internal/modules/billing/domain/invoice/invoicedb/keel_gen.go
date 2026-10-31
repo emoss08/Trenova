@@ -1013,6 +1013,7 @@ var invoicesTable = schema.Table{
 		{Name: "shipment_pro_number", Quoted: `"shipment_pro_number"`, Field: "ShipmentProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment PRO Number`, JSON: `shipmentProNumber`, Report: &reportDimString},
 		{Name: "shipment_bol", Quoted: `"shipment_bol"`, Field: "ShipmentBOL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment BOL`, JSON: `shipmentBol`, Report: &reportDimString},
 		{Name: "order_number", Quoted: `"order_number"`, Field: "OrderNumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Order Number`, JSON: `orderNumber`, Report: &reportDimString},
+		{Name: "po_number", Quoted: `"po_number"`, Field: "PONumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PO Number`, JSON: `poNumber`, Report: &reportDimString},
 		{Name: "service_date", Quoted: `"service_date"`, Field: "ServiceDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Service Date`, JSON: `serviceDate`, Report: &reportDimEpoch},
 		{Name: "bill_to_name", Quoted: `"bill_to_name"`, Field: "BillToName", Kind: schema.KindString, Flags: 0, Label: `Bill To Name`, JSON: `billToName`, Report: &reportDimString},
 		{Name: "bill_to_code", Quoted: `"bill_to_code"`, Field: "BillToCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Bill To Code`, JSON: `billToCode`, Report: &reportDimString},
@@ -1079,24 +1080,24 @@ var invoicesTable = schema.Table{
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Shipment`, JSON: `shipment`},
 		{Name: "Order", Alias: "o", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Order`, JSON: `order`},
 		{Name: "Customer", Alias: "c", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Customer`, JSON: `customer`},
-		{Name: "ShipperCustomer", Alias: "sc", Kind: schema.BelongsTo, Local: []int32{66}, Remote: []int32{0}, Label: `Shipper Customer`, JSON: `shipperCustomer`},
-		{Name: "FactoringCompany", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{67}, Remote: []int32{0}, Label: `Factoring Company`, JSON: `factoringCompany`},
-		{Name: "ReferenceInvoice", Alias: "ri", Kind: schema.BelongsTo, Local: []int32{77}, Remote: []int32{0}, Label: `Reference Invoice`, JSON: `referenceInvoice`},
-		{Name: "PDFDocument", Alias: "pd", Kind: schema.BelongsTo, Local: []int32{47}, Remote: []int32{0}, Label: `PDF Document`, JSON: `pdfDocument`, NoReport: true},
+		{Name: "ShipperCustomer", Alias: "sc", Kind: schema.BelongsTo, Local: []int32{67}, Remote: []int32{0}, Label: `Shipper Customer`, JSON: `shipperCustomer`},
+		{Name: "FactoringCompany", Alias: "fc", Kind: schema.BelongsTo, Local: []int32{68}, Remote: []int32{0}, Label: `Factoring Company`, JSON: `factoringCompany`},
+		{Name: "ReferenceInvoice", Alias: "ri", Kind: schema.BelongsTo, Local: []int32{78}, Remote: []int32{0}, Label: `Reference Invoice`, JSON: `referenceInvoice`},
+		{Name: "PDFDocument", Alias: "pd", Kind: schema.BelongsTo, Local: []int32{48}, Remote: []int32{0}, Label: `PDF Document`, JSON: `pdfDocument`, NoReport: true},
 		{Name: "Lines", Alias: "l", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Invoice Lines`, JSON: `lines`},
 		{Name: "Attachments", Alias: "a", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Attachments`, JSON: `attachments`, NoReport: true},
 		{Name: "EmailAttempts", Alias: "ea", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Email Attempts`, JSON: `emailAttempts`, NoReport: true},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 85, 86, 87},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 87},
-	Returning:    []int32{84},
-	Version:      85,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 86, 87, 88},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 88},
+	Returning:    []int32{85},
+	Version:      86,
 	AutoID:       0,
-	AutoCreate:   86,
-	AutoUpdate:   87,
+	AutoCreate:   87,
+	AutoUpdate:   88,
 	IDPrefix:     "inv_",
 	New:          newInvoice,
 	NewN:         newNInvoice,
@@ -1141,6 +1142,7 @@ type InvoicesTable struct {
 	ShipmentProNumber         keel.StringCol
 	ShipmentBOL               keel.StringCol
 	OrderNumber               keel.StringCol
+	PONumber                  keel.StringCol
 	ServiceDate               keel.Int64Col
 	BillToName                keel.StringCol
 	BillToCode                keel.StringCol
@@ -1234,66 +1236,67 @@ var Invoices = &InvoicesTable{
 	ShipmentProNumber:         keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 25}},
 	ShipmentBOL:               keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 26}},
 	OrderNumber:               keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 27}},
-	ServiceDate:               keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 28}},
-	BillToName:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 29}},
-	BillToCode:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 30}},
-	BillToAddressLine1:        keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 31}},
-	BillToAddressLine2:        keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 32}},
-	BillToCity:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 33}},
-	BillToState:               keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 34}},
-	BillToPostalCode:          keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 35}},
-	BillToCountry:             keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 36}},
-	SubtotalAmount:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoicesRef, Index: 37}}},
-	SubtotalAmountMinor:       keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 38}},
-	OtherAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoicesRef, Index: 39}}},
-	OtherAmountMinor:          keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 40}},
-	TotalAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoicesRef, Index: 41}}},
-	TotalAmountMinor:          keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 42}},
-	AppliedAmount:             keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoicesRef, Index: 43}}},
-	AppliedAmountMinor:        keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 44}},
-	SettlementStatus:          SettlementStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 45}}},
-	DisputeStatus:             DisputeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 46}}},
-	PDFDocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 47}}},
-	SendStatus:                SendStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 48}}},
-	SentAt:                    keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 49}},
-	SentByID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 50}}},
-	LastSendError:             keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 51}},
-	LastSendWarning:           keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 52}},
-	Memo:                      keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 53}},
-	RatingNotes:               keel.StringArrayCol{Col: keel.Col{Ref: &invoicesRef, Index: 54}},
-	RemittanceInstructions:    keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 55}},
-	EmailSubjectSnapshot:      keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 56}},
-	EmailBodySnapshot:         keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 57}},
-	EmailToSnapshot:           keel.StringArrayCol{Col: keel.Col{Ref: &invoicesRef, Index: 58}},
-	EmailCCSnapshot:           keel.StringArrayCol{Col: keel.Col{Ref: &invoicesRef, Index: 59}},
-	EmailBCCSnapshot:          keel.StringArrayCol{Col: keel.Col{Ref: &invoicesRef, Index: 60}},
-	CorrectionGroupID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 61}}},
-	SupersedesInvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 62}}},
-	SupersededByInvoiceID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 63}}},
-	SourceInvoiceAdjustmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 64}}},
-	IsAdjustmentArtifact:      keel.BoolCol{Col: keel.Col{Ref: &invoicesRef, Index: 65}},
-	ShipperCustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 66}}},
-	FactoringCompanyID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 67}}},
-	FactoringAgreementID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 68}}},
-	FactoringOverride:         FactoringOverrideCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 69}}},
-	FactoringOverrideReason:   keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 70}},
-	IsSplitBill:               keel.BoolCol{Col: keel.Col{Ref: &invoicesRef, Index: 71}},
-	VoidedAt:                  keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 72}},
-	VoidedByID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 73}}},
-	VoidReason:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 74}},
-	VoidDisposition:           VoidDispositionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 75}}},
-	VoidedByAdjustmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 76}}},
-	ReferenceInvoiceID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 77}}},
-	MemoReason:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 78}},
-	MemoKind:                  MemoKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 79}}},
-	EDISendStatus:             EDISendStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 80}}},
-	LastEDIMessageID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 81}}},
-	EDISentAt:                 keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 82}},
-	LastEDIError:              keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 83}},
-	BalanceDueMinor:           keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 84}},
-	Version:                   keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 85}},
-	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 86}},
-	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 87}},
+	PONumber:                  keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 28}},
+	ServiceDate:               keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 29}},
+	BillToName:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 30}},
+	BillToCode:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 31}},
+	BillToAddressLine1:        keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 32}},
+	BillToAddressLine2:        keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 33}},
+	BillToCity:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 34}},
+	BillToState:               keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 35}},
+	BillToPostalCode:          keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 36}},
+	BillToCountry:             keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 37}},
+	SubtotalAmount:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoicesRef, Index: 38}}},
+	SubtotalAmountMinor:       keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 39}},
+	OtherAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoicesRef, Index: 40}}},
+	OtherAmountMinor:          keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 41}},
+	TotalAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoicesRef, Index: 42}}},
+	TotalAmountMinor:          keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 43}},
+	AppliedAmount:             keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoicesRef, Index: 44}}},
+	AppliedAmountMinor:        keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 45}},
+	SettlementStatus:          SettlementStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 46}}},
+	DisputeStatus:             DisputeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 47}}},
+	PDFDocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 48}}},
+	SendStatus:                SendStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 49}}},
+	SentAt:                    keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 50}},
+	SentByID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 51}}},
+	LastSendError:             keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 52}},
+	LastSendWarning:           keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 53}},
+	Memo:                      keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 54}},
+	RatingNotes:               keel.StringArrayCol{Col: keel.Col{Ref: &invoicesRef, Index: 55}},
+	RemittanceInstructions:    keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 56}},
+	EmailSubjectSnapshot:      keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 57}},
+	EmailBodySnapshot:         keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 58}},
+	EmailToSnapshot:           keel.StringArrayCol{Col: keel.Col{Ref: &invoicesRef, Index: 59}},
+	EmailCCSnapshot:           keel.StringArrayCol{Col: keel.Col{Ref: &invoicesRef, Index: 60}},
+	EmailBCCSnapshot:          keel.StringArrayCol{Col: keel.Col{Ref: &invoicesRef, Index: 61}},
+	CorrectionGroupID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 62}}},
+	SupersedesInvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 63}}},
+	SupersededByInvoiceID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 64}}},
+	SourceInvoiceAdjustmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 65}}},
+	IsAdjustmentArtifact:      keel.BoolCol{Col: keel.Col{Ref: &invoicesRef, Index: 66}},
+	ShipperCustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 67}}},
+	FactoringCompanyID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 68}}},
+	FactoringAgreementID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 69}}},
+	FactoringOverride:         FactoringOverrideCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 70}}},
+	FactoringOverrideReason:   keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 71}},
+	IsSplitBill:               keel.BoolCol{Col: keel.Col{Ref: &invoicesRef, Index: 72}},
+	VoidedAt:                  keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 73}},
+	VoidedByID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 74}}},
+	VoidReason:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 75}},
+	VoidDisposition:           VoidDispositionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 76}}},
+	VoidedByAdjustmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 77}}},
+	ReferenceInvoiceID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 78}}},
+	MemoReason:                keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 79}},
+	MemoKind:                  MemoKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 80}}},
+	EDISendStatus:             EDISendStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 81}}},
+	LastEDIMessageID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 82}}},
+	EDISentAt:                 keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 83}},
+	LastEDIError:              keel.StringCol{Col: keel.Col{Ref: &invoicesRef, Index: 84}},
+	BalanceDueMinor:           keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 85}},
+	Version:                   keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 86}},
+	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 87}},
+	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &invoicesRef, Index: 88}},
 }
 
 // BuildInvoices builds the handle of invoices for ref. Generated relation and alias methods call it.
@@ -1328,66 +1331,67 @@ func BuildInvoices(r *keel.Ref) *InvoicesTable {
 		ShipmentProNumber:         keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
 		ShipmentBOL:               keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		OrderNumber:               keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		ServiceDate:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		BillToName:                keel.StringCol{Col: keel.Col{Ref: r, Index: 29}},
-		BillToCode:                keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
-		BillToAddressLine1:        keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
-		BillToAddressLine2:        keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
-		BillToCity:                keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
-		BillToState:               keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
-		BillToPostalCode:          keel.StringCol{Col: keel.Col{Ref: r, Index: 35}},
-		BillToCountry:             keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
-		SubtotalAmount:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 37}}},
-		SubtotalAmountMinor:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
-		OtherAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 39}}},
-		OtherAmountMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		TotalAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 41}}},
-		TotalAmountMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
-		AppliedAmount:             keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 43}}},
-		AppliedAmountMinor:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
-		SettlementStatus:          SettlementStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 45}}},
-		DisputeStatus:             DisputeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 46}}},
-		PDFDocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 47}}},
-		SendStatus:                SendStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 48}}},
-		SentAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
-		SentByID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 50}}},
-		LastSendError:             keel.StringCol{Col: keel.Col{Ref: r, Index: 51}},
-		LastSendWarning:           keel.StringCol{Col: keel.Col{Ref: r, Index: 52}},
-		Memo:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 53}},
-		RatingNotes:               keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 54}},
-		RemittanceInstructions:    keel.StringCol{Col: keel.Col{Ref: r, Index: 55}},
-		EmailSubjectSnapshot:      keel.StringCol{Col: keel.Col{Ref: r, Index: 56}},
-		EmailBodySnapshot:         keel.StringCol{Col: keel.Col{Ref: r, Index: 57}},
-		EmailToSnapshot:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 58}},
-		EmailCCSnapshot:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 59}},
-		EmailBCCSnapshot:          keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 60}},
-		CorrectionGroupID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 61}}},
-		SupersedesInvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 62}}},
-		SupersededByInvoiceID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 63}}},
-		SourceInvoiceAdjustmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 64}}},
-		IsAdjustmentArtifact:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 65}},
-		ShipperCustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 66}}},
-		FactoringCompanyID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 67}}},
-		FactoringAgreementID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 68}}},
-		FactoringOverride:         FactoringOverrideCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 69}}},
-		FactoringOverrideReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 70}},
-		IsSplitBill:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 71}},
-		VoidedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 72}},
-		VoidedByID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 73}}},
-		VoidReason:                keel.StringCol{Col: keel.Col{Ref: r, Index: 74}},
-		VoidDisposition:           VoidDispositionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 75}}},
-		VoidedByAdjustmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 76}}},
-		ReferenceInvoiceID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 77}}},
-		MemoReason:                keel.StringCol{Col: keel.Col{Ref: r, Index: 78}},
-		MemoKind:                  MemoKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 79}}},
-		EDISendStatus:             EDISendStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 80}}},
-		LastEDIMessageID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 81}}},
-		EDISentAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 82}},
-		LastEDIError:              keel.StringCol{Col: keel.Col{Ref: r, Index: 83}},
-		BalanceDueMinor:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 84}},
-		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 85}},
-		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 86}},
-		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 87}},
+		PONumber:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
+		ServiceDate:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		BillToName:                keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
+		BillToCode:                keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
+		BillToAddressLine1:        keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
+		BillToAddressLine2:        keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
+		BillToCity:                keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
+		BillToState:               keel.StringCol{Col: keel.Col{Ref: r, Index: 35}},
+		BillToPostalCode:          keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
+		BillToCountry:             keel.StringCol{Col: keel.Col{Ref: r, Index: 37}},
+		SubtotalAmount:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 38}}},
+		SubtotalAmountMinor:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
+		OtherAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 40}}},
+		OtherAmountMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
+		TotalAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 42}}},
+		TotalAmountMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		AppliedAmount:             keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 44}}},
+		AppliedAmountMinor:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
+		SettlementStatus:          SettlementStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 46}}},
+		DisputeStatus:             DisputeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 47}}},
+		PDFDocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 48}}},
+		SendStatus:                SendStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 49}}},
+		SentAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
+		SentByID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 51}}},
+		LastSendError:             keel.StringCol{Col: keel.Col{Ref: r, Index: 52}},
+		LastSendWarning:           keel.StringCol{Col: keel.Col{Ref: r, Index: 53}},
+		Memo:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 54}},
+		RatingNotes:               keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 55}},
+		RemittanceInstructions:    keel.StringCol{Col: keel.Col{Ref: r, Index: 56}},
+		EmailSubjectSnapshot:      keel.StringCol{Col: keel.Col{Ref: r, Index: 57}},
+		EmailBodySnapshot:         keel.StringCol{Col: keel.Col{Ref: r, Index: 58}},
+		EmailToSnapshot:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 59}},
+		EmailCCSnapshot:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 60}},
+		EmailBCCSnapshot:          keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 61}},
+		CorrectionGroupID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 62}}},
+		SupersedesInvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 63}}},
+		SupersededByInvoiceID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 64}}},
+		SourceInvoiceAdjustmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 65}}},
+		IsAdjustmentArtifact:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 66}},
+		ShipperCustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 67}}},
+		FactoringCompanyID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 68}}},
+		FactoringAgreementID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 69}}},
+		FactoringOverride:         FactoringOverrideCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 70}}},
+		FactoringOverrideReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 71}},
+		IsSplitBill:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 72}},
+		VoidedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 73}},
+		VoidedByID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 74}}},
+		VoidReason:                keel.StringCol{Col: keel.Col{Ref: r, Index: 75}},
+		VoidDisposition:           VoidDispositionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 76}}},
+		VoidedByAdjustmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 77}}},
+		ReferenceInvoiceID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 78}}},
+		MemoReason:                keel.StringCol{Col: keel.Col{Ref: r, Index: 79}},
+		MemoKind:                  MemoKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 80}}},
+		EDISendStatus:             EDISendStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 81}}},
+		LastEDIMessageID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 82}}},
+		EDISentAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 83}},
+		LastEDIError:              keel.StringCol{Col: keel.Col{Ref: r, Index: 84}},
+		BalanceDueMinor:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 85}},
+		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 86}},
+		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 87}},
+		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 88}},
 	}
 }
 
@@ -1517,124 +1521,126 @@ func ptrInvoice(p unsafe.Pointer, c int32) any {
 	case 27:
 		return &r.OrderNumber
 	case 28:
-		return &r.ServiceDate
+		return &r.PONumber
 	case 29:
-		return &r.BillToName
+		return &r.ServiceDate
 	case 30:
-		return &r.BillToCode
+		return &r.BillToName
 	case 31:
-		return &r.BillToAddressLine1
+		return &r.BillToCode
 	case 32:
-		return &r.BillToAddressLine2
+		return &r.BillToAddressLine1
 	case 33:
-		return &r.BillToCity
+		return &r.BillToAddressLine2
 	case 34:
-		return &r.BillToState
+		return &r.BillToCity
 	case 35:
-		return &r.BillToPostalCode
+		return &r.BillToState
 	case 36:
-		return &r.BillToCountry
+		return &r.BillToPostalCode
 	case 37:
-		return &r.SubtotalAmount
+		return &r.BillToCountry
 	case 38:
-		return &r.SubtotalAmountMinor
+		return &r.SubtotalAmount
 	case 39:
-		return &r.OtherAmount
+		return &r.SubtotalAmountMinor
 	case 40:
-		return &r.OtherAmountMinor
+		return &r.OtherAmount
 	case 41:
-		return &r.TotalAmount
+		return &r.OtherAmountMinor
 	case 42:
-		return &r.TotalAmountMinor
+		return &r.TotalAmount
 	case 43:
-		return &r.AppliedAmount
+		return &r.TotalAmountMinor
 	case 44:
-		return &r.AppliedAmountMinor
+		return &r.AppliedAmount
 	case 45:
-		return (*string)(unsafe.Pointer(&r.SettlementStatus))
+		return &r.AppliedAmountMinor
 	case 46:
-		return (*string)(unsafe.Pointer(&r.DisputeStatus))
+		return (*string)(unsafe.Pointer(&r.SettlementStatus))
 	case 47:
-		return (*string)(unsafe.Pointer(&r.PDFDocumentID))
+		return (*string)(unsafe.Pointer(&r.DisputeStatus))
 	case 48:
-		return (*string)(unsafe.Pointer(&r.SendStatus))
+		return (*string)(unsafe.Pointer(&r.PDFDocumentID))
 	case 49:
-		return &r.SentAt
+		return (*string)(unsafe.Pointer(&r.SendStatus))
 	case 50:
-		return (*string)(unsafe.Pointer(&r.SentByID))
+		return &r.SentAt
 	case 51:
-		return &r.LastSendError
+		return (*string)(unsafe.Pointer(&r.SentByID))
 	case 52:
-		return &r.LastSendWarning
+		return &r.LastSendError
 	case 53:
-		return &r.Memo
+		return &r.LastSendWarning
 	case 54:
-		return &r.RatingNotes
+		return &r.Memo
 	case 55:
-		return &r.RemittanceInstructions
+		return &r.RatingNotes
 	case 56:
-		return &r.EmailSubjectSnapshot
+		return &r.RemittanceInstructions
 	case 57:
-		return &r.EmailBodySnapshot
+		return &r.EmailSubjectSnapshot
 	case 58:
-		return &r.EmailToSnapshot
+		return &r.EmailBodySnapshot
 	case 59:
-		return &r.EmailCCSnapshot
+		return &r.EmailToSnapshot
 	case 60:
-		return &r.EmailBCCSnapshot
+		return &r.EmailCCSnapshot
 	case 61:
-		return (*string)(unsafe.Pointer(&r.CorrectionGroupID))
+		return &r.EmailBCCSnapshot
 	case 62:
-		return (*string)(unsafe.Pointer(&r.SupersedesInvoiceID))
+		return (*string)(unsafe.Pointer(&r.CorrectionGroupID))
 	case 63:
-		return (*string)(unsafe.Pointer(&r.SupersededByInvoiceID))
+		return (*string)(unsafe.Pointer(&r.SupersedesInvoiceID))
 	case 64:
-		return (*string)(unsafe.Pointer(&r.SourceInvoiceAdjustmentID))
+		return (*string)(unsafe.Pointer(&r.SupersededByInvoiceID))
 	case 65:
-		return &r.IsAdjustmentArtifact
+		return (*string)(unsafe.Pointer(&r.SourceInvoiceAdjustmentID))
 	case 66:
-		return (*string)(unsafe.Pointer(&r.ShipperCustomerID))
+		return &r.IsAdjustmentArtifact
 	case 67:
-		return (**string)(unsafe.Pointer(&r.FactoringCompanyID))
+		return (*string)(unsafe.Pointer(&r.ShipperCustomerID))
 	case 68:
-		return (**string)(unsafe.Pointer(&r.FactoringAgreementID))
+		return (**string)(unsafe.Pointer(&r.FactoringCompanyID))
 	case 69:
-		return (*string)(unsafe.Pointer(&r.FactoringOverride))
+		return (**string)(unsafe.Pointer(&r.FactoringAgreementID))
 	case 70:
-		return &r.FactoringOverrideReason
+		return (*string)(unsafe.Pointer(&r.FactoringOverride))
 	case 71:
-		return &r.IsSplitBill
+		return &r.FactoringOverrideReason
 	case 72:
-		return &r.VoidedAt
+		return &r.IsSplitBill
 	case 73:
-		return (*string)(unsafe.Pointer(&r.VoidedByID))
+		return &r.VoidedAt
 	case 74:
-		return &r.VoidReason
+		return (*string)(unsafe.Pointer(&r.VoidedByID))
 	case 75:
-		return (*string)(unsafe.Pointer(&r.VoidDisposition))
+		return &r.VoidReason
 	case 76:
-		return (*string)(unsafe.Pointer(&r.VoidedByAdjustmentID))
+		return (*string)(unsafe.Pointer(&r.VoidDisposition))
 	case 77:
-		return (*string)(unsafe.Pointer(&r.ReferenceInvoiceID))
+		return (*string)(unsafe.Pointer(&r.VoidedByAdjustmentID))
 	case 78:
-		return &r.MemoReason
+		return (*string)(unsafe.Pointer(&r.ReferenceInvoiceID))
 	case 79:
-		return (*string)(unsafe.Pointer(&r.MemoKind))
+		return &r.MemoReason
 	case 80:
-		return (*string)(unsafe.Pointer(&r.EDISendStatus))
+		return (*string)(unsafe.Pointer(&r.MemoKind))
 	case 81:
-		return (*string)(unsafe.Pointer(&r.LastEDIMessageID))
+		return (*string)(unsafe.Pointer(&r.EDISendStatus))
 	case 82:
-		return &r.EDISentAt
+		return (*string)(unsafe.Pointer(&r.LastEDIMessageID))
 	case 83:
-		return &r.LastEDIError
+		return &r.EDISentAt
 	case 84:
-		return &r.BalanceDueMinor
+		return &r.LastEDIError
 	case 85:
-		return &r.Version
+		return &r.BalanceDueMinor
 	case 86:
-		return &r.CreatedAt
+		return &r.Version
 	case 87:
+		return &r.CreatedAt
+	case 88:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1736,244 +1742,249 @@ func valueInvoice(p unsafe.Pointer, c int32) any {
 		}
 		return r.OrderNumber
 	case 28:
+		if r.PONumber == "" {
+			return nil
+		}
+		return r.PONumber
+	case 29:
 		if r.ServiceDate == nil {
 			return nil
 		}
 		return *r.ServiceDate
-	case 29:
-		return r.BillToName
 	case 30:
+		return r.BillToName
+	case 31:
 		if r.BillToCode == "" {
 			return nil
 		}
 		return r.BillToCode
-	case 31:
+	case 32:
 		if r.BillToAddressLine1 == "" {
 			return nil
 		}
 		return r.BillToAddressLine1
-	case 32:
+	case 33:
 		if r.BillToAddressLine2 == "" {
 			return nil
 		}
 		return r.BillToAddressLine2
-	case 33:
+	case 34:
 		if r.BillToCity == "" {
 			return nil
 		}
 		return r.BillToCity
-	case 34:
+	case 35:
 		if r.BillToState == "" {
 			return nil
 		}
 		return r.BillToState
-	case 35:
+	case 36:
 		if r.BillToPostalCode == "" {
 			return nil
 		}
 		return r.BillToPostalCode
-	case 36:
+	case 37:
 		if r.BillToCountry == "" {
 			return nil
 		}
 		return r.BillToCountry
-	case 37:
-		return r.SubtotalAmount
 	case 38:
-		return r.SubtotalAmountMinor
+		return r.SubtotalAmount
 	case 39:
-		return r.OtherAmount
+		return r.SubtotalAmountMinor
 	case 40:
-		return r.OtherAmountMinor
+		return r.OtherAmount
 	case 41:
-		return r.TotalAmount
+		return r.OtherAmountMinor
 	case 42:
-		return r.TotalAmountMinor
+		return r.TotalAmount
 	case 43:
-		return r.AppliedAmount
+		return r.TotalAmountMinor
 	case 44:
-		return r.AppliedAmountMinor
+		return r.AppliedAmount
 	case 45:
-		return string(r.SettlementStatus)
+		return r.AppliedAmountMinor
 	case 46:
-		return string(r.DisputeStatus)
+		return string(r.SettlementStatus)
 	case 47:
+		return string(r.DisputeStatus)
+	case 48:
 		if r.PDFDocumentID == "" {
 			return nil
 		}
 		return string(r.PDFDocumentID)
-	case 48:
-		return string(r.SendStatus)
 	case 49:
+		return string(r.SendStatus)
+	case 50:
 		if r.SentAt == nil {
 			return nil
 		}
 		return *r.SentAt
-	case 50:
+	case 51:
 		if r.SentByID == "" {
 			return nil
 		}
 		return string(r.SentByID)
-	case 51:
+	case 52:
 		if r.LastSendError == "" {
 			return nil
 		}
 		return r.LastSendError
-	case 52:
+	case 53:
 		if r.LastSendWarning == "" {
 			return nil
 		}
 		return r.LastSendWarning
-	case 53:
+	case 54:
 		if r.Memo == "" {
 			return nil
 		}
 		return r.Memo
-	case 54:
+	case 55:
 		if r.RatingNotes == nil {
 			return nil
 		}
 		return r.RatingNotes
-	case 55:
+	case 56:
 		if r.RemittanceInstructions == "" {
 			return nil
 		}
 		return r.RemittanceInstructions
-	case 56:
+	case 57:
 		if r.EmailSubjectSnapshot == "" {
 			return nil
 		}
 		return r.EmailSubjectSnapshot
-	case 57:
+	case 58:
 		if r.EmailBodySnapshot == "" {
 			return nil
 		}
 		return r.EmailBodySnapshot
-	case 58:
+	case 59:
 		if r.EmailToSnapshot == nil {
 			return nil
 		}
 		return r.EmailToSnapshot
-	case 59:
+	case 60:
 		if r.EmailCCSnapshot == nil {
 			return nil
 		}
 		return r.EmailCCSnapshot
-	case 60:
+	case 61:
 		if r.EmailBCCSnapshot == nil {
 			return nil
 		}
 		return r.EmailBCCSnapshot
-	case 61:
+	case 62:
 		if r.CorrectionGroupID == "" {
 			return nil
 		}
 		return string(r.CorrectionGroupID)
-	case 62:
+	case 63:
 		if r.SupersedesInvoiceID == "" {
 			return nil
 		}
 		return string(r.SupersedesInvoiceID)
-	case 63:
+	case 64:
 		if r.SupersededByInvoiceID == "" {
 			return nil
 		}
 		return string(r.SupersededByInvoiceID)
-	case 64:
+	case 65:
 		if r.SourceInvoiceAdjustmentID == "" {
 			return nil
 		}
 		return string(r.SourceInvoiceAdjustmentID)
-	case 65:
-		return r.IsAdjustmentArtifact
 	case 66:
+		return r.IsAdjustmentArtifact
+	case 67:
 		if r.ShipperCustomerID == "" {
 			return nil
 		}
 		return string(r.ShipperCustomerID)
-	case 67:
+	case 68:
 		if r.FactoringCompanyID == nil {
 			return nil
 		}
 		return string(*r.FactoringCompanyID)
-	case 68:
+	case 69:
 		if r.FactoringAgreementID == nil {
 			return nil
 		}
 		return string(*r.FactoringAgreementID)
-	case 69:
-		return string(r.FactoringOverride)
 	case 70:
+		return string(r.FactoringOverride)
+	case 71:
 		if r.FactoringOverrideReason == "" {
 			return nil
 		}
 		return r.FactoringOverrideReason
-	case 71:
-		return r.IsSplitBill
 	case 72:
+		return r.IsSplitBill
+	case 73:
 		if r.VoidedAt == nil {
 			return nil
 		}
 		return *r.VoidedAt
-	case 73:
+	case 74:
 		if r.VoidedByID == "" {
 			return nil
 		}
 		return string(r.VoidedByID)
-	case 74:
+	case 75:
 		if r.VoidReason == "" {
 			return nil
 		}
 		return r.VoidReason
-	case 75:
+	case 76:
 		if r.VoidDisposition == "" {
 			return nil
 		}
 		return string(r.VoidDisposition)
-	case 76:
+	case 77:
 		if r.VoidedByAdjustmentID == "" {
 			return nil
 		}
 		return string(r.VoidedByAdjustmentID)
-	case 77:
+	case 78:
 		if r.ReferenceInvoiceID == "" {
 			return nil
 		}
 		return string(r.ReferenceInvoiceID)
-	case 78:
+	case 79:
 		if r.MemoReason == "" {
 			return nil
 		}
 		return r.MemoReason
-	case 79:
+	case 80:
 		if r.MemoKind == "" {
 			return nil
 		}
 		return string(r.MemoKind)
-	case 80:
-		return string(r.EDISendStatus)
 	case 81:
+		return string(r.EDISendStatus)
+	case 82:
 		if r.LastEDIMessageID == "" {
 			return nil
 		}
 		return string(r.LastEDIMessageID)
-	case 82:
+	case 83:
 		if r.EDISentAt == nil {
 			return nil
 		}
 		return *r.EDISentAt
-	case 83:
+	case 84:
 		if r.LastEDIError == "" {
 			return nil
 		}
 		return r.LastEDIError
-	case 84:
-		return r.BalanceDueMinor
 	case 85:
-		return r.Version
+		return r.BalanceDueMinor
 	case 86:
-		return r.CreatedAt
+		return r.Version
 	case 87:
+		return r.CreatedAt
+	case 88:
 		return r.UpdatedAt
 	}
 	return nil

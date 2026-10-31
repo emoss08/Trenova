@@ -123,15 +123,13 @@ export type CompactionRecord = z.infer<typeof compactionRecordSchema>;
 export const threadStatusSchema = z.enum(["Active", "Archived"]);
 
 /**
- * Where a conversation began. A quick question from the palette (Ask) is
- * not listed until the person keeps it. An import or formula conversation
- * belongs to its page and is never listed; every other origin is a
- * conversation from the start.
+ * Where a conversation began. An import or formula conversation belongs to
+ * its page and is never listed; every other origin is a conversation from the
+ * start.
  */
 export const threadOriginSchema = z.enum([
   "Panel",
   "Desk",
-  "Ask",
   "Watchtower",
   "Briefing",
   "Import",
@@ -2081,7 +2079,6 @@ export type AssistantStreamEvent =
   | { event: "artifact_removed"; data: z.infer<typeof assistantArtifactRemovedEventSchema> }
   | { event: "memory_used"; data: z.infer<typeof assistantMemoryUsedEventSchema> }
   | { event: "memory_saved"; data: z.infer<typeof savedMemorySchema> }
-  | { event: "thread"; data: AssistantThread }
   /**
    * The saved turn, or null when the ending was rebuilt from the turn's record
    * because its stream could not supply one: the reader then reads the
@@ -2106,6 +2103,18 @@ function isReplayedEnding(data: unknown): boolean {
   return (
     typeof data === "object" && data !== null && (data as { replay?: unknown }).replay === true
   );
+}
+
+/**
+ * Parses one frame of a palette answer's stream. It carries the events a turn
+ * does, but ends with a done that names only the question: there is no
+ * conversation to send back.
+ */
+export function parseAskStreamEvent(event: string, raw: string): AssistantStreamEvent | null {
+  if (event === "done") {
+    return { event, data: null };
+  }
+  return parseAssistantStreamEvent(event, raw);
 }
 
 /**
@@ -2154,8 +2163,6 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantMemoryUsedEventSchema.parse(data) };
     case "memory_saved":
       return { event, data: savedMemorySchema.parse(data) };
-    case "thread":
-      return { event, data: assistantThreadSchema.parse(data) };
     case "done":
       return {
         event,

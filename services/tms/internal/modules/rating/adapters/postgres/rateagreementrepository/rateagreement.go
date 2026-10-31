@@ -125,8 +125,10 @@ func agreementQuery(
 		q = q.Load(rules.Where(scope).Order(rules.SpecificityScore.Desc()))
 	}
 
+	// Each accessorial carries its charge and the fuel binding its program, so a
+	// reader names them without a second lookup per row.
 	if req.IncludeChildren {
-		q = q.Load(ra.Accessorials(), ra.FuelBinding())
+		q = q.Load(ra.Accessorials().AccessorialCharge(), ra.FuelBinding().Program())
 	}
 
 	return q

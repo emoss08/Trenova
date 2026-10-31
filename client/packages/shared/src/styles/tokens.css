@@ -1356,6 +1356,9 @@
 
   --animate-flow-down: flow-down 1.5s linear infinite;
   --animate-rise: rise 180ms var(--ease-settle) both;
+  /* A pane's content arriving in place of its skeleton: it settles out of a soft blur as
+     it rises, so the swap from outline to record reads as one motion. */
+  --animate-reveal: reveal 420ms var(--ease-settle) both;
   --animate-confirm: confirm 320ms var(--ease-spring) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
 
@@ -1369,6 +1372,11 @@
      Two names with the same keyframes, so a second change replays it. */
   --animate-row-changed-a: row-changed-a 1600ms var(--ease-swift);
   --animate-row-changed-b: row-changed-b 1600ms var(--ease-swift);
+  /* Something the person was just sent to look at takes a hairline ring and a faint
+     tint for a moment, so the eye lands on it. Two names with the same keyframes, so a second request
+     replays it. */
+  --animate-attention-a: attention-a 1600ms var(--ease-swift);
+  --animate-attention-b: attention-b 1600ms var(--ease-swift);
   --animate-expand-in: expand-in 280ms var(--ease-settle) both;
   --animate-panel-in: panel-in 320ms var(--ease-settle) both;
   --animate-slide-in: slide-in 360ms var(--ease-settle) both;

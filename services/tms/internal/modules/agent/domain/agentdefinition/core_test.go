@@ -101,32 +101,3 @@ func TestTemplates_ListNoCoreTool(t *testing.T) {
 		}
 	}
 }
-
-func TestHoldingReads_AddsEveryReadButOnesTheAgentSwitchedOff(t *testing.T) {
-	t.Parallel()
-
-	definition := &agentdefinition.Definition{
-		ToolNames:         []string{"shipment_get", "dispatch_assign_move"},
-		DisabledToolNames: []string{"list_settlements"},
-	}
-
-	reading := definition.HoldingReads([]string{
-		"shipment_get",
-		"customer_get",
-		"list_settlements",
-		agentdefinition.CoreToolFindInTrenova,
-		"customer_get",
-	})
-
-	assert.Equal(
-		t,
-		[]string{"shipment_get", "dispatch_assign_move", "customer_get"},
-		reading.ToolNames,
-	)
-	assert.Equal(
-		t,
-		[]string{"shipment_get", "dispatch_assign_move"},
-		definition.ToolNames,
-		"the stored agent keeps the tools it was configured with",
-	)
-}

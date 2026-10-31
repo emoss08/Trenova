@@ -19,6 +19,7 @@ export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps & FormC
 
 export function InputField<T extends FieldValues>({
   label,
+  hideLabel,
   labelAction,
   name,
   control,
@@ -43,6 +44,7 @@ export function InputField<T extends FieldValues>({
           <FieldWrapper
             name={name}
             label={label}
+            hideLabel={hideLabel}
             labelAction={labelAction}
             required={!!rules?.required}
             description={description}

@@ -221,12 +221,13 @@ func TestGetThread_CannotContinueWithoutTheAssistant(t *testing.T) {
 }
 
 /*
-A quick question goes only to the general assistant, and only when the person
-may use it. Restricted to roles they do not hold, it is not swapped for an open
-chat agent that would answer from its own desk's records: the person is told an
-administrator can grant it. The read is narrowed to their audience either way.
+A palette answer is carried into the Desk only with the general assistant, and
+only when the person may use it. Restricted to roles they do not hold, it is not
+swapped for an open chat agent that would answer from its own desk's records:
+the person is told an administrator can grant it. The read is narrowed to their
+audience either way.
 */
-func TestAsk_ChoosesTheGeneralAssistantOnlyWhenThePersonMayUseIt(t *testing.T) {
+func TestGeneralAssistant_IsChosenOnlyWhenThePersonMayUseIt(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{logger: zap.NewNop()}
@@ -243,7 +244,7 @@ func TestAsk_ChoosesTheGeneralAssistantOnlyWhenThePersonMayUseIt(t *testing.T) {
 	svc.permissions = permissions
 	actor := assistanttest.Actor()
 
-	_, err := svc.askAgent(t.Context(), actor.TenantInfo(), actor)
+	_, err := svc.generalAssistant(t.Context(), actor.TenantInfo(), actor)
 	require.Error(t, err)
 	assert.True(
 		t,
@@ -255,12 +256,12 @@ func TestAsk_ChoosesTheGeneralAssistantOnlyWhenThePersonMayUseIt(t *testing.T) {
 	assert.Empty(t, chooser.Audience.GrantedAgentIDs)
 
 	permissions.Granted = []pulid.ID{general.ID}
-	chosen, err := svc.askAgent(t.Context(), actor.TenantInfo(), actor)
+	chosen, err := svc.generalAssistant(t.Context(), actor.TenantInfo(), actor)
 	require.NoError(t, err)
-	assert.Equal(t, general.ID, chosen.ID, "once granted, the general assistant answers")
+	assert.Equal(t, general.ID, chosen.ID, "once granted, the general assistant takes it")
 
 	permissions.Allowed = map[string]bool{}
-	_, err = svc.askAgent(t.Context(), actor.TenantInfo(), actor)
+	_, err = svc.generalAssistant(t.Context(), actor.TenantInfo(), actor)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 }

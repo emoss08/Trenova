@@ -15,7 +15,6 @@ package briefingfacts
 
 import (
 	"context"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -413,36 +412,31 @@ func (b *Builder) billing(ctx context.Context, req Request, facts *Facts) {
 		return
 	}
 
-	counts, err := b.sources.Billing.GetStatusCounts(
-		ctx,
-		&billingqueueports.GetBillingQueueStatsRequest{TenantInfo: req.TenantInfo},
-	)
+	lanes, err := b.sources.Billing.GetLaneStats(ctx, req.TenantInfo)
 	if err != nil {
 		facts.miss("billing queue")
 
 		return
 	}
 
-	items := make([]briefing.Item, 0, len(counts))
+	items := make([]briefing.Item, 0, len(lanes))
 	total := 0
-	// The statuses are sorted so two runs of the same morning lay the
-	// block out the same way; a map's order would reshuffle it daily.
-	statuses := make([]billingqueue.Status, 0, len(counts))
-	for status := range counts {
-		statuses = append(statuses, status)
-	}
-	sort.Slice(statuses, func(i, j int) bool { return statuses[i] < statuses[j] })
-	for _, status := range statuses {
-		count := counts[status]
+	for _, lane := range billingqueue.OpenLanes() {
+		count := 0
+		for _, stat := range lanes {
+			if stat.Lane == lane {
+				count = stat.Count
+			}
+		}
 		if count == 0 {
 			continue
 		}
 		total += count
-		facts.set("billing.status."+string(status), count)
+		facts.set("billing.lane."+string(lane), count)
 		items = append(items, briefing.Item{
-			Label: humanize(string(status)),
+			Label: billingLaneLabels[lane],
 			Value: strconv.Itoa(count),
-			Path:  billingPath + "?status=" + string(status),
+			Path:  billingPath + "?lane=" + string(lane),
 		})
 	}
 	facts.set("billing.total", total)
@@ -605,14 +599,12 @@ func plural(count int, one, many string) string {
 	return strconv.Itoa(count) + " " + word
 }
 
-func humanize(value string) string {
-	var builder strings.Builder
-	for index, r := range value {
-		if index > 0 && r >= 'A' && r <= 'Z' {
-			builder.WriteByte(' ')
-		}
-		builder.WriteRune(r)
-	}
-
-	return builder.String()
+var billingLaneLabels = map[billingqueue.Lane]string{
+	billingqueue.LaneChecking: "Being checked",
+	billingqueue.LaneNeedsYou: "Needs you",
+	billingqueue.LaneWaiting:  "Waiting on others",
+	billingqueue.LaneReady:    "Ready to approve",
+	billingqueue.LaneHeld:     "On hold",
+	billingqueue.LaneApproved: "Approved, not posted",
+	billingqueue.LaneClosed:   "Closed",
 }

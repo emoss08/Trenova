@@ -421,6 +421,11 @@ func TestHTTPStatus(t *testing.T) {
 		{"RateLimitError", errortypes.NewRateLimitError("api", "too many"), 429},
 		{"BusinessError", errortypes.NewBusinessError("invalid"), 422},
 		{"DatabaseError", errortypes.NewDatabaseError("failed"), 500},
+		{
+			"SessionContextStaleError",
+			errortypes.NewSessionContextStaleError("usr_1", "org_1", "bu_1"),
+			409,
+		},
 		{"unknown error", assert.AnError, 500},
 	}
 
@@ -447,6 +452,7 @@ func TestHTTPStatusWithCode(t *testing.T) {
 		{errortypes.ErrTooManyRequests, 429},
 		{errortypes.ErrBusinessLogic, 422},
 		{errortypes.ErrVersionMismatch, 409},
+		{errortypes.ErrSessionContextStale, 409},
 		{errortypes.ErrSystemError, 500},
 	}
 

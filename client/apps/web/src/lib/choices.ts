@@ -27,6 +27,7 @@ import type {
   InvoicePostingMode,
   LateChargeAssessmentMode,
   PaymentTerm,
+  QueueAutoApproveMode,
   RateVarianceAutoResolutionMode,
   ReadyToBillAssignmentMode,
   TransferSchedule,
@@ -1643,6 +1644,12 @@ export const invoiceEdiSendStatusChoices = [
   { value: "Failed", label: "Failed" },
   { value: "DeadLettered", label: "Dead-lettered" },
 ] satisfies ReadonlyArray<GenericSelectOption<InvoiceEdiSendStatus>>;
+
+export const queueAutoApproveModeChoices = [
+  { value: "Off", label: "Off" },
+  { value: "WhenChecksClear", label: "When all five checks clear" },
+  { value: "WhenAgentAgrees", label: "When the checks clear and Nova agrees" },
+] satisfies ReadonlyArray<GenericSelectOption<QueueAutoApproveMode>>;
 
 export const lateChargeAssessmentModeChoices = [
   { value: "Disabled", label: "Disabled" },

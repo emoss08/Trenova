@@ -1,3 +1,4 @@
+import { turnFailureDetail } from "@/components/assistant/follow-turn";
 import { useAsk } from "@/components/assistant/use-ask";
 import { usePageContext } from "@/components/assistant/use-page-context";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
@@ -8,6 +9,7 @@ import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { CommandDialog } from "@trenova/shared/components/ui/command";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -229,7 +231,14 @@ export function CommandPalette() {
   const settling = view !== typed || recordQuery !== debouncedRecordQuery || remote.refreshing;
 
   const getPageContext = usePageContext();
-  const { turn, ask, stop: stopAsk, reset: resetAsk, keep: keepAsk } = useAsk();
+  const {
+    turn,
+    ask,
+    stop: stopAsk,
+    reset: resetAsk,
+    keep: keepAsk,
+    keepable: askKeepable,
+  } = useAsk();
 
   const confirm = useCallback((message: string) => {
     if (confirmationTimer.current) {
@@ -470,12 +479,16 @@ export function CommandPalette() {
   );
 
   const continueInDesk = useCallback(() => {
-    void keepAsk().then((threadId) => {
-      if (threadId !== null) {
-        runIntent({ type: "navigate", href: conversationPath(threadId) });
-      }
-    });
-  }, [keepAsk, runIntent]);
+    void keepAsk()
+      .then((threadId) => {
+        if (threadId !== null) {
+          runIntent({ type: "navigate", href: conversationPath(threadId) });
+        }
+      })
+      .catch((error: unknown) => {
+        toast.error(turnFailureDetail(error, t("The question couldn't be opened in the Desk.")));
+      });
+  }, [keepAsk, runIntent, t]);
 
   const followUp = useCallback(() => {
     clearAnswer();
@@ -801,6 +814,7 @@ export function CommandPalette() {
             onAsk={() => startAsk({ kind: "ask", key: "retry", ...asked })}
             onStop={stopAsk}
             onContinue={continueInDesk}
+            canContinue={askKeepable}
             onCopy={() => runIntent({ type: "copy", text: plainAnswer(turn), what: "answer" })}
             onFollowUp={followUp}
             onPeek={setPeek}

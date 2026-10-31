@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
-import { keybindGroups } from "@/config/keybinds.config";
+import { hotkeyOf, keybindGroups, keybindKeys } from "@/config/keybinds.config";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAssistantEnabled } from "./assistant/use-assistant-enabled";
@@ -26,7 +26,7 @@ export function KeyboardShortcutsDialog() {
   const toggleDialog = useAppDialogsStore((state) => state.toggleDialog);
 
   useHotkey(
-    "Mod+/",
+    hotkeyOf("general", "keyboard-shortcuts"),
     () => {
       toggleDialog("shortcuts");
     },
@@ -66,7 +66,7 @@ export function KeyboardShortcutsDialog() {
                           </span>
                         </div>
                         <KbdGroup>
-                          {keybind.keys.map((key) => (
+                          {keybindKeys(keybind.keys).map((key) => (
                             <Kbd key={key}>{key}</Kbd>
                           ))}
                         </KbdGroup>

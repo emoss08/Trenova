@@ -3,6 +3,7 @@ import type {
   BillingCheck,
   BillingCheckKey,
   BillingIssue,
+  BillingQueueHoldReason,
   BillingQueueItem,
 } from "@trenova/shared/types/billing-queue";
 
@@ -75,8 +76,49 @@ export function checkDetail(check: BillingCheck, t: TranslateFn): string {
   }
 }
 
-/** The issue a failing check waits on, if it has one. */
-export function issueOf(item: BillingQueueItem, check: BillingCheck): BillingIssue | null {
-  if (!check.issueId) return null;
-  return item.review?.issues.find((issue) => issue.id === check.issueId) ?? null;
+/**
+ * Issues that only suggest: a charge the shipment carries proof of but does not bill.
+ * The charges show them; no check waits on them and they never hold approval.
+ */
+const SUGGESTION_CODES: ReadonlySet<string> = new Set(["UnbilledAccessorial"]);
+
+export function isSuggestion(issue: BillingIssue): boolean {
+  return SUGGESTION_CODES.has(issue.code);
+}
+
+/**
+ * The issues a failing check waits on, oldest first: every open one of its
+ * kind, so two flagged charges are both there to settle. A check that is
+ * clear waits on none, even when it names the issue that settled it, and no
+ * check waits on a suggestion.
+ */
+export function openIssuesOf(item: BillingQueueItem, check: BillingCheck): BillingIssue[] {
+  if (check.state === "ok") return [];
+  return (
+    item.review?.issues.filter(
+      (issue) => issue.checkKey === check.key && !issue.resolutionKey && !isSuggestion(issue),
+    ) ?? []
+  );
+}
+
+export const HOLD_REASONS: readonly BillingQueueHoldReason[] = [
+  "WaitingOnPaperwork",
+  "CustomerDispute",
+  "RateQuestion",
+];
+
+export function holdReasonLabel(
+  reason: BillingQueueHoldReason | null | undefined,
+  t: TranslateFn,
+): string {
+  switch (reason) {
+    case "WaitingOnPaperwork":
+      return t("Waiting on paperwork");
+    case "CustomerDispute":
+      return t("Customer dispute");
+    case "RateQuestion":
+      return t("Rate question");
+    default:
+      return "";
+  }
 }

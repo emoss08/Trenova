@@ -1,6 +1,6 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { BillingRecordCard } from "@/components/billing/billing-record-card";
-import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -9,10 +9,13 @@ import {
   ContextMenuTrigger,
 } from "@trenova/shared/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
-import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
-import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import {
+  formatCompactAge,
+  generateDateTimeStringFromUnixTimestamp,
+} from "@trenova/shared/lib/date";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import type { BillingQueueRow } from "@/lib/graphql/billing-queue";
 import {
   LinkExternal01Icon,
   PauseIcon,
@@ -20,6 +23,57 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { billingQueueItemLabel } from "@/lib/billing-queue-label";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
+import { holdReasonLabel } from "@/lib/billing-queue-checks";
+import { recordPath } from "@/config/record-links";
+
+type RowNote = {
+  text: string;
+  tone: "warning" | "muted" | "nova" | "concern";
+};
+
+/**
+ * The line a row leads with: what the item waits on while it waits, what Nova made
+ * of it once it is ready, and where it stands after that.
+ */
+export function rowNote(item: BillingQueueRow, t: TranslateFn): RowNote {
+  const headline = item.headline;
+  const more = headline && headline.open > 1 ? headline.open - 1 : 0;
+  const withMore = (text: string) => (more > 0 ? t("{0} · {1} more", text, more) : text);
+
+  switch (item.lane) {
+    case "NeedsYou":
+      if (headline) return { text: withMore(headline.summary), tone: "warning" };
+      if (!item.assignedBillerId) return { text: t("Nobody is assigned"), tone: "warning" };
+      return { text: t("Waiting for review"), tone: "warning" };
+    case "Waiting":
+      return {
+        text: headline ? withMore(headline.summary) : t("Waiting on someone else"),
+        tone: "muted",
+      };
+    case "Ready":
+      if (item.agentVerdict === "Concern" && item.agentSummary) {
+        return { text: item.agentSummary, tone: "concern" };
+      }
+      if (item.agentVerdict === "Agrees" && item.agentSummary) {
+        return { text: item.agentSummary, tone: "nova" };
+      }
+      return { text: t("All five checks clear"), tone: "muted" };
+    case "Checking":
+      return { text: t("Running the checks"), tone: "muted" };
+    case "Held": {
+      const reason = holdReasonLabel(item.holdReasonCode, t);
+      return {
+        text: reason ? t("On hold · {0}", reason) : t("On hold"),
+        tone: "muted",
+      };
+    }
+    case "Approved":
+      return { text: t("Approved · invoice not posted"), tone: "muted" };
+    case "Closed":
+      return { text: t("Closed"), tone: "muted" };
+  }
+}
 
 export function BillingQueueItemCard({
   item,
@@ -31,7 +85,7 @@ export function BillingQueueItemCard({
   checked,
   onCheckedChange,
 }: {
-  item: BillingQueueItem;
+  item: BillingQueueRow;
   isSelected: boolean;
   onClick: () => void;
   onAssignBiller: () => void;
@@ -41,6 +95,8 @@ export function BillingQueueItemCard({
   onCheckedChange?: (checked: boolean) => void;
 }) {
   const t = useT();
+  const now = useNow("minute");
+  const canReadShipment = useCanReadKind("shipment");
 
   const proNumber = item.shipment?.proNumber || billingQueueItemLabel(item);
   const customerName = item.shipment?.customer?.name;
@@ -54,64 +110,103 @@ export function BillingQueueItemCard({
   const shipmentTotal =
     item.shipment?.totalChargeAmount != null ? Number(item.shipment.totalChargeAmount) : null;
   const allocated = item.allocatedTotalAmount != null ? Number(item.allocatedTotalAmount) : null;
-  // One queue item per payer: the card shows this payer's share, and says so,
-  // or two cards for one shipment both read as billing the full freight.
+  // One queue item per payer: the row shows this payer's share, and says so,
+  // or two rows for one shipment both read as billing the full freight.
   const isPartial =
     allocated != null && shipmentTotal != null && Math.abs(allocated - shipmentTotal) >= 0.005;
-  const totalCharges = isPartial ? allocated : shipmentTotal;
-  const age = formatDistanceToNowStrict(fromUnixTime(item.createdAt), { addSuffix: true });
+  const amount = isPartial ? allocated : (shipmentTotal ?? allocated);
   const isTerminal = item.status === "Approved" || item.status === "Canceled";
+  const note = rowNote(item, t);
+
+  const showMeter = item.lane === "Ready" && !item.agentVerdict;
 
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <BillingRecordCard
-          title={proNumber}
-          auxiliary={
-            item.number ? (
-              <span className="text-muted-foreground font-mono text-2xs">{item.number}</span>
-            ) : null
-          }
-          amount={totalCharges != null ? formatCurrency(Number(totalCharges)) : undefined}
-          subtitle={payerName || "No customer"}
-          meta={
-            <div className="flex flex-col gap-1">
-              {onBehalfOf ? (
-                <span className="text-muted-foreground truncate text-xs">
-                  {t("On behalf of {0}", onBehalfOf)}
+        <div
+          className={cn(
+            "mx-1.5 flex items-start gap-2 rounded-md p-2 text-sm transition-colors",
+            isSelected ? "bg-surface-selected" : "hover:bg-surface-hover",
+          )}
+        >
+          {onCheckedChange ? (
+            <Checkbox
+              className="mt-0.5 shrink-0"
+              checked={checked === true}
+              onCheckedChange={(value) => onCheckedChange(value === true)}
+              aria-label={t("Select {0}", proNumber)}
+            />
+          ) : null}
+          <button
+            type="button"
+            onClick={onClick}
+            aria-current={isSelected ? "true" : undefined}
+            className="ui-focus-ring flex min-w-0 flex-1 flex-col gap-0.5 rounded-sm text-left"
+          >
+            <span className="flex w-full min-w-0 items-baseline gap-2">
+              <span className="text-foreground shrink-0 font-mono font-medium">{proNumber}</span>
+              <span className="text-foreground-muted min-w-0 flex-1 truncate">
+                {payerName || t("No customer")}
+              </span>
+              {amount != null ? (
+                <span className="text-foreground shrink-0 font-mono">{formatCurrency(amount)}</span>
+              ) : null}
+            </span>
+            {onBehalfOf ? (
+              <span className="text-foreground-muted truncate text-xs">
+                {t("On behalf of {0}", onBehalfOf)}
+              </span>
+            ) : null}
+            <span className="flex w-full min-w-0 items-center gap-1.5 text-xs">
+              {showMeter ? (
+                <span
+                  role="img"
+                  aria-label={t("All five checks clear")}
+                  className="flex shrink-0 gap-0.5"
+                >
+                  {[0, 1, 2, 3, 4].map((index) => (
+                    <span key={index} className="bg-success size-1.5 rounded-xs" />
+                  ))}
                 </span>
               ) : null}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <PlainBillingQueueStatusBadge status={item.status} />
-                  {item.isAdjustmentOrigin ? (
-                    <span className="inline-flex items-center rounded-badge bg-warning-subtle px-2 py-0.5 text-xs font-medium text-warning-foreground dark:bg-warning-subtle dark:text-warning-foreground">
-                      {t("Rebill")}
+              {note.tone === "nova" || note.tone === "concern" ? (
+                <NovaBadge size="xs" className="size-2.5 shrink-0" />
+              ) : null}
+              <span
+                className={cn(
+                  "min-w-0 flex-1 truncate",
+                  note.tone === "warning" || note.tone === "concern"
+                    ? "text-warning-foreground"
+                    : "text-foreground-muted",
+                )}
+              >
+                {note.text}
+              </span>
+              {item.isAdjustmentOrigin ? (
+                <span className="bg-warning-subtle text-warning-foreground rounded-xs shrink-0 px-1 text-2xs font-medium">
+                  {t("Rebill")}
+                </span>
+              ) : null}
+              {isPartial ? (
+                <span className="bg-accent-indigo-subtle text-accent-indigo-on-subtle rounded-xs shrink-0 px-1 text-2xs font-medium">
+                  {t("Split")}
+                </span>
+              ) : null}
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <span className="text-foreground-subtle shrink-0">
+                      {formatCompactAge(now - item.createdAt)}
                     </span>
-                  ) : null}
-                  {isPartial ? (
-                    <span className="inline-flex items-center rounded-badge bg-accent-indigo-subtle px-2 py-0.5 text-xs font-medium text-accent-indigo-on-subtle dark:bg-accent-indigo-subtle dark:text-accent-indigo-on-subtle">
-                      {t("Split")}
-                    </span>
-                  ) : null}
-                </div>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={<span className="text-muted-foreground/70 text-xs">{age}</span>}
-                  />
-                  <TooltipContent side="left" sideOffset={10}>
-                    {generateDateTimeStringFromUnixTimestamp(item.createdAt)}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-          }
-          isSelected={isSelected}
-          onClick={onClick}
-          checked={checked}
-          onCheckedChange={onCheckedChange}
-          checkLabel={t("Select {0}", proNumber)}
-        />
+                  }
+                />
+                <TooltipContent side="left" sideOffset={10}>
+                  {t("Queued {0}", generateDateTimeStringFromUnixTimestamp(item.createdAt))}
+                </TooltipContent>
+              </Tooltip>
+            </span>
+          </button>
+        </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={onAssignBiller} disabled={isTerminal}>
@@ -122,12 +217,16 @@ export function BillingQueueItemCard({
           <PauseIcon className="size-3.5" />
           {t("Hold")}
         </ContextMenuItem>
-        {item.shipmentId ? (
+        {item.shipmentId && canReadShipment ? (
           <>
             <ContextMenuSeparator />
             <ContextMenuItem
               onClick={() =>
-                window.open(`/shipment-management/shipments?item=${item.shipmentId}`, "_blank")
+                window.open(
+                  recordPath("shipment", item.shipmentId ?? ""),
+                  "_blank",
+                  "noopener,noreferrer",
+                )
               }
             >
               <LinkExternal01Icon className="size-3.5" />

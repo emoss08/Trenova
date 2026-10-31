@@ -58,12 +58,14 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
 
   const { data, isLoading } = useQuery({
     queryKey: ["dot-hazmat-search", debouncedSearch],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       fetchOptions<DotHazmatReference>(
         "/dot-hazmat-references/select-options/",
         debouncedSearch,
         1,
         10,
+        undefined,
+        { signal },
       ),
     enabled,
     staleTime: 2 * 60 * 1000,

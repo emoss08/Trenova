@@ -218,9 +218,9 @@ func (r *repository) RecordApprovalRunItem(
 }
 
 type runCounts struct {
-	Approved int
-	Failed   int
-	Skipped  int
+	Succeeded int
+	Failed    int
+	Skipped   int
 }
 
 func (r *repository) FinalizeApprovalRun(
@@ -252,7 +252,7 @@ func (r *repository) FinalizeApprovalRun(
 
 			counts, err := keel.IntoOne[runCounts](ctx, db, item.
 				Pick(
-					keel.Count().Filter(item.Status.Eq(billingapprovalrun.ApprovalItemApproved)),
+					keel.Count().Filter(item.Status.Eq(billingapprovalrun.ApprovalItemSucceeded)),
 					keel.Count().Filter(item.Status.Eq(billingapprovalrun.ApprovalItemFailed)),
 					keel.Count().Filter(item.Status.Eq(billingapprovalrun.ApprovalItemSkipped)),
 				).
@@ -266,7 +266,7 @@ func (r *repository) FinalizeApprovalRun(
 				run.Status.To(req.Status),
 				run.FailureMessage.ToExpr(keel.Val(nullable(req.FailureMessage))),
 				run.CompletedAt.To(now),
-				run.ApprovedCount.To(int64(counts.Approved)),
+				run.SucceededCount.To(int64(counts.Succeeded)),
 				run.FailedCount.To(int64(counts.Failed)),
 				run.SkippedCount.To(int64(counts.Skipped)),
 			); err != nil {

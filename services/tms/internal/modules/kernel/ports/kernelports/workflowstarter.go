@@ -25,6 +25,12 @@ type WorkflowStarter interface {
 	Enabled() bool
 }
 
+// WorkflowResults reads what a finished workflow returned. It waits for a
+// workflow still running, so a caller bounds it with ctx.
+type WorkflowResults interface {
+	WorkflowResult(ctx context.Context, workflowID string, out any) error
+}
+
 type WorkflowSignalStarter interface {
 	SignalWithStartWorkflow(
 		ctx context.Context,

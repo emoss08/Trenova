@@ -25,8 +25,7 @@ func TestIsPasswordChangeExempt(t *testing.T) {
 		// so the comparison has to normalise rather than match literally.
 		{"/api/v1/users/me/change-password", true},
 		{"/api/v1/users/me/", true},
-		{"/api/v1/auth/logout", true},
-		{"/api/v1/auth/csrf", true},
+		{"/api/v1/auth/logout", false},
 		{"/api/v1/shipments/", false},
 		{"/api/v1/users/", false},
 		// A path that merely starts with an exempt one must not slip through.

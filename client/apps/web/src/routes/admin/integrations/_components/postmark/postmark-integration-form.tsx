@@ -1,18 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import trenovaLogo from "@/assets/logo.webp";
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
+import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   Popover,
@@ -37,6 +30,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { IntegrationConnectHeader } from "../shared/integration-connect-header";
 
 const postmarkLogo = "/integrations/logos/postmark_all.png";
 const postmarkWebhookEvents = ["Delivery", "Bounce", "SpamComplaint", "Open", "Click"];
@@ -274,25 +268,18 @@ function PostmarkFormHeader() {
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
-        <LazyImage src={trenovaLogo} className="size-8" />
-        <div className="flex items-center justify-center gap-1">
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-        </div>
-        <LazyImage src={postmarkLogo} alt={t("Postmark")} className="h-8 w-28 object-contain" />
-      </div>
-      <DialogHeader>
-        <DialogTitle>{t("Connect with Postmark")}</DialogTitle>
-        <DialogDescription>
+    <IntegrationConnectHeader
+      name="Postmark"
+      logo={{ light: postmarkLogo }}
+      title={t("Connect with Postmark")}
+      description={
+        <>
           {t("Create a server token and webhook in")}{" "}
           <ExternalLink href="https://account.postmarkapp.com/servers">
             {t("Postmark.")}
           </ExternalLink>
-        </DialogDescription>
-      </DialogHeader>
-    </div>
+        </>
+      }
+    />
   );
 }

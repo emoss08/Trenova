@@ -5,6 +5,7 @@ import {
   type CreateDocumentUploadSessionParams,
   type BulkUploadDocumentParams,
   type BulkUploadDocumentResponse,
+  type DeliveryFacts,
   type Document,
   type DocumentSignatureStatus,
   type ImportAssistantChatHistoryResponse,
@@ -31,6 +32,7 @@ import {
   type DocumentExtractionStatus,
 } from "@/types/document-control";
 import { z } from "zod";
+import { extractionFrom, type Extraction } from "@/lib/document-reading/extraction-payload";
 
 export type DocumentContentAction = "download" | "view" | "preview";
 
@@ -226,6 +228,31 @@ export class DocumentService {
     const response = await api.post<Document>(
       `/documents/${encodeURIComponent(documentId)}/signature/`,
       params,
+    );
+    return safeParse(documentSchema, response, "Document");
+  }
+
+  /** The document as it was read: each value with the page and box it was found in. */
+  public async getReading(
+    documentId: string,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<Extraction> {
+    const response = await api.get<Record<string, unknown>>(
+      `/documents/${encodeURIComponent(documentId)}/reading/`,
+      { signal: options.signal },
+    );
+    return extractionFrom(response ?? {});
+  }
+
+  /** Records what a delivery document says; a receipt naming an unbilled charge raises a check. */
+  public async setDeliveryFacts(
+    documentId: string,
+    facts: Partial<DeliveryFacts>,
+    version: number,
+  ): Promise<Document> {
+    const response = await api.post<Document>(
+      `/documents/${encodeURIComponent(documentId)}/delivery-facts/`,
+      { facts, version },
     );
     return safeParse(documentSchema, response, "Document");
   }

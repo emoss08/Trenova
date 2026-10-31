@@ -1,43 +1,59 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import AuditTab from "@/components/audit-tab";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { LinkedRecordLink } from "@/components/linked-record-link";
+import { recordPath } from "@/config/record-links";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { exceptionReasonLabels } from "@/lib/choices";
 import { billingQueue } from "@/lib/queries/billing-queue";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { formatCompactAge, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CommentsTabSkeleton } from "@/routes/shipment/_components/comments/comments-skeleton";
-import type { ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
+import type { BillingQueueItem, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   ChevronDownIcon,
-  ClockStopwatchIcon,
+  LinkExternal01Icon,
   RefreshCw02Icon,
 } from "@trenova/shared/components/icons";
-import { useNow } from "@trenova/shared/hooks/use-now";
-import { lazy, Suspense, useCallback, useState, type ReactNode } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router";
+import { billingQueueItemLabel } from "@/lib/billing-queue-label";
+import { shipmentDocumentsQuery } from "../billing-queue-queries";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
-import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
 import { BillingQueueDetentionHolds } from "./billing-queue-detention-holds";
+import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
+import { BillingQueueInvoiceTab } from "./billing-queue-invoice-tab";
 import { BillingQueueRatingReviewHold } from "./billing-queue-rating-review-hold";
 import { BillingQueueReviewChecks } from "./billing-queue-review-checks";
-import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
+import { BillingQueueShipmentTabSkeleton } from "./billing-queue-shipment-tab-skeleton";
 import {
   BillingQueueDetailSkeleton,
   BillingQueueDetailUnselected,
 } from "./billing-queue-detail-skeleton";
+import { useScrolled } from "@/hooks/use-scrolled";
+import { shipmentMargin } from "@/lib/billing-queue-margin";
+import { useInvoiceDetails } from "./use-invoice-details";
+import { useBulkRun } from "./use-bulk-run";
 
-// The comments tab brings the realtime comment stack with it; the billing queue
-// opens on the Charges tab, so it only pays for that once someone switches.
+// The comments bring the realtime comment stack with them; the queue opens on the
+// Charges tab, so it only pays for them once someone opens Activity.
 const ShipmentCommentsTab = lazy(() => import("@/routes/shipment/_components/comments"));
+// The Shipment tab reads its shipment when it opens, so its code waits for it too.
+const BillingQueueShipmentTab = lazy(() => import("./billing-queue-shipment-tab"));
+
+type DetailTab = "charges" | "shipment" | "documents" | "invoice" | "activity";
 
 export default function BillingQueueDetailPane({
   selectedItemId,
@@ -50,18 +66,16 @@ export default function BillingQueueDetailPane({
   onDocumentSelect: (docId: string, fileName: string) => void;
   onAutoAdvance?: () => void;
 }) {
-  const t = useT();
-
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const { scrolled, ref: scrollRef } = useScrolled();
+  // Each "Show me" from the action bar, counted so the review replays its pulse.
+  const [reviewCalls, setReviewCalls] = useState(0);
+  const [tab, setTab] = useState<DetailTab>("charges");
 
   const { data: item, isLoading } = useQuery({
     ...billingQueue.get(selectedItemId ?? ""),
     enabled: !!selectedItemId,
   });
-
-  const handleAssignBiller = useCallback(() => {
-    setAssignDialogOpen(true);
-  }, []);
 
   if (!selectedItemId) {
     return <BillingQueueDetailUnselected />;
@@ -71,158 +85,44 @@ export default function BillingQueueDetailPane({
     return <BillingQueueDetailSkeleton />;
   }
 
-  const shipment = item.shipment;
-  const customerName = shipment?.customer?.name ?? "Unknown Customer";
-  const payerName = item.billToCustomer?.name ?? customerName;
-  const onBehalfOf =
-    item.billToCustomerId && shipment?.customerId && item.billToCustomerId !== shipment.customerId
-      ? customerName
-      : null;
-  const proNumber = shipment?.proNumber ?? billingQueueItemLabel(item);
-  const shipmentId = item.shipmentId;
-  const totalCharge = Number(shipment?.totalChargeAmount ?? 0);
-  const allocated = item.allocatedTotalAmount != null ? Number(item.allocatedTotalAmount) : null;
-  const isPartial =
-    shipment != null && allocated != null && Math.abs(allocated - totalCharge) >= 0.005;
-  const amount = shipment ? (isPartial && allocated != null ? allocated : totalCharge) : allocated;
-  const originLocation = shipment ? getOriginLocation(shipment) : null;
-  const destLocation = shipment ? getDestinationLocation(shipment) : null;
-  const routeWithheld = shipment != null && shipment.moves === null;
-
   return (
     <div className="flex h-full flex-col">
-      <div className="shrink-0 space-y-3 border-b px-4 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            {shipmentId ? (
-              <Link
-                to={`/shipment-management/shipments?item=${shipmentId}`}
-                className="text-lg font-semibold hover:underline"
-              >
-                {proNumber}
-              </Link>
-            ) : (
-              <span className="text-lg font-semibold">{proNumber}</span>
-            )}
-            <PlainBillingQueueStatusBadge status={item.status} />
-          </div>
-          <div className="flex items-center gap-2">
-            {item.status === "InReview" && item.reviewStartedAt && (
-              <ReviewTimer startedAt={item.reviewStartedAt} />
-            )}
-          </div>
-        </div>
-
-        {shipment || amount ? (
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className={KPI_VALUE_LG_CLASS}>{formatCurrency(amount ?? 0)}</span>
-            {isPartial ? (
-              <span className="text-muted-foreground text-xs tabular-nums">
-                {t("of {0} shipment total", formatCurrency(totalCharge))}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
-          {item.number ? <MetadataCell label={t("Queue #")} value={item.number} /> : null}
-          <MetadataCell label={t("Bill To")} value={payerName} />
-          {onBehalfOf ? <MetadataCell label={t("On behalf of")} value={onBehalfOf} /> : null}
-          {shipment?.bol ? <MetadataCell label={t("BOL")} value={shipment.bol} /> : null}
-          {item.assignedBiller ? (
-            <MetadataCell label={t("Assigned biller")} value={item.assignedBiller.name} />
-          ) : null}
-          {originLocation && destLocation ? (
-            <MetadataCell
-              label={t("Route")}
-              value={`${originLocation.city}, ${originLocation.state?.abbreviation} → ${destLocation.city}, ${destLocation.state?.abbreviation}`}
-            />
-          ) : routeWithheld ? (
-            <MetadataCell label={t("Route")} value={<WithheldValue kind="shipment" />} />
-          ) : null}
-        </div>
+      {/* The record arrives in a staggered reveal, in place of its skeleton or the item
+          before it: the header, then what the biller must settle, then the tabs. Keyed by
+          item so a refetch of the same item stays still; reduced motion settles it at once. */}
+      <div key={item.id} className="animate-reveal" data-testid="billing-queue-detail-enter">
+        <DetailHeader item={item} scrolled={scrolled} />
       </div>
+      <ScrollArea maskVariant="card" className="min-h-0 flex-1" viewportRef={scrollRef}>
+        <div className="flex flex-col gap-5.5 px-5 pt-1 pb-6">
+          <div
+            key={item.id}
+            className="animate-reveal flex flex-col gap-5.5 [animation-delay:70ms]"
+          >
+            <ItemNotices item={item} />
+            <BillingQueueReviewChecks
+              item={item}
+              attention={reviewCalls}
+              onDocumentSelect={onDocumentSelect}
+            />
+          </div>
+          <div key={`${item.id}-tabs`} className="animate-reveal [animation-delay:140ms]">
+            <DetailTabs
+              item={item}
+              tab={tab}
+              onTabChange={setTab}
+              selectedDocumentId={selectedDocumentId ?? null}
+              onDocumentSelect={onDocumentSelect}
+            />
+          </div>
+        </div>
+      </ScrollArea>
       <BillingQueueActionBar
         item={item}
-        onAssignBiller={handleAssignBiller}
+        onAssignBiller={() => setAssignDialogOpen(true)}
         onAutoAdvance={onAutoAdvance}
+        onShowReview={() => setReviewCalls((calls) => calls + 1)}
       />
-      {shipment?.customer?.billingProfile?.billingNotes && (
-        <div className="p-2">
-          <Alert variant="info">
-            <AlertTriangleIcon className="size-4" />
-            <AlertTitle>{t("Billing notes")}</AlertTitle>
-            <AlertDescription>{shipment.customer.billingProfile.billingNotes}</AlertDescription>
-          </Alert>
-        </div>
-      )}
-      {item.exceptionReasonCode && (
-        <div className="shrink-0 px-4 pt-2">
-          <Alert variant="destructive">
-            <AlertTriangleIcon className="size-4" />
-            <AlertTitle>
-              {exceptionReasonLabels[item.exceptionReasonCode as ExceptionReasonCode] ??
-                item.exceptionReasonCode}
-            </AlertTitle>
-            {item.exceptionNotes && <AlertDescription>{item.exceptionNotes}</AlertDescription>}
-          </Alert>
-        </div>
-      )}
-      <BillingQueueReviewChecks item={item} />
-      <BillingQueueDetentionHolds holds={item.detentionHolds} />
-      <BillingQueueRatingReviewHold hold={item.ratingReviewHold} />
-      {item.isAdjustmentOrigin ? (
-        <AdjustmentOriginBanner
-          rebillStrategy={item.rebillStrategy}
-          requiresReplacementReview={item.requiresReplacementReview}
-          rerateVariancePercent={item.rerateVariancePercent}
-          sourceInvoiceId={item.sourceInvoiceId}
-          sourceCreditMemoInvoiceId={item.sourceCreditMemoInvoiceId}
-          sourceInvoiceAdjustmentId={item.sourceInvoiceAdjustmentId}
-          correctionGroupId={item.correctionGroupId}
-        />
-      ) : null}
-      <Tabs defaultValue="charges" className="flex min-h-0 flex-1 flex-col">
-        <TabsList variant="underline" className="border-border w-full border-b">
-          <TabsTrigger value="charges">{t("Charges")}</TabsTrigger>
-          {shipmentId ? (
-            <>
-              <TabsTrigger value="documents">{t("Documents")}</TabsTrigger>
-              <TabsTrigger value="comments">{t("Comments")}</TabsTrigger>
-            </>
-          ) : null}
-          <TabsTrigger value="activity">{t("Activity")}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
-          <ScrollArea className="h-full">
-            <BillingQueueChargesTab item={item} />
-          </ScrollArea>
-        </TabsContent>
-        {shipmentId ? (
-          <>
-            <TabsContent value="documents" className="mt-0 min-h-0 flex-1">
-              <BillingQueueDocumentsTab
-                shipmentId={shipmentId}
-                selectedDocumentId={selectedDocumentId ?? null}
-                onDocumentSelect={onDocumentSelect}
-                isEditable={item.status === "InReview"}
-              />
-            </TabsContent>
-            <TabsContent value="comments" className="mt-0 min-h-0 flex-1">
-              <Suspense fallback={<CommentsTabSkeleton />}>
-                <ShipmentCommentsTab shipmentId={shipmentId} />
-              </Suspense>
-            </TabsContent>
-          </>
-        ) : null}
-        <TabsContent value="activity" className="mt-0 min-h-0 flex-1">
-          <ScrollArea className="h-full">
-            <div className="px-4">
-              <AuditTab resourceId={shipmentId ?? item.id} />
-            </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
       {assignDialogOpen && (
         <BillingQueueAssignDialog
           open={assignDialogOpen}
@@ -234,141 +134,362 @@ export default function BillingQueueDetailPane({
   );
 }
 
-function MetadataCell({ label, value }: { label: string; value: ReactNode }) {
+/**
+ * The PRO, its status and route, the amount this payer owes, when it delivered, and
+ * margin. Its bottom edge shows once the item's content scrolls under it.
+ */
+function DetailHeader({ item, scrolled }: { item: BillingQueueItem; scrolled: boolean }) {
+  const t = useT();
+  // The PRO is shown either way; only someone who can read shipments is offered its page.
+  const canReadShipment = useCanReadKind("shipment");
+  const now = useNow("minute");
+  const shipment = item.shipment;
+  const proNumber = shipment?.proNumber ?? billingQueueItemLabel(item);
+  const totalCharge = Number(shipment?.totalChargeAmount ?? 0);
+  const allocated = item.allocatedTotalAmount != null ? Number(item.allocatedTotalAmount) : null;
+  const isPartial =
+    shipment != null && allocated != null && Math.abs(allocated - totalCharge) >= 0.005;
+  const amount = shipment ? (isPartial && allocated != null ? allocated : totalCharge) : allocated;
+  const origin = shipment ? getOriginLocation(shipment) : null;
+  const destination = shipment ? getDestinationLocation(shipment) : null;
+  const routeWithheld = shipment != null && shipment.moves === null;
+  const payerName = item.billToCustomer?.name ?? shipment?.customer?.name;
+  const onBehalfOf =
+    item.billToCustomerId && shipment?.customerId && item.billToCustomerId !== shipment.customerId
+      ? shipment.customer?.name
+      : null;
+  const deliveredAt = shipment?.actualDeliveryDate ?? null;
+
   return (
-    <div>
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className="text-sm font-medium">{value}</p>
+    <div
+      className="relative flex shrink-0 flex-col gap-3 px-5 pt-4 pb-3"
+      data-scrolled={scrolled || undefined}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "bg-border pointer-events-none absolute inset-x-0 bottom-0 h-px transition-opacity duration-300 ease-settle",
+          scrolled ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h2 className="text-foreground font-mono text-2xl font-semibold tracking-tight">
+          {proNumber}
+        </h2>
+        <PlainBillingQueueStatusBadge status={item.status} />
+        <span className="text-foreground-muted text-sm">
+          {origin && destination ? (
+            t(
+              "{0}, {1} → {2}, {3}",
+              origin.city,
+              origin.state?.abbreviation ?? "",
+              destination.city,
+              destination.state?.abbreviation ?? "",
+            )
+          ) : routeWithheld ? (
+            <WithheldValue kind="shipment" />
+          ) : (
+            payerName
+          )}
+        </span>
+        <span className="flex-1" />
+        {item.shipmentId && canReadShipment ? (
+          <Link
+            to={recordPath("shipment", item.shipmentId)}
+            className="text-brand inline-flex items-center gap-1 text-sm font-medium hover:underline"
+          >
+            {t("Open shipment")}
+            <LinkExternal01Icon className="size-3" />
+          </Link>
+        ) : null}
+      </div>
+      <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+        <span className="text-foreground text-3xl font-semibold tracking-tight tabular-nums">
+          {formatCurrency(amount ?? 0)}
+        </span>
+        {isPartial ? (
+          <span className="text-foreground-muted text-sm tabular-nums">
+            {t("of {0} shipment total", formatCurrency(totalCharge))}
+          </span>
+        ) : null}
+        <span className="text-foreground-muted text-sm">
+          {deliveredAt
+            ? t(
+                "Delivered {0} · {1} ago",
+                formatUnixInUserTimezone(deliveredAt, {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                }),
+                formatCompactAge(now - deliveredAt),
+              )
+            : onBehalfOf
+              ? t("Bills {0} on behalf of {1}", payerName ?? "", onBehalfOf)
+              : payerName}
+        </span>
+        <span className="flex-1" />
+        {item.shipmentId ? <ShipmentMargin shipmentId={item.shipmentId} /> : null}
+      </div>
     </div>
   );
 }
 
-function AdjustmentOriginBanner({
-  rebillStrategy,
-  requiresReplacementReview,
-  rerateVariancePercent,
-  sourceInvoiceId,
-  sourceCreditMemoInvoiceId,
-  sourceInvoiceAdjustmentId,
-  correctionGroupId,
+/** The shipment's estimated margin in dollars and percent, toned against its target. */
+function ShipmentMargin({ shipmentId }: { shipmentId: string }) {
+  const t = useT();
+  const { data } = useQuery(shipmentQueries.profitability(shipmentId));
+  const margin = shipmentMargin(data, t);
+  if (!margin) {
+    return null;
+  }
+
+  return (
+    <span className="text-foreground-muted inline-flex items-center gap-1.5 text-xs">
+      {t("Margin")}
+      <span
+        className={cn(
+          "font-mono",
+          margin.thin ? "text-warning-foreground" : "text-success-foreground",
+        )}
+      >
+        {margin.text}
+      </span>
+    </span>
+  );
+}
+
+/** What the biller must know before reading the charges: notes, exceptions and holds. */
+function ItemNotices({ item }: { item: BillingQueueItem }) {
+  const t = useT();
+  const billingNotes = item.shipment?.customer?.billingProfile?.billingNotes;
+
+  if (
+    !billingNotes &&
+    !item.exceptionReasonCode &&
+    item.detentionHolds.length === 0 &&
+    !item.ratingReviewHold &&
+    !item.isAdjustmentOrigin
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {billingNotes ? (
+        <Alert size="sm" variant="info">
+          <AlertTriangleIcon />
+          <AlertTitle>{t("Billing notes")}</AlertTitle>
+          <AlertDescription>{billingNotes}</AlertDescription>
+        </Alert>
+      ) : null}
+      {item.exceptionReasonCode ? (
+        <Alert size="sm" variant="destructive">
+          <AlertTriangleIcon />
+          <AlertTitle>
+            {exceptionReasonLabels[item.exceptionReasonCode as ExceptionReasonCode] ??
+              item.exceptionReasonCode}
+          </AlertTitle>
+          {item.exceptionNotes ? <AlertDescription>{item.exceptionNotes}</AlertDescription> : null}
+        </Alert>
+      ) : null}
+      <BillingQueueDetentionHolds holds={item.detentionHolds} />
+      <BillingQueueRatingReviewHold hold={item.ratingReviewHold} />
+      {item.isAdjustmentOrigin ? <AdjustmentOriginNotice item={item} /> : null}
+    </div>
+  );
+}
+
+function DetailTabs({
+  item,
+  tab,
+  onTabChange,
+  selectedDocumentId,
+  onDocumentSelect,
 }: {
-  rebillStrategy?: string | null;
-  requiresReplacementReview?: boolean;
-  rerateVariancePercent?: number | null;
-  sourceInvoiceId?: string | null;
-  sourceCreditMemoInvoiceId?: string | null;
-  sourceInvoiceAdjustmentId?: string | null;
-  correctionGroupId?: string | null;
+  item: BillingQueueItem;
+  tab: DetailTab;
+  onTabChange: (tab: DetailTab) => void;
+  selectedDocumentId: string | null;
+  onDocumentSelect: (docId: string, fileName: string) => void;
 }) {
   const t = useT();
+  const shipmentId = item.shipmentId;
+  const { save, editable } = useInvoiceDetails(item);
+  const bulk = useBulkRun();
+  const { data: documents } = useQuery({
+    ...shipmentDocumentsQuery(shipmentId ?? ""),
+    enabled: Boolean(shipmentId),
+  });
+  const chargeCount =
+    (item.shipment?.freightLines?.length || (item.shipment ? 1 : 0)) +
+    (item.shipment?.additionalCharges?.length ?? 0);
 
+  return (
+    <Tabs value={tab} onValueChange={(value) => onTabChange(value as DetailTab)}>
+      <TabsList variant="underline" className="border-border w-full justify-start gap-4.5 border-b">
+        <TabsTrigger value="charges">
+          {t("Charges")} <TabCount value={chargeCount} />
+        </TabsTrigger>
+        {shipmentId ? <TabsTrigger value="shipment">{t("Shipment")}</TabsTrigger> : null}
+        {shipmentId ? (
+          <TabsTrigger value="documents">
+            {t("Documents")} <TabCount value={documents?.length} />
+          </TabsTrigger>
+        ) : null}
+        {item.billType === "Invoice" ? (
+          <TabsTrigger value="invoice">{t("Invoice")}</TabsTrigger>
+        ) : null}
+        <TabsTrigger value="activity">{t("Activity")}</TabsTrigger>
+      </TabsList>
+      <TabsContent value="charges" className="mt-4">
+        <BillingQueueChargesTab item={item} />
+      </TabsContent>
+      {shipmentId ? (
+        <TabsContent value="shipment" className="mt-4">
+          <LazyComponent fallback={<BillingQueueShipmentTabSkeleton />}>
+            <BillingQueueShipmentTab item={item} />
+          </LazyComponent>
+        </TabsContent>
+      ) : null}
+      {shipmentId ? (
+        <TabsContent value="documents" className="mt-4">
+          <BillingQueueDocumentsTab
+            shipmentId={shipmentId}
+            selectedDocumentId={selectedDocumentId}
+            onDocumentSelect={onDocumentSelect}
+            isEditable={item.status === "InReview"}
+            customerName={item.billToCustomer?.name ?? item.shipment?.customer?.name}
+            onRequestFromDriver={() => void bulk.start("RequestPaperwork", [item.id])}
+            packet={
+              item.billType === "Invoice"
+                ? {
+                    documentIds: item.packetDocumentIds,
+                    editable,
+                    itemId: item.id,
+                    onChange: (packetDocumentIds) => void save({ packetDocumentIds }),
+                  }
+                : undefined
+            }
+          />
+        </TabsContent>
+      ) : null}
+      {item.billType === "Invoice" ? (
+        <TabsContent value="invoice" className="mt-4">
+          <BillingQueueInvoiceTab key={item.id} item={item} />
+        </TabsContent>
+      ) : null}
+      <TabsContent value="activity" className="mt-4 flex flex-col gap-4">
+        {shipmentId ? (
+          <div className="border-border h-96 overflow-hidden rounded-md border">
+            <Suspense fallback={<CommentsTabSkeleton />}>
+              <ShipmentCommentsTab shipmentId={shipmentId} />
+            </Suspense>
+          </div>
+        ) : null}
+        <AuditTab resourceId={shipmentId ?? item.id} />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+function TabCount({ value }: { value: number | undefined }) {
+  if (value == null) return null;
+  return <span className="text-foreground-subtle font-mono">{value}</span>;
+}
+
+function AdjustmentOriginNotice({ item }: { item: BillingQueueItem }) {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="mx-4 mt-2 shrink-0 overflow-hidden rounded-lg border border-info-border bg-info-subtle">
+    <div className="border-info-border bg-info-subtle overflow-hidden rounded-md border">
       <button
         type="button"
         className="flex w-full items-center gap-2.5 px-3 py-2 text-left"
         onClick={() => setExpanded((prev) => !prev)}
       >
-        <RefreshCw02Icon className="size-3.5 shrink-0 text-info-foreground" />
+        <RefreshCw02Icon className="text-info-foreground size-3.5 shrink-0" />
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="text-xs font-medium text-info-foreground">
+          <span className="text-info-foreground text-xs font-medium">
             {t("Adjustment-origin rebill")}
           </span>
-          {rebillStrategy ? (
-            <span className="text-2xs rounded-md bg-info-subtle px-1.5 py-0.5 font-medium text-info-foreground">
-              {rebillStrategy}
+          {item.rebillStrategy ? (
+            <span className="bg-info-subtle text-info-foreground rounded-md px-1.5 py-0.5 text-2xs font-medium">
+              {item.rebillStrategy}
             </span>
           ) : null}
-          {requiresReplacementReview ? (
-            <span className="text-2xs rounded-md bg-warning-subtle px-1.5 py-0.5 font-medium text-warning-foreground">
+          {item.requiresReplacementReview ? (
+            <span className="bg-warning-subtle text-warning-foreground rounded-md px-1.5 py-0.5 text-2xs font-medium">
               {t("Review required")}
             </span>
           ) : null}
         </div>
         <div className="flex items-center gap-1.5">
-          {sourceInvoiceId ? (
-            <Link
-              to={`/billing/invoices?item=${sourceInvoiceId}`}
-              className="text-2xs font-medium text-info-foreground hover:underline dark:text-info-foreground"
+          {item.sourceInvoiceId ? (
+            <LinkedRecordLink
+              kind="invoice"
+              id={item.sourceInvoiceId}
+              className="text-info-foreground text-2xs font-medium hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
               {t("Original")}
-            </Link>
+            </LinkedRecordLink>
           ) : null}
-          {sourceInvoiceId && sourceCreditMemoInvoiceId ? (
-            <span className="text-info-foreground/30">/</span>
-          ) : null}
-          {sourceCreditMemoInvoiceId ? (
-            <Link
-              to={`/billing/invoices?item=${sourceCreditMemoInvoiceId}`}
-              className="text-2xs font-medium text-info-foreground hover:underline dark:text-info-foreground"
+          {item.sourceCreditMemoInvoiceId ? (
+            <LinkedRecordLink
+              kind="invoice"
+              id={item.sourceCreditMemoInvoiceId}
+              className="text-info-foreground text-2xs font-medium hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
               {t("Credit memo")}
-            </Link>
+            </LinkedRecordLink>
           ) : null}
           <ChevronDownIcon
-            className={`size-3.5 text-info-foreground/50 transition-transform duration-150 dark:text-info-foreground/50 ${expanded ? "rotate-180" : ""}`}
+            className={cn(
+              "text-info-foreground/50 size-3.5 transition-transform duration-150",
+              expanded && "rotate-180",
+            )}
           />
         </div>
       </button>
       {expanded ? (
-        <div className="border-t border-info-border px-3 py-2">
-          <div className="text-2xs flex flex-wrap gap-x-5 gap-y-1">
-            {sourceInvoiceAdjustmentId ? (
-              <span className="text-muted-foreground">
-                {t("Adjustment")}{" "}
-                <span className="text-foreground font-medium">
-                  {sourceInvoiceAdjustmentId.slice(0, 12)}
-                </span>
+        <div className="border-info-border text-2xs flex flex-wrap gap-x-5 gap-y-1 border-t px-3 py-2">
+          {item.sourceInvoiceAdjustmentId ? (
+            <span className="text-muted-foreground">
+              {t("Adjustment")}{" "}
+              <span className="text-foreground font-medium">
+                {item.sourceInvoiceAdjustmentId.slice(0, 12)}
               </span>
-            ) : null}
-            {correctionGroupId ? (
-              <span className="text-muted-foreground">
-                {t("Group")}{" "}
-                <span className="text-foreground font-medium">
-                  {correctionGroupId.slice(0, 12)}
-                </span>
+            </span>
+          ) : null}
+          {item.correctionGroupId ? (
+            <span className="text-muted-foreground">
+              {t("Group")}{" "}
+              <span className="text-foreground font-medium">
+                {item.correctionGroupId.slice(0, 12)}
               </span>
-            ) : null}
-            {rerateVariancePercent != null ? (
-              <span className="text-muted-foreground">
-                {t("Rerate variance")}{" "}
-                <span className="text-foreground font-medium">
-                  {Number(rerateVariancePercent).toFixed(2)}%
-                </span>
+            </span>
+          ) : null}
+          {item.rerateVariancePercent != null ? (
+            <span className="text-muted-foreground">
+              {t("Rerate variance")}{" "}
+              <span className="text-foreground font-medium">
+                {Number(item.rerateVariancePercent).toFixed(2)}%
               </span>
-            ) : null}
-            {requiresReplacementReview ? (
-              <span className="text-muted-foreground">
-                {t("Replacement review")}{" "}
-                <span className="text-foreground font-medium">
-                  {t("Required before invoice creation")}
-                </span>
+            </span>
+          ) : null}
+          {item.requiresReplacementReview ? (
+            <span className="text-muted-foreground">
+              {t("Replacement review")}{" "}
+              <span className="text-foreground font-medium">
+                {t("Required before invoice creation")}
               </span>
-            ) : null}
-          </div>
+            </span>
+          ) : null}
         </div>
       ) : null}
     </div>
-  );
-}
-
-function ReviewTimer({ startedAt }: { startedAt: number }) {
-  const elapsed = useNow("second") - startedAt;
-
-  const hours = Math.floor(elapsed / 3600);
-  const minutes = Math.floor((elapsed % 3600) / 60);
-  const seconds = elapsed % 60;
-
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  return (
-    <span className="text-muted-foreground inline-flex items-center gap-1 tabular-nums">
-      <ClockStopwatchIcon className="size-3" />
-      {pad(hours)}:{pad(minutes)}:{pad(seconds)}
-    </span>
   );
 }

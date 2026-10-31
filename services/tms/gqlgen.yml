@@ -1714,6 +1714,12 @@ models:
   BillingQueueHoldReasonCode:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.HoldReasonCode
+  BillingQueueLane:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.Lane
+  BillingQueueAgentVerdict:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.AgentVerdict
   InvoiceStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.Status

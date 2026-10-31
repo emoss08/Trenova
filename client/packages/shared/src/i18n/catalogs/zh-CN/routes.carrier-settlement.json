@@ -24,5 +24,6 @@
   "Traced back to the accrued cost event": "可回溯至已计提的成本事件",
   "Voiding releases cost events back to the accrual pool and reverses any GL postings.": "作废会将成本事件释放回计提池，并冲销任何总账分录。",
   "confirmed by {0}": "由 {0} 确认",
-  "cost event": "成本事件"
+  "cost event": "成本事件",
+  "rev {0}": "版本 {0}"
 }

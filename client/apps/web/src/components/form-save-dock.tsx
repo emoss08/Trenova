@@ -3,18 +3,18 @@ import {
   ActionDock,
   type ActionDockPosition,
 } from "@/components/action-dock";
+import { useChangedFieldNames } from "@/hooks/use-dirty-fields";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useFormFieldRegistry } from "@trenova/shared/lib/form-field-registry";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { useCallback, useRef, type Ref } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
 import { UnsavedChanges, type ChangeFields } from "./form-changes";
-import { useFormFieldRegistry } from "@trenova/shared/lib/form-field-registry";
-import { useChangedFieldNames } from "@/hooks/use-dirty-fields";
 
 const NO_CHANGE_FIELDS: ChangeFields = {};
 
@@ -109,7 +109,7 @@ function SaveDockContent<T extends string = string>({
       ) : (
         <Button
           type="submit"
-          variant="default"
+          variant="ghostInvert"
           className="pr-2"
           disabled={isSubmitting}
           form={formId}

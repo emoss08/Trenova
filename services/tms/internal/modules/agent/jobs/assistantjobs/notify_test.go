@@ -165,16 +165,12 @@ func TestNotifyUnseenTurn_TellsThePersonWhoAskedWhereTheirReplyIs(t *testing.T) 
 		"the conversation is read as the person's own")
 }
 
-/*
-A quick question from the palette is answered in the palette, and a page's
-conversation on its page. Neither is announced, and a palette question is
-not turned into a Desk conversation because nobody read its answer.
-*/
+// A page's conversation is answered on its page, so its replies are not
+// announced anywhere else.
 func TestNotifyUnseenTurn_LeavesAReplyWhereItWasAsked(t *testing.T) {
 	t.Parallel()
 
 	for _, origin := range []conversation.ThreadOrigin{
-		conversation.ThreadOriginAsk,
 		conversation.ThreadOriginImport,
 		conversation.ThreadOriginFormula,
 	} {

@@ -65,6 +65,20 @@ type FindingInput struct {
 	CreditHold       bool
 	CreditHoldReason string
 	PayerShareError  string
+	UnbilledReceipts []*UnbilledReceipt
+	MissingPONumber  bool
+}
+
+// UnbilledReceipt is a receipt on the shipment that names a charge to bill
+// and an amount, where the shipment bills no such charge. ReadByNova is set
+// when Nova read the charge and amount off the receipt, not a person.
+type UnbilledReceipt struct {
+	DocumentID          pulid.ID
+	Reference           string
+	AccessorialChargeID pulid.ID
+	Label               string
+	Amount              decimal.Decimal
+	ReadByNova          bool
 }
 
 // Findings is every issue the item has right now, unsaved. The same input
@@ -113,6 +127,17 @@ func Findings(in *FindingInput) []*billingqueue.Issue {
 		})
 	}
 
+	out = append(out, unbilledFindings(in.UnbilledReceipts)...)
+	if in.MissingPONumber {
+		out = append(out, &billingqueue.Issue{
+			CheckKey: billingqueue.CheckTerms,
+			Code:     billingqueue.IssuePONumberMissing,
+			Summary:  customer + " needs a PO number on the invoice",
+			Reasoning: customer + " requires its purchase order on every invoice. " +
+				"Enter it on the Invoice tab and this check clears.",
+		})
+	}
+
 	out = append(out, detentionFindings(in.Detention)...)
 	out = append(out, chargeFindings(in.Charges, customer, in.Detention)...)
 	out = append(out, podFindings(in.POD, customer)...)
@@ -152,7 +177,9 @@ func Findings(in *FindingInput) []*billingqueue.Issue {
 	}
 
 	for _, issue := range out {
-		issue.Source = billingqueue.IssueSourceDeterministic
+		if issue.Source == "" {
+			issue.Source = billingqueue.IssueSourceDeterministic
+		}
 		if issue.Options == nil {
 			issue.Options = []billingqueue.IssueOption{}
 		}
@@ -417,4 +444,56 @@ func capitalize(s string) string {
 	}
 
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+func unbilledFindings(receipts []*UnbilledReceipt) []*billingqueue.Issue {
+	out := make([]*billingqueue.Issue, 0, len(receipts))
+	for _, receipt := range receipts {
+		label := receipt.Label
+		if label == "" {
+			label = "A charge"
+		}
+		reasoning := "A receipt for " + FormatMoney(receipt.Amount) +
+			" is on the shipment, but no " + strings.ToLower(label) + " charge bills it."
+		if receipt.Reference != "" {
+			reasoning = "Receipt " + receipt.Reference + " for " + FormatMoney(receipt.Amount) +
+				" is on the shipment, but no " + strings.ToLower(label) + " charge bills it."
+		}
+		amount := decimal.NewNullDecimal(receipt.Amount)
+		source := billingqueue.IssueSourceDeterministic
+		if receipt.ReadByNova {
+			source = billingqueue.IssueSourceAgent
+		}
+		out = append(out, &billingqueue.Issue{
+			Source:     source,
+			CheckKey:   billingqueue.CheckCharges,
+			Code:       billingqueue.IssueUnbilledAccessorial,
+			SubjectKey: receipt.DocumentID.String(),
+			Summary:    label + " " + FormatMoney(receipt.Amount) + " isn't billed",
+			Reasoning:  reasoning,
+			Options: []billingqueue.IssueOption{
+				{
+					Key:    "add",
+					Label:  "Bill it · " + FormatMoney(receipt.Amount),
+					Amount: amount,
+					Done:   label + " billed at " + FormatMoney(receipt.Amount),
+					Effect: billingqueue.IssueEffect{
+						Kind:                billingqueue.EffectAdd,
+						AccessorialChargeID: receipt.AccessorialChargeID,
+						Label:               label,
+						Amount:              amount,
+						Basis:               "From the receipt",
+					},
+				},
+				{
+					Key:    "skip",
+					Label:  "Not billable",
+					Done:   label + " marked not billable",
+					Effect: billingqueue.IssueEffect{Kind: billingqueue.EffectAccept},
+				},
+			},
+		})
+	}
+
+	return out
 }

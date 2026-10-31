@@ -25,16 +25,16 @@ func (s *Service) access() *agentaccess.Access {
 	return &agentaccess.Access{
 		Permissions: s.permissions,
 		Definitions: s.definitions,
-		Queries:     s.queries,
 	}
 }
 
 func (s *Service) limits() *turnlimits.Limits {
 	return &turnlimits.Limits{
-		Budgets:       s.budgets,
-		Conversations: s.conversations,
-		AgentControls: s.agentControls,
-		Quota:         s.quota,
+		Budgets:          s.budgets,
+		Conversations:    s.conversations,
+		AgentControls:    s.agentControls,
+		Quota:            s.quota,
+		PaletteQuestions: s.paletteQuestions,
 	}
 }
 

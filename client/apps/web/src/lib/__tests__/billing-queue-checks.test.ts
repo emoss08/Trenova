@@ -1,6 +1,12 @@
 import type { BillingCheck, BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import { describe, expect, it } from "vitest";
-import { checkDetail, checkTitle, issueOf, paymentTermLabel } from "../billing-queue-checks";
+import {
+  checkDetail,
+  checkTitle,
+  isSuggestion,
+  openIssuesOf,
+  paymentTermLabel,
+} from "../billing-queue-checks";
 
 const t = ((text: string, ...args: unknown[]) =>
   text.replace(/\{(\d)\}/gu, (_m, at) => String(args[Number(at)]))) as never;
@@ -46,14 +52,65 @@ describe("the five checks", () => {
     expect(checkDetail(check as BillingCheck, t)).toBe("Lumper fee kept");
   });
 
-  it("finds the issue a failing check waits on", () => {
-    const issue = { id: "bqis_1", summary: "POD isn't signed", options: [] };
-    const withIssue = item({
-      review: { ...item().review!, issues: [issue as never] },
+  it("finds every open issue a failing check waits on, oldest first", () => {
+    const fuel = { id: "bqis_1", checkKey: "charges", summary: "Fuel isn't on the rate con" };
+    const stopOff = {
+      id: "bqis_2",
+      checkKey: "charges",
+      summary: "Stop-off isn't on the rate con",
+    };
+    const kept = { id: "bqis_3", checkKey: "charges", summary: "Lumper", resolutionKey: "keep" };
+    const pod = { id: "bqis_4", checkKey: "pod", summary: "POD isn't signed" };
+    const flagged = item({
+      review: { ...item().review!, issues: [fuel, kept, pod, stopOff] as never },
     });
-    const check = { key: "pod", state: "warn", code: "issue", issueId: "bqis_1" } as BillingCheck;
-    expect(issueOf(withIssue, check)?.summary).toBe("POD isn't signed");
-    expect(issueOf(withIssue, { ...check, issueId: null })).toBeNull();
+    const check = {
+      key: "charges",
+      state: "warn",
+      code: "issue",
+      issueId: "bqis_1",
+    } as BillingCheck;
+
+    expect(openIssuesOf(flagged, check).map((issue) => issue.id)).toEqual(["bqis_1", "bqis_2"]);
+  });
+
+  it("leaves a charge the shipment does not bill to the charges, off the check", () => {
+    const fuel = {
+      id: "bqis_1",
+      checkKey: "charges",
+      code: "AccessorialNotOnRateCon",
+      summary: "Fuel isn't on the rate con",
+    };
+    const lumper = {
+      id: "bqis_2",
+      checkKey: "charges",
+      code: "UnbilledAccessorial",
+      summary: "Lumper $185.00 isn't billed",
+    };
+    const flagged = item({ review: { ...item().review!, issues: [fuel, lumper] as never } });
+    const check = {
+      key: "charges",
+      state: "warn",
+      code: "issue",
+      issueId: "bqis_1",
+    } as BillingCheck;
+
+    expect(openIssuesOf(flagged, check).map((issue) => issue.id)).toEqual(["bqis_1"]);
+    expect(isSuggestion(lumper as never)).toBe(true);
+    expect(isSuggestion(fuel as never)).toBe(false);
+  });
+
+  it("finds nothing to settle on a check that is clear, though it names what settled it", () => {
+    const kept = { id: "bqis_3", checkKey: "charges", summary: "Lumper", resolutionKey: "keep" };
+    const settled = item({ review: { ...item().review!, issues: [kept] as never } });
+    const check = {
+      key: "charges",
+      state: "ok",
+      code: "resolved",
+      issueId: "bqis_3",
+    } as BillingCheck;
+
+    expect(openIssuesOf(settled, check)).toEqual([]);
   });
 
   it("writes payment terms the way people say them", () => {

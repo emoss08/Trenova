@@ -35,7 +35,7 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 		{ID: "toolu_unique", Name: "equipment_get_tractor"},
 	}}
 
-	turnhistory.DistinctCallIDs(completion, used, NewCallID)
+	completion.DistinctCallIDs(used, NewCallID)
 
 	ids := make(map[string]struct{}, len(completion.ToolCalls))
 	for _, call := range completion.ToolCalls {
@@ -64,7 +64,7 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 		{ID: "call_1", SynthesizedID: true, Name: "customer_get"},
 		{ID: "toolu_unique", Name: "worker_get"},
 	}}
-	turnhistory.DistinctCallIDs(current, map[string]struct{}{}, func() string {
+	current.DistinctCallIDs(map[string]struct{}{}, func() string {
 		minted++
 		return NewCallID()
 	})
@@ -78,7 +78,7 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	plain := &llmports.ChatCompletionResult{ToolCalls: []llmports.ToolCall{
 		{ID: "toolu_1", Name: "worker_get"},
 	}}
-	turnhistory.DistinctCallIDs(plain, map[string]struct{}{}, func() string {
+	plain.DistinctCallIDs(map[string]struct{}{}, func() string {
 		t.Fatal("a provider's own unique id is never replaced")
 		return ""
 	})

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -25,7 +24,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const studioTask = aitask.TaskAssistantChat
+const studioTask = aitask.TaskFormulaAssistant
 
 var errNoProvider = errors.New("no completion service is wired")
 
@@ -75,7 +74,7 @@ type Params struct {
 	Reviews      *formulatemplatereviewservice.Service
 	Permissions  permissionports.PermissionEngine
 	SystemAgents agentdefinitionports.SystemAgentProvisioner `optional:"true"`
-	Completion   llmports.StructuredCompleter                `optional:"true"`
+	Nova         llmports.TaskRunner                         `optional:"true"`
 }
 
 type Service struct {
@@ -85,7 +84,7 @@ type Service struct {
 	reviews      formulaReviews
 	access       agentAccess
 	systemAgents agentdefinitionports.SystemAgentProvisioner
-	completion   llmports.StructuredCompleter
+	nova         llmports.TaskRunner
 }
 
 var _ formulastudioports.FormulaStudioAssist = (*Service)(nil)
@@ -98,7 +97,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		reviews:      p.Reviews,
 		access:       p.Permissions,
 		systemAgents: p.SystemAgents,
-		completion:   p.Completion,
+		nova:         p.Nova,
 	}
 }
 
@@ -169,38 +168,38 @@ type completion struct {
 }
 
 func (s *Service) complete(ctx context.Context, call *completion, out any) error {
-	if s.completion == nil {
+	if s.nova == nil {
 		return errNoProvider
 	}
 
 	version := call.definition.Version
-	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
-		TenantInfo:          call.tenant,
-		Task:                studioTask,
-		System:              call.system,
+	result, err := s.nova.Run(ctx, &llmports.NovaTask{
+		Name:                studioTask,
+		Feature:             call.feature,
+		Instructions:        call.system,
 		Context:             llmports.DelimitedContext{Sections: call.sections},
-		OutputSchema:        call.schema,
+		Schema:              call.schema,
 		SchemaName:          call.schemaName,
 		MaxTokens:           call.maxTokens,
+		TenantInfo:          call.tenant,
 		PreferredProviderID: call.definition.PreferredProviderID,
-		Attribution: aiusageports.AIUsageAttribution{
+		Attribution: &aiusageports.AIUsageAttribution{
 			UserID:            call.tenant.UserID,
 			AgentDefinitionID: call.definition.ID,
 			Feature:           call.feature,
 			DefinitionVersion: &version,
 		},
-	})
-	if err != nil {
-		return err
-	}
-
-	if err = sonic.UnmarshalString(result.Text, out); err != nil {
+	}, out)
+	if errors.Is(err, llmports.ErrOutsideSchema) {
 		s.l.Warn("the formula assistant's answer could not be read",
 			zap.String("schema", call.schemaName),
 			zap.String("model", result.ModelIdentifier),
 			zap.Error(err),
 		)
 		return fmt.Errorf("%w: %w", llmports.ErrModelSchemaValidation, err)
+	}
+	if err != nil {
+		return err
 	}
 
 	return nil

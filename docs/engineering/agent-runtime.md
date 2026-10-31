@@ -1093,8 +1093,7 @@ restored in workflow code is the same profile it was opened as.
 Picking an agent is a soft default. A conversation turn reaches the tools the
 person's other enabled chat agents hold (`beyondFor`: `OtherUsableAgents`, then
 each one's `heldTools`), less the core tools, its own, and anything its own
-definition switched off. The palette (inline) and a turn without a thread reach
-nothing beyond. Each reached tool carries a ceiling: the most permissive static
+definition switched off. A turn without a thread reaches nothing beyond. Each reached tool carries a ceiling: the most permissive static
 tier any holding agent would run it at (`agenttoolpolicy.StaticTier` over that
 agent's ceiling and tool tiers; a read is `AutoExecute`). So a Dispatch
 conversation asked to "bill it and email the customer" finds the billing tools
@@ -1252,21 +1251,11 @@ the turn as Failed.
 
 ### Quick questions from the palette
 
-`POST /ask/` is the command palette's, and its turns carry the `Palette` surface whatever the
-client sends: the prompt says the question came from the palette, is about what it names
-anywhere in Trenova, and treats the page under the palette as where the person was, querying
-its table only for a question that points at those rows.
-
-Only the organization's general assistant (`TemplateGeneralAssistant`) answers one
-(`assistantthreads.Service.askAgent`). When it is off, or not open to the person, the palette says so;
-no other chat agent stands in, because each is built for its own desk and answered every
-question from that desk's records (the Agent Activity Desk, first by name, answered every
-question from agent runs). On a quick question's conversation (`ThreadOrigin.ReadsEverything`)
-the agent holds every query tool besides the ones it was configured with
-(`Definition.HoldingReads`): the person's permissions narrow them as they narrow any tool,
-`find_tools` discloses them on demand, a tool switched off on the agent stays off, extension
-tools keep their own grant, and no write is added. The conversation keeps them after Continue
-in Desk.
+A question typed into the command palette is not a Desk turn: it is a Nova harness task
+(`paletteanswer`, see [nova-harness](nova-harness.md#the-command-palette)) with three read
+tools, streamed on the same Workflow Stream a turn uses. "Continue in Desk" starts a Desk
+conversation with the general assistant (`assistantthreads.Service.StartGeneralThread`) that
+opens with the question (the records Nova read ride on it as mentions) and its answer.
 
 The palette searches records for the question's search words (`questionSearchText`: what is
 left once "tell me about", "what's going on with" and the like are taken away, since the
@@ -1275,27 +1264,10 @@ under the Nova row. A question carries the ones it names outright (`recordsNamed
 number or name written in the question as the record carries it) as mentions, found inside
 `useAsk`'s start under the withdraw signal; a search that fails asks without them.
 
-A quick question's answer is read in the palette and nowhere else
-(`ThreadOrigin.AnsweredInPlace`, which the import and formula pages share): it is not announced
-when it ends unread, its conversation is not kept for it, and it is not listed among the
-person's live replies. So closing the palette or asking something else takes the question back,
-as Stop does: a question on its way is withdrawn and a turn under way is stopped. Continue in
-Desk keeps the conversation (its origin becomes `Desk`), and from then on its turn runs on
-whether the palette is open or not, and is announced like any other.
-
-Nor does anything sit beside a palette answer, so its turn runs **inline**
-(`ThreadOrigin.AnswersInline`, `RunRequest.Inline`, carried by `TurnPlan.Inline` into the turn
-workflow and on `RunContext.Inline` to the activities and to any delegate): no tool result is kept as an artifact (`agentflow`'s observer
-is skipped), `publish_artifact` and `request_decision` are not offered, the prompt has no
-Artifacts section, and its Output section tells the model to write the rows into the reply as a
-markdown table — every row up to about 30, past that the count and the rows that matter most —
-and never to point to an artifact. A run recorded before the field existed reads it as false and
-keeps its artifacts. Once the question is kept for the Desk its turns have artifacts again.
-
 ### The turn stream
 
 A run's events go to a **Workflow Stream** its own workflow hosts
-(`agentflow.HostStream`, on `go.temporal.io/sdk/contrib/workflowstreams`). The
+(`runstream.Host`, on `go.temporal.io/sdk/contrib/workflowstreams`). The
 model activity publishes the reply as it streams, batched every 100 ms; the
 workflow publishes every other event. The first piece of each model call's
 reply (text or thinking) is flushed at once rather than waiting for the batch
@@ -1351,8 +1323,7 @@ person who asked (`kind: assistant_reply_ready`, with `threadId`, `turnId`,
 `status` and a `link` to the conversation from the record-link registry). It is
 keyed on the turn, so a retry never notifies twice. A stopped turn, one started
 by `POST /threads/:id/messages/` (whose caller waits on the result), and one in
-a conversation answered in place (an unkept palette question, an import or
-formula page) never notify; the last are also left out of
+a conversation answered in place (an import or formula page) never notify; the last are also left out of
 `GET /assistant/turns/active/`.
 
 A turn starting (once its workflow is recorded) and its record closing, on
@@ -3112,7 +3083,7 @@ adding a span, a trace attribute or a link column.**
 - **Schedules.** Agent schedules are created by saves and the reconcile, not by
   the static registry; a worker's start reconciles them once.
 - **Workflow Streams is Public Preview** (`contrib/workflowstreams` v0.1.1). It
-  is used only through `agentflow.HostStream`/`OpenStream` and the
+  is used only through `runstream` (`Host`, `Open`, `Flush`) and the
   `turnstream` reader, so an upgrade is local to those.
 
 ### Workflow versioning

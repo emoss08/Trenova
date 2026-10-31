@@ -735,10 +735,10 @@ func (s *Scenario) validatePalette() error {
 	}
 	for idx := range s.Steps {
 		step := &s.Steps[idx]
-		if step.Agent != "" ||
-			(step.Surface != "" && step.Surface != agentpagecontext.SurfacePalette) {
+		if step.Agent != "" || step.Surface != "" || len(step.Attach) > 0 || step.Decide != "" {
 			return fmt.Errorf(
-				"%s step %d: every message in a palette scenario is asked from the palette",
+				"%s step %d: a palette question is asked from the palette alone, with no "+
+					"agent, surface, attachment or decision",
 				s.Name, idx+1,
 			)
 		}

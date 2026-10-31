@@ -94,3 +94,51 @@ func (c HoldReasonCode) Phrase() string {
 		return "no reason given"
 	}
 }
+
+type Lane string
+
+const (
+	LaneChecking = Lane("Checking")
+	LaneNeedsYou = Lane("NeedsYou")
+	LaneWaiting  = Lane("Waiting")
+	LaneReady    = Lane("Ready")
+	LaneHeld     = Lane("Held")
+	LaneApproved = Lane("Approved")
+	LaneClosed   = Lane("Closed")
+)
+
+func (l Lane) IsValid() bool {
+	switch l {
+	case LaneChecking, LaneNeedsYou, LaneWaiting, LaneReady, LaneHeld, LaneApproved, LaneClosed:
+		return true
+	default:
+		return false
+	}
+}
+
+func OpenLanes() []Lane {
+	return []Lane{LaneChecking, LaneNeedsYou, LaneWaiting, LaneReady, LaneHeld, LaneApproved}
+}
+
+func ReviewLanes() []Lane {
+	return []Lane{LaneChecking, LaneNeedsYou, LaneWaiting, LaneReady}
+}
+
+func HeldStatuses() []Status {
+	return []Status{StatusOnHold, StatusException, StatusSentBackToOps}
+}
+
+func ClosedStatuses() []Status {
+	return []Status{StatusPosted, StatusCanceled}
+}
+
+type AgentVerdict string
+
+const (
+	AgentVerdictAgrees  = AgentVerdict("Agrees")
+	AgentVerdictConcern = AgentVerdict("Concern")
+)
+
+func (v AgentVerdict) IsValid() bool {
+	return v == AgentVerdictAgrees || v == AgentVerdictConcern
+}

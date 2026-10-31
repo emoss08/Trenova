@@ -14,7 +14,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 import { PageSkeleton } from "./extraction-skeleton";
-import type { PageSize } from "./extraction-payload";
+import type { PageSize } from "@/lib/document-reading/extraction-payload";
 import {
   ZOOM_STEPS,
   boxStyle,
@@ -24,7 +24,7 @@ import {
   stepZoom,
   type PageBox,
   type Zoom,
-} from "./page-geometry";
+} from "@/lib/document-reading/page-geometry";
 
 /** A value found on the page, as the page draws it. */
 export type PageMark = {

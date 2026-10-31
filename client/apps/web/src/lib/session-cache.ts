@@ -14,7 +14,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import type { PersistQueryClientOptions, Persister } from "@tanstack/react-query-persist-client";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 
@@ -145,7 +145,7 @@ export const sessionPersistence = createSessionPersistence(
   {
     enabled: import.meta.env.PROD,
     buster: () => buildId(),
-    activeScope: () => sessionScope(useAuthStore.getState().user),
+    activeScope: () => sessionScope(currentProfile(useAuthStore.getState())),
   },
 );
 

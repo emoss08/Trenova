@@ -180,6 +180,20 @@ func TestAnthropicBatch_ReadsProgress(t *testing.T) {
 	assert.Equal(t, "/v1/messages/batches/msgbatch_01", requests[0].path)
 }
 
+func TestAnthropicBatch_CancelsTheBatch(t *testing.T) {
+	t.Parallel()
+
+	server, seen := batchServer(t)
+	adapter := NewAnthropicAdapter().(anthropicAdapter)
+
+	require.NoError(t, adapter.CancelBatch(t.Context(), anthropicCall(server.URL), "msgbatch_01"))
+
+	requests := seen()
+	require.Len(t, requests, 1)
+	assert.Equal(t, http.MethodPost, requests[0].method)
+	assert.Equal(t, "/v1/messages/batches/msgbatch_01/cancel", requests[0].path)
+}
+
 func TestAnthropicBatch_ReadsEveryResultByItsCustomID(t *testing.T) {
 	t.Parallel()
 

@@ -11,6 +11,7 @@ import {
 } from "@trenova/shared/types/errors";
 import { API_BASE_URL } from "./constants";
 import { reportPlanLimit } from "./plan-limit";
+import { reportSessionContextStale, withSessionContextHeaders } from "./session-context";
 import { filenameFromDisposition } from "./utils";
 
 const CSRF_HEADER_NAME =
@@ -128,11 +129,13 @@ export class ApiRequestError extends Error {
 }
 
 /**
- * Every failed response becomes its error here, so this is where a plan-limit refusal
- * is handed to the app's dialog — once, whichever request helper made the call.
+ * Every failed response becomes its error here, so this is where a plan-limit refusal, or
+ * the refusal of a tab another tab's sign-in or organization switch left behind, is handed
+ * to the app — once, whichever request helper made the call.
  */
 function failedRequest(error: ApiRequestError): ApiRequestError {
   reportPlanLimit(error);
+  reportSessionContextStale(error);
   return error;
 }
 
@@ -224,12 +227,17 @@ function internalApiEndpoint(url: string): string | null {
   }
 }
 
-export async function withCsrfHeader(
+/**
+ * The headers every first-party request carries: the tab's confirmed session, so the server
+ * refuses a request from a tab another tab's sign-in or organization switch left behind, and
+ * on a write the CSRF token.
+ */
+export async function withSessionHeaders(
   method: string | undefined,
   headers?: HeadersInit,
   endpoint?: string,
 ): Promise<Headers> {
-  const nextHeaders = new Headers(headers);
+  const nextHeaders = withSessionContextHeaders(headers);
 
   if (
     !isUnsafeMethod(method) ||
@@ -259,25 +267,36 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const response = await fetch(url, {
     ...options,
     credentials: "include",
-    headers: await withCsrfHeader(method, headers, endpoint),
+    headers: await withSessionHeaders(method, headers, endpoint),
   });
 
   if (!response.ok) {
     await rejectResponse(response, translate("Request failed"));
   }
 
-  if (response.status === 204) {
+  return readBody<T>(response);
+}
+
+/**
+ * A successful response's JSON. A 204, and a 202 that only says the work was
+ * queued, carry no body, so an empty one reads as undefined rather than failing.
+ */
+async function readBody<T>(response: Response): Promise<T> {
+  const body = response.status === 204 ? "" : await response.text();
+  if (body.trim() === "") {
     return undefined as T;
   }
 
-  return response.json();
+  return JSON.parse(body) as T;
 }
 
 /**
  * Turns a failed response into the ApiRequestError every caller handles,
- * reading the problem body when the server sent one.
+ * reading the problem body when the server sent one. A transport that reads its
+ * own responses (an event stream) uses it too, so its refusals reach the same
+ * dialogs as every other request's.
  */
-async function rejectResponse(response: Response, title: string): Promise<never> {
+export async function responseError(response: Response, title: string): Promise<ApiRequestError> {
   const errorData = await response.json().catch(() => ({
     type: "internal-error",
     title,
@@ -287,7 +306,11 @@ async function rejectResponse(response: Response, title: string): Promise<never>
   }));
   const parsed = apiErrorResponseSchema.safeParse(errorData);
   const validatedData = parsed.success ? parsed.data : errorData;
-  throw failedRequest(new ApiRequestError(response.status, validatedData, retryAfterOf(response)));
+  return failedRequest(new ApiRequestError(response.status, validatedData, retryAfterOf(response)));
+}
+
+async function rejectResponse(response: Response, title: string): Promise<never> {
+  throw await responseError(response, title);
 }
 
 /** A generated file the server sent back, named as the server named it. */
@@ -303,7 +326,7 @@ async function fileRequest(
     ...options,
     method,
     credentials: "include",
-    headers: await withCsrfHeader(method, options.headers, endpoint),
+    headers: await withSessionHeaders(method, options.headers, endpoint),
   });
 
   if (!response.ok) {
@@ -329,29 +352,14 @@ async function uploadRequest<T>(
     method,
     credentials: "include",
     body: formData,
-    headers: await withCsrfHeader(method, options.headers, endpoint),
+    headers: await withSessionHeaders(method, options.headers, endpoint),
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({
-      type: "internal-error",
-      title: translate("Upload failed"),
-      // i18n-ignore: HTTP status code, the same in every language
-      detail: `HTTP ${response.status}`,
-      status: response.status,
-    }));
-    const parsed = apiErrorResponseSchema.safeParse(errorData);
-    const validatedData = parsed.success ? parsed.data : errorData;
-    throw failedRequest(
-      new ApiRequestError(response.status, validatedData, retryAfterOf(response)),
-    );
+    await rejectResponse(response, translate("Upload failed"));
   }
 
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json();
+  return readBody<T>(response);
 }
 
 async function uploadWithProgress<T>(
@@ -360,7 +368,7 @@ async function uploadWithProgress<T>(
   onProgress?: (percent: number) => void,
   signal?: AbortSignal,
 ): Promise<T> {
-  const csrfHeaders = await withCsrfHeader("POST", undefined, endpoint);
+  const sessionHeaders = await withSessionHeaders("POST", undefined, endpoint);
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -424,7 +432,7 @@ async function uploadWithProgress<T>(
 
     xhr.open("POST", url);
     xhr.withCredentials = true;
-    csrfHeaders.forEach((value, key) => {
+    sessionHeaders.forEach((value, key) => {
       xhr.setRequestHeader(key, value);
     });
     xhr.send(formData);
@@ -458,7 +466,7 @@ async function putFileWithProgress(
     headers.set("Content-Type", contentType);
   }
 
-  const uploadHeaders = endpoint ? await withCsrfHeader("PUT", headers, endpoint) : headers;
+  const uploadHeaders = endpoint ? await withSessionHeaders("PUT", headers, endpoint) : headers;
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();

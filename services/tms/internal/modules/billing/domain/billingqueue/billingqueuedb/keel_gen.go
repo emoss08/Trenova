@@ -62,11 +62,22 @@ var billingQueueItemsTable = schema.Table{
 		{Name: "requires_replacement_review", Quoted: `"requires_replacement_review"`, Field: "RequiresReplacementReview", Kind: schema.KindBool, Flags: 0, Label: `Requires Replacement Review`, JSON: `requiresReplacementReview`},
 		{Name: "rerate_variance_percent", Quoted: `"rerate_variance_percent"`, Field: "RerateVariancePercent", Kind: schema.KindOther, Flags: 0, Label: `Rerate Variance Percent`, JSON: `rerateVariancePercent`},
 		{Name: "adjustment_context", Quoted: `"adjustment_context"`, Field: "AdjustmentContext", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Adjustment Context`, JSON: `adjustmentContext`},
+		{Name: "lane", Quoted: `"lane"`, Field: "Lane", Kind: schema.KindString, Flags: schema.FlagReadOnly, Label: `Lane`, JSON: `lane`, Enum: enumLane[:]},
+		{Name: "checked_at", Quoted: `"checked_at"`, Field: "CheckedAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNullable, Label: `Checked At`, JSON: `checkedAt`},
+		{Name: "po_number", Quoted: `"po_number"`, Field: "PONumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PO Number`, JSON: `poNumber`},
+		{Name: "invoice_memo", Quoted: `"invoice_memo"`, Field: "InvoiceMemo", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Invoice Memo`, JSON: `invoiceMemo`},
+		{Name: "payment_term", Quoted: `"payment_term"`, Field: "PaymentTerm", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Payment Term`, JSON: `paymentTerm`},
+		{Name: "invoice_date", Quoted: `"invoice_date"`, Field: "InvoiceDate", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Invoice Date`, JSON: `invoiceDate`},
+		{Name: "packet_document_ids", Quoted: `"packet_document_ids"`, Field: "PacketDocumentIDs", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Packet Document IDs`, JSON: `packetDocumentIds`},
+		{Name: "agent_verdict", Quoted: `"agent_verdict"`, Field: "AgentVerdict", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Agent Verdict`, JSON: `agentVerdict`, Enum: enumAgentVerdict[:]},
+		{Name: "agent_summary", Quoted: `"agent_summary"`, Field: "AgentSummary", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Summary`, JSON: `agentSummary`},
+		{Name: "agent_reviewed_at", Quoted: `"agent_reviewed_at"`, Field: "AgentReviewedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Agent Reviewed At`, JSON: `agentReviewedAt`},
+		{Name: "agent_reads", Quoted: `"agent_reads"`, Field: "AgentReads", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Agent Reads`, JSON: `agentReads`},
+		{Name: "agent_review_hash", Quoted: `"agent_review_hash"`, Field: "AgentReviewHash", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Review Hash`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-		{Name: "po_number", Quoted: `"po_number"`, Field: "PONumber", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `PO Number`, Doc: `PONumber is the customer's purchase order, from the item's order. It is read with the item rather than stored on it.`, JSON: `poNumber`},
 	},
 	Relations: []schema.Relation{
 		{Name: "Shipment", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Shipment`, JSON: `shipment`},
@@ -76,14 +87,14 @@ var billingQueueItemsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36},
-	Returning:    nil,
-	Version:      34,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48},
+	Returning:    []int32{34, 35},
+	Version:      46,
 	AutoID:       0,
-	AutoCreate:   35,
-	AutoUpdate:   36,
+	AutoCreate:   47,
+	AutoUpdate:   48,
 	IDPrefix:     "bqi_",
 	New:          newBillingQueueItem,
 	NewN:         newNBillingQueueItem,
@@ -133,11 +144,22 @@ type BillingQueueItemsTable struct {
 	RequiresReplacementReview keel.BoolCol
 	RerateVariancePercent     keelkinds.DecimalDecimalCol
 	AdjustmentContext         keel.JSONBCol
+	Lane                      LaneCol
+	CheckedAt                 keel.Int64Col
+	PONumber                  keel.StringCol
+	InvoiceMemo               keel.StringCol
+	PaymentTerm               keel.StringCol
+	InvoiceDate               keel.Int64Col
+	PacketDocumentIDs         keel.JSONBCol
+	AgentVerdict              AgentVerdictCol
+	AgentSummary              keel.StringCol
+	AgentReviewedAt           keel.Int64Col
+	AgentReads                keel.JSONBCol
+	AgentReviewHash           keel.StringCol
 	Version                   keel.Int64Col
 	CreatedAt                 keel.Int64Col
 	UpdatedAt                 keel.Int64Col
 	SearchVector              keel.TSVectorCol
-	PONumber                  keel.StringCol
 }
 
 // BillingQueueItems references the billing_queue_items table.
@@ -177,11 +199,22 @@ var BillingQueueItems = &BillingQueueItemsTable{
 	RequiresReplacementReview: keel.BoolCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 31}},
 	RerateVariancePercent:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 32}}},
 	AdjustmentContext:         keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 33}},
-	Version:                   keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 34}},
-	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 35}},
-	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 36}},
-	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 37}},
-	PONumber:                  keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 38}},
+	Lane:                      LaneCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 34}}},
+	CheckedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 35}},
+	PONumber:                  keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 36}},
+	InvoiceMemo:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 37}},
+	PaymentTerm:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 38}},
+	InvoiceDate:               keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 39}},
+	PacketDocumentIDs:         keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 40}},
+	AgentVerdict:              AgentVerdictCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 41}}},
+	AgentSummary:              keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 42}},
+	AgentReviewedAt:           keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 43}},
+	AgentReads:                keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 44}},
+	AgentReviewHash:           keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 45}},
+	Version:                   keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 46}},
+	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 47}},
+	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 48}},
+	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 49}},
 }
 
 // BuildBillingQueueItems builds the handle of billing_queue_items for ref. Generated relation and alias methods call it.
@@ -222,11 +255,22 @@ func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 		RequiresReplacementReview: keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
 		RerateVariancePercent:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}}},
 		AdjustmentContext:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 33}},
-		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
-		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
-		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 37}},
-		PONumber:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
+		Lane:                      LaneCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		CheckedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
+		PONumber:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
+		InvoiceMemo:               keel.StringCol{Col: keel.Col{Ref: r, Index: 37}},
+		PaymentTerm:               keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
+		InvoiceDate:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
+		PacketDocumentIDs:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 40}},
+		AgentVerdict:              AgentVerdictCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 41}}},
+		AgentSummary:              keel.StringCol{Col: keel.Col{Ref: r, Index: 42}},
+		AgentReviewedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		AgentReads:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 44}},
+		AgentReviewHash:           keel.StringCol{Col: keel.Col{Ref: r, Index: 45}},
+		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 46}},
+		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
+		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
+		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 49}},
 	}
 }
 
@@ -341,15 +385,37 @@ func ptrBillingQueueItem(p unsafe.Pointer, c int32) any {
 	case 33:
 		return &r.AdjustmentContext
 	case 34:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.Lane))
 	case 35:
-		return &r.CreatedAt
+		return &r.CheckedAt
 	case 36:
-		return &r.UpdatedAt
-	case 37:
-		return &r.SearchVector
-	case 38:
 		return &r.PONumber
+	case 37:
+		return &r.InvoiceMemo
+	case 38:
+		return &r.PaymentTerm
+	case 39:
+		return &r.InvoiceDate
+	case 40:
+		return &r.PacketDocumentIDs
+	case 41:
+		return (**string)(unsafe.Pointer(&r.AgentVerdict))
+	case 42:
+		return &r.AgentSummary
+	case 43:
+		return &r.AgentReviewedAt
+	case 44:
+		return &r.AgentReads
+	case 45:
+		return &r.AgentReviewHash
+	case 46:
+		return &r.Version
+	case 47:
+		return &r.CreatedAt
+	case 48:
+		return &r.UpdatedAt
+	case 49:
+		return &r.SearchVector
 	}
 	return nil
 }
@@ -495,15 +561,70 @@ func valueBillingQueueItem(p unsafe.Pointer, c int32) any {
 		}
 		return r.AdjustmentContext
 	case 34:
-		return r.Version
+		return string(r.Lane)
 	case 35:
-		return r.CreatedAt
+		if r.CheckedAt == nil {
+			return nil
+		}
+		return *r.CheckedAt
 	case 36:
-		return r.UpdatedAt
-	case 37:
-		return r.SearchVector
-	case 38:
+		if r.PONumber == "" {
+			return nil
+		}
 		return r.PONumber
+	case 37:
+		if r.InvoiceMemo == "" {
+			return nil
+		}
+		return r.InvoiceMemo
+	case 38:
+		if r.PaymentTerm == "" {
+			return nil
+		}
+		return r.PaymentTerm
+	case 39:
+		if r.InvoiceDate == nil {
+			return nil
+		}
+		return *r.InvoiceDate
+	case 40:
+		if r.PacketDocumentIDs == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.PacketDocumentIDs
+	case 41:
+		if r.AgentVerdict == nil {
+			return nil
+		}
+		return string(*r.AgentVerdict)
+	case 42:
+		if r.AgentSummary == "" {
+			return nil
+		}
+		return r.AgentSummary
+	case 43:
+		if r.AgentReviewedAt == nil {
+			return nil
+		}
+		return *r.AgentReviewedAt
+	case 44:
+		if r.AgentReads == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.AgentReads
+	case 45:
+		if r.AgentReviewHash == "" {
+			return nil
+		}
+		return r.AgentReviewHash
+	case 46:
+		return r.Version
+	case 47:
+		return r.CreatedAt
+	case 48:
+		return r.UpdatedAt
+	case 49:
+		return r.SearchVector
 	}
 	return nil
 }
@@ -827,11 +948,168 @@ func beforeCreateIssue(ctx context.Context, p unsafe.Pointer) error {
 	return (*billingqueue.Issue)(p).BeforeCreate(ctx)
 }
 
+// queueBriefsTable is the schema of billingqueue.QueueBrief.
+var queueBriefsTable = schema.Table{
+	Name:   "billing_queue_briefs",
+	Quoted: `"billing_queue_briefs"`,
+	Alias:  "bqb",
+	Model:  "billingqueue.QueueBrief",
+	Label:  `Queue Brief`,
+	Plural: `Queue Briefs`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "text", Quoted: `"text"`, Field: "Text", Kind: schema.KindString, Flags: 0, Label: `Text`, JSON: `text`},
+		{Name: "input_hash", Quoted: `"input_hash"`, Field: "InputHash", Kind: schema.KindString, Flags: 0, Label: `Input Hash`},
+		{Name: "generated_at", Quoted: `"generated_at"`, Field: "GeneratedAt", Kind: schema.KindInt64, Flags: 0, Label: `Generated At`, JSON: `generatedAt`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
+	Update:     []int32{3, 4, 5, 8},
+	Returning:  nil,
+	Version:    6,
+	AutoID:     0,
+	AutoCreate: 7,
+	AutoUpdate: 8,
+	IDPrefix:   "bqb_",
+	New:        newQueueBrief,
+	NewN:       newNQueueBrief,
+	Size:       unsafe.Sizeof(billingqueue.QueueBrief{}),
+	Ptr:        ptrQueueBrief,
+	Value:      valueQueueBrief,
+}
+
+var queueBriefsRef = keel.Ref{Table: &queueBriefsTable}
+
+// QueueBriefsTable is the table of billingqueue.QueueBrief.
+type QueueBriefsTable struct {
+	keel.Handle[*billingqueue.QueueBrief]
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	Text           keel.StringCol
+	InputHash      keel.StringCol
+	GeneratedAt    keel.Int64Col
+	Version        keel.Int64Col
+	CreatedAt      keel.Int64Col
+	UpdatedAt      keel.Int64Col
+}
+
+// QueueBriefs references the billing_queue_briefs table.
+var QueueBriefs = &QueueBriefsTable{
+	Handle:         keel.Handle[*billingqueue.QueueBrief]{Ref: &queueBriefsRef},
+	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 2}}},
+	Text:           keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 3}},
+	InputHash:      keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 4}},
+	GeneratedAt:    keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 5}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 6}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 7}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 8}},
+}
+
+// BuildQueueBriefs builds the handle of billing_queue_briefs for ref. Generated relation and alias methods call it.
+func BuildQueueBriefs(r *keel.Ref) *QueueBriefsTable {
+	return &QueueBriefsTable{
+		Handle:         keel.Handle[*billingqueue.QueueBrief]{Ref: r},
+		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Text:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
+		InputHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		GeneratedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+	}
+}
+
+// QueueBriefsSchema returns the schema of billing_queue_briefs.
+func QueueBriefsSchema() *schema.Table { return &queueBriefsTable }
+
+// As returns a handle that references billing_queue_briefs under its own alias.
+func (t *QueueBriefsTable) As(alias string) *QueueBriefsTable {
+	return keel.Alias(t.Ref, alias, BuildQueueBriefs)
+}
+
+// Get returns the billing_queue_briefs row with the given key, or keel.ErrNotFound.
+func (t *QueueBriefsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueue.QueueBrief, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newQueueBrief() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.QueueBrief)) }
+
+func newNQueueBrief(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]billingqueue.QueueBrief, n)))
+}
+
+func ptrQueueBrief(p unsafe.Pointer, c int32) any {
+	r := (*billingqueue.QueueBrief)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return &r.Text
+	case 4:
+		return &r.InputHash
+	case 5:
+		return &r.GeneratedAt
+	case 6:
+		return &r.Version
+	case 7:
+		return &r.CreatedAt
+	case 8:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueQueueBrief(p unsafe.Pointer, c int32) any {
+	r := (*billingqueue.QueueBrief)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return r.Text
+	case 4:
+		return r.InputHash
+	case 5:
+		return r.GeneratedAt
+	case 6:
+		return r.Version
+	case 7:
+		return r.CreatedAt
+	case 8:
+		return r.UpdatedAt
+	}
+	return nil
+}
+
 func init() {
 	billingQueueItemsTable.Relations[0].Target = shipmentdb.ShipmentsSchema()
 	billingQueueItemsTable.Relations[1].Target = customerdb.CustomersSchema()
 	billingQueueItemsTable.Relations[2].Target = tenantdb.UsersSchema()
 	billingQueueItemsTable.Relations[3].Target = tenantdb.UsersSchema()
+}
+
+var enumAgentVerdict = [...]schema.EnumValue{
+	{Value: `Agrees`, Label: `Agrees`},
+	{Value: `Concern`, Label: `Concern`},
 }
 
 var enumBillType = [...]schema.EnumValue{
@@ -878,11 +1156,23 @@ var enumIssueCode = [...]schema.EnumValue{
 	{Value: `ChargesUnsplittable`, Label: `Issue Charges Unsplittable`},
 	{Value: `BillToCreditHold`, Label: `Issue Bill To Credit Hold`},
 	{Value: `PossibleDuplicate`, Label: `Issue Possible Duplicate`},
+	{Value: `UnbilledAccessorial`, Label: `Issue Unbilled Accessorial`},
+	{Value: `PONumberMissing`, Label: `Issue PO Number Missing`},
 }
 
 var enumIssueSource = [...]schema.EnumValue{
 	{Value: `Deterministic`, Label: `Deterministic`},
 	{Value: `Agent`, Label: `Agent`},
+}
+
+var enumLane = [...]schema.EnumValue{
+	{Value: `Checking`, Label: `Checking`},
+	{Value: `NeedsYou`, Label: `Needs You`},
+	{Value: `Waiting`, Label: `Waiting`},
+	{Value: `Ready`, Label: `Ready`},
+	{Value: `Held`, Label: `Held`},
+	{Value: `Approved`, Label: `Approved`},
+	{Value: `Closed`, Label: `Closed`},
 }
 
 var enumStatus = [...]schema.EnumValue{
@@ -894,6 +1184,35 @@ var enumStatus = [...]schema.EnumValue{
 	{Value: `SentBackToOps`, Label: `Sent Back To Ops`},
 	{Value: `Exception`, Label: `Exception`},
 	{Value: `Canceled`, Label: `Canceled`},
+}
+
+// AgentVerdictCol is a column of billingqueue.AgentVerdict values.
+type AgentVerdictCol struct{ keel.StringCol }
+
+func (c AgentVerdictCol) Eq(v billingqueue.AgentVerdict) keel.Pred { return c.StringCol.Eq(string(v)) }
+func (c AgentVerdictCol) Ne(v billingqueue.AgentVerdict) keel.Pred { return c.StringCol.Ne(string(v)) }
+func (c AgentVerdictCol) Gt(v billingqueue.AgentVerdict) keel.Pred { return c.StringCol.Gt(string(v)) }
+func (c AgentVerdictCol) Gte(v billingqueue.AgentVerdict) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c AgentVerdictCol) Lt(v billingqueue.AgentVerdict) keel.Pred { return c.StringCol.Lt(string(v)) }
+func (c AgentVerdictCol) Lte(v billingqueue.AgentVerdict) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c AgentVerdictCol) IsDistinctFrom(v billingqueue.AgentVerdict) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c AgentVerdictCol) Between(lo, hi billingqueue.AgentVerdict) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c AgentVerdictCol) To(v billingqueue.AgentVerdict) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c AgentVerdictCol) In(vs ...billingqueue.AgentVerdict) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c AgentVerdictCol) NotIn(vs ...billingqueue.AgentVerdict) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
 // BillTypeCol is a column of billingqueue.BillType values.
@@ -1061,6 +1380,27 @@ func (c IssueSourceCol) In(vs ...billingqueue.IssueSource) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c IssueSourceCol) NotIn(vs ...billingqueue.IssueSource) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// LaneCol is a column of billingqueue.Lane values.
+type LaneCol struct{ keel.StringCol }
+
+func (c LaneCol) Eq(v billingqueue.Lane) keel.Pred  { return c.StringCol.Eq(string(v)) }
+func (c LaneCol) Ne(v billingqueue.Lane) keel.Pred  { return c.StringCol.Ne(string(v)) }
+func (c LaneCol) Gt(v billingqueue.Lane) keel.Pred  { return c.StringCol.Gt(string(v)) }
+func (c LaneCol) Gte(v billingqueue.Lane) keel.Pred { return c.StringCol.Gte(string(v)) }
+func (c LaneCol) Lt(v billingqueue.Lane) keel.Pred  { return c.StringCol.Lt(string(v)) }
+func (c LaneCol) Lte(v billingqueue.Lane) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c LaneCol) IsDistinctFrom(v billingqueue.Lane) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c LaneCol) Between(lo, hi billingqueue.Lane) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c LaneCol) To(v billingqueue.Lane) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c LaneCol) In(vs ...billingqueue.Lane) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c LaneCol) NotIn(vs ...billingqueue.Lane) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

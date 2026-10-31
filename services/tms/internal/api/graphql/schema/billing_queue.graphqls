@@ -1,3 +1,71 @@
+"""Where an item sits in the queue's working order."""
+enum BillingQueueLane {
+  "Its checks have not run yet."
+  Checking
+  "A check needs the biller."
+  NeedsYou
+  "Waiting on a driver, an approver or credit."
+  Waiting
+  "Every check is clear."
+  Ready
+  "On hold or sent back to operations."
+  Held
+  "Approved and waiting to post."
+  Approved
+  "Posted or canceled."
+  Closed
+}
+
+"""What Nova made of an item it reviewed."""
+enum BillingQueueAgentVerdict {
+  Agrees
+  Concern
+}
+
+"""The open issue a list row leads with, and how many are open."""
+type BillingQueueHeadline {
+  code: String!
+  checkKey: String!
+  summary: String!
+  open: Int!
+  "The issue waits on someone other than the biller."
+  waiting: Boolean!
+}
+
+type BillingQueueItemEdge {
+  node: BillingQueueItem!
+  cursor: String!
+}
+
+type BillingQueueItemConnection {
+  edges: [BillingQueueItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+input BillingQueueItemsFilterInput {
+  "The lanes to include; empty includes every lane."
+  lanes: [BillingQueueLane!]
+  "Include items whose invoice already posted."
+  includePosted: Boolean = false
+  "Smallest amount, in the bill-to's currency."
+  minAmount: Decimal
+  "Largest amount, in the bill-to's currency."
+  maxAmount: Decimal
+  "Only items queued before this time."
+  createdBefore: Timestamp
+}
+
+extend type Query {
+  """The queue's items, oldest first, a page at a time. Each row carries the issue it leads with."""
+  billingQueueItems(
+    input: DataTableConnectionInput!
+    filter: BillingQueueItemsFilterInput
+  ): BillingQueueItemConnection!
+}
+
 input BillingQueueUpdateStatusInput {
   status: BillingQueueStatus!
   exceptionReasonCode: BillingQueueExceptionReasonCode

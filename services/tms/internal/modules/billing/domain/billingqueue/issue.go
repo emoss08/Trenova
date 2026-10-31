@@ -2,6 +2,7 @@ package billingqueue
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -23,10 +24,51 @@ const (
 	IssueChargesUnsplittable       = IssueCode("ChargesUnsplittable")
 	IssueBillToCreditHold          = IssueCode("BillToCreditHold")
 	IssuePossibleDuplicate         = IssueCode("PossibleDuplicate")
+	IssueUnbilledAccessorial       = IssueCode("UnbilledAccessorial")
+	IssuePONumberMissing           = IssueCode("PONumberMissing")
 )
 
-// IssueSource is who raised an issue. The checks raise every issue; an agent
-// may only add reasoning to one.
+func (c IssueCode) WaitsOnOthers() bool {
+	switch c {
+	case IssueDetentionAwaitingApproval, IssueRatingAwaitingReview, IssueBillToCreditHold:
+		return true
+	case IssueAccessorialNotOnRateCon,
+		IssueChargeOverRateCon,
+		IssuePODMissing,
+		IssuePODUnsigned,
+		IssueDetentionELDMismatch,
+		IssueChargesUnsplittable,
+		IssuePossibleDuplicate,
+		IssueUnbilledAccessorial,
+		IssuePONumberMissing:
+		return false
+	default:
+		return false
+	}
+}
+
+// SuggestionIssueCodes are the issues that only suggest: a charge the shipment
+// carries proof of but does not bill. They are shown, and settled, where the
+// charges are, but never hold a check, the item's lane or its approval.
+func SuggestionIssueCodes() []IssueCode {
+	return []IssueCode{IssueUnbilledAccessorial}
+}
+
+func (c IssueCode) IsSuggestion() bool {
+	return slices.Contains(SuggestionIssueCodes(), c)
+}
+
+func WaitingIssueCodes() []IssueCode {
+	return []IssueCode{
+		IssueDetentionAwaitingApproval,
+		IssueRatingAwaitingReview,
+		IssueBillToCreditHold,
+	}
+}
+
+// IssueSource is who found what an issue rests on. The checks raise every
+// issue, from the item's own records (Deterministic) or from what Nova read off
+// its paperwork (Agent), and clear it the same way once it is no longer found.
 type IssueSource string
 
 const (
@@ -49,6 +91,8 @@ const (
 	EffectRequest = EffectKind("request")
 	// EffectAccept bills without what the check wanted.
 	EffectAccept = EffectKind("accept")
+	// EffectAdd bills a charge the shipment is missing.
+	EffectAdd = EffectKind("add")
 )
 
 // ResolutionCleared is the resolution the checks themselves record when the
@@ -59,10 +103,13 @@ const OptionKeyRequest = "request"
 
 // IssueEffect is what an option changes.
 type IssueEffect struct {
-	Kind     EffectKind          `json:"kind"`
-	ChargeID pulid.ID            `json:"chargeId,omitempty"`
-	Amount   decimal.NullDecimal `json:"amount"`
-	Basis    string              `json:"basis,omitempty"`
+	Kind                EffectKind `json:"kind"`
+	ChargeID            pulid.ID   `json:"chargeId,omitempty"`
+	AccessorialChargeID pulid.ID   `json:"accessorialChargeId,omitempty"`
+	// Label names the charge an add effect bills.
+	Label  string              `json:"label,omitempty"`
+	Amount decimal.NullDecimal `json:"amount"`
+	Basis  string              `json:"basis,omitempty"`
 }
 
 // IssueOption is one way to settle an issue, worded for its button.
@@ -94,6 +141,9 @@ type EffectSnapshot struct {
 	Charge *ChargeSnapshot `json:"charge,omitempty"`
 	// RestoredChargeID is the charge undo recreated, when it had to.
 	RestoredChargeID pulid.ID `json:"restoredChargeId,omitempty"`
+	// AddedChargeID is the charge an add option put on the shipment, which
+	// undo takes off again.
+	AddedChargeID pulid.ID `json:"addedChargeId,omitempty"`
 }
 
 // Issue is something about a billing queue item that a person settles before

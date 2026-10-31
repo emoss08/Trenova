@@ -40,6 +40,7 @@ type Params struct {
 	fx.In
 
 	Logger                   *zap.Logger
+	Paperwork                documentports.PaperworkReadRequester `optional:"true"`
 	DocumentConversionConfig *documentconversionconfig.Config
 	SearchConfig             *searchconfig.Config
 	Metrics                  *metrics.Registry
@@ -56,6 +57,7 @@ type Params struct {
 
 type Service struct {
 	logger              *zap.Logger
+	paperwork           documentports.PaperworkReadRequester
 	metrics             *metrics.Registry
 	searchConfig        *searchconfig.Config
 	conversionConfig    *documentconversionconfig.Config
@@ -88,6 +90,7 @@ func New(p Params) *Service {
 
 	return &Service{
 		logger:              p.Logger.Named("service.document-extraction"),
+		paperwork:           p.Paperwork,
 		searchConfig:        p.SearchConfig,
 		conversionConfig:    p.DocumentConversionConfig,
 		metrics:             p.Metrics,
@@ -196,9 +199,18 @@ func (s *Service) Reextract(
 	if err != nil {
 		return err
 	}
+	// A shipment's paperwork uploaded before it was read is read from here on.
+	var upgraded *document.ProcessingProfile
+	if profile := document.ProcessingProfileFor(
+		doc.ProcessingProfile,
+		doc.ResourceType,
+	); profile != doc.ProcessingProfile {
+		doc.ProcessingProfile = profile
+		upgraded = &profile
+	}
 	if !doc.ProcessingProfile.SupportsIntelligence() {
 		return errortypes.NewConflictError(
-			"Re-extraction is only available for rate confirmation import documents",
+			"This document isn't one Nova reads",
 		)
 	}
 	if err = planservice.RequireCapability(
@@ -226,6 +238,7 @@ func (s *Service) Reextract(
 			HasExtractedText:    doc.HasExtractedText,
 			ShipmentDraftStatus: doc.ShipmentDraftStatus,
 			DocumentTypeID:      doc.DocumentTypeID,
+			ProcessingProfile:   upgraded,
 		},
 	); err != nil {
 		return err
@@ -248,6 +261,9 @@ func (s *Service) Reextract(
 	}
 	if err = s.contentRepo.ReplacePages(ctx, content, nil); err != nil {
 		return err
+	}
+	if s.paperwork != nil {
+		s.paperwork.RequestRead(ctx, doc, tenantInfo.UserID)
 	}
 
 	return s.EnqueueExtraction(ctx, doc, tenantInfo.UserID)

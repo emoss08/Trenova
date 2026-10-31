@@ -16,13 +16,13 @@ package tablequeryservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -51,7 +51,7 @@ type ServiceParams struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Completion    llmports.StructuredCompleter
+	Nova          llmports.TaskRunner
 	Permissions   permissionports.PermissionEngine
 	Catalog       *filtercatalog.Catalog
 	Organizations tenantports.OrganizationRepository
@@ -59,7 +59,7 @@ type ServiceParams struct {
 
 type Service struct {
 	logger        *zap.Logger
-	completion    llmports.StructuredCompleter
+	nova          llmports.TaskRunner
 	permissions   permissionports.PermissionEngine
 	catalog       *filtercatalog.Catalog
 	organizations tenantports.OrganizationRepository
@@ -68,7 +68,7 @@ type Service struct {
 func NewService(p ServiceParams) *Service {
 	return &Service{
 		logger:        p.Logger.Named("tablequery-service"),
-		completion:    p.Completion,
+		nova:          p.Nova,
 		permissions:   p.Permissions,
 		catalog:       p.Catalog,
 		organizations: p.Organizations,
@@ -139,23 +139,19 @@ func (s *Service) Compose(ctx context.Context, req *ComposeRequest) (*ComposeRes
 		)
 	}
 
-	completion, err := s.completion.CompleteStructured(
-		ctx,
-		&llmports.StructuredCompletionRequest{
-			TenantInfo:   req.TenantInfo,
-			Task:         aitask.TaskQueryCompose,
-			System:       systemPrompt,
-			Context:      buildContext(resource, prompt, req.Current),
-			OutputSchema: outputSchema(resource),
-			SchemaName:   "table_query",
-			MaxTokens:    maxOutputTokens,
-			Attribution: aiusageports.AIUsageAttribution{
-				UserID:  req.Actor.UserID,
-				Feature: aiusage.FeatureTableQuery,
-			},
-		},
-	)
-	if err != nil {
+	var answer map[string]any
+	completion, err := s.nova.Run(ctx, &llmports.NovaTask{
+		Name:         aitask.TaskQueryCompose,
+		Feature:      aiusage.FeatureTableQuery,
+		Instructions: systemPrompt,
+		Context:      buildContext(resource, prompt, req.Current),
+		Schema:       outputSchema(resource),
+		SchemaName:   "table_query",
+		MaxTokens:    maxOutputTokens,
+		TenantInfo:   req.TenantInfo,
+		UserID:       req.Actor.UserID,
+	}, &answer)
+	if err != nil && !errors.Is(err, llmports.ErrOutsideSchema) {
 		return nil, err
 	}
 

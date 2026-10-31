@@ -81,7 +81,7 @@ export function RecordStopActualDialog({
         <DialogHeader>
           <DialogTitle>{t(copy.title)}</DialogTitle>
           <DialogDescription>
-            {stopDescription ? `${stopDescription} — ${copy.description}` : copy.description}
+            {stopDescription ? t("{0} — {1}", stopDescription, copy.description) : copy.description}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5 pb-4">

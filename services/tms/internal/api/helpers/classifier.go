@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"context"
-	"encoding/json" //nolint:depguard // this is fine
+	"encoding/json" //nolint:depguard // gin binds request bodies with encoding/json, so its error types are what a malformed body produces
 	"errors"
 	"io"
 
@@ -47,6 +47,7 @@ func NewDefaultClassifier() *ChainClassifier {
 	return NewChainClassifier(
 		ClassifierFunc(classifyTimeout),
 		ClassifierFunc(classifyRequestTooLarge),
+		ClassifierFunc(classifySessionContextStale),
 		ClassifierFunc(classifyEditConflict),
 		ClassifierFunc(classifyValidation),
 		ClassifierFunc(classifyTariff),
@@ -179,6 +180,13 @@ func classifyNotFound(err error) (ProblemType, bool) {
 func classifyRateLimit(err error) (ProblemType, bool) {
 	if errortypes.IsRateLimitError(err) {
 		return ProblemTypeRateLimit, true
+	}
+	return "", false
+}
+
+func classifySessionContextStale(err error) (ProblemType, bool) {
+	if errortypes.IsSessionContextStaleError(err) {
+		return ProblemTypeSessionContextStale, true
 	}
 	return "", false
 }

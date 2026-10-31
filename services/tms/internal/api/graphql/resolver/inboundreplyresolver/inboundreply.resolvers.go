@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -132,7 +131,6 @@ func (r *MutationResolver) DraftInboundReply(ctx context.Context, messageID stri
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageID:  id,
-		Mode:       triagenova.Interactive,
 	})
 }
 

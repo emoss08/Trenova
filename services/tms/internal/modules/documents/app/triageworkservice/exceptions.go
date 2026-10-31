@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -516,7 +515,7 @@ func (s *Service) DecideStops(
 	activity.RecordID = message.MatchedShipmentID
 	s.record(ctx, activity)
 
-	if _, err = s.replies.DraftReplyFor(ctx, updated, triagenova.Interactive); err != nil {
+	if _, err = s.replies.DraftReplyFor(ctx, updated); err != nil {
 		s.l.Warn("recorded a stops decision but Nova could not draft the reply",
 			zap.String("messageId", updated.ID.String()), zap.Error(err))
 	}

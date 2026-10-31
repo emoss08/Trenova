@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
-	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -448,7 +447,6 @@ type fakeDrafter struct {
 func (f *fakeDrafter) DraftReplyFor(
 	_ context.Context,
 	message *inboundmessage.InboundMessage,
-	_ triagenova.Mode,
 ) (*triage.Reply, error) {
 	f.drafted = append(f.drafted, message.ID)
 

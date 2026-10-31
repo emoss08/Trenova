@@ -1,6 +1,11 @@
 import { clearCsrfToken } from "@trenova/shared/lib/api";
 import { setUserDatePreferences } from "@trenova/shared/lib/date";
 import { isSessionExpiry } from "@trenova/shared/lib/error-presentation";
+import {
+  announceSignedOut,
+  sessionContextOf,
+  setSessionContext,
+} from "@trenova/shared/lib/session-context";
 import { realtimeClient } from "@trenova/shared/services/realtime";
 import { userService } from "@trenova/shared/services/user";
 import { authService } from "@trenova/shared/services/auth";
@@ -28,8 +33,33 @@ export type SessionCheck =
   | { status: "signed_out" }
   | { status: "unreachable"; error: unknown };
 
+/**
+ * What a returning tab may know about its person before the server answers: enough to paint
+ * the right cached frame, in the right language and clock, and nothing that says who they
+ * are. It is all the store writes to the browser, since a shared dispatch-office computer
+ * keeps it after the browser closes.
+ */
+export type RestoredProfile = Pick<
+  User,
+  "id" | "currentOrganizationId" | "businessUnitId" | "locale" | "timezone" | "timeFormat"
+>;
+
+function restoredProfileOf(user: User | null): RestoredProfile | null {
+  if (!user) {
+    return null;
+  }
+  const { id, currentOrganizationId, businessUnitId, locale, timezone, timeFormat } = user;
+  return { id, currentOrganizationId, businessUnitId, locale, timezone, timeFormat };
+}
+
 interface AuthState {
   user: User | null;
+  /**
+   * The profile restored from storage at startup. Every answer from the server about the
+   * session (signed in or out) clears it, so after a sign-out the last person's profile never
+   * goes on choosing the cache, language or clock.
+   */
+  restored: RestoredProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 
@@ -46,6 +76,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      restored: null,
       isLoading: false,
       isAuthenticated: false,
 
@@ -59,6 +90,7 @@ export const useAuthStore = create<AuthState>()(
           }
           set({
             user: response.user,
+            restored: null,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -76,6 +108,7 @@ export const useAuthStore = create<AuthState>()(
           const response = await authService.verifyMFA(request);
           set({
             user: response.user,
+            restored: null,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -90,9 +123,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           await authService.logout();
         } finally {
+          announceSignedOut();
           realtimeClient.disconnect();
           clearCsrfToken();
-          set({ user: null, isAuthenticated: false });
+          set({ user: null, restored: null, isAuthenticated: false });
           usePermissionStore.getState().clearPermissions();
         }
       },
@@ -100,7 +134,7 @@ export const useAuthStore = create<AuthState>()(
       checkSession: async () => {
         try {
           const freshUser = await userService.currentUser();
-          set({ user: freshUser, isAuthenticated: true });
+          set({ user: freshUser, restored: null, isAuthenticated: true });
           usePermissionStore
             .getState()
             .checkForUpdates(freshUser.currentOrganizationId)
@@ -110,7 +144,7 @@ export const useAuthStore = create<AuthState>()(
           if (!isSessionExpiry(error)) {
             return { status: "unreachable", error };
           }
-          set({ user: null, isAuthenticated: false });
+          set({ user: null, restored: null, isAuthenticated: false });
           clearCsrfToken();
           usePermissionStore.getState().clearPermissions();
           return { status: "signed_out" };
@@ -120,18 +154,22 @@ export const useAuthStore = create<AuthState>()(
       checkAuth: async () => (await get().checkSession()).status === "signed_in",
 
       setUser: (user: User | null) => {
-        set({ user, isAuthenticated: !!user });
+        set({ user, restored: null, isAuthenticated: !!user });
       },
 
       clearAuth: () => {
         clearCsrfToken();
-        set({ user: null, isAuthenticated: false, isLoading: false });
+        set({ user: null, restored: null, isAuthenticated: false, isLoading: false });
         usePermissionStore.getState().clearPermissions();
       },
     }),
     {
       name: "auth-storage",
-      partialize: (state) => ({ user: state.user }),
+      // Version 0 kept the whole user; migrating drops it, so a browser that stored a person's
+      // name, email and phone number before this change no longer holds them.
+      version: 1,
+      migrate: () => ({ restored: null }),
+      partialize: (state) => ({ restored: restoredProfileOf(state.user) ?? state.restored }),
     },
   ),
 );
@@ -142,9 +180,34 @@ export const useAuthStore = create<AuthState>()(
  * clock preferences from module state. Mirroring them here — on hydration and
  * on every change — is what keeps a Denver user from reading Eastern times.
  */
-const syncUserDatePreferences = (user: User | null) => {
+const syncUserDatePreferences = (user: Pick<User, "timezone" | "timeFormat"> | null) => {
   setUserDatePreferences({ timezone: user?.timezone, timeFormat: user?.timeFormat });
 };
 
-syncUserDatePreferences(useAuthStore.getState().user);
-useAuthStore.subscribe((state) => syncUserDatePreferences(state.user));
+/**
+ * The person this tab acts for, as far as it knows: the user once the server has answered,
+ * the restored profile before that. Read it for anything that only needs who and where
+ * (the cache scope, language, clock), never for what the server must confirm.
+ */
+export function currentProfile(state: {
+  user: User | null;
+  restored: RestoredProfile | null;
+}): RestoredProfile | null {
+  return state.user ?? state.restored;
+}
+
+syncUserDatePreferences(currentProfile(useAuthStore.getState()));
+useAuthStore.subscribe((state) => syncUserDatePreferences(currentProfile(state)));
+
+/**
+ * Every request asserts the session the server last confirmed for this tab: sign-in, an
+ * organization switch, a session check. Only the user is a confirmation, and only the server
+ * sets it; the profile restored from storage never is, since another tab may have moved the
+ * session after writing it. Until the startup session check answers, requests assert
+ * nothing.
+ */
+useAuthStore.subscribe((state, previous) => {
+  if (state.user !== previous.user) {
+    setSessionContext(sessionContextOf(state.user));
+  }
+});

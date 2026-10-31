@@ -1,4 +1,5 @@
 import { deliverToDesktop } from "@/lib/desktop-notifications";
+import { leaveExpiredSession } from "@/lib/session-exit";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadReportRun } from "@/hooks/use-reports";
 import { aiAuditExportNotice, downloadAIAuditExport } from "@/lib/ai-audit-exports";
@@ -10,7 +11,11 @@ import {
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { APP_ENV } from "@trenova/shared/lib/constants";
 import { notification } from "@trenova/shared/lib/queries/notification";
-import { realtimeClient, type RealtimeConnectionState } from "@trenova/shared/services/realtime";
+import {
+  REALTIME_SESSION_ENDED_EVENT,
+  realtimeClient,
+  type RealtimeConnectionState,
+} from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
@@ -111,10 +116,6 @@ export function useRealtimeConnection() {
       },
     });
 
-    // A watchtower item that changed is read once and put where it now
-    // belongs in the queue, and a run that moved redraws the rows it works.
-    const watchtowerItems = createWatchtowerPatcher({ queryClient });
-
     // Refetches every pending root not refetched within the last
     // MIN_REFETCH_INTERVAL_MS, and comes back for the rest when their
     // interval is up.
@@ -159,6 +160,14 @@ export function useRealtimeConnection() {
 
       flushTimeoutRef.current = window.setTimeout(flush, COALESCE_DELAY_MS);
     };
+
+    // A watchtower item that changed is read once and put where it now
+    // belongs in the queue, and a run that moved redraws the rows it works.
+    // Its refetches share this connection's throttle.
+    const watchtowerItems = createWatchtowerPatcher({
+      queryClient,
+      invalidate: enqueueInvalidation,
+    });
 
     const invalidateCoreKeys = () => {
       enqueueInvalidation(CORE_QUERY_KEYS);
@@ -375,6 +384,9 @@ export function useRealtimeConnection() {
     const offState = realtimeClient.onStateChange(onConnectionState);
     const offResource = realtimeClient.on(RESOURCE_EVENT_NAME, onResourceEvent);
     const offReset = realtimeClient.on("reset", onReset);
+    // The server closed the stream because its session ended (signed out elsewhere, revoked,
+    // expired): the tab ends the session as it would for a 401.
+    const offSessionEnded = realtimeClient.on(REALTIME_SESSION_ENDED_EVENT, leaveExpiredSession);
     realtimeClient.connect({
       identity: `${user.id}:${user.currentOrganizationId}:${user.businessUnitId}`,
       joinUsers: true,
@@ -388,6 +400,7 @@ export function useRealtimeConnection() {
       offState();
       offResource();
       offReset();
+      offSessionEnded();
       if (flushTimeoutRef.current !== null) {
         clearTimeout(flushTimeoutRef.current);
         flushTimeoutRef.current = null;

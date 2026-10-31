@@ -1,8 +1,9 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { withCsrfHeader } from "@trenova/shared/lib/api";
+import { withSessionHeaders } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { withIdempotencyKeyHeader } from "@trenova/shared/lib/idempotency";
 import { reportPlanLimit } from "@trenova/shared/lib/plan-limit";
+import { reportSessionContextStale } from "@trenova/shared/lib/session-context";
 import { isRecord } from "@trenova/shared/lib/utils";
 import type {
   GraphQLExecutableDocument,
@@ -30,6 +31,11 @@ type GraphQLErrorResponse = {
 type GraphQLResponse<TData> = {
   data?: TData;
   errors?: GraphQLErrorResponse[];
+  type?: unknown;
+  title?: unknown;
+  detail?: unknown;
+  params?: unknown;
+  traceId?: unknown;
 };
 
 type GraphQLRequestBody<TVariables> = {
@@ -480,11 +486,34 @@ function isAuthenticationExpiry(graphQLErrors: NormalizedGraphQLError[], status:
 }
 
 // failedGraphQLRequest hands a plan-limit refusal (QUOTA_EXCEEDED, PLAN_RESTRICTED in the
-// error extensions) to the app's dialog before the error reaches its caller, so every
-// operation gets the same explanation without each call site recognising the code.
+// error extensions), or the refusal of a tab another tab's sign-in or organization switch
+// left behind, to the app before the error reaches its caller, so every operation gets the
+// same explanation without each call site recognising the code.
 function failedGraphQLRequest(error: GraphQLRequestError): GraphQLRequestError {
   reportPlanLimit(error);
+  reportSessionContextStale(error);
   return error;
+}
+
+// responseErrors reads the errors a response carries. A request refused before it reached
+// GraphQL (the session check, an entitlement, the CSRF guard) answers with a REST problem
+// document instead of an errors array; it becomes one error carrying the problem's type
+// and params as extensions, so it is classified like any resolver error.
+function responseErrors(payload: GraphQLResponse<unknown>): NormalizedGraphQLError[] {
+  if (payload.errors) {
+    return payload.errors.map(normalizeGraphQLError);
+  }
+  if (typeof payload.type !== "string") {
+    return [];
+  }
+
+  const message = stringExtension(payload.detail) ?? stringExtension(payload.title);
+  return [
+    normalizeGraphQLError({
+      message,
+      extensions: { type: payload.type, params: payload.params, traceId: payload.traceId },
+    }),
+  ];
 }
 
 // graphQLErrorMessage extracts the server's field-level or top-level error detail for
@@ -528,7 +557,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
   const response = await fetch(resolveGraphQLURL(API_BASE_URL, operationLabel), {
     body: JSON.stringify(body),
     credentials: "include",
-    headers: await withCsrfHeader(
+    headers: await withSessionHeaders(
       "POST",
       withIdempotencyKeyHeader({ "Content-Type": "application/json" }, idempotencyKey),
       "/graphql",
@@ -538,7 +567,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
   });
 
   const payload = (await response.json().catch(() => ({}))) as GraphQLResponse<TData>;
-  const graphQLErrors = payload.errors?.map(normalizeGraphQLError) ?? [];
+  const graphQLErrors = responseErrors(payload);
 
   // An expired session has to reach the auth store from here. The router only
   // re-checks on navigation, so a long-lived screen would otherwise sit on a dead

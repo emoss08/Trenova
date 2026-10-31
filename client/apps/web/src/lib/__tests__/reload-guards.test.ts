@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { addReloadGuard, reloadIsSafe } from "../reload-guards";
 
 const removers: Array<() => void> = [];
@@ -27,5 +27,36 @@ describe("reload guards", () => {
 
     remove();
     expect(reloadIsSafe()).toBe(true);
+  });
+});
+
+describe("leaveRegardlessOfWork", () => {
+  function stubLocation() {
+    const location = { ...window.location, assign: vi.fn() };
+    Object.defineProperty(window, "location", { configurable: true, value: location });
+    return location;
+  }
+
+  async function freshModule() {
+    vi.resetModules();
+    return import("../reload-guards");
+  }
+
+  it("is not leaving until asked to", async () => {
+    const { isLeavingRegardlessOfWork } = await freshModule();
+
+    expect(isLeavingRegardlessOfWork()).toBe(false);
+  });
+
+  it("marks the page as leaving before it loads the destination", async () => {
+    const { isLeavingRegardlessOfWork, leaveRegardlessOfWork } = await freshModule();
+    const location = stubLocation();
+    location.assign.mockImplementation(() => {
+      expect(isLeavingRegardlessOfWork()).toBe(true);
+    });
+
+    leaveRegardlessOfWork("/login?signed_out=elsewhere");
+
+    expect(location.assign).toHaveBeenCalledWith("/login?signed_out=elsewhere");
   });
 });

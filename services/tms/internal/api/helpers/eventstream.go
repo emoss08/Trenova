@@ -211,3 +211,21 @@ func (s *EventStream) beat(ctx context.Context) {
 		}
 	}
 }
+
+// LastEventIDHeader is where a reconnecting reader puts the id of the last
+// event it applied, as the server-sent events specification says.
+const LastEventIDHeader = "Last-Event-ID"
+
+// lastEventIDQuery carries the same cursor for a client that cannot set
+// headers on the request that opens the stream.
+const lastEventIDQuery = "lastEventId"
+
+// EventCursor reads where a stream's reader left off: the header a browser
+// sends on its own after a dropped connection, or the query parameter.
+func EventCursor(c *gin.Context) string {
+	if cursor := c.GetHeader(LastEventIDHeader); cursor != "" {
+		return cursor
+	}
+
+	return c.Query(lastEventIDQuery)
+}

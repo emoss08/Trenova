@@ -16,15 +16,6 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   "zh-CN": "简体中文",
 };
 
-// A flag is a country, not a language. These name the region each translation is written
-// for, and exist to pick the switcher's flag alone - never to infer a locale from.
-export const LOCALE_REGIONS: Record<Locale, string> = {
-  "en": "US",
-  "es": "MX",
-  "zh-TW": "TW",
-  "zh-CN": "CN",
-};
-
 // Every locale's strings are split into the same bundles (i18n/tools/bundles.mjs): "core"
 // and "web" load at startup, "dash" only in the driver portal, and each "routes/<dir>"
 // with that route folder's code. English has none: its keys are its text.

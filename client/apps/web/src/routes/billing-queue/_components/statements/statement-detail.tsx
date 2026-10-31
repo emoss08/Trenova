@@ -33,7 +33,7 @@ import { BillStatementDialog } from "./bill-statement-dialog";
 import { StatementDetailSkeleton, StatementDetailUnselected } from "./statement-detail-skeleton";
 import { StatementGroupCard } from "./statement-group-card";
 import { StatementTimeline } from "./statement-timeline";
-import { recordPath } from "@/config/record-links";
+import { LinkedRecordLink } from "@/components/linked-record-link";
 
 /** Beyond a handful of invoices, opening every one buries the totals. */
 const AUTO_EXPAND_LIMIT = 3;
@@ -220,12 +220,13 @@ export function StatementDetail({
                       standalone,
                       statement.customerName,
                     )}{" "}
-                    <Link
-                      to={recordPath("customer", statement.customerId)}
+                    <LinkedRecordLink
+                      kind="customer"
+                      id={statement.customerId}
                       className="text-foreground font-medium underline underline-offset-2"
                     >
                       {t("change how they're split")}
-                    </Link>
+                    </LinkedRecordLink>
                     .
                   </p>
                 </AlertDescription>

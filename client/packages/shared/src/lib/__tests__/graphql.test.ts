@@ -282,6 +282,46 @@ describe("requestGraphQL", () => {
     });
   });
 
+  it("classifies a problem document the server answered before GraphQL ran", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          type: `${PROBLEM_BASE}session-context-stale`,
+          title: "Session Changed",
+          status: 409,
+          detail: "Your session changed in another tab. Reload this page to continue.",
+          traceId: "trace-409",
+          params: {
+            userId: "usr_current",
+            organizationId: "org_current",
+            businessUnitId: "bu_current",
+          },
+        }),
+        { status: 409, headers: { "Content-Type": "application/problem+json" } },
+      ),
+    );
+
+    const error = await requestGraphQL({
+      document: "query Test { ok }",
+      operationName: "Test",
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(GraphQLRequestError);
+    const graphQLError = error as GraphQLRequestError;
+    expect(graphQLError.kind).toBe("transport");
+    expect(graphQLError.status).toBe(409);
+    expect(graphQLError.message).toBe(
+      "Your session changed in another tab. Reload this page to continue.",
+    );
+    expect(graphQLError.getProblemType()).toBe("session-context-stale");
+    expect(graphQLError.traceId).toBe("trace-409");
+    expect(graphQLError.params).toEqual({
+      userId: "usr_current",
+      organizationId: "org_current",
+      businessUnitId: "bu_current",
+    });
+  });
+
   it("throws when the response omits data", async () => {
     setCsrfToken("graphql-token");
     fetchMock.mockResolvedValueOnce(createGraphQLResponse({}));

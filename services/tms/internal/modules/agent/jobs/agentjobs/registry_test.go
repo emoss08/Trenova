@@ -3,9 +3,8 @@ package agentjobs
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +34,7 @@ func TestWorkflows_KeepTheWorkloadClassesApart(t *testing.T) {
 		agentcontract.AgentScheduledRunWorkflowName,
 		ReconcileSchedulesWorkflowName,
 		ExpireStaleProposalsWorkflowName,
-		DeleteStaleAskThreadsWorkflowName,
+		AssistantRetentionWorkflowName,
 	} {
 		assert.Contains(t, background, name)
 	}

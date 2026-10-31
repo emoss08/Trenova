@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,6 +31,8 @@ type Params struct {
 	Service              billingqueueports.BillingQueueService
 	Review               billingqueueports.BillingQueueReviewService
 	Approval             billingqueueports.BillingQueueApprovalService
+	Assist               billingqueueports.BillingQueueAssistService
+	Packets              billingqueueports.PacketPreviewer `optional:"true"`
 	PresetRepo           billingqueuefilterpresetports.BillingQueueFilterPresetRepository
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
@@ -40,6 +43,8 @@ type Handler struct {
 	service    billingqueueports.BillingQueueService
 	review     billingqueueports.BillingQueueReviewService
 	approval   billingqueueports.BillingQueueApprovalService
+	assist     billingqueueports.BillingQueueAssistService
+	packets    billingqueueports.PacketPreviewer
 	presetRepo billingqueuefilterpresetports.BillingQueueFilterPresetRepository
 	eh         *helpers.ErrorHandler
 	pm         *middleware.PermissionMiddleware
@@ -51,6 +56,8 @@ func New(p Params) *Handler {
 		service:    p.Service,
 		review:     p.Review,
 		approval:   p.Approval,
+		assist:     p.Assist,
+		packets:    p.Packets,
 		presetRepo: p.PresetRepo,
 		eh:         p.ErrorHandler,
 		pm:         p.PermissionMiddleware,
@@ -76,6 +83,15 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		),
 		h.stats,
 	)
+	api.GET(
+		"/recommendations/",
+		h.pm.RequirePermission(
+			permission.ResourceBillingQueue.String(),
+			permission.OpRead,
+		),
+		h.recommendations,
+	)
+	h.registerAssistRoutes(api)
 	h.registerReviewRoutes(api)
 	api.GET(
 		"/:itemID/",
@@ -116,6 +132,22 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 			permission.OpUpdate,
 		),
 		h.reassignCharge,
+	)
+	api.GET(
+		"/:itemID/packet-preview/",
+		h.pm.RequirePermission(
+			permission.ResourceBillingQueue.String(),
+			permission.OpRead,
+		),
+		h.packetPreview,
+	)
+	api.PUT(
+		"/:itemID/invoice-details/",
+		h.pm.RequirePermission(
+			permission.ResourceBillingQueue.String(),
+			permission.OpUpdate,
+		),
+		h.updateInvoiceDetails,
 	)
 	api.PUT(
 		"/:itemID/charges/",
@@ -169,6 +201,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
+// @Param lane query []string false "Lanes to include" collectionFormat(multi)
+// @Param minAmount query string false "Smallest amount, in the bill-to's currency"
+// @Param maxAmount query string false "Largest amount, in the bill-to's currency"
+// @Param createdBefore query int false "Only items queued before this Unix time"
 // @Success 200 {object} pagination.Response[[]billingqueue.BillingQueueItem]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -184,11 +220,31 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
+			lanes, err := laneParams(c)
+			if err != nil {
+				return nil, err
+			}
+			minAmount, err := amountParam(c, "minAmount")
+			if err != nil {
+				return nil, err
+			}
+			maxAmount, err := amountParam(c, "maxAmount")
+			if err != nil {
+				return nil, err
+			}
+			var createdBefore *int64
+			if before := helpers.QueryInt64(c, "createdBefore"); before > 0 {
+				createdBefore = &before
+			}
 			result, err := h.service.List(
 				c.Request.Context(),
 				&billingqueueports.ListBillingQueueItemsRequest{
 					Filter:        req,
 					IncludePosted: helpers.QueryBool(c, "includePosted"),
+					Lanes:         lanes,
+					MinAmount:     minAmount,
+					MaxAmount:     maxAmount,
+					CreatedBefore: createdBefore,
 				},
 			)
 			if err != nil {
@@ -204,7 +260,8 @@ func (h *Handler) list(c *gin.Context) {
 // @ID getBillingQueueStats
 // @Tags Billing Queue
 // @Produce json
-// @Success 200 {object} services.BillingQueueStats
+// @Param dayStart query int false "Start of the caller's day, Unix seconds; adds the day's pulse"
+// @Success 200 {object} billingqueueports.BillingQueueStats
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -217,6 +274,7 @@ func (h *Handler) stats(c *gin.Context) {
 		c.Request.Context(),
 		&billingqueueports.GetBillingQueueStatsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
+			DayStart:   helpers.QueryInt64(c, "dayStart"),
 		},
 	)
 	if err != nil {
@@ -225,6 +283,46 @@ func (h *Handler) stats(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, stats)
+}
+
+// @Summary List the batch actions the queue recommends
+// @Description What a biller can clear in one action now: ready items, items that only need a biller, approved drafts to post, paperwork to ask drivers for, unbilled charges, possible duplicates, and the items Nova agreed with or questioned. Each names its items so a bulk action can act on exactly them.
+// @ID listBillingQueueRecommendations
+// @Tags Billing Queue
+// @Produce json
+// @Success 200 {array} billingqueueports.Recommendation
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/recommendations/ [get]
+func (h *Handler) recommendations(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	canPost, err := h.pm.Allowed(c, permission.ResourceInvoice.String(), permission.OpPost)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	canAssign, err := h.pm.Allowed(c, permission.ResourceBillingQueue.String(), permission.OpAssign)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	recs, err := h.service.Recommendations(
+		c.Request.Context(),
+		&billingqueueports.ListRecommendationsRequest{
+			TenantInfo: pagination.FromAuth(authCtx),
+			UserID:     authCtx.UserID,
+			CanPost:    canPost,
+			CanAssign:  canAssign,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, recs)
 }
 
 // @Summary Get a billing queue item
@@ -742,4 +840,146 @@ func (h *Handler) reassignCharge(c *gin.Context) {
 		result,
 		(*billingqueueports.ReassignChargeResult).WithoutFormulaContent,
 	)
+}
+
+func laneParams(c *gin.Context) ([]billingqueue.Lane, error) {
+	raw := c.QueryArray("lane")
+	lanes := make([]billingqueue.Lane, 0, len(raw))
+	for _, value := range raw {
+		lane := billingqueue.Lane(value)
+		if !lane.IsValid() {
+			return nil, errortypes.NewValidationError(
+				"lane",
+				errortypes.ErrInvalid,
+				"Unknown billing queue lane {0}",
+				value,
+			)
+		}
+		lanes = append(lanes, lane)
+	}
+
+	return lanes, nil
+}
+
+type invoiceDetailsRequest struct {
+	Version           int64      `json:"version"`
+	PONumber          string     `json:"poNumber"`
+	InvoiceMemo       string     `json:"invoiceMemo"`
+	PaymentTerm       string     `json:"paymentTerm"`
+	InvoiceDate       *int64     `json:"invoiceDate"`
+	PacketDocumentIDs []pulid.ID `json:"packetDocumentIds"`
+}
+
+// @Summary Set what the invoice will say before it is made
+// @Description The customer's PO, the note printed under the charges, a payment term and invoice date that override the customer's defaults, and the shipment documents sent with the invoice as one packet. Only before approval; after it, change the invoice itself.
+// @ID updateBillingQueueInvoiceDetails
+// @Tags Billing Queue
+// @Accept json
+// @Produce json
+// @Param itemID path string true "Billing queue item ID"
+// @Success 200 {object} billingqueue.BillingQueueItem
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 409 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/{itemID}/invoice-details/ [put]
+func (h *Handler) updateInvoiceDetails(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	itemID, err := pulid.MustParse(c.Param("itemID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	var body invoiceDetailsRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	item, err := h.service.UpdateInvoiceDetails(
+		c.Request.Context(),
+		&billingqueueports.UpdateInvoiceDetailsRequest{
+			ItemID:            itemID,
+			TenantInfo:        pagination.FromAuth(authCtx),
+			Version:           body.Version,
+			PONumber:          body.PONumber,
+			InvoiceMemo:       body.InvoiceMemo,
+			PaymentTerm:       body.PaymentTerm,
+			InvoiceDate:       body.InvoiceDate,
+			PacketDocumentIDs: body.PacketDocumentIDs,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	formulavisibility.Respond(
+		c,
+		h.formulas,
+		http.StatusOK,
+		item,
+		(*billingqueue.BillingQueueItem).WithoutFormulaContent,
+	)
+}
+
+func amountParam(c *gin.Context, key string) (decimal.NullDecimal, error) {
+	raw := c.Query(key)
+	if raw == "" {
+		return decimal.NullDecimal{}, nil
+	}
+	value, err := decimal.NewFromString(raw)
+	if err != nil || value.IsNegative() {
+		return decimal.NullDecimal{}, errortypes.NewValidationError(
+			key,
+			errortypes.ErrInvalid,
+			"Enter an amount of zero or more",
+		)
+	}
+
+	return decimal.NewNullDecimal(value), nil
+}
+
+// @Summary Preview an item's invoice packet
+// @Description The one PDF approving the item would send: the invoice it would make, followed by the documents it carries. Nothing is saved.
+// @ID previewBillingQueuePacket
+// @Tags Billing Queue
+// @Produce application/pdf
+// @Param itemID path string true "Billing queue item ID"
+// @Success 200 {file} binary
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/{itemID}/packet-preview/ [get]
+func (h *Handler) packetPreview(c *gin.Context) {
+	if h.packets == nil {
+		h.eh.HandleError(
+			c,
+			errortypes.NewBusinessError("Invoice packets are not configured on this deployment"),
+		)
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	itemID, err := pulid.MustParse(c.Param("itemID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	preview, err := h.packets.PreviewPacket(
+		c.Request.Context(),
+		&billingqueueports.PacketPreviewRequest{
+			ItemID:     itemID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Content-Disposition", `inline; filename="`+preview.FileName+`"`)
+	c.Data(http.StatusOK, "application/pdf", preview.Content)
 }

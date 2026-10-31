@@ -24,7 +24,7 @@ type Params struct {
 	// with no provider configured. Mail lands and waits for a person instead of
 	// being classified, which is the behaviour a mailbox on AlwaysReview has
 	// anyway.
-	Completion    llmports.CompletionService             `optional:"true"`
+	Nova          llmports.TaskRunner                    `optional:"true"`
 	Events        agenteventports.AgentEventPublisher    `optional:"true"`
 	Hints         inboundmessageports.SenderHintProvider `optional:"true"`
 	Indexer       retrievalports.RetrievalIndexer        `optional:"true"`
@@ -49,7 +49,7 @@ type Params struct {
 
 type Service struct {
 	activityRepo  inboundmessageports.TriageActivityRepository
-	completion    llmports.CompletionService
+	nova          llmports.TaskRunner
 	events        agenteventports.AgentEventPublisher
 	hints         inboundmessageports.SenderHintProvider
 	indexer       retrievalports.RetrievalIndexer
@@ -71,7 +71,7 @@ func New(p Params) *Service {
 	}
 	return &Service{
 		activityRepo: p.ActivityRepo,
-		completion:   p.Completion,
+		nova:         p.Nova,
 		events:       p.Events,
 		hints:        p.Hints,
 		indexer:      p.Indexer,

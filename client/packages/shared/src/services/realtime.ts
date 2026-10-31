@@ -1,10 +1,18 @@
-import { api } from "@trenova/shared/lib/api";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { api, responseError, withSessionHeaders } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { readEventStream, type SSEMessage } from "@trenova/shared/lib/sse";
 
 export type RealtimeConnectionState = "connecting" | "connected" | "disconnected";
 
 export const REALTIME_USERS_SCOPE = "users";
+
+/**
+ * Emitted, with no payload, when the server says the session behind the stream has ended:
+ * it closed the stream because the session was signed out, revoked or expired, or refused a
+ * reconnect with a 401. The stream does not retry; the app ends the session in the tab.
+ */
+export const REALTIME_SESSION_ENDED_EVENT = "session.ended";
 
 /** What a member is doing in a scope that tracks it: reading a record, or writing to it. */
 export type RealtimePresenceActivity = "viewing" | "writing";
@@ -132,10 +140,7 @@ function joinBody(
   return { connectionId, messageId: presence.messageId, activity: presence.activity };
 }
 
-function samePresence(
-  a: RealtimePresenceState | null,
-  b: RealtimePresenceState | null,
-): boolean {
+function samePresence(a: RealtimePresenceState | null, b: RealtimePresenceState | null): boolean {
   if (a === null || b === null) return a === b;
   return a.messageId === b.messageId && a.activity === b.activity;
 }
@@ -276,11 +281,7 @@ export class RealtimeClient {
     }
     state.joins += 1;
     state.joinPath = joinPath;
-    if (
-      state.joins === 1 &&
-      this.connectionId &&
-      (!held || !samePresence(previous, state.state))
-    ) {
+    if (state.joins === 1 && this.connectionId && (!held || !samePresence(previous, state.state))) {
       void this.sendJoin(scope, joinPath, this.connectionId);
     }
 
@@ -311,12 +312,10 @@ export class RealtimeClient {
     this.pruneScope(scope);
     if (connectionId && path) {
       void this.enqueue(scope, () =>
-        api
-          .delete(`${path}?connectionId=${encodeURIComponent(connectionId)}`)
-          .then(
-            () => undefined,
-            () => undefined,
-          ),
+        api.delete(`${path}?connectionId=${encodeURIComponent(connectionId)}`).then(
+          () => undefined,
+          () => undefined,
+        ),
       );
     }
   }
@@ -371,11 +370,11 @@ export class RealtimeClient {
     const controller = new AbortController();
     this.controller = controller;
 
-    const headers = new Headers({ Accept: "text/event-stream" });
+    const query = options.joinUsers ? `?presence=${REALTIME_USERS_SCOPE}` : "";
+    const headers = await withSessionHeaders("GET", { Accept: "text/event-stream" }, STREAM_PATH);
     if (this.lastEventId) {
       headers.set("Last-Event-ID", this.lastEventId);
     }
-    const query = options.joinUsers ? `?presence=${REALTIME_USERS_SCOPE}` : "";
 
     let response: Response;
     try {
@@ -389,8 +388,19 @@ export class RealtimeClient {
       return this.backoff();
     }
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
+      this.emit(REALTIME_SESSION_ENDED_EVENT, null);
       return null;
+    }
+    if (response.status === 403) {
+      return null;
+    }
+    // The session changed under this tab (another organization, or another person): the
+    // refusal tells the tab, and the stream keeps retrying so it reconnects if the session
+    // comes back to this one.
+    if (response.status === 409) {
+      await responseError(response, translate("Request failed"));
+      return this.backoff();
     }
     if (response.status === 429 || response.status === 503) {
       const retryAfter = Number(response.headers.get("Retry-After"));
@@ -423,6 +433,9 @@ export class RealtimeClient {
     }
 
     switch (this.lastCloseReason()) {
+      case "session_ended":
+        this.emit(REALTIME_SESSION_ENDED_EVENT, null);
+        return null;
       case "rotate":
         return jitter(ROTATE_SPREAD_MS);
       case "shutdown":

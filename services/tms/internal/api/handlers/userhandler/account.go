@@ -39,6 +39,13 @@ type RevokeSessionsResponse struct {
 	Revoked int `json:"revoked"`
 }
 
+func respondWithSelf(c *gin.Context, user *tenant.User) {
+	authCtx := authctx.GetAuthContext(c)
+	user.CurrentOrganizationID = authCtx.OrganizationID
+	user.BusinessUnitID = authCtx.BusinessUnitID
+	helpers.JSON(c, http.StatusOK, user)
+}
+
 func selfTenant(c *gin.Context) pagination.TenantInfo {
 	authCtx := authctx.GetAuthContext(c)
 	return pagination.TenantInfo{
@@ -88,7 +95,7 @@ func (h *Handler) updateMyProfile(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, updated)
+	respondWithSelf(c, updated)
 }
 
 // @Summary Show or hide the assistant for the current user
@@ -129,7 +136,7 @@ func (h *Handler) updateMyAssistantVisibility(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, updated)
+	respondWithSelf(c, updated)
 }
 
 // @Summary Update current user availability
@@ -176,7 +183,7 @@ func (h *Handler) updateMyAvailability(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, updated)
+	respondWithSelf(c, updated)
 }
 
 // @Summary List avatar styles and availability for teammates

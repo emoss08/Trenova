@@ -124,6 +124,34 @@ func TestBuildReadinessReadsTheChecksFromTheirIssues(t *testing.T) {
 	assert.False(t, review.Ready)
 }
 
+func TestBuildReadinessCountsEveryOpenIssueAsOneThatNeedsThem(t *testing.T) {
+	t.Parallel()
+
+	keep := "keep"
+	settledAt := int64(200)
+	charge := func(summary string) *billingqueue.Issue {
+		return &billingqueue.Issue{
+			ID:       pulid.MustNew("bqis_"),
+			CheckKey: billingqueue.CheckCharges,
+			Summary:  summary,
+			Options:  []billingqueue.IssueOption{{Key: "keep"}, {Key: "drop"}},
+		}
+	}
+	fuel := charge("$1,911.58 fuel surcharge isn't on the rate con")
+	stopOff := charge("$100.00 stop-off charge isn't on the rate con")
+	lumper := charge("$110.00 lumper fee isn't on the rate con")
+	lumper.ResolutionKey, lumper.ResolvedAt = &keep, &settledAt
+
+	review := BuildReadiness(
+		reviewItem(billingqueue.StatusInReview, true),
+		[]*billingqueue.Issue{fuel, stopOff, lumper},
+		CheckFacts{ShipmentRef: "S-1001"},
+	)
+
+	assert.Equal(t, 2, review.NeedsCount, "two charges to settle are two, though they share a check")
+	assert.Equal(t, fuel.ID, review.Checks[1].IssueID, "the check still names the oldest open one")
+}
+
 func TestBuildReadinessNeverCallsAHeldOrSettledItemReady(t *testing.T) {
 	t.Parallel()
 

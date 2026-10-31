@@ -63,7 +63,7 @@ func seedSession(t *testing.T, repo *sessionRepository, sess *session.Session) {
 	require.NoError(t, redishelpers.SetJSON(
 		t.Context(),
 		repo.client,
-		repo.getSessionKey(sess.ID),
+		sessionKey(sess.ID),
 		sess,
 		time.Hour,
 	))
@@ -81,7 +81,7 @@ func TestSessionRepository_KeyLivesOnlyAsLongAsTheSession_Integration(t *testing
 
 	require.NoError(t, repo.Create(t.Context(), sess))
 
-	ttl, err := repo.client.TTL(t.Context(), repo.getSessionKey(sess.ID)).Result()
+	ttl, err := repo.client.TTL(t.Context(), sessionKey(sess.ID)).Result()
 	require.NoError(t, err)
 	assert.InDelta(t, (12 * time.Hour).Seconds(), ttl.Seconds(), 5)
 }
@@ -97,7 +97,7 @@ func TestSessionRepository_GetEndsAnIdleSession_Integration(t *testing.T) {
 	_, err := repo.Get(t.Context(), sess.ID)
 	require.ErrorIs(t, err, sessionports.ErrSessionNotFound)
 
-	exists, err := repo.client.Exists(t.Context(), repo.getSessionKey(sess.ID)).Result()
+	exists, err := repo.client.Exists(t.Context(), sessionKey(sess.ID)).Result()
 	require.NoError(t, err)
 	assert.Zero(t, exists)
 	members, err := repo.client.ZRange(t.Context(), repo.getUserSessionsKey(userID), 0, -1).Result()
@@ -126,7 +126,7 @@ func TestSessionRepository_CreateRefusesASessionThatHasAlreadyEnded_Integration(
 
 	require.Error(t, repo.Create(t.Context(), sess))
 
-	exists, err := repo.client.Exists(t.Context(), repo.getSessionKey(sess.ID)).Result()
+	exists, err := repo.client.Exists(t.Context(), sessionKey(sess.ID)).Result()
 	require.NoError(t, err)
 	assert.Zero(t, exists)
 }
@@ -159,4 +159,49 @@ func TestSessionRepository_ListForUserLeavesOutEndedSessions_Integration(t *test
 	members, err := repo.client.ZRange(t.Context(), repo.getUserSessionsKey(userID), 0, -1).Result()
 	require.NoError(t, err)
 	assert.Equal(t, []string{active.ID.String()}, members)
+}
+
+func TestSessionRepository_EndedNamesEverySessionThatNoLongerHolds_Integration(t *testing.T) {
+	repo := setupSessionRepository(t)
+	now := timeutils.NowUnix()
+	userID := pulid.MustNew("usr_")
+	live := newIntegrationSession(userID, now, now, integrationSessionPolicy.ExpiresAt(now))
+	idle := newIntegrationSession(
+		userID,
+		now-integrationIdleFor,
+		now-integrationIdleFor,
+		now+60*60,
+	)
+	past := newIntegrationSession(userID, now-60, now-60, now-1)
+	deleted := newIntegrationSession(userID, now, now, integrationSessionPolicy.ExpiresAt(now))
+	seedSession(t, repo, live)
+	seedSession(t, repo, idle)
+	seedSession(t, repo, past)
+	require.NoError(t, repo.Create(t.Context(), deleted))
+	require.NoError(t, repo.Delete(t.Context(), deleted.ID))
+	never := pulid.MustNew("ses_")
+
+	ended, err := repo.Ended(t.Context(), []pulid.ID{live.ID, idle.ID, past.ID, deleted.ID, never})
+
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []pulid.ID{idle.ID, past.ID, deleted.ID, never}, ended)
+}
+
+func TestSessionRepository_EndedChecksSessionsInBatches_Integration(t *testing.T) {
+	repo := setupSessionRepository(t)
+	now := timeutils.NowUnix()
+	userID := pulid.MustNew("usr_")
+	ids := make([]pulid.ID, 0, livenessBatchSize+3)
+	for range livenessBatchSize + 3 {
+		ids = append(ids, pulid.MustNew("ses_"))
+	}
+	live := newIntegrationSession(userID, now, now, integrationSessionPolicy.ExpiresAt(now))
+	seedSession(t, repo, live)
+	ids = append(ids, live.ID)
+
+	ended, err := repo.Ended(t.Context(), ids)
+
+	require.NoError(t, err)
+	assert.Len(t, ended, livenessBatchSize+3)
+	assert.NotContains(t, ended, live.ID)
 }

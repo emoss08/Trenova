@@ -150,6 +150,21 @@ func (a anthropicAdapter) PollBatch(
 	}, nil
 }
 
+func (a anthropicAdapter) CancelBatch(ctx context.Context, call *modeladapter.Call, id string) error {
+	service, err := anthropicMessages(ctx, call, false, a.credentials)
+	if err != nil {
+		return err
+	}
+	_, err = service.Batches.Cancel(
+		ctx,
+		id,
+		anthropic.BetaMessageBatchCancelParams{},
+		anthropicBlockingOptions(call)...,
+	)
+
+	return err
+}
+
 func (a anthropicAdapter) ReadBatch(
 	ctx context.Context,
 	call *modeladapter.Call,

@@ -1,37 +1,37 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
-import { useHotkey } from "@tanstack/react-hotkeys";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { RoutePrefetch, RoutePrefetchEntry } from "@/lib/route-prefetch";
+import { useQuery } from "@tanstack/react-query";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import type { OpenStatement } from "@trenova/shared/types/statement";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@trenova/shared/components/ui/sheet";
 import { createLoader, useQueryStates } from "nuqs";
-import { lazy, useCallback, useEffect, useState } from "react";
+import { lazy, useCallback, useEffect, useRef, useState } from "react";
+import {
+  BILLING_QUEUE_OPEN_LANES,
+  type BillingQueueLane,
+} from "@trenova/shared/types/billing-queue";
 import {
   BillingQueueDetailSkeleton,
   BillingQueueDetailUnselected,
 } from "./_components/billing-queue-detail-skeleton";
-import { BillingQueueDocumentPreviewSkeleton } from "./_components/billing-queue-document-preview-skeleton";
-import { BillingQueueKPIStrip } from "./_components/billing-queue-kpi-strip";
+import { BillingQueueDocumentReview } from "./_components/billing-queue-document-review";
+import { BillingQueueOverview } from "./_components/billing-queue-overview";
+import { useOpenFirstItem } from "./use-open-first-item";
+import { LANES_FOLDED_BY_DEFAULT } from "./_components/billing-queue-lanes";
+import { BillingQueueCaughtUp, isCaughtUp } from "./_components/billing-queue-caught-up";
+import { activeQueueFilterCount } from "./_components/billing-queue-filters";
 import { BillingQueueSidebar } from "./_components/billing-queue-sidebar";
 import {
-  BILLING_QUEUE_LIST_KEY,
   billingQueueFilterPresetsQuery,
-  billingQueueListQuery,
+  billingQueueLaneQuery,
+  billingQueueStatsQuery,
 } from "./billing-queue-queries";
 import { statementListQuery } from "./statement-queries";
 import {
   queueSearchParamsParser,
   queueSelectionSearchParamsParser,
-  queueToolbarSearchParamsParser,
+  queueSidebarSearchParamsParser,
   queueViewSearchParamsParser,
   statementSelectionSearchParamsParser,
   transferRunSearchParamsParser,
@@ -47,9 +47,6 @@ import {
 import { StatementSidebar } from "./_components/statements/statement-sidebar";
 
 const BillingQueueDetailPane = lazy(() => import("./_components/billing-queue-detail-pane"));
-const BillingQueueDocumentPreview = lazy(
-  () => import("./_components/billing-queue-document-preview"),
-);
 const StatementDetail = lazy(() =>
   import("./_components/statements/statement-detail").then((module) => ({
     default: module.StatementDetail,
@@ -60,25 +57,62 @@ const loadQueueSearch = createLoader(queueSearchParamsParser);
 
 const EMPTY_STATEMENTS: OpenStatement[] = [];
 
-// The KPI strip, the sidebar's presets and its first page of items all fire on mount
-// with nothing but the URL to go on, so the loader can reproduce their keys exactly.
-// The sidebar's search box is deferred, which on first render is the URL value too.
+// The overview, the suggestions, the presets and the first page of every open lane all
+// fire on mount with nothing but the URL to go on, so the loader can reproduce their
+// keys exactly. The sidebar's search box is deferred, which on first render is the URL
+// value too.
 export const prefetch: RoutePrefetch = ({ request }) => {
-  const { view, item, status, query, billType, billers, payer, includePosted } =
-    loadQueueSearch(request);
+  const {
+    view,
+    item,
+    status,
+    query,
+    billType,
+    billers,
+    payer,
+    includePosted,
+    lanes,
+    minAmount,
+    maxAmount,
+    createdBefore,
+    shipmentCustomer,
+    delivered,
+    pickedUp,
+    queued,
+  } = loadQueueSearch(request);
 
   // The switch shows the statement count in both views, so the list is warmed
   // either way; only the statements view pays for the rest.
-  const list: RoutePrefetchQuery[] = [statementListQuery()];
+  const list: RoutePrefetchEntry[] = [statementListQuery()];
 
   if (view === "statements") {
     return list;
   }
 
+  const filters = {
+    status,
+    billers,
+    billType,
+    payer,
+    search: query,
+    includePosted,
+    minAmount,
+    maxAmount,
+    createdBefore,
+    shipmentCustomer,
+    delivered,
+    pickedUp,
+    queued,
+  };
+  const openLanes = BILLING_QUEUE_OPEN_LANES.filter((lane) =>
+    lanes.length > 0 ? lanes.includes(lane) : !LANES_FOLDED_BY_DEFAULT.includes(lane),
+  );
   list.push(
-    billingQueue.stats(),
+    billingQueueStatsQuery(),
+    billingQueue.assist(),
+    billingQueue.recommendations(),
     billingQueueFilterPresetsQuery(),
-    billingQueueListQuery({ status, billers, billType, payer, search: query, includePosted }),
+    ...openLanes.map((lane) => billingQueueLaneQuery(lane, filters)),
   );
   if (item) {
     list.push(billingQueue.get(item));
@@ -110,12 +144,11 @@ export function BillingQueuePage() {
   const [statementParams, setStatementParams] = useQueryStates(
     statementSelectionSearchParamsParser,
   );
-  const [toolbarParams, setToolbarParams] = useQueryStates(queueToolbarSearchParamsParser);
+  const [sidebarParams, setSidebarParams] = useQueryStates(queueSidebarSearchParamsParser);
   const [transferParams, setTransferParams] = useQueryStates(transferRunSearchParamsParser);
   const { view } = viewParams;
   const { item: selectedItemId } = selectionParams;
   const { customer: selectedCustomerId } = statementParams;
-  const { status: statusFilter, includePosted } = toolbarParams;
   const { transferRun } = transferParams;
 
   // A run id in the URL means somebody followed the completion toast back to a
@@ -131,6 +164,13 @@ export function BillingQueuePage() {
   );
 
   const nowSeconds = useNowSeconds();
+  const { data: queueStats } = useQuery({
+    ...billingQueueStatsQuery(),
+    enabled: view === "shipments",
+  });
+  const queueFiltered =
+    activeQueueFilterCount(sidebarParams) > 0 || sidebarParams.query.trim() !== "";
+  const caughtUp = !queueFiltered && isCaughtUp(queueStats);
   const { data: statementData, isLoading: statementsLoading } = useQuery(statementListQuery());
   const statements = statementData?.results ?? EMPTY_STATEMENTS;
 
@@ -152,63 +192,50 @@ export function BillingQueuePage() {
   );
 
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  const [selectedDocumentName, setSelectedDocumentName] = useState<string | null>(null);
 
   const handleSelectItem = useCallback(
     (id: string) => {
       void setSelectionParams({ item: id });
       setSelectedDocumentId(null);
-      setSelectedDocumentName(null);
     },
     [setSelectionParams],
   );
 
-  const setStatusFilter = useCallback(
-    (status: string | null) => {
-      void setToolbarParams({ status });
+  const toggleLane = useCallback(
+    (lane: BillingQueueLane) => {
+      const current = sidebarParams.lanes;
+      const open = lane as (typeof BILLING_QUEUE_OPEN_LANES)[number];
+      void setSidebarParams({
+        lanes: current.length === 1 && current[0] === open ? [] : [open],
+      });
     },
-    [setToolbarParams],
+    [sidebarParams.lanes, setSidebarParams],
   );
 
-  const handleDocumentSelect = useCallback((docId: string, fileName: string) => {
+  const handleDocumentSelect = useCallback((docId: string) => {
     setSelectedDocumentId(docId);
-    setSelectedDocumentName(fileName);
   }, []);
 
-  const queryClient = useQueryClient();
+  // The sidebar reports the ids it shows, in order; after an approval the pane moves
+  // to the next one below, read before the list refetches and the item leaves its lane.
+  const order = useRef<string[]>([]);
+  const { firstItemId, reportFirstItem } = useOpenFirstItem(selectedItemId, handleSelectItem);
+  const handleOrderChange = useCallback(
+    (ids: string[]) => {
+      order.current = ids;
+      reportFirstItem(ids[0] ?? null);
+    },
+    [reportFirstItem],
+  );
 
   const handleAutoAdvance = useCallback(() => {
-    const cached = queryClient.getQueriesData<{
-      results?: { id: string; status: string }[];
-    }>({
-      queryKey: [BILLING_QUEUE_LIST_KEY],
-    });
-
-    for (const [, data] of cached) {
-      const items = data?.results;
-      if (!items?.length) continue;
-
-      const currentIdx = items.findIndex((i) => i.id === selectedItemId);
-      const nextItem = items.find(
-        (i, idx) => idx > currentIdx && i.status !== "Approved" && i.status !== "Canceled",
-      );
-
-      if (nextItem) {
-        handleSelectItem(nextItem.id);
-        return;
-      }
+    const ids = order.current;
+    const index = selectedItemId ? ids.indexOf(selectedItemId) : -1;
+    const next = ids[index + 1] ?? (index > 0 ? ids[index - 1] : undefined);
+    if (next && next !== selectedItemId) {
+      handleSelectItem(next);
     }
-  }, [queryClient, selectedItemId, handleSelectItem]);
-
-  useHotkey(
-    "Escape",
-    () => {
-      void setSelectionParams({ item: null });
-      setSelectedDocumentId(null);
-      setSelectedDocumentName(null);
-    },
-    { ignoreInputs: true },
-  );
+  }, [selectedItemId, handleSelectItem]);
 
   if (view === "statements") {
     return (
@@ -256,56 +283,50 @@ export function BillingQueuePage() {
           actions: headerActions,
         }}
         toolbar={
-          <BillingQueueKPIStrip
-            statusFilter={statusFilter}
-            includePosted={includePosted}
-            onFilterChange={setStatusFilter}
-          />
+          <BillingQueueOverview activeLanes={sidebarParams.lanes} onLaneSelect={toggleLane} />
+        }
+        sidebarWidth="wide"
+        empty={
+          caughtUp && queueStats ? (
+            <BillingQueueCaughtUp
+              stats={queueStats}
+              onShowApproved={() => void setSidebarParams({ lanes: ["Approved"] })}
+            />
+          ) : undefined
         }
         sidebar={
-          <BillingQueueSidebar selectedItemId={selectedItemId} onSelectItem={handleSelectItem} />
+          <BillingQueueSidebar
+            selectedItemId={selectedItemId}
+            onSelectItem={handleSelectItem}
+            onOrderChange={handleOrderChange}
+          />
         }
         detail={
-          <LazyComponent
-            fallback={
-              selectedItemId ? <BillingQueueDetailSkeleton /> : <BillingQueueDetailUnselected />
-            }
-          >
-            <BillingQueueDetailPane
-              selectedItemId={selectedItemId}
-              onDocumentSelect={handleDocumentSelect}
-              onAutoAdvance={handleAutoAdvance}
-            />
-          </LazyComponent>
+          // Until the list answers, or while its first item is being opened, the pane
+          // is the item it is about to show.
+          selectedItemId || firstItemId === null ? (
+            <LazyComponent
+              fallback={
+                selectedItemId ? <BillingQueueDetailSkeleton /> : <BillingQueueDetailUnselected />
+              }
+            >
+              <BillingQueueDetailPane
+                selectedItemId={selectedItemId}
+                onDocumentSelect={handleDocumentSelect}
+                onAutoAdvance={handleAutoAdvance}
+              />
+            </LazyComponent>
+          ) : (
+            <BillingQueueDetailSkeleton />
+          )
         }
       />
 
-      <Sheet
-        open={Boolean(selectedDocumentId)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedDocumentId(null);
-            setSelectedDocumentName(null);
-          }
-        }}
-      >
-        <SheetContent side="right" className="w-[min(92vw,1100px)] p-0 sm:max-w-none">
-          <SheetHeader className="border-border border-b pr-12">
-            <SheetTitle>{selectedDocumentName || t("Document preview")}</SheetTitle>
-            <SheetDescription>
-              {t("Review the supporting shipment document attached to this billing queue item.")}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="h-[calc(100%-73px)]">
-            <LazyComponent fallback={<BillingQueueDocumentPreviewSkeleton />}>
-              <BillingQueueDocumentPreview
-                documentId={selectedDocumentId}
-                fileName={selectedDocumentName}
-              />
-            </LazyComponent>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <BillingQueueDocumentReview
+        itemId={selectedItemId}
+        documentId={selectedDocumentId}
+        onDocumentChange={setSelectedDocumentId}
+      />
     </>
   );
 }

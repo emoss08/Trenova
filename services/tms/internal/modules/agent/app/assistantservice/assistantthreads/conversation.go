@@ -330,9 +330,6 @@ func (s *Service) UpdateThread(
 	if req.PinnedFacts != nil {
 		thread.PinnedFacts = conversation.NormalizePinnedFacts(*req.PinnedFacts)
 	}
-	if req.Keep && thread.Origin.Keepable() {
-		thread.Origin = conversation.ThreadOriginDesk
-	}
 	if req.AutoCompact != nil {
 		thread.AutoCompactOff = !*req.AutoCompact
 	}

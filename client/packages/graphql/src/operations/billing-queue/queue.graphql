@@ -1,0 +1,57 @@
+query BillingQueueItems(
+  $input: DataTableConnectionInput!
+  $filter: BillingQueueItemsFilterInput
+  $includeTotalCount: Boolean = true
+) {
+  billingQueueItems(input: $input, filter: $filter) {
+    edges {
+      cursor
+      node {
+        id
+        number
+        status
+        lane
+        billType
+        shipmentId
+        billToCustomerId
+        allocatedTotalAmount
+        assignedBillerId
+        holdReasonCode
+        isAdjustmentOrigin
+        agentVerdict
+        agentSummary
+        version
+        createdAt
+        headline {
+          code
+          checkKey
+          summary
+          open
+          waiting
+        }
+        billToCustomer {
+          id
+          code
+          name
+        }
+        shipment {
+          id
+          proNumber
+          customerId
+          totalChargeAmount
+          customer {
+            id
+            code
+            name
+          }
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

@@ -29,7 +29,7 @@ import { ExtractionCheck } from "./extraction-check";
 import { ExtractionFileDialog } from "./extraction-file-dialog";
 import { groupExtraction, reviewTally, rowsInOrder, type FieldRow } from "./extraction-groups";
 import { ExtractionLoad } from "./extraction-load";
-import { extractionFrom, isImageFile } from "./extraction-payload";
+import { extractionFrom, isImageFile } from "@/lib/document-reading/extraction-payload";
 import {
   documentMark,
   headFacts,

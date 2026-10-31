@@ -16,15 +16,16 @@ const (
 	ErrTypeApprovalItem = "BILLING_QUEUE_APPROVAL_ITEM"
 )
 
-type ApproveItemPayload struct {
+type ApplyRunItemPayload struct {
 	temporaltype.BasePayload
 
-	RunID          pulid.ID `json:"runId"`
-	ItemID         pulid.ID `json:"itemId"`
-	AssignApprover bool     `json:"assignApprover,omitempty"`
+	RunID  pulid.ID                     `json:"runId"`
+	ItemID pulid.ID                     `json:"itemId"`
+	Action billingapprovalrun.RunAction `json:"action"`
+	Params billingapprovalrun.RunParams `json:"params"`
 }
 
-func (p *ApproveItemPayload) tenant() pagination.TenantInfo {
+func (p *ApplyRunItemPayload) tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  p.OrganizationID,
 		BuID:   p.BusinessUnitID,
@@ -49,15 +50,15 @@ type FinalizeApprovalRunPayload struct {
 	LeftoverCode   billingapprovalrun.ApprovalFailureCode `json:"leftoverCode,omitempty"`
 }
 
-type ApproveItemResult struct {
+type ApplyRunItemResult struct {
 	Status      billingapprovalrun.ApprovalItemStatus  `json:"status"`
 	FailureCode billingapprovalrun.ApprovalFailureCode `json:"failureCode,omitempty"`
 }
 
 type ApprovalRunResult struct {
-	RunID         pulid.ID                             `json:"runId"`
-	Status        billingapprovalrun.ApprovalRunStatus `json:"status"`
-	ApprovedCount int                                  `json:"approvedCount"`
-	FailedCount   int                                  `json:"failedCount"`
-	SkippedCount  int                                  `json:"skippedCount"`
+	RunID          pulid.ID                             `json:"runId"`
+	Status         billingapprovalrun.ApprovalRunStatus `json:"status"`
+	SucceededCount int                                  `json:"succeededCount"`
+	FailedCount    int                                  `json:"failedCount"`
+	SkippedCount   int                                  `json:"skippedCount"`
 }

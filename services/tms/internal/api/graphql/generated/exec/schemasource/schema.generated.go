@@ -6350,6 +6350,8 @@ enum AITask {
   InboundClassification
   AccountingMapping
   RemittanceExtraction
+  PaperworkReading
+  PaletteAnswer
   EvaluationJudge
   Embedding
   AssistantChat
@@ -6903,6 +6905,13 @@ enum AIUsageFeature {
   AgentProfile
   AgentRecommendation
   ConversationChapters
+  BillingQueueReview
+  BillingQueueBrief
+  BillingQueueSearch
+  PaperworkReading
+  InboundMail
+  PaletteAnswer
+  InsightNarration
 }
 
 """
@@ -7328,7 +7337,75 @@ extend type Mutation {
   endBenefitEnrollment(input: EndBenefitEnrollmentInput!): WorkerBenefitEnrollment!
 }
 `, BuiltIn: false},
-	{Name: "../schema/billing_queue.graphqls", Input: `input BillingQueueUpdateStatusInput {
+	{Name: "../schema/billing_queue.graphqls", Input: `"""Where an item sits in the queue's working order."""
+enum BillingQueueLane {
+  "Its checks have not run yet."
+  Checking
+  "A check needs the biller."
+  NeedsYou
+  "Waiting on a driver, an approver or credit."
+  Waiting
+  "Every check is clear."
+  Ready
+  "On hold or sent back to operations."
+  Held
+  "Approved and waiting to post."
+  Approved
+  "Posted or canceled."
+  Closed
+}
+
+"""What Nova made of an item it reviewed."""
+enum BillingQueueAgentVerdict {
+  Agrees
+  Concern
+}
+
+"""The open issue a list row leads with, and how many are open."""
+type BillingQueueHeadline {
+  code: String!
+  checkKey: String!
+  summary: String!
+  open: Int!
+  "The issue waits on someone other than the biller."
+  waiting: Boolean!
+}
+
+type BillingQueueItemEdge {
+  node: BillingQueueItem!
+  cursor: String!
+}
+
+type BillingQueueItemConnection {
+  edges: [BillingQueueItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+input BillingQueueItemsFilterInput {
+  "The lanes to include; empty includes every lane."
+  lanes: [BillingQueueLane!]
+  "Include items whose invoice already posted."
+  includePosted: Boolean = false
+  "Smallest amount, in the bill-to's currency."
+  minAmount: Decimal
+  "Largest amount, in the bill-to's currency."
+  maxAmount: Decimal
+  "Only items queued before this time."
+  createdBefore: Timestamp
+}
+
+extend type Query {
+  """The queue's items, oldest first, a page at a time. Each row carries the issue it leads with."""
+  billingQueueItems(
+    input: DataTableConnectionInput!
+    filter: BillingQueueItemsFilterInput
+  ): BillingQueueItemConnection!
+}
+
+input BillingQueueUpdateStatusInput {
   status: BillingQueueStatus!
   exceptionReasonCode: BillingQueueExceptionReasonCode
   exceptionNotes: String
@@ -24903,6 +24980,10 @@ type RateAgreementAccessorial {
   maxAmount: Decimal
   "The Tariff condition a shipment meets for the charge to apply; empty applies always."
   condition: String!
+  "The accessorial charge's code, such as DET."
+  chargeCode: String!
+  "The accessorial charge's description, such as Detention."
+  chargeDescription: String!
 }
 
 "How an agreement prices fuel: the program it binds, or a waiver."
@@ -24910,6 +24991,8 @@ type RateAgreementFuelBinding {
   id: ID!
   fuelSurchargeProgramId: ID!
   waived: Boolean!
+  "The fuel surcharge program's name."
+  programName: String!
 }
 
 "The header terms of an agreement as they stood for a window."
@@ -28174,6 +28257,17 @@ type BillingQueueItem {
   shipment: Shipment
   assignedBiller: User
   canceledBy: User
+  "Where the item sits in the queue's working order; the server keeps it current."
+  lane: BillingQueueLane!
+  holdReasonCode: BillingQueueHoldReasonCode
+  "The customer's PO number printed on the invoice."
+  poNumber: String!
+  "What Nova made of the item after the checks ran. It never blocks approval."
+  agentVerdict: BillingQueueAgentVerdict
+  agentSummary: String
+  agentReviewedAt: Timestamp
+  "The open issue a list row leads with. Set on items read through billingQueueItems."
+  headline: BillingQueueHeadline
 }
 
 type ShipmentCommentEdge {

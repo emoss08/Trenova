@@ -7,12 +7,11 @@ type Surface string
 const (
 	SurfaceDesk      = Surface("Desk")
 	SurfaceAssistant = Surface("Assistant")
-	SurfacePalette   = Surface("Palette")
 )
 
 func (s Surface) IsValid() bool {
 	switch s {
-	case "", SurfaceDesk, SurfaceAssistant, SurfacePalette:
+	case "", SurfaceDesk, SurfaceAssistant:
 		return true
 	default:
 		return false
@@ -21,6 +20,6 @@ func (s Surface) IsValid() bool {
 
 func (s Surface) Validate(field string, multiErr *errortypes.MultiError) {
 	if !s.IsValid() {
-		multiErr.Add(field, errortypes.ErrInvalid, "Surface must be Desk, Assistant or Palette")
+		multiErr.Add(field, errortypes.ErrInvalid, "Surface must be Desk or Assistant")
 	}
 }

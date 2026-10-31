@@ -2,10 +2,16 @@ import { recordPath } from "@/config/record-links";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { DetentionHold } from "@trenova/shared/types/billing-queue";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { clearPermissions, seedPermissions } from "@/test/permissions";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { BillingQueueDetentionHolds } from "../billing-queue-detention-holds";
 
-afterEach(cleanup);
+beforeEach(() => seedPermissions({ [Resource.Detention]: Operation.Read }));
+afterEach(() => {
+  cleanup();
+  clearPermissions();
+});
 
 function hold(overrides: Partial<DetentionHold> = {}): DetentionHold {
   return {
@@ -60,5 +66,14 @@ describe("BillingQueueDetentionHolds", () => {
       "href",
       recordPath("detention_occurrence", "dto_2"),
     );
+  });
+
+  it("names a held charge without a link for someone who cannot open the detention desk", () => {
+    seedPermissions({});
+    renderHolds([hold()]);
+
+    expect(screen.queryByRole("link", { name: "Riverside DC" })).not.toBeInTheDocument();
+    expect(screen.getByText("Riverside DC").closest("[data-slot=locked-reference]")).not.toBeNull();
+    expect(screen.getByText("$425.00")).toBeInTheDocument();
   });
 });

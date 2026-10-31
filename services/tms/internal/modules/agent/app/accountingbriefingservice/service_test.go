@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -892,7 +893,7 @@ func newFixture(completion stubCompletion) *fixture {
 			Collections:   collections,
 			Briefs:        briefs,
 			Organizations: stubOrgs{},
-			Completion:    completion,
+			Nova:          agenttest.NovaRunner(completion),
 			Logger:        zap.NewNop(),
 			Now:           c.now,
 		}),

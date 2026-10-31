@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -224,7 +225,7 @@ func newFixture(t *testing.T, reply any) *fixture {
 			reviews:      engine,
 			access:       stubAccess{allowed: true},
 			systemAgents: &stubProvisioner{definition: definition},
-			completion:   completer,
+			nova:         agenttest.NovaRunner(completer),
 		},
 		completer:  completer,
 		engine:     engine,
@@ -565,7 +566,7 @@ func TestExplainTest_FallsBackWithoutAProvider(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, nil)
-	f.svc.completion = nil
+	f.svc.nova = nil
 	f.engine.tests = failingTests
 
 	resp, err := f.svc.ExplainTest(t.Context(), &formulastudioports.ExplainFormulaTestRequest{
@@ -602,7 +603,7 @@ func TestDraftReviewNote_IsBoundedAndNeedsAProvider(t *testing.T) {
 	assert.Contains(t, sections[1].Content, perMileSource)
 
 	f = newFixture(t, nil)
-	f.svc.completion = nil
+	f.svc.nova = nil
 	_, err = f.svc.DraftReviewNote(t.Context(), &formulastudioports.DraftFormulaReviewNoteRequest{
 		TenantInfo: f.tenant,
 	}, f.actor)

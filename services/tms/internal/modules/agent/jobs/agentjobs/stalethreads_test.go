@@ -27,29 +27,25 @@ func (s *staleThreads) DeleteStaleThreads(
 	return s.deleted[req.Origin], nil
 }
 
-func TestDeleteStaleAskThreadsActivity_AlsoClearsFormulaConversationsNeverSaved(t *testing.T) {
+func TestDeleteStaleFormulaDraftsActivity_ClearsOnlyConversationsAboutUnsavedTemplates(t *testing.T) {
 	t.Parallel()
 
 	threads := &staleThreads{deleted: map[conversation.ThreadOrigin]int{
-		conversation.ThreadOriginAsk:     4,
 		conversation.ThreadOriginFormula: 3,
 	}}
 	a := &Activities{logger: zap.NewNop(), conversations: threads}
 
-	result, err := a.DeleteStaleAskThreadsActivity(t.Context(), &DeleteStaleAskThreadsInput{
+	result, err := a.DeleteStaleFormulaDraftsActivity(t.Context(), &RetentionInput{
 		Before: 1_700_000_000,
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, 7, result.Deleted)
-	require.Len(t, threads.asked, 2)
-	assert.Equal(t, conversation.ThreadOriginAsk, threads.asked[0].Origin)
-	assert.False(t, threads.asked[0].SubjectlessOnly)
-	assert.Equal(t, conversation.ThreadOriginFormula, threads.asked[1].Origin)
-	assert.True(t, threads.asked[1].SubjectlessOnly,
+	assert.Equal(t, 3, result.Deleted)
+	require.Len(t, threads.asked, 1)
+	req := threads.asked[0]
+	assert.Equal(t, conversation.ThreadOriginFormula, req.Origin)
+	assert.True(t, req.SubjectlessOnly,
 		"a formula conversation about a saved template is kept with its template")
-	for _, req := range threads.asked {
-		assert.Equal(t, int64(1_700_000_000), req.Before)
-		assert.Equal(t, deleteStaleAskBatch, req.Limit)
-	}
+	assert.Equal(t, int64(1_700_000_000), req.Before)
+	assert.Equal(t, deleteStaleDraftBatch, req.Limit)
 }

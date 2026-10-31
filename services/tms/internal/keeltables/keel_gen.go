@@ -66,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal/extensionportaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch/extensionwebwatchdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion/palettequestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief/shipmentbriefdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat/shipmentimportchatdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
@@ -346,6 +347,7 @@ func All() []*schema.Table {
 		assistantartifactdb.ArtifactsSchema(),
 		briefingdb.BriefingsSchema(),
 		conversationdb.MessagesSchema(),
+		palettequestiondb.QuestionsSchema(),
 		conversationqueuedb.QueuedMessagesSchema(),
 		conversationchapterdb.ChaptersSchema(),
 		conversationdb.ThreadsSchema(),
@@ -358,6 +360,7 @@ func All() []*schema.Table {
 		bankreceiptdb.BankReceiptsSchema(),
 		paybenefitdb.BenefitPlansSchema(),
 		billingcontroldb.BillingControlsSchema(),
+		billingqueuedb.QueueBriefsSchema(),
 		billingqueueeventdb.ItemEventsSchema(),
 		billingqueuefilterpresetdb.BillingQueueFilterPresetsSchema(),
 		billingqueuedb.IssuesSchema(),

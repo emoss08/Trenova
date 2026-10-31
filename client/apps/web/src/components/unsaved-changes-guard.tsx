@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { addReloadGuard } from "@/lib/reload-guards";
+import { addReloadGuard, isLeavingRegardlessOfWork } from "@/lib/reload-guards";
 import { useCallback, useEffect } from "react";
 import { useBlocker, type BlockerFunction } from "react-router";
 
@@ -35,6 +35,9 @@ export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
     if (!when) return;
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // A session ended on purpose in another tab takes its unsaved work with it; asking
+      // would only keep the last person's screen up.
+      if (isLeavingRegardlessOfWork()) return;
       event.preventDefault();
     };
 

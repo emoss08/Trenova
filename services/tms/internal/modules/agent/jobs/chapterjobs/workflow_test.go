@@ -54,7 +54,7 @@ func modelPlan(req assistantchapterports.ChapterTurnRequest) *assistantchapterpo
 		Fallback:       "Why is load 1200 late?",
 		FallbackSource: conversationchapter.ChapterTitleQuestion,
 		ModelSource:    conversationchapter.ChapterTitleModel,
-		Request: &llmports.StructuredCompletionRequest{
+		Task: &llmports.NovaTask{
 			TenantInfo: tenant(),
 			SchemaName: "chapter_title",
 		},
@@ -84,8 +84,8 @@ func TestThreadChaptersWorkflow_AsksTheModelAndKeepsWhatItSaid(t *testing.T) {
 	)).Return(modelPlan(req), nil).Once()
 	env.OnActivity(a.ChapterModelActivity, mock.Anything, mock.MatchedBy(
 		func(plan *assistantchapterports.ChapterPlan) bool {
-			return plan.Turn.TurnID == req.TurnID && plan.Request != nil &&
-				plan.Request.SchemaName == "chapter_title"
+			return plan.Turn.TurnID == req.TurnID && plan.Task != nil &&
+				plan.Task.SchemaName == "chapter_title"
 		},
 	)).Return(&llmports.StructuredCompletionResult{Text: `{"title":"Late load 1200"}`}, nil).Once()
 	env.OnActivity(a.ApplyChapterActivity, mock.Anything, mock.MatchedBy(

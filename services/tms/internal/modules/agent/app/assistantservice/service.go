@@ -15,12 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordanchorports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -64,10 +64,11 @@ type Params struct {
 	Runs agentruntimeports.AgentRunRepository `optional:"true"`
 	// AgentControls holds the per-person allowance; without it nobody is
 	// limited.
-	AgentControls tenantports.AgentControlRepository    `optional:"true"`
-	Users         tenantports.UserRepository            `optional:"true"`
-	Queries       agenttoolports.AgentQueryToolRegistry `optional:"true"`
-	Boards        assistantports.BoardFiller            `optional:"true"`
+	AgentControls tenantports.AgentControlRepository `optional:"true"`
+	// PaletteQuestions are counted against the same allowance.
+	PaletteQuestions paletteports.QuestionRepository `optional:"true"`
+	Users            tenantports.UserRepository      `optional:"true"`
+	Boards           assistantports.BoardFiller      `optional:"true"`
 	// Memories describes the memories a reply used or saved.
 	Memories agentmemoryports.AgentMemoryService `optional:"true"`
 	Quota    platformplanports.QuotaGuard        `optional:"true"`
@@ -88,67 +89,67 @@ var Module = fx.Module("assistant",
 )
 
 type Service struct {
-	logger        *zap.Logger
-	guard         *agentguard.Service
-	runtime       *agentruntime.Service
-	contexts      agentruntimeports.RuntimeContextBuilder
-	conversations conversationports.ConversationRepository
-	definitions   agentdefinitionports.AgentDefinitionRepository
-	recorder      *proposalrecorder.Service
-	proposals     proposalstores.ProposalStore
-	plans         proposalstores.PlanStore
-	providers     aiproviderports.AIProviderRepository
-	shadow        *agentshadow.Resolver
-	budgets       agentbudgetports.AgentBudgetService
-	decisions     agentdecisionports.AgentDecisionRepository
-	artifacts     assistantartifactports.AssistantArtifactRepository
-	subjects      agentruntimeports.AgentSubjectDescriber
-	anchors       recordanchorports.RecordAnchorReader
-	activity      agentactivityports.AgentActivityPublisher
-	documents     documentports.DocumentRepository
-	contents      documentports.DocumentContentService
-	permissions   permissionports.PermissionEngine
-	runs          agentruntimeports.AgentRunRepository
-	agentControls tenantports.AgentControlRepository
-	users         tenantports.UserRepository
-	queries       agenttoolports.AgentQueryToolRegistry
-	boards        assistantports.BoardFiller
-	memories      agentmemoryports.AgentMemoryService
-	quota         platformplanports.QuotaGuard
-	waits         agentwaitports.AgentWaitRepository
-	readWaits     agentwaitports.DocumentReadWaiter
+	logger           *zap.Logger
+	guard            *agentguard.Service
+	runtime          *agentruntime.Service
+	contexts         agentruntimeports.RuntimeContextBuilder
+	conversations    conversationports.ConversationRepository
+	definitions      agentdefinitionports.AgentDefinitionRepository
+	recorder         *proposalrecorder.Service
+	proposals        proposalstores.ProposalStore
+	plans            proposalstores.PlanStore
+	providers        aiproviderports.AIProviderRepository
+	shadow           *agentshadow.Resolver
+	budgets          agentbudgetports.AgentBudgetService
+	decisions        agentdecisionports.AgentDecisionRepository
+	artifacts        assistantartifactports.AssistantArtifactRepository
+	subjects         agentruntimeports.AgentSubjectDescriber
+	anchors          recordanchorports.RecordAnchorReader
+	activity         agentactivityports.AgentActivityPublisher
+	documents        documentports.DocumentRepository
+	contents         documentports.DocumentContentService
+	permissions      permissionports.PermissionEngine
+	runs             agentruntimeports.AgentRunRepository
+	agentControls    tenantports.AgentControlRepository
+	paletteQuestions paletteports.QuestionRepository
+	users            tenantports.UserRepository
+	boards           assistantports.BoardFiller
+	memories         agentmemoryports.AgentMemoryService
+	quota            platformplanports.QuotaGuard
+	waits            agentwaitports.AgentWaitRepository
+	readWaits        agentwaitports.DocumentReadWaiter
 }
 
 func New(p Params) *Service {
 	return &Service{
-		logger:        p.Logger.Named("service.assistant"),
-		guard:         p.Guard,
-		runtime:       p.Runtime,
-		contexts:      p.Contexts,
-		conversations: p.Conversations,
-		definitions:   p.Definitions,
-		providers:     p.AIProviders,
-		recorder:      p.Recorder,
-		proposals:     p.Proposals,
-		plans:         proposalstores.PlansOrNil(p.Plans),
-		shadow:        p.Shadow,
-		budgets:       p.Budgets,
-		decisions:     p.Decisions,
-		artifacts:     p.Artifacts,
-		subjects:      p.Subjects,
-		anchors:       p.Anchors,
-		activity:      p.Activity,
-		documents:     p.Documents,
-		contents:      p.Contents,
-		permissions:   p.Permissions,
-		runs:          p.Runs,
-		waits:         p.Waits,
-		readWaits:     p.ReadWaits,
-		agentControls: p.AgentControls,
-		users:         p.Users,
-		queries:       p.Queries,
-		boards:        p.Boards,
-		memories:      p.Memories,
-		quota:         p.Quota,
+		logger:           p.Logger.Named("service.assistant"),
+		guard:            p.Guard,
+		runtime:          p.Runtime,
+		contexts:         p.Contexts,
+		conversations:    p.Conversations,
+		definitions:      p.Definitions,
+		providers:        p.AIProviders,
+		recorder:         p.Recorder,
+		proposals:        p.Proposals,
+		plans:            proposalstores.PlansOrNil(p.Plans),
+		shadow:           p.Shadow,
+		budgets:          p.Budgets,
+		decisions:        p.Decisions,
+		artifacts:        p.Artifacts,
+		subjects:         p.Subjects,
+		anchors:          p.Anchors,
+		activity:         p.Activity,
+		documents:        p.Documents,
+		contents:         p.Contents,
+		permissions:      p.Permissions,
+		runs:             p.Runs,
+		waits:            p.Waits,
+		readWaits:        p.ReadWaits,
+		agentControls:    p.AgentControls,
+		paletteQuestions: p.PaletteQuestions,
+		users:            p.Users,
+		boards:           p.Boards,
+		memories:         p.Memories,
+		quota:            p.Quota,
 	}
 }

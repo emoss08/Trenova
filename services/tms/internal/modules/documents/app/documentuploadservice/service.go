@@ -123,6 +123,7 @@ func (s *Service) CreateSession(
 			"Invalid processing profile",
 		)
 	}
+	processingProfile = document.ProcessingProfileFor(processingProfile, req.ResourceType)
 
 	if multiErr := s.validator.ValidateUploadMetadata(
 		req.FileName,

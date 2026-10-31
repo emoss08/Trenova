@@ -741,6 +741,11 @@ type Localizable interface {
 	LocalizedMessage() (message string, args []any)
 }
 
+type Parameterized interface {
+	error
+	Params() map[string]string
+}
+
 func (e *BaseError) LocalizedMessage() (message string, args []any) {
 	return e.Message, e.Args
 }

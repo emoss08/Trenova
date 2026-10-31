@@ -36,12 +36,14 @@ function selectOptionMetaString(option: SelectOption, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
-export const fetchMentionCandidates: SuggestionFetcher = async (query, page) => {
+export const fetchMentionCandidates: SuggestionFetcher = async (query, page, options) => {
   const response = await fetchOptions<UserSelectOption>(
     "/users/select-options/",
     query,
     page,
     MENTION_PAGE_SIZE,
+    undefined,
+    { signal: options?.signal },
   );
 
   return {

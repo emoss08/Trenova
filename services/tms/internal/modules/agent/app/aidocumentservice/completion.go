@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -31,23 +30,26 @@ type structuredCall struct {
 	evaluation bool
 }
 
-func (c *structuredCall) request() *llmports.StructuredCompletionRequest {
-	request := &llmports.StructuredCompletionRequest{
-		TenantInfo:   c.tenant,
-		Task:         c.task,
-		System:       c.system,
-		Context:      c.context,
-		OutputSchema: c.schema,
-		SchemaName:   c.schemaName,
-		Attribution:  documentAttribution(c.tenant, c.documentID, c.feature),
-	}
-	request.PreferredProviderID = c.providerID
+func (c *structuredCall) novaTask(maxTokens int) *llmports.NovaTask {
+	attribution := documentAttribution(c.tenant, c.documentID, c.feature)
 	if c.evaluation {
-		request.RequireProvider = true
-		request.Attribution.Purpose = aiusageports.AIUsagePurposeEvaluation
+		attribution.Purpose = aiusageports.AIUsagePurposeEvaluation
 	}
 
-	return request
+	return &llmports.NovaTask{
+		Name:                c.task,
+		Feature:             c.feature,
+		Instructions:        c.system,
+		SchemaName:          c.schemaName,
+		Schema:              c.schema,
+		Context:             c.context,
+		MaxTokens:           maxTokens,
+		TenantInfo:          c.tenant,
+		UserID:              c.tenant.UserID,
+		Attribution:         &attribution,
+		PreferredProviderID: c.providerID,
+		RequireProvider:     c.evaluation,
+	}
 }
 
 func documentAttribution(
@@ -78,33 +80,23 @@ func (s *Service) runStructured(
 		return nil, err
 	}
 
-	request := call.request()
-	request.MaxTokens = s.cfg.GetExtractionMaxTokens()
-
-	result, err := s.completion.CompleteStructured(ctx, request)
+	result, err := s.nova.Run(ctx, call.novaTask(s.cfg.GetExtractionMaxTokens()), out)
+	if errors.Is(err, llmports.ErrOutsideSchema) {
+		s.recordAIUsage(call.metric, false, "invalid_output")
+		return nil, errors.Join(llmports.ErrModelSchemaValidation, err)
+	}
 	if err != nil {
 		s.recordAIUsage(call.metric, false, failureOutcome(err))
-		return nil, err
-	}
-
-	if err = decodeStructured(result.Text, out); err != nil {
-		s.recordAIUsage(call.metric, false, "invalid_output")
 		return nil, err
 	}
 
 	return result, nil
 }
 
-// decodeStructured reads the model's reply. The router already rejects a reply
-// that will not decode against the requested schema and falls through to the
-// next provider, so reaching a decode error here means the shape parsed for the
-// router and not for us.
+// decodeStructured reads a deferred extraction's answer, which comes back on a
+// submission or a poll rather than from Run.
 func decodeStructured(text string, out any) error {
-	if out == nil {
-		return nil
-	}
-
-	if err := sonic.Unmarshal([]byte(text), out); err != nil {
+	if err := llmports.DecodeAnswer(aitask.TaskDocumentExtraction, text, out); err != nil {
 		return errors.Join(llmports.ErrModelSchemaValidation, err)
 	}
 
@@ -119,7 +111,8 @@ func failureOutcome(err error) string {
 	switch {
 	case errors.Is(err, llmports.ErrNoProviderConfigured):
 		return "missing_config"
-	case errors.Is(err, llmports.ErrModelSchemaValidation):
+	case errors.Is(err, llmports.ErrModelSchemaValidation),
+		errors.Is(err, llmports.ErrOutsideSchema):
 		return "invalid_output"
 	default:
 		return "error"

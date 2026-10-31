@@ -2,11 +2,10 @@ package triageworkservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -72,7 +71,7 @@ var findingKeys = map[inboundmessage.LoadFieldKey][]string{
 	inboundmessage.LoadFieldInstructions: {"instructions", "special_instructions", "notes"},
 }
 
-const loadSystemPrompt = `You read freight tenders for a carrier's dispatch team and pull out the load a
+const loadSystemPrompt = `Your task: read a freight tender for a carrier's dispatch team and pull out the load a
 person would enter. Answer with every field; leave a field empty when the text does not say it.
 
 Copy values as written: a city with its state ("Columbus, OH"), a date with its time window
@@ -110,19 +109,18 @@ func (s *Service) DraftLoad(
 		return nil, err
 	}
 
-	return s.draftLoad(ctx, message, triagenova.Interactive)
+	return s.draftLoad(ctx, message)
 }
 
 func (s *Service) draftLoad(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
-	mode triagenova.Mode,
 ) (*inboundmessage.InboundMessage, error) {
 	if err := requireNoCreatedLoad(message); err != nil {
 		return nil, err
 	}
 
-	draft, err := s.readLoad(ctx, message, mode)
+	draft, err := s.readLoad(ctx, message)
 	if err != nil {
 		return nil, err
 	}
@@ -177,8 +175,8 @@ func (s *Service) PlanDraftLoad(ctx context.Context, req *LoadRequest) (*LoadDra
 
 		return &LoadDraftPlan{Message: message, Draft: draft}, nil
 	}
-	if !s.nova.Available(triagenova.Interactive) {
-		return nil, triagenova.ErrUnavailable
+	if err = s.requireNova(ctx, message); err != nil {
+		return nil, err
 	}
 
 	return &LoadDraftPlan{Message: message, NeedsNova: true}, nil
@@ -195,7 +193,6 @@ func requireNoCreatedLoad(message *inboundmessage.InboundMessage) error {
 func (s *Service) readLoad(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
-	mode triagenova.Mode,
 ) (*inboundmessage.LoadDraft, error) {
 	draft, found, err := s.loadFromDocuments(ctx, message)
 	if err != nil {
@@ -205,11 +202,23 @@ func (s *Service) readLoad(
 		return draft, nil
 	}
 
-	if !s.nova.Available(mode) {
-		return nil, triagenova.ErrUnavailable
+	if err = s.requireNova(ctx, message); err != nil {
+		return nil, err
 	}
 
-	return s.readLoadWithNova(ctx, message, mode)
+	return s.readLoadWithNova(ctx, message)
+}
+
+func (s *Service) requireNova(ctx context.Context, message *inboundmessage.InboundMessage) error {
+	available, err := s.nova.Available(ctx, tenantOf(message))
+	if err != nil {
+		return err
+	}
+	if !available {
+		return triagenova.ErrUnavailable
+	}
+
+	return nil
 }
 
 func (s *Service) loadFromDocuments(
@@ -353,11 +362,10 @@ func loadSchema() map[string]any {
 func (s *Service) readLoadWithNova(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
-	mode triagenova.Mode,
 ) (*inboundmessage.LoadDraft, error) {
-	result, err := s.nova.Complete(ctx, mode, &llmports.StructuredCompletionRequest{
-		TenantInfo: tenantOf(message),
-		System:     loadSystemPrompt,
+	values := make(map[string]string, len(loadFieldOrder))
+	result, err := s.nova.Run(ctx, &llmports.NovaTask{
+		Instructions: loadSystemPrompt,
 		Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{
 			{Title: "Sender", Content: message.FromName + " <" + message.FromAddress + ">"},
 			{
@@ -369,17 +377,12 @@ func (s *Service) readLoadWithNova(
 				Content: stringutils.TruncateRunes(message.TextBody, loadBodyMaxRunes),
 			},
 		}},
-		OutputSchema: loadSchema(),
-		SchemaName:   loadSchemaName,
-		MaxTokens:    loadMaxTokens,
-		Attribution:  aiusageports.AIUsageAttribution{},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	values := make(map[string]string, len(loadFieldOrder))
-	if err = sonic.UnmarshalString(strings.TrimSpace(result.Text), &values); err != nil {
+		Schema:     loadSchema(),
+		SchemaName: loadSchemaName,
+		MaxTokens:  loadMaxTokens,
+		TenantInfo: tenantOf(message),
+	}, &values)
+	if errors.Is(err, llmports.ErrOutsideSchema) {
 		s.l.Warn("a drafted load could not be read",
 			zap.String("messageId", message.ID.String()),
 			zap.String("model", result.ModelIdentifier),
@@ -389,6 +392,9 @@ func (s *Service) readLoadWithNova(
 		return nil, errortypes.NewBusinessError(
 			"Nova could not read a load from this message. Create it by hand, or try again.",
 		)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	keyed := make(map[inboundmessage.LoadFieldKey]string, len(values))

@@ -112,12 +112,11 @@ func TestActiveTurns_ListsTheCallersRepliesInProgress(t *testing.T) {
 	assert.Equal(t, buID, records.asked.TenantInfo.BuID)
 	assert.ElementsMatch(t,
 		[]conversation.ThreadOrigin{
-			conversation.ThreadOriginAsk,
 			conversation.ThreadOriginImport,
 			conversation.ThreadOriginFormula,
 		},
 		records.asked.ExcludeOrigins,
-		"a reply in the palette or on an import or formula page is read there, not listed")
+		"a reply on an import or formula page is read there, not listed")
 
 	var body map[string][]map[string]any
 	require.NoError(t, sonic.Unmarshal(recorder.Body.Bytes(), &body))

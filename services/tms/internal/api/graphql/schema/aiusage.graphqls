@@ -36,6 +36,13 @@ enum AIUsageFeature {
   AgentProfile
   AgentRecommendation
   ConversationChapters
+  BillingQueueReview
+  BillingQueueBrief
+  BillingQueueSearch
+  PaperworkReading
+  InboundMail
+  PaletteAnswer
+  InsightNarration
 }
 
 """

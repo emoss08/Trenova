@@ -19,12 +19,14 @@ type DocumentObserverParams struct {
 	fx.In
 
 	Repo     billingqueueports.BillingQueueRepository
-	Realtime realtimeports.RealtimeService `optional:"true"`
+	Rechecks billingqueueports.RecheckRequester `optional:"true"`
+	Realtime realtimeports.RealtimeService      `optional:"true"`
 	Logger   *zap.Logger
 }
 
 type DocumentObserver struct {
 	repo     billingqueueports.BillingQueueRepository
+	rechecks billingqueueports.RecheckRequester
 	realtime realtimeports.RealtimeService
 	l        *zap.Logger
 }
@@ -34,6 +36,7 @@ var _ documentports.DocumentChangeObserver = (*DocumentObserver)(nil)
 func NewDocumentObserver(p DocumentObserverParams) documentports.DocumentChangeObserver {
 	return &DocumentObserver{
 		repo:     p.Repo,
+		rechecks: p.Rechecks,
 		realtime: p.Realtime,
 		l:        p.Logger.Named("billing-queue.document-observer"),
 	}
@@ -43,7 +46,7 @@ func (o *DocumentObserver) DocumentsChanged(
 	ctx context.Context,
 	change *documentports.DocumentChange,
 ) {
-	if o.realtime == nil || change == nil || change.ResourceType != shipmentResourceType {
+	if change == nil || change.ResourceType != shipmentResourceType {
 		return
 	}
 	shipmentIDs := make([]pulid.ID, 0, len(change.ResourceIDs))
@@ -75,6 +78,12 @@ func (o *DocumentObserver) DocumentsChanged(
 	for _, items := range byShipment {
 		for _, item := range items {
 			if item == nil {
+				continue
+			}
+			if o.rechecks != nil {
+				o.rechecks.RequestRecheck(ctx, change.TenantInfo, item.ID)
+			}
+			if o.realtime == nil {
 				continue
 			}
 			if err = realtimeinvalidation.Publish(

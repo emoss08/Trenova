@@ -51,6 +51,31 @@ func (s *Service) RenderPreview(
 	return s.invoicePreviewForEntity(ctx, entity, deliveryProfile, req.TenantInfo)
 }
 
+// RenderDraftPreview renders an invoice that has not been saved, such as the one
+// approving a billing queue item would make, the way RenderPreview renders a saved one.
+func (s *Service) RenderDraftPreview(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	tenantInfo pagination.TenantInfo,
+) (*invoiceports.InvoicePreviewResult, error) {
+	deliveryProfile, err := s.resolveDeliveryProfile(ctx, invoicedocument.DeliveryProfileParams{
+		Entity:                 entity,
+		TenantInfo:             tenantInfo,
+		IncludeShipmentDetails: true,
+		IncludeCustomer:        true,
+		IncludeCustomerState:   true,
+		IncludeBillingControl:  true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = s.resolveDeliveryOrganization(ctx, deliveryProfile, tenantInfo); err != nil {
+		return nil, err
+	}
+
+	return s.invoicePreviewForEntity(ctx, entity, deliveryProfile, tenantInfo)
+}
+
 func (s *Service) GeneratePDF(
 	ctx context.Context,
 	req *invoiceports.InvoicePreviewRequest,

@@ -120,15 +120,14 @@ func (s ThreadStatus) IsValid() bool {
 }
 
 // ThreadOrigin is where a conversation was started. The Desk shows a
-// person's own conversations; a quick question asked from the command
-// palette stays out of that list until the person keeps it, and one opened
-// from the watchtower or a briefing says so, since it began about something.
+// person's own conversations; one opened from the watchtower or a briefing
+// says so, since it began about something, and one on an import or formula
+// page stays on that page.
 type ThreadOrigin string
 
 const (
 	ThreadOriginPanel      = ThreadOrigin("Panel")
 	ThreadOriginDesk       = ThreadOrigin("Desk")
-	ThreadOriginAsk        = ThreadOrigin("Ask")
 	ThreadOriginWatchtower = ThreadOrigin("Watchtower")
 	ThreadOriginBriefing   = ThreadOrigin("Briefing")
 	ThreadOriginImport     = ThreadOrigin("Import")
@@ -139,7 +138,6 @@ func AllThreadOrigins() []ThreadOrigin {
 	return []ThreadOrigin{
 		ThreadOriginPanel,
 		ThreadOriginDesk,
-		ThreadOriginAsk,
 		ThreadOriginWatchtower,
 		ThreadOriginBriefing,
 		ThreadOriginImport,
@@ -149,7 +147,7 @@ func AllThreadOrigins() []ThreadOrigin {
 
 func (o ThreadOrigin) IsValid() bool {
 	switch o {
-	case ThreadOriginPanel, ThreadOriginDesk, ThreadOriginAsk,
+	case ThreadOriginPanel, ThreadOriginDesk,
 		ThreadOriginWatchtower, ThreadOriginBriefing,
 		ThreadOriginImport, ThreadOriginFormula:
 		return true
@@ -159,24 +157,9 @@ func (o ThreadOrigin) IsValid() bool {
 }
 
 // Listed reports whether the Desk's thread rail shows a conversation of
-// this origin. A quick question is not listed until it is kept.
+// this origin.
 func (o ThreadOrigin) Listed() bool {
-	return o != ThreadOriginAsk && !o.PageBound()
-}
-
-func (o ThreadOrigin) Keepable() bool {
-	return o == ThreadOriginAsk
-}
-
-// AnswersInline reports whether a reply in a conversation of this origin is
-// read on its own, with nothing beside it to hold a table, a card or a
-// document: a quick question in the command palette, until it is kept.
-func (o ThreadOrigin) AnswersInline() bool {
-	return o == ThreadOriginAsk
-}
-
-func (o ThreadOrigin) ReadsEverything() bool {
-	return o == ThreadOriginAsk
+	return !o.PageBound()
 }
 
 func (o ThreadOrigin) PageBound() bool {
@@ -184,11 +167,10 @@ func (o ThreadOrigin) PageBound() bool {
 }
 
 // AnsweredInPlace reports whether a reply in a conversation of this origin is
-// read only where it was asked: an unkept quick question in the palette, or a
-// conversation on an import or formula page. Nothing announces such a reply,
-// keeps its conversation, or lists it as under way anywhere else.
+// read only where it was asked: a conversation on an import or formula page.
+// Nothing announces such a reply or lists it as under way anywhere else.
 func (o ThreadOrigin) AnsweredInPlace() bool {
-	return o == ThreadOriginAsk || o.PageBound()
+	return o.PageBound()
 }
 
 func AnsweredInPlaceOrigins() []ThreadOrigin {

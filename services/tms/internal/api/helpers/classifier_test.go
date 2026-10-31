@@ -143,6 +143,11 @@ func TestNewDefaultClassifier(t *testing.T) {
 			expectedType: helpers.ProblemTypeRateLimit,
 		},
 		{
+			name:         "SessionContextStaleError classifies as session context stale",
+			err:          errortypes.NewSessionContextStaleError("usr_1", "org_1", "bu_1"),
+			expectedType: helpers.ProblemTypeSessionContextStale,
+		},
+		{
 			name:         "unknown error classifies as internal",
 			err:          errors.New("unknown error"),
 			expectedType: helpers.ProblemTypeInternal,

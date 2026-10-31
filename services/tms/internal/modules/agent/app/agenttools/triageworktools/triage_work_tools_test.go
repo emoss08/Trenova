@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -75,7 +74,6 @@ func TestDraftInboundReply_SavesTheBodyOrAsksTheDrafter(t *testing.T) {
 	assert.True(t, previewOf(t, tool, asked).Partial, "the drafter's words are not known yet")
 	require.NoError(t, tool.Execute(t.Context(), asked))
 	drafted := f.Written[1].(*inboundreplyservice.DraftReplyRequest)
-	assert.Equal(t, triagenova.Interactive, drafted.Mode)
 	assert.Equal(t, f.Message.ID, drafted.MessageID)
 
 	require.Error(t, tool.Execute(t.Context(), agenttoolstest.DeskParams(map[string]any{

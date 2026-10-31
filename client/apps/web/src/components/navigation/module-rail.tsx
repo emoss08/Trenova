@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { OrgSwitcher } from "@/components/navigation/org-switcher";
+import { RailGlideGroup } from "@/components/navigation/rail-hover-glide";
 import { AttentionCountBadge, ModulePageList } from "@/components/navigation/sidebar-chrome";
 import {
   moduleDisplayLabel,
@@ -32,8 +33,11 @@ export const RAIL_WIDTH_CLASS = "w-12";
 
 const TILE_CLASS =
   "ui-focus-ring relative flex size-8 shrink-0 items-center justify-center rounded-md transition-colors outline-none";
-const TILE_REST_CLASS = "text-foreground-muted hover:bg-surface-hover hover:text-foreground";
+/** The hover background is the group's glide, not the tile's own (nor the ghost button's). */
+const TILE_REST_CLASS = "text-foreground-muted hover:bg-transparent hover:text-foreground";
 const TILE_ACTIVE_CLASS = "bg-nav-active text-nav-active-foreground";
+/** A rail tile is a control, not a term to explain: it keeps the pointer, not the help cursor. */
+const RAIL_TOOLTIP_TRIGGER_CLASS = "cursor-pointer";
 
 function ChordHint({ letter }: { letter: string }) {
   return (
@@ -50,19 +54,6 @@ function TileLabel({ label, letter }: { label: string; letter?: string }) {
       {label}
       {letter && <ChordHint letter={letter} />}
     </span>
-  );
-}
-
-/**
- * The mark that says which module you are in: an ink bar on the rail's
- * edge, the way an active line is marked in a gutter.
- */
-function ActiveMark() {
-  return (
-    <span
-      aria-hidden
-      className="bg-ink absolute top-1.5 bottom-1.5 -left-2 w-0.5 rounded-full ease-settle animate-in fade-in-0 zoom-in-50"
-    />
   );
 }
 
@@ -144,6 +135,7 @@ function RailTile({
   const link = (
     <Link
       to={to}
+      data-rail-tile
       aria-label={label}
       aria-current={active ? "page" : undefined}
       className={cn(TILE_CLASS, active ? TILE_ACTIVE_CLASS : TILE_REST_CLASS)}
@@ -153,7 +145,6 @@ function RailTile({
         attention={attention}
         className="ring-sidebar absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 text-3xs ring-2"
       />
-      {active && <ActiveMark />}
     </Link>
   );
 
@@ -167,7 +158,7 @@ function RailTile({
 
   return (
     <Tooltip>
-      <TooltipTrigger render={link} />
+      <TooltipTrigger className={RAIL_TOOLTIP_TRIGGER_CLASS} render={link} />
       <TooltipContent side="right" sideOffset={10}>
         <TileLabel label={label} letter={letter} />
       </TooltipContent>
@@ -193,9 +184,11 @@ function RailButton({
   return (
     <Tooltip>
       <TooltipTrigger
+        className={RAIL_TOOLTIP_TRIGGER_CLASS}
         render={
           <button
             type="button"
+            data-rail-tile
             aria-label={label}
             aria-pressed={pressed}
             onClick={onClick}
@@ -282,7 +275,7 @@ function moduleTile({
 
 /**
  * The map of the product, always on screen: one tile per module in its
- * domain, the one you are in marked on the rail's edge, how much work waits
+ * domain, the one you are in filled, how much work waits
  * behind each as a count on its corner. Who you work as sits at the top; what
  * applies everywhere (search, notifications, settings, you) sits at the
  * bottom. It never scrolls the page and never folds; the panel beside it
@@ -335,16 +328,18 @@ export function ModuleRail({ panelFolded, search, fold = false, className }: Mod
         aria-label={t("Modules")}
         className="flex min-h-0 w-full flex-1 flex-col items-center gap-0.5 overflow-y-auto px-2 py-1 [scrollbar-width:none]"
       >
-        {home && tileFor(home)}
-        {domains.map((domain) => (
-          <div key={domain.id} className="flex flex-col items-center gap-0.5">
-            <DomainRule />
-            {domain.modules.map(tileFor)}
-          </div>
-        ))}
+        <RailGlideGroup className="flex w-full flex-col items-center gap-0.5">
+          {home && tileFor(home)}
+          {domains.map((domain) => (
+            <div key={domain.id} className="flex flex-col items-center gap-0.5">
+              <DomainRule />
+              {domain.modules.map(tileFor)}
+            </div>
+          ))}
+        </RailGlideGroup>
       </nav>
 
-      <div className="flex shrink-0 flex-col items-center gap-0.5 pt-1 pb-2">
+      <RailGlideGroup className="flex shrink-0 flex-col items-center gap-0.5 pt-1 pb-2">
         <DomainRule />
         {fold && <FoldTile />}
         {search && (
@@ -357,16 +352,18 @@ export function ModuleRail({ panelFolded, search, fold = false, className }: Mod
             <SearchLgIcon className="size-4" strokeWidth={1.75} />
           </RailButton>
         )}
-        <NotificationSheet
-          className={cn(TILE_CLASS, TILE_REST_CLASS, "size-8 w-8")}
-          iconClassName="size-4"
-          tooltipSide="right"
-        />
+        <div data-rail-tile className="flex size-8">
+          <NotificationSheet
+            className={cn(TILE_CLASS, TILE_REST_CLASS, "size-8 w-8")}
+            iconClassName="size-4"
+            tooltipSide="right"
+          />
+        </div>
         {settings && tileFor(settings)}
         <div className="flex h-8 items-center justify-center">
           <UserMenu compact />
         </div>
-      </div>
+      </RailGlideGroup>
     </div>
   );
 }

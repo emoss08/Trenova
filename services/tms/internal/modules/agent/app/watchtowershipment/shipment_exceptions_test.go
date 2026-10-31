@@ -296,3 +296,53 @@ func TestShipmentExceptionKindsFor(t *testing.T) {
 	)
 	assert.Empty(t, ShipmentExceptionKindsFor(shipmentevent.TypeHoldPlaced))
 }
+
+func TestDescribeMissedStop_ReadsTheSameAcrossSweeps(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	stop := missedStop(exceptionNow - 5*3600)
+	grace := int64(15 * 60)
+
+	first := DescribeMissedStop(tenant, watchtower.SourceMissedPickup, stop, grace, exceptionNow)
+	next := DescribeMissedStop(
+		tenant,
+		watchtower.SourceMissedPickup,
+		stop,
+		grace,
+		exceptionNow+10*60,
+	)
+
+	assert.Equal(
+		t,
+		"The pickup window at Acme DC in Reno, NV closed and no arrival has been recorded.",
+		first.Summary,
+	)
+	assert.Equal(t, first, next)
+}
+
+func TestDescribeMissingPOD_ReadsTheSameAcrossSweeps(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	row := &watchtowerports.MissingPOD{
+		ShipmentID:   pulid.MustNew("shp_"),
+		ProNumber:    "PRO-9",
+		CustomerName: "Globex",
+		DeliveredAt:  exceptionNow - 30*3600,
+	}
+	grace := int64(24 * 3600)
+
+	first := DescribeMissingPOD(tenant, row, grace, exceptionNow)
+	next := DescribeMissingPOD(tenant, row, grace, exceptionNow+10*60)
+
+	assert.Equal(t, "Delivered for Globex, and no proof of delivery is on file.", first.Summary)
+	assert.Equal(t, first, next)
+
+	row.CustomerName = ""
+	assert.Equal(
+		t,
+		"Delivered, and no proof of delivery is on file.",
+		DescribeMissingPOD(tenant, row, grace, exceptionNow).Summary,
+	)
+}

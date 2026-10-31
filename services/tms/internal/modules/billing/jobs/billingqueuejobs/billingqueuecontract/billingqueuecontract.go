@@ -1,6 +1,7 @@
 package billingqueuecontract
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,10 +17,9 @@ const UndoSignalName = "billing-queue-approval-undo"
 type ApprovalRunPayload struct {
 	temporaltype.BasePayload
 
-	RunID pulid.ID `json:"runId"`
-	// AssignApprover: the person agreed to become the biller of the items
-	// that have none.
-	AssignApprover bool `json:"assignApprover,omitempty"`
+	RunID  pulid.ID                     `json:"runId"`
+	Action billingapprovalrun.RunAction `json:"action"`
+	Params billingapprovalrun.RunParams `json:"params"`
 }
 
 func (p *ApprovalRunPayload) Tenant() pagination.TenantInfo {

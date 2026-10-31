@@ -122,7 +122,7 @@ func (s *Service) planOpened(
 		plan.FallbackSource = conversationchapter.ChapterTitleSchedule
 		plan.ModelSource = conversationchapter.ChapterTitleSchedule
 		if auto {
-			plan.Request = nameRequest(&plan.Turn, question, "")
+			plan.Task = nameTask(&plan.Turn, question, "")
 		}
 
 		return plan, nil
@@ -156,7 +156,7 @@ func (s *Service) planOpened(
 	plan.Decides = true
 	plan.ModelSource = conversationchapter.ChapterTitleModel
 	plan.Evidence = append(plan.Evidence, contents(recent)...)
-	plan.Request = decideRequest(&plan.Turn, chapters[len(chapters)-1].Title, recent, question)
+	plan.Task = decideTask(&plan.Turn, chapters[len(chapters)-1].Title, recent, question)
 
 	return plan, nil
 }
@@ -237,7 +237,7 @@ func (s *Service) planRename(
 
 	plan.ModelSource = conversationchapter.ChapterTitleModel
 	plan.Evidence = []string{question, reply}
-	plan.Request = nameRequest(&plan.Turn, question, reply)
+	plan.Task = nameTask(&plan.Turn, question, reply)
 
 	return plan, nil
 }
@@ -298,7 +298,7 @@ func (s *Service) Apply(
 		return s.open(ctx, plan, answer.Title, plan.ModelSource, outcome)
 	case plan.Opens:
 		if answer.Title == "" {
-			outcome.Fallback = plan.Request != nil
+			outcome.Fallback = plan.Task != nil
 
 			return s.open(ctx, plan, plan.Fallback, plan.FallbackSource, outcome)
 		}

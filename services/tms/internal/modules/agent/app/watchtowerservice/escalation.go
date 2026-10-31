@@ -45,6 +45,8 @@ func (s *Exceptions) SweepAttention(
 		}
 	}
 
+	defer s.publishSwept(ctx, tenant, result)
+
 	policy := s.router.Policy(ctx, tenant)
 	if policy.MaxEscalations <= 0 {
 		return result, nil
@@ -70,6 +72,16 @@ func (s *Exceptions) SweepAttention(
 	return result, nil
 }
 
+func (s *Exceptions) publishSwept(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	result *watchtowerports.ExceptionSweepResult,
+) {
+	if result.Woke > 0 || result.Escalated > 0 {
+		s.projector.publishBulk(ctx, tenant, bulkSweptAction)
+	}
+}
+
 func (s *Exceptions) wake(ctx context.Context, item *watchtower.Item) bool {
 	woken := *item
 	until := formatOptionalTime(item.SnoozedUntil)
@@ -89,7 +101,6 @@ func (s *Exceptions) wake(ctx context.Context, item *watchtower.Item) bool {
 			zap.String("item", item.ID.String()), zap.Error(err))
 		return false
 	}
-	s.projector.publish(ctx, saved, "updated")
 	if saved.AssigneeID.IsNotNil() && s.notifications != nil {
 		sendExceptionNotice(ctx, s.notifications, s.l, &exceptionNotice{
 			item:      saved,
@@ -132,7 +143,6 @@ func (s *Exceptions) escalate(
 			zap.String("item", item.ID.String()), zap.Error(err))
 		return false
 	}
-	s.projector.publish(ctx, saved, "updated")
 	s.notifyEscalation(ctx, saved, policy.EscalationContact)
 	return true
 }

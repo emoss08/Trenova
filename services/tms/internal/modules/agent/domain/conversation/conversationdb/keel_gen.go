@@ -1004,7 +1004,6 @@ var enumRole = [...]schema.EnumValue{
 var enumThreadOrigin = [...]schema.EnumValue{
 	{Value: `Panel`, Label: `Panel`},
 	{Value: `Desk`, Label: `Desk`},
-	{Value: `Ask`, Label: `Ask`},
 	{Value: `Watchtower`, Label: `Watchtower`},
 	{Value: `Briefing`, Label: `Briefing`},
 	{Value: `Import`, Label: `Import`},

@@ -36,7 +36,14 @@ vi.mock("../use-palette-intents", () => ({
 }));
 
 vi.mock("@/components/assistant/use-ask", () => ({
-  useAsk: () => ({ turn: null, ask, stop: vi.fn(), reset: vi.fn(), keep: vi.fn() }),
+  useAsk: () => ({
+    turn: null,
+    ask,
+    stop: vi.fn(),
+    reset: vi.fn(),
+    keep: vi.fn(),
+    keepable: false,
+  }),
 }));
 
 vi.mock("@/services/api", () => ({

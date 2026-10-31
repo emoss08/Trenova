@@ -13,11 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -25,27 +25,27 @@ import (
 )
 
 type Service struct {
-	logger        *zap.Logger
-	conversations conversationports.ConversationRepository
-	definitions   agentdefinitionports.AgentDefinitionRepository
-	schedules     conversationscheduleports.ConversationThreadSchedules
-	runtime       *agentruntime.Service
-	shadow        *agentshadow.Resolver
-	cases         deskcaseports.AssistantCaseStates
-	plans         proposalstores.PlanStore
-	proposals     proposalstores.ProposalStore
-	budgets       agentbudgetports.AgentBudgetService
-	notifier      raiseNotifier
-	pageThreads   conversationports.PageThreadRepository
-	systemAgents  agentdefinitionports.SystemAgentProvisioner
-	permissions   permissionports.PermissionEngine
-	providers     aiproviderports.AIProviderRepository
-	queries       agenttoolports.AgentQueryToolRegistry
-	runs          agentruntimeports.AgentRunRepository
-	users         tenantports.UserRepository
-	agentControls tenantports.AgentControlRepository
-	quota         platformplanports.QuotaGuard
-	memories      agentmemoryports.AgentMemoryService
+	logger           *zap.Logger
+	conversations    conversationports.ConversationRepository
+	definitions      agentdefinitionports.AgentDefinitionRepository
+	schedules        conversationscheduleports.ConversationThreadSchedules
+	runtime          *agentruntime.Service
+	shadow           *agentshadow.Resolver
+	cases            deskcaseports.AssistantCaseStates
+	plans            proposalstores.PlanStore
+	proposals        proposalstores.ProposalStore
+	budgets          agentbudgetports.AgentBudgetService
+	notifier         raiseNotifier
+	pageThreads      conversationports.PageThreadRepository
+	systemAgents     agentdefinitionports.SystemAgentProvisioner
+	permissions      permissionports.PermissionEngine
+	providers        aiproviderports.AIProviderRepository
+	runs             agentruntimeports.AgentRunRepository
+	users            tenantports.UserRepository
+	agentControls    tenantports.AgentControlRepository
+	paletteQuestions paletteports.QuestionRepository
+	quota            platformplanports.QuotaGuard
+	memories         agentmemoryports.AgentMemoryService
 }
 
 func (s *Service) attribution() *attribution.Attributor {
@@ -61,16 +61,16 @@ func (s *Service) access() *agentaccess.Access {
 	return &agentaccess.Access{
 		Permissions: s.permissions,
 		Definitions: s.definitions,
-		Queries:     s.queries,
 	}
 }
 
 func (s *Service) limits() *turnlimits.Limits {
 	return &turnlimits.Limits{
-		Budgets:       s.budgets,
-		Conversations: s.conversations,
-		AgentControls: s.agentControls,
-		Quota:         s.quota,
+		Budgets:          s.budgets,
+		Conversations:    s.conversations,
+		AgentControls:    s.agentControls,
+		Quota:            s.quota,
+		PaletteQuestions: s.paletteQuestions,
 	}
 }
 

@@ -22,18 +22,17 @@ import type {
 } from "@trenova/shared/types/billing-queue";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { useCallback, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useState, type ReactNode } from "react";
 import { deskPopoverClass } from "@/components/desk-chat/desk-popover";
-import { checkDetail, checkTitle, issueOf, paymentTermLabel } from "@/lib/billing-queue-checks";
 import {
   HOLD_REASONS,
-  barReason,
+  checkDetail,
+  checkTitle,
   holdReasonLabel,
-  initials,
-  itemStage,
-  type ItemStage,
-  stageLabel,
-} from "./billing-item-checks";
+  openIssuesOf,
+  paymentTermLabel,
+} from "@/lib/billing-queue-checks";
+import { barReason, initials, itemStage, type ItemStage, stageLabel } from "./billing-item-checks";
 import {
   CardBar,
   CardBarHint,
@@ -163,16 +162,20 @@ function CheckRow({
 }) {
   const t = useT();
   const [picking, setPicking] = useState(false);
-  const issue = issueOf(item, check);
-  const ok = check.state === "ok";
+  const issues = openIssuesOf(item, check);
+  const several = issues.length > 1;
 
   return (
     <CardCheck
       state={check.state === "fail" ? "bad" : check.state}
       title={checkTitle(check.key, t)}
-      detail={issue && !ok ? issue.summary : checkDetail(check, t)}
+      detail={
+        several
+          ? t("{0, plural, one {# needs you} other {# need you}}", issues.length)
+          : (issues[0]?.summary ?? checkDetail(check, t))
+      }
     >
-      {!ok &&
+      {check.state !== "ok" &&
         check.code === "unassigned" &&
         canAct &&
         (picking ? (
@@ -207,8 +210,9 @@ function CheckRow({
             </Button>
           </div>
         ))}
-      {!ok && issue && (
-        <>
+      {issues.map((issue) => (
+        <Fragment key={issue.id}>
+          {several && <p className="dk-bi-issue">{issue.summary}</p>}
           {issue.reasoning && <p className="dk-bi-why">{issue.reasoning}</p>}
           {canAct && issue.options.length > 0 && (
             <div className="dk-bi-opts">
@@ -229,8 +233,8 @@ function CheckRow({
               })}
             </div>
           )}
-        </>
-      )}
+        </Fragment>
+      ))}
     </CardCheck>
   );
 }
@@ -592,7 +596,9 @@ export function DeskBillingItem({
           title={t("Before it can be approved")}
           aside={
             needs > 0 ? (
-              <span className="dk-warn">{t("{0} of 5 need you", needs)}</span>
+              <span className="dk-warn">
+                {t("{0, plural, one {# needs you} other {# need you}}", needs)}
+              </span>
             ) : (
               <span className="dk-ok">{t("All clear")}</span>
             )

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,12 +27,14 @@ type stubNova struct {
 	available bool
 }
 
-func (s stubNova) Available(triagenova.Mode) bool { return s.available }
+func (s stubNova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+	return s.available, nil
+}
 
-func (s stubNova) Complete(
+func (s stubNova) Run(
 	context.Context,
-	triagenova.Mode,
-	*llmports.StructuredCompletionRequest,
+	*llmports.NovaTask,
+	any,
 ) (*llmports.StructuredCompletionResult, error) {
 	return nil, errors.New("a plan never asks Nova")
 }

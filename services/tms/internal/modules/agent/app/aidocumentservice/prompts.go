@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	routeSystemPrompt = "You classify transportation documents into one of: " +
+	routeSystemPrompt = "Your task: classify a transportation document as one of: " +
 		"RateConfirmation, BillOfLading, ProofOfDelivery, Other. " +
 		"Use the extracted text, the feature summary, and any provider fingerprint hint. " +
 		"Set shouldExtract=true only when the documentKind is RateConfirmation and the " +
@@ -28,8 +28,8 @@ const (
 		"the receiver's signature as YYYY-MM-DD when it is legible, otherwise an empty " +
 		"string; never use the print, pickup or due date. Return strict JSON only."
 
-	extractSystemPrompt = "You extract structured rate confirmation data for a " +
-		"transportation management system. Return only the compact canonical fields and " +
+	extractSystemPrompt = "Your task: extract structured rate confirmation data " +
+		"for Trenova. Return only the compact canonical fields and " +
 		"stop data needed for shipment creation and review; do not emit extra " +
 		"broker-specific or descriptive fields beyond the canonical key set. Use " +
 		"page-local evidence, keep evidence excerpts short and specific, and mark " +

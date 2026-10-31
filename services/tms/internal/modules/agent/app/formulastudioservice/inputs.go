@@ -17,7 +17,7 @@ const (
 	describeMaxTokens        = 1500
 )
 
-const describeSystem = "You are the formula assistant in Trenova's Formula Studio. Write a doc " +
+const describeSystem = "Your task: in Formula Studio, write a doc " +
 	"comment for each input listed under Inputs to describe: what the value is for, in words " +
 	"a billing clerk understands, at most 120 characters, no trailing period needed. Read the " +
 	"source to see how each input is used. Describe only the inputs listed there, by their " +

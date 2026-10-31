@@ -671,6 +671,26 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
+			{
+				Name:     "chargeCode",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementAccessorial)
+					return obj.ChargeCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "chargeDescription",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementAccessorial)
+					return obj.ChargeDescription, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
 		}},
 		{Object: "RateAgreementConnection", Fields: []*gqlexec.Field{
 			{
@@ -768,6 +788,16 @@ var Shard = &gqlexec.Shard{
 					return obj.Waived, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "programName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementFuelBinding)
+					return obj.ProgramName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "RateAgreementLane", Fields: []*gqlexec.Field{

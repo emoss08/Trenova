@@ -85,6 +85,10 @@ const (
 	// handed to the shipment extraction model: that model, its shadow runs and
 	// its training data are for freight paperwork, not a factor's statement.
 	ProcessingProfileFactoringRemittance ProcessingProfile = "factoring_remittance"
+	// ProcessingProfileShipmentPaperwork is the paperwork a shipment is billed on
+	// (proof of delivery, bill of lading, receipts): read so the billing queue can
+	// place what each page says beside it and check it against the invoice.
+	ProcessingProfileShipmentPaperwork ProcessingProfile = "shipment_paperwork"
 )
 
 func (s Status) String() string {
@@ -149,6 +153,7 @@ func AllProcessingProfiles() []ProcessingProfile {
 		ProcessingProfileInboundAttachment,
 		ProcessingProfileCapture,
 		ProcessingProfileFactoringRemittance,
+		ProcessingProfileShipmentPaperwork,
 	}
 }
 
@@ -173,7 +178,8 @@ func (p ProcessingProfile) IsValid() bool {
 		ProcessingProfileAssistantAttachment,
 		ProcessingProfileInboundAttachment,
 		ProcessingProfileCapture,
-		ProcessingProfileFactoringRemittance:
+		ProcessingProfileFactoringRemittance,
+		ProcessingProfileShipmentPaperwork:
 		return true
 	}
 	return false
@@ -195,7 +201,18 @@ func (p ProcessingProfile) SupportsIntelligence() bool {
 		p == ProcessingProfileAssistantAttachment ||
 		p == ProcessingProfileInboundAttachment ||
 		p == ProcessingProfileCapture ||
-		p == ProcessingProfileFactoringRemittance
+		p == ProcessingProfileFactoringRemittance ||
+		p == ProcessingProfileShipmentPaperwork
+}
+
+// ProcessingProfileFor is the profile a document is read under when its upload
+// asked for none: a shipment's paperwork is read, anything else is kept as given.
+func ProcessingProfileFor(profile ProcessingProfile, resourceType string) ProcessingProfile {
+	if profile == ProcessingProfileNone && strings.EqualFold(resourceType, "shipment") {
+		return ProcessingProfileShipmentPaperwork
+	}
+
+	return profile
 }
 
 // ExtractsWithAI reports whether a document read under this profile may be
@@ -257,6 +274,7 @@ type Document struct {
 	SignatureSource       SignatureSource     `json:"signatureSource"       keel:"signature_source,nullzero"`
 	SignatureUpdatedByID  pulid.ID            `json:"signatureUpdatedById"  keel:"signature_updated_by_id,nullzero"`
 	SignatureUpdatedAt    *int64              `json:"signatureUpdatedAt"    keel:"signature_updated_at"`
+	DeliveryFacts         *DeliveryFacts      `json:"deliveryFacts"         keel:"delivery_facts,jsonb"`
 	SearchVector          string              `json:"-"                     keel:"search_vector,tsvector,readonly,noselect"`
 	Rank                  string              `json:"-"                     keel:"rank,computed"`
 	Version               int64               `json:"version"               keel:"version,version"`

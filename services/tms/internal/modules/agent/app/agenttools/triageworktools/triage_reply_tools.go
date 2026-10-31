@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -218,7 +217,6 @@ func draftReplyRequest(params *agenttoolports.ToolExecuteParams) (*draftReplyCal
 			TenantInfo: inboundtools.TenantOnly(params),
 			UserID:     inboundtools.ActorOf(params),
 			MessageID:  messageID,
-			Mode:       triagenova.Interactive,
 		}}, nil
 	}
 

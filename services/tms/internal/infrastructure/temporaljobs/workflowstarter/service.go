@@ -25,6 +25,7 @@ type Service struct {
 var (
 	_ kernelports.WorkflowStarter       = (*Service)(nil)
 	_ kernelports.WorkflowSignalStarter = (*Service)(nil)
+	_ kernelports.WorkflowResults       = (*Service)(nil)
 )
 
 func New(p Params) kernelports.WorkflowStarter {
@@ -32,6 +33,10 @@ func New(p Params) kernelports.WorkflowStarter {
 }
 
 func NewSignalStarter(p Params) kernelports.WorkflowSignalStarter {
+	return &Service{client: p.TemporalClient}
+}
+
+func NewResults(p Params) kernelports.WorkflowResults {
 	return &Service{client: p.TemporalClient}
 }
 
@@ -92,6 +97,14 @@ func (s *Service) SignalWithStartWorkflow(
 	)
 
 	return run, unreachable(err)
+}
+
+func (s *Service) WorkflowResult(ctx context.Context, workflowID string, out any) error {
+	if s.client == nil {
+		return kernelports.ErrWorkflowStarterDisabled
+	}
+
+	return unreachable(s.client.GetWorkflow(ctx, workflowID, "").Get(ctx, out))
 }
 
 func (s *Service) Enabled() bool {

@@ -41,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -95,6 +96,8 @@ type ActivitiesParams struct {
 	ActionTools   agenttoolports.AgentToolRegistry      `optional:"true"`
 	Decisions     agentdecisionports.AgentDecisionRepository
 	Conversations conversationports.ConversationRepository `optional:"true"`
+	// PaletteQuestions ages out the record of command palette questions.
+	PaletteQuestions paletteports.QuestionRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
 	Watchtower    watchtowerports.WatchtowerProjector           `optional:"true"`
@@ -106,34 +109,35 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
-	logger        *zap.Logger
-	definitions   agentdefinitionports.AgentDefinitionRepository
-	controls      tenantports.AgentControlRepository
-	runRepo       agentruntimeports.AgentRunRepository
-	proposalRepo  agentproposalports.AgentProposalRepository
-	runs          agentruntimeports.AgentRunService
-	runtime       *agentruntime.Service
-	steps         agentruntimeports.RunStepLedger
-	trajectory    agentruntimeports.AgentRunEventRecorder
-	contexts      agentruntimeports.RuntimeContextBuilder
-	recorder      *proposalrecorder.Service
-	notifier      agentproposalports.AgentProposalNotifier
-	plans         agentplanports.AgentPlanRepository
-	baselines     agentproposalports.AgentProposalBaselineRepository
-	evaluations   agentevaluationports.AgentEvaluationRepository
-	evalCases     agentqualityports.AgentEvalCaseRepository
-	caseService   agentqualityports.AgentEvalCaseService
-	users         tenantports.UserRepository
-	scorer        *agentscoring.Scorer
-	decisions     agentdecisionports.AgentDecisionRepository
-	conversations conversationports.ConversationRepository
-	subjects      agentruntimeports.AgentSubjectDescriber
-	activity      agentactivityports.AgentActivityPublisher
-	watchtower    watchtowerports.WatchtowerProjector
-	reflections   agentreflectionports.AgentReflectionScheduler
-	schedules     *agentcontract.DefinitionSchedules
-	platformPlans platformplanports.PlanService
-	waits         agentwaitports.AgentWaitRepository
+	logger           *zap.Logger
+	definitions      agentdefinitionports.AgentDefinitionRepository
+	controls         tenantports.AgentControlRepository
+	runRepo          agentruntimeports.AgentRunRepository
+	proposalRepo     agentproposalports.AgentProposalRepository
+	runs             agentruntimeports.AgentRunService
+	runtime          *agentruntime.Service
+	steps            agentruntimeports.RunStepLedger
+	trajectory       agentruntimeports.AgentRunEventRecorder
+	contexts         agentruntimeports.RuntimeContextBuilder
+	recorder         *proposalrecorder.Service
+	notifier         agentproposalports.AgentProposalNotifier
+	plans            agentplanports.AgentPlanRepository
+	baselines        agentproposalports.AgentProposalBaselineRepository
+	evaluations      agentevaluationports.AgentEvaluationRepository
+	evalCases        agentqualityports.AgentEvalCaseRepository
+	caseService      agentqualityports.AgentEvalCaseService
+	users            tenantports.UserRepository
+	scorer           *agentscoring.Scorer
+	decisions        agentdecisionports.AgentDecisionRepository
+	conversations    conversationports.ConversationRepository
+	paletteQuestions paletteports.QuestionRepository
+	subjects         agentruntimeports.AgentSubjectDescriber
+	activity         agentactivityports.AgentActivityPublisher
+	watchtower       watchtowerports.WatchtowerProjector
+	reflections      agentreflectionports.AgentReflectionScheduler
+	schedules        *agentcontract.DefinitionSchedules
+	platformPlans    platformplanports.PlanService
+	waits            agentwaitports.AgentWaitRepository
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -143,34 +147,35 @@ func NewActivities(p ActivitiesParams) *Activities {
 	)
 
 	return &Activities{
-		logger:        logger,
-		definitions:   p.Definitions,
-		controls:      p.Controls,
-		runRepo:       p.RunRepo,
-		proposalRepo:  p.ProposalRepo,
-		runs:          p.Runs,
-		runtime:       p.Runtime,
-		steps:         p.Steps,
-		trajectory:    p.Trajectory,
-		contexts:      p.Contexts,
-		recorder:      p.Recorder,
-		notifier:      p.Notifier,
-		plans:         p.Plans,
-		baselines:     p.Baselines,
-		evaluations:   p.Evaluations,
-		evalCases:     p.EvalCases,
-		caseService:   p.CaseService,
-		users:         p.Users,
-		scorer:        scorer,
-		decisions:     p.Decisions,
-		conversations: p.Conversations,
-		subjects:      p.Subjects,
-		activity:      p.Activity,
-		watchtower:    p.Watchtower,
-		reflections:   p.Reflections,
-		schedules:     p.Schedules,
-		platformPlans: p.PlatformPlans,
-		waits:         p.Waits,
+		logger:           logger,
+		definitions:      p.Definitions,
+		controls:         p.Controls,
+		runRepo:          p.RunRepo,
+		proposalRepo:     p.ProposalRepo,
+		runs:             p.Runs,
+		runtime:          p.Runtime,
+		steps:            p.Steps,
+		trajectory:       p.Trajectory,
+		contexts:         p.Contexts,
+		recorder:         p.Recorder,
+		notifier:         p.Notifier,
+		plans:            p.Plans,
+		baselines:        p.Baselines,
+		evaluations:      p.Evaluations,
+		evalCases:        p.EvalCases,
+		caseService:      p.CaseService,
+		users:            p.Users,
+		scorer:           scorer,
+		decisions:        p.Decisions,
+		conversations:    p.Conversations,
+		paletteQuestions: p.PaletteQuestions,
+		subjects:         p.Subjects,
+		activity:         p.Activity,
+		watchtower:       p.Watchtower,
+		reflections:      p.Reflections,
+		schedules:        p.Schedules,
+		platformPlans:    p.PlatformPlans,
+		waits:            p.Waits,
 	}
 }
 
@@ -987,30 +992,16 @@ func (a *Activities) purgeOrphanBaselines(ctx context.Context, now int64) {
 	}
 }
 
-// DeleteStaleAskThreadsActivity removes one batch of unkept quick questions
-// older than the cut-off. It reports how many went, so the workflow knows
-// whether to ask again.
-func (a *Activities) DeleteStaleAskThreadsActivity(
+// DeleteStaleFormulaDraftsActivity removes one batch of formula
+// conversations about templates that were never saved, older than the
+// cut-off. It reports how many went, so the workflow knows whether to ask
+// again.
+func (a *Activities) DeleteStaleFormulaDraftsActivity(
 	ctx context.Context,
-	input *DeleteStaleAskThreadsInput,
-) (*DeleteStaleAskThreadsResult, error) {
+	input *RetentionInput,
+) (*RetentionBatch, error) {
 	if a.conversations == nil {
-		return &DeleteStaleAskThreadsResult{}, nil
-	}
-
-	deleted, err := a.conversations.DeleteStaleThreads(
-		ctx,
-		conversationports.DeleteStaleThreadsRequest{
-			Origin: conversation.ThreadOriginAsk,
-			Before: input.Before,
-			Limit:  deleteStaleAskBatch,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("delete stale ask threads: %w", err)
-	}
-	if deleted > 0 {
-		a.logger.Info("removed quick questions nobody kept", zap.Int("deleted", deleted))
+		return &RetentionBatch{}, nil
 	}
 
 	drafts, err := a.conversations.DeleteStaleThreads(
@@ -1018,7 +1009,7 @@ func (a *Activities) DeleteStaleAskThreadsActivity(
 		conversationports.DeleteStaleThreadsRequest{
 			Origin:          conversation.ThreadOriginFormula,
 			Before:          input.Before,
-			Limit:           deleteStaleAskBatch,
+			Limit:           deleteStaleDraftBatch,
 			SubjectlessOnly: true,
 		},
 	)
@@ -1030,7 +1021,25 @@ func (a *Activities) DeleteStaleAskThreadsActivity(
 			zap.Int("deleted", drafts))
 	}
 
-	return &DeleteStaleAskThreadsResult{Deleted: deleted + drafts}, nil
+	return &RetentionBatch{Deleted: drafts}, nil
+}
+
+// DeleteStalePaletteQuestionsActivity removes one batch of palette question
+// records older than the cut-off: the allowance reads this month's alone.
+func (a *Activities) DeleteStalePaletteQuestionsActivity(
+	ctx context.Context,
+	input *RetentionInput,
+) (*RetentionBatch, error) {
+	if a.paletteQuestions == nil {
+		return &RetentionBatch{}, nil
+	}
+
+	deleted, err := a.paletteQuestions.DeleteBefore(ctx, input.Before, deleteStaleDraftBatch)
+	if err != nil {
+		return nil, fmt.Errorf("delete stale palette questions: %w", err)
+	}
+
+	return &RetentionBatch{Deleted: deleted}, nil
 }
 
 // RemindPendingProposalsActivity brings proposals that have waited past the

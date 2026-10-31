@@ -285,13 +285,17 @@ export default function InvoiceDetailPane({
           <div className="flex h-full flex-col">
             <div className="min-h-0 flex-1">
               {shipment ? (
-                <BillingQueueDocumentsTab
-                  shipmentId={invoice.shipmentId ?? ""}
-                  selectedDocumentId={selectedDocumentId}
-                  onDocumentSelect={onDocumentSelect}
-                  isEditable={false}
-                  context="invoice"
-                />
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <BillingQueueDocumentsTab
+                      shipmentId={invoice.shipmentId ?? ""}
+                      selectedDocumentId={selectedDocumentId}
+                      onDocumentSelect={onDocumentSelect}
+                      isEditable={false}
+                      context="invoice"
+                    />
+                  </div>
+                </ScrollArea>
               ) : (
                 <div className="flex h-full items-center justify-center p-6">
                   <EmptyState

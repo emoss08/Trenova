@@ -8,7 +8,7 @@ import {
   rowsInOrder,
   type FieldRow,
 } from "../extraction-groups";
-import { extractionFrom } from "../extraction-payload";
+import { extractionFrom } from "@/lib/document-reading/extraction-payload";
 import { currentPayload, legacyPayload } from "./extraction-fixtures";
 
 const t = ((source: string, ...args: unknown[]) =>

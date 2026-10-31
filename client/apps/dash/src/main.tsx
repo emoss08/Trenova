@@ -6,8 +6,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
+import { installDashSessionContextHandler } from "./lib/session-context-handler";
 import { dashRouter } from "./router";
 import "@trenova/shared/styles/app.css";
+
+// A sign-out, sign-in or organization switch in another tab ends what this tab shows.
+installDashSessionContextHandler();
 
 const queryClient = new QueryClient({
   defaultOptions: {

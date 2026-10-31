@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { MemoryRouter } from "react-router";
+import { clearPermissions, seedPermissions } from "@/test/permissions";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import BillingQueueDetailPane from "../billing-queue-detail-pane";
 import { queueItem } from "./split-shipment-fixture";
@@ -21,7 +23,6 @@ vi.mock("@/hooks/use-permission", () => ({
 }));
 vi.mock("../billing-queue-action-bar", () => ({ BillingQueueActionBar: () => null }));
 vi.mock("../billing-queue-documents-tab", () => ({ BillingQueueDocumentsTab: () => null }));
-vi.mock("../billing-queue-charge-dialog", () => ({ BillingQueueChargeDialog: () => null }));
 vi.mock("../billing-queue-rerate-dialog", () => ({ BillingQueueRerateDialog: () => null }));
 vi.mock("../billing-queue-reassign-charge-dialog", () => ({
   BillingQueueReassignChargeDialog: () => null,
@@ -74,5 +75,55 @@ describe("billing queue review pane shows each split fact once", () => {
         "Charges belong to the shipment, so changing one here also changes the other payers' bills.",
       ),
     ).toBeInTheDocument();
+  });
+});
+
+describe("billing queue review pane links", () => {
+  afterEach(clearPermissions);
+
+  it("offers the shipment's page to someone who can read shipments", async () => {
+    seedPermissions({ [Resource.Shipment]: Operation.Read });
+    getItem.mockResolvedValue(queueItem({ payer: "peak" }));
+    renderPane();
+
+    expect(await screen.findByRole("link", { name: "Open shipment" })).toBeInTheDocument();
+  });
+
+  it("keeps the shipment's page from someone who cannot read shipments", async () => {
+    seedPermissions({});
+    getItem.mockResolvedValue(queueItem({ payer: "peak" }));
+    renderPane();
+
+    expect(await screen.findByTestId("payer-bill-total")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open shipment" })).not.toBeInTheDocument();
+  });
+});
+
+describe("billing queue review pane entrance", () => {
+  it("rises in again for a different item, and stays still while the same item refreshes", async () => {
+    getItem.mockImplementation(async (id: string) =>
+      id === "bqi_peak" ? queueItem({ payer: "peak" }) : queueItem({ payer: "acme" }),
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = (selectedItemId: string) => (
+      <MemoryRouter>
+        <QueryClientProvider client={client}>
+          <NuqsTestingAdapter>
+            <BillingQueueDetailPane selectedItemId={selectedItemId} onDocumentSelect={vi.fn()} />
+          </NuqsTestingAdapter>
+        </QueryClientProvider>
+      </MemoryRouter>
+    );
+    const { rerender } = render(view("bqi_peak"));
+
+    const first = await screen.findByTestId("billing-queue-detail-enter");
+    expect(first).toHaveClass("animate-reveal");
+
+    await client.invalidateQueries();
+    expect(await screen.findByTestId("billing-queue-detail-enter")).toBe(first);
+
+    rerender(view("bqi_acme"));
+    await waitFor(() => expect(screen.getByTestId("billing-queue-detail-enter")).not.toBe(first));
+    expect(screen.getByTestId("billing-queue-detail-enter")).toHaveClass("animate-reveal");
   });
 });

@@ -217,7 +217,7 @@ func BuildSystemPromptParts(
 	} else if delegator != "" {
 		section(&stable, buildDelegatedOutputSection(delegator))
 	} else {
-		section(&stable, buildOutputSection(d, rc.Inline))
+		section(&stable, buildOutputSection(d))
 		if d.OutputMode != agentdefinition.OutputReport &&
 			d.HasContextProvider(agentdefinition.ContextMemory) {
 			section(&stable, rememberingSection)
@@ -498,7 +498,7 @@ func fencedContext(d *agentdefinition.Definition, rc *agentturn.RuntimeContext) 
 	if d.HasContextProvider(agentdefinition.ContextPage) && rc.Page != nil {
 		fenced = append(fenced, agentpageprompt.DescribePage(rc.Page, rc.PageGuide, rc.Surface))
 		if !rc.Page.View.Empty() {
-			fenced = append(fenced, agentpageprompt.DescribePageView(rc.Page.View, rc.Surface))
+			fenced = append(fenced, agentpageprompt.DescribePageView(rc.Page.View))
 		}
 		if rc.Page.Draft != nil {
 			fenced = append(fenced, agentpageprompt.DescribePageDraft(rc.Page.Draft))
@@ -908,26 +908,23 @@ func buildToolNotes(tools []agentturn.ToolSummary) string {
 	return builder.String()
 }
 
-func buildOutputSection(d *agentdefinition.Definition, inline bool) string {
+func buildOutputSection(d *agentdefinition.Definition) string {
 	if d.OutputMode == agentdefinition.OutputReport {
 		return "## Output\nNobody is reading this as a conversation. Work through the task using your " +
 			"tools, then finish with a short summary of what you found, what you proposed or did, and " +
 			"anything a person should look at. That summary is stored as the run's record."
 	}
 
-	tables, naming := besideTables, besideNaming
-	if inline {
-		tables, naming = inlineTables, inlineNaming
-	}
-
 	return "## Output\nAnswer in concise markdown. The people you talk to are busy: give them " +
 		"the answer first and the detail under it. Use **bold** for the record or number that " +
 		"matters. When the answer is several records with two or more facts each, use a " +
-		"markdown table with a header row rather than a bulleted list" + tables +
+		"markdown table with a header row rather than a bulleted list, up to about a dozen " +
+		"rows; past that, or when you rank or compare the rows a tool returned, point to " +
+		"the table the tool result names." +
 		" A fenced block is only for data to copy, labelled csv or text. Cite the record " +
 		"you used — a shipment number, a load number, a worker name — so the person can " +
 		"verify you, and name it by its number or name, never by an internal id or a " +
-		"proposal's id" + naming + " Answer in the language the person writes " +
+		"proposal's id, or point to its card. Answer in the language the person writes " +
 		"in, keeping record numbers, names and the labels Trenova shows exactly as they are; " +
 		"the values you send to tools stay as each tool declares them.\nKeep your working " +
 		"to yourself. Do not narrate which tool you are about to call, think through " +
@@ -935,20 +932,6 @@ func buildOutputSection(d *agentdefinition.Definition, inline bool) string {
 		"write out the records you are weighing up. The person wants the answer, not the " +
 		"process that produced it."
 }
-
-// How the Output section has a table shown. Beside a conversation a long list
-// is pointed to, since the tool's own table is open beside the reply; with
-// nothing beside the reply, a pointer leads nowhere, so the rows go in it.
-const (
-	besideTables = ", up to about a dozen rows; past that, or when you rank or compare the " +
-		"rows a tool returned, point to the table the tool result names."
-	besideNaming = ", or point to its card."
-	inlineTables = ". Nothing is kept beside this reply — no table, card or document the " +
-		"person can open — so everything they asked for goes in it: write every row up to " +
-		"about 30, and past that the count, the 30 that matter most and how many are left " +
-		"out. Never point to an artifact or say a table is attached."
-	inlineNaming = "."
-)
 
 const maxPendingProposalRationaleChars = 200
 

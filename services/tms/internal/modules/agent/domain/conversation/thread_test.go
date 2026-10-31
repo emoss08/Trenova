@@ -59,65 +59,43 @@ func TestThreadValidate_OriginMustBeKnown(t *testing.T) {
 	assert.True(t, multiErr.HasErrors())
 }
 
-// A quick question from the palette is not listed until it is kept; every
-// other origin is a conversation from the start.
+// Every origin but a page's is a conversation the Desk lists.
 func TestThreadOrigin_Listed(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, ThreadOriginAsk.Listed())
 	for _, origin := range []ThreadOrigin{ThreadOriginPanel, ThreadOriginDesk, ThreadOriginWatchtower, ThreadOriginBriefing} {
 		assert.True(t, origin.Listed(), string(origin))
 		assert.True(t, origin.IsValid())
 	}
 	assert.False(t, ThreadOrigin("Nope").IsValid())
+	assert.False(t, ThreadOrigin("Ask").IsValid(), "palette questions are no longer conversations")
 }
 
-func TestThreadOrigin_PageBoundConversationsAreNeitherListedNorKept(t *testing.T) {
+func TestThreadOrigin_PageBoundConversationsAreNotListed(t *testing.T) {
 	t.Parallel()
 
 	for _, origin := range []ThreadOrigin{ThreadOriginImport, ThreadOriginFormula} {
 		assert.True(t, origin.IsValid(), string(origin))
 		assert.True(t, origin.PageBound(), string(origin))
 		assert.False(t, origin.Listed(), string(origin))
-		assert.False(t, origin.Keepable(), string(origin))
 	}
-	assert.True(t, ThreadOriginAsk.Keepable())
-	assert.False(t, ThreadOriginAsk.PageBound())
 	for _, origin := range []ThreadOrigin{
 		ThreadOriginPanel, ThreadOriginDesk, ThreadOriginWatchtower, ThreadOriginBriefing,
 	} {
-		assert.False(t, origin.Keepable(), string(origin))
 		assert.False(t, origin.PageBound(), string(origin))
 	}
-	assert.ElementsMatch(t,
-		[]ThreadOrigin{ThreadOriginAsk, ThreadOriginImport, ThreadOriginFormula},
-		UnlistedOrigins(),
-	)
+	assert.ElementsMatch(t, []ThreadOrigin{ThreadOriginImport, ThreadOriginFormula}, UnlistedOrigins())
 	for _, origin := range AllThreadOrigins() {
 		assert.True(t, origin.IsValid(), string(origin))
 	}
 }
 
-// Only a palette question, until it is kept, has nothing beside its answer.
-func TestThreadOrigin_AnswersInline(t *testing.T) {
-	t.Parallel()
-
-	assert.True(t, ThreadOriginAsk.AnswersInline())
-	for _, origin := range AllThreadOrigins() {
-		if origin != ThreadOriginAsk {
-			assert.False(t, origin.AnswersInline(), string(origin))
-		}
-	}
-}
-
-// A reply in the palette or on a page is read where it was asked; one in a
-// conversation is announced and listed wherever the person is.
+// A reply on a page is read where it was asked; one in a conversation is
+// announced and listed wherever the person is.
 func TestThreadOrigin_AnsweredInPlace(t *testing.T) {
 	t.Parallel()
 
-	for _, origin := range []ThreadOrigin{
-		ThreadOriginAsk, ThreadOriginImport, ThreadOriginFormula,
-	} {
+	for _, origin := range []ThreadOrigin{ThreadOriginImport, ThreadOriginFormula} {
 		assert.True(t, origin.AnsweredInPlace(), string(origin))
 	}
 	for _, origin := range []ThreadOrigin{
@@ -126,7 +104,7 @@ func TestThreadOrigin_AnsweredInPlace(t *testing.T) {
 		assert.False(t, origin.AnsweredInPlace(), string(origin))
 	}
 	assert.ElementsMatch(t,
-		[]ThreadOrigin{ThreadOriginAsk, ThreadOriginImport, ThreadOriginFormula},
+		[]ThreadOrigin{ThreadOriginImport, ThreadOriginFormula},
 		AnsweredInPlaceOrigins(),
 	)
 }

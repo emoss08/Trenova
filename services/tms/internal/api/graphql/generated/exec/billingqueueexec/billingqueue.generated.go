@@ -16,9 +16,130 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "billingqueue",
 	Objects: []*gqlexec.Object{
+		{Name: "BillingQueueHeadline", Implementors: []string{"BillingQueueHeadline"}},
+		{Name: "BillingQueueItemConnection", Implementors: []string{"BillingQueueItemConnection"}},
+		{Name: "BillingQueueItemEdge", Implementors: []string{"BillingQueueItemEdge"}},
 		{Name: "BillingQueuePostResult", Implementors: []string{"BillingQueuePostResult"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "BillingQueueHeadline", Fields: []*gqlexec.Field{
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueHeadline)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "checkKey",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueHeadline)
+					return obj.CheckKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "summary",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueHeadline)
+					return obj.Summary, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "open",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueHeadline)
+					return obj.Open, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "waiting",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueHeadline)
+					return obj.Waiting, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "BillingQueueItemConnection", Fields: []*gqlexec.Field{
+			{
+				Name:      "edges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BillingQueueItemEdge",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItemConnection)
+					return obj.Edges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueItemEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemEdgeᚄ),
+			},
+			{
+				Name:      "pageInfo",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageInfo",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItemConnection)
+					return obj.PageInfo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo),
+			},
+			{
+				Name:     "totalCount",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItemConnection)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItemConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "BillingQueueItemEdge", Fields: []*gqlexec.Field{
+			{
+				Name:      "node",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BillingQueueItem",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItemEdge)
+					return obj.Node, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
+			},
+			{
+				Name:     "cursor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItemEdge)
+					return obj.Cursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "BillingQueuePostResult", Fields: []*gqlexec.Field{
 			{
 				Name:      "item",
@@ -34,7 +155,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "invoiceId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueuePostResult)
 					return obj.InvoiceID, nil
@@ -44,7 +165,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "invoiceNumber",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueuePostResult)
 					return obj.InvoiceNumber, nil
@@ -53,7 +174,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sentTo",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueuePostResult)
 					return obj.SentTo, nil
@@ -63,7 +184,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "recipients",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingQueuePostResult)
 					return obj.Recipients, nil
@@ -151,13 +272,31 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem),
 			},
 		}},
+		{Object: "Query", Fields: []*gqlexec.Field{
+			{
+				Name:       "billingQueueItems",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "BillingQueueItemConnection",
+				Args:       field_Query_billingQueueItems_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").BillingQueueItems(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["filter"].(*gqlmodel.BillingQueueItemsFilterInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueItemConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemConnection),
+			},
+		}},
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "BillingQueueAssignInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBillingQueueAssignInput)},
+		{Name: "BillingQueueItemsFilterInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBillingQueueItemsFilterInput)},
 		{Name: "BillingQueueUpdateStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBillingQueueUpdateStatusInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
+		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
 
@@ -170,9 +309,15 @@ type resolverMutation interface {
 	UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error)
 }
 
+type resolverQuery interface {
+	BillingQueueItems(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingQueueItemsFilterInput) (*gqlmodel.BillingQueueItemConnection, error)
+}
+
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
+	errNoChild0 = errors.New("field of type String does not have child fields")
+	errNoChild1 = errors.New("field of type Int does not have child fields")
+	errNoChild2 = errors.New("field of type Boolean does not have child fields")
+	errNoChild3 = errors.New("field of type ID does not have child fields")
 )
 
 func field_Mutation_updateBillingQueueStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -293,6 +438,27 @@ func field_Mutation_undoBillingQueueIssue_args(ctx context.Context, ec *gqlexec.
 	return args, nil
 }
 
+func field_Query_billingQueueItems_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "filter",
+		func(ctx context.Context, v any) (*gqlmodel.BillingQueueItemsFilterInput, error) {
+			return unmarshalOBillingQueueItemsFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemsFilterInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg1
+	return args, nil
+}
+
 func unmarshalInputBillingQueueAssignInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BillingQueueAssignInput, error) {
 	var it gqlmodel.BillingQueueAssignInput
 	if obj == nil {
@@ -318,6 +484,67 @@ func unmarshalInputBillingQueueAssignInput(ctx context.Context, ec *gqlexec.Exec
 				return it, err
 			}
 			it.BillerID = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputBillingQueueItemsFilterInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BillingQueueItemsFilterInput, error) {
+	var it gqlmodel.BillingQueueItemsFilterInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+	if _, present := asMap["includePosted"]; !present {
+		asMap["includePosted"] = false
+	}
+
+	fieldsInOrder := [...]string{"lanes", "includePosted", "minAmount", "maxAmount", "createdBefore"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "lanes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lanes"))
+			data, err := unmarshalOBillingQueueLane2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐLaneᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lanes = data
+		case "includePosted":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includePosted"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncludePosted = data
+		case "minAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minAmount"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinAmount = data
+		case "maxAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxAmount"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxAmount = data
+		case "createdBefore":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBefore"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBefore = data
 		}
 	}
 	return it, nil
@@ -388,8 +615,18 @@ func unmarshalInputBillingQueueUpdateStatusInput(ctx context.Context, ec *gqlexe
 	return it, nil
 }
 
+func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
+	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
 func unmarshalNBillingQueueAssignInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueAssignInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BillingQueueAssignInput, error) {
 	res, err := unmarshalInputBillingQueueAssignInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBillingQueueLane2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐLane(ctx context.Context, ec *gqlexec.Exec, v any) (billingqueue.Lane, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := billingqueue.Lane(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -401,6 +638,11 @@ func unmarshalNBillingQueueStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 
 func unmarshalNBillingQueueUpdateStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueUpdateStatusInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BillingQueueUpdateStatusInput, error) {
 	res, err := unmarshalInputBillingQueueUpdateStatusInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
+	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -432,11 +674,50 @@ func unmarshalOBillingQueueHoldReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalOBillingQueueItemsFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemsFilterInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.BillingQueueItemsFilterInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputBillingQueueItemsFilterInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBillingQueueLane2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐLaneᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]billingqueue.Lane, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNBillingQueueLane2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐLane)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -448,6 +729,30 @@ func marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "BillingQueueItem", v)
 }
 
+func marshalNBillingQueueItemConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.BillingQueueItemConnection) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueItemConnection", v)
+}
+
+func marshalNBillingQueueItemEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.BillingQueueItemEdge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.BillingQueueItemEdge]{
+		Elem:        marshalNBillingQueueItemEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemEdge,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNBillingQueueItemEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemEdge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.BillingQueueItemEdge) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueItemEdge", v)
+}
+
 func marshalNBillingQueuePostResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueuePostResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.BillingQueuePostResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -456,12 +761,36 @@ func marshalNBillingQueuePostResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "BillingQueuePostResult", v)
 }
 
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalID(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
@@ -479,6 +808,14 @@ func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.
 		NonNullElem: true,
 		Scalar:      true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
 }
 
 func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

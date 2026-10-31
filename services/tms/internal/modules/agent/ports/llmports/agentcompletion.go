@@ -52,9 +52,13 @@ type StructuredCompletionRequest struct {
 	TenantInfo pagination.TenantInfo
 	// Task selects which configured providers may serve this call. Leaving it
 	// empty routes to the general-purpose pool.
-	Task         aitask.Task
-	System       string
-	Context      DelimitedContext
+	Task    aitask.Task
+	System  string
+	Context DelimitedContext
+	// Files are documents the model reads as themselves, after Context. Only
+	// their references cross the worker boundary; the bytes are read where the
+	// model is called, and a model that cannot read files gets their entries.
+	Files        []MessageFile
 	OutputSchema map[string]any
 	// SchemaName labels the schema for the protocols that require one.
 	SchemaName string
@@ -98,7 +102,9 @@ type StructuredCompletionResult struct {
 // structured path it sends the whole exchange, because these APIs are stateless.
 type ChatCompletionRequest struct {
 	TenantInfo pagination.TenantInfo
-	System     string
+	// Task selects the providers and the model; empty is the assistant chat.
+	Task   aitask.Task
+	System string
 	// SystemStable is how many leading bytes of System are the same on every
 	// turn, which a provider that caches by explicit mark can cache apart from
 	// the turn's own part. Zero treats the whole prompt as one.
@@ -131,6 +137,15 @@ type ChatCompletionRequest struct {
 	// turn is starting over on another attempt. Whatever reached the text
 	// sink before it is being discarded, and the reader should see that.
 	RetrySink func(ChatRetryNotice) `json:"-"`
+}
+
+// ChatTask is the task the chat is routed and billed as.
+func (r *ChatCompletionRequest) ChatTask() aitask.Task {
+	if r.Task == "" {
+		return aitask.TaskAssistantChat
+	}
+
+	return r.Task
 }
 
 // ChatRetryNotice says a reply is starting again after a provider failed

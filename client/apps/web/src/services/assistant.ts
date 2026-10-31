@@ -1,4 +1,4 @@
-import { api, withCsrfHeader } from "@trenova/shared/lib/api";
+import { api, withSessionHeaders } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
@@ -46,6 +46,7 @@ import {
   conversationScheduleSchema,
   createdScheduleSchema,
   handoffResultSchema,
+  parseAskStreamEvent,
   parseAssistantStreamEvent,
   saveAgentDefinitionRequestSchema,
   sendMessageResultSchema,
@@ -144,17 +145,32 @@ export function downloadAssistantTranscript(threadId: AssistantThread["id"]): vo
   downloadFromUrl(assistantTranscriptUrl(threadId));
 }
 
-/**
- * A turn handed to a worker, and where to watch it. A quick question also
- * carries the thread the server made for it.
- */
+/** A turn handed to a worker, and where to watch it. */
 const startedTurnSchema = z.object({
   turnId: z.string(),
   threadId: z.string(),
   streamUrl: z.string(),
   status: z.string(),
-  thread: assistantThreadSchema.optional(),
 });
+
+/** A palette question handed to a worker, and where its answer streams. */
+const startedAskSchema = z.object({
+  askId: z.string(),
+  streamUrl: z.string(),
+});
+
+export type StartedAsk = z.infer<typeof startedAskSchema>;
+
+/**
+ * The Desk conversation a palette question was carried into. `unanswered` is
+ * the question when there was no answer to carry, for the Desk to ask.
+ */
+const keptAskSchema = z.object({
+  thread: assistantThreadSchema,
+  unanswered: z.string().optional().default(""),
+});
+
+export type KeptAsk = z.infer<typeof keptAskSchema>;
 
 export type StartedTurn = z.infer<typeof startedTurnSchema>;
 
@@ -244,8 +260,6 @@ export type UpdateThreadOptions = {
   pinned?: boolean;
   /** Replaces what the agents keep in mind for the whole conversation. */
   pinnedFacts?: readonly string[];
-  /** Lists a quick question as a conversation. */
-  keep?: boolean;
   /** Whether the conversation compacts itself on nearing a full context. */
   autoCompact?: boolean;
 };
@@ -323,7 +337,6 @@ export class AssistantService {
       title: options.title ?? null,
       pinned: options.pinned ?? null,
       pinnedFacts: options.pinnedFacts ?? null,
-      keep: options.keep ?? false,
       autoCompact: options.autoCompact ?? null,
     });
     return safeParse(assistantThreadSchema, response, "Assistant Thread");
@@ -875,15 +888,14 @@ export class AssistantService {
   }
 
   /**
-   * A quick question from the palette. It is answered on a hidden thread the
-   * server makes for it, returned with the turn so the reader can keep the
-   * conversation even when the answer fails partway.
+   * A quick question from the palette. Nova answers it on a worker without
+   * making a conversation; its answer streams from `attachAsk`.
    */
   public async startAsk(
     content: string,
     options: AskOptions = {},
     { signal }: { signal?: AbortSignal } = {},
-  ): Promise<StartedTurn> {
+  ): Promise<StartedAsk> {
     const response = await api.post(
       "/assistant/ask/",
       {
@@ -894,7 +906,32 @@ export class AssistantService {
       { signal },
     );
 
-    return safeParse(startedTurnSchema, response, "Assistant Turn");
+    return safeParse(startedAskSchema, response, "Palette Question");
+  }
+
+  /** Follows a palette question's answer from where the reader left off. */
+  public async attachAsk(
+    askId: string,
+    onEvent: (event: AssistantStreamEvent, cursor: string) => void,
+    options: { cursor?: string; signal?: AbortSignal } = {},
+  ): Promise<void> {
+    await this.attachStream(
+      `/assistant/ask/${askId}/stream/`,
+      parseAskStreamEvent,
+      onEvent,
+      options,
+    );
+  }
+
+  /** Takes back a palette question nobody is waiting for. */
+  public async stopAsk(askId: string): Promise<void> {
+    await api.delete(`/assistant/ask/${askId}/`);
+  }
+
+  /** Carries a palette question and its answer into a new Desk conversation. */
+  public async keepAsk(askId: string): Promise<KeptAsk> {
+    const response = await api.post(`/assistant/ask/${askId}/keep/`, {});
+    return safeParse(keptAskSchema, response, "Kept Question");
   }
 
   /**
@@ -911,10 +948,23 @@ export class AssistantService {
     onEvent: (event: AssistantStreamEvent, cursor: string) => void,
     options: { cursor?: string; signal?: AbortSignal } = {},
   ): Promise<void> {
-    const path = `/assistant/turns/${turnId}/stream/`;
-    const headers: Record<string, string> = { Accept: "text/event-stream" };
+    await this.attachStream(
+      `/assistant/turns/${turnId}/stream/`,
+      parseAssistantStreamEvent,
+      onEvent,
+      options,
+    );
+  }
+
+  private async attachStream(
+    path: string,
+    parse: (event: string, raw: string) => AssistantStreamEvent | null,
+    onEvent: (event: AssistantStreamEvent, cursor: string) => void,
+    options: { cursor?: string; signal?: AbortSignal },
+  ): Promise<void> {
+    const headers = await withSessionHeaders("GET", { Accept: "text/event-stream" }, path);
     if (options.cursor) {
-      headers["Last-Event-ID"] = options.cursor;
+      headers.set("Last-Event-ID", options.cursor);
     }
 
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -931,7 +981,7 @@ export class AssistantService {
     await readEventStream(
       response.body,
       (message) => {
-        const event = parseAssistantStreamEvent(message.event, message.data);
+        const event = parse(message.event, message.data);
         if (event) {
           onEvent(event, message.id);
         }
@@ -1078,7 +1128,7 @@ export class AgentDefinitionService {
     options: { signal?: AbortSignal } = {},
   ): Promise<void> {
     const path = "/agent-definitions/dry-run/";
-    const headers = await withCsrfHeader(
+    const headers = await withSessionHeaders(
       "POST",
       { Accept: "text/event-stream", "Content-Type": "application/json" },
       path,

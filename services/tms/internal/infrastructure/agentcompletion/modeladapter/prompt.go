@@ -4,48 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/shared/textfence"
 )
-
-const (
-	untrustedOpenTag  = "<untrusted_data>"
-	untrustedCloseTag = "</untrusted_data>"
-)
-
-// BuildContextText renders a delimited context, fencing every untrusted section
-// so prompt injection carried in customer data cannot be read as instruction.
-func BuildContextText(deliminated llmports.DelimitedContext) string {
-	var builder strings.Builder
-
-	for _, section := range deliminated.Sections {
-		title := strings.TrimSpace(section.Title)
-		if title != "" {
-			builder.WriteString("## ")
-			builder.WriteString(title)
-			builder.WriteString("\n")
-		}
-
-		if section.Trusted {
-			builder.WriteString(section.Content)
-			builder.WriteString("\n\n")
-			continue
-		}
-
-		builder.WriteString(untrustedOpenTag)
-		builder.WriteString("\n")
-		builder.WriteString(neutralizeUntrusted(section.Content))
-		builder.WriteString("\n")
-		builder.WriteString(untrustedCloseTag)
-		builder.WriteString("\n\n")
-	}
-
-	return strings.TrimSpace(builder.String())
-}
-
-func neutralizeUntrusted(content string) string {
-	return textfence.FenceText(content, untrustedCloseTag)
-}
 
 // WithSchemaInstruction appends the schema to a system prompt for providers that
 // cannot enforce it on the wire. Without this a prompted-mode provider is given

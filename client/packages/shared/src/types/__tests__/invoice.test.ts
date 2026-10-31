@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { invoiceLineSchema, invoiceSchema } from "@trenova/shared/types/invoice";
+import {
+  invoiceLineSchema,
+  invoiceSchema,
+  memoFormSchema,
+  memoFormTotal,
+} from "@trenova/shared/types/invoice";
 
 /**
  * The Go domain stamps `shipment_id`, `shipment_pro_number` and `shipment_bol`
@@ -274,5 +279,70 @@ describe("invoiceSchema optional enums", () => {
 
     expect(parsed.voidDisposition).toBe("Rebill");
     expect(parsed.memoKind).toBe("LateCharge");
+  });
+});
+
+/**
+ * `invoicememoservice.memoLines` stores a memo line's amount as the line total and
+ * derives the unit price as amount over quantity, so the total the dialog shows is
+ * the sum of the amounts, whatever the quantities.
+ */
+describe("memoFormTotal", () => {
+  it("sums line amounts without scaling them by quantity", () => {
+    expect(memoFormTotal([{ amount: 100 }, { amount: 25.5 }, { amount: 10 }])).toBe(135.5);
+  });
+
+  it("counts a line with no amount yet as zero", () => {
+    expect(memoFormTotal([{ amount: 40 }, { amount: Number.NaN }])).toBe(40);
+  });
+});
+
+/**
+ * Invoice amounts, unit prices and totals are numeric(19,4) columns. The server's
+ * memo validator caps a line at 999,999,999.99, keeps quantity within 0.0001 and
+ * 999,999,999.9999, and allows 200 lines, so every stored figure fits; the form
+ * refuses the same values before they reach it.
+ */
+describe("memoFormSchema limits", () => {
+  const line = { description: "Returned cheque fee", amount: 25, quantity: 1 };
+  const memo = (lines: unknown[]) => ({
+    customerId: "cus_1",
+    billType: "CreditMemo",
+    reason: "Goodwill",
+    lines,
+  });
+  const issuePaths = (values: unknown) => {
+    const result = memoFormSchema.safeParse(values);
+    return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
+  };
+
+  it("accepts every figure at its limit", () => {
+    expect(
+      issuePaths(
+        memo([
+          { ...line, amount: 999_999_999.99, quantity: 0.0001 },
+          { ...line, quantity: 999_999_999.9999 },
+        ]),
+      ),
+    ).toEqual([]);
+  });
+
+  it("rejects an amount over the cap on the line that holds it", () => {
+    expect(issuePaths(memo([line, { ...line, amount: 1_000_000_000 }]))).toEqual([
+      "lines.1.amount",
+    ]);
+  });
+
+  it("rejects a quantity finer than the column stores", () => {
+    expect(issuePaths(memo([{ ...line, quantity: 0.00009 }]))).toEqual(["lines.0.quantity"]);
+  });
+
+  it("rejects a quantity over the cap", () => {
+    expect(issuePaths(memo([{ ...line, quantity: 1_000_000_000 }]))).toEqual(["lines.0.quantity"]);
+  });
+
+  it("rejects more lines than the server accepts", () => {
+    expect(issuePaths(memo(Array.from({ length: 201 }, () => line)))).toEqual(["lines"]);
+    expect(issuePaths(memo(Array.from({ length: 200 }, () => line)))).toEqual([]);
   });
 });

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -43,6 +44,7 @@ type Params struct {
 	Validator            *invoicevalidation.Validator
 	AuditService         auditports.AuditService
 	Realtime             realtimeports.RealtimeService
+	Readiness            shipmentserviceports.ShipmentBillingReadinessReader `optional:"true"`
 }
 
 // Service creates invoices from approved billing queue items, shipments, orders and
@@ -58,6 +60,7 @@ type Service struct {
 	db                   kernelports.Transactor
 	detentionBilling     detentionports.DetentionBillingService
 	l                    *zap.Logger
+	readiness            shipmentserviceports.ShipmentBillingReadinessReader
 	orderRepo            orderports.OrderRepository
 	rec                  *invoiceaction.Recorder
 	repo                 invoiceports.InvoiceRepository
@@ -83,6 +86,7 @@ func New(p Params) *Service {
 		db:                   p.DB,
 		detentionBilling:     p.DetentionBilling,
 		l:                    l,
+		readiness:            p.Readiness,
 		orderRepo:            p.OrderRepo,
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{

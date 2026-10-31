@@ -139,6 +139,9 @@ func (c *Conversation) Say(
 	u *benchscenario.Utterance,
 ) ([]*benchrecord.TurnRecord, error) {
 	ctx = c.session.Context(ctx)
+	if c.palette {
+		return c.askPalette(ctx, u)
+	}
 	bench := c.session.bench
 
 	surface := u.Surface
@@ -148,9 +151,6 @@ func (c *Conversation) Say(
 	if c.formula != nil {
 		u.Page = c.formula.page()
 		surface = agentpagecontext.SurfaceAssistant
-	}
-	if c.palette {
-		surface = agentpagecontext.SurfacePalette
 	}
 
 	attached, err := c.attach(ctx, u.Attachments)
@@ -260,6 +260,9 @@ func (c *Conversation) Close(
 	ctx context.Context,
 	opts CloseOptions,
 ) ([]*benchrecord.TurnRecord, error) {
+	if c.palette {
+		return nil, nil
+	}
 	bench := c.session.bench
 	defer bench.watcher.Forget(c.Thread.ID)
 

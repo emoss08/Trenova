@@ -1,8 +1,8 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { errorReferenceDetails } from "@trenova/shared/lib/error-presentation";
+import { isExplainedError } from "@trenova/shared/lib/explained-errors";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
-import { isExplainedPlanLimitError } from "@trenova/shared/lib/plan-limit";
 import {
   type NormalizedApiError,
   type ValidationError,
@@ -103,9 +103,10 @@ export function handleMutationError<T extends FieldValues>({
   form,
   resourceName,
 }: MutationErrorOptions<T>): void {
-  // The plan-limit dialog has already said why and what the limit is; a toast saying
-  // "Access denied" or "Error" on top of it would only contradict it.
-  if (isExplainedPlanLimitError(error)) {
+  // A dialog has already said what happened (a plan limit, a tab left behind by an
+  // organization switch); a toast saying "Access denied" or "Error" on top of it would only
+  // contradict it.
+  if (isExplainedError(error)) {
     return;
   }
 

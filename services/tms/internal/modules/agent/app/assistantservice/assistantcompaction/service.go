@@ -18,11 +18,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -35,17 +35,17 @@ import (
 )
 
 type Service struct {
-	logger        *zap.Logger
-	conversations conversationports.ConversationRepository
-	definitions   agentdefinitionports.AgentDefinitionRepository
-	permissions   permissionports.PermissionEngine
-	queries       agenttoolports.AgentQueryToolRegistry
-	budgets       agentbudgetports.AgentBudgetService
-	agentControls tenantports.AgentControlRepository
-	quota         platformplanports.QuotaGuard
-	chapters      assistantchapterports.ChapterRepository
-	proposals     proposalstores.ProposalStore
-	decisions     agentdecisionports.AgentDecisionRepository
+	logger           *zap.Logger
+	conversations    conversationports.ConversationRepository
+	definitions      agentdefinitionports.AgentDefinitionRepository
+	permissions      permissionports.PermissionEngine
+	budgets          agentbudgetports.AgentBudgetService
+	agentControls    tenantports.AgentControlRepository
+	paletteQuestions paletteports.QuestionRepository
+	quota            platformplanports.QuotaGuard
+	chapters         assistantchapterports.ChapterRepository
+	proposals        proposalstores.ProposalStore
+	decisions        agentdecisionports.AgentDecisionRepository
 }
 
 // PrepareCompaction reads a conversation and makes ready the request that
@@ -236,16 +236,16 @@ func (s *Service) access() *agentaccess.Access {
 	return &agentaccess.Access{
 		Permissions: s.permissions,
 		Definitions: s.definitions,
-		Queries:     s.queries,
 	}
 }
 
 func (s *Service) limits() *turnlimits.Limits {
 	return &turnlimits.Limits{
-		Budgets:       s.budgets,
-		Conversations: s.conversations,
-		AgentControls: s.agentControls,
-		Quota:         s.quota,
+		Budgets:          s.budgets,
+		Conversations:    s.conversations,
+		AgentControls:    s.agentControls,
+		Quota:            s.quota,
+		PaletteQuestions: s.paletteQuestions,
 	}
 }
 

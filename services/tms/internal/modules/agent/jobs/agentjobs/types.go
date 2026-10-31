@@ -18,12 +18,12 @@ import (
 // Workflow names. A workflow a schedule starts is started by its function, so
 // its name is the function's name: the SDK derives one from the other.
 const (
-	ReconcileSchedulesWorkflowName    = "ReconcileDefinitionSchedulesWorkflow"
-	ReconcileSchedulesScheduleID      = "agent-definition-schedules"
-	ExpireStaleProposalsWorkflowName  = "ExpireStaleProposalsWorkflow"
-	ExpireStaleProposalsScheduleID    = "agent-proposal-expiry"
-	DeleteStaleAskThreadsWorkflowName = "DeleteStaleAskThreadsWorkflow"
-	DeleteStaleAskThreadsScheduleID   = "assistant-ask-thread-retention"
+	ReconcileSchedulesWorkflowName   = "ReconcileDefinitionSchedulesWorkflow"
+	ReconcileSchedulesScheduleID     = "agent-definition-schedules"
+	ExpireStaleProposalsWorkflowName = "ExpireStaleProposalsWorkflow"
+	ExpireStaleProposalsScheduleID   = "agent-proposal-expiry"
+	AssistantRetentionWorkflowName   = "AssistantRetentionWorkflow"
+	AssistantRetentionScheduleID     = "assistant-retention"
 )
 
 type PrepareRunResult struct {
@@ -99,14 +99,19 @@ type ExpireStaleProposalsInput struct {
 	Now int64 `json:"now"`
 }
 
-// DeleteStaleAskThreadsInput names the cut-off: quick questions with no
-// activity since Before, and never kept, are removed.
-type DeleteStaleAskThreadsInput struct {
+// RetentionInput names the cut-off of one retention sweep.
+type RetentionInput struct {
 	Before int64 `json:"before"`
 }
 
-// DeleteStaleAskThreadsResult is what one retention sweep removed.
-type DeleteStaleAskThreadsResult struct {
+// RetentionResult is what the assistant's retention sweep removed.
+type RetentionResult struct {
+	FormulaDrafts    int `json:"formulaDrafts"`
+	PaletteQuestions int `json:"paletteQuestions"`
+}
+
+// RetentionBatch is what one batch of a retention sweep removed.
+type RetentionBatch struct {
 	Deleted int `json:"deleted"`
 }
 

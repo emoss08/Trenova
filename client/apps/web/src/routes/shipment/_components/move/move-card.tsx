@@ -1,27 +1,20 @@
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
-import { CarrierTrackingLink } from "@/components/carrier-assignment/carrier-tracking-link";
-import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
+import { useEtaLabels } from "@/hooks/use-eta-labels";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { fieldErrorMessages } from "@/lib/form-errors";
 import { shipment } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowDownIcon,
   Building07Icon,
-  CheckIcon,
-  DotsVerticalIcon,
+  DotsHorizontalIcon,
   Edit02Icon,
-  PlusIcon,
+  RouteIcon,
   Scissors01Icon,
   Trash01Icon,
-  Truck01Icon,
   User01Icon,
   UserX01Icon,
-  XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -30,33 +23,67 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getProfile, getRule, RULE_KEYS } from "@trenova/shared/lib/capability";
-import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { STOP_TYPE_LABELS } from "@trenova/shared/lib/stop-type";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type {
-  CarrierAssignment,
   MoveStatus,
   Shipment,
   ShipmentMove,
   Stop,
   StopActualAction,
   StopEta,
-  StopStatus,
-  StopType,
 } from "@trenova/shared/types/shipment";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
-import { createElement, useState } from "react";
+import { useState } from "react";
 import { useFormContext, useFormState, useWatch } from "react-hook-form";
 import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
+import { MoveCoverage } from "./move-coverage";
+import { focusStop, moveHeadline } from "./move-headline";
+import { MoveStops, stopDescription, useStopPlace } from "./move-stops";
+import { stopEtaSlackText, VERDICT_DOT } from "./stop-eta";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";
-import { StopEtaLine } from "./stop-eta";
 
+const MOVE_STATUS_LABELS: Record<MoveStatus, string> = defineLabels({
+  New: "New",
+  Assigned: "Assigned",
+  InTransit: "In transit",
+  Completed: "Completed",
+  Canceled: "Canceled",
+});
+
+/** The line under the headline: how the projection to the stop in focus stands, in its tone. */
+function HeadlineDetail({ eta }: { eta: StopEta | undefined }) {
+  const t = useT();
+  const labels = useEtaLabels();
+  if (!eta || eta.arrived) return null;
+  const slack = stopEtaSlackText(eta.slackMinutes, t);
+  return (
+    <span className="text-foreground-muted text-2xs flex items-center gap-1.5">
+      <span aria-hidden className={cn("size-1.5 rounded-full", VERDICT_DOT[eta.verdict])} />
+      <span className="text-foreground font-medium">{labels.verdict(eta.verdict)}</span>
+      {slack ? (
+        <>
+          <span aria-hidden>·</span>
+          <span className="tabular-nums">{slack}</span>
+        </>
+      ) : null}
+    </span>
+  );
+}
+
+/**
+ * One move of a shipment, compact: its number, status and distance with every action in one
+ * menu; its stops as a route; and who covers it, in a line that opens to the carrier's details.
+ * Check calls, assignment, cancelling a carrier and splitting the move happen here and write the
+ * result back into the form, so the page reflects them without a reload.
+ */
 export function MoveCard({
   moveIndex,
   allowPersistedMoveRemoval,
@@ -75,76 +102,84 @@ export function MoveCard({
   const { errors } = useFormState({ control, name: `moves.${moveIndex}.stops` });
   const queryClient = useQueryClient();
   const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
-  const moveRemovalRule = getRule(getProfile(shipmentUIPolicy), RULE_KEYS.moveRemoval);
   const move = useWatch({ control, name: `moves.${moveIndex}` });
   const shipmentId = useWatch({ control, name: "id" });
   const { data: shipmentEta } = useQuery({
     ...shipment.eta(shipmentId ?? ""),
     enabled: !!shipmentId,
   });
-  const stopEtas = new Map((shipmentEta?.stops ?? []).map((eta) => [eta.stopId, eta]));
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [cancelCarrierOpen, setCancelCarrierOpen] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
-  const [stopActualTarget, setStopActualTarget] = useState<{
+  const [checkCall, setCheckCall] = useState<{
     stopId: string;
     action: StopActualAction;
     description: string;
   } | null>(null);
 
   const stops = move?.stops ?? [];
-  const statusConfig = moveStatusConfig[move?.status ?? "New"];
-  const moveErrors = errors.moves?.[moveIndex]?.stops;
-  const hasId = !!move?.id;
-  const carrierAssignment = move?.carrierAssignment ?? null;
-  const hasCarrierAssignment = isActiveCarrierAssignment(carrierAssignment);
+  const status: MoveStatus = move?.status ?? "New";
+  const moveId = move?.id;
+  const stopErrorTree = errors.moves?.[moveIndex]?.stops;
+  const stopErrors = stops.map((_, index) => {
+    const tree = stopErrorTree?.[index];
+    return tree ? fieldErrorMessages(tree) : [];
+  });
+  const etas = new Map((shipmentEta?.stops ?? []).map((eta) => [eta.stopId, eta]));
+
+  const carrierAssignment = isActiveCarrierAssignment(move?.carrierAssignment)
+    ? (move?.carrierAssignment ?? null)
+    : null;
   const hasDriverAssignment = !!move?.assignment?.id;
-  const hasAssignment = hasDriverAssignment || hasCarrierAssignment;
-  const isTerminal = move?.status === "Completed" || move?.status === "Canceled";
-  const canRemove = !hasId || allowPersistedMoveRemoval;
+  const hasAssignment = hasDriverAssignment || !!carrierAssignment;
+  const isTerminal = status === "Completed" || status === "Canceled";
+  const assignBlockedReason = !moveId
+    ? t("Save the shipment to assign a driver or carrier")
+    : isTerminal
+      ? t("A completed or canceled move cannot be assigned")
+      : null;
+  const canRemove = !moveId || allowPersistedMoveRemoval;
+  const moveRemovalRule = getRule(getProfile(shipmentUIPolicy), RULE_KEYS.moveRemoval);
   const removalBlockedReason = moveRemovalRule
     ? t("Move removal is blocked by the {0} profile", moveRemovalRule.provenance.profileName)
     : t("Move removal is disabled by shipment control");
   const canUnassign =
-    hasDriverAssignment && move?.status === "Assigned" && move?.assignment?.status === "New";
-  const canCancelCarrier = hasCarrierAssignment && move?.status === "Assigned";
-  const canSplit =
-    hasId &&
-    !isTerminal &&
-    move?.stops?.length === 2 &&
-    (move?.status === "New" || move?.status === "Assigned");
-  const canRecordStopActuals =
-    hasId && hasCarrierAssignment && (move?.status === "Assigned" || move?.status === "InTransit");
+    hasDriverAssignment && status === "Assigned" && move?.assignment?.status === "New";
+  const canCancelCarrier = !!carrierAssignment && status === "Assigned";
+  const canSplit = !!moveId && stops.length === 2 && (status === "New" || status === "Assigned");
+  const canRecordActuals =
+    !!moveId && !!carrierAssignment && (status === "Assigned" || status === "InTransit");
+
+  const refreshShipmentLists = () => {
+    void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+  };
 
   const unassignMutation = useMutation({
-    mutationFn: () => apiService.assignmentService.unassign(move.id!),
+    mutationFn: () => apiService.assignmentService.unassign(moveId!),
     onSuccess: () => {
       setValue(`moves.${moveIndex}.assignment`, null);
       setValue(`moves.${moveIndex}.coverageType`, "unassigned");
       setValue(`moves.${moveIndex}.status`, "New");
-      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      refreshShipmentLists();
     },
-    onError: () => {
-      toast.error(t("Failed to unassign move"));
-    },
+    onError: () => toast.error(t("Failed to unassign move")),
   });
 
   const cancelCarrierMutation = useMutation({
-    mutationFn: (reason: string) => apiService.carrierAssignmentService.cancel(move.id!, reason),
+    mutationFn: (reason: string) => apiService.carrierAssignmentService.cancel(moveId!, reason),
     onSuccess: () => {
       setValue(`moves.${moveIndex}.carrierAssignment`, null);
       setValue(`moves.${moveIndex}.coverageType`, "unassigned");
       setValue(`moves.${moveIndex}.status`, "New");
       setCancelCarrierOpen(false);
-      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      refreshShipmentLists();
     },
-    onError: (error: Error) => {
-      toast.error(t("Failed to cancel carrier assignment"), { description: error.message });
-    },
+    onError: (error: Error) =>
+      toast.error(t("Failed to cancel carrier assignment"), { description: error.message }),
   });
 
   const withIdempotencyKey = useIdempotencyKey();
-  const recordStopActualMutation = useMutation({
+  const checkCallMutation = useMutation({
     mutationFn: ({
       stopId,
       action,
@@ -155,8 +190,8 @@ export function MoveCard({
       occurredAt?: number;
     }) => {
       const payload = { action, ...(occurredAt !== undefined ? { occurredAt } : {}) };
-      return withIdempotencyKey({ moveId: move.id, stopId, ...payload }, (idempotencyKey) =>
-        apiService.assignmentService.recordStopActual(move.id!, stopId, payload, {
+      return withIdempotencyKey({ moveId, stopId, ...payload }, (idempotencyKey) =>
+        apiService.assignmentService.recordStopActual(moveId!, stopId, payload, {
           idempotencyKey,
         }),
       );
@@ -164,77 +199,115 @@ export function MoveCard({
     onSuccess: (updatedMove: ShipmentMove) => {
       setValue(`moves.${moveIndex}.status`, updatedMove.status);
       setValue(`moves.${moveIndex}.stops`, updatedMove.stops);
-      setStopActualTarget(null);
-      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      setCheckCall(null);
+      refreshShipmentLists();
       if (move?.shipmentId) {
         void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
       }
     },
-    onError: (error: Error) => {
-      toast.error(t("Failed to record stop actual"), { description: error.message });
-    },
+    onError: (error: Error) =>
+      toast.error(t("Failed to record stop actual"), { description: error.message }),
   });
 
   const recalculateDistanceMutation = useMutation({
     mutationFn: () => apiService.shipmentService.recalculateDistance(shipmentId!),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      refreshShipmentLists();
       toast.success(t("Distance recalculated"));
     },
     onError: () => toast.error(t("Failed to recalculate distance")),
   });
 
+  const distance = move?.distance ? t("{0} mi", formatNumber(move.distance)) : null;
+  const focus = focusStop(stops);
+  const focusPlace = useStopPlace(focus);
+  const headline = moveHeadline({
+    status,
+    stops,
+    etas,
+    placeOf: (stop) =>
+      (stop === focus ? focusPlace.city || focusPlace.name : stop.location?.city) ||
+      STOP_TYPE_LABELS[stop.type],
+    t,
+  });
+  const focusEta = headline.focus?.id ? etas.get(headline.focus.id) : undefined;
+
   return (
-    <div className="bg-card rounded-lg border">
-      <div className="flex items-center justify-between border-b px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <Badge variant={statusConfig.variant}>{t(statusConfig.label)}</Badge>
-          {move?.loaded && <Badge variant="neutral">{t("Loaded")}</Badge>}
-          {move?.distance ? (
-            <span className="text-muted-foreground text-xs">{t("{0} mi", move.distance)}</span>
-          ) : null}
-          {move?.distanceSource ? (
-            <Badge variant="neutral" appearance="outline">
-              {move.distanceSource}
-            </Badge>
-          ) : null}
+    <div className="bg-card overflow-hidden rounded-lg border">
+      <div className="flex items-start gap-2 pt-3 pr-2 pb-2 pl-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <div className="text-foreground-muted text-2xs flex flex-wrap items-center gap-x-1.5">
+            <span className="font-medium">{t("Move {0}", moveIndex + 1)}</span>
+            <span aria-hidden>·</span>
+            <span>{MOVE_STATUS_LABELS[status]}</span>
+            {distance && (
+              <>
+                <span aria-hidden>·</span>
+                {move?.distanceSource ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <span
+                          tabIndex={0}
+                          className="ui-focus-ring cursor-help rounded-sm tabular-nums"
+                        />
+                      }
+                    >
+                      {distance}
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      {t("Distance from {0}", move.distanceSource)}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <span className="tabular-nums">{distance}</span>
+                )}
+              </>
+            )}
+            {move && !move.loaded && (
+              <>
+                <span aria-hidden>·</span>
+                <span>{t("Empty")}</span>
+              </>
+            )}
+          </div>
+          <h3
+            // A new key when the move's story changes, so the new sentence settles in.
+            key={headline.title}
+            className={cn(
+              "animate-rise truncate text-sm font-semibold",
+              headline.tone === "success" && "text-success",
+              headline.tone === "muted" && "text-foreground-muted",
+            )}
+            title={headline.title}
+          >
+            {headline.title}
+          </h3>
+          <HeadlineDetail eta={focusEta} />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button type="button" variant="ghost" size="icon" className="size-7">
-                <DotsVerticalIcon className="text-muted-foreground size-3.5" />
+              <Button
+                type="button"
+                variant="quiet"
+                size="icon-sm"
+                aria-label={t("Move {0} actions", moveIndex + 1)}
+              >
+                <DotsHorizontalIcon className="size-4" />
               </Button>
             }
           />
-          <DropdownMenuContent align="end" sideOffset={4} className="w-auto">
-            {hasId && !isTerminal ? (
-              <DropdownMenuItem
-                label={hasAssignment ? "Reassign" : "Assign"}
-                title={hasAssignment ? "Reassign" : "Assign"}
-                startContent={<User01Icon className="size-3.5" />}
-                onClick={() => setAssignmentOpen(true)}
-              />
-            ) : (
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <div className="text-muted-foreground flex cursor-not-allowed items-center px-1.5 py-1 text-sm">
-                      <User01Icon className="mr-2 size-3.5" />
-                      {hasAssignment ? t("Reassign") : t("Assign")}
-                    </div>
-                  }
-                />
-                <TooltipContent side="left" sideOffset={10}>
-                  {isTerminal
-                    ? t("Cannot assign a completed or canceled move")
-                    : t("Save the shipment first to assign workers")}
-                </TooltipContent>
-              </Tooltip>
-            )}
+          <DropdownMenuContent align="end" sideOffset={4} className="min-w-56">
+            <DropdownMenuItem
+              title={hasAssignment ? t("Reassign") : t("Assign")}
+              startContent={<User01Icon className="size-3.5" />}
+              description={assignBlockedReason ?? undefined}
+              disabled={!!assignBlockedReason}
+              onClick={() => setAssignmentOpen(true)}
+            />
             {canUnassign && (
               <DropdownMenuItem
-                label={t("Unassign")}
                 title={t("Unassign")}
                 color="danger"
                 startContent={<UserX01Icon className="size-3.5" />}
@@ -243,7 +316,6 @@ export function MoveCard({
             )}
             {canCancelCarrier && (
               <DropdownMenuItem
-                label={t("Cancel carrier assignment")}
                 title={t("Cancel carrier assignment")}
                 color="danger"
                 startContent={<Building07Icon className="size-3.5" />}
@@ -252,7 +324,6 @@ export function MoveCard({
             )}
             {canSplit && (
               <DropdownMenuItem
-                label={t("Split")}
                 title={t("Split")}
                 startContent={<Scissors01Icon className="size-3.5" />}
                 onClick={() => setSplitOpen(true)}
@@ -260,23 +331,21 @@ export function MoveCard({
             )}
             {shipmentId && (
               <DropdownMenuItem
-                label={t("Recalculate distance")}
                 title={t("Recalculate distance")}
-                startContent={<Truck01Icon className="size-3.5" />}
-                onClick={() => recalculateDistanceMutation.mutateAsync()}
+                startContent={<RouteIcon className="size-3.5" />}
+                disabled={recalculateDistanceMutation.isPending}
+                onClick={() => recalculateDistanceMutation.mutate()}
               />
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              startContent={<Edit02Icon className="size-3.5" />}
               title={t("Edit")}
-              label={t("Edit")}
+              startContent={<Edit02Icon className="size-3.5" />}
               onClick={onEdit}
             />
             <DropdownMenuItem
-              startContent={<Trash01Icon className="size-3.5" />}
               title={t("Delete")}
-              label={t("Delete")}
+              startContent={<Trash01Icon className="size-3.5" />}
               description={
                 canRemove ? t("Delete this move and all associated stops") : removalBlockedReason
               }
@@ -288,84 +357,49 @@ export function MoveCard({
         </DropdownMenu>
       </div>
 
-      <ScrollArea maskVariant="card" className="max-h-62.5 px-4 py-2">
-        <div className="relative space-y-2 py-2">
-          {stops.map((stop, stopIdx) => {
-            const isLast = stopIdx === stops.length - 1;
-            const nextStop = !isLast ? stops[stopIdx + 1] : undefined;
-            const showConnector =
-              !isLast && stopHasInfo(stop) && (nextStop ? stopHasInfo(nextStop) : false);
+      <MoveStops
+        stops={stops}
+        stopErrors={stopErrors}
+        etas={etas}
+        distance={distance}
+        canRecordActuals={canRecordActuals}
+        onEdit={onEdit}
+        onCheckCall={(stop: Stop, action) => {
+          if (!stop.id) return;
+          setCheckCall({ stopId: stop.id, action, description: stopDescription(stop, t) });
+        }}
+      />
 
-            const stopErrs = moveErrors?.[stopIdx];
-            const stopErrorMessages = stopErrs ? fieldErrorMessages(stopErrs) : [];
-            const stopHasErrors = stopErrorMessages.length > 0;
+      <MoveCoverage
+        key={carrierAssignment?.id ?? move?.assignment?.id ?? "uncovered"}
+        carrierAssignment={carrierAssignment}
+        assignment={move?.assignment}
+        moveId={moveId}
+        canTrack={!!moveId && !isTerminal}
+        assignBlockedReason={assignBlockedReason}
+        onAssign={() => setAssignmentOpen(true)}
+      />
 
-            const priorStopsDeparted = stops
-              .slice(0, stopIdx)
-              .every((priorStop) => priorStop.status === "Canceled" || !!priorStop.actualDeparture);
-            const checkCallAction = stopCheckCallAction(
-              stop,
-              canRecordStopActuals && priorStopsDeparted,
-            );
-
-            return (
-              <StopTimelineItem
-                key={stopTimelineKey(stop, stopIdx)}
-                stop={stop}
-                isLast={isLast}
-                moveStatus={move?.status ?? "New"}
-                prevStopStatus={stopIdx > 0 ? stops[stopIdx - 1]?.status : undefined}
-                showConnector={showConnector}
-                hasErrors={stopHasErrors}
-                errorMessages={stopErrorMessages}
-                checkCallAction={checkCallAction}
-                eta={stop.id ? stopEtas.get(stop.id) : undefined}
-                onCheckCall={() => {
-                  if (!checkCallAction || !stop.id) return;
-                  setStopActualTarget({
-                    stopId: stop.id,
-                    action: checkCallAction,
-                    description: stopDescription(stop),
-                  });
-                }}
-              />
-            );
-          })}
-        </div>
-      </ScrollArea>
-      {hasCarrierAssignment && carrierAssignment ? (
-        <CarrierAssignmentDetails
-          carrierAssignment={carrierAssignment}
-          moveId={move?.id}
-          canCancel={canCancelCarrier}
-          canTrack={hasId && !isTerminal}
-          onCancel={() => setCancelCarrierOpen(true)}
-        />
-      ) : (
-        <AssignmentDetails assignmentId={move?.assignment?.id} />
-      )}
-      {hasId && (
+      {moveId && (
         <>
           <AssignmentDialog
             open={assignmentOpen}
             onOpenChange={setAssignmentOpen}
-            moveId={move.id!}
+            moveId={moveId}
             shipmentId={shipmentId}
             existingAssignment={move?.assignment}
-            existingCarrierAssignment={carrierAssignment}
+            existingCarrierAssignment={move?.carrierAssignment ?? null}
             onAssigned={(assignment) => {
               setValue(`moves.${moveIndex}.assignment`, assignment);
               setValue(`moves.${moveIndex}.coverageType`, "driver");
               setValue(`moves.${moveIndex}.status`, "Assigned");
-              void queryClient.invalidateQueries({
-                queryKey: ["assignment", assignment.id],
-              });
+              void queryClient.invalidateQueries({ queryKey: ["assignment", assignment.id] });
             }}
             onCarrierAssigned={(nextCarrierAssignment) => {
               setValue(`moves.${moveIndex}.carrierAssignment`, nextCarrierAssignment);
               setValue(`moves.${moveIndex}.coverageType`, "carrier");
               setValue(`moves.${moveIndex}.status`, "Assigned");
-              void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+              refreshShipmentLists();
             }}
           />
           <CarrierAssignmentCancelDialog
@@ -376,18 +410,18 @@ export function MoveCard({
             onConfirm={(reason) => cancelCarrierMutation.mutate(reason)}
           />
           <RecordStopActualDialog
-            open={!!stopActualTarget}
+            open={!!checkCall}
             onOpenChange={(open) => {
-              if (!open) setStopActualTarget(null);
+              if (!open) setCheckCall(null);
             }}
-            action={stopActualTarget?.action ?? "Arrive"}
-            stopDescription={stopActualTarget?.description}
-            isSubmitting={recordStopActualMutation.isPending}
+            action={checkCall?.action ?? "Arrive"}
+            stopDescription={checkCall?.description}
+            isSubmitting={checkCallMutation.isPending}
             onConfirm={(occurredAt) => {
-              if (!stopActualTarget) return;
-              recordStopActualMutation.mutate({
-                stopId: stopActualTarget.stopId,
-                action: stopActualTarget.action,
+              if (!checkCall) return;
+              checkCallMutation.mutate({
+                stopId: checkCall.stopId,
+                action: checkCall.action,
                 occurredAt,
               });
             }}
@@ -396,454 +430,15 @@ export function MoveCard({
             <SplitMoveDialog
               open={splitOpen}
               onOpenChange={setSplitOpen}
-              moveId={move.id!}
+              moveId={moveId}
               currentMove={move}
               onSplit={() => {
-                void queryClient.invalidateQueries({
-                  queryKey: ["shipment-list"],
-                });
-                void queryClient.invalidateQueries({
-                  queryKey: ["shipment", move.shipmentId],
-                });
+                refreshShipmentLists();
+                void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
               }}
             />
           )}
         </>
-      )}
-    </div>
-  );
-}
-
-const moveStatusConfig: Record<
-  MoveStatus,
-  {
-    label: string;
-    variant: "neutral" | "info" | "warning" | "success" | "danger";
-  }
-> = {
-  New: { label: "New", variant: "neutral" },
-  Assigned: { label: "Assigned", variant: "info" },
-  InTransit: { label: "In transit", variant: "info" },
-  Completed: { label: "Completed", variant: "success" },
-  Canceled: { label: "Canceled", variant: "danger" },
-};
-
-const stopStatusBgColor: Record<StopStatus, string> = {
-  New: "bg-accent-violet",
-  InTransit: "bg-info",
-  Completed: "bg-success",
-  Canceled: "bg-danger",
-};
-
-const stopStatusLineColor: Record<StopStatus, string> = {
-  New: "bg-accent-violet",
-  InTransit: "bg-info",
-  Completed: "bg-success",
-  Canceled: "bg-danger",
-};
-
-function getStatusIcon(status: StopStatus, isLast: boolean, moveStatus: MoveStatus) {
-  if (isLast && moveStatus === "Completed") return CheckIcon;
-  switch (status) {
-    case "New":
-      return PlusIcon;
-    case "InTransit":
-      return Truck01Icon;
-    case "Completed":
-      return ArrowDownIcon;
-    case "Canceled":
-      return XCloseIcon;
-  }
-}
-
-const transitionGradients: Record<string, string> = {
-  "New-InTransit": "bg-linear-to-b from-accent-violet to-info",
-  "New-Completed": "bg-linear-to-b from-accent-violet to-success",
-  "New-Canceled": "bg-linear-to-b from-accent-violet to-danger",
-  "InTransit-New": "bg-linear-to-b from-info to-accent-violet",
-  "InTransit-Completed": "bg-linear-to-b from-info to-success",
-  "InTransit-Canceled": "bg-linear-to-b from-info to-danger",
-  "Completed-New": "bg-linear-to-b from-success to-accent-violet",
-  "Completed-InTransit": "bg-linear-to-b from-success to-info",
-  "Completed-Canceled": "bg-linear-to-b from-success to-danger",
-  "Canceled-New": "bg-linear-to-b from-danger to-accent-violet",
-  "Canceled-InTransit": "bg-linear-to-b from-danger to-info",
-  "Canceled-Completed": "bg-linear-to-b from-danger to-success",
-};
-
-function getConnectorLineClasses(status: StopStatus, prevStatus?: StopStatus): string {
-  if (status === "InTransit") {
-    return "bg-linear-to-b from-info to-transparent bg-[length:100%_200%] animate-flow-down";
-  }
-  if (prevStatus && prevStatus !== status) {
-    const key = `${prevStatus}-${status}`;
-    return transitionGradients[key] ?? stopStatusLineColor[status];
-  }
-  return stopStatusLineColor[status];
-}
-
-function LocationDisplay({ locationId, stopType }: { locationId: string; stopType: StopType }) {
-  const { data: location } = useQuery({
-    queryKey: ["location", "selectOption", locationId],
-    queryFn: () => apiService.locationService.getOption(locationId),
-    enabled: !!locationId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  if (!location) return null;
-
-  return (
-    <>
-      <div className="flex items-center gap-1.5">
-        {location.addressLine1 && <span className="truncate text-xs">{location.addressLine1}</span>}
-        <span className="text-muted-foreground text-xs whitespace-nowrap">
-          ({STOP_TYPE_LABELS[stopType]})
-        </span>
-      </div>
-      <p className="text-muted-foreground truncate text-xs">
-        {location.city}
-        {location.state?.abbreviation && `, ${location.state.abbreviation}`} {location.postalCode}
-      </p>
-    </>
-  );
-}
-
-function stopHasInfo(stop: Stop): boolean {
-  return !!(
-    stop.locationId ||
-    stop.addressLine ||
-    (stop.scheduledWindowStart && stop.scheduledWindowStart > 0)
-  );
-}
-
-function stopCheckCallAction(stop: Stop, enabled: boolean): StopActualAction | null {
-  if (!enabled || !stop.id || stop.status === "Canceled") return null;
-  if (!stop.actualArrival) return "Arrive";
-  if (!stop.actualDeparture) return "Depart";
-  return null;
-}
-
-function stopDescription(stop: Stop): string {
-  const label = STOP_TYPE_LABELS[stop.type];
-  const place = stop.location?.name || stop.addressLine;
-  return place ? `${label} · ${place}` : label;
-}
-
-function stopTimelineKey(stop: Stop, fallbackIndex: number): string {
-  return [
-    stop.shipmentMoveId,
-    stop.sequence,
-    stop.locationId,
-    stop.type,
-    stop.scheduledWindowStart,
-    fallbackIndex,
-  ].join(":");
-}
-
-function StopTimelineItem({
-  stop,
-  isLast,
-  moveStatus,
-  prevStopStatus,
-  showConnector,
-  hasErrors,
-  errorMessages,
-  checkCallAction,
-  eta,
-  onCheckCall,
-}: {
-  stop: Stop;
-  isLast: boolean;
-  moveStatus: MoveStatus;
-  prevStopStatus?: StopStatus;
-  showConnector: boolean;
-  hasErrors?: boolean;
-  errorMessages?: string[];
-  checkCallAction?: StopActualAction | null;
-  eta?: StopEta;
-  onCheckCall?: () => void;
-}) {
-  const t = useT();
-
-  const status = stop.status ?? "New";
-  const statusIcon = getStatusIcon(status, isLast, moveStatus);
-  const hasInfo = stopHasInfo(stop);
-  const scheduled =
-    stop.scheduledWindowStart && stop.scheduledWindowStart > 0
-      ? formatSplitDateTime(stop.scheduledWindowStart)
-      : null;
-
-  return (
-    <div
-      className={cn(
-        "relative flex h-15 items-start gap-4 rounded-lg px-3 pt-2",
-        hasErrors ? "border-destructive bg-danger-subtle border" : "bg-muted",
-      )}
-    >
-      {showConnector && (
-        <div
-          className={`absolute top-5 left-33.75 z-10 w-0.5 ${getConnectorLineClasses(status, prevStopStatus)}`}
-          style={{ height: "80px" }}
-        />
-      )}
-
-      <div className="flex w-24 shrink-0 flex-col items-end pt-0.5">
-        {scheduled ? (
-          <>
-            <span className="text-primary text-xs font-medium">{scheduled.date}</span>
-            <span className="text-muted-foreground text-xs">{scheduled.time}</span>
-          </>
-        ) : (
-          <span className="text-muted-foreground text-xs">--</span>
-        )}
-      </div>
-
-      <div className="relative z-10">
-        <div
-          className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full ${stopStatusBgColor[status]}`}
-        >
-          {createElement(statusIcon, { className: "size-3 text-foreground-on-solid" })}
-        </div>
-        {hasErrors && errorMessages && errorMessages.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <div className="bg-destructive absolute -top-1 -right-1 flex size-3 cursor-help items-center justify-center rounded-full">
-                  <span className="text-3xs font-semibold text-danger-foreground">!</span>
-                </div>
-              }
-            />
-            <TooltipContent side="top" className="max-w-xs">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold">{t("Validation errors:")}</p>
-                {errorMessages.map((msg) => (
-                  <p key={msg} className="text-xs">
-                    • {msg}
-                  </p>
-                ))}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1 pt-0.5">
-        {hasInfo ? (
-          <>
-            {stop.locationId ? (
-              <LocationDisplay locationId={stop.locationId} stopType={stop.type} />
-            ) : stop.addressLine ? (
-              <>
-                <div className="flex items-center gap-1.5">
-                  <span className="truncate text-xs">{stop.addressLine}</span>
-                  <span className="text-muted-foreground text-xs whitespace-nowrap">
-                    ({STOP_TYPE_LABELS[stop.type]})
-                  </span>
-                </div>
-              </>
-            ) : (
-              <span className="text-muted-foreground text-xs whitespace-nowrap">
-                ({STOP_TYPE_LABELS[stop.type]})
-              </span>
-            )}
-          </>
-        ) : hasErrors ? (
-          <div className="flex flex-col gap-0.5">
-            <span className="text-destructive text-xs">
-              {t("Error in {0} stop", STOP_TYPE_LABELS[stop.type])}
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {t("Click to edit and fix errors")}
-            </span>
-          </div>
-        ) : (
-          <span className="text-muted-foreground text-xs">
-            {t("Enter {0} information", STOP_TYPE_LABELS[stop.type])}
-          </span>
-        )}
-      </div>
-
-      <StopEtaLine eta={eta} />
-
-      {checkCallAction && onCheckCall && (
-        <Button
-          type="button"
-          size="xs"
-          variant="outline"
-          className="mt-1 shrink-0"
-          onClick={onCheckCall}
-        >
-          {checkCallAction === "Arrive" ? t("Arrive") : t("Depart")}
-        </Button>
-      )}
-    </div>
-  );
-}
-
-function formatCarrierMoney(
-  value: string | number | null | undefined,
-  currencyCode?: string | null,
-): string {
-  const amount = typeof value === "string" ? Number(value) : (value ?? 0);
-  return formatCurrency(Number.isFinite(amount) ? amount : 0, currencyCode || "USD");
-}
-
-function CarrierAssignmentDetails({
-  carrierAssignment,
-  moveId,
-  canCancel,
-  canTrack,
-  onCancel,
-}: {
-  carrierAssignment: CarrierAssignment;
-  moveId?: string;
-  canCancel: boolean;
-  canTrack: boolean;
-  onCancel: () => void;
-}) {
-  const t = useT();
-
-  const carrierName = carrierAssignment.carrier?.name || "External carrier";
-  const scac = carrierAssignment.carrier?.scac;
-  const currency = carrierAssignment.currencyCode;
-
-  return (
-    <div className="bg-muted rounded-b-md border-t p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <Building07Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
-          <span className="truncate text-xs font-medium">
-            {carrierName}
-            {scac ? ` (${scac})` : ""}
-          </span>
-          <CarrierAssignmentStatusBadge
-            status={carrierAssignment.status}
-            className="h-4 shrink-0 rounded-md px-1 text-3xs"
-          />
-        </div>
-        {canCancel && (
-          <Button type="button" size="xs" variant="outline" onClick={onCancel}>
-            {t("Cancel")}
-          </Button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-        {carrierAssignment.proNumber && (
-          <div>
-            <p className="text-2xs text-muted-foreground">{t("Carrier pro number")}</p>
-            <p className="text-xs font-medium">{carrierAssignment.proNumber}</p>
-          </div>
-        )}
-        {carrierAssignment.externalDriverName && (
-          <div>
-            <p className="text-2xs text-muted-foreground">{t("Driver")}</p>
-            <p className="text-xs font-medium">
-              {carrierAssignment.externalDriverName}
-              {carrierAssignment.externalDriverPhone
-                ? ` · ${carrierAssignment.externalDriverPhone}`
-                : ""}
-            </p>
-          </div>
-        )}
-        {carrierAssignment.externalTractorNumber && (
-          <div>
-            <p className="text-2xs text-muted-foreground">{t("Tractor")}</p>
-            <p className="text-xs font-medium">{carrierAssignment.externalTractorNumber}</p>
-          </div>
-        )}
-        {carrierAssignment.externalTrailerNumber && (
-          <div>
-            <p className="text-2xs text-muted-foreground">{t("Trailer")}</p>
-            <p className="text-xs font-medium">{carrierAssignment.externalTrailerNumber}</p>
-          </div>
-        )}
-      </div>
-
-      <div className="text-2xs text-muted-foreground mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-t pt-2 tabular-nums">
-        <span>{t("Base {0}", formatCarrierMoney(carrierAssignment.baseAmount, currency))}</span>
-        <span aria-hidden>+</span>
-        <span>{t("Fuel {0}", formatCarrierMoney(carrierAssignment.fuelSurcharge, currency))}</span>
-        <span aria-hidden>+</span>
-        <span>
-          {t("Accessorials {0}", formatCarrierMoney(carrierAssignment.accessorialTotal, currency))}
-        </span>
-        <span aria-hidden>=</span>
-        <span className="text-foreground font-medium">
-          {formatCarrierMoney(carrierAssignment.totalCost, currency)}
-        </span>
-      </div>
-
-      {moveId && carrierAssignment.id && (
-        <div className="mt-2 border-t pt-2">
-          <RateConfirmationActions moveId={moveId} carrierAssignmentId={carrierAssignment.id} />
-        </div>
-      )}
-
-      {moveId && canTrack && (
-        <div className="mt-2 border-t pt-2">
-          <CarrierTrackingLink moveId={moveId} carrierName={carrierAssignment.carrier?.name} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
-  const t = useT();
-
-  const { data: assignment, isLoading } = useQuery({
-    queryKey: ["assignment", assignmentId],
-    queryFn: () => apiService.assignmentService.get(assignmentId!),
-    enabled: !!assignmentId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  if (!assignmentId) return null;
-
-  if (isLoading) {
-    return (
-      <div className="bg-muted rounded-b-md border-t p-3">
-        <p className="text-2xs text-muted-foreground">{t("Loading assignment…")}</p>
-      </div>
-    );
-  }
-
-  if (!assignment) return null;
-
-  const { tractor, trailer, primaryWorker, secondaryWorker } = assignment;
-
-  if (!tractor && !trailer && !primaryWorker && !secondaryWorker) return null;
-
-  return (
-    <div className="bg-muted grid grid-cols-2 gap-x-6 gap-y-2 rounded-b-md border-t p-3">
-      {tractor && (
-        <div>
-          <p className="text-2xs text-muted-foreground">{t("Tractor")}</p>
-          <p className="text-xs font-medium">{tractor.code}</p>
-        </div>
-      )}
-      {trailer && (
-        <div>
-          <p className="text-2xs text-muted-foreground">{t("Trailer")}</p>
-          <p className="text-xs font-medium">{trailer.code}</p>
-        </div>
-      )}
-      {primaryWorker && (
-        <div>
-          <p className="text-2xs text-muted-foreground">{t("Primary worker")}</p>
-          <p className="text-xs font-medium">
-            {`${primaryWorker.firstName} ${primaryWorker.lastName}`}
-          </p>
-        </div>
-      )}
-      {secondaryWorker && (
-        <div>
-          <p className="text-2xs text-muted-foreground">{t("Secondary worker")}</p>
-          <p className="text-xs font-medium">
-            {`${secondaryWorker.firstName} ${secondaryWorker.lastName}`}
-          </p>
-        </div>
       )}
     </div>
   );

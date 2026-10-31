@@ -25,6 +25,8 @@ func NewDefaultBillingControl(orgID, buID pulid.ID) *BillingControl {
 		RateVarianceTolerancePercent:          decimal.Zero,
 		RateVarianceAutoResolutionMode:        RateVarianceAutoResolutionMode("Disabled"),
 		RequireRateOverrideReason:             true,
+		QueueAutoApproveMode:                  QueueAutoApproveModeOff,
+		QueueAgentReviewEnabled:               true,
 		UnratedShipmentDisposition: UnratedShipmentDisposition(
 			"FallbackFormulaTemplate",
 		),

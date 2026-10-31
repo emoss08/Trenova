@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -20,7 +21,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const workflowIDPrefix = "billing-queue-approval/"
+const (
+	workflowIDPrefix   = "billing-queue-approval/"
+	maxRunReasonLength = 500
+)
 
 type Params struct {
 	fx.In
@@ -72,6 +76,13 @@ func (s *Service) Start(
 		return nil, err
 	}
 
+	if req.Action == "" {
+		req.Action = billingapprovalrun.RunActionApprove
+	}
+	if err := validateRunAction(req); err != nil {
+		return nil, err
+	}
+
 	itemIDs := sliceutils.Dedupe(req.ItemIDs)
 	if len(itemIDs) == 0 {
 		return nil, errortypes.NewValidationError(
@@ -82,7 +93,7 @@ func (s *Service) Start(
 	}
 	if len(itemIDs) > billingapprovalrun.MaxApprovalRunItems {
 		return nil, errortypes.NewValidationError(
-			"itemIds", errortypes.ErrInvalid, "Approve at most 500 items at a time",
+			"itemIds", errortypes.ErrInvalid, "Act on at most 500 items at a time",
 		)
 	}
 	if !s.workflows.Enabled() {
@@ -97,9 +108,11 @@ func (s *Service) Start(
 			BusinessUnitID: req.TenantInfo.BuID,
 			RequestedByID:  req.TenantInfo.UserID,
 			IdempotencyKey: key,
+			Action:         req.Action,
+			Params:         req.Params,
 			Status:         billingapprovalrun.ApprovalRunScheduled,
 			TotalCount:     len(itemIDs),
-			CommitAt:       timeutils.NowUnix() + billingapprovalrun.ApprovalUndoWindowSeconds,
+			CommitAt:       commitAt(req.Action),
 		},
 		ItemIDs: itemIDs,
 	})
@@ -110,7 +123,7 @@ func (s *Service) Start(
 		return nil, err
 	}
 
-	if err = s.startWorkflow(ctx, run, req.AssignApprover); err != nil {
+	if err = s.startWorkflow(ctx, run); err != nil {
 		return nil, err
 	}
 
@@ -120,7 +133,6 @@ func (s *Service) Start(
 func (s *Service) startWorkflow(
 	ctx context.Context,
 	run *billingapprovalrun.ApprovalRun,
-	assignApprover bool,
 ) error {
 	wf, err := s.workflows.StartWorkflow(ctx,
 		client.StartWorkflowOptions{
@@ -136,8 +148,9 @@ func (s *Service) startWorkflow(
 				UserID:         run.RequestedByID,
 				Timestamp:      timeutils.NowUnix(),
 			},
-			RunID:          run.ID,
-			AssignApprover: assignApprover,
+			RunID:  run.ID,
+			Action: run.Action,
+			Params: run.Params,
 		},
 	)
 	if err == nil {
@@ -165,13 +178,13 @@ func (s *Service) startWorkflow(
 		TenantInfo:     tenantOf(run),
 		RunID:          run.ID,
 		Status:         billingapprovalrun.ApprovalRunFailed,
-		FailureMessage: "The approval could not be queued",
+		FailureMessage: "The bulk action could not be queued",
 		LeftoverCode:   billingapprovalrun.ApprovalFailureUnexpected,
 	}); finErr != nil {
 		s.l.Error("failed to mark unqueued approval run as failed", zap.Error(finErr))
 	}
 
-	return errortypes.NewBusinessError("The approval could not be queued — try again shortly")
+	return errortypes.NewBusinessError("The bulk action could not be queued — try again shortly")
 }
 
 func (s *Service) Get(
@@ -197,7 +210,7 @@ func (s *Service) Undo(
 		return nil, err
 	}
 	if run.RequestedByID != req.TenantInfo.UserID {
-		return nil, errortypes.NewAuthorizationError("Only the person who approved can undo it")
+		return nil, errortypes.NewAuthorizationError("Only the person who started this can undo it")
 	}
 
 	stopped, err := s.repo.RequestApprovalRunUndo(
@@ -216,7 +229,7 @@ func (s *Service) Undo(
 			return run, nil
 		}
 		return nil, errortypes.NewBusinessError(
-			"These invoices are already approved — it's too late to undo",
+			"These items are already done — it's too late to undo",
 		)
 	}
 
@@ -238,4 +251,64 @@ func (s *Service) Undo(
 
 func tenantOf(run *billingapprovalrun.ApprovalRun) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
+}
+
+func commitAt(action billingapprovalrun.RunAction) int64 {
+	now := timeutils.NowUnix()
+	if !action.Undoable() {
+		return now
+	}
+
+	return now + billingapprovalrun.ApprovalUndoWindowSeconds
+}
+
+func validateRunAction(req *billingqueueports.StartBillingQueueApprovalRequest) error {
+	if !req.Action.IsValid() {
+		return errortypes.NewValidationError("action", errortypes.ErrInvalid, "Unknown bulk action")
+	}
+
+	multiErr := errortypes.NewMultiError()
+	params := &req.Params
+	params.Reason = strings.TrimSpace(params.Reason)
+	switch req.Action {
+	case billingapprovalrun.RunActionAssign:
+		if params.BillerID.IsNil() {
+			multiErr.Add("params.billerId", errortypes.ErrRequired, "Choose who to assign")
+		}
+	case billingapprovalrun.RunActionHold:
+		if !billingqueue.HoldReasonCode(params.HoldReasonCode).IsValid() {
+			multiErr.Add(
+				"params.holdReasonCode",
+				errortypes.ErrRequired,
+				"Say why the items are on hold",
+			)
+		}
+	case billingapprovalrun.RunActionCancel:
+		if params.Reason == "" {
+			multiErr.Add("params.reason", errortypes.ErrRequired, "Say why the items are canceled")
+		}
+	case billingapprovalrun.RunActionResolveIssue:
+		if params.IssueCode == "" {
+			multiErr.Add("params.issueCode", errortypes.ErrRequired, "Name the check to settle")
+		}
+		if strings.TrimSpace(params.OptionKey) == "" {
+			multiErr.Add("params.optionKey", errortypes.ErrRequired, "Name how to settle it")
+		}
+	case billingapprovalrun.RunActionApprove,
+		billingapprovalrun.RunActionPost,
+		billingapprovalrun.RunActionRequestPaperwork:
+	}
+	if len(params.Reason) > maxRunReasonLength {
+		multiErr.Add(
+			"params.reason",
+			errortypes.ErrInvalid,
+			"Keep the reason under {0} characters",
+			maxRunReasonLength,
+		)
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }

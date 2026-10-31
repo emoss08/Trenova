@@ -2,6 +2,7 @@ package chapterjobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
@@ -13,17 +14,17 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Chapters   assistantchapterports.AssistantChapterService
-	Completion llmports.CompletionService
+	Chapters assistantchapterports.AssistantChapterService
+	Nova     llmports.TaskRunner
 }
 
 type Activities struct {
-	chapters   assistantchapterports.AssistantChapterService
-	completion llmports.CompletionService
+	chapters assistantchapterports.AssistantChapterService
+	nova     llmports.TaskRunner
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
-	return &Activities{chapters: p.Chapters, completion: p.Completion}
+	return &Activities{chapters: p.Chapters, nova: p.Nova}
 }
 
 var Module = fx.Module("assistant-chapter-jobs", fx.Provide(NewActivities))
@@ -47,8 +48,9 @@ func (a *Activities) ChapterModelActivity(
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
-	result, err := a.completion.CompleteStructured(ctx, plan.Request)
-	if err != nil {
+	var answer map[string]any
+	result, err := a.nova.Run(ctx, plan.Task, &answer)
+	if err != nil && !errors.Is(err, llmports.ErrOutsideSchema) {
 		return nil, modelcall.Classify(err)
 	}
 

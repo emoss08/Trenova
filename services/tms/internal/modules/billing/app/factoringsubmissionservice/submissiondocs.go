@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/csv"
 	"html/template"
-	"io"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
@@ -44,11 +43,7 @@ const (
 	pdfContentType       = "application/pdf"
 	docResourceShipment  = "shipment"
 	docResourceInvoice   = "invoice"
-	maxPacketBytes       = 256 << 20
 	csvContentType       = "text/csv"
-	jpegContentType      = "image/jpeg"
-	pngContentType       = "image/png"
-	maxPacketSourceBytes = 50 << 20
 	maxScheduleFileName  = 120
 	scheduleFallbackName = "Factoring-Schedule"
 	packetFallbackName   = "Invoice-Packet"
@@ -472,14 +467,7 @@ func (s *SubmissionService) buildPacket(
 			pages = append(pages, *page)
 		}
 	}
-	packet, _, err := imagingkit.Merge(
-		ctx,
-		s.imaging,
-		pages,
-		maxPacketBytes,
-		kernelports.ImagingBatch,
-	)
-	return packet, err
+	return s.packets.Merge(ctx, pages, kernelports.ImagingBatch)
 }
 
 func (s *SubmissionService) invoicePDF(
@@ -602,19 +590,7 @@ func (s *SubmissionService) documentPart(
 	tenantInfo pagination.TenantInfo,
 	doc *document.Document,
 ) (*imagingkit.Part, error) {
-	contentType := strings.ToLower(strings.TrimSpace(doc.FileType))
-	switch contentType {
-	case pdfContentType, jpegContentType, pngContentType:
-	default:
-		s.l.Info("left a document out of a factoring packet because it is not a PDF or image",
-			zap.String("documentId", doc.ID.String()), zap.String("fileType", doc.FileType))
-		return nil, nil
-	}
-	content, err := s.readDocument(ctx, tenantInfo, doc.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &imagingkit.Part{Source: kernelports.ImagingBytes(contentType, content)}, nil
+	return s.packets.Part(ctx, tenantInfo, doc)
 }
 
 func (s *SubmissionService) readDocument(
@@ -622,22 +598,7 @@ func (s *SubmissionService) readDocument(
 	tenantInfo pagination.TenantInfo,
 	documentID pulid.ID,
 ) ([]byte, error) {
-	content, err := s.invoiceDocuments.GetDownloadContent(ctx, documentports.GetDocumentByIDRequest{
-		ID:         documentID,
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer content.Body.Close()
-	body, err := io.ReadAll(io.LimitReader(content.Body, maxPacketSourceBytes+1))
-	if err != nil {
-		return nil, err
-	}
-	if len(body) > maxPacketSourceBytes {
-		return nil, errortypes.NewBusinessError("A document is larger than 50 MB")
-	}
-	return body, nil
+	return s.packets.Read(ctx, tenantInfo, documentID)
 }
 
 type storedFile struct {

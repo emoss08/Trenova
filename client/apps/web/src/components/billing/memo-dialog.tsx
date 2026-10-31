@@ -12,6 +12,7 @@ import { invoicePanelPath } from "@/lib/invoice-links";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -25,8 +26,15 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { memoFormSchema, memoFormTotal, type MemoFormValues } from "@trenova/shared/types/invoice";
-import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
+import {
+  MAX_MEMO_LINE_AMOUNT,
+  MAX_MEMO_LINES,
+  MAX_MEMO_QUANTITY,
+  MIN_MEMO_QUANTITY,
+  memoFormSchema,
+  memoFormTotal,
+  type MemoFormValues,
+} from "@trenova/shared/types/invoice";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
 import { useNavigate } from "react-router";
@@ -94,7 +102,7 @@ export function MemoDialog({
 
   const lines = useWatch({ control: form.control, name: "lines" });
   const chosenBillType = useWatch({ control: form.control, name: "billType" });
-  const total = useMemo(() => memoFormTotal(lines ?? []), [lines]);
+  const total = formatCurrency(memoFormTotal(lines ?? []), "USD");
   const billTypeOptions = useMemo(
     () => memoBillTypeChoices.map((choice) => ({ value: choice.value, label: t(choice.label) })),
     [t],
@@ -153,6 +161,7 @@ export function MemoDialog({
                     name="customerId"
                     label={t("Customer")}
                     placeholder={t("Select customer")}
+                    description={t("Who the memo is issued to.")}
                   />
                 </FormControl>
                 <FormControl>
@@ -160,24 +169,28 @@ export function MemoDialog({
                     control={form.control}
                     name="billType"
                     label={t("Memo type")}
+                    placeholder={t("Select type")}
+                    description={t("Credit lowers the balance; debit raises it.")}
                     options={billTypeOptions}
                   />
                 </FormControl>
-                <FormControl>
+                <FormControl cols="full">
                   <DateField
                     control={form.control}
                     name="invoiceDate"
                     label={t("Memo date")}
                     placeholder={t("Today")}
+                    description={t("Leave blank to use today.")}
                     clearable
                   />
                 </FormControl>
-                <FormControl>
+                <FormControl cols="full">
                   <SwitchField
                     control={form.control}
                     name="autoPost"
                     label={t("Post immediately")}
-                    description={t("Post the memo to the ledger in the same step.")}
+                    outlined
+                    description={t("Post to the ledger on create.")}
                   />
                 </FormControl>
                 <FormControl cols="full">
@@ -185,7 +198,8 @@ export function MemoDialog({
                     control={form.control}
                     name="reason"
                     label={t("Reason")}
-                    placeholder={t("Why the memo is being raised")}
+                    placeholder={t("e.g. Goodwill credit for a late delivery")}
+                    description={t("Why the memo is being raised.")}
                     rows={2}
                   />
                 </FormControl>
@@ -194,7 +208,8 @@ export function MemoDialog({
                     control={form.control}
                     name="memo"
                     label={t("Memo text")}
-                    placeholder={t("Printed on the memo, optional")}
+                    placeholder={t("Optional note for the customer")}
+                    description={t("Printed on the memo.")}
                     rows={2}
                   />
                 </FormControl>
@@ -206,6 +221,7 @@ export function MemoDialog({
                   type="button"
                   size="sm"
                   variant="outline"
+                  disabled={fields.length >= MAX_MEMO_LINES}
                   onClick={() => append({ ...BLANK_LINE })}
                 >
                   <PlusIcon className="size-3.5" />
@@ -222,6 +238,8 @@ export function MemoDialog({
                       control={form.control}
                       name={`lines.${index}.description`}
                       label={t("Description")}
+                      placeholder={t("e.g. Returned cheque fee")}
+                      description={index === 0 ? t("What this line covers.") : undefined}
                       hideLabel={index > 0}
                       aria-label={t("Description")}
                     />
@@ -229,22 +247,31 @@ export function MemoDialog({
                       control={form.control}
                       name={`lines.${index}.amount`}
                       label={t("Amount")}
+                      placeholder={t("0.00")}
+                      description={index === 0 ? t("Line total.") : undefined}
+                      hideLabel={index > 0}
                       aria-label={t("Amount")}
                       decimalScale={2}
                       fixedDecimalScale
+                      max={MAX_MEMO_LINE_AMOUNT}
                     />
                     <NumberField
                       control={form.control}
                       name={`lines.${index}.quantity`}
                       label={t("Qty")}
+                      placeholder={t("1")}
+                      description={index === 0 ? t("Units.") : undefined}
+                      hideLabel={index > 0}
                       aria-label={t("Qty")}
-                      decimalScale={2}
+                      decimalScale={4}
+                      min={MIN_MEMO_QUANTITY}
+                      max={MAX_MEMO_QUANTITY}
                     />
                     <Button
                       type="button"
                       size="icon-sm"
                       variant="ghost"
-                      className="mt-5"
+                      className={index === 0 ? "mt-5" : undefined}
                       aria-label={t("Remove line {0}", index + 1)}
                       disabled={fields.length <= 1}
                       onClick={() => remove(index)}
@@ -254,23 +281,25 @@ export function MemoDialog({
                   </div>
                 ))}
               </div>
-              <div className="mt-3 flex items-center justify-end gap-3 border-t pt-3">
-                <span className="text-muted-foreground text-sm">{t("Total")}</span>
-                <span className="text-base font-semibold tabular-nums">
-                  {formatCurrency(total, "USD")}
-                </span>
-              </div>
             </ScrollArea>
           </Form>
         </FormProvider>
 
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {t("Cancel")}
-          </Button>
-          <Button type="submit" form={MEMO_FORM_ID} disabled={mutation.isPending}>
-            {submitLabel}
-          </Button>
+        <DialogFooter className="sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-baseline gap-2" aria-live="polite">
+            <span className="text-muted-foreground shrink-0 text-sm">{t("Total")}</span>
+            <span className="min-w-0 truncate text-base font-semibold tabular-nums" title={total}>
+              {total}
+            </span>
+          </div>
+          <div className="flex shrink-0 flex-col-reverse gap-2 sm:flex-row">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" form={MEMO_FORM_ID} disabled={mutation.isPending}>
+              {submitLabel}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

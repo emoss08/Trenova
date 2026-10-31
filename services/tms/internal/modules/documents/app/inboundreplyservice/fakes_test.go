@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -410,22 +409,26 @@ type fakeNova struct {
 	available bool
 	text      string
 	err       error
-	requests  []*llmports.StructuredCompletionRequest
+	requests  []*llmports.NovaTask
 }
 
-func (f *fakeNova) Available(triagenova.Mode) bool { return f.available }
+func (f *fakeNova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+	return f.available, nil
+}
 
-func (f *fakeNova) Complete(
+func (f *fakeNova) Run(
 	_ context.Context,
-	_ triagenova.Mode,
-	req *llmports.StructuredCompletionRequest,
+	task *llmports.NovaTask,
+	out any,
 ) (*llmports.StructuredCompletionResult, error) {
-	f.requests = append(f.requests, req)
+	f.requests = append(f.requests, task)
 	if f.err != nil {
 		return nil, f.err
 	}
 
-	return &llmports.StructuredCompletionResult{Text: f.text}, nil
+	result := &llmports.StructuredCompletionResult{Text: f.text}
+
+	return result, llmports.DecodeAnswer(task.Name, f.text, out)
 }
 
 type fakePeeks struct {

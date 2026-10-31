@@ -25,6 +25,13 @@ const FEATURES: AiUsageFeature[] = [
   "AgentProfile",
   "AgentRecommendation",
   "ConversationChapters",
+  "BillingQueueReview",
+  "BillingQueueBrief",
+  "BillingQueueSearch",
+  "PaperworkReading",
+  "InboundMail",
+  "PaletteAnswer",
+  "InsightNarration",
 ];
 
 /** The share of the busiest feature's calls a bar may never fall below, so a failure shows. */

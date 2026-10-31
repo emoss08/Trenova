@@ -19,7 +19,7 @@ import (
 // instruction against unstated numbers is repeated here because a clear prompt
 // makes the guard's rejections rare, but the guard is what makes it true: this
 // text is a request, and the check afterwards is the enforcement.
-const systemPrompt = `You write short, plain explanations of findings from a transportation management system.
+const systemPrompt = `Your task: write short, plain explanations of findings from a transportation management system.
 
 Each finding has already been computed from the company's own records. Your only job is to say what it means in language an operations manager understands.
 

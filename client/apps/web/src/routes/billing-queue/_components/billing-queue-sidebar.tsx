@@ -2,250 +2,176 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { usePermission } from "@/hooks/use-permission";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
-import { MultiSelectAutocomplete } from "@/components/fields/multi-select-field";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Checkbox } from "@trenova/shared/components/ui/checkbox";
-import { Input } from "@trenova/shared/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@trenova/shared/components/ui/select";
 import { SelectionDock } from "@/components/selection-dock";
+import { type VirtualRow, VirtualRows, type VirtualRowsHandle } from "@/components/virtual-rows";
 import { useListSelection } from "@/hooks/use-list-selection";
 import { billingQueueItemLabel } from "@/lib/billing-queue-label";
-import {
-  BULK_CONCURRENCY,
-  type BulkOutcomeMessages,
-  notifyBulkOutcome,
-  settleAll,
-} from "@/lib/bulk-outcome";
-import { billTypeChoices, billingQueueStatusChoices } from "@/lib/choices";
 import type { DockAction } from "@trenova/shared/types/data-table";
-import type {
-  GraphQLSelectOptionsConfig,
-  SelectOption as GraphQLSelectOption,
-} from "@/lib/graphql/select-options";
-import { selectOptionMetaString } from "@/lib/select-option-meta";
-import { apiService } from "@/services/api";
-import type {
-  BillingQueueFilterPreset,
-  BillingQueueItem,
+import {
+  BILLING_QUEUE_OPEN_LANES,
+  type BillingQueueLane,
+  type BillingQueueStats,
 } from "@trenova/shared/types/billing-queue";
-import type { User } from "@trenova/shared/types/user";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { BillingQueueRow } from "@/lib/graphql/billing-queue";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   CheckCircleIcon,
-  FilterFunnel01Icon,
+  CheckDone01Icon,
+  ChevronDownIcon,
+  File06Icon,
   PauseIcon,
   Send01Icon,
   UserPlus01Icon,
-  Save01Icon,
-  SearchLgIcon,
-  Trash01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import { useQueryStates } from "nuqs";
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
-import type { FieldValues } from "react-hook-form";
-import { toast } from "@trenova/shared/components/ui/toast";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import {
-  BILLING_QUEUE_FILTER_PRESETS_KEY,
-  BILLING_QUEUE_LIST_KEY,
-  billingQueueFilterPresetsQuery,
-  billingQueueListQuery,
+  type BillingQueueListFilters,
+  billingQueueLaneQuery,
+  billingQueueStatsQuery,
+  laneItems,
+  laneTotal,
 } from "../billing-queue-queries";
 import { queueSidebarSearchParamsParser } from "../use-billing-queue-state";
-import { BillingQueueAssignDialog, type BillingQueueTarget } from "./billing-queue-assign-dialog";
-import { BillingQueueCancelDialog } from "./billing-queue-cancel-dialog";
-import { BillingQueueItemCard } from "./billing-queue-item-card";
 import { BillingQueueApproveConfirm } from "./billing-queue-approve-confirm";
-import { BillingQueueSavePresetDialog } from "./billing-queue-save-preset-dialog";
+import { BillingQueueAssignDialog, type BillingQueueTarget } from "./billing-queue-assign-dialog";
 import { bulkEligibility } from "./billing-queue-bulk";
-import { useBulkApprove } from "./use-bulk-approve";
+import { BillingQueueCancelDialog } from "./billing-queue-cancel-dialog";
+import {
+  activeQueueFilterCount,
+  BillingQueueFilters,
+  CLEARED_QUEUE_FILTERS,
+} from "./billing-queue-filters";
+import { BillingQueueHoldDialog } from "./billing-queue-hold-dialog";
+import { BillingQueueItemCard } from "./billing-queue-item-card";
+import { LANE_DOT, LANES_FOLDED_BY_DEFAULT, laneLabel } from "./billing-queue-lanes";
+import { BillingQueueLaneSkeleton, BillingQueueListSkeleton } from "./billing-queue-list-skeleton";
+import { BillingQueueSearch, isSentence } from "./billing-queue-search";
+import { BillingQueueSuggestions } from "./billing-queue-suggestions";
+import { useBulkRun } from "./use-bulk-run";
 
-/** The queue filters on the customer invoiced, which for a split shipment is not the shipper. */
-const CUSTOMER_SELECT_OPTIONS = { resource: "CUSTOMER" } satisfies GraphQLSelectOptionsConfig;
+const itemId = (item: BillingQueueRow) => item.id;
 
-const EMPTY_ITEMS: BillingQueueItem[] = [];
-
-const itemId = (item: BillingQueueItem) => item.id;
-
-const toTarget = (item: BillingQueueItem): BillingQueueTarget => ({
+const toTarget = (item: BillingQueueRow): BillingQueueTarget => ({
   id: item.id,
   label: billingQueueItemLabel(item),
 });
 
-function PresetSelector({
-  selectedPresetId,
-  onSelect,
-}: {
-  presets: BillingQueueFilterPreset[];
-  selectedPresetId: string | null;
-  onSelect: (value: string) => void;
-}) {
-  const t = useT();
+type HoldRequest = { targets: BillingQueueTarget[]; note: string };
 
-  return (
-    <div className="flex-1">
-      <Autocomplete<BillingQueueFilterPreset, FieldValues>
-        link="/billing-queue/filter-presets/"
-        value={selectedPresetId}
-        onChange={(val) => onSelect(val ?? "none")}
-        getOptionValue={(preset) => preset.id}
-        getDisplayValue={(preset) => preset.name}
-        renderOption={(preset) => <span className="text-xs">{preset.name}</span>}
-        placeholder={t("Select preset...")}
-        clearable
-        triggerClassName="h-7 text-xs"
-      />
-    </div>
-  );
+type OpenLane = (typeof BILLING_QUEUE_OPEN_LANES)[number];
+
+function useLaneQuery(lane: BillingQueueLane, filters: BillingQueueListFilters, enabled: boolean) {
+  return useInfiniteQuery({ ...billingQueueLaneQuery(lane, filters), enabled });
 }
 
+/**
+ * The queue as lanes in working order: what needs the biller, what is ready to
+ * approve, what waits on someone else, what is still being checked, what is held,
+ * and what is approved but not posted. One virtualized list carries every lane,
+ * each lane's heading pinned while its rows scroll under it; each lane pages on its
+ * own, a folded lane fetches nothing until a filter needs its count, and a selection
+ * spans lanes.
+ */
 export function BillingQueueSidebar({
   selectedItemId,
   onSelectItem,
+  onOrderChange,
 }: {
   selectedItemId: string | null;
   onSelectItem: (id: string) => void;
+  /** The ids on screen, in order, so the detail pane can move to the next one. */
+  onOrderChange?: (itemIds: string[]) => void;
 }) {
   const t = useT();
   const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
+  const [params, setParams] = useQueryStates(queueSidebarSearchParamsParser);
+  const deferredSearch = useDeferredValue(params.query);
+  const { data: assist } = useQuery(billingQueue.assist());
+  const { data: stats } = useQuery(billingQueueStatsQuery());
 
-  const [searchParams, setSearchParams] = useQueryStates(queueSidebarSearchParamsParser);
-  const {
-    status: statusFilter,
-    query: search,
-    billType: billTypeFilter,
-    billers: billerFilter,
-    payer: payerFilter,
-    includePosted,
-    preset: selectedPresetId,
-  } = searchParams;
-  const deferredSearch = useDeferredValue(search);
+  // A sentence waits for Enter, when Nova turns it into filters; searching the
+  // server for it as typed would only ever empty the list.
+  const search = assist?.search && isSentence(deferredSearch) ? "" : deferredSearch;
+  const filters: BillingQueueListFilters = {
+    status: params.status,
+    billers: params.billers,
+    billType: params.billType,
+    payer: params.payer,
+    search,
+    includePosted: params.includePosted,
+    minAmount: params.minAmount,
+    maxAmount: params.maxAmount,
+    createdBefore: params.createdBefore,
+    shipmentCustomer: params.shipmentCustomer,
+    delivered: params.delivered,
+    pickedUp: params.pickedUp,
+    queued: params.queued,
+  };
+  const filtered = activeQueueFilterCount(params) > 0 || search.trim() !== "";
+
+  const [folded, setFolded] = useState<ReadonlySet<BillingQueueLane>>(
+    () => new Set(LANES_FOLDED_BY_DEFAULT),
+  );
+  const visibleLanes = BILLING_QUEUE_OPEN_LANES.filter(
+    (lane) => params.lanes.length === 0 || params.lanes.includes(lane),
+  );
+  // A lane asked for by name opens, whatever it was left as.
+  const isOpen = (lane: OpenLane) => params.lanes.includes(lane) || !folded.has(lane);
+  const shouldFetch = (lane: OpenLane) => visibleLanes.includes(lane) && (isOpen(lane) || filtered);
+
+  const lanes = {
+    NeedsYou: useLaneQuery("NeedsYou", filters, shouldFetch("NeedsYou")),
+    Ready: useLaneQuery("Ready", filters, shouldFetch("Ready")),
+    Waiting: useLaneQuery("Waiting", filters, shouldFetch("Waiting")),
+    Checking: useLaneQuery("Checking", filters, shouldFetch("Checking")),
+    Held: useLaneQuery("Held", filters, shouldFetch("Held")),
+    Approved: useLaneQuery("Approved", filters, shouldFetch("Approved")),
+  } satisfies Record<OpenLane, unknown>;
+
+  const items = visibleLanes.filter(isOpen).flatMap((lane) => laneItems(lanes[lane].data));
+  const selection = useListSelection(items, itemId);
+  const eligible = bulkEligibility(selection.selected);
+  const clearSelection = selection.clear;
+  const bulk = useBulkRun();
 
   const [assignTargets, setAssignTargets] = useState<BillingQueueTarget[] | null>(null);
   const [cancelTargets, setCancelTargets] = useState<BillingQueueTarget[] | null>(null);
-  const [approveConfirm, setApproveConfirm] = useState<BillingQueueItem[] | null>(null);
-  const [savePresetOpen, setSavePresetOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [holdRequest, setHoldRequest] = useState<HoldRequest | null>(null);
+  const [approveConfirm, setApproveConfirm] = useState<BillingQueueRow[] | null>(null);
 
-  const activeFilterCount =
-    (statusFilter ? 1 : 0) +
-    (billerFilter.length > 0 ? 1 : 0) +
-    (billTypeFilter ? 1 : 0) +
-    (payerFilter ? 1 : 0) +
-    (includePosted ? 1 : 0);
-  const hasActiveFilters = activeFilterCount > 0 || !!search;
+  const listHandle = useRef<VirtualRowsHandle>(null);
+  useEffect(() => {
+    if (selectedItemId) {
+      listHandle.current?.scrollToKey(selectedItemId);
+    }
+  }, [selectedItemId]);
 
-  const { data: presetsData } = useQuery(billingQueueFilterPresetsQuery());
+  const orderKey = items.map(itemId).join(",");
+  useEffect(() => {
+    onOrderChange?.(orderKey ? orderKey.split(",") : []);
+  }, [orderKey, onOrderChange]);
 
-  const { mutate: deletePreset } = useMutation({
-    mutationFn: (id: string) => apiService.billingQueueService.deleteFilterPreset(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: [BILLING_QUEUE_FILTER_PRESETS_KEY],
-      });
-      void setSearchParams({ preset: null });
-    },
-    onError: () => {
-      toast.error(t("Failed to delete filter preset"));
-    },
-  });
+  const approve = async (targets: BillingQueueRow[], assignMe: boolean) => {
+    await bulk.start("Approve", targets.map(itemId), { assignApprover: assignMe });
+    setApproveConfirm(null);
+    clearSelection();
+  };
 
-  const presets: BillingQueueFilterPreset[] = presetsData ?? [];
-
-  const applyPreset = (preset: BillingQueueFilterPreset) => {
-    const f = preset.filters;
-    void setSearchParams({
-      status: (f.status as string) ?? null,
-      billers: Array.isArray(f.assignedBillerIds) ? f.assignedBillerIds : [],
-      billType: (f.billType as string) ?? null,
-      payer: (f.billToCustomerId as string) ?? null,
-      query: (f.search as string) ?? "",
-      includePosted: f.includePosted === true,
-      preset: preset.id,
+  const dockActions: DockAction<BillingQueueRow>[] = [];
+  if (selection.allState !== "all") {
+    dockActions.push({
+      id: "select-all",
+      label: t("Select all {0}", items.length),
+      icon: CheckDone01Icon,
+      onClick: () => selection.setAll(true),
     });
-  };
-
-  const handlePresetChange = (value: string | null) => {
-    if (!value || value === "none") {
-      void setSearchParams({ preset: null });
-      return;
-    }
-    const preset = presets.find((p) => p.id === value);
-    if (preset) {
-      applyPreset(preset);
-    }
-  };
-
-  const { data, isLoading } = useQuery(
-    billingQueueListQuery({
-      status: statusFilter,
-      billers: billerFilter,
-      billType: billTypeFilter,
-      payer: payerFilter,
-      search: deferredSearch,
-      includePosted,
-    }),
-  );
-
-  const { mutate: updateStatus } = useMutation({
-    mutationFn: ({ itemId, status }: { itemId: string; status: string }) =>
-      apiService.billingQueueService.updateStatus(itemId, {
-        status: status as any,
-      }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: [BILLING_QUEUE_LIST_KEY] });
-      void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-    },
-    onError: () => {
-      toast.error(t("Failed to update status"));
-    },
-  });
-
-  const items = data?.results ?? EMPTY_ITEMS;
-  const selection = useListSelection(items, itemId);
-  const eligible = useMemo(() => bulkEligibility(selection.selected), [selection.selected]);
-  const { approve, isStarting } = useBulkApprove();
-  const clearSelection = selection.clear;
-
-  const startApprove = useCallback(
-    async (targets: BillingQueueItem[], assignMe: boolean) => {
-      await approve(targets.map(itemId), assignMe);
-      setApproveConfirm(null);
-      clearSelection();
-    },
-    [approve, clearSelection],
-  );
-
-  const runBulk = useCallback(
-    async (
-      targets: BillingQueueItem[],
-      action: (item: BillingQueueItem) => Promise<unknown>,
-      messages: BulkOutcomeMessages,
-    ) => {
-      const result = await settleAll(targets, action, {
-        concurrency: BULK_CONCURRENCY,
-        label: billingQueueItemLabel,
-      });
-      void queryClient.invalidateQueries({ queryKey: [BILLING_QUEUE_LIST_KEY] });
-      void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      notifyBulkOutcome(result, messages);
-      if (result.failed.length === 0) {
-        clearSelection();
-      }
-    },
-    [queryClient, clearSelection],
-  );
-
-  const dockActions: DockAction<BillingQueueItem>[] = [];
+  }
   if (eligible.approvable.length > 0) {
     dockActions.push({
       id: "approve",
@@ -256,7 +182,7 @@ export function BillingQueueSidebar({
           setApproveConfirm(eligible.approvable);
           return;
         }
-        await startApprove(eligible.approvable, false);
+        await approve(eligible.approvable, false);
       },
     });
   }
@@ -264,46 +190,37 @@ export function BillingQueueSidebar({
     dockActions.push({
       id: "post",
       label: t("Post {0}", eligible.postable.length),
-      loadingLabel: t("Posting..."),
       icon: Send01Icon,
-      onClick: () =>
-        runBulk(eligible.postable, (item) => apiService.billingQueueService.post(item.id), {
-          succeeded: (count) =>
-            t("{0, plural, one {Posted # invoice} other {Posted # invoices}}", count),
-          partial: (succeeded, failed) =>
-            t("Posted {0}; {1} could not be posted", succeeded, failed),
-          allFailed: (failed) =>
-            t("{0, plural, one {# invoice} other {# invoices}} could not be posted", failed),
-        }),
+      onClick: async () => {
+        await bulk.start("Post", eligible.postable.map(itemId));
+        clearSelection();
+      },
     });
   }
   if (eligible.holdable.length > 0) {
     dockActions.push({
       id: "hold",
-      label: t("Hold {0}", eligible.holdable.length),
-      loadingLabel: t("Holding..."),
+      label: t("Hold"),
       icon: PauseIcon,
-      onClick: () =>
-        runBulk(
-          eligible.holdable,
-          (item) => apiService.billingQueueService.updateStatus(item.id, { status: "OnHold" }),
-          {
-            succeeded: (count) =>
-              t("{0, plural, one {Put # item on hold} other {Put # items on hold}}", count),
-            partial: (succeeded, failed) => t("Held {0}; {1} could not be held", succeeded, failed),
-            allFailed: (failed) =>
-              t("{0, plural, one {# item} other {# items}} could not be held", failed),
-          },
-        ),
+      onClick: () => setHoldRequest({ targets: eligible.holdable.map(toTarget), note: "" }),
     });
   }
   if (eligible.open.length > 0) {
     dockActions.push(
       {
         id: "assign",
-        label: t("Assign biller"),
+        label: t("Assign"),
         icon: UserPlus01Icon,
         onClick: () => setAssignTargets(eligible.open.map(toTarget)),
+      },
+      {
+        id: "paperwork",
+        label: t("Ask for paperwork"),
+        icon: File06Icon,
+        onClick: async () => {
+          await bulk.start("RequestPaperwork", eligible.open.map(itemId));
+          clearSelection();
+        },
       },
       {
         id: "cancel",
@@ -314,278 +231,188 @@ export function BillingQueueSidebar({
       },
     );
   }
+  const selectedTotal = selection.selected.reduce(
+    (sum, item) => sum + Number(item.allocatedTotalAmount ?? 0),
+    0,
+  );
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (items.length === 0) return;
-
+    const handler = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)
+        return;
+      if (items.length === 0 || (event.key !== "j" && event.key !== "k")) return;
       if (!selectedItemId) {
-        if (e.key === "j" || e.key === "k") {
-          onSelectItem(items[0].id);
-        }
+        onSelectItem(items[0].id);
         return;
       }
-
-      const currentIndex = items.findIndex((i) => i.id === selectedItemId);
-      const nextIndex =
-        e.key === "j"
-          ? Math.min(currentIndex + 1, items.length - 1)
-          : Math.max(currentIndex - 1, 0);
-
-      if (e.key === "j" || e.key === "k") {
-        onSelectItem(items[nextIndex].id);
-      }
+      const current = items.findIndex((item) => item.id === selectedItemId);
+      const next =
+        event.key === "j" ? Math.min(current + 1, items.length - 1) : Math.max(current - 1, 0);
+      onSelectItem(items[next].id);
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [items, onSelectItem, selectedItemId]);
 
-  const clearFilters = () => {
-    void setSearchParams({
-      status: null,
-      billers: [],
-      billType: null,
-      payer: null,
-      query: "",
-      includePosted: false,
-      preset: null,
+  const toggleLane = (lane: OpenLane) => {
+    if (params.lanes.includes(lane)) {
+      void setParams({ lanes: params.lanes.filter((value) => value !== lane) });
+      return;
+    }
+    setFolded((current) => {
+      const next = new Set(current);
+      if (next.has(lane)) next.delete(lane);
+      else next.add(lane);
+      return next;
     });
   };
 
-  const currentFilters: Record<string, string | string[] | null> = {
-    status: statusFilter,
-    assignedBillerIds: billerFilter.length > 0 ? billerFilter : null,
-    billType: billTypeFilter,
-    billToCustomerId: payerFilter,
-    search: search || null,
-    includePosted: includePosted ? "true" : null,
-  };
+  function laneCount(lane: OpenLane): number | null {
+    const loaded = laneTotal(lanes[lane].data);
+    if (filtered) return loaded ?? null;
+    // The stats leave out empty lanes, so a lane they don't name is empty.
+    if (stats) return statFor(stats, lane)?.count ?? 0;
+    return loaded ?? null;
+  }
+
+  const fetchedLanes = visibleLanes.filter(shouldFetch);
+  const firstLoad = fetchedLanes.length > 0 && fetchedLanes.every((lane) => lanes[lane].isPending);
+  const settled = fetchedLanes.every((lane) => lanes[lane].isSuccess);
+  const emptyByFilter = filtered && settled && fetchedLanes.every((lane) => laneCount(lane) === 0);
+
+  const suggestions = filtered ? null : (
+    <BillingQueueSuggestions
+      run={bulk.start}
+      isStarting={bulk.isStarting}
+      onOpenItem={onSelectItem}
+      onHoldItems={(ids, note) =>
+        setHoldRequest({ targets: ids.map((id) => ({ id, label: id })), note })
+      }
+    />
+  );
+
+  // One flat list for the virtualizer: each lane's heading stays pinned while its
+  // rows scroll under it, and a lane with more to read ends in a row that loads it.
+  const rows: VirtualRow[] = [];
+  if (suggestions) {
+    rows.push({ key: "suggestions", render: () => suggestions });
+  }
+  for (const lane of visibleLanes) {
+    const count = laneCount(lane);
+    if (count === 0 && (filtered || params.lanes.length === 0)) continue;
+    const query = lanes[lane];
+    const open = isOpen(lane);
+    const total = filtered ? null : statFor(stats, lane)?.total;
+    rows.push({
+      key: `lane-${lane}`,
+      sticky: true,
+      render: () => (
+        <div className="bg-card pt-1.5">
+          <button
+            type="button"
+            onClick={() => toggleLane(lane)}
+            aria-expanded={open}
+            className="ui-inset-focus-ring hover:bg-surface-hover text-foreground flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm"
+          >
+            <ChevronDownIcon
+              className={cn(
+                "text-foreground-subtle size-3.5 transition-transform",
+                !open && "-rotate-90",
+              )}
+            />
+            <span aria-hidden className={cn("size-1.5 rounded-full", LANE_DOT[lane])} />
+            <span className="font-semibold">{laneLabel(lane, t)}</span>
+            {count != null ? (
+              <span className="text-foreground-muted font-mono text-xs">{count}</span>
+            ) : null}
+            <span className="flex-1" />
+            {total != null ? (
+              <span className="text-foreground-muted font-mono text-xs">
+                {formatCurrency(Number(total))}
+              </span>
+            ) : null}
+          </button>
+        </div>
+      ),
+    });
+    if (!open) continue;
+    if (query.isPending) {
+      rows.push({
+        key: `loading-${lane}`,
+        render: () => <BillingQueueLaneSkeleton rows={Math.min(count ?? 3, 3)} />,
+      });
+      continue;
+    }
+    const laneRows = laneItems(query.data);
+    for (const item of laneRows) {
+      rows.push({
+        key: item.id,
+        render: () => (
+          <BillingQueueItemCard
+            item={item}
+            isSelected={item.id === selectedItemId}
+            onClick={() => onSelectItem(item.id)}
+            onAssignBiller={() => setAssignTargets([toTarget(item)])}
+            onHold={() => setHoldRequest({ targets: [toTarget(item)], note: "" })}
+            onCancel={() => setCancelTargets([toTarget(item)])}
+            checked={selection.isSelected(item.id)}
+            onCheckedChange={(checked) => selection.setSelected(item.id, checked)}
+          />
+        ),
+      });
+    }
+    if (query.hasNextPage) {
+      rows.push({
+        key: `more-${lane}`,
+        render: () => (
+          <LaneMore
+            hasNextPage={query.hasNextPage}
+            isFetchingNextPage={query.isFetchingNextPage}
+            isFetchNextPageError={query.isFetchNextPageError}
+            fetchNextPage={query.fetchNextPage}
+            remaining={count != null ? count - laneRows.length : null}
+          />
+        ),
+      });
+    }
+  }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-1.5 border-b p-2">
-        <Popover>
-          <div className="flex items-center gap-1">
-            <Input
-              placeholder={t("Search PRO, BOL...")}
-              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
-              value={search}
-              onChange={(e) => void setSearchParams({ query: e.target.value })}
-              className="h-7 flex-1 text-xs"
-              inputContainerClassName="w-full"
-            />
-            <PopoverTrigger
-              render={
-                <Button size="xs" variant="outline" className="relative h-7 shrink-0 gap-1 px-2">
-                  <FilterFunnel01Icon className="size-3" />
-                  <span className="text-xs">{t("Filters")}</span>
-                  {activeFilterCount > 0 && (
-                    <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-badge text-2xs font-medium">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </Button>
-              }
-            />
-          </div>
-          <PopoverContent sideOffset={4} className="w-100 p-3">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium">{t("Filters")}</span>
-                {hasActiveFilters && (
-                  <Button size="xs" variant="ghost" onClick={clearFilters} className="h-5 px-1">
-                    <XCloseIcon className="mr-0.5 size-3" />
-                    <span className="text-xs">{t("Clear all")}</span>
-                  </Button>
-                )}
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex flex-row gap-2">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-muted-foreground text-xs">{t("Status")}</p>
-                    <Select
-                      value={statusFilter ?? "all"}
-                      items={billingQueueStatusChoices}
-                      onValueChange={(v) =>
-                        void setSearchParams({ status: v === "all" ? null : v })
-                      }
-                    >
-                      <SelectTrigger className="h-7 w-37.5 text-xs">
-                        <SelectValue placeholder={t("All statuses")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("All statuses")}</SelectItem>
-                        {billingQueueStatusChoices.map((choice) => (
-                          <SelectItem key={choice.value} value={choice.value}>
-                            {t(choice.label)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <p className="text-muted-foreground text-xs">{t("Bill type")}</p>
-                    <Select
-                      value={billTypeFilter ?? "all"}
-                      items={billTypeChoices}
-                      onValueChange={(v) =>
-                        void setSearchParams({
-                          billType: v === "all" ? null : v,
-                        })
-                      }
-                    >
-                      <SelectTrigger className="h-7 w-37.5 text-xs">
-                        <SelectValue placeholder={t("All bill types")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("All bill types")}</SelectItem>
-                        {billTypeChoices.map((choice) => (
-                          <SelectItem key={choice.value} value={choice.value}>
-                            {t(choice.label)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-muted-foreground text-xs">{t("Payer")}</p>
-                  <Autocomplete<GraphQLSelectOption, FieldValues>
-                    graphql={CUSTOMER_SELECT_OPTIONS}
-                    value={payerFilter}
-                    onChange={(val) => void setSearchParams({ payer: val || null })}
-                    getOptionValue={(option) => option.id}
-                    getDisplayValue={(option) => {
-                      const code = selectOptionMetaString(option, "code");
-                      return code ? `${code} - ${option.label}` : option.label;
-                    }}
-                    renderOption={(option) => <span className="text-xs">{option.label}</span>}
-                    placeholder={t("All payers")}
-                    clearable
-                    triggerClassName="h-7 text-xs"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-muted-foreground text-xs">{t("Assigned billers")}</p>
-                  <MultiSelectAutocomplete<User>
-                    link="/users/select-options/"
-                    label={t("Billers")}
-                    className="text-foreground"
-                    placeholder={t("All billers")}
-                    values={billerFilter}
-                    onChange={(values) =>
-                      void setSearchParams({
-                        billers: values
-                          .map((v) => (typeof v === "string" ? v : (v.id ?? "")))
-                          .filter(Boolean),
-                      })
-                    }
-                    getOptionValue={(user) => user.id ?? ""}
-                    getDisplayValue={(user) => user.name}
-                    renderOption={(user) => <span className="text-xs">{user.name}</span>}
-                    triggerClassName="h-7 text-xs"
-                    maxCount={2}
-                  />
-                </div>
-                <label className="flex items-start gap-2 rounded-md border px-2 py-2">
-                  <Checkbox
-                    checked={includePosted}
-                    onCheckedChange={(checked) =>
-                      void setSearchParams({ includePosted: checked === true })
-                    }
-                  />
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-medium">{t("Include posted items")}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {t("Show historical queue records that already produced a posted invoice.")}
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              <div className="flex items-center gap-1 border-t pt-2">
-                <PresetSelector
-                  presets={presets}
-                  selectedPresetId={selectedPresetId}
-                  onSelect={handlePresetChange}
-                />
-                {hasActiveFilters && (
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => setSavePresetOpen(true)}
-                    title={t("Save current filters as preset")}
-                  >
-                    <Save01Icon className="size-3" />
-                  </Button>
-                )}
-                {selectedPresetId && (
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => deletePreset(selectedPresetId)}
-                    title={t("Delete selected preset")}
-                  >
-                    <Trash01Icon className="size-3" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+      <div className="flex shrink-0 items-start gap-1.5 border-b p-2.5">
+        <BillingQueueSearch />
+        <BillingQueueFilters />
       </div>
-      {items.length > 0 && (
-        <label className="text-muted-foreground flex items-center gap-2 border-b px-3 py-1.5 text-xs">
-          <Checkbox
-            checked={selection.allState === "all"}
-            indeterminate={selection.allState === "some"}
-            onCheckedChange={(checked) => selection.setAll(checked === true)}
-            aria-label={t("Select all items")}
-          />
-          {selection.allState === "none"
-            ? t("{0, plural, one {# item} other {# items}}", items.length)
-            : t("{0} of {1} selected", selection.selected.length, items.length)}
-        </label>
-      )}
-      <ScrollArea className="flex-1">
-        <div className="flex flex-col gap-1.5 p-2">
-          {isLoading && (
-            <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
-              {t("Loading...")}
-            </div>
-          )}
-          {!isLoading && items.length === 0 && (
+      {emptyByFilter || firstLoad ? (
+        <ScrollArea maskVariant="card" className="min-h-0 flex-1">
+          {suggestions}
+          {emptyByFilter ? (
             <BillingListEmpty
-              title={hasActiveFilters ? "Nothing matches" : "Nothing waiting"}
-              description={
-                hasActiveFilters
-                  ? "No item in the queue fits the search and filters. Widen them, or clear them to see everything waiting."
-                  : "A shipment lands here once it is marked ready to bill, by its billing policy or by hand from the shipment. Until one does, there is nothing to review."
-              }
-              onClearFilters={hasActiveFilters ? clearFilters : undefined}
+              title="Nothing matches"
+              description="No item in the queue fits the search and filters. Widen them, or clear them to see everything waiting."
+              onClearFilters={() => void setParams(CLEARED_QUEUE_FILTERS)}
             />
+          ) : (
+            <BillingQueueListSkeleton />
           )}
-          {items.map((item: BillingQueueItem) => (
-            <BillingQueueItemCard
-              key={item.id}
-              item={item}
-              isSelected={item.id === selectedItemId}
-              onClick={() => onSelectItem(item.id)}
-              onAssignBiller={() => setAssignTargets([toTarget(item)])}
-              onHold={() => updateStatus({ itemId: item.id, status: "OnHold" })}
-              onCancel={() => setCancelTargets([toTarget(item)])}
-              checked={selection.isSelected(item.id)}
-              onCheckedChange={(checked) => selection.setSelected(item.id, checked)}
-            />
-          ))}
-        </div>
-      </ScrollArea>
+        </ScrollArea>
+      ) : (
+        <VirtualRows
+          rows={rows}
+          estimateSize={56}
+          initialHeight={720}
+          mask="card"
+          className="min-h-0 flex-1"
+          aria-label={t("Billing queue")}
+          handleRef={listHandle}
+        />
+      )}
       {assignTargets && (
         <BillingQueueAssignDialog
           open
           onOpenChange={(open) => !open && setAssignTargets(null)}
           targets={assignTargets}
+          run={bulk.start}
           onDone={clearSelection}
         />
       )}
@@ -594,28 +421,84 @@ export function BillingQueueSidebar({
           open
           onOpenChange={(open) => !open && setCancelTargets(null)}
           targets={cancelTargets}
+          run={bulk.start}
+          onDone={clearSelection}
+        />
+      )}
+      {holdRequest && (
+        <BillingQueueHoldDialog
+          targets={holdRequest.targets}
+          defaultNote={holdRequest.note}
+          run={bulk.start}
+          onOpenChange={(open) => !open && setHoldRequest(null)}
           onDone={clearSelection}
         />
       )}
       {approveConfirm && (
         <BillingQueueApproveConfirm
           items={approveConfirm}
-          isPending={isStarting}
+          isPending={bulk.isStarting}
           onOpenChange={(open) => !open && setApproveConfirm(null)}
-          onApprove={(targets, assignMe) => void startApprove(targets, assignMe)}
+          onApprove={(targets, assignMe) => void approve(targets, assignMe)}
         />
       )}
       <SelectionDock
         selectedCount={selection.selected.length}
+        totals={[
+          { id: "amount", label: t("Selected amount"), text: formatCurrency(selectedTotal) },
+        ]}
         actions={dockActions}
         getSelected={() => selection.selected}
         onClearSelection={clearSelection}
       />
-      <BillingQueueSavePresetDialog
-        open={savePresetOpen}
-        onOpenChange={setSavePresetOpen}
-        filters={currentFilters}
-      />
     </div>
   );
+}
+
+function statFor(stats: BillingQueueStats | undefined, lane: BillingQueueLane) {
+  return stats?.lanes.find((entry) => entry.lane === lane);
+}
+
+/**
+ * The end of a lane that has more to read. The list mounts only the rows near the
+ * viewport, so this mounting means the biller has scrolled to the lane's end: it reads
+ * the next page then, and again while it stays in view, so every open lane fills in as
+ * it is reached rather than only the last. Its rows wait in the lane's own skeleton; a
+ * page that fails waits on a retry instead of asking again on its own.
+ */
+function LaneMore({
+  hasNextPage,
+  isFetchingNextPage,
+  isFetchNextPageError,
+  fetchNextPage,
+  remaining,
+}: {
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  isFetchNextPageError: boolean;
+  fetchNextPage: () => Promise<unknown>;
+  remaining: number | null;
+}) {
+  const t = useT();
+
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
+      void fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
+
+  if (isFetchNextPageError) {
+    return (
+      <Button
+        variant="ghost"
+        size="xs"
+        className="text-foreground-muted mt-0.5 mb-1 ml-7.5"
+        onClick={() => void fetchNextPage()}
+      >
+        {t("Couldn't load more · Try again")}
+      </Button>
+    );
+  }
+
+  return <BillingQueueLaneSkeleton rows={Math.max(1, Math.min(remaining ?? 3, 3))} />;
 }

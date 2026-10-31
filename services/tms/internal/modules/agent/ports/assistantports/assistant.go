@@ -52,8 +52,6 @@ type UpdateThreadRequest struct {
 	// PinnedFacts, when set, replaces what the agents keep in mind for the
 	// whole conversation. An empty list unpins them all.
 	PinnedFacts *[]string
-	// Keep promotes an Ask thread to the Desk so it is listed.
-	Keep bool
 	// AutoCompact turns the conversation's compacting itself on or off.
 	AutoCompact *bool
 }
@@ -103,13 +101,11 @@ type SendMessageRequest struct {
 	CodeMode        codemode.Override
 }
 
-// AskRequest is a quick question from anywhere in the application. It runs
-// as an ordinary turn on a hidden thread bound to the organization's general
-// assistant, so the answer can be kept as a conversation afterwards.
-type AskRequest struct {
-	Content    string
-	Page       *agentpagecontext.PageContext
-	Mentions   []agentpagecontext.EntityRef
+// GeneralThreadRequest opens a Desk conversation with the organization's
+// general assistant, for work begun elsewhere that the person carries on in
+// the Desk.
+type GeneralThreadRequest struct {
+	Title      string
 	TenantInfo pagination.TenantInfo
 }
 
@@ -249,12 +245,11 @@ type AssistantService interface {
 		req *ListThreadMessagesRequest,
 	) (*ThreadMessagesPage, error)
 	DeleteThread(ctx context.Context, req *conversationports.GetThreadRequest) error
-	// StartAsk opens the hidden thread a quick question is answered on. The
-	// answer is a turn like any other; the thread is listed only when the
-	// person keeps it.
-	StartAsk(
+	// StartGeneralThread opens a Desk conversation with the general
+	// assistant, the one a command palette answer is carried on with.
+	StartGeneralThread(
 		ctx context.Context,
-		req *AskRequest,
+		req *GeneralThreadRequest,
 		actor *permissionports.RequestActor,
 	) (*conversation.Thread, error)
 }

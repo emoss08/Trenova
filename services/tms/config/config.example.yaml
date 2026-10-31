@@ -71,6 +71,9 @@ server:
       - X-CSRF-Token
       - Last-Event-ID # Lets an event stream resume where it left off
       - Idempotency-Key # Lets a retried write return the first result instead of repeating it
+      - X-Trenova-User-Id # The person the page was loaded for; refused when someone else has signed in since
+      - X-Trenova-Organization-Id # The organization the page was loaded for; refused when the session has moved on
+      - X-Trenova-Business-Unit-Id # The business unit the page was loaded for
     exposeHeaders: # Headers exposed to the client
       - X-Request-Id
       - Idempotent-Replayed # Set on a response replayed for a repeated Idempotency-Key
@@ -200,6 +203,7 @@ realtime:
   publishTimeout: 5s # Deadline for one flush to Redis
   maxEntityBytes: 65536 # Larger payloads are sent without the entity; readers refetch instead
   typingThrottle: 1s # Minimum interval between typing signals per connection and scope
+  sessionCheckInterval: 30s # How often open streams check their session still holds; an ended one is closed
 
 # Object storage configuration
 storage:

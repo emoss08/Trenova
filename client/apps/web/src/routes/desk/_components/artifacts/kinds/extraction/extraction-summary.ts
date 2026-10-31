@@ -3,7 +3,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { CardStatusMark, CardTone } from "../../record-card/record-card";
 import { money } from "../../record-card/record-card-values";
 import type { FieldGroup, FieldRow, ReviewTally, StopGroup } from "./extraction-groups";
-import type { ExtractedField, Extraction } from "./extraction-payload";
+import type { ExtractedField, Extraction } from "@/lib/document-reading/extraction-payload";
 import type { ShipmentStage } from "./shipment-stage";
 
 /** The mark on the document's stub, the way a dispatcher abbreviates the paper. */

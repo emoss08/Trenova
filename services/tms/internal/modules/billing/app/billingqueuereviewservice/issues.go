@@ -88,6 +88,11 @@ func (s *Service) ResolveIssue(
 		if err != nil {
 			return nil, err
 		}
+	case billingqueue.EffectAdd:
+		snapshot, err = s.addChargeEffect(ctx, item, option.Effect, actor, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	now := timeutils.NowUnix()
@@ -140,6 +145,12 @@ func (s *Service) PlanResolveIssue(
 			return nil, editErr
 		}
 		plan.ChargeBefore, plan.ChargeAfter = edit.before, edit.after
+	case billingqueue.EffectAdd:
+		edit, editErr := planChargeAdd(settle.item, settle.option.Effect)
+		if editErr != nil {
+			return nil, editErr
+		}
+		plan.ChargeAfter = edit.after
 	}
 
 	return plan, nil
@@ -238,6 +249,11 @@ func (s *Service) UndoIssue(
 	}
 	item, issue, option := undo.item, undo.issue, undo.option
 
+	if issue.EffectSnapshot != nil && issue.EffectSnapshot.AddedChargeID.IsNotNil() {
+		if err = s.removeAddedCharge(ctx, item, issue.EffectSnapshot, actor, req.TenantInfo); err != nil {
+			return nil, err
+		}
+	}
 	if option != nil && issue.EffectSnapshot != nil && issue.EffectSnapshot.Charge != nil {
 		restoredID, restoreErr := s.restoreCharge(
 			ctx,
@@ -300,6 +316,10 @@ func (s *Service) PlanUndoIssue(
 		Option: undo.option,
 	}
 	snapshot := undo.issue.EffectSnapshot
+	if snapshot != nil && snapshot.AddedChargeID.IsNotNil() {
+		plan.ChargeBefore = addedCharge(undo.item, snapshot.AddedChargeID)
+		return plan, nil
+	}
 	if undo.option == nil || snapshot == nil || snapshot.Charge == nil {
 		return plan, nil
 	}

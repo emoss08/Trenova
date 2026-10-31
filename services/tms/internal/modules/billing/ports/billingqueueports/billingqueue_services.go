@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type TransferToBillingRequest struct {
@@ -54,15 +55,20 @@ type UpdateBillingQueueStatusRequest struct {
 }
 
 type BillingQueueStats struct {
-	ReadyForReview int `json:"readyForReview"`
-	InReview       int `json:"inReview"`
-	Approved       int `json:"approved"`
-	Posted         int `json:"posted"`
-	OnHold         int `json:"onHold"`
-	Exception      int `json:"exception"`
-	SentBackToOps  int `json:"sentBackToOps"`
-	Canceled       int `json:"canceled"`
-	Total          int `json:"total"`
+	Lanes     []*BillingQueueLaneStat `json:"lanes"`
+	OpenCount int                     `json:"openCount"`
+	OpenTotal decimal.Decimal         `json:"openTotal"`
+	Pulse     *BillingQueuePulse      `json:"pulse"`
+}
+
+func (s *BillingQueueStats) Lane(lane billingqueue.Lane) *BillingQueueLaneStat {
+	for _, stat := range s.Lanes {
+		if stat.Lane == lane {
+			return stat
+		}
+	}
+
+	return &BillingQueueLaneStat{Lane: lane, Total: decimal.Zero}
 }
 
 type UpdateChargesRequest struct {
@@ -112,6 +118,10 @@ type BillingQueueService interface {
 		ctx context.Context,
 		req *ListBillingQueueItemsRequest,
 	) (*pagination.ListResult[*billingqueue.BillingQueueItem], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListBillingQueueItemsRequest,
+	) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error)
 	GetByID(
 		ctx context.Context,
 		req *GetBillingQueueItemByIDRequest,
@@ -120,6 +130,15 @@ type BillingQueueService interface {
 		ctx context.Context,
 		req *GetBillingQueueStatsRequest,
 	) (*BillingQueueStats, error)
+	Recommendations(
+		ctx context.Context,
+		req *ListRecommendationsRequest,
+	) ([]*Recommendation, error)
+	UpdateInvoiceDetails(
+		ctx context.Context,
+		req *UpdateInvoiceDetailsRequest,
+		actor *permissionports.RequestActor,
+	) (*billingqueue.BillingQueueItem, error)
 	TransferToBilling(
 		ctx context.Context,
 		req *TransferToBillingRequest,
@@ -186,4 +205,15 @@ func (r *ReassignChargeResult) WithoutFormulaContent() *ReassignChargeResult {
 	redacted.Items = billingqueue.WithoutFormulaContent(r.Items)
 
 	return &redacted
+}
+
+type UpdateInvoiceDetailsRequest struct {
+	ItemID            pulid.ID
+	TenantInfo        pagination.TenantInfo
+	Version           int64
+	PONumber          string
+	InvoiceMemo       string
+	PaymentTerm       string
+	InvoiceDate       *int64
+	PacketDocumentIDs []pulid.ID
 }

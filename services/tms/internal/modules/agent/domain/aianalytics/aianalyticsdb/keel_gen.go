@@ -819,6 +819,8 @@ var enumAitaskTask = [...]schema.EnumValue{
 	{Value: `InboundClassification`, Label: `Inbound Classification`, Doc: `TaskInboundClassification decides what an email that arrived actually is. Like the other classifiers it answers with a label from a fixed set, and the label is re-checked against that set afterwards — a model that invents a category produces a message for a person, not a new kind of work.`},
 	{Value: `AccountingMapping`, Label: `Accounting Mapping`},
 	{Value: `RemittanceExtraction`, Label: `Remittance Extraction`, Doc: `TaskRemittanceExtraction reads the lines of a factor's PDF remittance. It is kept apart from DocumentExtraction because the fine-tuned extraction model, its shadow runs and its training data all key on that task, and a remittance is not the kind of document they were built for. What it reads is matched to schedule items and a person applies it, so it never books anything on its own.`},
+	{Value: `PaperworkReading`, Label: `Paperwork Reading`, Doc: `TaskPaperworkReading reads a shipment's billing paperwork (a proof of delivery, a bill of lading, a receipt) for the facts billing checks. It runs through the Nova harness, a single structured call that reads the file itself, so a fast model answers in seconds without waiting for the document to be converted.`},
+	{Value: `PaletteAnswer`, Label: `Palette Answer`, Doc: `TaskPaletteAnswer answers a quick question typed into the command palette: a short streamed answer from a few read-only lookups, run through the Nova harness rather than as a Desk turn.`},
 	{Value: `EvaluationJudge`, Label: `Evaluation Judge`},
 	{Value: `Embedding`, Label: `Embedding`},
 	{Value: `General`, Label: `General`},

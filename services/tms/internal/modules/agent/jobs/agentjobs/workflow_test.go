@@ -378,49 +378,58 @@ func TestAgentScheduledRunWorkflowTestSuite(t *testing.T) {
 	suite.Run(t, new(AgentScheduledRunWorkflowTestSuite))
 }
 
-type DeleteStaleAskThreadsWorkflowTestSuite struct {
+type AssistantRetentionWorkflowTestSuite struct {
 	suite.Suite
 	testsuite.WorkflowTestSuite
 
 	env *testsuite.TestWorkflowEnvironment
 }
 
-func (s *DeleteStaleAskThreadsWorkflowTestSuite) SetupTest() {
+func (s *AssistantRetentionWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
 }
 
-// The sweep removes a batch at a time and keeps going while batches come
+// Each sweep removes a batch at a time and keeps going while batches come
 // back full, so one quiet night clears a backlog without one long
-// transaction. The cut-off is a month before the workflow's own clock.
-func (s *DeleteStaleAskThreadsWorkflowTestSuite) TestSweepsInBatchesUntilShort() {
+// transaction. Formula drafts go after a month quiet; palette question
+// records after two months, past any allowance that reads them.
+func (s *AssistantRetentionWorkflowTestSuite) TestSweepsEachRecordInBatchesUntilShort() {
 	var a *Activities
-	calls := 0
-	var cutoffs []int64
+	draftCalls := 0
+	var draftCutoffs []int64
+	var questionCutoff int64
 
-	s.env.OnActivity(a.DeleteStaleAskThreadsActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, input *DeleteStaleAskThreadsInput) (*DeleteStaleAskThreadsResult, error) {
-			calls++
-			cutoffs = append(cutoffs, input.Before)
-			if calls == 1 {
-				return &DeleteStaleAskThreadsResult{Deleted: deleteStaleAskBatch}, nil
+	s.env.OnActivity(a.DeleteStaleFormulaDraftsActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, input *RetentionInput) (*RetentionBatch, error) {
+			draftCalls++
+			draftCutoffs = append(draftCutoffs, input.Before)
+			if draftCalls == 1 {
+				return &RetentionBatch{Deleted: deleteStaleDraftBatch}, nil
 			}
-			return &DeleteStaleAskThreadsResult{Deleted: 3}, nil
+			return &RetentionBatch{Deleted: 3}, nil
+		})
+	s.env.OnActivity(a.DeleteStalePaletteQuestionsActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, input *RetentionInput) (*RetentionBatch, error) {
+			questionCutoff = input.Before
+			return &RetentionBatch{Deleted: 7}, nil
 		})
 
-	s.env.ExecuteWorkflow(DeleteStaleAskThreadsWorkflow)
+	s.env.ExecuteWorkflow(AssistantRetentionWorkflow)
 
 	s.True(s.env.IsWorkflowCompleted())
 	s.NoError(s.env.GetWorkflowError())
 
-	var result *DeleteStaleAskThreadsResult
+	var result *RetentionResult
 	s.Require().NoError(s.env.GetWorkflowResult(&result))
-	s.Equal(deleteStaleAskBatch+3, result.Deleted)
-	s.Equal(2, calls)
-	s.Require().Len(cutoffs, 2)
-	s.Equal(cutoffs[0], cutoffs[1], "one cut-off for the whole sweep")
-	s.Less(cutoffs[0], time.Now().Add(-29*24*time.Hour).Unix())
+	s.Equal(deleteStaleDraftBatch+3, result.FormulaDrafts)
+	s.Equal(7, result.PaletteQuestions)
+	s.Equal(2, draftCalls)
+	s.Require().Len(draftCutoffs, 2)
+	s.Equal(draftCutoffs[0], draftCutoffs[1], "one cut-off for the whole sweep")
+	s.Less(draftCutoffs[0], time.Now().Add(-29*24*time.Hour).Unix())
+	s.Less(questionCutoff, time.Now().Add(-61*24*time.Hour).Unix())
 }
 
-func TestDeleteStaleAskThreadsWorkflowTestSuite(t *testing.T) {
-	suite.Run(t, new(DeleteStaleAskThreadsWorkflowTestSuite))
+func TestAssistantRetentionWorkflowTestSuite(t *testing.T) {
+	suite.Run(t, new(AssistantRetentionWorkflowTestSuite))
 }

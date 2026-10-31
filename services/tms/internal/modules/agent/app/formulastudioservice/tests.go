@@ -27,7 +27,7 @@ const (
 	maxWhyRunes          = 600
 )
 
-const suggestSystem = "You are the formula assistant in Trenova's Formula Studio. Propose up " +
+const suggestSystem = "Your task: in Formula Studio, propose up " +
 	"to five Tariff test blocks for the formula that pin its behaviour at the edges: a minimum " +
 	"or maximum being reached, a break or threshold being crossed, an optional field being " +
 	"none, a condition switching a charge on or off. Each has a short name not used by the " +
@@ -202,8 +202,8 @@ func hasExpectation(lines []string) bool {
 	return false
 }
 
-const explainTestSystem = "You are the formula assistant in Trenova's Formula Studio. A test " +
-	"block in the formula fails. From the source, the test and the engine's failure, say in at " +
+const explainTestSystem = "Your task: a test block in a Formula " +
+	"Studio formula fails. From the source, the test and the engine's failure, say in at " +
 	"most 80 words why it fails, and give a verdict: intended when the formula changed on " +
 	"purpose and the test is out of date, bug when the formula is wrong, unclear when you " +
 	"cannot tell. Write identifiers in backticks. " + amountsRule + " " + untrustedNote

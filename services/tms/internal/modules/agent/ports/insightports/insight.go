@@ -116,6 +116,37 @@ type ReplaceDetectorFindingsResult struct {
 	Detected []*insight.Insight
 }
 
+// ListNarratedInsightsRequest reads one detector's active findings that a
+// model has worded, so a refresh that measures the same figures again keeps
+// that wording rather than paying for it twice.
+type ListNarratedInsightsRequest struct {
+	TenantInfo  pagination.TenantInfo
+	DetectorKey string
+}
+
+type GetInsightsByIDsRequest struct {
+	TenantInfo pagination.TenantInfo
+	IDs        []pulid.ID
+}
+
+// InsightNarration is a model's wording for one stored finding.
+type InsightNarration struct {
+	ID              pulid.ID
+	Headline        string
+	Narrative       string
+	Recommendation  string
+	ModelIdentifier string
+	ProviderID      pulid.ID
+}
+
+// ApplyInsightNarrationsRequest words findings stored before their narration
+// was written. A finding a later refresh has since superseded keeps what it
+// had.
+type ApplyInsightNarrationsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Narrations []InsightNarration
+}
+
 type InsightRepository interface {
 	ListActive(
 		ctx context.Context,
@@ -136,6 +167,9 @@ type InsightRepository interface {
 		ctx context.Context,
 		req ReplaceDetectorFindingsRequest,
 	) (ReplaceDetectorFindingsResult, error)
+	ListNarrated(ctx context.Context, req ListNarratedInsightsRequest) ([]*insight.Insight, error)
+	GetByIDs(ctx context.Context, req GetInsightsByIDsRequest) ([]*insight.Insight, error)
+	ApplyNarrations(ctx context.Context, req ApplyInsightNarrationsRequest) (int, error)
 }
 
 // InsightMetricsRepository holds the aggregate queries the detectors read.

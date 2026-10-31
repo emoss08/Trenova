@@ -8,7 +8,8 @@ import type {
 } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { runTurn, stopTurnQuietly, turnFailureDetail } from "./follow-turn";
+import type { StartedAsk } from "@/services/assistant";
+import { followStream, turnFailureDetail } from "./follow-turn";
 import { registerTurnReader } from "./turn-readers";
 import { initialTurnState, isTurnActive, advanceTurn, type TurnState } from "./turn-stream";
 
@@ -45,17 +46,21 @@ async function questionMentions(
   return found;
 }
 
+/** Takes back a palette question; nobody is left to tell if it fails. */
+function stopAskQuietly(askId: string): void {
+  void apiService.assistantService.stopAsk(askId).catch(() => undefined);
+}
+
 /**
- * One quick question at a time, from the palette. The answer streams into a
- * TurnState like a thread's turn does, and the thread it was answered on is
- * kept only when the person opens it in the Desk to continue.
+ * One quick question at a time, from the palette. Nova answers it on a worker
+ * without making a conversation, and the answer streams into a TurnState the
+ * way a thread's turn does.
  *
- * The answer is read in the palette and nowhere else: the server neither
- * announces it nor lists it in the Desk. So closing the palette or asking
- * something else takes the question back — a question on its way is
- * withdrawn and a turn under way is stopped — rather than leaving a worker to
- * write an answer nobody will see. A kept question is a Desk conversation, and
- * its turn runs on there.
+ * The answer is read in the palette and nowhere else, so closing the palette
+ * or asking something else takes the question back: a question on its way is
+ * withdrawn and an answer being written is stopped, rather than leaving a
+ * worker to write an answer nobody will see. Continuing in the Desk carries
+ * the question and its answer into a new conversation.
  */
 export function useAsk() {
   const t = useT();
@@ -65,17 +70,20 @@ export function useAsk() {
   // different things, so they are two signals.
   const abortRef = useRef<AbortController | null>(null);
   const withdrawRef = useRef<AbortController | null>(null);
-  // The turn a worker is answering. Stopping has to reach it: closing the
-  // reader leaves the turn running and billing.
-  const turnIdRef = useRef<string | null>(null);
+  // The question a worker has, and whether its answer has ended. Stopping has
+  // to reach a worker still writing; one that has finished is kept to carry
+  // into the Desk.
+  const askRef = useRef<{ id: string; ended: boolean } | null>(null);
+  // Whether the question on show reached a worker and ended, answered or
+  // not: then it can be carried into the Desk.
+  const [keepable, setKeepable] = useState(false);
 
-  // Takes back whatever question is out: the turn a worker is answering is
-  // stopped, a question on its way is withdrawn, and the reader lets go.
   const withdrawQuestion = useCallback(() => {
-    const running = turnIdRef.current;
-    turnIdRef.current = null;
-    if (running !== null) {
-      stopTurnQuietly(running);
+    const current = askRef.current;
+    askRef.current = null;
+    setKeepable(false);
+    if (current !== null && !current.ended) {
+      stopAskQuietly(current.id);
     }
     withdrawRef.current?.abort();
     withdrawRef.current = null;
@@ -93,6 +101,11 @@ export function useAsk() {
       const withdraw = new AbortController();
       withdrawRef.current = withdraw;
       const unregister = registerTurnReader(controller);
+      const fail = (error: unknown) => {
+        unregister();
+        const detail = turnFailureDetail(error, t("The connection to the assistant was lost."));
+        setTurn((state) => (state ? { ...state, status: "error", error: detail } : state));
+      };
 
       setTurn(
         initialTurnState(content, options.context ?? null, {
@@ -100,58 +113,58 @@ export function useAsk() {
         }),
       );
 
-      let terminal = false;
+      let started: StartedAsk;
+      try {
+        const mentions = await questionMentions(options, withdraw.signal);
+        if (options.findMentions) {
+          setTurn((state) => (state ? { ...state, mentions: [...mentions] } : state));
+        }
+        started = await apiService.assistantService.startAsk(
+          content,
+          { context: options.context, mentions },
+          { signal: withdraw.signal },
+        );
+      } catch (error) {
+        if (withdraw.signal.aborted || controller.signal.aborted) {
+          return;
+        }
+        fail(error);
+        return;
+      }
+      // Stop was pressed while the question was on its way: the worker has
+      // it now and would answer nobody.
+      if (withdraw.signal.aborted) {
+        stopAskQuietly(started.askId);
+        return;
+      }
+
+      const current = { id: started.askId, ended: false };
+      askRef.current = current;
       const onEvent = (event: AssistantStreamEvent) => {
         setTurn((state) => (state ? advanceTurn(state, event) : state));
         if (event.event === "done" || event.event === "error") {
-          terminal = true;
+          current.ended = true;
+          setKeepable(true);
         }
       };
 
-      turnIdRef.current = null;
       try {
-        await runTurn(
-          async (signal) => {
-            const mentions = await questionMentions(options, signal);
-            if (options.findMentions) {
-              setTurn((state) => (state ? { ...state, mentions: [...mentions] } : state));
-            }
-            return apiService.assistantService.startAsk(
-              content,
-              { context: options.context, mentions },
-              { signal },
-            );
-          },
-          {
-            signal: controller.signal,
-            withdrawSignal: withdraw.signal,
-            onTurnStarted: (started) => {
-              turnIdRef.current = started.turnId;
-              // The thread is named before the answer, so the question can be
-              // kept whatever happens to the answer.
-              if (started.thread) {
-                onEvent({ event: "thread", data: started.thread });
-              }
-            },
-            onEvent,
-          },
+        await followStream(
+          (apply, attach) => apiService.assistantService.attachAsk(started.askId, apply, attach),
+          { signal: controller.signal, onEvent },
         );
       } catch (error) {
         if (controller.signal.aborted) {
           return;
         }
-        unregister();
-        const detail = turnFailureDetail(error, t("The connection to the assistant was lost."));
-        setTurn((state) => (state ? { ...state, status: "error", error: detail } : state));
+        fail(error);
         return;
       }
       if (controller.signal.aborted) {
         return;
       }
       unregister();
-      if (terminal) {
-        // Nothing is left to stop once the answer has ended.
-        turnIdRef.current = null;
+      if (current.ended) {
         return;
       }
       setTurn((state) =>
@@ -176,27 +189,39 @@ export function useAsk() {
     setTurn(null);
   }, [withdrawQuestion]);
 
+  // A second press while the first is carrying the question waits on it,
+  // so one question never opens two conversations.
+  const keepingRef = useRef<Promise<string | null> | null>(null);
+
   /**
-   * Lists the question as a conversation and says where it is. The thread
-   * exists already; keeping it is what makes the rail show it, and from then
-   * on its turn belongs to the Desk, so putting the palette away no longer
-   * stops it.
+   * Carries the answered question into a Desk conversation, which opens with
+   * the question and Nova's answer, and says which. A question with no
+   * answer to carry is asked again there.
    */
-  const keep = useCallback(async (): Promise<string | null> => {
-    const threadId = turn?.thread?.id ?? turn?.result?.thread.id ?? null;
-    if (threadId === null) {
-      return null;
+  const keep = useCallback((): Promise<string | null> => {
+    if (keepingRef.current !== null) {
+      return keepingRef.current;
     }
-    await apiService.assistantService.updateThread(threadId, { keep: true });
-    turnIdRef.current = null;
-    withdrawRef.current = null;
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
-      queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey }),
-    ]);
+    const current = askRef.current;
+    if (current === null || !current.ended) {
+      return Promise.resolve(null);
+    }
 
-    return threadId;
-  }, [queryClient, turn?.result?.thread.id, turn?.thread?.id]);
+    const keeping = (async () => {
+      const kept = await apiService.assistantService.keepAsk(current.id);
+      if (kept.unanswered !== "") {
+        await apiService.assistantService.startTurn(kept.thread.id, kept.unanswered);
+      }
+      await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
 
-  return { turn, isActive: isTurnActive(turn), ask, stop, reset, keep };
+      return kept.thread.id;
+    })().finally(() => {
+      keepingRef.current = null;
+    });
+    keepingRef.current = keeping;
+
+    return keeping;
+  }, [queryClient]);
+
+  return { turn, isActive: isTurnActive(turn), ask, stop, reset, keep, keepable };
 }

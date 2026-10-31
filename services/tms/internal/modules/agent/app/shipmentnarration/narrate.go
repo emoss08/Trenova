@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/shopspring/decimal"
@@ -18,16 +17,17 @@ type Narration[T any] struct {
 
 func Narrate[T any](
 	ctx context.Context,
-	completion llmports.CompletionService,
+	nova llmports.TaskRunner,
 	logger *zap.Logger,
-	req *llmports.StructuredCompletionRequest,
+	req *llmports.NovaTask,
 ) (*Narration[T], bool) {
-	if completion == nil {
+	if nova == nil {
 		return nil, false
 	}
 
-	result, err := completion.CompleteStructured(ctx, req)
-	if err != nil {
+	out := &Narration[T]{}
+	result, err := nova.Run(ctx, req, &out.Draft)
+	if err != nil && !errors.Is(err, llmports.ErrOutsideSchema) {
 		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			logger.Debug("no provider configured; using computed wording",
 				zap.String("schema", req.SchemaName))
@@ -40,8 +40,8 @@ func Narrate[T any](
 		return nil, false
 	}
 
-	out := &Narration[T]{Model: result.ModelIdentifier}
-	if err = sonic.UnmarshalString(result.Text, &out.Draft); err != nil {
+	out.Model = result.ModelIdentifier
+	if err != nil {
 		logger.Warn("narration could not be parsed; using computed wording",
 			zap.String("schema", req.SchemaName),
 			zap.String("model", result.ModelIdentifier),

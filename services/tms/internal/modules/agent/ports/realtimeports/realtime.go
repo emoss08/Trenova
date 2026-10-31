@@ -41,6 +41,8 @@ const RealtimeCloseShutdown = "shutdown"
 
 const RealtimeCloseOverflow = "overflow"
 
+const RealtimeCloseSessionEnded = "session_ended"
+
 type ResourceInvalidationEvent struct {
 	EventID        string    `json:"eventId"`
 	OrganizationID string    `json:"organizationId"`

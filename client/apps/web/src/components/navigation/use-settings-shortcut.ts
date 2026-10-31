@@ -1,3 +1,4 @@
+import { hotkeyOf } from "@/config/keybinds.config";
 import { SETTINGS_PATH } from "@/lib/settings-path";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useMatch, useNavigate } from "react-router";
@@ -11,7 +12,7 @@ export function useSettingsShortcut() {
   const onSettings = useMatch(SETTINGS_PATH) !== null;
 
   useHotkey(
-    "Mod+Shift+S",
+    hotkeyOf("general", "user-settings"),
     () => {
       if (onSettings) return;
       void navigate(SETTINGS_PATH);

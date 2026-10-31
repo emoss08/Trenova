@@ -36,8 +36,7 @@ func (r *QueryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 		if sErr != nil {
 			return sErr
 		}
-		open := stats.Total - stats.Posted - stats.Canceled
-		summary.BillingQueue = &open
+		summary.BillingQueue = &stats.OpenCount
 		return nil
 	})
 	run(permission.ResourceInvoice, "invoice adjustment summary", func(ctx context.Context) error {

@@ -126,6 +126,8 @@ enum AITask {
   InboundClassification
   AccountingMapping
   RemittanceExtraction
+  PaperworkReading
+  PaletteAnswer
   EvaluationJudge
   Embedding
   AssistantChat

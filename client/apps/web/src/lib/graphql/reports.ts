@@ -45,7 +45,7 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import type { DashboardFilter } from "@trenova/shared/generated/keel-analytics";
-import { withCsrfHeader } from "@trenova/shared/lib/api";
+import { withSessionHeaders } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { filenameFromDisposition } from "@trenova/shared/lib/utils";
@@ -102,13 +102,13 @@ export async function exportDashboard(
   body: DashboardExportRequest,
 ): Promise<{ blob: Blob; fileName: string }> {
   // A workbook is binary, so this bypasses the JSON api helper while keeping
-  // its credential and CSRF handling.
+  // its credential, tenant and CSRF headers.
   const endpoint = `/reports/dashboards/${encodeURIComponent(dashboardId)}/export/`;
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: "POST",
     credentials: "include",
     body: JSON.stringify(body),
-    headers: await withCsrfHeader("POST", { "Content-Type": "application/json" }, endpoint),
+    headers: await withSessionHeaders("POST", { "Content-Type": "application/json" }, endpoint),
   });
 
   if (!response.ok) {

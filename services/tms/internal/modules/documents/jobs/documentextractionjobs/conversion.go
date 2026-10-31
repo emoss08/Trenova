@@ -636,6 +636,9 @@ func (a *Activities) convertDocument(
 			}, nil
 		}
 		nativePages = native
+		// A PDF whose every page carries its own text is read from that text; OCR,
+		// the slow part of a conversion, runs only when some page is a scan.
+		ocr = ocr && !everyPageNative(native, pageCount)
 	}
 
 	converted, err := a.convertWithConverter(ctx, &kernelports.ConvertRequest{
@@ -1184,4 +1187,17 @@ func (a *Activities) ReconcileDocumentExtractionActivity(
 	}
 
 	return result, nil
+}
+
+func everyPageNative(native map[int]bool, pageCount int) bool {
+	if pageCount <= 0 || len(native) < pageCount {
+		return false
+	}
+	for page := 1; page <= pageCount; page++ {
+		if !native[page] {
+			return false
+		}
+	}
+
+	return true
 }

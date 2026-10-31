@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -109,9 +108,9 @@ func (w *Workflows) background() []registry.WorkflowDefinition {
 			Description: "Mark pending agent proposals whose decision window has closed as expired",
 		},
 		{
-			Name:        DeleteStaleAskThreadsWorkflowName,
-			Fn:          DeleteStaleAskThreadsWorkflow,
-			Description: "Remove quick questions nobody kept once they have gone quiet for a month",
+			Name:        AssistantRetentionWorkflowName,
+			Fn:          AssistantRetentionWorkflow,
+			Description: "Remove unsaved formula conversations and old palette question records",
 		},
 		{
 			Name:        CaptureEvalCaseCandidatesWorkflowName,
@@ -138,33 +137,54 @@ func (w *Workflows) heavy() []registry.WorkflowDefinition {
 	}
 }
 
-// askThreadRetention is how long an unkept quick question stays. A person
-// who wants one keeps it, which lists it; the rest are noise the rail
-// already hides and the database need not carry.
-const askThreadRetention = 30 * 24 * time.Hour
+// formulaDraftRetention is how long a formula conversation about a template
+// that was never saved stays once it has gone quiet.
+const formulaDraftRetention = 30 * 24 * time.Hour
 
-// deleteStaleAskBatch bounds one activity call, so the sweep never holds a
+// paletteQuestionRetention is how long the record of a palette question stays.
+// The allowance counts this month's, so two months covers every month it is
+// read for.
+const paletteQuestionRetention = 62 * 24 * time.Hour
+
+// deleteStaleDraftBatch bounds one activity call, so the sweep never holds a
 // long transaction; the workflow loops until a batch comes back short.
-const deleteStaleAskBatch = 200
+const deleteStaleDraftBatch = 200
 
-// DeleteStaleAskThreadsWorkflow removes quick questions nobody kept.
-func DeleteStaleAskThreadsWorkflow(ctx workflow.Context) (*DeleteStaleAskThreadsResult, error) {
+// AssistantRetentionWorkflow removes what the assistant keeps past its use:
+// formula conversations about templates nobody saved, and the records of
+// palette questions older than any allowance reads.
+func AssistantRetentionWorkflow(ctx workflow.Context) (*RetentionResult, error) {
 	var a *Activities
-	result := &DeleteStaleAskThreadsResult{}
-
-	before := workflow.Now(ctx).Add(-askThreadRetention).Unix()
+	now := workflow.Now(ctx)
 	deleteCtx := workflow.WithActivityOptions(ctx, sweepListOptions)
+
+	drafts, err := sweepBatches(deleteCtx, a.DeleteStaleFormulaDraftsActivity,
+		now.Add(-formulaDraftRetention).Unix())
+	if err != nil {
+		return nil, err
+	}
+	questions, err := sweepBatches(deleteCtx, a.DeleteStalePaletteQuestionsActivity,
+		now.Add(-paletteQuestionRetention).Unix())
+	if err != nil {
+		return nil, err
+	}
+
+	return &RetentionResult{FormulaDrafts: drafts, PaletteQuestions: questions}, nil
+}
+
+// sweepBatches runs one deleting activity until a batch comes back short, all
+// against one cut-off.
+func sweepBatches(ctx workflow.Context, activity any, before int64) (int, error) {
+	deleted := 0
 	for {
-		var batch DeleteStaleAskThreadsResult
-		if err := workflow.ExecuteActivity(deleteCtx, a.DeleteStaleAskThreadsActivity, &DeleteStaleAskThreadsInput{
-			Before: before,
-		}).
-			Get(deleteCtx, &batch); err != nil {
-			return nil, err
+		var batch RetentionBatch
+		if err := workflow.ExecuteActivity(ctx, activity, &RetentionInput{Before: before}).
+			Get(ctx, &batch); err != nil {
+			return deleted, err
 		}
-		result.Deleted += batch.Deleted
-		if batch.Deleted < deleteStaleAskBatch {
-			return result, nil
+		deleted += batch.Deleted
+		if batch.Deleted < deleteStaleDraftBatch {
+			return deleted, nil
 		}
 	}
 }

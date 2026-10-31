@@ -18,6 +18,10 @@ export function useSwitchOrganization() {
       apiService.userService.switchOrganization(data),
     resourceName: "Organization",
     onSuccess: async (user) => {
+      // The session already acts for the new organization, so the tab confirms it before
+      // asking for anything else: a request still asserting the old one is refused.
+      setUser(user);
+
       const { clearPermissions, fetchManifest } = usePermissionStore.getState();
       try {
         await fetchManifest();
@@ -25,8 +29,6 @@ export function useSwitchOrganization() {
         clearPermissions();
         console.error("Failed to refresh permissions after organization switch:", error);
       }
-
-      setUser(user);
 
       await clearSessionCache();
 

@@ -23,6 +23,7 @@
   "Currency used for every monetary amount on this order and its invoices.": "Moneda usada para todos los importes de este pedido y de sus facturas.",
   "Detach leg": "Desvincular el tramo",
   "Detach leg {0}?": "¿Desvincular el tramo {0}?",
+  "Edit charge": "Editar el cargo",
   "Every remaining active leg will be canceled and the order will derive to Canceled. This cannot be undone. A reason is required.": "Todos los tramos activos restantes se cancelarán y el pedido pasará a Cancelado. Esto no se puede deshacer. Se requiere un motivo.",
   "Failed to add charge": "No se pudo agregar el cargo",
   "Failed to add legs": "No se pudieron agregar los tramos",

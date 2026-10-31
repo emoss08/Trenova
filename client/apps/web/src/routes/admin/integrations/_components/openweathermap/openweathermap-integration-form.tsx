@@ -1,16 +1,9 @@
 const openWeatherMapLogo = "/integrations/logos/open_weather_logo.webp";
 import { useT } from "@trenova/shared/i18n/use-t";
-import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
+import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -21,6 +14,7 @@ import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { IntegrationConnectHeader } from "../shared/integration-connect-header";
 
 export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
@@ -129,29 +123,18 @@ function OpenWeatherMapFormHeader() {
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
-        <LazyImage src={trenovaLogo} className="size-8" />
-        <div className="flex items-center justify-center gap-1">
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-        </div>
-        <LazyImage
-          src={openWeatherMapLogo}
-          alt={t("OpenWeatherMap logo")}
-          className="h-8 max-w-28 object-contain"
-        />
-      </div>
-      <DialogHeader>
-        <DialogTitle>{t("Connect with OpenWeatherMap")}</DialogTitle>
-        <DialogDescription>
+    <IntegrationConnectHeader
+      name="OpenWeatherMap"
+      logo={{ light: openWeatherMapLogo }}
+      title={t("Connect with OpenWeatherMap")}
+      description={
+        <>
           {t("To get a free API key, visit")}{" "}
           <ExternalLink href="https://home.openweathermap.org/api_keys">
             {t("OpenWeatherMap API keys.")}
           </ExternalLink>
-        </DialogDescription>
-      </DialogHeader>
-    </div>
+        </>
+      }
+    />
   );
 }

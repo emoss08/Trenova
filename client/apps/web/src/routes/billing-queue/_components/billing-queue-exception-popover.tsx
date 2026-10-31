@@ -64,7 +64,7 @@ type BillingQueueExceptionPopoverProps = {
   targetStatus: ExceptionTargetStatus;
   label: string;
   icon: React.ReactNode;
-  variant?: "outline" | "destructive";
+  variant?: "outline" | "destructive" | "ghost";
   disabled?: boolean;
   onSuccess: () => void;
 };

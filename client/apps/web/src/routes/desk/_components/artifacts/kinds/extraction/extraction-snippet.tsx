@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useObjectUrl } from "@trenova/shared/hooks/use-object-url";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { PageSize } from "./extraction-payload";
+import type { PageSize } from "@/lib/document-reading/extraction-payload";
 import {
   boxInRegion,
   boxStyle,
@@ -13,7 +13,7 @@ import {
   regionImageStyle,
   snippetRegion,
   type PageBox,
-} from "./page-geometry";
+} from "@/lib/document-reading/page-geometry";
 
 /** How long a page the server drew is kept once nothing shows it, as the viewer keeps it. */
 const PAGE_GC_MS = 5 * 60 * 1000;

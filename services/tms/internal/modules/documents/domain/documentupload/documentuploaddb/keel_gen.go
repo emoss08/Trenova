@@ -403,6 +403,7 @@ var enumDocumentProcessingProfile = [...]schema.EnumValue{
 	{Value: `inbound_attachment`, Label: `Inbound Attachment`, Doc: `ProcessingProfileInboundAttachment is a file that came in on a monitored mailbox. It is its own profile rather than borrowing the rate-confirmation one because a POD, an invoice and a tender all arrive this way, and labelling them all a rate confirmation would be a lie the pipeline then acts on.`},
 	{Value: `capture`, Label: `Capture`, Doc: `ProcessingProfileCapture is paper scanned or printed into Trenova. It is read like an inbound attachment: what a scan is, and whose it is, is only known once its text has been read.`},
 	{Value: `factoring_remittance`, Label: `Factoring Remittance`, Doc: `ProcessingProfileFactoringRemittance is a factor's PDF remittance. Its text is read and indexed so billing can read its lines, but it is never handed to the shipment extraction model: that model, its shadow runs and its training data are for freight paperwork, not a factor's statement.`},
+	{Value: `shipment_paperwork`, Label: `Shipment Paperwork`, Doc: `ProcessingProfileShipmentPaperwork is the paperwork a shipment is billed on (proof of delivery, bill of lading, receipts): read so the billing queue can place what each page says beside it and check it against the invoice.`},
 }
 
 var enumStatus = [...]schema.EnumValue{

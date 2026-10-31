@@ -71,8 +71,12 @@ describe("billing queue loading states", () => {
       "aria-busy",
       "true",
     );
-    expect(screen.queryByText("Nothing open")).not.toBeInTheDocument();
-    expect(mocks.getById).toHaveBeenCalledWith("bqi_1", { expandShipmentDetails: "true" });
+    expect(screen.queryByText("Nothing to open")).not.toBeInTheDocument();
+    expect(mocks.getById).toHaveBeenCalledWith(
+      "bqi_1",
+      { expandShipmentDetails: "true" },
+      { signal: expect.any(AbortSignal) },
+    );
   });
 
   it("draws the statement's outline while the customer's statement loads", () => {

@@ -1,3 +1,4 @@
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type {
@@ -7,6 +8,11 @@ import type {
   ReassignChargeResult,
 } from "@trenova/shared/types/billing-queue";
 import type { ChargeAllocation, Shipment } from "@trenova/shared/types/shipment";
+import {
+  accessorialChargeMethodSchema,
+  type AccessorialCharge,
+  type AccessorialChargeMethod,
+} from "@trenova/shared/types/accessorial-charge";
 
 /**
  * The field the server reports an amount split on when a charge edit leaves it
@@ -118,4 +124,22 @@ export function nextItemAfterReassignment(
       row.id !== current.id && current.shipmentId != null && row.shipmentId === current.shipmentId,
   );
   return next?.id ?? null;
+}
+
+/**
+ * The method and amount a chosen accessorial bills by, read from its select option
+ * (or the full accessorial an older option carries), for a charge that takes them on.
+ */
+export function accessorialOptionDefaults(option: GraphQLSelectOption): {
+  method?: AccessorialChargeMethod;
+  amount?: number;
+} {
+  const full = option as unknown as Partial<AccessorialCharge>;
+  const method = accessorialChargeMethodSchema.safeParse(option.meta?.["method"] ?? full.method);
+  const amount = option.meta?.["amount"] ?? full.amount;
+
+  return {
+    method: method.success ? method.data : undefined,
+    amount: amount != null && Number.isFinite(Number(amount)) ? Number(amount) : undefined,
+  };
 }

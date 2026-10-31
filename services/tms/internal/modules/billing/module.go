@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueapprovalservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueassist"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
@@ -59,6 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedraftservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicememoservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepacket"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepdfservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicequeryservice"
@@ -69,6 +71,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoidservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/latechargeservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/paymentreminderservice"
+	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
@@ -172,6 +175,15 @@ func SharedOptions() fx.Option {
 			func(s *invoiceediservice.Service) invoiceports.InvoiceEDIService { return s },
 			invoicepdfservice.New,
 			func(s *invoicepdfservice.Service) invoiceports.InvoicePDFService { return s },
+			invoicepacket.NewAssembler,
+			func(
+				planner *invoicecreationservice.Service,
+				renderer *invoicepdfservice.Service,
+				assembler *invoicepacket.Assembler,
+				documents documentports.InvoiceDocumentService,
+			) billingqueueports.PacketPreviewer {
+				return invoicepacket.NewPreviewService(planner, renderer, assembler, documents)
+			},
 			invoicepostingservice.New,
 			func(s *invoicepostingservice.Service) invoiceports.InvoicePostingService { return s },
 			invoicesendservice.New,
@@ -190,6 +202,10 @@ func SharedOptions() fx.Option {
 			func(s *billingqueueservice.Service) billingqueueports.BillingQueueService { return s },
 			billingqueuereviewservice.New,
 			billingqueueapprovalservice.New,
+			billingqueuecontract.NewRecheckRequester,
+			billingqueuecontract.NewBriefRequester,
+			billingqueuecontract.NewNovaGenerator,
+			billingqueueassist.New,
 			invoicedocument.NewContextBuilder,
 			fx.Annotate(
 				func(b *invoicedocument.ContextBuilder) documenttemplateports.ContextBuilder { return b },
@@ -237,6 +253,10 @@ func factoringOptions() fx.Option {
 			fx.Annotate(
 				billingqueueservice.NewDocumentObserver,
 				fx.ResultTags(documentports.DocumentChangeObserverGroup),
+			),
+			fx.Annotate(
+				billingqueueservice.NewShipmentObserver,
+				fx.ResultTags(`group:"shipment_event_observers"`),
 			),
 		),
 		fx.Decorate(factoringreadinessservice.WatchInvoices),

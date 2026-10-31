@@ -24,6 +24,8 @@ func HTTPStatus(err error) int {
 		return http.StatusPaymentRequired
 	case IsPlanRestrictionError(err):
 		return http.StatusForbidden
+	case IsSessionContextStaleError(err):
+		return http.StatusConflict
 	case IsBusinessError(err):
 		return http.StatusUnprocessableEntity
 	case IsNotImplementedError(err):
@@ -57,7 +59,7 @@ func HTTPStatusWithCode(code ErrorCode) int {
 		return http.StatusTooManyRequests
 	case ErrBusinessLogic, ErrComplianceViolation, ErrAlreadyCleared:
 		return http.StatusUnprocessableEntity
-	case ErrVersionMismatch:
+	case ErrVersionMismatch, ErrSessionContextStale:
 		return http.StatusConflict
 	case ErrSystemError:
 		return http.StatusInternalServerError

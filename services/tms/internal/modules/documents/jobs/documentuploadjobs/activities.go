@@ -58,6 +58,7 @@ type ActivitiesParams struct {
 	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
 	Redis                *goredis.Client                    `optional:"true"`
 	DocumentIntelligence documentports.DocumentContentService
+	Paperwork            documentports.PaperworkReadRequester                `optional:"true"`
 	ShipmentService      shipmentserviceports.ShipmentBillingTransferService `optional:"true"`
 	Triage               inboundmessageports.TriageEventSink                 `optional:"true"`
 }
@@ -74,6 +75,7 @@ type Activities struct {
 	usageProvider        platformcatalogports.UsageProvider
 	redis                *goredis.Client
 	documentIntelligence documentports.DocumentContentService
+	paperwork            documentports.PaperworkReadRequester
 	shipmentService      shipmentserviceports.ShipmentBillingTransferService
 	triage               inboundmessageports.TriageEventSink
 }
@@ -107,6 +109,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		usageProvider:        p.UsageProvider,
 		redis:                p.Redis,
 		documentIntelligence: documentIntelligence,
+		paperwork:            p.Paperwork,
 		shipmentService:      p.ShipmentService,
 		triage:               p.Triage,
 	}
@@ -313,6 +316,9 @@ func (a *Activities) finalizeUploadPersistDocument(
 	previewPath := ""
 	if a.thumbnailGenerator != nil && a.thumbnailGenerator.SupportsThumbnail(doc.FileType) {
 		previewPath = a.startThumbnailWorkflow(ctx, doc)
+	}
+	if a.paperwork != nil {
+		a.paperwork.RequestRead(ctx, doc, payload.UserID)
 	}
 	if doc.ProcessingProfile.SupportsIntelligence() {
 		enqueueErr := a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)

@@ -11,6 +11,7 @@ package insightservice
 import (
 	"context"
 	"errors"
+	"maps"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
@@ -100,6 +101,9 @@ type RefreshRequest struct {
 	// from the clock so a scheduled run and a test agree on what "the last 30
 	// days" means.
 	Now int64
+	// Deferred words new findings through the batch API: they are stored with
+	// their detector's wording and the narration lands when the batch ends.
+	Deferred bool
 }
 
 // RefreshResult reports what the run did, per detector, so a scheduled job logs
@@ -116,6 +120,8 @@ type RefreshResult struct {
 	// Narrated counts how many findings a model actually wrote prose for, which
 	// is the number that says whether narration is working in this deployment.
 	Narrated int
+	// Pending is the narration still being written for a deferred refresh.
+	Pending *PendingNarration
 }
 
 // Refresh recomputes every detector's findings for one tenant.
@@ -133,14 +139,18 @@ func (s *Service) Refresh(ctx context.Context, req RefreshRequest) (RefreshResul
 	}
 
 	var result RefreshResult
+	deferred := make([]*insight.Insight, 0)
 	for _, d := range s.detectors.All() {
 		s.refreshDetector(ctx, refreshParams{
 			detector: d,
 			params:   params,
 			now:      now,
+			deferred: req.Deferred,
 			result:   &result,
+			unworded: &deferred,
 		})
 	}
+	result.Pending = s.deferNarration(ctx, params, deferred, &result)
 
 	s.l.Info("insight refresh complete",
 		zap.String("organization", req.TenantInfo.OrgID.String()),
@@ -158,7 +168,9 @@ type refreshParams struct {
 	detector detector.Detector
 	params   detector.Params
 	now      int64
+	deferred bool
 	result   *RefreshResult
+	unworded *[]*insight.Insight
 }
 
 // refreshDetector runs one detector and stores what it found.
@@ -201,11 +213,18 @@ func (s *Service) refreshDetector(ctx context.Context, p refreshParams) {
 		valid = append(valid, finding)
 	}
 
-	narrations := s.narrator.Narrate(ctx, &narrator.NarrateRequest{
-		TenantInfo: p.params.TenantInfo,
-		Findings:   valid,
-		WindowDays: p.params.WindowDays(),
-	})
+	narrations, fresh := s.carriedNarrations(ctx, p, valid)
+	if p.deferred {
+		for _, finding := range fresh {
+			narrations[finding.DedupeKey] = narrator.Fallback(finding)
+		}
+	} else {
+		maps.Copy(narrations, s.narrator.Narrate(ctx, &narrator.NarrateRequest{
+			TenantInfo: p.params.TenantInfo,
+			Findings:   fresh,
+			WindowDays: p.params.WindowDays(),
+		}))
+	}
 
 	entities := s.buildInsights(p, valid, narrations)
 
@@ -225,6 +244,9 @@ func (s *Service) refreshDetector(ctx context.Context, p refreshParams) {
 		return
 	}
 
+	if p.deferred {
+		*p.unworded = append(*p.unworded, unworded(entities)...)
+	}
 	p.result.Created += stored.Created
 	p.result.Superseded += stored.Superseded
 	p.result.Resolved += stored.Resolved

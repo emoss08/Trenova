@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -85,29 +84,4 @@ func (s *Service) sendMessage(
 	}
 
 	return result, err
-}
-
-func (s *Service) ask(
-	ctx context.Context,
-	req *assistantports.AskRequest,
-	actor *permissionports.RequestActor,
-	emit kernelports.AssistantStreamEmitter,
-) (*assistantports.SendMessageResult, error) {
-	if emit == nil {
-		emit = func(kernelports.StreamEvent) {}
-	}
-
-	thread, err := threadsOf(s).StartAsk(ctx, req, actor)
-	if err != nil {
-		return nil, err
-	}
-	emit(kernelports.StreamEvent{Event: assistantstreamports.AssistantEventThread, Data: thread})
-
-	return s.sendMessage(ctx, &assistantports.SendMessageRequest{
-		ThreadID:   thread.ID,
-		Content:    req.Content,
-		Page:       req.Page,
-		TenantInfo: req.TenantInfo,
-		Mentions:   req.Mentions,
-	}, actor, emit)
 }

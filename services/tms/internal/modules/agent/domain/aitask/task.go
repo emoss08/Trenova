@@ -50,20 +50,35 @@ const (
 	// What it reads is matched to schedule items and a person applies it, so
 	// it never books anything on its own.
 	TaskRemittanceExtraction = Task("RemittanceExtraction")
-	TaskEvaluationJudge      = Task("EvaluationJudge")
-	TaskEmbedding            = Task("Embedding")
-	TaskGeneral              = Task("General")
+	// TaskPaperworkReading reads a shipment's billing paperwork (a proof of
+	// delivery, a bill of lading, a receipt) for the facts billing checks. It
+	// runs through the Nova harness, a single structured call that reads the
+	// file itself, so a fast model answers in seconds without waiting for the
+	// document to be converted.
+	TaskPaperworkReading = Task("PaperworkReading")
+	// TaskPaletteAnswer answers a quick question typed into the command
+	// palette: a short streamed answer from a few read-only lookups, run
+	// through the Nova harness rather than as a Desk turn.
+	TaskPaletteAnswer   = Task("PaletteAnswer")
+	TaskEvaluationJudge = Task("EvaluationJudge")
+	TaskEmbedding       = Task("Embedding")
+	TaskGeneral         = Task("General")
 )
 
 // BorrowsFrom is the task whose providers serve this one after its own: the
 // scope classifier falls back to the model answering the Desk, so a guard that
 // no provider was assigned to, or whose providers are down, still runs.
 func (t Task) BorrowsFrom() Task {
-	if t == TaskScopeClassification || t == TaskChapterTitling {
+	switch t {
+	case TaskScopeClassification, TaskChapterTitling, TaskPaletteAnswer, TaskFormulaAssistant:
 		return TaskAssistantChat
+	case TaskPaperworkReading:
+		// Paperwork reading wants a fast model that reads files; until one is
+		// assigned to it, the document classifier's providers serve it.
+		return TaskDocumentClassification
+	default:
+		return ""
 	}
-
-	return ""
 }
 
 func (t Task) IsValid() bool {
@@ -81,6 +96,8 @@ func (t Task) IsValid() bool {
 		TaskInboundClassification,
 		TaskAccountingMapping,
 		TaskRemittanceExtraction,
+		TaskPaperworkReading,
+		TaskPaletteAnswer,
 		TaskEvaluationJudge,
 		TaskEmbedding,
 		TaskGeneral:
@@ -106,6 +123,8 @@ func AllTasks() []Task {
 		TaskInboundClassification,
 		TaskAccountingMapping,
 		TaskRemittanceExtraction,
+		TaskPaperworkReading,
+		TaskPaletteAnswer,
 		TaskEvaluationJudge,
 		TaskEmbedding,
 		TaskGeneral,

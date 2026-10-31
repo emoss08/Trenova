@@ -235,7 +235,11 @@ over it (`boxStyle`), so they stay on their text at any width, zoom step or pixe
 a resize. Fit draws the page at the viewer's width but never under 600px (`sheetWidth`), so on a
 phone it scrolls sideways rather than shrinking past reading.
 
-**What was read.** `extraction-payload.ts` reads the payload, old and new. Each field carries
+**What was read.** `lib/document-reading/extraction-payload.ts` reads the payload, old and new
+(it and `page-geometry.ts` live in `lib/` because the billing queue's document review draws the
+same reading; `GET /documents/:id/reading/` serves it for any document, through the
+`documentports.DocumentReader` port the agent module implements with `extractionartifact`,
+reading docling's intelligence when no shipment draft was made from the document). Each field carries
 `reason` (`conflict`, `review` or `low`) and, for a conflict, every `readings`; each stop is its
 `name`, `address` and `window` parts (`stop`, `role`, `part`, `appointment`, and `place`, the
 stop's "City, ST" from `stopPlace` in `extraction.go`); `missingFields` names what the document

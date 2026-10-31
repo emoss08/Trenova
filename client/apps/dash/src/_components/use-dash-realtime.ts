@@ -3,7 +3,8 @@ import {
   RESOURCE_EVENT_NAME,
 } from "@trenova/shared/hooks/realtime-patching";
 import { notification } from "@trenova/shared/lib/queries/notification";
-import { realtimeClient } from "@trenova/shared/services/realtime";
+import { REALTIME_SESSION_ENDED_EVENT, realtimeClient } from "@trenova/shared/services/realtime";
+import { leaveDashExpiredSession } from "@/lib/session-context-handler";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -78,10 +79,15 @@ export function useDashRealtime() {
 
     const offEvent = realtimeClient.on(RESOURCE_EVENT_NAME, onEvent);
     const offReset = realtimeClient.on("reset", onReset);
+    const offSessionEnded = realtimeClient.on(
+      REALTIME_SESSION_ENDED_EVENT,
+      leaveDashExpiredSession,
+    );
     realtimeClient.connect({ identity: `${userId}:${orgId}:${buId}`, joinUsers: false });
     return () => {
       offEvent();
       offReset();
+      offSessionEnded();
     };
   }, [isAuthenticated, orgId, buId, userId, queryClient]);
 }

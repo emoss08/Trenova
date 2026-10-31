@@ -105,6 +105,26 @@ export async function followTurn(
   turnId: string,
   options: Pick<RunTurnOptions, "signal" | "onEvent">,
 ): Promise<void> {
+  await followStream(
+    (apply, attach) => apiService.assistantService.attachTurn(turnId, apply, attach),
+    options,
+  );
+}
+
+/** Reads one stream from a cursor; a turn's and a palette question's are the two. */
+export type AttachStream = (
+  apply: (event: AssistantStreamEvent, id: string) => void,
+  options: { cursor: string; signal: AbortSignal },
+) => Promise<void>;
+
+/**
+ * Follows a stream to its ending, reattaching from the last event applied
+ * when the connection drops.
+ */
+export async function followStream(
+  attach: AttachStream,
+  options: Pick<RunTurnOptions, "signal" | "onEvent">,
+): Promise<void> {
   let cursor = "";
   let terminal = false;
   let attempt = 0;
@@ -132,10 +152,7 @@ export async function followTurn(
 
   for (;;) {
     try {
-      await apiService.assistantService.attachTurn(turnId, apply, {
-        cursor,
-        signal: options.signal,
-      });
+      await attach(apply, { cursor, signal: options.signal });
     } catch (error) {
       if (options.signal.aborted || terminal) {
         return;

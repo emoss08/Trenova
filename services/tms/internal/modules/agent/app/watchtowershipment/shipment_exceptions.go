@@ -281,8 +281,8 @@ func DescribeMissedStop(
 		title = "Missed delivery"
 	}
 	late := max(now-stop.Cutoff, 0)
-	summary := "The " + what + " window at " + missedStopPlace(stop) + " closed " +
-		timeutils.DescribeAgo(stop.Cutoff, now) + " and no arrival has been recorded."
+	summary := "The " + what + " window at " + missedStopPlace(stop) +
+		" closed and no arrival has been recorded."
 
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenant,
@@ -310,11 +310,9 @@ func DescribeMissingPOD(
 	grace, now int64,
 ) watchtowerports.WatchtowerItemInput {
 	since := max(now-row.DeliveredAt, 0)
-	ago := timeutils.DescribeAgo(row.DeliveredAt, now)
-	summary := "Delivered " + ago + " and no proof of delivery is on file."
+	summary := "Delivered, and no proof of delivery is on file."
 	if row.CustomerName != "" {
-		summary = "Delivered for " + row.CustomerName + " " + ago +
-			" and no proof of delivery is on file."
+		summary = "Delivered for " + row.CustomerName + ", and no proof of delivery is on file."
 	}
 
 	return watchtowerports.WatchtowerItemInput{

@@ -65,10 +65,6 @@ type TurnPlan struct {
 	// Records are the records the question is about, so an agent the turn
 	// hands a task to reads their memories too.
 	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
-	// Inline says the answer is read with nothing beside it, so the turn's
-	// activities keep no tool result as an artifact. A plan recorded before it
-	// existed reads false and keeps its artifacts.
-	Inline bool `json:"inline,omitempty"`
 	// Readings are files whose reading the turn picks up from a wait. Their
 	// extraction is shown again when the turn finishes, so a card the wait's
 	// pickup made opens in the pane like one the turn made.
@@ -116,7 +112,6 @@ func (p *TurnPlan) RunRequest(actor *permissionports.RequestActor) *agentruntime
 		ThreadID:    p.ThreadID,
 		Proposals:   p.Proposals,
 		Records:     p.Records,
-		Inline:      p.Inline,
 	}
 }
 
@@ -284,9 +279,7 @@ func (s *Service) prepareTurn(
 		// activity that runs the publish rather than on this request. The
 		// palette has nothing beside its answer, so there the reply holds
 		// everything.
-		runReq.Inline = thread.Origin.AnswersInline()
-		runReq.Publishes = s.artifacts != nil && !runReq.Inline
-		plan.Inline = runReq.Inline
+		runReq.Publishes = s.artifacts != nil
 		runReq.Directed = checks.directed
 		runReq.Command = command
 		plan.Timezone = runReq.Context.Timezone

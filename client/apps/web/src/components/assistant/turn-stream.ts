@@ -4,7 +4,6 @@ import type {
   AssistantMessageAttachment,
   AssistantPageContext,
   AssistantStreamEvent,
-  AssistantThread,
   DelegateReport,
   FailedProvider,
   SendMessageResult,
@@ -449,8 +448,6 @@ export type TurnState = {
   mentions: AssistantEntityRef[];
   /** The turn follows up a decision; it carries no words of the person's own. */
   followUp: boolean;
-  /** The thread a quick question was answered on, once the server names it. */
-  thread: AssistantThread | null;
   /** When this reader began following the turn, in epoch milliseconds. */
   startedAt: number;
   /** What reached the turn while it worked, in the order it arrived. */
@@ -495,7 +492,6 @@ export function initialTurnState(
     attachments: context.attachments ?? [],
     mentions: context.mentions ?? [],
     followUp: context.followUp ?? false,
-    thread: null,
     startedAt: context.startedAt ?? Date.now(),
     interjections: [],
     next: null,
@@ -729,9 +725,6 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           : [...state.savedMemories, saved],
       };
     }
-
-    case "thread":
-      return { ...state, thread: event.data };
 
     case "steered": {
       // A reader that rejoins is sent the turn from its start, so a steer it

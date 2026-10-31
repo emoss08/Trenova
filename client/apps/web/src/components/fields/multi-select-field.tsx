@@ -13,7 +13,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
-import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { api } from "@trenova/shared/lib/api";
+import { selectOptionsPath } from "@/lib/select-options-path";
 import {
   fetchGraphQLSelectOptions,
   selectOptionFiltersFromSearchParams,
@@ -101,6 +102,9 @@ export interface MultiSelectAutocompleteFieldProps<TOption, TForm extends FieldV
   nestedValues?: boolean;
 }
 
+/** The most IDs one REST lookup answers; a REST select-options endpoint pages at this size. */
+const REST_IDS_PER_REQUEST = 100;
+
 async function fetchOptions<T>(
   link: string,
   inputValue: string,
@@ -125,34 +129,25 @@ async function fetchOptions<T>(
     return response as GenericLimitOffsetResponse<T>;
   }
 
-  const fetchURL = new URL(`${API_BASE_URL}${link}`, window.location.origin);
-  fetchURL.searchParams.set("limit", limit.toString());
-  fetchURL.searchParams.set("offset", offset.toString());
-  if (inputValue) {
-    fetchURL.searchParams.set("query", inputValue);
-  }
-
-  if (extraSearchParams) {
-    Object.entries(extraSearchParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        fetchURL.searchParams.set(key, value.toString());
-      }
-    });
-  }
-
-  const response = await fetch(fetchURL.href, {
-    credentials: "include",
-  });
-
-  return response.json();
+  return api.get<GenericLimitOffsetResponse<T>>(
+    selectOptionsPath(
+      link,
+      {
+        limit: limit.toString(),
+        offset: offset.toString(),
+        ...(inputValue ? { query: inputValue } : {}),
+      },
+      extraSearchParams,
+    ),
+  );
 }
 
-async function fetchOptionsByIds(
+async function fetchOptionsByIds<T>(
   link: string,
   ids: string[],
   extraSearchParams?: Record<string, string>,
   graphql?: GraphQLSelectOptionsConfig,
-) {
+): Promise<T[]> {
   if (!ids.length) {
     return [];
   }
@@ -167,38 +162,21 @@ async function fetchOptionsByIds(
         ...graphql.filters,
       },
     });
-    return response.results;
+    return response.results as T[];
   }
 
-  const promises = ids.map(async (id) => {
-    try {
-      const fetchURL = new URL(`${API_BASE_URL}${link}${id}`, window.location.origin);
-
-      if (extraSearchParams) {
-        Object.entries(extraSearchParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            fetchURL.searchParams.set(key, value.toString());
-          }
-        });
-      }
-
-      const response = await fetch(fetchURL.href, {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch option with id ${id}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error(`Failed to fetch option with id ${id}:`, error);
-      return null;
-    }
-  });
-
-  const results = await Promise.all(promises);
-  return results.filter((result) => result !== null);
+  const pages: string[][] = [];
+  for (let start = 0; start < ids.length; start += REST_IDS_PER_REQUEST) {
+    pages.push(ids.slice(start, start + REST_IDS_PER_REQUEST));
+  }
+  const responses = await Promise.all(
+    pages.map((pageIds) =>
+      api.get<GenericLimitOffsetResponse<T>>(
+        selectOptionsPath(link, {}, extraSearchParams, pageIds),
+      ),
+    ),
+  );
+  return responses.flatMap((response) => response.results);
 }
 
 export function MultiSelectAutocomplete<T>({
@@ -321,13 +299,13 @@ export function MultiSelectAutocomplete<T>({
             const strings = values.filter((v): v is string => typeof v === "string");
             const additionalOptionsPromise =
               strings.length > 0
-                ? fetchOptionsByIds(link, strings, extraSearchParams, graphql)
+                ? fetchOptionsByIds<T>(link, strings, extraSearchParams, graphql)
                 : Promise.resolve([] as T[]);
 
             const additionalOptions = await additionalOptionsPromise;
             return [...objects, ...additionalOptions];
           })()
-        : fetchOptionsByIds(
+        : fetchOptionsByIds<T>(
             link,
             values.map((v) => (typeof v === "string" ? v : getOptionValue(v as T).toString())),
             extraSearchParams,

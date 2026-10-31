@@ -45,13 +45,6 @@ const (
 	// EventsTopic carries everything a reader of the run sees, in order.
 	EventsTopic = temporaltype.StreamEventsTopic
 
-	// streamBatchInterval is how long the model activity holds streamed text
-	// before publishing it. Each publish is a signal in the run's history, so
-	// sending every token would bloat the history for nothing. A tenth of a
-	// second is below what reads as lag and is the value Temporal's own AI
-	// integrations use.
-	streamBatchInterval = 100 * time.Millisecond
-
 	// modelCallTimeout bounds one model call. A reasoning model can think for
 	// minutes before it writes anything, so this is generous. What catches a
 	// dead call early is the heartbeat, not this.
@@ -131,9 +124,6 @@ type RunContext struct {
 	// Records are the records the turn is about, so an agent it hands a task
 	// to reads their memories too.
 	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
-	// Inline says the reply is read with nothing beside it, so no tool result
-	// is kept as an artifact.
-	Inline bool `json:"inline,omitempty"`
 	// CodeMode forces the code-mode gate for the run.
 	CodeMode codemode.Override `json:"codeMode,omitempty"`
 }
@@ -168,7 +158,6 @@ func NewRunContext(req *agentruntimeports.RunRequest, priorityKey int) RunContex
 		PriorityKey:         priorityKey,
 		Delegation:          req.Delegation,
 		Records:             req.Records,
-		Inline:              req.Inline,
 		CodeMode:            req.CodeMode,
 	}
 }
@@ -191,7 +180,6 @@ func (rc *RunContext) request() *agentruntimeports.RunRequest {
 		PinProvider:         rc.PinProvider,
 		Delegation:          rc.Delegation,
 		Records:             rc.Records,
-		Inline:              rc.Inline,
 		CodeMode:            rc.CodeMode,
 	}
 }

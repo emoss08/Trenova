@@ -2,8 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
+import { FakeBroadcastChannel } from "@trenova/shared/testing/fake-broadcast-channel";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthForm } from "./auth-form";
+
+vi.stubGlobal("BroadcastChannel", FakeBroadcastChannel);
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -177,6 +180,16 @@ describe("AuthForm", () => {
     ]);
     mocks.currentUser.mockResolvedValue({ id: "usr_1", currentOrganizationId: "org_1" });
     mocks.switchOrganization.mockResolvedValue({ id: "usr_1", currentOrganizationId: "org_2" });
+  });
+
+  it("goes into the app when the person finishes signing in in another tab", async () => {
+    renderAuthForm();
+    await screen.findByLabelText("Email");
+
+    new FakeBroadcastChannel("trenova-session-context").postMessage({ kind: "signed-in" });
+
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith("/", { replace: true }));
+    expect(mocks.login).not.toHaveBeenCalled();
   });
 
   it("transitions from login to a dedicated organization selection step", async () => {

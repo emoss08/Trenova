@@ -19,7 +19,7 @@ const (
 	modelSchemaName     = "accounting_mapping"
 )
 
-const modelSystemPrompt = `You match a freight company's records in its transport management system to records in its accounting system.
+const modelSystemPrompt = `Your task: match a freight company's records in Trenova to records in its accounting system.
 
 For each target you are given the candidates the accounting system has. Choose the candidate that names the same thing as the target. If none of them does, answer with an empty candidate. Never invent a candidate: answer only with a candidate label listed under that target.
 

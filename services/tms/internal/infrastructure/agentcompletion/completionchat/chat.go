@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -148,7 +147,7 @@ func (s *Chat) chatProviders(
 		return nil, err
 	}
 
-	usable, err := s.UsableFor(ctx, aitask.TaskAssistantChat, req.TenantInfo)
+	usable, err := s.UsableFor(ctx, req.ChatTask(), req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +215,7 @@ func (s *Chat) attempt(ctx context.Context, run *chatRun, idx int) *chatAttempt 
 	outcome := chatOutcome(provider, result, &streamed, attemptErr)
 	s.SettleAttempt(attemptCtx, span, &completionengine.UsageAttempt{
 		Provider:    provider,
-		Task:        aitask.TaskAssistantChat,
+		Task:        req.ChatTask(),
 		Surface:     completionengine.SurfaceFor(aiusage.SurfaceChat, &req.Attribution),
 		Attribution: req.Attribution,
 		Tenant:      req.TenantInfo,
@@ -235,7 +234,7 @@ func (s *Chat) attempt(ctx context.Context, run *chatRun, idx int) *chatAttempt 
 		if first := firstOtherThan(run.failures, provider.ID); first != nil {
 			result.FallbackFrom = first
 		}
-		result.CostUSD = outcome.Cost(provider, aitask.TaskAssistantChat)
+		result.CostUSD = outcome.Cost(provider, req.ChatTask())
 	}
 
 	return &chatAttempt{result: result, streamed: streamed, err: attemptErr, elapsed: elapsed}
@@ -638,7 +637,7 @@ func (s *Chat) chatCall(
 			// A chat turn drives tools, so it is sampled for exactness: the
 			// model has to name a tool that exists and fill its arguments
 			// with JSON that parses, and invention there is only ever a bug.
-			Sampling: modeladapter.SamplingForTask(aitask.TaskAssistantChat),
+			Sampling: modeladapter.SamplingForTask(req.ChatTask()),
 		},
 	}
 }

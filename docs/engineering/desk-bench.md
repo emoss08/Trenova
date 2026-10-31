@@ -485,13 +485,13 @@ the source.
           formula: ["shipment.distance", '/shipment\.stops|extraStops/']
 ```
 
-A scenario with `palette: true` asks the way the command palette does: the case opens with
-`StartAsk` on its first message, so the palette's own choice of agent answers it (the
-general assistant; `agent` is refused), on a quick question's conversation holding every read
-the person may use, and every message is sent on the `Palette` surface. The conversation is
-retitled `[bench] …` like any other, so `desk clean` finds it. The palette sends the records
-its search found that the question names as `mentions`; give them on the step to test that
-path, or leave them out to test Nova finding the record itself.
+A scenario with `palette: true` asks the way the command palette does: each step is a
+question to the palette's Nova harness task (`paletteservice.Ask`), recorded from the stream the
+palette reads. It is not a Desk conversation, so `agent`, `surface`, attachments and decisions
+are refused, and its expected calls are the palette's own tools (`search_records`,
+`get_record`, `list_records`). The palette sends the records its search found that the question
+names as `mentions`; give them on the step to test that path, or leave them out to test Nova
+finding the record itself.
 
 Every step also checks that each of its turns finished, that no artifact link restarted its reply (a link the runtime mends without asking again, a left-out artifact or one standing apart from any sentence moved into the reply's own sentence, is a `place_artifacts` with no `relink_artifacts` and is not counted), and that the grounding guard did not
 have to rewrite or annotate its reply ("reply grounded without a correction": a reply that named

@@ -17,8 +17,7 @@ scenarios:
             label: SEED-PAY-002
             find: select id from shipments where pro_number = 'SEED-PAY-002'
         expect:
-          calls: ["shipment_get|shipment_list|shipment_get_tracking"]
-          noCalls: [agent_list_runs, agent_get_run]
+          calls: ["get_record|search_records|list_records"]
           noProposals: true
           noRecordIds: true
           replyIncludes: ["SEED-PAY-002"]
@@ -46,8 +45,7 @@ scenarios:
             label: Peak Distributing
             find: select id from customers where code = 'PEAK'
         expect:
-          calls: ["customer_get|customer_list|search_customers|shipment_list"]
-          noCalls: [agent_list_runs, agent_get_run]
+          calls: ["get_record|search_records|list_records"]
           noProposals: true
           noRecordIds: true
           replyIncludes: ["Peak"]
@@ -58,24 +56,21 @@ scenarios:
   - name: palette-list-answered-inline
     description: >
       A quick question from the command palette whose answer is a list. Asked for the shipment
-      types, Nova replied "The full table is in [Shipment types](artifact:…)", a link the palette
-      cannot open: the list tool's result was kept as an artifact beside a conversation the
-      palette never shows. A palette turn keeps nothing beside its answer, so the rows are written
-      into the reply as a markdown table.
+      types, Nova once replied "The full table is in [Shipment types](artifact:…)", a link the
+      palette cannot open. A palette answer has nothing beside it, so the rows are written into
+      the reply.
     palette: true
     steps:
       - say: "what shipment types do we have?"
         page: { path: /, title: Home }
         expect:
-          calls: ["masterdata_list_shipment_types"]
-          noCalls: [publish_artifact]
+          calls: ["list_records"]
           noProposals: true
           noRecordIds: true
-          replyIncludes: ["/\\|\\s*-{3,}/"]
           replyExcludes: ["artifact:", "full table is in", "attached"]
           facts:
             - sql: select code from shipment_types
               note: every shipment type's code
           rubric: >
-            Gives the count and a markdown table of every shipment type, written into the reply,
+            Gives the count and every shipment type, written into the reply as a short list,
             without pointing to a table, card or document.

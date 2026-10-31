@@ -3,6 +3,7 @@ package documenthandler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -41,6 +42,7 @@ type Params struct {
 	UploadService          *documentuploadservice.Service
 	DocumentContentService documentports.DocumentContentService
 	ExtractionStatus       documentports.ExtractionStatusReader
+	Reader                 documentports.DocumentReader `optional:"true"`
 	ImportAssistant        shipmentimportassistantports.ShipmentImportAssistantService
 	PageAssistant          assistantports.PageAssistant `optional:"true"`
 	ErrorHandler           *helpers.ErrorHandler
@@ -54,6 +56,7 @@ type Handler struct {
 	uploadService   *documentuploadservice.Service
 	contentService  documentports.DocumentContentService
 	extraction      documentports.ExtractionStatusReader
+	reader          documentports.DocumentReader
 	importAssistant shipmentimportassistantports.ShipmentImportAssistantService
 	pageAssistant   assistantports.PageAssistant
 	eh              *helpers.ErrorHandler
@@ -86,6 +89,7 @@ func New(p Params) *Handler {
 		uploadService:   p.UploadService,
 		contentService:  p.DocumentContentService,
 		extraction:      p.ExtractionStatus,
+		reader:          p.Reader,
 		importAssistant: p.ImportAssistant,
 		pageAssistant:   p.PageAssistant,
 		eh:              p.ErrorHandler,
@@ -217,6 +221,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.getContent,
 	)
 	api.GET(
+		"/:documentID/reading/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getReading,
+	)
+	api.GET(
 		"/:documentID/versions/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.listVersions,
@@ -240,6 +249,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:documentID/signature/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
 		h.setSignature,
+	)
+	api.POST(
+		"/:documentID/delivery-facts/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.setDeliveryFacts,
 	)
 	api.GET(
 		"/:documentID/shipment-draft/",
@@ -417,14 +431,26 @@ func (h *Handler) getOption(c *gin.Context) {
 // @Param offset query int false "Page offset" minimum(0)
 // @Param resourceId query string false "Filter by resource ID"
 // @Param resourceType query string false "Filter by resource type"
+// @Param ids query []string false "Look up these documents, archived or not, instead of searching" collectionFormat(multi)
 // @Success 200 {object} pagination.Response[[]document.Document]
 // @Failure 401 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /documents/select-options/ [get]
 func (h *Handler) selectOptions(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	ids, err := selectOptionIDs(c.QueryArray("ids"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	if len(ids) > 0 {
+		req.Query = ""
+		req.Pagination = pagination.Info{Limit: len(ids), Offset: 0}
+	}
 
 	pagination.SelectOptions(
 		c,
@@ -437,6 +463,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 					SelectQueryRequest: req,
 					ResourceID:         c.Query("resourceId"),
 					ResourceType:       c.Query("resourceType"),
+					IDs:                ids,
 				},
 			)
 		},
@@ -1217,6 +1244,42 @@ func (h *Handler) getPacketSummary(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, summary)
 }
 
+// @Summary Read a document as it was read
+// @Description Each value read from the document with the page and the box on that page it was found in, the same reading the Desk's extraction card draws. A document nothing was read from returns no fields.
+// @ID getDocumentReading
+// @Tags Documents
+// @Produce json
+// @Param documentID path string true "Document ID"
+// @Success 200 {object} map[string]any
+// @Failure 404 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /documents/{documentID}/reading/ [get]
+func (h *Handler) getReading(c *gin.Context) {
+	if h.reader == nil {
+		helpers.JSON(c, http.StatusNotImplemented, contentServiceUnavailable())
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	reading, err := h.reader.ReadDocument(
+		c.Request.Context(),
+		documentID,
+		pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, reading)
+}
+
 func (h *Handler) getContent(c *gin.Context) {
 	if h.contentService == nil {
 		helpers.JSON(
@@ -1617,4 +1680,90 @@ func (h *Handler) extractionStatus(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, status)
+}
+
+type setDeliveryFactsRequest struct {
+	Facts   document.DeliveryFacts `json:"facts"`
+	Version int64                  `json:"version"`
+}
+
+// @Summary Record what a delivery document says
+// @Description Who signed, pieces, over/short/damaged, seal, in and out times, and for a receipt its amount and the charge it bills as. A receipt that names a charge the shipment does not bill raises a check on its billing queue item.
+// @ID setDocumentDeliveryFacts
+// @Tags Documents
+// @Accept json
+// @Produce json
+// @Param documentID path string true "Document ID"
+// @Param request body setDeliveryFactsRequest true "The facts and the document version being changed"
+// @Success 200 {object} document.Document
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 409 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /documents/{documentID}/delivery-facts/ [post]
+func (h *Handler) setDeliveryFacts(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req := new(setDeliveryFactsRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	updated, err := h.service.SetDeliveryFacts(
+		c.Request.Context(),
+		&documentservice.SetDeliveryFactsRequest{
+			DocumentID: documentID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			Facts:   req.Facts,
+			Version: req.Version,
+			Actor:   requestActorFromAuthContext(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, updated)
+}
+
+func selectOptionIDs(values []string) ([]pulid.ID, error) {
+	if len(values) > pagination.MaxLimit {
+		return nil, errortypes.NewValidationError(
+			"ids",
+			errortypes.ErrInvalidLength,
+			"No more than {0} documents can be looked up at once",
+			pagination.MaxLimit,
+		)
+	}
+
+	ids := make([]pulid.ID, 0, len(values))
+	seen := make(map[pulid.ID]struct{}, len(values))
+	for _, value := range values {
+		id, err := pulid.MustParse(strings.TrimSpace(value))
+		if err != nil {
+			return nil, errortypes.NewValidationError(
+				"ids",
+				errortypes.ErrInvalidFormat,
+				"Every document ID must be valid",
+			)
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
 }

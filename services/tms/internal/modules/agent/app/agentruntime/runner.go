@@ -277,7 +277,7 @@ func (s *Service) driveRound(t *Turn, effects TurnEffects, loop *driveLoop) driv
 		return finished(s.finishCutOff(t, effects, completion))
 	}
 	modelstream.TagToolCalls(completion)
-	turnhistory.DistinctCallIDs(completion, t.callIDs, effects.NewCallID)
+	completion.DistinctCallIDs(t.callIDs, effects.NewCallID)
 
 	if len(completion.ToolCalls) == 0 {
 		return s.driveReply(t, effects, loop, completion)

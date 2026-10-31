@@ -43,6 +43,7 @@ export const documentProcessingProfileSchema = z.enum([
   "inbound_attachment",
   "capture",
   "factoring_remittance",
+  "shipment_paperwork",
 ]);
 
 export type DocumentProcessingProfile = z.infer<typeof documentProcessingProfileSchema>;
@@ -54,6 +55,35 @@ export type DocumentSignatureStatus = z.infer<typeof documentSignatureStatusSche
 export const documentSignatureSourceSchema = z.enum(["Extraction", "Person"]);
 
 export type DocumentSignatureSource = z.infer<typeof documentSignatureSourceSchema>;
+
+export const deliveryOsdSchema = z.enum(["None", "Over", "Short", "Damaged"]);
+export type DeliveryOsd = z.infer<typeof deliveryOsdSchema>;
+
+/** What a delivery document or receipt says, recorded by a person or read by Nova. */
+export const deliveryFactsSchema = z.object({
+  signedBy: z.string().nullish(),
+  pieces: z.string().nullish(),
+  osd: z
+    .union([deliveryOsdSchema, z.literal("")])
+    .nullish()
+    .transform((value) => (value ? value : null)),
+  osdNote: z.string().nullish(),
+  seal: z.string().nullish(),
+  arrivedAt: z.number().nullish(),
+  departedAt: z.number().nullish(),
+  amount: z.string().nullish(),
+  reference: z.string().nullish(),
+  chargeId: z.string().nullish(),
+  chargeLabel: z.string().nullish(),
+  source: z.enum(["Person", "Agent"]).nullish(),
+  readFields: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  updatedById: z.string().nullish(),
+  updatedAt: z.number().nullish(),
+});
+export type DeliveryFacts = z.infer<typeof deliveryFactsSchema>;
 
 export const documentSchema = z.object({
   id: z.string(),
@@ -105,6 +135,7 @@ export const documentSchema = z.object({
     .transform((value) => value || null),
   signatureUpdatedById: z.string().nullable().optional(),
   signatureUpdatedAt: z.number().nullable().optional(),
+  deliveryFacts: deliveryFactsSchema.nullish(),
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),

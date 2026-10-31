@@ -1,4 +1,8 @@
-import { parseAssistantStreamEvent, type AssistantStreamEvent } from "@/types/assistant";
+import {
+  parseAskStreamEvent,
+  parseAssistantStreamEvent,
+  type AssistantStreamEvent,
+} from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   NO_HAND_OFF_AGENTS,
@@ -587,26 +591,14 @@ describe("a turn's context", () => {
     expect(initialTurnState("Plain").attachments).toEqual([]);
   });
 
-  it("keeps the thread a quick question was answered on", () => {
-    const thread = parseAssistantStreamEvent(
-      "thread",
-      JSON.stringify({
-        id: "athr_1",
-        businessUnitId: "bu_1",
-        organizationId: "org_1",
-        userId: "usr_1",
-        agentDefinitionId: "agdef_1",
-        status: "Active",
-        origin: "Ask",
-        createdAt: 1,
-        updatedAt: 1,
-      }),
-    );
-    expect(thread?.event).toBe("thread");
+  it("ends a palette answer on its done, which names only the question", () => {
+    const done = parseAskStreamEvent("done", JSON.stringify({ askId: "pask_1" }));
+    expect(done).toEqual({ event: "done", data: null });
 
-    const state = run([thread!, accepted]);
-    expect(state.thread?.id).toBe("athr_1");
-    expect(state.status).toBe("working");
+    const delta = parseAskStreamEvent("delta", JSON.stringify({ text: "Dana" }));
+    const state = run([accepted, delta!, done!]);
+    expect(state.status).toBe("done");
+    expect(state.result).toBeNull();
   });
 });
 
@@ -736,7 +728,7 @@ describe("advanceTurn", () => {
 
   it("returns the same state when nothing needed stamping", () => {
     const state = initialTurnState("Q");
-    const next = advanceTurn(state, { event: "thread", data: undefined as never }, 1);
+    const next = advanceTurn(state, accepted, 1);
 
     expect(next.segments).toBe(state.segments);
   });

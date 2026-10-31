@@ -48,7 +48,6 @@ func TestPlanDraftReply_RefusesWhatDraftReplyRefuses(t *testing.T) {
 		TenantInfo: testTenant,
 		UserID:     testUserID,
 		MessageID:  f.message.ID,
-		Mode:       triagenova.Interactive,
 	}
 
 	plan, err := f.service.PlanDraftReply(t.Context(), req)

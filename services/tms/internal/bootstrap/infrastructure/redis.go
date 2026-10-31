@@ -18,6 +18,7 @@ var RedisRepositoriesModule = fx.Module("redis-repositories",
 	fx.Provide(
 		entitycache.NewOrganizationRepository,
 		authstore.NewSessionRepository,
+		authstore.NewSessionLiveness,
 		authstore.NewSSOLoginStateRepository,
 		authstore.NewMFAChallengeRepository,
 		authstore.NewAccountingOAuthStateRepository,

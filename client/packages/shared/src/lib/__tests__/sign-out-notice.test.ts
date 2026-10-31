@@ -18,6 +18,7 @@ describe("sign-out notices", () => {
   it("reads back the notices it writes", () => {
     expect(signOutNoticeFrom(new URLSearchParams("signed_out=idle"))).toBe("idle");
     expect(signOutNoticeFrom(new URLSearchParams("signed_out=expired"))).toBe("expired");
+    expect(signOutNoticeFrom(new URLSearchParams("signed_out=elsewhere"))).toBe("elsewhere");
   });
 
   it("ignores a missing or unknown notice", () => {

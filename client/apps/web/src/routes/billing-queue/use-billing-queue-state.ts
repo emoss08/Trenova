@@ -1,4 +1,17 @@
-import { createParser, parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs";
+import {
+  parseDateWindow,
+  serializeDateWindow,
+  type DateWindow,
+} from "@/lib/billing-queue-date-window";
+import { BILLING_QUEUE_OPEN_LANES } from "@trenova/shared/types/billing-queue";
+import {
+  createParser,
+  parseAsArrayOf,
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+} from "nuqs";
 
 const parseAsStringArray = createParser<string[]>({
   parse: (value) => {
@@ -14,6 +27,12 @@ const parseAsStringArray = createParser<string[]>({
     return JSON.stringify(value);
   },
 }).withDefault([]);
+
+/** A billing queue date filter in the URL, `last:7` or `range:FROM:TO`. */
+const parseAsDateWindow = createParser<DateWindow>({
+  parse: (value) => parseDateWindow(value),
+  serialize: (value) => serializeDateWindow(value),
+});
 
 /**
  * The two halves of the billing queue.
@@ -38,6 +57,18 @@ export const queueSearchParamsParser = {
   payer: parseAsString,
   includePosted: parseAsBoolean.withDefault(false),
   preset: parseAsString,
+  /** The lanes the list shows; empty shows every open lane. */
+  lanes: parseAsArrayOf(parseAsStringLiteral(BILLING_QUEUE_OPEN_LANES)).withDefault([]),
+  minAmount: parseAsString,
+  maxAmount: parseAsString,
+  /** Only items queued before this Unix time; set by "older than N days". */
+  createdBefore: parseAsInteger,
+  /** Narrows the queue to one customer's shipments, whoever each bill goes to. */
+  shipmentCustomer: parseAsString,
+  /** Only shipments delivered, picked up, or items queued within these windows. */
+  delivered: parseAsDateWindow,
+  pickedUp: parseAsDateWindow,
+  queued: parseAsDateWindow,
   /**
    * The transfer run the bulk dialog is watching. It lives in the URL so the
    * toast announcing a finished transfer can link straight back to its report,
@@ -62,11 +93,6 @@ export const transferRunSearchParamsParser = {
   transferRun: queueSearchParamsParser.transferRun,
 };
 
-export const queueToolbarSearchParamsParser = {
-  status: queueSearchParamsParser.status,
-  includePosted: queueSearchParamsParser.includePosted,
-};
-
 export const queueSidebarSearchParamsParser = {
   status: queueSearchParamsParser.status,
   query: queueSearchParamsParser.query,
@@ -75,4 +101,12 @@ export const queueSidebarSearchParamsParser = {
   payer: queueSearchParamsParser.payer,
   includePosted: queueSearchParamsParser.includePosted,
   preset: queueSearchParamsParser.preset,
+  lanes: queueSearchParamsParser.lanes,
+  minAmount: queueSearchParamsParser.minAmount,
+  maxAmount: queueSearchParamsParser.maxAmount,
+  createdBefore: queueSearchParamsParser.createdBefore,
+  shipmentCustomer: queueSearchParamsParser.shipmentCustomer,
+  delivered: queueSearchParamsParser.delivered,
+  pickedUp: queueSearchParamsParser.pickedUp,
+  queued: queueSearchParamsParser.queued,
 };

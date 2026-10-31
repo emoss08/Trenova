@@ -38,6 +38,14 @@ type sessionRepository struct {
 }
 
 func NewSessionRepository(p SessionRepositoryParams) sessionports.SessionRepository {
+	return newSessionRepository(p)
+}
+
+func NewSessionLiveness(p SessionRepositoryParams) sessionports.SessionLiveness {
+	return newSessionRepository(p)
+}
+
+func newSessionRepository(p SessionRepositoryParams) *sessionRepository {
 	return &sessionRepository{
 		client: p.Client,
 		policy: session.Policy{
@@ -55,7 +63,7 @@ func (r *sessionRepository) Get(ctx context.Context, sessionID pulid.ID) (*sessi
 	)
 
 	sess := new(session.Session)
-	if err := redishelpers.GetJSON(ctx, r.client, r.getSessionKey(sessionID), sess); err != nil {
+	if err := redishelpers.GetJSON(ctx, r.client, sessionKey(sessionID), sess); err != nil {
 		if redishelpers.IsRedisNil(err) {
 			return nil, sessionports.ErrSessionNotFound
 		}
@@ -75,7 +83,7 @@ func (r *sessionRepository) Get(ctx context.Context, sessionID pulid.ID) (*sessi
 
 func (r *sessionRepository) discard(ctx context.Context, sess *session.Session) {
 	pipe := r.client.Pipeline()
-	pipe.Del(ctx, r.getSessionKey(sess.ID))
+	pipe.Del(ctx, sessionKey(sess.ID))
 	pipe.ZRem(ctx, r.getUserSessionsKey(sess.UserID), sess.ID.String())
 	if _, err := pipe.Exec(ctx); err != nil {
 		r.l.Warn(
@@ -108,7 +116,7 @@ func (r *sessionRepository) Create(ctx context.Context, sess *session.Session) e
 
 	pipe := r.client.Pipeline()
 
-	sessionKey := r.getSessionKey(sess.ID)
+	sessionKey := sessionKey(sess.ID)
 	if err := redishelpers.PipelineSetJSON(
 		ctx,
 		pipe,
@@ -151,7 +159,7 @@ func (r *sessionRepository) Update(ctx context.Context, sess *session.Session) e
 	if err := redishelpers.SetJSON(
 		ctx,
 		r.client,
-		r.getSessionKey(sess.ID),
+		sessionKey(sess.ID),
 		sess,
 		remainingTTL,
 	); err != nil {
@@ -169,13 +177,13 @@ func (r *sessionRepository) Delete(ctx context.Context, sessionID pulid.ID) erro
 	)
 
 	sess := new(session.Session)
-	if err := redishelpers.GetJSON(ctx, r.client, r.getSessionKey(sessionID), sess); err != nil {
+	if err := redishelpers.GetJSON(ctx, r.client, sessionKey(sessionID), sess); err != nil {
 		log.Error("failed to get session", zap.Error(err))
 		return err
 	}
 
 	pipe := r.client.Pipeline()
-	pipe.Del(ctx, r.getSessionKey(sessionID))
+	pipe.Del(ctx, sessionKey(sessionID))
 	pipe.ZRem(ctx, r.getUserSessionsKey(sess.UserID), sessionID.String())
 
 	if _, err := pipe.Exec(ctx); err != nil {
@@ -209,7 +217,7 @@ func (r *sessionRepository) DeleteAllForUser(ctx context.Context, userID pulid.I
 			log.Warn("skipping unparseable session id", zap.String("member", member))
 			continue
 		}
-		pipe.Del(ctx, r.getSessionKey(sessionID))
+		pipe.Del(ctx, sessionKey(sessionID))
 	}
 	pipe.Del(ctx, userSessionsKey)
 
@@ -253,7 +261,7 @@ func (r *sessionRepository) ListForUser(
 		if parseErr != nil {
 			continue
 		}
-		reads = append(reads, pipe.JSONGet(ctx, r.getSessionKey(sessionID), "."))
+		reads = append(reads, pipe.JSONGet(ctx, sessionKey(sessionID), "."))
 		ids = append(ids, member)
 	}
 	if _, err = pipe.Exec(ctx); err != nil && !redishelpers.IsRedisNil(err) {
@@ -293,7 +301,7 @@ func (r *sessionRepository) ListForUser(
 }
 
 func (r *sessionRepository) Touch(ctx context.Context, sessionID pulid.ID, at int64) error {
-	err := r.client.JSONSet(ctx, r.getSessionKey(sessionID), ".lastAccessedAt", at).Err()
+	err := r.client.JSONSet(ctx, sessionKey(sessionID), ".lastAccessedAt", at).Err()
 	if err != nil && !redishelpers.IsRedisNil(err) {
 		r.l.Warn(
 			"failed to touch session",
@@ -335,13 +343,13 @@ func (r *sessionRepository) evictOldestSessions(
 		sessionID, _ := pulid.Parse(
 			z.Member.(string), //nolint:errcheck // we don't care about the error here
 		)
-		sessionKeys[i] = r.getSessionKey(sessionID)
+		sessionKeys[i] = sessionKey(sessionID)
 	}
 
 	return r.client.Del(ctx, sessionKeys...).Err()
 }
 
-func (r *sessionRepository) getSessionKey(sessionID pulid.ID) string {
+func sessionKey(sessionID pulid.ID) string {
 	return fmt.Sprintf("%s:%s", sessionKeyPrefix, sessionID.String())
 }
 

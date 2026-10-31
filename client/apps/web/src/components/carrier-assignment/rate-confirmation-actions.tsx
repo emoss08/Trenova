@@ -1,9 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useSingleFlight } from "@/hooks/use-single-flight";
 import { documentContentUrl } from "@/services/document";
 import { apiService } from "@/services/api";
 import { RateConfirmationStatusBadge } from "@trenova/shared/components/status-badge";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@trenova/shared/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +31,12 @@ import {
   RefreshCcw02Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import {
+  CarrierDocumentRow,
+  CarrierDocumentRowSkeleton,
+  SublineParts,
+} from "./carrier-document-row";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -86,126 +95,162 @@ export function RateConfirmationActions({
     onError: (error: Error) => toast.error(error.message || t("Failed to send rate confirmation")),
   });
 
+  // One request at a time: a second send or generate while the first is out is ignored.
+  const generate = useSingleFlight(() => generateMutation.mutateAsync());
+  const send = useSingleFlight((rateConId: string) => sendMutation.mutateAsync(rateConId));
+
   if (isLoading) {
-    return <p className="text-2xs text-muted-foreground">{t("Loading rate confirmations…")}</p>;
+    return <CarrierDocumentRowSkeleton label={t("Loading rate confirmations…")} />;
   }
 
+  const active = latest && latest.status !== "Voided" ? latest : null;
+  const busy = generate.pending || send.pending;
+
+  // The one step that moves the paper forward; everything else, sending included, waits in the
+  // menu.
+  const nextStep = !active ? (
+    <Button
+      type="button"
+      variant="outline"
+      size="xxs"
+      isLoading={generate.pending}
+      disabled={busy}
+      onClick={() => void generate.run()}
+      title={t("Generate the rate confirmation PDF from the current buy rate")}
+    >
+      {t("Generate")}
+    </Button>
+  ) : active.status === "Sent" ? (
+    <Button
+      type="button"
+      variant="outline"
+      size="xxs"
+      onClick={() => setConfirmOpen(true)}
+      title={t("Record that the carrier confirmed this rate")}
+    >
+      {t("Mark confirmed")}
+    </Button>
+  ) : null;
+
+  const subline: { key: string; node: ReactNode }[] = [];
+  if (!latest) {
+    subline.push({ key: "none", node: t("Not generated yet") });
+  } else {
+    subline.push({
+      key: "revision",
+      node: <span className="tabular-nums">{t("Revision {0}", latest.revision)}</span>,
+    });
+    if (latest.generatedVia === "TenderAcceptance") {
+      subline.push({
+        key: "auto",
+        node: (
+          <span title={t("Generated automatically when the carrier accepted the tender")}>
+            {t("Auto-issued from tender")}
+          </span>
+        ),
+      });
+    }
+    if (latest.status === "Confirmed" && latest.confirmedVia) {
+      subline.push({
+        key: "via",
+        node: (
+          <span title={t("How the carrier's confirmation was captured")}>
+            {RATE_CONFIRMATION_VIA_LABEL[latest.confirmedVia]}
+          </span>
+        ),
+      });
+    }
+    if (latest.status === "Confirmed" && latest.confirmedByName) {
+      subline.push({
+        key: "by",
+        node: (
+          <span className="truncate">
+            {latest.confirmedByTitle
+              ? t("by {0}, {1}", latest.confirmedByName, latest.confirmedByTitle)
+              : t("by {0}", latest.confirmedByName)}
+          </span>
+        ),
+      });
+    }
+    if (latest.status === "Voided" && latest.voidReason) {
+      subline.push({
+        key: "void",
+        node: <span className="truncate">{t("Voided: {0}", latest.voidReason)}</span>,
+      });
+    }
+  }
+
+  const documentId = latest?.documentId;
+  const menu = [
+    documentId ? (
+      <DropdownMenuItem
+        key="view"
+        title={t("View PDF")}
+        description={t("Open the filed rate confirmation in a new tab")}
+        startContent={<File06Icon className="size-3.5" />}
+        onClick={() =>
+          window.open(documentContentUrl(documentId, "view"), "_blank", "noopener,noreferrer")
+        }
+      />
+    ) : null,
+    active && (active.status === "Generated" || active.status === "Sent") ? (
+      <DropdownMenuItem
+        key="send"
+        title={active.status === "Sent" ? t("Resend") : t("Send")}
+        description={
+          active.status === "Sent"
+            ? t("Email it again to the carrier's rate confirmation contacts")
+            : t("Email it to the carrier's rate confirmation contacts")
+        }
+        startContent={<Mail01Icon className="size-3.5" />}
+        disabled={busy}
+        onClick={() => void send.run(active.id)}
+      />
+    ) : null,
+    active?.status === "Generated" ? (
+      <DropdownMenuItem
+        key="confirm"
+        title={t("Mark confirmed")}
+        description={t("Record who at the carrier confirmed this rate")}
+        startContent={<FileCheck03Icon className="size-3.5" />}
+        onClick={() => setConfirmOpen(true)}
+      />
+    ) : null,
+    active ? (
+      <DropdownMenuItem
+        key="regenerate"
+        title={t("Regenerate")}
+        description={t("Files a new revision and voids this one")}
+        startContent={<RefreshCcw02Icon className="size-3.5" />}
+        disabled={busy}
+        onClick={() => void generate.run()}
+      />
+    ) : null,
+    active ? <DropdownMenuSeparator key="separator" /> : null,
+    active ? (
+      <DropdownMenuItem
+        key="void"
+        title={t("Void")}
+        description={t("Cancel this revision; generate again for a fresh one")}
+        color="danger"
+        startContent={<XCloseIcon className="size-3.5" />}
+        onClick={() => setVoidOpen(true)}
+      />
+    ) : null,
+  ].filter(Boolean);
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-muted-foreground font-medium">{t("Rate con")}</span>
-        {latest ? (
-          <>
-            <RateConfirmationStatusBadge status={latest.status} />
-            <span className="text-2xs text-muted-foreground tabular-nums">
-              {t("rev {0}", latest.revision)}
-            </span>
-            {latest.generatedVia === "TenderAcceptance" && (
-              <Badge
-                variant="neutral"
-                appearance="outline"
-                className="max-h-5 text-2xs"
-                title={t("Generated automatically when the carrier accepted the tender")}
-              >
-                {t("Auto-issued from tender")}
-              </Badge>
-            )}
-            {latest.status === "Confirmed" && latest.confirmedVia && (
-              <Badge
-                variant="neutral"
-                appearance="outline"
-                className="max-h-5 text-2xs"
-                title={t("How the carrier's confirmation was captured")}
-              >
-                {RATE_CONFIRMATION_VIA_LABEL[latest.confirmedVia]}
-              </Badge>
-            )}
-            {latest.status === "Confirmed" && latest.confirmedByName && (
-              <span className="text-2xs text-muted-foreground">
-                {t(
-                  "by {0}{1}",
-                  latest.confirmedByName,
-                  latest.confirmedByTitle ? `, ${latest.confirmedByTitle}` : "",
-                )}
-              </span>
-            )}
-            {latest.status === "Voided" && latest.voidReason && (
-              <span className="text-2xs text-muted-foreground">({latest.voidReason})</span>
-            )}
-          </>
-        ) : (
-          <span className="text-2xs text-muted-foreground">{t("None generated")}</span>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-1">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="h-6 px-2 text-2xs"
-          disabled={generateMutation.isPending}
-          onClick={() => generateMutation.mutate()}
-          title={
-            latest && latest.status !== "Voided"
-              ? "Regenerate — files a new revision and voids the prior one"
-              : "Generate the rate confirmation PDF from the current buy rate"
-          }
-        >
-          <RefreshCcw02Icon className="size-3" aria-hidden />
-          {latest && latest.status !== "Voided" ? t("Regenerate") : t("Generate")}
-        </Button>
-        {latest && (latest.status === "Generated" || latest.status === "Sent") && (
-          <>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-6 px-2 text-2xs"
-              disabled={sendMutation.isPending}
-              onClick={() => sendMutation.mutate(latest.id)}
-              title={t("Email the rate confirmation to the carrier's rate confirmation contacts")}
-            >
-              <Mail01Icon className="size-3" aria-hidden />
-              {latest.status === "Sent" ? t("Resend") : t("Send")}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-6 px-2 text-2xs"
-              onClick={() => setConfirmOpen(true)}
-              title={t("Record that the carrier confirmed this rate")}
-            >
-              <FileCheck03Icon className="size-3" aria-hidden />
-              {t("Mark confirmed")}
-            </Button>
-          </>
-        )}
-        {latest && latest.status !== "Voided" && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="h-6 px-2 text-2xs text-danger-foreground hover:text-danger-foreground"
-            onClick={() => setVoidOpen(true)}
-          >
-            <XCloseIcon className="size-3" aria-hidden />
-            {t("Void")}
-          </Button>
-        )}
-        {latest?.documentId && (
-          <a
-            href={documentContentUrl(latest.documentId, "view")}
-            target="_blank"
-            rel="noreferrer"
-            className="hover:bg-muted inline-flex h-6 items-center gap-1 rounded-md border px-2 text-2xs font-medium"
-            title={t("Open the filed rate confirmation document")}
-          >
-            <File06Icon className="size-3" aria-hidden />
-            {t("View PDF")}
-          </a>
-        )}
-      </div>
+    <>
+      <CarrierDocumentRow
+        icon={File06Icon}
+        title={t("Rate confirmation")}
+        subline={<SublineParts parts={subline} />}
+        status={latest ? <RateConfirmationStatusBadge status={latest.status} /> : null}
+        action={nextStep}
+        menuLabel={t("Rate confirmation actions")}
+        busy={busy}
+        menu={menu}
+      />
       {latest && (
         <>
           <MarkConfirmedDialog
@@ -222,7 +267,7 @@ export function RateConfirmationActions({
           />
         </>
       )}
-    </div>
+    </>
   );
 }
 

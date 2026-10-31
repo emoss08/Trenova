@@ -11,6 +11,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 )
 
 const (
@@ -18,6 +19,8 @@ const (
 	InsightRefreshWorkflowName = "InsightRefreshWorkflow"
 	// RefreshOrganizationInsightsWorkflowName refreshes one organization.
 	RefreshOrganizationInsightsWorkflowName = "RefreshOrganizationInsightsWorkflow"
+	// InsightNarrationWorkflowName waits on one organization's narration batch.
+	InsightNarrationWorkflowName = "InsightNarrationWorkflow"
 )
 
 // InsightRefreshInput carries a sweep across continue-as-new: where the next
@@ -48,6 +51,8 @@ type OrganizationInsightsResult struct {
 	Suppressed int      `json:"suppressed"`
 	Narrated   int      `json:"narrated"`
 	Failed     []string `json:"failed,omitempty"`
+	// Pending is the wording the batch API is still writing for the findings.
+	Pending *insightservice.PendingNarration `json:"pending,omitempty"`
 }
 
 // InsightRefreshResult reports the sweep across every tenant.

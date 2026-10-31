@@ -3,14 +3,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const apiPost = vi.fn();
 const apiDelete = vi.fn();
 
-vi.mock("@trenova/shared/lib/api", () => ({
-  api: {
-    post: (...args: unknown[]) => apiPost(...args),
-    delete: (...args: unknown[]) => apiDelete(...args),
-  },
-}));
+vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
+  return {
+    ...actual,
+    api: {
+      post: (...args: unknown[]) => apiPost(...args),
+      delete: (...args: unknown[]) => apiDelete(...args),
+    },
+  };
+});
 
-const { RealtimeClient, REALTIME_USERS_SCOPE } = await import("@trenova/shared/services/realtime");
+const { RealtimeClient, REALTIME_SESSION_ENDED_EVENT, REALTIME_USERS_SCOPE } =
+  await import("@trenova/shared/services/realtime");
 
 /**
  * One response from GET /realtime/stream/, written the way the Go handler
@@ -235,6 +240,49 @@ describe("RealtimeClient", () => {
     await tick(120_000);
 
     expect(calls).toHaveLength(1);
+    expect(client.getState()).toBe("disconnected");
+  });
+
+  it("tells the app the session has ended when a reconnect is refused as signed out", async () => {
+    replies.push(() => response(401));
+    const client = new RealtimeClient();
+    const ended = vi.fn();
+    client.on(REALTIME_SESSION_ENDED_EVENT, ended);
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+
+    expect(ended).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops without ending the session when the stream is forbidden", async () => {
+    replies.push(() => response(403));
+    const client = new RealtimeClient();
+    const ended = vi.fn();
+    client.on(REALTIME_SESSION_ENDED_EVENT, ended);
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    await tick(120_000);
+
+    expect(calls).toHaveLength(1);
+    expect(ended).not.toHaveBeenCalled();
+    expect(client.getState()).toBe("disconnected");
+  });
+
+  it("stops for good and tells the app when the server closes the stream because its session ended", async () => {
+    const stream = streamReply();
+    const client = new RealtimeClient();
+    const ended = vi.fn();
+    client.on(REALTIME_SESSION_ENDED_EVENT, ended);
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    stream.send("ready", ready("rtc_1"));
+    stream.send("close", { reason: "session_ended" });
+    stream.end();
+    await tick();
+    await tick(120_000);
+
+    expect(calls).toHaveLength(1);
+    expect(ended).toHaveBeenCalledTimes(1);
     expect(client.getState()).toBe("disconnected");
   });
 

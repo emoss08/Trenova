@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -38,7 +39,7 @@ type wiring struct {
 	Carriers           carrierports.CarrierRepository
 	Accessorials       accessorialchargeports.AccessorialChargeRepository
 	AuditService       auditports.AuditService
-	Completion         llmports.CompletionService
+	Completion         llmports.StructuredCompleter
 	Refresher          accountingconnectionports.AccountingReferenceRefresher
 	Realtime           realtimeports.RealtimeService
 	SyncRecords        accountingsyncports.AccountingSyncRecordRepository
@@ -93,7 +94,7 @@ func wire(p *wiring) services {
 			References:  p.References,
 			Mappings:    p.Mappings,
 			Sessions:    p.Sessions,
-			Completion:  p.Completion,
+			Nova:        agenttest.NovaRunner(p.Completion),
 			Kit:         kit,
 			Catalog:     catalog,
 		}),

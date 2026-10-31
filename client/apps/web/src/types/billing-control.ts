@@ -21,6 +21,9 @@ export const paymentTermSchema = z.enum([
 ]);
 export type PaymentTerm = z.infer<typeof paymentTermSchema>;
 
+export const queueAutoApproveModeSchema = z.enum(["Off", "WhenChecksClear", "WhenAgentAgrees"]);
+export type QueueAutoApproveMode = z.infer<typeof queueAutoApproveModeSchema>;
+
 export const enforcementLevelSchema = z.enum(["Ignore", "Warn", "RequireReview", "Block"]);
 export type EnforcementLevel = z.infer<typeof enforcementLevelSchema>;
 
@@ -97,6 +100,15 @@ export const billingControlSchema = z.object({
   fallbackFormulaTemplateId: z.string().nullish(),
   requireRateOverrideReason: z.boolean(),
   enforceMarginFloor: z.boolean(),
+
+  queueAutoApproveMode: queueAutoApproveModeSchema.default("Off"),
+  queueAutoApproveMaxAmount: z
+    .preprocess(
+      (value) => (value === null || value === undefined || value === "" ? null : Number(value)),
+      z.number().positive().nullable(),
+    )
+    .default(null),
+  queueAgentReviewEnabled: z.boolean().default(true),
 
   lateChargeAssessmentMode: lateChargeAssessmentModeSchema.default("Disabled"),
   lateChargeMinimumAmount: decimalNumberSchema.default(0),

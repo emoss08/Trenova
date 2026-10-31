@@ -9,23 +9,22 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
-import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 
 /**
  * Asked before a bulk approval that includes items nobody is biller of:
  * approving those makes the person approving their biller, so they choose
  * between taking them on and approving only the items that already have one.
  */
-export function BillingQueueApproveConfirm({
+export function BillingQueueApproveConfirm<T extends { assignedBillerId?: string | null }>({
   items,
   isPending,
   onOpenChange,
   onApprove,
 }: {
-  items: BillingQueueItem[];
+  items: T[];
   isPending: boolean;
   onOpenChange: (open: boolean) => void;
-  onApprove: (items: BillingQueueItem[], assignMe: boolean) => void;
+  onApprove: (items: T[], assignMe: boolean) => void;
 }) {
   const t = useT();
   const withBiller = items.filter((item) => item.assignedBillerId);

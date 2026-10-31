@@ -8,10 +8,6 @@ import (
 )
 
 type ExtractionContract interface {
-	CompletionRequest(
-		fileName string,
-		pages []documentaiextractionports.AIDocumentPage,
-	) *llmports.StructuredCompletionRequest
 	PageLimit() int
 	FieldKeys() []string
 	ParseReply(text string) (*documentaiextractionports.AIExtractResult, error)

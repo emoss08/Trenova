@@ -2,11 +2,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ChargeSplitEditor } from "@/components/billing/charge-split-editor";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import {
-  allocationsForCharge,
-  nextItemAfterReassignment,
-  reassignSummary,
-} from "@/lib/billing-queue-charges";
+import { allocationsForCharge } from "@/lib/billing-queue-charges";
 import { rulesResolver } from "@/lib/rules-resolver";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,7 +25,6 @@ import type {
 import { withChargeAllocations } from "@trenova/shared/rules/allocation-form";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import { chargeAllocationSchema, type ChargeAllocation } from "@trenova/shared/types/shipment";
-import { useQueryStates } from "nuqs";
 import { useEffect, useMemo } from "react";
 import {
   FormProvider,
@@ -38,10 +33,8 @@ import {
   type FieldValues,
   type Resolver,
 } from "react-hook-form";
-import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
-import { queueSelectionSearchParamsParser } from "../use-billing-queue-state";
-import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
+import { useAfterReassignment } from "./use-after-reassignment";
 
 type ReassignFormValues = { allocations: ChargeAllocation[] };
 
@@ -88,8 +81,7 @@ export function BillingQueueReassignChargeDialog({
   line: PayerShareLine | null;
 }) {
   const t = useT();
-  const invalidate = useInvalidateBillingQueue();
-  const [, setSelection] = useQueryStates(queueSelectionSearchParamsParser);
+  const afterReassignment = useAfterReassignment(item);
   const shipment = item.shipment;
 
   const chargeTotal = line?.chargeTotal ?? null;
@@ -126,12 +118,7 @@ export function BillingQueueReassignChargeDialog({
     resourceName: "billing queue charge",
     mutationFn: (input) => apiService.billingQueueService.reassignCharge(item.id, input),
     onSuccess: (result) => {
-      invalidate();
-      toast.success(reassignSummary(t, chargeName, result));
-      const next = nextItemAfterReassignment(item, result);
-      if (next !== undefined) {
-        void setSelection({ item: next });
-      }
+      afterReassignment(result, chargeName);
       onOpenChange(false);
     },
   });

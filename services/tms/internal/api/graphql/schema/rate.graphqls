@@ -133,6 +133,10 @@ type RateAgreementAccessorial {
   maxAmount: Decimal
   "The Tariff condition a shipment meets for the charge to apply; empty applies always."
   condition: String!
+  "The accessorial charge's code, such as DET."
+  chargeCode: String!
+  "The accessorial charge's description, such as Detention."
+  chargeDescription: String!
 }
 
 "How an agreement prices fuel: the program it binds, or a waiver."
@@ -140,6 +144,8 @@ type RateAgreementFuelBinding {
   id: ID!
   fuelSurchargeProgramId: ID!
   waived: Boolean!
+  "The fuel surcharge program's name."
+  programName: String!
 }
 
 "The header terms of an agreement as they stood for a window."

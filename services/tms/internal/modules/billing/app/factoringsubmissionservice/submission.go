@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringtransportservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepacket"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
@@ -87,6 +88,7 @@ type SubmissionService struct {
 	documents        documentports.DocumentRepository
 	store            documentports.DocumentStore
 	imaging          kernelports.Imaging
+	packets          *invoicepacket.Assembler
 	factors          factoringcompanyports.FactoringCompanyRepository
 	customers        customerports.CustomerRepository
 	organizations    tenantports.OrganizationRepository
@@ -119,6 +121,7 @@ func NewSubmissionService(p SubmissionParams) factoringsubmissionports.Submissio
 		documents:        p.Documents,
 		store:            p.Store,
 		imaging:          p.Imaging,
+		packets:          invoicepacket.NewAssembler(p.Imaging, p.InvoiceDocuments, l),
 		factors:          p.Factors,
 		customers:        p.Customers,
 		organizations:    p.Organizations,

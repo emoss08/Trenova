@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Copy01Icon, Link01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
+import { DropdownMenuItem } from "@trenova/shared/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -23,11 +24,16 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
+import {
+  CarrierDocumentRow,
+  CarrierDocumentRowSkeleton,
+  SublineParts,
+} from "./carrier-document-row";
 
 export function CarrierTrackingLink({
   moveId,
@@ -53,57 +59,84 @@ export function CarrierTrackingLink({
   });
 
   if (isPending) {
-    return <p className="text-2xs text-muted-foreground">{t("Loading tracking link…")}</p>;
+    return <CarrierDocumentRowSkeleton label={t("Loading tracking link…")} />;
   }
 
+  const subline: { key: string; node: ReactNode }[] = isError
+    ? [
+        {
+          key: "error",
+          node: (
+            <span className="text-danger-foreground">
+              {t("The tracking link could not be loaded.")}
+            </span>
+          ),
+        },
+      ]
+    : link
+      ? [
+          {
+            key: "to",
+            node: (
+              <span className="truncate">
+                {link.recipientEmail ? t("Sent to {0}", link.recipientEmail) : t("Shared")}
+              </span>
+            ),
+          },
+          { key: "expires", node: t("Expires {0}", formatUnixDateTimeShort(link.expiresAt)) },
+          {
+            key: "used",
+            node: link.lastUsedAt
+              ? t("Last used {0}", formatUnixDateTimeShort(link.lastUsedAt))
+              : t("Not used yet"),
+          },
+        ]
+      : [{ key: "none", node: t("Not sent yet") }];
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">{t("Tracking link")}</span>
-        {isError ? (
-          <span className="text-2xs text-danger-foreground">
-            {t("The tracking link could not be loaded.")}
-          </span>
-        ) : link ? (
-          <span className="text-2xs text-muted-foreground">
-            {[
-              link.recipientEmail ? t("Sent to {0}", link.recipientEmail) : t("Shared"),
-              t("expires {0}", formatUnixDateTime(link.expiresAt)),
-              link.lastUsedAt
-                ? t("last used {0}", formatUnixDateTime(link.lastUsedAt))
-                : t("not used yet"),
-            ].join(" · ")}
-          </span>
-        ) : (
-          <span className="text-2xs text-muted-foreground">{t("None sent")}</span>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-1">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="h-6 px-2 text-2xs"
-          onClick={() => setIssueOpen(true)}
-          title={t("Send the carrier a link to post arrivals, departures and position updates")}
-        >
-          <Link01Icon className="size-3" aria-hidden />
-          {link ? t("Send new link") : t("Send tracking link")}
-        </Button>
-        {link ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="h-6 px-2 text-2xs text-danger-foreground hover:text-danger-foreground"
-            disabled={revokeMutation.isPending}
-            onClick={() => revokeMutation.mutate()}
-          >
-            <XCloseIcon className="size-3" aria-hidden />
-            {t("Revoke")}
-          </Button>
-        ) : null}
-      </div>
+    <>
+      <CarrierDocumentRow
+        icon={Link01Icon}
+        title={t("Tracking link")}
+        subline={<SublineParts parts={subline} />}
+        action={
+          link || isError ? null : (
+            <Button
+              type="button"
+              variant="outline"
+              size="xxs"
+              onClick={() => setIssueOpen(true)}
+              title={t("Send the carrier a link to post arrivals, departures and position updates")}
+            >
+              {t("Send")}
+            </Button>
+          )
+        }
+        menuLabel={t("Tracking link actions")}
+        busy={revokeMutation.isPending}
+        menu={
+          link
+            ? [
+                <DropdownMenuItem
+                  key="replace"
+                  title={t("Send new link")}
+                  description={t("The link already out stops working")}
+                  startContent={<Link01Icon className="size-3.5" />}
+                  onClick={() => setIssueOpen(true)}
+                />,
+                <DropdownMenuItem
+                  key="revoke"
+                  title={t("Revoke")}
+                  description={t("The carrier can no longer post updates through it")}
+                  color="danger"
+                  startContent={<XCloseIcon className="size-3.5" />}
+                  disabled={revokeMutation.isPending}
+                  onClick={() => revokeMutation.mutate()}
+                />,
+              ]
+            : undefined
+        }
+      />
       <IssueTrackingLinkDialog
         open={issueOpen}
         onOpenChange={setIssueOpen}
@@ -111,7 +144,7 @@ export function CarrierTrackingLink({
         carrierName={carrierName}
         replacing={!!link}
       />
-    </div>
+    </>
   );
 }
 

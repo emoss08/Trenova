@@ -114,9 +114,14 @@ func BuildReadiness(
 	}
 
 	for _, check := range review.Checks {
-		if check.State != billingqueue.CheckStateOK {
-			review.NeedsCount++
+		if check.State == billingqueue.CheckStateOK {
+			continue
 		}
+		if check.Code == billingqueue.CheckCodeIssue {
+			review.NeedsCount += openIssues(check.Key, issues)
+			continue
+		}
+		review.NeedsCount++
 	}
 
 	switch {
@@ -158,13 +163,26 @@ func billerCheck(item *billingqueue.BillingQueueItem, facts CheckFacts) *billing
 	}
 }
 
+// openIssues is how many of a check's issues wait on a person: each is
+// something to settle, so a check with two open is two that need them.
+func openIssues(key billingqueue.CheckKey, issues []*billingqueue.Issue) int {
+	open := 0
+	for _, issue := range issues {
+		if issue.CheckKey == key && issue.IsOpen() && !issue.Code.IsSuggestion() {
+			open++
+		}
+	}
+
+	return open
+}
+
 // issueCheck is the check as its issues leave it: waiting on the oldest open
 // one, settled by the latest a person resolved, or nil when it has none that
 // a person has seen.
 func issueCheck(key billingqueue.CheckKey, issues []*billingqueue.Issue) *billingqueue.Check {
 	var settled *billingqueue.Issue
 	for _, issue := range issues {
-		if issue.CheckKey != key {
+		if issue.CheckKey != key || issue.Code.IsSuggestion() {
 			continue
 		}
 		if issue.IsOpen() {

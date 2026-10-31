@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -246,7 +245,7 @@ func TestStandByDraftAttachesTheDetentionEvidence(t *testing.T) {
 		FileName:   eld.OriginalName,
 	}
 
-	draft, err := f.service.DraftReplyFor(t.Context(), f.message, triagenova.Interactive)
+	draft, err := f.service.DraftReplyFor(t.Context(), f.message)
 	require.NoError(t, err)
 
 	require.Len(t, draft.Attachments, 1)
@@ -267,7 +266,7 @@ func TestStandByDraftWithoutEvidenceClaimsNoAttachment(t *testing.T) {
 
 	f := standByFixture(t)
 
-	draft, err := f.service.DraftReplyFor(t.Context(), f.message, triagenova.Interactive)
+	draft, err := f.service.DraftReplyFor(t.Context(), f.message)
 	require.NoError(t, err)
 
 	assert.Empty(t, draft.Attachments)
@@ -275,7 +274,7 @@ func TestStandByDraftWithoutEvidenceClaimsNoAttachment(t *testing.T) {
 	assert.Contains(t, attached, "Nothing is attached")
 	task, _ := sectionNamed(f, "What to write")
 	assert.NotContains(t, strings.ToLower(task), "attached record")
-	assert.Contains(t, f.nova.requests[0].System, "Attachments")
+	assert.Contains(t, f.nova.requests[0].Instructions, "Attachments")
 }
 
 func TestStandByDraftWhenEvidenceFailsStillDrafts(t *testing.T) {
@@ -284,7 +283,7 @@ func TestStandByDraftWhenEvidenceFailsStillDrafts(t *testing.T) {
 	f := standByFixture(t)
 	f.evidence.err = errors.New("renderer down")
 
-	draft, err := f.service.DraftReplyFor(t.Context(), f.message, triagenova.Interactive)
+	draft, err := f.service.DraftReplyFor(t.Context(), f.message)
 	require.NoError(t, err)
 	assert.Empty(t, draft.Attachments)
 }
@@ -298,7 +297,7 @@ func TestOtherNovaDraftsAttachNothing(t *testing.T) {
 		DocumentID: pulid.MustNew("doc_"),
 	}
 
-	draft, err := f.service.DraftReplyFor(t.Context(), f.message, triagenova.Background)
+	draft, err := f.service.DraftReplyFor(t.Context(), f.message)
 	require.NoError(t, err)
 
 	assert.Empty(t, draft.Attachments)
@@ -322,7 +321,7 @@ func TestNovaRedraftKeepsWhatAPersonAttached(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	draft, err := f.service.DraftReplyFor(t.Context(), f.message, triagenova.Interactive)
+	draft, err := f.service.DraftReplyFor(t.Context(), f.message)
 	require.NoError(t, err)
 
 	require.Len(t, draft.Attachments, 2)

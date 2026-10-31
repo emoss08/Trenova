@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiRequestError, api, clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
 import { GraphQLRequestError, requestGraphQL } from "@trenova/shared/lib/graphql";
+import { isExplainedError } from "@trenova/shared/lib/explained-errors";
 import {
-  isExplainedPlanLimitError,
   planLimitFromError,
   planLimitFromGraphQLErrors,
   planLimitFromProblem,
@@ -151,7 +151,7 @@ describe("transports report plan-limit refusals", () => {
     expect(error).toBeInstanceOf(ApiRequestError);
     expect(handler).toHaveBeenCalledTimes(1);
     expect(handler.mock.calls[0][0]).toMatchObject({ kind: "quota", meter: "shipments.total" });
-    expect(isExplainedPlanLimitError(error)).toBe(true);
+    expect(isExplainedError(error)).toBe(true);
     // The schema keeps the code, so callers can read it off the error as well.
     expect((error as ApiRequestError).data.code).toBe("QUOTA_EXCEEDED");
   });
@@ -166,7 +166,7 @@ describe("transports report plan-limit refusals", () => {
     const error = await api.patch("/customers/cus_1/", {}).catch((caught) => caught);
 
     expect(handler).toHaveBeenCalledTimes(1);
-    expect(isExplainedPlanLimitError(error)).toBe(false);
+    expect(isExplainedError(error)).toBe(false);
   });
 
   it("leaves ordinary failures alone", async () => {
@@ -183,7 +183,7 @@ describe("transports report plan-limit refusals", () => {
     const error = await api.post("/customers/", {}).catch((caught) => caught);
 
     expect(handler).not.toHaveBeenCalled();
-    expect(isExplainedPlanLimitError(error)).toBe(false);
+    expect(isExplainedError(error)).toBe(false);
   });
 
   it("hands a GraphQL mutation's PLAN_RESTRICTED extension to the handler", async () => {
@@ -220,7 +220,7 @@ describe("transports report plan-limit refusals", () => {
       kind: "restricted",
       capability: "integrations",
     });
-    expect(isExplainedPlanLimitError(error)).toBe(true);
+    expect(isExplainedError(error)).toBe(true);
   });
 
   it("does not drive the dialog from a query's partial errors", async () => {
@@ -255,7 +255,7 @@ describe("reportPlanLimit", () => {
   it("reports nothing and explains nothing without a handler", () => {
     const error = new ApiRequestError(402, quotaProblem);
     expect(reportPlanLimit(error)).toBe(false);
-    expect(isExplainedPlanLimitError(error)).toBe(false);
+    expect(isExplainedError(error)).toBe(false);
   });
 
   it("treats a throwing handler as not having shown the notice", () => {
@@ -266,7 +266,7 @@ describe("reportPlanLimit", () => {
     const error = new ApiRequestError(402, quotaProblem);
 
     expect(reportPlanLimit(error)).toBe(false);
-    expect(isExplainedPlanLimitError(error)).toBe(false);
+    expect(isExplainedError(error)).toBe(false);
     consoleError.mockRestore();
   });
 

@@ -11,7 +11,6 @@ vi.mock("../shipment-billing-details", () => ({ default: () => <p>billing detail
 vi.mock("../additional-charges/shipment-additional-charges", () => ({ default: () => null }));
 vi.mock("../shipment-general-information", () => ({ default: () => null }));
 vi.mock("../shipment-commodities", () => ({ default: () => null }));
-vi.mock("../load-envelope-panel", () => ({ default: () => null }));
 vi.mock("../move/shipment-move-details", () => ({ default: () => null }));
 vi.mock("../trailer-loading/trailer-loading-drawer", () => ({ default: () => null }));
 vi.mock("../recurring-shipment-suggestion", () => ({ RecurringShipmentSuggestion: () => null }));

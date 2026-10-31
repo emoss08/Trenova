@@ -62,11 +62,8 @@ func (s *Sanitizer) ExtractErrors(err error) []ValidationError {
 }
 
 func (s *Sanitizer) ExtractParams(err error) map[string]string {
-	if quotaErr, ok := errors.AsType[*errortypes.QuotaExceededError](err); ok {
-		return quotaErr.Params()
-	}
-	if planErr, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
-		return planErr.Params()
+	if parameterized, ok := errors.AsType[errortypes.Parameterized](err); ok {
+		return parameterized.Params()
 	}
 
 	var businessErr *errortypes.BusinessError

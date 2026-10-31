@@ -1,4 +1,5 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { holdReasonLabel } from "@/lib/billing-queue-checks";
 import type {
   BillingQueueHoldReason,
   BillingQueueItem,
@@ -25,28 +26,6 @@ export function itemStage(status: BillingQueueStatus): ItemStage {
       return "held";
     default:
       return "other";
-  }
-}
-
-export const HOLD_REASONS: readonly BillingQueueHoldReason[] = [
-  "WaitingOnPaperwork",
-  "CustomerDispute",
-  "RateQuestion",
-];
-
-export function holdReasonLabel(
-  reason: BillingQueueHoldReason | null | undefined,
-  t: TranslateFn,
-): string {
-  switch (reason) {
-    case "WaitingOnPaperwork":
-      return t("Waiting on paperwork");
-    case "CustomerDispute":
-      return t("Customer dispute");
-    case "RateQuestion":
-      return t("Rate question");
-    default:
-      return "";
   }
 }
 

@@ -5,8 +5,10 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
 
@@ -15,88 +17,66 @@ var ErrUnavailable = errortypes.NewBusinessError(
 		"or ask an administrator to connect one.",
 )
 
-type Mode int
-
-const (
-	Interactive Mode = iota
-	Background
-)
-
 type Params struct {
 	fx.In
 
-	Interactive llmports.StructuredCompleter `optional:"true"`
-	Background  llmports.CompletionService   `optional:"true"`
+	Nova llmports.TaskRunner `optional:"true"`
 }
 
+// Caller runs the inbox's Nova tasks through the harness, which decides
+// whether the call runs here or as a worker job.
 type Caller struct {
-	interactive llmports.StructuredCompleter
-	background  llmports.CompletionService
+	nova llmports.TaskRunner
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Caller {
-	return &Caller{interactive: p.Interactive, background: p.Background}
+	return &Caller{nova: p.Nova}
 }
 
-func (c *Caller) Available(mode Mode) bool {
-	return c.completer(mode) != nil
+func (c *Caller) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+	if c.nova == nil {
+		return false, nil
+	}
+
+	return c.nova.Available(ctx, aitask.TaskInboundClassification, tenantInfo)
 }
 
-func (c *Caller) Complete(
+func (c *Caller) Run(
 	ctx context.Context,
-	mode Mode,
-	req *llmports.StructuredCompletionRequest,
+	task *llmports.NovaTask,
+	out any,
 ) (*llmports.StructuredCompletionResult, error) {
-	completer := c.completer(mode)
-	if completer == nil {
+	if c.nova == nil {
 		return nil, ErrUnavailable
 	}
-	if req.Task == "" {
-		req.Task = aitask.TaskInboundClassification
+	if task.Name == "" {
+		task.Name = aitask.TaskInboundClassification
+	}
+	if task.Feature == "" {
+		task.Feature = aiusage.FeatureInboundMail
 	}
 
-	result, err := completer.CompleteStructured(ctx, req)
-	if err != nil {
-		var failed *llmports.ChatProvidersFailedError
-		if errors.As(err, &failed) {
-			return nil, errortypes.NewBusinessError(
-				"Nova could not reach an AI provider just now. Try again in a moment.",
-			).WithInternal(err)
-		}
-
-		return nil, err
+	result, err := c.nova.Run(ctx, task, out)
+	var failed *llmports.ChatProvidersFailedError
+	switch {
+	case errors.Is(err, llmports.ErrNoProviderConfigured):
+		return nil, ErrUnavailable
+	case errors.As(err, &failed):
+		return nil, errortypes.NewBusinessError(
+			"Nova could not reach an AI provider just now. Try again in a moment.",
+		).WithInternal(err)
 	}
 
-	return result, nil
-}
-
-type structuredCompleter interface {
-	CompleteStructured(
-		ctx context.Context,
-		req *llmports.StructuredCompletionRequest,
-	) (*llmports.StructuredCompletionResult, error)
-}
-
-func (c *Caller) completer(mode Mode) structuredCompleter {
-	if mode == Background && c.background != nil {
-		return c.background
-	}
-	if c.interactive != nil {
-		return c.interactive
-	}
-	if c.background != nil {
-		return c.background
-	}
-
-	return nil
+	return result, err
 }
 
 type Completer interface {
-	Available(mode Mode) bool
-	Complete(
+	Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
+	Run(
 		ctx context.Context,
-		mode Mode,
-		req *llmports.StructuredCompletionRequest,
+		task *llmports.NovaTask,
+		out any,
 	) (*llmports.StructuredCompletionResult, error)
 }
 

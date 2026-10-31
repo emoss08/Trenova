@@ -13,13 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -293,17 +291,14 @@ func TestSendMessageStream_RendersTheTableView(t *testing.T) {
 	assert.Equal(t, 17, *conversations.Appended[0].PageContext.View.RowCount)
 }
 
-// A quick question goes to the general assistant when the organization has
-// one enabled for chat, on a thread that begins hidden; the thread is named
-// on the stream before the answer so it can be kept whatever happens next.
-func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
+// A palette answer carried into the Desk goes to the general assistant when
+// the organization has one enabled for chat, on an ordinary Desk thread named
+// for the question.
+func TestStartGeneralThread_OpensADeskConversationWithTheGeneralAssistant(t *testing.T) {
 	t.Parallel()
 
-	completion := &assistanttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		assistanttest.TextTurn("Twelve loads are late."),
-	}}
 	svc := newService(
-		completion,
+		&assistanttest.ScriptedCompletion{},
 		&assistanttest.StubQueryRegistry{},
 		&assistanttest.StubActionRegistry{},
 	)
@@ -317,18 +312,10 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	svc.conversations = conversations
 	actor := assistanttest.Actor()
 
-	var events []string
-	var announced *conversation.Thread
-	result, err := svc.ask(t.Context(), &assistantports.AskRequest{
-		Content:    "How many loads are late today?",
+	thread, err := threadsOf(svc).StartGeneralThread(t.Context(), &assistantports.GeneralThreadRequest{
+		Title:      "How many loads are late today?",
 		TenantInfo: actor.TenantInfo(),
-		Page:       &agentpagecontext.PageContext{Path: "/dispatch"},
-	}, actor, func(event kernelports.StreamEvent) {
-		events = append(events, event.Event)
-		if event.Event == assistantstreamports.AssistantEventThread {
-			announced = event.Data.(*conversation.Thread)
-		}
-	})
+	}, actor)
 	require.NoError(t, err)
 
 	assert.True(t, definitions.Last.EnabledOnly)
@@ -341,62 +328,37 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 		definitions.Last.Filter.FieldFilters[0].Value,
 	)
 	require.NotNil(t, conversations.Created)
-	assert.Equal(
-		t,
-		general.ID,
-		conversations.Created.AgentDefinitionID,
-		"the general assistant answers",
-	)
-	assert.Equal(t, conversation.ThreadOriginAsk, conversations.Created.Origin)
+	assert.Equal(t, general.ID, conversations.Created.AgentDefinitionID)
+	assert.Equal(t, conversation.ThreadOriginDesk, conversations.Created.Origin)
 	assert.Equal(t, "How many loads are late today?", conversations.Created.Title)
-	require.NotNil(t, announced)
-	assert.Equal(t, conversations.Created.ID, announced.ID)
-	assert.Equal(
-		t,
-		assistantstreamports.AssistantEventThread,
-		events[0],
-		"the thread is announced first",
-	)
-	assert.Equal(t, "Twelve loads are late.", result.Reply)
-	assert.Equal(t, "/dispatch", conversations.Appended[0].PageContext.Path)
+	assert.Equal(t, conversations.Created.ID, thread.ID)
 }
 
-func TestAsk_RefusesWithoutTheGeneralAssistantRatherThanAskingAnotherAgent(t *testing.T) {
+func TestStartGeneralThread_RefusesWithoutTheGeneralAssistantRatherThanAnotherAgent(t *testing.T) {
 	t.Parallel()
 
-	completion := &assistanttest.ScriptedCompletion{
-		Turns: []*llmports.ChatCompletionResult{assistanttest.TextTurn("ok")},
-	}
 	svc := newService(
-		completion,
+		&assistanttest.ScriptedCompletion{},
 		&assistanttest.StubQueryRegistry{},
 		&assistanttest.StubActionRegistry{},
 	)
 	activity := assistanttest.ChatDefinition("Agent Activity Desk", "")
 	dispatch := assistanttest.ChatDefinition("Dispatch", agenttemplate.TemplateDispatchAssistant)
-	definitions := &assistanttest.StubDefinitionList{
+	svc.definitions = &assistanttest.StubDefinitionList{
 		Definitions: []*agentdefinition.Definition{activity, dispatch},
 	}
 	conversations := &assistanttest.CreatingConversations{}
-	svc.definitions = definitions
 	svc.conversations = conversations
 	actor := assistanttest.Actor()
 
-	_, err := svc.ask(t.Context(), &assistantports.AskRequest{
-		Content:    "Tell me about SEED-PAY-002?",
+	_, err := threadsOf(svc).StartGeneralThread(t.Context(), &assistantports.GeneralThreadRequest{
+		Title:      "Tell me about SEED-PAY-002?",
 		TenantInfo: actor.TenantInfo(),
-	}, actor, nil)
+	}, actor)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Contains(t, err.Error(), "general assistant, which is turned off")
-	assert.Nil(t, conversations.Created, "no other agent answers in its place")
-
-	_, err = svc.ask(t.Context(), &assistantports.AskRequest{
-		Content:    "   ",
-		TenantInfo: actor.TenantInfo(),
-	}, actor, nil)
-	var multiErr *errortypes.MultiError
-	require.ErrorAs(t, err, &multiErr)
+	assert.Nil(t, conversations.Created, "no other agent takes the conversation")
 }
 
 func TestEarlierFileTexts_ReadsTheFilesTheConversationCarried(t *testing.T) {

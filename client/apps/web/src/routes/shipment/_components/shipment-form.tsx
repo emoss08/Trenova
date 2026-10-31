@@ -1,9 +1,9 @@
 "use no memo";
+import { File06Icon, Lock01Icon } from "@trenova/shared/components/icons";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { File06Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { type ReactNode, lazy, Suspense } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -17,7 +17,6 @@ const AdditionalChargesSection = lazy(
 );
 const ShipmentGeneralInformation = lazy(() => import("./shipment-general-information"));
 const CommoditiesSection = lazy(() => import("./shipment-commodities"));
-const LoadEnvelopePanel = lazy(() => import("./load-envelope-panel"));
 const ShipmentMoveDetails = lazy(() => import("./move/shipment-move-details"));
 const LoadPlannerDialog = lazy(() => import("./trailer-loading/trailer-loading-drawer"));
 
@@ -46,10 +45,10 @@ export function ShipmentForm() {
   const isFullyLocked = isInBillingReview || isCanceled;
 
   return (
-    <div className="flex flex-col gap-6">
+    <ShipmentFormElement className="flex flex-col gap-6">
       <Suspense fallback={<ShipmentFormSkeleton />}>
-        <div className="relative">
-          <div className="flex flex-col gap-6">
+        <ShipmentFormElement className="relative">
+          <ShipmentFormElement className="flex flex-col gap-6">
             {isInvoiced && <InvoicedBanner />}
             <RecurringShipmentSuggestion />
             <ServiceDetails />
@@ -59,9 +58,8 @@ export function ShipmentForm() {
             </SectionLock>
             <ShipmentGeneralInformation />
             <CommoditiesSection />
-            <LoadEnvelopePanel />
             <ShipmentMoveDetails />
-          </div>
+          </ShipmentFormElement>
           {isFullyLocked && (
             <div className="bg-background/60 absolute inset-0 z-10 rounded-lg">
               <div className="sticky top-1/3 flex flex-col items-center gap-3 py-12">
@@ -85,12 +83,12 @@ export function ShipmentForm() {
               </div>
             </div>
           )}
-        </div>
+        </ShipmentFormElement>
       </Suspense>
       <Suspense fallback={null}>
         <LoadPlannerDialog open={loadPlannerOpen} onOpenChange={setLoadPlannerOpen} />
       </Suspense>
-    </div>
+    </ShipmentFormElement>
   );
 }
 
@@ -128,4 +126,14 @@ function SectionLock({ locked, children }: { locked: boolean; children: ReactNod
       </div>
     </div>
   );
+}
+
+function ShipmentFormElement({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={className}>{children}</div>;
 }

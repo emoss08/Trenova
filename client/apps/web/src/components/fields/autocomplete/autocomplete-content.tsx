@@ -12,7 +12,8 @@ import {
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { popoutWindowManager } from "@/hooks/popout-window/popout-window";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
-import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { api } from "@trenova/shared/lib/api";
+import { selectOptionsPath } from "@/lib/select-options-path";
 import {
   fetchGraphQLSelectOptions,
   selectOptionFiltersFromSearchParams,
@@ -32,38 +33,23 @@ export async function fetchOptions<T>(
   page: number,
   initialLimit?: number,
   extraSearchParams?: Record<string, string | string[]>,
+  options: { signal?: AbortSignal } = {},
 ): Promise<GenericLimitOffsetResponse<T>> {
   const limit = initialLimit ?? 10;
   const offset = (page - 1) * limit;
 
-  const fetchURL = new URL(`${API_BASE_URL}${link}`, window.location.origin);
-  fetchURL.searchParams.set("limit", limit.toString());
-  fetchURL.searchParams.set("offset", offset.toString());
-
-  if (inputValue) {
-    fetchURL.searchParams.set("query", inputValue);
-  }
-
-  if (extraSearchParams) {
-    Object.entries(extraSearchParams).forEach(([key, value]) => {
-      if (value === undefined || value === null) return;
-      if (Array.isArray(value)) {
-        value.forEach((entry) => fetchURL.searchParams.append(key, entry));
-      } else {
-        fetchURL.searchParams.set(key, value);
-      }
-    });
-  }
-
-  const response = await fetch(fetchURL.href, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch options (${response.status})`);
-  }
-
-  return response.json();
+  return api.get<GenericLimitOffsetResponse<T>>(
+    selectOptionsPath(
+      link,
+      {
+        limit: limit.toString(),
+        offset: offset.toString(),
+        ...(inputValue ? { query: inputValue } : {}),
+      },
+      extraSearchParams,
+    ),
+    { signal: options.signal },
+  );
 }
 
 function openPopoutWindow(popoutLink: string, event: React.MouseEvent<HTMLButtonElement>) {
@@ -178,6 +164,7 @@ export function AutocompleteCommandContent<TOption>({
         pageParam,
         initialLimit,
         extraSearchParams,
+        { signal },
       );
     },
     initialPageParam: 1,

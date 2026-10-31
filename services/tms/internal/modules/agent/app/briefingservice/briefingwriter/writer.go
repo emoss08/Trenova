@@ -34,19 +34,19 @@ const maxOutputTokens = 900
 type Params struct {
 	fx.In
 
-	Logger     *zap.Logger
-	Completion llmports.CompletionService
+	Logger *zap.Logger
+	Nova   llmports.TaskRunner
 }
 
 type Service struct {
-	l          *zap.Logger
-	completion llmports.CompletionService
+	l    *zap.Logger
+	nova llmports.TaskRunner
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:          p.Logger.Named("service.briefing-writer"),
-		completion: p.Completion,
+		l:    p.Logger.Named("service.briefing-writer"),
+		nova: p.Nova,
 	}
 }
 
@@ -86,16 +86,17 @@ func (s *Service) Write(ctx context.Context, req *Request) Result {
 		return result
 	}
 
-	completion, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
-		TenantInfo:   req.TenantInfo,
-		Task:         aitask.TaskDailyBriefing,
-		System:       systemPrompt,
+	var answer map[string]any
+	completion, err := s.nova.Run(ctx, &llmports.NovaTask{
+		Name:         aitask.TaskDailyBriefing,
+		Instructions: systemPrompt,
 		Context:      buildContext(req),
-		OutputSchema: outputSchema(),
+		Schema:       outputSchema(),
 		SchemaName:   "daily_briefing",
 		MaxTokens:    maxOutputTokens,
-	})
-	if err != nil {
+		TenantInfo:   req.TenantInfo,
+	}, &answer)
+	if err != nil && !errors.Is(err, llmports.ErrOutsideSchema) {
 		s.logUnavailable(err, req.Role)
 
 		return result

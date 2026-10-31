@@ -1,5 +1,6 @@
 import type { BillingTransferRun, BillingTransferRunItem } from "@/lib/graphql/billing-transfer";
 import { shipmentPanelPath } from "@/lib/shipment-utils";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -271,20 +272,23 @@ function ResultList({
 
 function ShipmentLink({ shipmentId, proNumber }: { shipmentId: string; proNumber: string | null }) {
   const t = useT();
+  const canReadShipment = useCanReadKind("shipment");
   const display = proNumber ?? shipmentId;
 
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <span className="truncate font-mono text-xs font-medium">{display}</span>
-      <a
-        href={shipmentPanelPath(shipmentId)}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={t("Open shipment {0}", display)}
-        className="text-muted-foreground hover:text-foreground shrink-0"
-      >
-        <LinkExternal01Icon className="size-3" />
-      </a>
+      {canReadShipment ? (
+        <a
+          href={shipmentPanelPath(shipmentId)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("Open shipment {0}", display)}
+          className="text-muted-foreground hover:text-foreground shrink-0"
+        >
+          <LinkExternal01Icon className="size-3" />
+        </a>
+      ) : null}
     </div>
   );
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/numberguard"
@@ -53,17 +52,17 @@ func (s *Service) narrate(
 ) ([]aicontrolsummary.Segment, bool) {
 	narration, ok := shipmentnarration.Narrate[draft](
 		ctx,
-		s.completion,
+		s.nova,
 		s.l,
-		&llmports.StructuredCompletionRequest{
+		&llmports.NovaTask{
 			TenantInfo:   tenantInfo,
-			Task:         aitask.TaskOperationalInsights,
-			System:       systemPrompt,
+			Name:         aitask.TaskOperationalInsights,
+			Instructions: systemPrompt,
 			Context:      promptContext(tab, facts, plain),
-			OutputSchema: outputSchema(),
+			Schema:       outputSchema(),
 			SchemaName:   schemaName,
 			MaxTokens:    maxOutputTokens,
-			Attribution:  aiusageports.AIUsageAttribution{UserID: tenantInfo.UserID},
+			UserID:       tenantInfo.UserID,
 		},
 	)
 	if !ok {

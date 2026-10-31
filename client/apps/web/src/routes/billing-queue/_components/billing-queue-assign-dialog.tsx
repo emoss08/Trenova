@@ -12,7 +12,6 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
-import { BULK_CONCURRENCY, notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   billingQueueAssignSchema,
   type BillingQueueAssignInput,
@@ -21,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
+import type { StartBulkRun } from "./use-bulk-run";
 
 /** One queue item to assign, with the label a failure is reported under. */
 export type BillingQueueTarget = {
@@ -32,6 +32,8 @@ type BillingQueueAssignDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   targets: readonly BillingQueueTarget[];
+  /** Starts the bulk run that assigns several items; one item is assigned directly. */
+  run?: StartBulkRun;
   onDone?: () => void;
 };
 
@@ -39,6 +41,7 @@ export function BillingQueueAssignDialog({
   open,
   onOpenChange,
   targets,
+  run,
   onDone,
 }: BillingQueueAssignDialogProps) {
   const t = useT();
@@ -59,37 +62,27 @@ export function BillingQueueAssignDialog({
     formState: { isSubmitting },
   } = form;
 
-  const single = targets.length === 1;
+  const single = targets.length === 1 || !run;
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: BillingQueueAssignInput) => {
       if (single) {
-        await apiService.billingQueueService.assign(targets[0].id, values);
-        return null;
+        await Promise.all(
+          targets.map((target) => apiService.billingQueueService.assign(target.id, values)),
+        );
+        return;
       }
-      return settleAll(
-        targets,
-        (target) => apiService.billingQueueService.assign(target.id, values),
-        { concurrency: BULK_CONCURRENCY, label: (target) => target.label },
+      await run(
+        "Assign",
+        targets.map((target) => target.id),
+        { billerId: values.billerId },
       );
     },
     resourceName: "BillingQueueItem",
     form,
-    onSuccess: (result) => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      if (!result) {
-        return;
-      }
-      notifyBulkOutcome(result, {
-        succeeded: (count) => t("{0, plural, one {# item} other {# items}} assigned", count),
-        partial: (succeeded, failed) =>
-          t("{0} assigned; {1} could not be assigned", succeeded, failed),
-        allFailed: (failed) =>
-          t("{0, plural, one {# item} other {# items}} could not be assigned", failed),
-      });
-      if (result.failed.length === 0) {
-        onDone?.();
-      }
+      onDone?.();
     },
   });
 

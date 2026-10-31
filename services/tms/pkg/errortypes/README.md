@@ -152,7 +152,19 @@ err := errortypes.NewPlanRestrictionError("api_keys", errortypes.PlanRestriction
 ```
 
 Both expose `Params()`, which the REST problem document and the GraphQL error
-extensions carry as `params`.
+extensions carry as `params`. Any error implementing `Parameterized` (`error` plus
+`Params() map[string]string`) gets the same treatment.
+
+### Session Context Errors
+
+`SessionContextMiddleware` refuses a request whose `X-Trenova-User-Id`,
+`X-Trenova-Organization-Id` or `X-Trenova-Business-Unit-Id` names another session than the
+cookie's, because another tab signed in as someone else or switched organization
+(`docs/engineering/session-context.md`). Its params name the session the cookie acts for now:
+
+```go
+err := errortypes.NewSessionContextStaleError(authCtx.UserID, authCtx.OrganizationID, authCtx.BusinessUnitID) // 409, SESSION_CONTEXT_STALE
+```
 
 ---
 
@@ -351,11 +363,12 @@ func handleErrorCode(code errortypes.ErrorCode) int {
 | `RateLimitError` | 429 Too Many Requests |
 | `QuotaExceededError` | 402 Payment Required |
 | `PlanRestrictionError` | 403 Forbidden |
+| `SessionContextStaleError` | 409 Conflict |
 | `DatabaseError` | 500 Internal Server Error |
 
 | Error Code | HTTP Status |
 |------------|-------------|
-| `ErrDuplicate`, `ErrAlreadyExists`, `ErrVersionMismatch` | 409 Conflict |
+| `ErrDuplicate`, `ErrAlreadyExists`, `ErrVersionMismatch`, `ErrSessionContextStale` | 409 Conflict |
 | `ErrNotFound` | 404 Not Found |
 | `ErrUnauthorized` | 401 Unauthorized |
 | `ErrForbidden` | 403 Forbidden |
@@ -609,6 +622,7 @@ func (s *ImportService) ImportUsers(ctx context.Context, records []UserRecord) (
 | `ErrTooManyRequests` | Rate limited | API throttling |
 | `ErrQuotaExceeded` | Plan limit reached | Cloud free tier meter at its limit |
 | `ErrPlanRestricted` | Not on this plan | Cloud capability restriction, read-only or expired trial |
+| `ErrSessionContextStale` | Session no longer the tab's | A tab another tab's sign-in or organization switch left behind |
 | `ErrBusinessLogic` | Business rule violation | Domain-specific rules |
 | `ErrComplianceViolation` | Compliance rule broken | Regulatory requirements |
 | `ErrVersionMismatch` | Optimistic lock failed | Concurrent modification |

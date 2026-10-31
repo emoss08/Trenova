@@ -6,10 +6,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueueprojection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -42,6 +42,50 @@ func New(p Params) billingqueueports.BillingQueueRepository {
 	}
 }
 
+var laneCursorSort = []pagination.CursorSortField{
+	{Field: "createdAt", Direction: "asc"},
+	{Field: "id", Direction: "asc"},
+}
+
+func listQuery(
+	req *billingqueueports.ListBillingQueueItemsRequest,
+) *keel.Query[*billingqueue.BillingQueueItem] {
+	bq := billingqueuedb.BillingQueueItems
+
+	return bq.Where(
+		keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted)),
+		laneFilter(req),
+	)
+}
+
+// shipmentNamed finds an item by its shipment, which is how a biller names one:
+// its PRO number, BOL or the customer's own reference, as the shipment's search
+// words hold them (idx_shipments_search).
+func shipmentNamed(query string) keel.Pred {
+	bq := billingqueuedb.BillingQueueItems
+	sh := shipmentdb.Shipments.As("bqi_named_shp")
+
+	return keel.Exists(sh.Pick(sh.ID).Where(
+		sh.ID.EqCol(bq.ShipmentID),
+		sh.OrganizationID.EqCol(bq.OrganizationID),
+		sh.BusinessUnitID.EqCol(bq.BusinessUnitID),
+		listquery.MatchVector(sh.SearchVector, query),
+	))
+}
+
+func listShape(
+	q *keel.Query[*billingqueue.BillingQueueItem],
+) *keel.Query[*billingqueue.BillingQueueItem] {
+	bq := billingqueuedb.BillingQueueItems
+
+	return q.Load(
+		bq.Shipment().Customer(),
+		bq.BillToCustomer(),
+		bq.AssignedBiller(),
+		bq.CanceledBy(),
+	)
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *billingqueueports.ListBillingQueueItemsRequest,
@@ -50,27 +94,60 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-			bq := billingqueuedb.BillingQueueItems
 			result, err := listquery.List(
 				ctx,
 				r.db.Keel(ctx),
-				bq.Where(keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted))),
+				listQuery(req),
 				&listquery.Request[billingqueue.BillingQueueItem]{
-					Filter: req.Filter,
-					Shape: func(
-						q *keel.Query[*billingqueue.BillingQueueItem],
-					) *keel.Query[*billingqueue.BillingQueueItem] {
-						return q.Load(
-							bq.Shipment().Customer(),
-							bq.BillToCustomer(),
-							bq.AssignedBiller(),
-							bq.CanceledBy(),
-						)
-					},
+					Filter:    req.Filter,
+					Shape:     listShape,
+					AlsoMatch: shipmentNamed,
 				},
 			)
 			if err != nil {
 				r.l.Error("failed to list billing queue items", zap.Error(err))
+				return nil, err
+			}
+			if err = r.attachHeadlines(ctx, r.db.Keel(ctx), result.Items); err != nil {
+				return nil, err
+			}
+
+			return result, nil
+		},
+	)
+}
+
+// ListConnection pages the queue oldest first, which is the order a lane is worked
+// in and the order idx_billing_queue_items_lane keeps per lane.
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *billingqueueports.ListBillingQueueItemsRequest,
+) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error) {
+			bq := billingqueuedb.BillingQueueItems
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				listQuery(req),
+				&listquery.Request[billingqueue.BillingQueueItem]{
+					Filter:    req.Filter,
+					Cursor:    req.Cursor,
+					Shape:     listShape,
+					AlsoMatch: shipmentNamed,
+					Keyset: &listquery.Keyset{
+						Orders: []keel.Order{bq.CreatedAt.Asc(), bq.ID.Asc()},
+						Shape:  laneCursorSort,
+					},
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to page billing queue items", zap.Error(err))
+				return nil, err
+			}
+			if err = r.attachHeadlines(ctx, r.db.Keel(ctx), result.Items); err != nil {
 				return nil, err
 			}
 
@@ -81,19 +158,16 @@ func (r *repository) List(
 
 func itemDetail() *keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
-	ord := orderdb.Orders
 	sh := bq.Shipment()
-	po := keel.Scalar(ord.Pick(ord.PONumber).Where(ord.ID.EqCol(bq.OrderID)).Limit(1))
 
-	return bq.Compute(bq.PONumber, keel.StringOf(po).Coalesce("")).
-		Load(
-			sh.Customer(),
-			sh.AdditionalCharges(),
-			sh.ChargeAllocations(),
-			bq.BillToCustomer(),
-			bq.AssignedBiller(),
-			bq.CanceledBy(),
-		)
+	return bq.Load(
+		sh.Customer(),
+		sh.AdditionalCharges(),
+		sh.ChargeAllocations(),
+		bq.BillToCustomer(),
+		bq.AssignedBiller(),
+		bq.CanceledBy(),
+	)
 }
 
 func (r *repository) GetByID(
@@ -121,8 +195,16 @@ func (r *repository) Create(
 			r.l.Error("failed to create billing queue item", zap.Error(err))
 			return nil, itemErrors.Map(err, entity.ID.String())
 		}
+		if entity.PONumber == "" {
+			if err := fillPONumber(ctx, r.db.Keel(ctx), entity.ID); err != nil {
+				return nil, itemErrors.Map(err, entity.ID.String())
+			}
+		}
 
 		if err := r.syncShipmentTransferState(ctx, []pulid.ID{entity.ShipmentID}); err != nil {
+			return nil, err
+		}
+		if err := billingqueueprojection.Refresh(ctx, r.db.Keel(ctx), entity.ID); err != nil {
 			return nil, err
 		}
 
@@ -162,6 +244,32 @@ func (r *repository) Update(
 
 		if err = r.syncShipmentTransferState(ctx, []pulid.ID{entity.ShipmentID}); err != nil {
 			return nil, err
+		}
+		if err = billingqueueprojection.Refresh(ctx, r.db.Keel(ctx), entity.ID); err != nil {
+			return nil, err
+		}
+
+		return r.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
+			ItemID:     entity.ID,
+			TenantInfo: tenantInfo(entity),
+		})
+	})
+}
+
+func (r *repository) UpdateInvoiceDetails(
+	ctx context.Context,
+	entity *billingqueue.BillingQueueItem,
+) (*billingqueue.BillingQueueItem, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.BillingQueueItem, error) {
+		bq := billingqueuedb.BillingQueueItems
+		if err := bq.Save(ctx, r.db.Keel(ctx), entity,
+			bq.PONumber,
+			bq.InvoiceMemo,
+			bq.PaymentTerm,
+			bq.InvoiceDate,
+			bq.PacketDocumentIDs,
+		); err != nil {
+			return nil, itemErrors.Map(err, entity.ID.String())
 		}
 
 		return r.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
@@ -221,7 +329,7 @@ func (r *repository) MarkPostedForInvoice(
 func (r *repository) markPosted(ctx context.Context, scope keel.Pred) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		bq := billingqueuedb.BillingQueueItems
-		rows, err := bq.Pick(bq.ShipmentID).
+		rows, err := bq.Pick(bq.ID, bq.ShipmentID).
 			Where(
 				scope,
 				bq.Status.Ne(billingqueue.StatusPosted),
@@ -233,10 +341,15 @@ func (r *repository) markPosted(ctx context.Context, scope keel.Pred) (int64, er
 		}
 
 		shipmentIDs := make([]pulid.ID, 0, len(rows))
+		itemIDs := make([]pulid.ID, 0, len(rows))
 		for _, row := range rows {
 			shipmentIDs = append(shipmentIDs, row.ShipmentID)
+			itemIDs = append(itemIDs, row.ID)
 		}
 		if err = r.syncShipmentTransferState(ctx, shipmentIDs); err != nil {
+			return 0, err
+		}
+		if err = billingqueueprojection.Refresh(ctx, r.db.Keel(ctx), itemIDs...); err != nil {
 			return 0, err
 		}
 
@@ -322,17 +435,22 @@ func (r *repository) ReleaseForInvoice(
 
 			released := make([]*billingqueue.BillingQueueItem, 0, len(items))
 			shipmentIDs := make([]pulid.ID, 0, len(items))
+			itemIDs := make([]pulid.ID, 0, len(items))
 			for _, item := range items {
 				if err = r.releaseItem(ctx, req, item); err != nil {
 					return nil, err
 				}
 				released = append(released, item)
+				itemIDs = append(itemIDs, item.ID)
 				if item.ShipmentID.IsNotNil() {
 					shipmentIDs = append(shipmentIDs, item.ShipmentID)
 				}
 			}
 
 			if err = syncTransferState(ctx, db, shipmentIDs); err != nil {
+				return nil, err
+			}
+			if err = billingqueueprojection.Refresh(ctx, db, itemIDs...); err != nil {
 				return nil, err
 			}
 
@@ -468,33 +586,6 @@ func (r *repository) ListOpenShipmentIDs(
 		}
 
 		return ids, nil
-	})
-}
-
-type statusCount struct {
-	Status billingqueue.Status
-	Count  int
-}
-
-func (r *repository) GetStatusCounts(
-	ctx context.Context,
-	_ *billingqueueports.GetBillingQueueStatsRequest,
-) (map[billingqueue.Status]int, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[billingqueue.Status]int, error) {
-		bq := billingqueuedb.BillingQueueItems
-		rows, err := keel.Into[statusCount](ctx, r.db.Keel(ctx), bq.
-			Group(bq.Status).
-			Pick(bq.Status, keel.Count()))
-		if err != nil {
-			return nil, err
-		}
-
-		counts := make(map[billingqueue.Status]int, len(rows))
-		for _, row := range rows {
-			counts[row.Status] = row.Count
-		}
-
-		return counts, nil
 	})
 }
 

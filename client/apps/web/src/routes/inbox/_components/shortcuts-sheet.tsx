@@ -1,4 +1,4 @@
-import { keybindGroups } from "@/config/keybinds.config";
+import { keybindGroups, keybindKeys } from "@/config/keybinds.config";
 import {
   Dialog,
   DialogContent,
@@ -66,7 +66,7 @@ export function ShortcutsSheet({ open, onClose }: { open: boolean; onClose: () =
                   >
                     <dt>{t(keybind.label)}</dt>
                     <dd className="flex gap-1">
-                      {keybind.keys.map((key) => (
+                      {keybindKeys(keybind.keys).map((key) => (
                         <Kbd key={key}>{KEY_GLYPH[key] ?? key}</Kbd>
                       ))}
                     </dd>

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -23,7 +22,7 @@ const (
 	remittanceModelMaxRunes   = 120000
 )
 
-const remittanceSystemPrompt = `You read a factoring company's remittance report: the funding, purchase, reserve release or chargeback statement a factor sends a freight carrier about the invoices it bought.
+const remittanceSystemPrompt = `Your task: read a factoring company's remittance report: the funding, purchase, reserve release or chargeback statement a factor sends a freight carrier about the invoices it bought.
 
 Give one line for every invoice the report lists, in the order it lists them. For each line copy, exactly as the report prints them:
 - invoiceNumber: the carrier's invoice, load or pro number.
@@ -51,10 +50,11 @@ func (s *RemittanceService) extractPdf(
 	documentID pulid.ID,
 	text string,
 ) (*rateimport.Sheet, error) {
-	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
-		TenantInfo: remittanceTenant(rem),
-		Task:       aitask.TaskRemittanceExtraction,
-		System:     remittanceSystemPrompt,
+	var reply factoringremit.ModelReply
+	_, err := s.nova.Run(ctx, &llmports.NovaTask{
+		Name:         aitask.TaskRemittanceExtraction,
+		Feature:      aiusage.FeatureFactoringRemittanceExtract,
+		Instructions: remittanceSystemPrompt,
 		Context: llmports.DelimitedContext{
 			Sections: []llmports.ContextSection{{
 				Title:   "Remittance report",
@@ -62,30 +62,28 @@ func (s *RemittanceService) extractPdf(
 				Content: stringutils.TruncateRunes(text, remittanceModelMaxRunes),
 			}},
 		},
-		OutputSchema: factoringremit.ModelSchema(),
-		SchemaName:   remittanceModelSchemaName,
-		MaxTokens:    remittanceModelMaxTokens,
-		Attribution: aiusageports.AIUsageAttribution{
+		Schema:     factoringremit.ModelSchema(),
+		SchemaName: remittanceModelSchemaName,
+		MaxTokens:  remittanceModelMaxTokens,
+		TenantInfo: remittanceTenant(rem),
+		Attribution: &aiusageports.AIUsageAttribution{
 			Feature: aiusage.FeatureFactoringRemittanceExtract,
 			Subject: aiusage.Subject{
 				Type: aiusage.SubjectTypeDocument,
 				ID:   documentID.String(),
 			},
 		},
-	})
-	if err != nil {
-		if errors.Is(err, llmports.ErrNoProviderConfigured) {
-			return nil, &pdfProblemError{message: problemNoPdfModel}
-		}
-		return nil, err
-	}
-
-	var reply factoringremit.ModelReply
-	if err = sonic.UnmarshalString(result.Text, &reply); err != nil {
+	}, &reply)
+	switch {
+	case errors.Is(err, llmports.ErrNoProviderConfigured):
+		return nil, &pdfProblemError{message: problemNoPdfModel}
+	case errors.Is(err, llmports.ErrOutsideSchema):
 		s.l.Warn("the remittance model's reply could not be read",
 			zap.String("remittanceId", rem.ID.String()),
 			zap.Error(err))
 		return nil, &pdfProblemError{message: problemPdfNoLines}
+	case err != nil:
+		return nil, err
 	}
 	if len(reply.Lines) == 0 {
 		return nil, &pdfProblemError{message: problemPdfNoLines}

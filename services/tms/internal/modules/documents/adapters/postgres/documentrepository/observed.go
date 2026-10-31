@@ -89,6 +89,17 @@ func (o *observed) RecordDetectedSignature(
 	return changed, err
 }
 
+func (o *observed) RecordDeliveryFacts(
+	ctx context.Context,
+	req *documentports.RecordDeliveryFactsRequest,
+) (*document.Document, error) {
+	written, err := o.DocumentRepository.RecordDeliveryFacts(ctx, req)
+	if err == nil && written != nil {
+		o.notify(ctx, written)
+	}
+	return written, err
+}
+
 func (o *observed) PromoteVersion(
 	ctx context.Context,
 	req *documentports.PromoteDocumentVersionRequest,

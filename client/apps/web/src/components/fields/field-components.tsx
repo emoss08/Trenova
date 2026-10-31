@@ -57,6 +57,11 @@ export function FieldDescription({
 
 type FieldWrapperProps = {
   label?: React.ReactNode;
+  /**
+   * Keeps the label for assistive technology but not on screen, such as on every row of a
+   * repeated group after the first, whose labels already head the columns.
+   */
+  hideLabel?: boolean;
   /** A small control beside the label, such as one that clears the value back to what it inherits. */
   labelAction?: React.ReactNode;
   description?: string | React.ReactNode;
@@ -156,8 +161,14 @@ export function FieldLabel({
   );
 }
 
-function FieldWrapperInner({ children }: { children: React.ReactNode }) {
-  return <div className="mb-0.5 flex items-center gap-1">{children}</div>;
+function FieldWrapperInner({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={cn("mb-0.5 flex items-center gap-1", className)}>{children}</div>;
 }
 
 function FieldWrapperDescriptionInner({ children }: { children: React.ReactNode }) {
@@ -166,6 +177,7 @@ function FieldWrapperDescriptionInner({ children }: { children: React.ReactNode 
 
 export function FieldWrapper({
   label,
+  hideLabel = false,
   labelAction,
   description,
   warning,
@@ -195,7 +207,7 @@ export function FieldWrapper({
   if (layout === "inline") {
     return (
       <FieldRow
-        label={label}
+        label={hideLabel ? undefined : label}
         labelAction={labelAction}
         required={required}
         htmlFor={htmlFor}
@@ -215,7 +227,7 @@ export function FieldWrapper({
   return (
     <div className={cn("flex flex-col gap-0.5", className)}>
       {label && (
-        <FieldWrapperInner>
+        <FieldWrapperInner className={hideLabel ? "sr-only" : undefined}>
           <FieldLabel label={label} required={required} htmlFor={htmlFor} />
           {labelAction}
         </FieldWrapperInner>

@@ -101,8 +101,9 @@ func (r *repository) SelectOptions(
 				d.CreatedAt,
 			).
 				Where(
-					d.IsCurrentVersion.IsTrue(),
-					d.Status.Ne(document.StatusArchived),
+					keel.When(len(req.IDs) > 0, d.ID.In(req.IDs...)),
+					keel.When(len(req.IDs) == 0, d.IsCurrentVersion.IsTrue()),
+					keel.When(len(req.IDs) == 0, d.Status.Ne(document.StatusArchived)),
 					keel.When(req.ResourceID != "", d.ResourceID.Eq(req.ResourceID)),
 					keel.When(req.ResourceType != "", d.ResourceType.Eq(req.ResourceType)),
 				).
@@ -359,16 +360,18 @@ func (r *repository) UpdateIntelligence(
 			documentType = d.DocumentTypeID.To(*req.DocumentTypeID)
 		}
 
-		n, err := d.Where(d.ID.Eq(req.ID)).Update(
-			ctx,
-			r.db.Keel(ctx),
+		sets := []keel.Assignment{
 			d.ContentStatus.To(req.ContentStatus),
 			d.ContentError.To(req.ContentError),
 			d.DetectedKind.To(req.DetectedKind),
 			d.HasExtractedText.To(req.HasExtractedText),
 			d.ShipmentDraftStatus.To(req.ShipmentDraftStatus),
 			documentType,
-		)
+		}
+		if req.ProcessingProfile != nil {
+			sets = append(sets, d.ProcessingProfile.To(*req.ProcessingProfile))
+		}
+		n, err := d.Where(d.ID.Eq(req.ID)).Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			r.l.Error(
 				"failed to update document intelligence",
@@ -379,6 +382,40 @@ func (r *repository) UpdateIntelligence(
 		}
 
 		return dberror.CheckAffected(n, "Document", req.ID.String())
+	})
+}
+
+func (r *repository) RecordDeliveryFacts(
+	ctx context.Context,
+	req *documentports.RecordDeliveryFactsRequest,
+) (*document.Document, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*document.Document, error) {
+		d := documentdb.Documents
+		var version keel.Pred
+		if req.Version != nil {
+			version = d.Version.Eq(*req.Version)
+		}
+		var person keel.Pred
+		if req.KeepPerson {
+			person = d.DeliveryFacts.Text("source").
+				IsDistinctFrom(string(document.FactsSourcePerson))
+		}
+
+		rows, err := d.Where(d.ID.Eq(req.ID), version, person).
+			UpdateReturning(ctx, r.db.Keel(ctx), d.DeliveryFacts.To(req.Facts))
+		if err != nil {
+			r.l.Error(
+				"failed to record document delivery facts",
+				zap.Error(err),
+				zap.String("id", req.ID.String()),
+			)
+			return nil, documentErrors.Map(err, req.ID.String())
+		}
+		if len(rows) == 0 {
+			return nil, nil //nolint:nilnil // nil is the contract for a guard leaving the document as it was
+		}
+
+		return rows[0], nil
 	})
 }
 

@@ -442,10 +442,11 @@ func taskDescriptors() []TaskDescriptor {
 				"requires a provider marked trusted.",
 		},
 		{
-			Task:           aitask.TaskFormulaAssistant,
-			Label:          "Formula assistant",
-			Description:    "Generate and explain rating formulas.",
-			VolumeGuidance: "Interactive; favours a capable model.",
+			Task:        aitask.TaskFormulaAssistant,
+			Label:       "Formula assistant",
+			Description: "Generate and explain rating formulas.",
+			VolumeGuidance: "Interactive; favours a capable model. Without one, the Desk's " +
+				"provider writes and explains formulas.",
 		},
 		{
 			Task:        aitask.TaskScopeClassification,
@@ -508,6 +509,24 @@ func taskDescriptors() []TaskDescriptor {
 			VolumeGuidance: "Runs only for records the deterministic matcher could not settle, at most " +
 				"a hundred per refresh and usually a handful. It picks from a supplied list, so a " +
 				"small, inexpensive model is enough.",
+		},
+		{
+			Task:        aitask.TaskPaperworkReading,
+			Label:       "Shipment paperwork",
+			Description: "Read a proof of delivery, bill of lading or receipt the moment it is uploaded.",
+			VolumeGuidance: "One call per shipment document uploaded, so it follows your load volume. " +
+				"The file goes to the model as itself and the answer is a handful of fields, " +
+				"so a fast, inexpensive model that reads PDFs and photos (such as Claude Haiku) is the right fit. " +
+				"Without one, the document classifier's provider reads it, or the facts wait for the document's conversion.",
+		},
+		{
+			Task:        aitask.TaskPaletteAnswer,
+			Label:       "Command palette answers",
+			Description: "Answer a quick question typed into the command palette from a few lookups.",
+			VolumeGuidance: "One short answer per question asked, with at most four model calls " +
+				"while it looks records up. A person is waiting on each, so a fast model that " +
+				"calls tools reliably (such as Claude Haiku) is the right fit. Without one, " +
+				"the Desk's provider answers.",
 		},
 		{
 			Task:        aitask.TaskRemittanceExtraction,

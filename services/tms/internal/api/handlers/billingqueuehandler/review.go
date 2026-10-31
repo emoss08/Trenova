@@ -25,9 +25,9 @@ func (h *Handler) registerReviewRoutes(api *gin.RouterGroup) {
 	update := h.pm.RequirePermission(permission.ResourceBillingQueue.String(), permission.OpUpdate)
 
 	api.GET("/summaries/", read, h.summaries)
-	api.POST("/bulk-approve/", update, h.startBulkApprove)
-	api.GET("/bulk-approve/:runID/", read, h.getBulkApprove)
-	api.POST("/bulk-approve/:runID/cancel/", update, h.cancelBulkApprove)
+	api.POST("/bulk/", update, h.startBulk)
+	api.GET("/bulk/:runID/", read, h.getBulk)
+	api.POST("/bulk/:runID/cancel/", update, h.cancelBulk)
 	api.GET("/:itemID/neighbors/", read, h.neighbors)
 	api.GET("/:itemID/activity/", read, h.activity)
 	api.POST("/:itemID/issues/:issueID/resolve/", update, h.resolveIssue)
@@ -328,44 +328,50 @@ func (h *Handler) post(c *gin.Context) {
 	)
 }
 
-type bulkApproveRequest struct {
-	ItemIDs        []pulid.ID `json:"itemIds"        binding:"required"`
-	IdempotencyKey string     `json:"idempotencyKey" binding:"required"`
-	// AssignApprover makes the person approving the biller of the picked
-	// items that have none.
-	AssignApprover bool `json:"assignApprover"`
+type bulkRequest struct {
+	ItemIDs        []pulid.ID                   `json:"itemIds"        binding:"required"`
+	IdempotencyKey string                       `json:"idempotencyKey" binding:"required"`
+	Action         billingapprovalrun.RunAction `json:"action"`
+	Params         billingapprovalrun.RunParams `json:"params"`
 }
 
-// @Summary Approve several items as one job, after an undo window
-// @ID startBillingQueueBulkApprove
+// @Summary Apply one action to several items as one job
+// @Description Approve, post, hold, assign, cancel, ask drivers for paperwork, or settle one check, across up to 500 items. Every action but posting waits out a short undo window first. Posting also needs invoice post permission, assigning needs billing queue assign.
+// @ID startBillingQueueBulk
 // @Tags Billing Queue
 // @Accept json
 // @Produce json
+// @Success 202 {object} billingapprovalrun.ApprovalRun
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
 // @Security BearerAuth
-// @Router /billing-queue/bulk-approve/ [post]
-func (h *Handler) startBulkApprove(c *gin.Context) {
+// @Router /billing-queue/bulk/ [post]
+func (h *Handler) startBulk(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	var body bulkApproveRequest
+	var body bulkRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 	if len(body.ItemIDs) > billingapprovalrun.MaxApprovalRunItems {
 		h.eh.HandleError(c, errortypes.NewValidationError(
-			"itemIds", errortypes.ErrInvalid, "Approve at most 500 items at a time",
+			"itemIds", errortypes.ErrInvalid, "Act on at most 500 items at a time",
 		))
 		return
 	}
+	if err := h.requireBulkPermission(c, body.Action); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
 
-	// The run is the person's: it is approved in their name, and an item with
-	// no biller can only be given to them.
 	run, err := h.approval.Start(
 		c.Request.Context(),
 		&billingqueueports.StartBillingQueueApprovalRequest{
 			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			ItemIDs:        body.ItemIDs,
 			IdempotencyKey: body.IdempotencyKey,
-			AssignApprover: body.AssignApprover,
+			Action:         body.Action,
+			Params:         body.Params,
 		},
 	)
 	if err != nil {
@@ -374,6 +380,34 @@ func (h *Handler) startBulkApprove(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusAccepted, run)
+}
+
+func (h *Handler) requireBulkPermission(c *gin.Context, action billingapprovalrun.RunAction) error {
+	resource, op := "", permission.Operation("")
+	switch action {
+	case billingapprovalrun.RunActionPost:
+		resource, op = permission.ResourceInvoice.String(), permission.OpPost
+	case billingapprovalrun.RunActionAssign:
+		resource, op = permission.ResourceBillingQueue.String(), permission.OpAssign
+	case billingapprovalrun.RunActionApprove,
+		billingapprovalrun.RunActionHold,
+		billingapprovalrun.RunActionCancel,
+		billingapprovalrun.RunActionRequestPaperwork,
+		billingapprovalrun.RunActionResolveIssue:
+		return nil
+	default:
+		return nil
+	}
+
+	allowed, err := h.pm.Allowed(c, resource, op)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return errortypes.NewAuthorizationError("You don't have permission for this bulk action")
+	}
+
+	return nil
 }
 
 func (h *Handler) runRequest(
@@ -393,13 +427,14 @@ func (h *Handler) runRequest(
 	}, true
 }
 
-// @Summary Get a bulk approval and its per-item results
-// @ID getBillingQueueBulkApprove
+// @Summary Get a bulk action and its per-item results
+// @ID getBillingQueueBulk
 // @Tags Billing Queue
 // @Produce json
+// @Success 200 {object} billingapprovalrun.ApprovalRun
 // @Security BearerAuth
-// @Router /billing-queue/bulk-approve/{runID}/ [get]
-func (h *Handler) getBulkApprove(c *gin.Context) {
+// @Router /billing-queue/bulk/{runID}/ [get]
+func (h *Handler) getBulk(c *gin.Context) {
 	req, ok := h.runRequest(c)
 	if !ok {
 		return
@@ -413,13 +448,14 @@ func (h *Handler) getBulkApprove(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, run)
 }
 
-// @Summary Undo a bulk approval inside its window
-// @ID cancelBillingQueueBulkApprove
+// @Summary Undo a bulk action inside its window
+// @ID cancelBillingQueueBulk
 // @Tags Billing Queue
 // @Produce json
+// @Success 200 {object} billingapprovalrun.ApprovalRun
 // @Security BearerAuth
-// @Router /billing-queue/bulk-approve/{runID}/cancel/ [post]
-func (h *Handler) cancelBulkApprove(c *gin.Context) {
+// @Router /billing-queue/bulk/{runID}/cancel/ [post]
+func (h *Handler) cancelBulk(c *gin.Context) {
 	req, ok := h.runRequest(c)
 	if !ok {
 		return

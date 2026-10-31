@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
@@ -38,7 +37,7 @@ type Params struct {
 	Collections   collectionports.Service
 	Briefs        accountingbriefports.AccountingBriefRepository
 	Organizations tenantports.OrganizationRepository
-	Completion    llmports.CompletionService
+	Nova          llmports.TaskRunner
 	Logger        *zap.Logger
 }
 
@@ -47,7 +46,7 @@ type Dependencies struct {
 	Collections   collectionports.Service
 	Briefs        accountingbriefports.AccountingBriefRepository
 	Organizations tenantports.OrganizationRepository
-	Completion    llmports.CompletionService
+	Nova          llmports.TaskRunner
 	Logger        *zap.Logger
 	Now           func() time.Time
 }
@@ -57,7 +56,7 @@ type Service struct {
 	collections   collectionports.Service
 	briefs        accountingbriefports.AccountingBriefRepository
 	organizations tenantports.OrganizationRepository
-	completion    llmports.CompletionService
+	nova          llmports.TaskRunner
 	l             *zap.Logger
 	now           func() time.Time
 }
@@ -74,7 +73,7 @@ func New(p Params) *Service {
 		Collections:   p.Collections,
 		Briefs:        p.Briefs,
 		Organizations: p.Organizations,
-		Completion:    p.Completion,
+		Nova:          p.Nova,
 		Logger:        p.Logger,
 		Now:           time.Now,
 	})
@@ -86,7 +85,7 @@ func NewWithDependencies(d *Dependencies) *Service {
 		collections:   d.Collections,
 		briefs:        d.Briefs,
 		organizations: d.Organizations,
-		completion:    d.Completion,
+		nova:          d.Nova,
 		l:             d.Logger.Named("service.accounting-briefing"),
 		now:           d.Now,
 	}
@@ -256,17 +255,17 @@ func (s *Service) narrate(
 	allowed := facts.Links()
 	narration, ok := shipmentnarration.Narrate[narrationDraft](
 		ctx,
-		s.completion,
+		s.nova,
 		s.l,
-		&llmports.StructuredCompletionRequest{
+		&llmports.NovaTask{
 			TenantInfo:   tenantInfo,
-			Task:         aitask.TaskDailyBriefing,
-			System:       systemPrompt,
+			Name:         aitask.TaskDailyBriefing,
+			Instructions: systemPrompt,
 			Context:      buildContext(facts, plain),
-			OutputSchema: outputSchema(allowed),
+			Schema:       outputSchema(allowed),
 			SchemaName:   schemaName,
 			MaxTokens:    maxOutputTokens,
-			Attribution:  aiusageports.AIUsageAttribution{UserID: tenantInfo.UserID},
+			UserID:       tenantInfo.UserID,
 		},
 	)
 	if !ok {

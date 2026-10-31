@@ -22,6 +22,7 @@ import {
   invoicePostingModeChoices,
   lateChargeAssessmentModeChoices,
   paymentTermChoices,
+  queueAutoApproveModeChoices,
   rateVarianceAutoResolutionModeChoices,
   readyToBillAssignmentModeChoices,
   transferScheduleChoices,
@@ -79,6 +80,7 @@ export default function BillingControlForm() {
         <div className="flex flex-col gap-4 pb-14">
           <InvoiceDefaultsCard />
           <AutomationCard />
+          <BillingQueueCard />
           <ExceptionPolicyCard />
           <RatingPolicyCard />
           <LateChargesCard />
@@ -285,6 +287,73 @@ function AutomationCard() {
                 />
               </FormControl>
             </>
+          )}
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BillingQueueCard() {
+  const t = useT();
+
+  const { control } = useFormContext<BillingControl>();
+  const mode = useWatch({ control, name: "queueAutoApproveMode" });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("Billing queue")}</CardTitle>
+        <CardDescription>
+          {t(
+            "How the queue reviews items before a biller sees them, and whether it approves the clean ones on its own.",
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="queueAgentReviewEnabled"
+              label={t("Nova reviews each item")}
+              description={t(
+                "Nova compares each item's charges with its contract, its paperwork and this customer's recent invoices, reads its documents, and writes the queue's brief. It only advises; the five checks still decide. Its cost shows under Billing queue review in AI usage.",
+              )}
+              position="left"
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="queueAutoApproveMode"
+              label={t("Approve on its own")}
+              description={
+                mode === "WhenAgentAgrees"
+                  ? t(
+                      "An item is approved without a biller once all five checks clear and Nova agrees with the charges.",
+                    )
+                  : mode === "WhenChecksClear"
+                    ? t("An item is approved without a biller once all five checks clear.")
+                    : t("Every item waits for a biller to approve it.")
+              }
+              options={queueAutoApproveModeChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          {mode !== "Off" && (
+            <FormControl className="max-w-[420px]">
+              <NumberField
+                control={control}
+                name="queueAutoApproveMaxAmount"
+                label={t("Only up to this amount")}
+                aria-label={t("Only up to this amount")}
+                description={t("Larger items wait for a biller. Leave empty for no limit.")}
+                decimalScale={2}
+                fixedDecimalScale
+                min={0}
+              />
+            </FormControl>
           )}
         </FormGroup>
       </CardContent>

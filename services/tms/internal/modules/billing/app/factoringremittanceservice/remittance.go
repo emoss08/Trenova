@@ -45,7 +45,7 @@ type RemittanceParams struct {
 	Factors     factoringcompanyports.FactoringCompanyRepository
 	Documents   documentports.InvoiceDocumentService
 	Content     documentports.DocumentContentService            `optional:"true"`
-	Completion  llmports.CompletionService                      `optional:"true"`
+	Nova        llmports.TaskRunner                             `optional:"true"`
 	Starter     factoringremittanceports.RemittanceStageStarter `optional:"true"`
 	Events      agenteventports.AgentEventPublisher             `optional:"true"`
 	Audit       auditports.AuditService
@@ -62,7 +62,7 @@ type RemittanceService struct {
 	factors     factoringcompanyports.FactoringCompanyRepository
 	documents   documentports.InvoiceDocumentService
 	content     documentports.DocumentContentService
-	completion  llmports.CompletionService
+	nova        llmports.TaskRunner
 	starter     factoringremittanceports.RemittanceStageStarter
 	events      agenteventports.AgentEventPublisher
 	rec         factoringaction.Recorder
@@ -84,7 +84,7 @@ func NewRemittanceService(p RemittanceParams) factoringremittanceports.Remittanc
 		factors:     p.Factors,
 		documents:   p.Documents,
 		content:     p.Content,
-		completion:  p.Completion,
+		nova:        p.Nova,
 		starter:     p.Starter,
 		sheetLimits: p.SheetLimits,
 		events:      p.Events,

@@ -19,6 +19,7 @@ type DocumentSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 	ResourceID         string                         `json:"resourceId"`
 	ResourceType       string                         `json:"resourceType"`
+	IDs                []pulid.ID                     `json:"ids"`
 }
 
 type GetDocumentByIDRequest struct {
@@ -73,6 +74,8 @@ type UpdateDocumentIntelligenceRequest struct {
 	HasExtractedText    bool                         `json:"hasExtractedText"`
 	ShipmentDraftStatus document.ShipmentDraftStatus `json:"shipmentDraftStatus"`
 	DocumentTypeID      *pulid.ID                    `json:"documentTypeId"`
+	// ProcessingProfile moves the document to another profile when set.
+	ProcessingProfile *document.ProcessingProfile `json:"processingProfile,omitempty"`
 }
 
 type RecordDetectedSignatureRequest struct {
@@ -81,6 +84,20 @@ type RecordDetectedSignatureRequest struct {
 	Status     document.SignatureStatus `json:"status"`
 	SignedAt   *int64                   `json:"signedAt"`
 	DetectedAt int64                    `json:"detectedAt"`
+}
+
+// RecordDeliveryFactsRequest writes a document's delivery facts and nothing
+// else, so it never carries a stale copy of the rest of the row back over a
+// change the conversion or a person made meanwhile.
+type RecordDeliveryFactsRequest struct {
+	ID         pulid.ID                `json:"id"`
+	TenantInfo pagination.TenantInfo   `json:"tenantInfo"`
+	Facts      *document.DeliveryFacts `json:"facts"`
+	// Version, when set, is the version the writer read; a document that
+	// changed since is left as it is.
+	Version *int64 `json:"version,omitempty"`
+	// KeepPerson leaves facts a person recorded as they are.
+	KeepPerson bool `json:"keepPerson,omitempty"`
 }
 
 type ListPendingPreviewReconciliationRequest struct {
@@ -154,6 +171,9 @@ type DocumentRepository interface {
 	UpdatePreview(ctx context.Context, req *UpdateDocumentPreviewRequest) error
 	UpdateIntelligence(ctx context.Context, req *UpdateDocumentIntelligenceRequest) error
 	RecordDetectedSignature(ctx context.Context, req *RecordDetectedSignatureRequest) (bool, error)
+	// RecordDeliveryFacts returns the document as written, or nil when its
+	// guards left it as it was.
+	RecordDeliveryFacts(ctx context.Context, req *RecordDeliveryFactsRequest) (*document.Document, error)
 	PromoteVersion(ctx context.Context, req *PromoteDocumentVersionRequest) error
 	MoveLineageToResource(ctx context.Context, req *MoveDocumentLineageRequest) error
 	Delete(ctx context.Context, req DeleteDocumentRequest) error

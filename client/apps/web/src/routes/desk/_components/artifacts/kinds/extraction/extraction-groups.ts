@@ -1,5 +1,9 @@
 import { defineLabels } from "@trenova/shared/i18n/labels";
-import type { ExtractedField, Extraction, MissingField } from "./extraction-payload";
+import type {
+  ExtractedField,
+  Extraction,
+  MissingField,
+} from "@/lib/document-reading/extraction-payload";
 
 export type GroupId = "parties" | "stops" | "references" | "freight" | "charges" | "other";
 

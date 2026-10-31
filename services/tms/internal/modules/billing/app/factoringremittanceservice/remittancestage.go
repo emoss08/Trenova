@@ -609,7 +609,7 @@ func (s *RemittanceService) preparePdf(
 	doc *document.Document,
 	wait bool,
 ) (*preparedStage, error) {
-	if s.completion == nil || s.content == nil {
+	if s.nova == nil || s.content == nil {
 		return &preparedStage{problem: problemNoPdfModel}, nil
 	}
 	content, err := s.content.GetContent(ctx, doc.ID, remittanceTenant(rem))

@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { CardIcon, CardSection } from "../../record-card/record-card";
 import type { CheckItem, FieldRow, ReviewTally } from "./extraction-groups";
-import type { PageSize } from "./extraction-payload";
+import type { PageSize } from "@/lib/document-reading/extraction-payload";
 import { ExtractionSnippet } from "./extraction-snippet";
 import { checkFields } from "./extraction-summary";
 import { rowReason, sharedStopReason, stopTitle } from "./extraction-words";

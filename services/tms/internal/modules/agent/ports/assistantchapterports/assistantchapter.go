@@ -50,12 +50,12 @@ type ChapterPlan struct {
 	// is named when the next one opens.
 	NameEarlier pulid.ID `json:"nameEarlier,omitempty"`
 
-	Request *llmports.StructuredCompletionRequest `json:"request,omitempty"`
+	Task *llmports.NovaTask `json:"task,omitempty"`
 }
 
 func (p *ChapterPlan) Skipped() bool { return p.Skip != "" }
 
-func (p *ChapterPlan) NeedsModel() bool { return p.Skip == "" && p.Request != nil }
+func (p *ChapterPlan) NeedsModel() bool { return p.Skip == "" && p.Task != nil }
 
 type ChapterOutcome struct {
 	ChapterID pulid.ID `json:"chapterId,omitempty"`

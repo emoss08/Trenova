@@ -1,0 +1,113 @@
+# What the billing queue's Shipment tab shows: the stops with their times, the load,
+# and how the shipment was rated. Only these fields are asked for.
+query BillingQueueShipment($id: ID!) {
+  shipment(id: $id, expandShipmentDetails: true) {
+    id
+    proNumber
+    bol
+    externalReference
+    pieces
+    weight
+    temperatureMin
+    temperatureMax
+    customer {
+      id
+      name
+    }
+    commodities {
+      id
+      commodity {
+        id
+        name
+      }
+    }
+    moves {
+      id
+      sequence
+      loaded
+      distance
+      assignment {
+        id
+        tractor {
+          id
+          code
+        }
+        trailer {
+          id
+          code
+        }
+        primaryWorker {
+          id
+          wholeName
+        }
+      }
+      stops {
+        id
+        type
+        sequence
+        scheduledWindowStart
+        scheduledWindowEnd
+        actualArrival
+        actualDeparture
+        addressLine
+        location {
+          id
+          name
+          city
+          state {
+            id
+            abbreviation
+          }
+        }
+      }
+    }
+    ratingDetail {
+      agreementId
+      agreementName
+      ruleId
+      ruleLabel
+      formulaTemplateName
+      ratedAt
+      source
+      inputs
+    }
+  }
+}
+
+# The agreement behind "Rated by": its terms, accessorial schedule and fuel program.
+query BillingQueueRateAgreement($id: ID!) {
+  rateAgreement(id: $id) {
+    id
+    code
+    name
+    status
+    effectiveFrom
+    effectiveTo
+    accessorials {
+      id
+      accessorialChargeId
+      chargeCode
+      chargeDescription
+      method
+      rateUnit
+      amount
+      freeUnits
+      waived
+    }
+    fuelBinding {
+      id
+      waived
+      programName
+    }
+  }
+}
+
+# The template behind "Rated by" when no contract priced the shipment.
+query BillingQueueFormulaTemplate($id: ID!) {
+  formulaTemplate(id: $id) {
+    id
+    name
+    description
+    status
+  }
+}

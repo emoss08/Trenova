@@ -4,20 +4,32 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 
 /**
- * The detail pane while an item's code or record is read: the PRO number and its status, the
- * amount, the row of facts, the action bar, the four tabs and the charges tab it opens on. Each
- * text line sits in a box of that text's own line height, so the record lands where its outline
- * was. The page draws it while the pane's code arrives and the pane draws it while the item
- * loads, so the two phases are one picture.
+ * The detail pane while an item's code or record is read, measured from the pane itself
+ * so nothing moves when the record lands: the header (the PRO row at the 2xl line, the
+ * amount row at the 3xl line, "Open shipment" and the margin on the right), the Review
+ * card's five checks and Nova's note, the tabs, the Charges tab's header, rows and
+ * totals, and the action footer. Each text line sits in a box of that text's own line
+ * height. The page draws it while the pane's code arrives and the pane draws it while
+ * the item loads, so the two phases are one picture.
  */
 
-const FACT_WIDTHS = ["w-16", "w-28", "w-20", "w-36"] as const;
-const ACTION_WIDTHS = ["w-24", "w-28", "w-20"] as const;
-const TAB_WIDTHS = ["w-14", "w-18", "w-18", "w-14"] as const;
-const ACCESSORIAL_ROWS = [
-  { name: "w-28", detail: "w-20", amount: "w-14" },
-  { name: "w-20", detail: "w-24", amount: "w-12" },
+const CHECK_WIDTHS = ["w-40", "w-52", "w-36", "w-44", "w-48"] as const;
+const TAB_WIDTHS = ["w-16", "w-16", "w-20", "w-14", "w-14"] as const;
+const CHARGE_ROWS = [
+  { name: "w-24", basis: "w-40", amount: "w-16" },
+  { name: "w-28", basis: "w-36", amount: "w-14" },
+  { name: "w-20", basis: "w-44", amount: "w-14" },
 ] as const;
+const TOTAL_ROWS = ["w-14", "w-20", "w-10", "w-20", "w-12"] as const;
+
+/** A line of text as a box of its line height holding a bar of its glyphs' height. */
+function Line({ height, bar, width }: { height: string; bar: string; width: string }) {
+  return (
+    <span className={cn("flex items-center", height)}>
+      <Skeleton className={cn(bar, width)} />
+    </span>
+  );
+}
 
 export function BillingQueueDetailSkeleton() {
   const t = useT();
@@ -29,93 +41,107 @@ export function BillingQueueDetailSkeleton() {
       aria-label={t("Loading the billing queue item")}
     >
       <div className="contents" aria-hidden>
-        <div className="shrink-0 space-y-3 border-b px-4 py-4">
-          <div className="flex items-center gap-2 text-lg">
-            <Skeleton className="inline-block h-4 w-28 align-middle" />
-            <Skeleton className="h-5 w-20 rounded-badge" />
+        <div className="flex shrink-0 flex-col gap-3 px-5 pt-4 pb-3">
+          <div className="flex h-6.5 items-center gap-2.5">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="rounded-badge h-5 w-18" />
+            <Skeleton className="h-3 w-44" />
+            <span className="flex-1" />
+            <Skeleton className="h-3 w-24" />
           </div>
-          <div className="flex h-5 items-center">
-            <Skeleton className="h-5 w-32" />
+          <div className="flex h-7.5 items-center gap-3.5">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-3 w-48" />
+            <span className="flex-1" />
+            <Skeleton className="h-3 w-28" />
           </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
-            {FACT_WIDTHS.map((width, index) => (
-              <div key={index}>
-                <div className="text-xs">
-                  <Skeleton className="inline-block h-2.5 w-12 align-middle" />
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-5.5 overflow-hidden px-5 pt-1 pb-6">
+          <div className="border-border rounded-md border">
+            <div className="border-border flex h-9.5 items-center justify-between border-b px-3">
+              <Skeleton className="h-3 w-14" />
+              <Skeleton className="h-2.5 w-20" />
+            </div>
+            <div className="flex flex-col py-1">
+              {CHECK_WIDTHS.map((width, index) => (
+                <div key={index} className="mx-1 flex h-7.25 items-center gap-2.5 px-2">
+                  <Skeleton className="size-4 rounded-full" />
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className={cn("h-3", width)} />
                 </div>
-                <div className="text-sm">
-                  <Skeleton className={cn("inline-block h-3 align-middle", width)} />
+              ))}
+            </div>
+            <div className="border-border bg-muted flex gap-2.5 rounded-b-md border-t px-3 py-2.5">
+              <Skeleton className="mt-0.5 size-3.5 rounded-full" />
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <div className="flex flex-col">
+                  <Line height="h-4.5" bar="h-3" width="w-full" />
+                  <Line height="h-4.5" bar="h-3" width="w-3/5" />
+                </div>
+                <Line height="h-4" bar="h-2.5" width="w-40" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="border-border flex h-8.25 items-center gap-4.5 border-b">
+              {TAB_WIDTHS.map((width, index) => (
+                <Skeleton key={index} className={cn("h-3", width)} />
+              ))}
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex h-6 items-center gap-2">
+                <Skeleton className="h-3 w-14" />
+                <span className="flex-1" />
+                <Skeleton className="h-2.5 w-36" />
+                <Skeleton className="h-6 w-16" />
+              </div>
+              <div className="border-border rounded-md border">
+                <div className="border-border flex h-8 items-center border-b px-2.5">
+                  <Skeleton className="h-2.5 w-12" />
+                </div>
+                {CHARGE_ROWS.map((row, index) => (
+                  <div
+                    key={index}
+                    className="border-border flex h-10.75 items-center justify-between gap-2 border-b px-2.5 py-1"
+                  >
+                    <div className="flex flex-col gap-px">
+                      <Line height="h-4.25" bar="h-3" width={row.name} />
+                      <Line height="h-4" bar="h-2.5" width={row.basis} />
+                    </div>
+                    <Skeleton className={cn("h-3", row.amount)} />
+                  </div>
+                ))}
+                <div className="flex items-start justify-between gap-4 p-2.5">
+                  <Skeleton className="h-6 w-24" />
+                  <div className="flex min-w-60 flex-col gap-1">
+                    {TOTAL_ROWS.map((width, index) => (
+                      <div
+                        key={index}
+                        className={cn(
+                          "flex h-4.25 items-center justify-between gap-4",
+                          index === 2 && "border-border box-content border-t pt-1.5",
+                        )}
+                      >
+                        <Skeleton className={cn("h-3", width)} />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 border-b px-4 py-2">
-          {ACTION_WIDTHS.map((width, index) => (
-            <Skeleton key={index} className={cn("h-7", width)} />
-          ))}
-        </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <div className="flex w-full items-center gap-x-0.5 border-b py-1">
-            {TAB_WIDTHS.map((width, index) => (
-              <span key={index} className="flex h-8 grow items-center justify-center px-2.5">
-                <Skeleton className={cn("h-3", width)} />
-              </span>
-            ))}
-          </div>
-          <ChargesSkeleton />
-        </div>
-      </div>
-    </div>
-  );
-}
 
-/** The charges tab: the rating line, the base rate, the accessorials and the total. */
-function ChargesSkeleton() {
-  return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="flex items-center justify-between rounded-md border px-3 py-2">
-        <Skeleton className="h-3 w-48" />
-        <Skeleton className="h-6 w-20" />
-      </div>
-      <div className="flex flex-col">
-        <ChargeRowSkeleton name="w-20" detail="w-32" amount="w-16" />
-        <div className="flex items-center justify-between p-2">
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-6 w-16" />
-        </div>
-        {ACCESSORIAL_ROWS.map((row, index) => (
-          <ChargeRowSkeleton key={index} {...row} />
-        ))}
-      </div>
-      <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2.5">
-        <Skeleton className="h-3.5 w-10" />
-        <Skeleton className="h-4 w-20" />
-      </div>
-    </div>
-  );
-}
-
-function ChargeRowSkeleton({
-  name,
-  detail,
-  amount,
-}: {
-  name: string;
-  detail: string;
-  amount: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-2 p-2">
-      <div className="flex flex-col">
-        <div className="text-sm">
-          <Skeleton className={cn("inline-block h-3 align-middle", name)} />
-        </div>
-        <div className="text-xs">
-          <Skeleton className={cn("inline-block h-2.5 align-middle", detail)} />
+        <div className="border-border flex h-12.25 shrink-0 items-center justify-end gap-2 border-t px-5">
+          <Skeleton className="h-7 w-24" />
+          <Skeleton className="h-7 w-28" />
+          <Skeleton className="h-7 w-16" />
+          <Skeleton className="h-7 w-20" />
         </div>
       </div>
-      <Skeleton className={cn("h-3 shrink-0", amount)} />
     </div>
   );
 }
@@ -127,10 +153,8 @@ export function BillingQueueDetailUnselected() {
   return (
     <BillingDetailUnselected
       layout="tabs"
-      title={t("Nothing open")}
-      description={t(
-        "Pick an item from the queue to review it here, or press J to start at the top.",
-      )}
+      title={t("Nothing to open")}
+      description={t("No item in the queue matches what you're looking at.")}
     />
   );
 }

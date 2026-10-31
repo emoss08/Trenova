@@ -1,8 +1,13 @@
-import type { Hotkey } from "@tanstack/react-hotkeys";
+import { formatForDisplay, type Hotkey } from "@tanstack/react-hotkeys";
+import { isMacPlatform } from "@trenova/shared/lib/shortcuts";
 
 export interface Keybind {
   id: string;
   label: string;
+  /**
+   * The keys as printed on the keyboard, with "Mod" for the platform's primary modifier
+   * (⌘ on a Mac, Ctrl elsewhere); `keybindKeys` spells them for the person's platform.
+   */
   keys: string[];
   description: string;
   /** The binding as `useHotkey` takes it, for a keybind bound from this config. */
@@ -23,37 +28,39 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "command-palette",
         label: "Command palette",
-        keys: ["Ctrl", "K"],
+        keys: ["Mod", "K"],
         description: "Search records, jump to pages, run commands and ask the assistant",
       },
       {
         id: "toggle-sidebar",
         label: "Fold the sidebar",
-        keys: ["Ctrl", "B"],
+        keys: ["Mod", "B"],
         description: "Fold the module's pages away beside the rail, or bring them back",
       },
       {
         id: "user-settings",
         label: "User settings",
-        keys: ["Ctrl", "Shift", "S"],
+        keys: ["Mod", "Shift", "S"],
         description: "Open your settings from any page",
+        hotkey: "Mod+Shift+S",
       },
       {
         id: "keyboard-shortcuts",
         label: "Keyboard shortcuts",
-        keys: ["Ctrl", "/"],
+        keys: ["Mod", "/"],
         description: "Show this keyboard shortcuts dialog",
+        hotkey: "Mod+/",
       },
       {
         id: "assistant",
         label: "Assistant",
-        keys: ["Ctrl", "J"],
+        keys: ["Mod", "J"],
         description: "Open or close the assistant from any page",
       },
       {
         id: "page-access",
         label: "Page access",
-        keys: ["Ctrl", "Alt", "P"],
+        keys: ["Mod", "Alt", "P"],
         description: "See what this screen needs and what each role sees on it",
         hotkey: "Mod+Alt+P",
       },
@@ -100,7 +107,7 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "approval-approve",
         label: "Approve",
-        keys: ["Ctrl", "Enter"],
+        keys: ["Mod", "Enter"],
         description: "Approve the change the approval box shows; Enter alone never approves",
       },
       {
@@ -136,13 +143,13 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "palette-new-tab",
         label: "Open in new tab",
-        keys: ["Ctrl", "Enter"],
+        keys: ["Mod", "Enter"],
         description: "Open the selected result in a new browser tab",
       },
       {
         id: "palette-copy-link",
         label: "Copy link",
-        keys: ["Ctrl", "L"],
+        keys: ["Mod", "L"],
         description: "Copy a link to the selected result",
       },
       {
@@ -160,7 +167,7 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "comment-send",
         label: "Send comment",
-        keys: ["Ctrl", "Enter"],
+        keys: ["Mod", "Enter"],
         description: "Send the comment you are composing",
       },
       {
@@ -172,13 +179,13 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "comment-bold",
         label: "Bold",
-        keys: ["Ctrl", "B"],
+        keys: ["Mod", "B"],
         description: "Toggle bold formatting in the comment editor",
       },
       {
         id: "comment-italic",
         label: "Italic",
-        keys: ["Ctrl", "I"],
+        keys: ["Mod", "I"],
         description: "Toggle italic formatting in the comment editor",
       },
       {
@@ -197,7 +204,7 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "submit-form",
         label: "Submit form",
-        keys: ["Ctrl", "Enter"],
+        keys: ["Mod", "Enter"],
         description: "Submit the current form in a modal or panel",
       },
       {
@@ -215,7 +222,7 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "save",
         label: "Save changes",
-        keys: ["Ctrl", "S"],
+        keys: ["Mod", "S"],
         description: "Save the editor you are in",
         hotkey: "Mod+S",
       },
@@ -514,7 +521,7 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "shipments-copy-link",
         label: "Copy link",
-        keys: ["Ctrl", "L"],
+        keys: ["Mod", "L"],
         description: "Copy a link to the shipment under the cursor",
       },
       {
@@ -526,7 +533,7 @@ export const keybindGroups: KeybindGroup[] = [
       {
         id: "shipments-approve",
         label: "Approve suggestion",
-        keys: ["Ctrl", "Enter"],
+        keys: ["Mod", "Enter"],
         description: "Run the suggested action at the top of the brief",
       },
       {
@@ -552,4 +559,30 @@ export function hotkeyOf(groupId: string, keybindId: string): Hotkey {
     throw new Error(`No hotkey is configured for ${groupId}.${keybindId}`);
   }
   return hotkey;
+}
+
+/**
+ * A configured keybind as the person's keyboard spells it, for a hint beside the control it
+ * runs: "⇧⌘S" on a Mac (run together, the way macOS menus print it), "Ctrl+Shift+S" elsewhere.
+ */
+export function hotkeyLabel(groupId: string, keybindId: string): string {
+  const hotkey = hotkeyOf(groupId, keybindId);
+  return isMacPlatform()
+    ? formatForDisplay(hotkey, { platform: "mac", separatorToken: "" })
+    : formatForDisplay(hotkey, { platform: "windows" });
+}
+
+const MAC_MODIFIERS: Readonly<Record<string, string>> = { Alt: "⌥", Shift: "⇧", Mod: "⌘" };
+/** The order macOS prints modifiers in: ⌥ before ⇧ before ⌘. */
+const MAC_MODIFIER_ORDER = ["Alt", "Shift", "Mod"];
+
+/**
+ * A keybind's keys as the person's keyboard spells them, one label per key: ⇧ ⌘ S on a Mac,
+ * in the order macOS prints modifiers, and Ctrl Shift S elsewhere.
+ */
+export function keybindKeys(keys: readonly string[], mac: boolean = isMacPlatform()): string[] {
+  if (!mac) return keys.map((key) => (key === "Mod" ? "Ctrl" : key));
+  const modifiers = MAC_MODIFIER_ORDER.filter((modifier) => keys.includes(modifier));
+  const rest = keys.filter((key) => !MAC_MODIFIER_ORDER.includes(key));
+  return [...modifiers.map((modifier) => MAC_MODIFIERS[modifier] ?? modifier), ...rest];
 }

@@ -23,6 +23,7 @@ type Config struct {
 	PublishTimeout        time.Duration `mapstructure:"publishTimeout"`
 	MaxEntityBytes        int           `mapstructure:"maxEntityBytes"        validate:"omitempty,min=0"`
 	TypingThrottle        time.Duration `mapstructure:"typingThrottle"`
+	SessionCheckInterval  time.Duration `mapstructure:"sessionCheckInterval"`
 }
 
 const (
@@ -40,6 +41,7 @@ const (
 	DefaultPublishTimeout        = 5 * time.Second
 	DefaultMaxEntityBytes        = 64 * 1024
 	DefaultTypingThrottle        = time.Second
+	DefaultSessionCheckInterval  = 30 * time.Second
 )
 
 func (c *Config) GetShardCount() int {
@@ -141,4 +143,11 @@ func (c *Config) GetTypingThrottle() time.Duration {
 		return DefaultTypingThrottle
 	}
 	return c.TypingThrottle
+}
+
+func (c *Config) GetSessionCheckInterval() time.Duration {
+	if c.SessionCheckInterval <= 0 {
+		return DefaultSessionCheckInterval
+	}
+	return c.SessionCheckInterval
 }

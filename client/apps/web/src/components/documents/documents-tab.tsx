@@ -134,7 +134,10 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 
   const { data: documentTypesData } = useQuery({
     queryKey: ["document-types-select-options"],
-    queryFn: () => fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100),
+    queryFn: ({ signal }) =>
+      fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100, undefined, {
+        signal,
+      }),
     enabled: isShipment,
     staleTime: 5 * 60 * 1000,
   });

@@ -23,7 +23,6 @@ func TestDraftReplyKeepsMailOutOfTrustedSections(t *testing.T) {
 		TenantInfo: testTenant,
 		UserID:     testUserID,
 		MessageID:  f.message.ID,
-		Mode:       triagenova.Interactive,
 	})
 	require.NoError(t, err)
 

@@ -1,16 +1,9 @@
 const googleMapsPinLogo = "/integrations/logos/googleMaps.svg";
 import { useT } from "@trenova/shared/i18n/use-t";
-import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
+import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -21,6 +14,7 @@ import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { IntegrationConnectHeader } from "../shared/integration-connect-header";
 
 export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
@@ -133,25 +127,18 @@ export function GoogleMapsFormHeader() {
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
-        <LazyImage src={trenovaLogo} className="size-8" />
-        <div className="flex items-center justify-center gap-1">
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-        </div>
-        <LazyImage src={googleMapsPinLogo} alt={t("Google maps logo")} className="size-8" />
-      </div>
-      <DialogHeader>
-        <DialogTitle>{t("Connect with Google maps")}</DialogTitle>
-        <DialogDescription>
+    <IntegrationConnectHeader
+      name="Google Maps"
+      logo={{ light: googleMapsPinLogo }}
+      title={t("Connect with Google maps")}
+      description={
+        <>
           {t("To get a Google Maps API key, visit the")}{" "}
           <ExternalLink href="https://console.cloud.google.com/google/maps-apis/overview">
             {t("Google cloud console.")}
           </ExternalLink>
-        </DialogDescription>
-      </DialogHeader>
-    </div>
+        </>
+      }
+    />
   );
 }

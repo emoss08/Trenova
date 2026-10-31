@@ -5,6 +5,8 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { DetentionHold } from "@trenova/shared/types/billing-queue";
 import type { BillingHoldReason } from "@trenova/shared/types/detention";
 import { ClockStopwatchIcon } from "@trenova/shared/components/icons";
+import { LockedReference } from "@trenova/shared/components/withheld-value";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { Link } from "react-router";
 
 function holdReasonLabel(t: TranslateFn, reason: BillingHoldReason): string {
@@ -25,6 +27,8 @@ function holdReasonLabel(t: TranslateFn, reason: BillingHoldReason): string {
  */
 export function BillingQueueDetentionHolds({ holds }: { holds: DetentionHold[] }) {
   const t = useT();
+  // A detention charge opens on the detention desk, which needs detention's read.
+  const canReadDetention = useCanReadKind("detention");
 
   if (holds.length === 0) {
     return null;
@@ -52,12 +56,18 @@ export function BillingQueueDetentionHolds({ holds }: { holds: DetentionHold[] }
                 key={hold.occurrenceId}
                 className="flex flex-wrap items-baseline justify-between gap-x-3"
               >
-                <Link
-                  to={recordPath("detention_occurrence", hold.occurrenceId)}
-                  className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
-                >
-                  {hold.locationName || t("Detention charge")}
-                </Link>
+                {canReadDetention ? (
+                  <Link
+                    to={recordPath("detention_occurrence", hold.occurrenceId)}
+                    className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
+                  >
+                    {hold.locationName || t("Detention charge")}
+                  </Link>
+                ) : (
+                  <LockedReference kind="detention">
+                    {hold.locationName || t("Detention charge")}
+                  </LockedReference>
+                )}
                 <span className="flex items-baseline gap-2">
                   <span className="tabular-nums">
                     {formatCurrency(hold.billableAmount ?? 0, hold.currency)}

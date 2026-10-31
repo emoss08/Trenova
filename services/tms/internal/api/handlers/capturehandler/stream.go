@@ -23,7 +23,6 @@ const (
 	// EventCaptureRevoked tells the device it has been revoked. The stream
 	// closes right after it.
 	EventCaptureRevoked = "capture.revoked"
-	lastEventIDHeader   = "Last-Event-ID"
 	defaultLifetime     = 30 * time.Minute
 )
 
@@ -69,7 +68,7 @@ func (h *Handler) stream(c *gin.Context) {
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		UserID:         tenantInfo.UserID,
-		LastEventID:    c.GetHeader(lastEventIDHeader),
+		LastEventID:    helpers.EventCursor(c),
 	})
 	if err != nil {
 		if errortypes.IsRateLimitError(err) {

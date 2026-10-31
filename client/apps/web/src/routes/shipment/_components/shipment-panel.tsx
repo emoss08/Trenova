@@ -12,6 +12,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
+import {
+  CAPABILITIES,
+  getProfile,
+  isCapabilitySectionVisible,
+} from "@trenova/shared/lib/capability";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { withShipmentAllocations } from "@trenova/shared/rules/allocation-form";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -26,6 +31,7 @@ import {
   AlertTriangleIcon,
   ClockRewindIcon,
   File06Icon,
+  FileShield02Icon,
   MessageSquare01Icon,
   PhoneCall01Icon,
   Share07Icon,
@@ -37,6 +43,7 @@ import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { lazy } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { CheckCallsSkeleton } from "./check-calls/check-calls-skeleton";
+import { PermitsTabSkeleton } from "./permits/permits-tab-skeleton";
 import { ShipmentBillingActionsMenu } from "./shipment-billing-actions-menu";
 import { ShipmentForm } from "./shipment-form";
 
@@ -46,6 +53,7 @@ const ShipmentCommentsTab = lazy(() => import("./comments"));
 const ShipmentServiceFailuresTab = lazy(() => import("./shipment-service-failures"));
 const ShipmentCustomerTrackingTab = lazy(() => import("./shipment-customer-tracking"));
 const ShipmentCheckCallsTab = lazy(() => import("./check-calls/shipment-check-calls"));
+const ShipmentPermitsTab = lazy(() => import("./permits/shipment-permits-tab"));
 
 function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   const t = useT();
@@ -199,6 +207,18 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     enabled: !!row?.id && mode === "edit",
   });
   const checkCallCount = checkCalls?.length ?? 0;
+  // Permits apply only to a mode that carries dimensional cargo, and only once the shipment is saved.
+  const { data: shipmentUIPolicy } = useQuery({ ...shipmentQueries.uiPolicy() });
+  const permitsVisible =
+    !!row?.id &&
+    mode === "edit" &&
+    isCapabilitySectionVisible(getProfile(shipmentUIPolicy), CAPABILITIES.dimensionalCargo);
+  const { data: permitRequirements } = useQuery({
+    ...shipmentQueries.permitRequirements(row?.id ?? ""),
+    enabled: permitsVisible,
+  });
+  const openPermitCount =
+    permitRequirements?.filter((requirement) => requirement.status === "Open").length ?? 0;
 
   const extraTabs = [
     {
@@ -212,6 +232,21 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         resourceId: row?.id,
       },
     },
+    ...(permitsVisible
+      ? [
+          {
+            value: "permits",
+            label: openPermitCount > 0 ? t("Permits ({0} open)", openPermitCount) : t("Permits"),
+            icon: FileShield02Icon,
+            hideFooter: true,
+            content: ShipmentPermitsTab,
+            fallback: <PermitsTabSkeleton />,
+            contentProps: {
+              shipment: row,
+            },
+          },
+        ]
+      : []),
     {
       value: "service-failures",
       label:

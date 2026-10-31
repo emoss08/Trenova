@@ -22,6 +22,15 @@ type Limits struct {
 	Conversations conversationports.ConversationRepository
 	AgentControls tenantports.AgentControlRepository
 	Quota         platformplanports.QuotaGuard
+	// PaletteQuestions counts the questions asked from the command palette,
+	// which no conversation holds until one is carried into the Desk.
+	PaletteQuestions PaletteQuestionCounter
+}
+
+// PaletteQuestionCounter is the slice of the palette's question record the
+// allowance reads.
+type PaletteQuestionCounter interface {
+	CountUnkeptSince(ctx context.Context, tenant pagination.TenantInfo, since int64) (int, error)
 }
 
 // PersonAllowance is how many questions one person has asked this month
@@ -54,6 +63,15 @@ func (s *Limits) PersonAllowance(
 	)
 	if err != nil {
 		return nil, err
+	}
+	if s.PaletteQuestions != nil {
+		asker := tenant
+		asker.UserID = userID
+		asked, countErr := s.PaletteQuestions.CountUnkeptSince(ctx, asker, monthStart.Unix())
+		if countErr != nil {
+			return nil, countErr
+		}
+		used += asked
 	}
 
 	return &assistantports.PersonAllowance{
@@ -102,6 +120,31 @@ func (s *Limits) AssertWithinPlan(ctx context.Context, tenantInfo pagination.Ten
 
 	return quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
 		TenantInfo: tenantInfo,
+		Meter:      platformcatalog.MeterAISpendCents,
+		Quantity:   1,
+	})
+}
+
+// AssertMayAsk refuses a question asked outside a conversation, from the
+// command palette, on the allowance and plan a Desk question is held to.
+func (s *Limits) AssertMayAsk(
+	ctx context.Context,
+	userID pulid.ID,
+	tenant pagination.TenantInfo,
+) error {
+	if err := s.AssertWithinAllowance(ctx, userID, tenant); err != nil {
+		return err
+	}
+	if err := quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
+		TenantInfo: tenant,
+		Meter:      platformcatalog.MeterAIAssistantMessages,
+		Quantity:   1,
+	}); err != nil {
+		return err
+	}
+
+	return quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
+		TenantInfo: tenant,
 		Meter:      platformcatalog.MeterAISpendCents,
 		Quantity:   1,
 	})

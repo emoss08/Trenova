@@ -394,6 +394,8 @@ export type AiTask =
   | 'General'
   | 'InboundClassification'
   | 'OperationalInsights'
+  | 'PaletteAnswer'
+  | 'PaperworkReading'
   | 'QueryCompose'
   | 'RemittanceExtraction'
   | 'ScopeClassification';
@@ -450,12 +452,19 @@ export type AiUsageFeature =
   | 'AgentRecommendation'
   | 'AgentReflection'
   | 'AgentTurn'
+  | 'BillingQueueBrief'
+  | 'BillingQueueReview'
+  | 'BillingQueueSearch'
   | 'ConversationChapters'
   | 'DocumentIntelligenceExtract'
   | 'DocumentIntelligenceRoute'
   | 'FactoringRemittanceExtract'
   | 'FormulaExplain'
   | 'FormulaGenerate'
+  | 'InboundMail'
+  | 'InsightNarration'
+  | 'PaletteAnswer'
+  | 'PaperworkReading'
   | 'ShipmentImportChat'
   | 'TableQuery';
 
@@ -1803,6 +1812,11 @@ export type BillType =
   | 'DebitMemo'
   | 'Invoice';
 
+/** What Nova made of an item it reviewed. */
+export type BillingQueueAgentVerdict =
+  | 'Agrees'
+  | 'Concern';
+
 export type BillingQueueAssignInput = {
   billerId: string | number;
 };
@@ -1824,6 +1838,36 @@ export type BillingQueueHoldReasonCode =
   | 'CustomerDispute'
   | 'RateQuestion'
   | 'WaitingOnPaperwork';
+
+export type BillingQueueItemsFilterInput = {
+  /** Only items queued before this time. */
+  createdBefore?: number | null | undefined;
+  /** Include items whose invoice already posted. */
+  includePosted?: boolean | null | undefined;
+  /** The lanes to include; empty includes every lane. */
+  lanes?: Array<BillingQueueLane> | null | undefined;
+  /** Largest amount, in the bill-to's currency. */
+  maxAmount?: string | null | undefined;
+  /** Smallest amount, in the bill-to's currency. */
+  minAmount?: string | null | undefined;
+};
+
+/** Where an item sits in the queue's working order. */
+export type BillingQueueLane =
+  /** Approved and waiting to post. */
+  | 'Approved'
+  /** Its checks have not run yet. */
+  | 'Checking'
+  /** Posted or canceled. */
+  | 'Closed'
+  /** On hold or sent back to operations. */
+  | 'Held'
+  /** A check needs the biller. */
+  | 'NeedsYou'
+  /** Every check is clear. */
+  | 'Ready'
+  /** Waiting on a driver, an approver or credit. */
+  | 'Waiting';
 
 export type BillingQueueStatus =
   | 'Approved'
@@ -11266,6 +11310,36 @@ export type AssignBillingQueueBillerMutationVariables = Exact<{
 
 export type AssignBillingQueueBillerMutation = { assignBillingQueueBiller: { ' $fragmentRefs'?: { 'BillingQueueActionFieldsFragment': BillingQueueActionFieldsFragment } } };
 
+export type BillingQueueItemsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: BillingQueueItemsFilterInput | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type BillingQueueItemsQuery = { billingQueueItems: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, number: string, status: BillingQueueStatus, lane: BillingQueueLane, billType: BillType, shipmentId: string | null, billToCustomerId: string, allocatedTotalAmount: string, assignedBillerId: string | null, holdReasonCode: BillingQueueHoldReasonCode | null, isAdjustmentOrigin: boolean, agentVerdict: BillingQueueAgentVerdict | null, agentSummary: string | null, version: number, createdAt: number, headline: { code: string, checkKey: string, summary: string, open: number, waiting: boolean } | null, billToCustomer: { id: string, code: string, name: string } | null, shipment: { id: string, proNumber: string, customerId: string, totalChargeAmount: string, customer: { id: string, code: string, name: string } | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type BillingQueueShipmentQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BillingQueueShipmentQuery = { shipment: { id: string, proNumber: string, bol: string | null, externalReference: string | null, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, customer: { id: string, name: string } | null, commodities: Array<{ id: string | null, commodity: { id: string, name: string } | null }>, moves: Array<{ id: string | null, sequence: number, loaded: boolean, distance: number | null, assignment: { id: string | null, tractor: { id: string, code: string } | null, trailer: { id: string, code: string } | null, primaryWorker: { id: string, wholeName: string } | null } | null, stops: Array<{ id: string | null, type: StopType, sequence: number, scheduledWindowStart: number, scheduledWindowEnd: number | null, actualArrival: number | null, actualDeparture: number | null, addressLine: string, location: { id: string, name: string, city: string, state: { id: string, abbreviation: string } | null } | null }> }>, ratingDetail: { agreementId: string, agreementName: string, ruleId: string, ruleLabel: string, formulaTemplateName: string, ratedAt: number, source: string, inputs: unknown } | null } | null };
+
+export type BillingQueueRateAgreementQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BillingQueueRateAgreementQuery = { rateAgreement: { id: string, code: string, name: string, status: RateAgreementStatus, effectiveFrom: number, effectiveTo: number | null, accessorials: Array<{ id: string, accessorialChargeId: string, chargeCode: string, chargeDescription: string, method: string, rateUnit: string, amount: string, freeUnits: number | null, waived: boolean }> | null, fuelBinding: { id: string, waived: boolean, programName: string } | null } | null };
+
+export type BillingQueueFormulaTemplateQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BillingQueueFormulaTemplateQuery = { formulaTemplate: { id: string, name: string, description: string, status: FormulaTemplateStatus } | null };
+
 export type BillingTransferCandidatesQueryVariables = Exact<{
   input: ShipmentsInput;
   includeTotalCount?: boolean | null | undefined;
@@ -19889,6 +19963,8 @@ export { RecentActivityDocument } from "./documents/audit-log/recent-activity";
 export { AuditLogTableRowFieldsFragmentDoc, AuditLogTableDocument } from "./documents/audit-log/table";
 export { BenefitPlansDocument, WorkerBenefitEnrollmentsDocument, BenefitEnrollmentsDocument, BenefitCostsDocument, WorkerTotalCompensationDocument, MyTotalCompensationDocument, CreateBenefitPlanDocument, UpdateBenefitPlanDocument, EnrollBenefitDocument, EndBenefitEnrollmentDocument } from "./documents/benefits/operations";
 export { BillingQueueActionFieldsFragmentDoc, UpdateBillingQueueStatusDocument, AssignBillingQueueBillerDocument } from "./documents/billing-queue/mutations";
+export { BillingQueueItemsDocument } from "./documents/billing-queue/queue";
+export { BillingQueueShipmentDocument, BillingQueueRateAgreementDocument, BillingQueueFormulaTemplateDocument } from "./documents/billing-queue/shipment";
 export { BillingTransferCandidatesDocument, BillingTransferCandidateIdsDocument, BillingTransferRunDocument, MyActiveBillingTransferRunDocument, BillingTransferRunItemsDocument, StartBillingTransferRunDocument, CancelBillingTransferRunDocument, RetryBillingTransferRunDocument } from "./documents/billing-queue/transfer";
 export { BriefingFieldsFragmentDoc, TodaysBriefingDocument, MarkBriefingReadDocument, RegenerateBriefingDocument } from "./documents/briefing/briefing";
 export { BulkEditJobFieldsFragmentDoc, BulkEditFieldsDocument, PreviewBulkEditDocument, MyBulkEditDocument, StartBulkEditDocument, UndoMyBulkEditDocument } from "./documents/bulk-edit/operations";

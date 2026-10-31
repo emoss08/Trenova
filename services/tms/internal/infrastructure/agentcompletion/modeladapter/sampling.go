@@ -41,6 +41,7 @@ func SamplingForTask(task aitask.Task) Sampling {
 		aitask.TaskInboundClassification,
 		aitask.TaskAccountingMapping,
 		aitask.TaskRemittanceExtraction,
+		aitask.TaskPaperworkReading,
 		// Compiling a sentence into a table's filters is the same kind of work:
 		// the answer is a structure checked against a catalogue afterwards, and
 		// the same question giving two different sets of filters is a defect
@@ -61,7 +62,7 @@ func SamplingForTask(task aitask.Task) Sampling {
 		temperature = 0.1
 	case aitask.TaskFormulaAssistant:
 		temperature = 0.2
-	case aitask.TaskAssistantChat, aitask.TaskGeneral:
+	case aitask.TaskAssistantChat, aitask.TaskPaletteAnswer, aitask.TaskGeneral:
 		temperature = 0.3
 	case aitask.TaskOperationalInsights, aitask.TaskDailyBriefing:
 		// Prose, whose numbers are checked against the computed facts after

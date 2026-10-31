@@ -1,19 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import trenovaLogo from "@/assets/logo.webp";
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
+import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   Popover,
@@ -38,6 +30,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { IntegrationConnectHeader } from "../shared/integration-connect-header";
 
 const resendLogoDark = "/integrations/logos/resend_logo_dark.svg";
 const resendLogoLight = "/integrations/logos/resend_logo_light.svg";
@@ -288,27 +281,17 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
 function ResendFormHeader() {
   const t = useT();
 
-  const { theme } = useTheme();
-  const resendLogo = theme === "dark" ? resendLogoDark : resendLogoLight;
-
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
-        <LazyImage src={trenovaLogo} className="size-8" />
-        <div className="flex items-center justify-center gap-1">
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-        </div>
-        <LazyImage src={resendLogo} alt={t("Resend")} className="h-8 w-24 object-contain" />
-      </div>
-      <DialogHeader>
-        <DialogTitle>{t("Connect with Resend")}</DialogTitle>
-        <DialogDescription>
+    <IntegrationConnectHeader
+      name="Resend"
+      logo={{ light: resendLogoLight, dark: resendLogoDark }}
+      title={t("Connect with Resend")}
+      description={
+        <>
           {t("Create an API key and webhook in")}{" "}
           <ExternalLink href="https://resend.com/api-keys">{t("Resend.")}</ExternalLink>
-        </DialogDescription>
-      </DialogHeader>
-    </div>
+        </>
+      }
+    />
   );
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replystep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/runstream"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -139,11 +140,11 @@ func (a *Activities) ModelCallActivity(
 
 	emit := func(kernelports.StreamEvent) {}
 	if in.Stream {
-		stream, events, err := OpenStream(ctx)
+		stream, events, err := runstream.Open(ctx)
 		if err != nil {
 			return nil, err
 		}
-		defer CloseStream(ctx, stream, a.l)
+		defer runstream.Flush(ctx, stream, a.l)
 
 		publish := func(event kernelports.StreamEvent, force bool) {
 			tagged, shown := in.Scope.Tag(event)
@@ -368,11 +369,11 @@ func (a *Activities) observing(
 	run *RunContext,
 ) (agentruntimeports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
 	kept := new([]*assistantartifact.Artifact)
-	if a.observer == nil || run.ThreadID.IsNil() || run.Inline {
+	if a.observer == nil || run.ThreadID.IsNil() {
 		return nil, kept, func() {}
 	}
 
-	stream, events, openErr := OpenStream(ctx)
+	stream, events, openErr := runstream.Open(ctx)
 	if openErr != nil {
 		// The call still counts; the reader misses its announcement and sees
 		// the artifact when the conversation is read.
@@ -398,7 +399,7 @@ func (a *Activities) observing(
 
 	return observe, kept, func() {
 		if stream != nil {
-			CloseStream(ctx, stream, a.l)
+			runstream.Flush(ctx, stream, a.l)
 		}
 	}
 }

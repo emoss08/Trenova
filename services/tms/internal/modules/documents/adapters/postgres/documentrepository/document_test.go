@@ -46,7 +46,9 @@ func setupRepository(t *testing.T) (documentports.DocumentRepository, *testFixtu
 	fixtures := fixturesOf(t.Context(), seedtest.SeedFullTestData(t, ctx, admin))
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 
-	return documentrepository.New(documentrepository.Params{DB: conn, Logger: zap.NewNop()}), fixtures
+	return documentrepository.New(
+		documentrepository.Params{DB: conn, Logger: zap.NewNop()},
+	), fixtures
 }
 
 func createTestDocument(
@@ -148,10 +150,13 @@ func TestDocumentRepository_GetByID_Integration(t *testing.T) {
 
 	t.Run("get document with wrong tenant", func(t *testing.T) {
 		other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-		_, err := repo.GetByID(dbscope.WithTenant(t.Context(), other.DBTenant()), documentports.GetDocumentByIDRequest{
-			ID:         doc.ID,
-			TenantInfo: other,
-		})
+		_, err := repo.GetByID(
+			dbscope.WithTenant(t.Context(), other.DBTenant()),
+			documentports.GetDocumentByIDRequest{
+				ID:         doc.ID,
+				TenantInfo: other,
+			},
+		)
 		assert.Error(t, err)
 	})
 }
@@ -436,4 +441,43 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, doc2.ID, kept.ID)
 	})
+}
+
+func TestDocumentRepository_SelectOptionsLooksUpIDs_Integration(t *testing.T) {
+	repo, fixtures := setupRepository(t)
+	ctx := fixtures.ctx
+	tenant := pagination.TenantInfo{
+		OrgID:  fixtures.orgID,
+		BuID:   fixtures.buID,
+		UserID: fixtures.userID,
+	}
+
+	resourceID := pulid.MustNew("tr_").String()
+	onResource := func(doc *document.Document) { doc.ResourceID = resourceID }
+	current := createTestDocument(fixtures, onResource)
+	archived := createTestDocument(fixtures, onResource, func(doc *document.Document) {
+		doc.Status = document.StatusArchived
+	})
+	elsewhere := createTestDocument(fixtures)
+	unasked := createTestDocument(fixtures, onResource)
+	for _, doc := range []*document.Document{current, archived, elsewhere, unasked} {
+		_, err := repo.Create(ctx, doc)
+		require.NoError(t, err)
+	}
+
+	result, err := repo.SelectOptions(ctx, &documentports.DocumentSelectOptionsRequest{
+		SelectQueryRequest: &pagination.SelectQueryRequest{
+			TenantInfo: tenant,
+			Pagination: pagination.Info{Limit: 3},
+		},
+		ResourceID: resourceID,
+		IDs:        []pulid.ID{current.ID, archived.ID, elsewhere.ID},
+	})
+
+	require.NoError(t, err)
+	ids := make([]pulid.ID, 0, len(result.Items))
+	for _, item := range result.Items {
+		ids = append(ids, item.ID)
+	}
+	assert.ElementsMatch(t, []pulid.ID{current.ID, archived.ID}, ids)
 }

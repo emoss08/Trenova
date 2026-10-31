@@ -51,6 +51,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Recompute one organization's operational insights",
 		},
+		{
+			Name:        InsightNarrationWorkflowName,
+			Fn:          InsightNarrationWorkflow,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
+			Description: "Word one organization's insights once their narration batch ends",
+		},
 	}
 }
 
@@ -144,6 +150,11 @@ func RefreshOrganizationInsightsWorkflow(
 	if err := workflow.ExecuteActivity(ctx, a.RefreshOrganizationInsightsActivity, input).
 		Get(ctx, &result); err != nil {
 		return nil, err
+	}
+	if result.Pending != nil {
+		if err := startNarration(ctx, input, result.Pending); err != nil {
+			workflow.GetLogger(ctx).Warn("could not wait on the insight narration batch", "error", err)
+		}
 	}
 
 	return &result, nil

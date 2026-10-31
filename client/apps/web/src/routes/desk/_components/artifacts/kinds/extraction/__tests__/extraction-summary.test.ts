@@ -1,7 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
 import { groupExtraction, reviewTally } from "../extraction-groups";
-import { extractionFrom } from "../extraction-payload";
+import { extractionFrom } from "@/lib/document-reading/extraction-payload";
 import {
   documentMark,
   headFacts,

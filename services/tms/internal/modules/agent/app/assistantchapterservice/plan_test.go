@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func sectionTitles(req *llmports.StructuredCompletionRequest) []string {
+func sectionTitles(req *llmports.NovaTask) []string {
 	titles := make([]string, 0, len(req.Context.Sections))
 	for _, section := range req.Context.Sections {
 		titles = append(titles, section.Title)
@@ -53,7 +53,7 @@ func TestPlan_TheFirstQuestionOpensAQuietChapterWithoutAskingTheModel(t *testing
 			assert.False(t, plan.Decides)
 			assert.Equal(t, "Why is load 1200 late?", plan.Fallback)
 			assert.Equal(t, conversationchapter.ChapterTitleQuestion, plan.FallbackSource)
-			assert.Nil(t, plan.Request)
+			assert.Nil(t, plan.Task)
 			assert.False(t, plan.NeedsModel())
 			assert.True(t, plan.NameEarlier.IsNil())
 		})
@@ -84,7 +84,7 @@ func TestPlan_AutomaticChaptersOffSkipsALaterQuestion(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, skipAutoOff, plan.Skip)
-	assert.Nil(t, plan.Request)
+	assert.Nil(t, plan.Task)
 	assert.False(t, plan.Opens)
 }
 
@@ -183,10 +183,10 @@ func TestPlan_ALaterQuestionAsksWhetherItStartsANewChapter(t *testing.T) {
 		"{\"rows\":3}",
 	}, plan.Evidence)
 
-	req := plan.Request
+	req := plan.Task
 	require.NotNil(t, req)
 	assert.Equal(t, "chapter_decision", req.SchemaName)
-	assert.Equal(t, aitask.TaskChapterTitling, req.Task)
+	assert.Equal(t, aitask.TaskChapterTitling, req.Name)
 	assert.Equal(t, aireasoning.ReasoningOff, req.Reasoning)
 	assert.Equal(t, f.tenant, req.TenantInfo)
 	assert.Equal(t, aiusage.FeatureConversationChapters, req.Attribution.Feature)
@@ -240,8 +240,8 @@ func TestPlan_TheCurrentChapterIsTheLatestOne(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	require.NotNil(t, plan.Request)
-	assert.Equal(t, "Acme invoice dispute", plan.Request.Context.Sections[0].Content)
+	require.NotNil(t, plan.Task)
+	assert.Equal(t, "Acme invoice dispute", plan.Task.Context.Sections[0].Content)
 }
 
 func TestPlan_TurnsThatContinueAChapterAreSkipped(t *testing.T) {
@@ -269,7 +269,7 @@ func TestPlan_TurnsThatContinueAChapterAreSkipped(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, skipContinues, plan.Skip)
-			assert.Nil(t, plan.Request)
+			assert.Nil(t, plan.Task)
 			assert.False(t, plan.Opens)
 			assert.False(t, plan.Decides)
 		})
@@ -308,8 +308,8 @@ func TestPlan_AScheduledRunAlwaysOpensAChapter(t *testing.T) {
 		assert.Equal(t, "Send me the loads delivered today", plan.Fallback)
 		assert.Equal(t, conversationchapter.ChapterTitleSchedule, plan.FallbackSource)
 		assert.Equal(t, conversationchapter.ChapterTitleSchedule, plan.ModelSource)
-		require.NotNil(t, plan.Request)
-		assert.Equal(t, "chapter_title", plan.Request.SchemaName)
+		require.NotNil(t, plan.Task)
+		assert.Equal(t, "chapter_title", plan.Task.SchemaName)
 	})
 
 	t.Run("automatic chapters off", func(t *testing.T) {
@@ -332,7 +332,7 @@ func TestPlan_AScheduledRunAlwaysOpensAChapter(t *testing.T) {
 		assert.False(t, plan.Skipped())
 		assert.True(t, plan.Opens)
 		assert.Equal(t, conversationchapter.ChapterTitleSchedule, plan.FallbackSource)
-		assert.Nil(t, plan.Request, "no model is asked while automatic chapters are off")
+		assert.Nil(t, plan.Task, "no model is asked while automatic chapters are off")
 		assert.False(t, plan.NeedsModel())
 	})
 }
@@ -442,7 +442,7 @@ func TestPlan_AChapterWhoseTurnSavedNothingIsRemoved(t *testing.T) {
 	assert.False(t, plan.Skipped())
 	assert.True(t, plan.Remove)
 	assert.Equal(t, chapter.ID, plan.ChapterID)
-	assert.Nil(t, plan.Request)
+	assert.Nil(t, plan.Task)
 }
 
 func TestPlan_ARefusedQuestionsChapterIsRemoved(t *testing.T) {
@@ -513,7 +513,7 @@ func TestPlan_AChapterThePersonNamedIsNeverRemovedOrRenamed(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, skipNamed, plan.Skip)
-		assert.Nil(t, plan.Request)
+		assert.Nil(t, plan.Task)
 		assert.Empty(t, f.conversations.listed, "nothing is read for a title that stays")
 	})
 }
@@ -541,7 +541,7 @@ func TestPlan_AnAnsweredQuestionsChapterWaitsToBeNamedUntilAnotherOpens(t *testi
 	require.NoError(t, err)
 
 	assert.Equal(t, skipNamed, plan.Skip)
-	assert.Nil(t, plan.Request)
+	assert.Nil(t, plan.Task)
 }
 
 func TestPlan_RequestedNamesAChapterFromItsQuestionAndReply(t *testing.T) {
@@ -581,7 +581,7 @@ func TestPlan_RequestedNamesAChapterFromItsQuestionAndReply(t *testing.T) {
 	assert.Equal(t, conversationchapter.ChapterTitleModel, plan.ModelSource)
 	assert.Equal(t, []string{question, "Three loads are late on the Dallas lane."}, plan.Evidence)
 
-	req := plan.Request
+	req := plan.Task
 	require.NotNil(t, req)
 	assert.Equal(t, "chapter_title", req.SchemaName)
 	assert.Equal(t, []string{
@@ -629,7 +629,7 @@ func TestPlan_AModelTitleIsRenamedOnlyAfterAShortQuestion(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.renamed, plan.Request != nil)
+			assert.Equal(t, tc.renamed, plan.Task != nil)
 		})
 	}
 }
@@ -701,8 +701,8 @@ func TestPlan_RequestedNamesAChapterOpenedFromItsQuestion(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, chapter.ID, plan.ChapterID)
-	require.NotNil(t, plan.Request)
-	assert.Equal(t, "chapter_title", plan.Request.SchemaName)
+	require.NotNil(t, plan.Task)
+	assert.Equal(t, "chapter_title", plan.Task.SchemaName)
 
 	f.control.AutoChaptersOff = true
 	off, err := f.svc.Plan(

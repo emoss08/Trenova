@@ -19,14 +19,13 @@ func surfaceErrors(surface agentpagecontext.Surface) []string {
 	return fields
 }
 
-func TestSurfaceValidateAcceptsTheDeskTheAssistantThePaletteAndNothing(t *testing.T) {
+func TestSurfaceValidateAcceptsTheDeskTheAssistantAndNothing(t *testing.T) {
 	t.Parallel()
 
 	for _, surface := range []agentpagecontext.Surface{
 		"",
 		agentpagecontext.SurfaceDesk,
 		agentpagecontext.SurfaceAssistant,
-		agentpagecontext.SurfacePalette,
 	} {
 		assert.Empty(t, surfaceErrors(surface), "surface %q", surface)
 		assert.True(t, surface.IsValid(), "surface %q", surface)
@@ -36,7 +35,7 @@ func TestSurfaceValidateAcceptsTheDeskTheAssistantThePaletteAndNothing(t *testin
 func TestSurfaceValidateRefusesAnythingElseOnTheField(t *testing.T) {
 	t.Parallel()
 
-	for _, surface := range []agentpagecontext.Surface{"desk", "DESK", "Inbox", " Desk", "palette"} {
+	for _, surface := range []agentpagecontext.Surface{"desk", "DESK", "Inbox", " Desk", "Palette"} {
 		assert.Equal(t, []string{"surface"}, surfaceErrors(surface), "surface %q", surface)
 		assert.False(t, surface.IsValid(), "surface %q", surface)
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
@@ -133,6 +134,7 @@ func TestStreamEndToEnd(t *testing.T) {
 			middleware.PermissionMiddlewareParams{PermissionEngine: engine, ErrorHandler: eh},
 		),
 		RealtimeConfig: &cfg.Realtime,
+		Sessions:       sessionwatch.NewWatch(&stubLiveness{}, time.Minute, logger),
 		Logger:         logger,
 	})
 

@@ -237,6 +237,9 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   document: ["documents", ["shipment", "billingReadiness"]],
   // A bulk approval's progress: the run and the items it is approving.
   "billing-queue-approval-run": ["billingQueue", "billing-queue-list"],
+  // Nova's bulk reviews and brief moving; the reviews and brief it writes come as
+  // billing_queue.
+  "billing-queue-nova": ["billingQueueNova"],
   // Every change to an invoice: its own page (detail, send plan, email
   // attempts), the lists and register that show it, the billing queue item it
   // came from, and the receivables read from its balance.

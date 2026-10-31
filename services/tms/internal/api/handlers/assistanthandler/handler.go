@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentwaitservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
@@ -49,6 +50,7 @@ type Params struct {
 	Chapters             assistantchapterports.AssistantChapterService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Sessions             *sessionwatch.Watch
 	Logger               *zap.Logger
 }
 
@@ -67,6 +69,7 @@ type Handler struct {
 	chapters    assistantchapterports.AssistantChapterService
 	eh          *helpers.ErrorHandler
 	pm          *middleware.PermissionMiddleware
+	sessions    *sessionwatch.Watch
 	logger      *zap.Logger
 }
 
@@ -85,6 +88,7 @@ func New(p Params) *Handler {
 		chapters:    p.Chapters,
 		eh:          p.ErrorHandler,
 		pm:          p.PermissionMiddleware,
+		sessions:    p.Sessions,
 		logger:      p.Logger.Named("assistanthandler"),
 	}
 	// A nil service put in the interface would no longer compare equal to
@@ -118,9 +122,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.countThreadShelves,
 	)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
-	// A quick question makes a thread of its own, so it needs what starting
-	// one needs.
-	api.POST("/ask/", h.pm.RequirePermission(resource, permission.OpCreate), h.ask)
 	api.GET("/threads/:threadID/", h.pm.RequirePermission(resource, permission.OpRead), h.getThread)
 	api.GET(
 		"/threads/:threadID/budget/",
@@ -494,8 +495,6 @@ type updateThreadRequest struct {
 	Pinned *bool   `json:"pinned"`
 	// PinnedFacts replaces the facts the agents keep in mind, when sent.
 	PinnedFacts *[]string `json:"pinnedFacts"`
-	// Keep lists a quick question as a conversation.
-	Keep bool `json:"keep"`
 	// AutoCompact turns the conversation's compacting itself on or off.
 	AutoCompact *bool `json:"autoCompact"`
 }
@@ -520,7 +519,6 @@ func (h *Handler) updateThread(c *gin.Context) {
 		Title:       body.Title,
 		Pinned:      body.Pinned,
 		PinnedFacts: body.PinnedFacts,
-		Keep:        body.Keep,
 		AutoCompact: body.AutoCompact,
 	}, &actor)
 	if err != nil {
@@ -755,12 +753,6 @@ type sendMessageRequest struct {
 // askRequest is a quick question from the command palette: the words, the
 // page under the palette, and the records named. There is no thread yet; the
 // answer makes one. It names no surface: this route is the palette's.
-type askRequest struct {
-	Content  string                       `json:"content"`
-	Context  *pageContextRequest          `json:"context"`
-	Mentions []agentpagecontext.EntityRef `json:"mentions"`
-}
-
 func (r *sendMessageRequest) provider() (pulid.ID, bool) {
 	if r.ProviderID == nil {
 		return pulid.Nil, false

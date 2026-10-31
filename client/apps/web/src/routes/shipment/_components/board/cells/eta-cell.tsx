@@ -9,7 +9,7 @@ export function useEtaDelta(shipment: Shipment): { text: string; tone: string } 
   const t = useT();
   const slack = shipment.eta?.slackMinutes;
   if (shipment.stage === "Delivered" || slack == null) return null;
-  if (slack < 0) return { text: `+${formatMinutesSpan(-slack)}`, tone: "text-danger" };
+  if (slack < 0) return { text: t("+{0}", formatMinutesSpan(-slack)), tone: "text-danger" };
   if (shipment.eta?.verdict === "AtRisk") {
     return { text: t("{0} to spare", formatMinutesSpan(slack)), tone: "text-warning" };
   }

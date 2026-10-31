@@ -14,6 +14,7 @@ import {
 } from "./helpers";
 import { invoiceDetailSchema, invoiceSectionKeySchema } from "./customer";
 import { shipmentSchema } from "./shipment";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const invoiceStatusSchema = z.enum(["Draft", "Posted", "Voided"]);
@@ -564,6 +565,10 @@ export type UpdateInvoiceDraft = z.infer<typeof updateInvoiceDraftSchema>;
 
 export const MAX_VOID_REASON_LENGTH = 1000;
 export const MAX_MEMO_REASON_LENGTH = 1000;
+export const MAX_MEMO_LINES = 200;
+export const MAX_MEMO_LINE_AMOUNT = 999_999_999.99;
+export const MIN_MEMO_QUANTITY = 0.0001;
+export const MAX_MEMO_QUANTITY = 999_999_999.9999;
 export const MAX_DISPUTE_NOTES_LENGTH = 2000;
 
 export const voidInvoiceFormSchema = z.object({
@@ -605,10 +610,31 @@ export const memoLineFormSchema = z.object({
     .min(1, { error: () => translate("Description is required") }),
   amount: z.coerce
     .number()
-    .positive({ error: () => translate("Amount must be greater than zero") }),
+    .positive({ error: () => translate("Amount must be greater than zero") })
+    .max(MAX_MEMO_LINE_AMOUNT, {
+      error: () =>
+        translate(
+          "Amount must be at most {0}",
+          formatNumber(MAX_MEMO_LINE_AMOUNT, { minimumFractionDigits: 2 }),
+        ),
+    }),
   quantity: z.coerce
     .number()
     .positive({ error: () => translate("Quantity must be greater than zero") })
+    .min(MIN_MEMO_QUANTITY, {
+      error: () =>
+        translate(
+          "Quantity must be at least {0}",
+          formatNumber(MIN_MEMO_QUANTITY, { maximumFractionDigits: 4 }),
+        ),
+    })
+    .max(MAX_MEMO_QUANTITY, {
+      error: () =>
+        translate(
+          "Quantity must be at most {0}",
+          formatNumber(MAX_MEMO_QUANTITY, { maximumFractionDigits: 4 }),
+        ),
+    })
     .default(1),
   accessorialChargeId: z.string().nullish(),
 });
@@ -630,16 +656,20 @@ export const memoFormSchema = z.object({
   autoPost: z.boolean().default(false),
   lines: z
     .array(memoLineFormSchema)
-    .min(1, { error: () => translate("A memo needs at least one line") }),
+    .min(1, { error: () => translate("A memo needs at least one line") })
+    .max(MAX_MEMO_LINES, {
+      error: () => translate("A memo may carry at most {0} lines", MAX_MEMO_LINES),
+    }),
 });
 export type MemoFormValues = z.infer<typeof memoFormSchema>;
 
-export function memoFormTotal(lines: readonly Pick<MemoLineFormValues, "amount" | "quantity">[]) {
-  return lines.reduce((sum, line) => {
-    const amount = Number(line.amount) || 0;
-    const quantity = Number(line.quantity) || 0;
-    return sum + amount * (quantity > 0 ? quantity : 1);
-  }, 0);
+/**
+ * A memo line's amount is the line total; the server derives the unit price as
+ * amount over quantity (`invoicememoservice.memoLines`), so the memo total is the
+ * sum of the amounts and quantity never scales it.
+ */
+export function memoFormTotal(lines: readonly Pick<MemoLineFormValues, "amount">[]) {
+  return lines.reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
 }
 
 export const openDisputeFormSchema = z.object({

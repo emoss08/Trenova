@@ -68,14 +68,6 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@trenova/shared/components/theme-provider", () => ({
-  useTheme: () => ({ theme: "light" }),
-}));
-
-vi.mock("@/components/image", () => ({
-  LazyImage: ({ alt }: { alt: string }) => <span>{alt}</span>,
-}));
-
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));

@@ -1,6 +1,17 @@
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { SignOutNotice } from "@trenova/shared/lib/sign-out-notice";
+
+function noticeText(notice: SignOutNotice, t: TranslateFn): string {
+  switch (notice) {
+    case "idle":
+      return t("You were signed out after a period of inactivity. Sign in again to continue.");
+    case "elsewhere":
+      return t("You signed out in another tab. Sign in again to continue.");
+    case "expired":
+      return t("Your session has ended. Sign in again to continue.");
+  }
+}
 
 /** Tells someone on the sign-in page why they were signed out when they did not choose to be. */
 export function SignOutNoticeAlert({ notice }: { notice: SignOutNotice }) {
@@ -8,11 +19,7 @@ export function SignOutNoticeAlert({ notice }: { notice: SignOutNotice }) {
 
   return (
     <Alert variant="info" size="sm" role="status">
-      <AlertDescription>
-        {notice === "idle"
-          ? t("You were signed out after a period of inactivity. Sign in again to continue.")
-          : t("Your session has ended. Sign in again to continue.")}
-      </AlertDescription>
+      <AlertDescription>{noticeText(notice, t)}</AlertDescription>
     </Alert>
   );
 }

@@ -9,82 +9,77 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
-import { BULK_CONCURRENCY, notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import type { BillingQueueTarget } from "./billing-queue-assign-dialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { toast } from "@trenova/shared/components/ui/toast";
+import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
+import type { StartBulkRun } from "./use-bulk-run";
 
 export function BillingQueueCancelDialog({
   open,
   onOpenChange,
   targets,
+  run,
   onDone,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   targets: readonly BillingQueueTarget[];
+  /** Starts the bulk run that cancels several items; one item is canceled directly. */
+  run?: StartBulkRun;
   onDone?: () => void;
 }) {
   const t = useT();
-
+  const invalidate = useInvalidateBillingQueue();
   const [reason, setReason] = useState("");
-  const queryClient = useQueryClient();
 
-  const single = targets.length === 1;
-  const { mutate, isPending } = useMutation({
-    mutationFn: () =>
-      settleAll(
-        targets,
-        (target) =>
-          apiService.billingQueueService.updateStatus(target.id, {
-            status: "Canceled",
-            cancelReason: reason.trim(),
-          }),
-        { concurrency: BULK_CONCURRENCY, label: (target) => target.label },
-      ),
-    onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
-      void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      notifyBulkOutcome(result, {
-        succeeded: (count) =>
-          single
-            ? t("Billing queue item canceled")
-            : t("{0, plural, one {# item} other {# items}} canceled", count),
-        partial: (succeeded, failed) =>
-          t("{0} canceled; {1} could not be canceled", succeeded, failed),
-        allFailed: (failed) =>
-          single
-            ? t("Failed to cancel item")
-            : t("{0, plural, one {# item} other {# items}} could not be canceled", failed),
-      });
-      if (result.failed.length === 0) {
-        onDone?.();
-      }
-      handleClose();
-    },
-    onError: () => {
-      toast.error(t("Failed to cancel item"));
-    },
-  });
+  const single = targets.length === 1 || !run;
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
     setReason("");
   }, [onOpenChange]);
 
+  const { mutate, isPending } = useApiMutation({
+    mutationFn: async () => {
+      const cancelReason = reason.trim();
+      if (single) {
+        await Promise.all(
+          targets.map((target) =>
+            apiService.billingQueueService.updateStatus(target.id, {
+              status: "Canceled",
+              cancelReason,
+            }),
+          ),
+        );
+        return;
+      }
+      await run(
+        "Cancel",
+        targets.map((target) => target.id),
+        { reason: cancelReason },
+      );
+    },
+    resourceName: "BillingQueueItem",
+    onSuccess: () => {
+      onDone?.();
+      handleClose();
+    },
+    onSettled: invalidate,
+  });
+
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {single
+            {targets.length === 1
               ? t("Cancel billing queue item")
               : t("Cancel {0} billing queue items", targets.length)}
           </DialogTitle>
           <DialogDescription>
-            {single
+            {targets.length === 1
               ? t("This item will be removed from the billing queue.")
               : t("These items will be removed from the billing queue.")}
           </DialogDescription>
@@ -106,7 +101,7 @@ export function BillingQueueCancelDialog({
             isLoading={isPending}
             loadingText={t("Canceling...")}
           >
-            {single ? t("Cancel item") : t("Cancel items")}
+            {targets.length === 1 ? t("Cancel item") : t("Cancel items")}
           </Button>
         </DialogFooter>
       </DialogContent>

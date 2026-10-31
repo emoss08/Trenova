@@ -106,41 +106,6 @@ func TestRun_DoesNotOfferPublishingWithoutAPane(t *testing.T) {
 	assert.Contains(t, last.Content, "nowhere to publish")
 }
 
-/*
-A quick question in the command palette has nothing beside its answer.
-
-Asked for the organization's shipment types, Nova in the palette replied "The
-full table is in [Shipment types](artifact:…)", a link the palette cannot open.
-An inline turn is offered no way to publish or ask for a decision on a card,
-and is told to write its tables into the reply, even on a conversation that
-would otherwise keep what it publishes.
-*/
-func TestRun_InlineTurnWritesItsTablesIntoTheReply(t *testing.T) {
-	t.Parallel()
-
-	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.TextTurn("We have **10 shipment types**."),
-	}}
-	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-
-	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition(),
-		Actor:      runtimetest.Actor(),
-		Input:      "What shipment types do we have?",
-		ThreadID:   pulid.MustNew("athr_"),
-		Publishes:  true,
-		Inline:     true,
-	})
-	require.NoError(t, err)
-
-	offered := offeredNames(completion.LastReq.Tools)
-	assert.NotContains(t, offered, runtimetools.PublishArtifactName)
-	assert.NotContains(t, offered, runtimetools.RequestDecisionName)
-	assert.NotContains(t, completion.LastReq.System, "## Artifacts")
-	assert.Contains(t, completion.LastReq.System, "Nothing is kept beside this reply")
-	assert.NotContains(t, completion.LastReq.System, "point to the table the tool result names")
-}
-
 // A published document reaches the observer whole, and the model is told the
 // id it can revise it by.
 func TestRun_PublishesADocumentAndReturnsItsID(t *testing.T) {

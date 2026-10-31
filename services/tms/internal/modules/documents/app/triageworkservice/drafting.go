@@ -33,7 +33,11 @@ func (s *Service) DraftMany(ctx context.Context, req *DraftManyRequest) (int, er
 			"Draft at most {0} messages at once", triageworkcontract.MaxDraftBatch,
 		)
 	}
-	if !s.nova.Available(triagenova.Background) {
+	available, err := s.nova.Available(ctx, req.TenantInfo)
+	if err != nil {
+		return 0, err
+	}
+	if !available {
 		return 0, triagenova.ErrUnavailable
 	}
 	if s.workflows == nil || !s.workflows.Enabled() {
@@ -43,7 +47,7 @@ func (s *Service) DraftMany(ctx context.Context, req *DraftManyRequest) (int, er
 	}
 
 	batchID := pulid.MustNew("tdrf_")
-	if _, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:            triageworkcontract.DraftManyWorkflowID(batchID),
 		TaskQueue:     temporaltype.TaskQueueSystem.String(),
 		StaticSummary: "Draft replies and loads for Triage",
@@ -94,12 +98,12 @@ func (s *Service) DraftOne(
 		}
 		switch action.Kind {
 		case triage.ActionReply:
-			if _, err = s.replies.DraftReplyFor(ctx, message, triagenova.Background); err != nil {
+			if _, err = s.replies.DraftReplyFor(ctx, message); err != nil {
 				return drafted, err
 			}
 			drafted = true
 		case triage.ActionBuildLoad:
-			if _, err = s.draftLoad(ctx, message, triagenova.Background); err != nil {
+			if _, err = s.draftLoad(ctx, message); err != nil {
 				return drafted, err
 			}
 			drafted = true
@@ -124,7 +128,7 @@ func (s *Service) latestReply(
 }
 
 func (s *Service) DraftReplyFor(ctx context.Context, message *inboundmessage.InboundMessage) error {
-	_, err := s.replies.DraftReplyFor(ctx, message, triagenova.Background)
+	_, err := s.replies.DraftReplyFor(ctx, message)
 
 	return err
 }
@@ -137,7 +141,7 @@ func (s *Service) DraftLoadFor(ctx context.Context, message *inboundmessage.Inbo
 		}
 		message.Attachments = attachments
 	}
-	_, err := s.draftLoad(ctx, message, triagenova.Background)
+	_, err := s.draftLoad(ctx, message)
 
 	return err
 }

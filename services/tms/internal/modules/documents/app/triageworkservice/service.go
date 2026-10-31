@@ -45,7 +45,6 @@ type replyDrafter interface {
 	DraftReplyFor(
 		ctx context.Context,
 		message *inboundmessage.InboundMessage,
-		mode triagenova.Mode,
 	) (*triage.Reply, error)
 }
 

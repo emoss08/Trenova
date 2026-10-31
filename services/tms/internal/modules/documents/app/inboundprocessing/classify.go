@@ -83,7 +83,7 @@ func classifierSchema() map[string]any {
 	}, "classification", "confidence", "reasoning", "facts")
 }
 
-const classifierSystemPrompt = `You sort mail arriving at a freight carrier's monitored address into one of eight kinds.
+const classifierSystemPrompt = `Your task: sort mail arriving at a freight carrier's monitored address into one of eight kinds.
 
 Answer with the kind, how confident you are from 0 to 1, one sentence saying why, and
 the facts a dispatcher would want at a glance.
@@ -147,20 +147,21 @@ func (s *Service) classify(
 		Reasoning:  "The message was not read by a model, so it goes to a person.",
 	}
 
-	if s.completion == nil {
+	if s.nova == nil {
 		return fallback, nil
 	}
 
-	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
-		TenantInfo:   tenantInfo,
-		Task:         aitask.TaskInboundClassification,
-		System:       classifierSystemPrompt,
+	var answer map[string]any
+	result, err := s.nova.Run(ctx, &llmports.NovaTask{
+		Name:         aitask.TaskInboundClassification,
+		Instructions: classifierSystemPrompt,
 		Context:      classifierContext(message, s.senderHints(ctx, message, tenantInfo)),
-		OutputSchema: classifierSchema(),
+		Schema:       classifierSchema(),
 		SchemaName:   "inbound_classification",
 		MaxTokens:    classifyMaxTokens,
-	})
-	if err != nil {
+		TenantInfo:   tenantInfo,
+	}, &answer)
+	if err != nil && !errors.Is(err, llmports.ErrOutsideSchema) {
 		s.l.Warn("inbound classification did not run",
 			zap.String("messageId", message.ID.String()), zap.Error(err))
 

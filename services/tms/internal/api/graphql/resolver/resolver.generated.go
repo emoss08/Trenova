@@ -1587,6 +1587,7 @@ func FromServices(s *Services) *Resolver {
 			attentionQuery:                &attentionQuery{Deps: attentionDeps},
 			auditlogQuery:                 &auditlogQuery{Deps: auditlogDeps},
 			benefitsQuery:                 &benefitsQuery{Deps: benefitsDeps},
+			billingqueueQuery:             &billingqueueQuery{Deps: billingqueueDeps},
 			billingtransferQuery:          &billingtransferQuery{Deps: billingtransferDeps},
 			briefingQuery:                 &briefingQuery{Deps: briefingDeps},
 			bulkeditQuery:                 &bulkeditQuery{Deps: bulkeditDeps},
@@ -2837,6 +2838,7 @@ type queryResolver struct {
 	*attentionQuery
 	*auditlogQuery
 	*benefitsQuery
+	*billingqueueQuery
 	*billingtransferQuery
 	*briefingQuery
 	*bulkeditQuery
@@ -3372,6 +3374,7 @@ type (
 	attentionQuery                  = attentionresolver.QueryResolver
 	auditlogQuery                   = auditlogresolver.QueryResolver
 	benefitsQuery                   = benefitsresolver.QueryResolver
+	billingqueueQuery               = billingqueueresolver.QueryResolver
 	billingtransferQuery            = billingtransferresolver.QueryResolver
 	briefingQuery                   = briefingresolver.QueryResolver
 	bulkeditQuery                   = bulkeditresolver.QueryResolver

@@ -113,6 +113,20 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Agent suggestions");
     case "ConversationChapters":
       return t("Desk chapters");
+    case "BillingQueueReview":
+      return t("Billing queue review");
+    case "BillingQueueBrief":
+      return t("Billing queue brief");
+    case "BillingQueueSearch":
+      return t("Billing queue search");
+    case "PaperworkReading":
+      return t("Shipment paperwork");
+    case "InboundMail":
+      return t("Inbound mail");
+    case "PaletteAnswer":
+      return t("Command palette answers");
+    case "InsightNarration":
+      return t("Insight wording");
     case null:
       return t("Other");
   }

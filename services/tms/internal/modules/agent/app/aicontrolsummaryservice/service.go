@@ -54,7 +54,7 @@ type Params struct {
 	Cache      aicontrolsummaryports.AIControlSummaryCache
 	Dismissals aiproviderports.AIProviderFailureDismissalRepository
 	Usage      aiusageports.AIUsageRepository
-	Completion llmports.CompletionService `optional:"true"`
+	Nova       llmports.TaskRunner `optional:"true"`
 }
 
 type Service struct {
@@ -65,7 +65,7 @@ type Service struct {
 	cache      aicontrolsummaryports.AIControlSummaryCache
 	dismissals aiproviderports.AIProviderFailureDismissalRepository
 	usage      aiusageports.AIUsageRepository
-	completion llmports.CompletionService
+	nova       llmports.TaskRunner
 	inflight   singleflight.Group
 	now        func() time.Time
 	// detach starts a rewording that outlives the request asking for it.
@@ -83,7 +83,7 @@ func New(p Params) *Service {
 		cache:      p.Cache,
 		dismissals: p.Dismissals,
 		usage:      p.Usage,
-		completion: p.Completion,
+		nova:       p.Nova,
 		now:        time.Now,
 		detach:     func(run func()) { go run() },
 	}
@@ -126,7 +126,7 @@ func (s *Service) Summary(
 		GeneratedAt: s.now().Unix(),
 		Facts:       *facts,
 	}
-	if facts.NoProvider() || s.completion == nil || err != nil {
+	if facts.NoProvider() || s.nova == nil || err != nil {
 		return plain, nil
 	}
 

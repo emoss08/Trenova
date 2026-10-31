@@ -49,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/palettequestionrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordlabelrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordsummaryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/roleagentgrantrepository"
@@ -132,12 +133,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/documentreader"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionwebwatchservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/formulastudioservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/modules/agent/app/messagefileservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/novaharness"
+	"github.com/emoss08/trenova/internal/modules/agent/app/paletteanswer"
+	"github.com/emoss08/trenova/internal/modules/agent/app/paletteservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalpreviewservice"
@@ -157,6 +162,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs/chaptercontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/paperworkjobs/paperworkcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
@@ -199,6 +205,15 @@ func SharedOptions() fx.Option {
 			fx.As(new(agentdefinitionports.AgentDefinitionScheduler)),
 		)),
 		fx.Provide(
+			novaharness.New,
+			func(h *novaharness.Harness) llmports.TaskRunner { return h },
+			func(h *novaharness.Harness) llmports.TaskDeferrer { return h },
+			func(h *novaharness.Harness) llmports.TaskBatcher { return h },
+			func(h *novaharness.Harness) llmports.TaskConverser { return h },
+			paletteanswer.New,
+			paletteservice.New,
+			paperworkcontract.NewRequester,
+			documentreader.New,
 			assistantcaserepository.New,
 			messagefileservice.New,
 			casechecklistrepository.New,
@@ -252,6 +267,7 @@ func SharedOptions() fx.Option {
 			aiauditrepository.NewSource,
 			aiauditrepository.NewExport,
 			insightrepository.New,
+			palettequestionrepository.New,
 			insightrepository.NewMetrics,
 			agentexceptionrepository.New,
 			agentdecisionrepository.New,

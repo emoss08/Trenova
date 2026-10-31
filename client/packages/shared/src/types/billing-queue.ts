@@ -130,8 +130,11 @@ export type BillingCheckKey = z.infer<typeof billingCheckKeySchema>;
 
 /** What choosing an issue's option does: bill as is, remove, reprice, ask, or accept. */
 export const billingIssueEffectSchema = z.object({
-  kind: z.enum(["keep", "drop", "set", "request", "accept"]),
+  kind: z.enum(["keep", "drop", "set", "request", "accept", "add"]),
   chargeId: nullableStringSchema,
+  accessorialChargeId: nullableStringSchema,
+  /** The charge an add effect bills. */
+  label: z.string().nullish(),
   amount: decimalStringSchema.nullish(),
   basis: z.string().nullish(),
 });
@@ -265,6 +268,81 @@ export const billingReviewSchema = z.object({
 });
 export type BillingReview = z.infer<typeof billingReviewSchema>;
 
+/** Where an item sits in the queue's working order, stored by the server. */
+export const billingQueueLaneSchema = z.enum([
+  "Checking",
+  "NeedsYou",
+  "Waiting",
+  "Ready",
+  "Held",
+  "Approved",
+  "Closed",
+]);
+export type BillingQueueLane = z.infer<typeof billingQueueLaneSchema>;
+
+export const BILLING_QUEUE_OPEN_LANES = [
+  "NeedsYou",
+  "Ready",
+  "Waiting",
+  "Checking",
+  "Held",
+  "Approved",
+] as const satisfies readonly BillingQueueLane[];
+
+/** What Nova made of an item it reviewed; it never blocks approval. */
+export const agentVerdictSchema = z.enum(["Agrees", "Concern"]);
+export type AgentVerdict = z.infer<typeof agentVerdictSchema>;
+
+/**
+ * One thing Nova read to review an item: what the review was given and what it read
+ * further. A document carries how many of its parts were read (`part` of `parts`); one
+ * with no text has neither. A charge looked up carries how many of the payer's invoices
+ * billed it (`count` of `of`).
+ */
+export const agentReadSchema = z.object({
+  kind: z.enum([
+    "Invoice",
+    "Stops",
+    "Terms",
+    "BillingNotes",
+    "Comments",
+    "PastInvoices",
+    "ChargeHistory",
+    "Document",
+  ]),
+  count: z.number().nullish(),
+  code: z.string().nullish(),
+  documentId: z.string().nullish(),
+  name: z.string().nullish(),
+  fileName: z.string().nullish(),
+  part: z.number().nullish(),
+  parts: z.number().nullish(),
+  of: z.number().nullish(),
+});
+export type AgentRead = z.infer<typeof agentReadSchema>;
+
+/** The open issue a list row leads with, and how many are open. */
+export const billingQueueHeadlineSchema = z.object({
+  code: z.string(),
+  checkKey: billingCheckKeySchema,
+  summary: z.string(),
+  open: z.number().default(0),
+  waiting: z.boolean().default(false),
+});
+export type BillingQueueHeadline = z.infer<typeof billingQueueHeadlineSchema>;
+
+/**
+ * What priced an item's shipment, for the biller to open: the rate agreement when one
+ * did, or the formula template.
+ */
+export const billingQueueRatedBySchema = z.object({
+  kind: z.enum(["Agreement", "Template"]),
+  id: z.string(),
+  code: z.string().nullish(),
+  name: z.string(),
+});
+export type BillingQueueRatedBy = z.infer<typeof billingQueueRatedBySchema>;
+
 export const billingQueueItemSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -304,6 +382,7 @@ export const billingQueueItemSchema = z.object({
   assignedBiller: linkedRecordSchema("user", userSchema).optional().nullable(),
   canceledBy: linkedRecordSchema("user", userSchema).optional().nullable(),
   payerShare: payerShareSchema.nullish(),
+  ratedBy: billingQueueRatedBySchema.nullish(),
   detentionHolds: z
     .array(detentionHoldSchema)
     .nullish()
@@ -313,7 +392,24 @@ export const billingQueueItemSchema = z.object({
   heldAt: z.number().nullish(),
   heldById: nullableStringSchema,
   statusBeforeHold: nullableEnumSchema(billingQueueStatusSchema),
+  lane: billingQueueLaneSchema.default("Checking"),
+  checkedAt: z.number().nullish(),
   poNumber: z.string().nullish(),
+  invoiceMemo: z.string().nullish(),
+  paymentTerm: z.string().nullish(),
+  invoiceDate: z.number().nullish(),
+  packetDocumentIds: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  agentVerdict: nullableEnumSchema(agentVerdictSchema),
+  agentSummary: z.string().nullish(),
+  agentReviewedAt: z.number().nullish(),
+  agentReads: z
+    .array(agentReadSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  headline: billingQueueHeadlineSchema.nullish(),
   review: billingReviewSchema.nullish(),
 });
 
@@ -363,9 +459,29 @@ export const billingQueueSummarySchema = z.object({
 });
 export type BillingQueueSummary = z.infer<typeof billingQueueSummarySchema>;
 
+export const bulkRunActionSchema = z.enum([
+  "Approve",
+  "Post",
+  "Hold",
+  "Assign",
+  "Cancel",
+  "RequestPaperwork",
+  "ResolveIssue",
+]);
+export type BulkRunAction = z.infer<typeof bulkRunActionSchema>;
+
+export type BulkRunParams = {
+  assignApprover?: boolean;
+  billerId?: string;
+  holdReasonCode?: BillingQueueHoldReason;
+  reason?: string;
+  issueCode?: string;
+  optionKey?: string;
+};
+
 export const billingQueueApprovalRunItemSchema = z.object({
   itemId: z.string(),
-  status: z.enum(["Pending", "Approved", "Failed", "Skipped"]),
+  status: z.enum(["Pending", "Succeeded", "Failed", "Skipped"]),
   failureCode: z.string().nullish(),
   errorMessage: z.string().nullish(),
   invoiceNumber: z.string().nullish(),
@@ -374,9 +490,10 @@ export const billingQueueApprovalRunItemSchema = z.object({
 /** One press of Approve over several items, run as a job behind an undo window. */
 export const billingQueueApprovalRunSchema = z.object({
   id: z.string(),
+  action: bulkRunActionSchema.default("Approve"),
   status: z.enum(["Scheduled", "Running", "Completed", "Undone", "Failed"]),
   totalCount: z.number(),
-  approvedCount: z.number().default(0),
+  succeededCount: z.number().default(0),
   failedCount: z.number().default(0),
   skippedCount: z.number().default(0),
   commitAt: z.number(),
@@ -461,18 +578,130 @@ export const billingQueueUpdateStatusSchema = z.object({
 });
 export type BillingQueueUpdateStatusInput = z.infer<typeof billingQueueUpdateStatusSchema>;
 
+export const billingQueueLaneStatSchema = z.object({
+  lane: billingQueueLaneSchema,
+  count: z.number(),
+  total: decimalStringSchema,
+});
+export type BillingQueueLaneStat = z.infer<typeof billingQueueLaneStatSchema>;
+
+/** The day's figures for the queue, computed against the caller's day. */
+export const billingQueuePulseSchema = z.object({
+  oldestWaitingAt: z.number().nullish(),
+  deliveryToInvoiceDays: decimalStringSchema.nullish(),
+  priorDeliveryToInvoiceDays: decimalStringSchema.nullish(),
+  approvedTodayCount: z.number().default(0),
+  approvedTodayTotal: decimalStringSchema.default(0),
+  medianReviewSecondsToday: z.number().nullish(),
+});
+export type BillingQueuePulse = z.infer<typeof billingQueuePulseSchema>;
+
 export const billingQueueStatsSchema = z.object({
-  readyForReview: z.number(),
-  inReview: z.number(),
-  approved: z.number(),
-  posted: z.number(),
-  onHold: z.number(),
-  exception: z.number(),
-  sentBackToOps: z.number(),
-  canceled: z.number(),
-  total: z.number(),
+  lanes: z
+    .array(billingQueueLaneStatSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  openCount: z.number().default(0),
+  openTotal: decimalStringSchema.default(0),
+  pulse: billingQueuePulseSchema.nullish(),
 });
 export type BillingQueueStats = z.infer<typeof billingQueueStatsSchema>;
+
+export const recommendationKindSchema = z.enum([
+  "ApproveReady",
+  "AssignToMe",
+  "PostApproved",
+  "RequestPaperwork",
+  "ReviewUnbilled",
+  "HoldDuplicates",
+  "ApproveAgentAgreed",
+  "ReviewAgentConcerns",
+]);
+export type RecommendationKind = z.infer<typeof recommendationKindSchema>;
+
+/** A batch the queue can clear in one action, naming exactly the items it covers. */
+export const billingQueueRecommendationSchema = z.object({
+  kind: recommendationKindSchema,
+  source: z.enum(["Rules", "Agent"]),
+  count: z.number(),
+  total: decimalStringSchema,
+  itemIds: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type BillingQueueRecommendation = z.infer<typeof billingQueueRecommendationSchema>;
+
+export const billingQueueAssistSchema = z.object({
+  review: z.boolean().default(false),
+  brief: z.boolean().default(false),
+  search: z.boolean().default(false),
+});
+export type BillingQueueAssist = z.infer<typeof billingQueueAssistSchema>;
+
+export const billingQueueBriefSchema = z.object({
+  available: z.boolean().default(false),
+  text: z.string().default(""),
+  generatedAt: z.number().default(0),
+});
+export type BillingQueueBrief = z.infer<typeof billingQueueBriefSchema>;
+
+/**
+ * Nova writing, in bulk, the reviews the queue is missing and then its brief;
+ * null when nothing is generating. One runs per organization, shared by everyone
+ * who has the queue open.
+ */
+export const billingQueueNovaGenerationSchema = z
+  .object({
+    phase: z.enum(["Reviewing", "Briefing", "Done", "Left"]),
+    total: z.number().default(0),
+    done: z.number().default(0),
+    /** When opening the queue next tries what the last generation left ("Left"). */
+    retryAt: z.number().nullish(),
+  })
+  .nullable();
+export type BillingQueueNovaGeneration = z.infer<typeof billingQueueNovaGenerationSchema>;
+
+/** The filters Nova read out of a sentence typed into the queue's search. */
+/**
+ * A window of days a queue search names: the last N days, or a range of calendar days
+ * (YYYY-MM-DD, both ends kept) in the person's own calendar.
+ */
+export const billingQueueSearchDatesSchema = z.object({
+  lastDays: z.number().int().positive().nullish(),
+  from: z.string().nullish(),
+  to: z.string().nullish(),
+});
+export type BillingQueueSearchDates = z.infer<typeof billingQueueSearchDatesSchema>;
+
+export const billingQueueSearchIntentSchema = z.object({
+  lanes: z
+    .array(billingQueueLaneSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  search: z.string().default(""),
+  payerId: nullableStringSchema,
+  payerName: z.string().nullish(),
+  shipmentCustomerId: nullableStringSchema,
+  shipmentCustomerName: z.string().nullish(),
+  minAmount: decimalStringSchema.nullish(),
+  maxAmount: decimalStringSchema.nullish(),
+  createdBefore: z.number().nullish(),
+  delivered: billingQueueSearchDatesSchema.nullish(),
+  pickedUp: billingQueueSearchDatesSchema.nullish(),
+  queued: billingQueueSearchDatesSchema.nullish(),
+  unresolved: z.string().nullish(),
+});
+export type BillingQueueSearchIntent = z.infer<typeof billingQueueSearchIntentSchema>;
+
+export type BillingQueueInvoiceDetailsInput = {
+  version: number;
+  poNumber: string;
+  invoiceMemo: string;
+  paymentTerm: string;
+  invoiceDate: number | null;
+  packetDocumentIds: string[];
+};
 
 export const billingQueueUpdateChargesSchema = z.object({
   formulaTemplateId: z.string().optional(),

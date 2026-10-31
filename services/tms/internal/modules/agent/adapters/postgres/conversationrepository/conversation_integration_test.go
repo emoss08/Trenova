@@ -118,7 +118,7 @@ func TestListThreadsPagesThroughEveryConversationOnce(t *testing.T) {
 	for range 5 {
 		h.thread(t, conversation.ThreadOriginPanel)
 	}
-	h.thread(t, conversation.ThreadOriginAsk)
+	h.thread(t, conversation.ThreadOriginFormula)
 
 	seen := make(map[pulid.ID]struct{})
 	cursor := ""
@@ -152,7 +152,7 @@ func TestListThreadsPagesThroughEveryConversationOnce(t *testing.T) {
 
 func TestDeleteStaleThreadsRemovesTheThreadsAndTheirMessages(t *testing.T) {
 	h := newHarness(t)
-	stale := h.thread(t, conversation.ThreadOriginAsk)
+	stale := h.thread(t, conversation.ThreadOriginFormula)
 	kept := h.thread(t, conversation.ThreadOriginPanel)
 	_, err := h.repo.AppendTurn(h.ctx, &conversationports.AppendTurnRequest{
 		ThreadID:   stale.ID,
@@ -162,7 +162,7 @@ func TestDeleteStaleThreadsRemovesTheThreadsAndTheirMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	deleted, err := h.repo.DeleteStaleThreads(h.ctx, conversationports.DeleteStaleThreadsRequest{
-		Origin: conversation.ThreadOriginAsk,
+		Origin: conversation.ThreadOriginFormula,
 		Before: stale.CreatedAt + 3_600,
 		Limit:  10,
 	})

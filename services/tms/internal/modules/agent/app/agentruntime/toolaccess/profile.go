@@ -99,7 +99,7 @@ func (s *Access) LooksUp(name string) bool {
 }
 
 func reachesBeyond(req *agentruntimeports.RunRequest, mode ProfileMode) bool {
-	return mode == ProfileConversation && !req.Inline && req.ThreadID.IsNotNil() &&
+	return mode == ProfileConversation && req.ThreadID.IsNotNil() &&
 		req.Actor != nil && req.Actor.PrincipalType == permissionports.PrincipalTypeUser
 }
 

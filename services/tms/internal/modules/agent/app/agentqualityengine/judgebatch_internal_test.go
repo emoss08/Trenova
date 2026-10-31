@@ -156,6 +156,10 @@ func (f *batchedJudge) BatchStatus(
 	return &llmports.BatchStatus{Ended: true}, nil
 }
 
+func (*batchedJudge) CancelBatch(context.Context, *llmports.BatchCancelRequest) error {
+	return nil
+}
+
 func (f *batchedJudge) BatchResults(
 	context.Context,
 	*llmports.BatchResultsRequest,

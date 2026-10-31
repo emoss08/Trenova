@@ -69,6 +69,7 @@ func (a *Activities) refresh(
 	refresh, err := a.insights.Refresh(ctx, insightservice.RefreshRequest{
 		TenantInfo: tenantInfo,
 		Now:        now,
+		Deferred:   true,
 	})
 	if err != nil {
 		return nil, err
@@ -80,5 +81,6 @@ func (a *Activities) refresh(
 		Suppressed: refresh.Suppressed,
 		Narrated:   refresh.Narrated,
 		Failed:     refresh.Failed,
+		Pending:    refresh.Pending,
 	}, nil
 }

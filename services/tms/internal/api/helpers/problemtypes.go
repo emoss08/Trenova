@@ -5,20 +5,21 @@ import "net/http"
 type ProblemType string
 
 const (
-	ProblemTypeBlank           = ProblemType("about:blank")
-	ProblemTypeValidation      = ProblemType("validation-error")
-	ProblemTypeBusiness        = ProblemType("business-rule-violation")
-	ProblemTypeDatabase        = ProblemType("database-error")
-	ProblemTypeAuthentication  = ProblemType("authentication-error")
-	ProblemTypeAuthorization   = ProblemType("authorization-error")
-	ProblemTypeNotFound        = ProblemType("resource-not-found")
-	ProblemTypeRequestTooLarge = ProblemType("request-entity-too-large")
-	ProblemTypeRateLimit       = ProblemType("rate-limit-exceeded")
-	ProblemTypeConflict        = ProblemType("resource-conflict")
-	ProblemTypeTimeout         = ProblemType("request-timeout")
-	ProblemTypeInternal        = ProblemType("internal-error")
-	ProblemTypeQuotaExceeded   = ProblemType("quota-exceeded")
-	ProblemTypePlanRestricted  = ProblemType("plan-restricted")
+	ProblemTypeBlank               = ProblemType("about:blank")
+	ProblemTypeValidation          = ProblemType("validation-error")
+	ProblemTypeBusiness            = ProblemType("business-rule-violation")
+	ProblemTypeDatabase            = ProblemType("database-error")
+	ProblemTypeAuthentication      = ProblemType("authentication-error")
+	ProblemTypeAuthorization       = ProblemType("authorization-error")
+	ProblemTypeNotFound            = ProblemType("resource-not-found")
+	ProblemTypeRequestTooLarge     = ProblemType("request-entity-too-large")
+	ProblemTypeRateLimit           = ProblemType("rate-limit-exceeded")
+	ProblemTypeConflict            = ProblemType("resource-conflict")
+	ProblemTypeTimeout             = ProblemType("request-timeout")
+	ProblemTypeInternal            = ProblemType("internal-error")
+	ProblemTypeQuotaExceeded       = ProblemType("quota-exceeded")
+	ProblemTypePlanRestricted      = ProblemType("plan-restricted")
+	ProblemTypeSessionContextStale = ProblemType("session-context-stale")
 )
 
 type ProblemTypeInfo struct {
@@ -99,6 +100,12 @@ var problemTypeRegistry = map[ProblemType]ProblemTypeInfo{ //nolint:exhaustive /
 		Type:       ProblemTypePlanRestricted,
 		Title:      "Not Available on Your Plan",
 		StatusCode: http.StatusForbidden,
+		ShouldLog:  false,
+	},
+	ProblemTypeSessionContextStale: {
+		Type:       ProblemTypeSessionContextStale,
+		Title:      "Session Changed",
+		StatusCode: http.StatusConflict,
 		ShouldLog:  false,
 	},
 	ProblemTypeInternal: {

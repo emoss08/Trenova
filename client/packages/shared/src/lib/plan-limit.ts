@@ -1,3 +1,4 @@
+import { markExplained } from "@trenova/shared/lib/explained-errors";
 import { isRecord } from "@trenova/shared/lib/utils";
 
 export const QUOTA_EXCEEDED_CODE = "QUOTA_EXCEEDED";
@@ -179,7 +180,6 @@ export function planLimitFromError(error: unknown): PlanLimitNotice | null {
 export type PlanLimitHandler = (notice: PlanLimitNotice) => boolean;
 
 let planLimitHandler: PlanLimitHandler | null = null;
-const explainedErrors = new WeakSet<object>();
 
 /**
  * The transports sit below the router and the dialog, so they can only signal. The
@@ -208,12 +208,7 @@ export function reportPlanLimit(error: object): boolean {
     console.error("[plan-limit] handler failed", handlerError);
   }
   if (shown) {
-    explainedErrors.add(error);
+    markExplained(error);
   }
   return shown;
-}
-
-/** Whether the plan-limit dialog has already explained this error to the person. */
-export function isExplainedPlanLimitError(error: unknown): boolean {
-  return typeof error === "object" && error !== null && explainedErrors.has(error);
 }

@@ -13,7 +13,7 @@ import (
 // paragraph a dispatcher reads at six in the morning. The instruction
 // against unstated numbers is repeated here because a clear prompt makes
 // the guard's rejections rare — but the guard is what makes it true.
-const systemPrompt = `You write the morning briefing for people who run a trucking company.
+const systemPrompt = `Your task: write the morning briefing for people who run a trucking company.
 
 Every figure you are given was computed from the company's own records before you were asked. Your only job is to say what the morning looks like in language an operations manager reads once and understands.
 

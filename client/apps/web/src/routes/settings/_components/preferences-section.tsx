@@ -3,7 +3,7 @@ import { SegmentedField } from "@/components/fields/segmented-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TimezoneField } from "@/components/fields/timezone-field";
-import { applyLocale } from "@/components/navigation/language-submenu";
+import { applyLocale } from "@/lib/locale-switch";
 import { usePermission } from "@/hooks/use-permission";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useEditorPreferenceStore } from "@/stores/editor-preference-store";

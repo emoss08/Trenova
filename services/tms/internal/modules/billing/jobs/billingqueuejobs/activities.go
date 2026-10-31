@@ -2,6 +2,7 @@ package billingqueuejobs
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
@@ -21,24 +22,39 @@ type ActivitiesParams struct {
 	fx.In
 
 	ReviewRepo billingqueueports.BillingQueueReviewRepository
+	QueueRepo  billingqueueports.BillingQueueRepository
 	Review     billingqueueports.BillingQueueReviewService
-	Realtime   realtimeports.RealtimeService `optional:"true"`
+	Rechecks   billingqueueports.RecheckRequester
+	Assist     billingqueueports.BillingQueueAssistService `optional:"true"`
+	Briefs     billingqueueports.BriefRequester            `optional:"true"`
+	Generator  billingqueueports.NovaGenerator             `optional:"true"`
+	Realtime   realtimeports.RealtimeService               `optional:"true"`
 	Logger     *zap.Logger
 }
 
 type Activities struct {
-	repo     billingqueueports.BillingQueueReviewRepository
-	review   billingqueueports.BillingQueueReviewService
-	realtime realtimeports.RealtimeService
-	l        *zap.Logger
+	repo      billingqueueports.BillingQueueReviewRepository
+	queueRepo billingqueueports.BillingQueueRepository
+	review    billingqueueports.BillingQueueReviewService
+	rechecks  billingqueueports.RecheckRequester
+	assist    billingqueueports.BillingQueueAssistService
+	briefs    billingqueueports.BriefRequester
+	generator billingqueueports.NovaGenerator
+	realtime  realtimeports.RealtimeService
+	l         *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		repo:     p.ReviewRepo,
-		review:   p.Review,
-		realtime: p.Realtime,
-		l:        p.Logger.Named("billing-queue-approval-activities"),
+		repo:      p.ReviewRepo,
+		queueRepo: p.QueueRepo,
+		review:    p.Review,
+		rechecks:  p.Rechecks,
+		assist:    p.Assist,
+		briefs:    p.Briefs,
+		generator: p.Generator,
+		realtime:  p.Realtime,
+		l:         p.Logger.Named("billing-queue-activities"),
 	}
 }
 
@@ -82,17 +98,13 @@ func (a *Activities) ListApprovalRunItemsActivity(
 	return ids, nil
 }
 
-// ApproveQueueItemActivity approves one item if, read fresh, it is still
-// ready, and records what happened. A refusal is an outcome, not an error.
-// Only a fault comes back as an error, for Temporal to retry.
-//
-// Recording is idempotent, and a retry after an approval that went through
-// but failed to record finds the item already approved: on a retry that is
-// taken as this run's own approval rather than somebody else's.
-func (a *Activities) ApproveQueueItemActivity(
+// ApplyRunItemActivity applies the run's action to one item and records what
+// happened. A refusal is an outcome, not an error; only a fault comes back as
+// an error, for Temporal to retry.
+func (a *Activities) ApplyRunItemActivity(
 	ctx context.Context,
-	payload *ApproveItemPayload,
-) (*ApproveItemResult, error) {
+	payload *ApplyRunItemPayload,
+) (*ApplyRunItemResult, error) {
 	tenant := payload.tenant()
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
@@ -102,12 +114,78 @@ func (a *Activities) ApproveQueueItemActivity(
 		BusinessUnitID: payload.BusinessUnitID,
 	}
 
+	record, err := a.applyRunItem(ctx, payload, tenant, actor)
+	if err != nil {
+		return nil, err
+	}
+	record.RunID = payload.RunID
+	record.ItemID = payload.ItemID
+
+	if recErr := a.repo.RecordApprovalRunItem(ctx, &billingqueueports.RecordApprovalRunItemRequest{
+		TenantInfo: tenant,
+		Item:       record,
+	}); recErr != nil {
+		return nil, recErr
+	}
+	a.publishRunChanged(ctx, tenant, payload.RunID, payload.UserID)
+
+	return &ApplyRunItemResult{Status: record.Status, FailureCode: record.FailureCode}, nil
+}
+
+func (a *Activities) applyRunItem(
+	ctx context.Context,
+	payload *ApplyRunItemPayload,
+	tenant pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+) (*billingapprovalrun.ApprovalRunItem, error) {
+	if payload.Action == billingapprovalrun.RunActionApprove {
+		return a.approveRunItem(ctx, payload, tenant, actor)
+	}
+
+	err := a.review.ApplyBulkAction(ctx, &billingqueueports.ApplyBulkActionRequest{
+		ItemID:     payload.ItemID,
+		TenantInfo: tenant,
+		Action:     payload.Action,
+		Params:     payload.Params,
+	}, actor)
+	switch {
+	case err == nil:
+		return &billingapprovalrun.ApprovalRunItem{
+			Status: billingapprovalrun.ApprovalItemSucceeded,
+		}, nil
+	case errors.Is(err, billingqueueports.ErrBulkActionNotApplicable):
+		return &billingapprovalrun.ApprovalRunItem{
+			Status:       billingapprovalrun.ApprovalItemSkipped,
+			FailureCode:  billingapprovalrun.ApprovalFailureNotApplies,
+			ErrorMessage: err.Error(),
+		}, nil
+	case isRefusal(err):
+		return &billingapprovalrun.ApprovalRunItem{
+			Status:       billingapprovalrun.ApprovalItemFailed,
+			FailureCode:  billingapprovalrun.ApprovalFailureNotReady,
+			ErrorMessage: err.Error(),
+		}, nil
+	default:
+		return nil, err
+	}
+}
+
+// approveRunItem approves one item if, read fresh, it is still ready.
+// Recording is idempotent, and a retry after an approval that went through
+// but failed to record finds the item already approved: on a retry that is
+// taken as this run's own approval rather than somebody else's.
+func (a *Activities) approveRunItem(
+	ctx context.Context,
+	payload *ApplyRunItemPayload,
+	tenant pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+) (*billingapprovalrun.ApprovalRunItem, error) {
 	outcome, err := a.review.ApproveIfReady(ctx, &billingqueueports.ApproveIfReadyRequest{
 		ItemID:         payload.ItemID,
 		TenantInfo:     tenant,
-		AssignApprover: payload.AssignApprover,
+		AssignApprover: payload.Params.AssignApprover,
 	}, actor)
-	record := &billingapprovalrun.ApprovalRunItem{RunID: payload.RunID, ItemID: payload.ItemID}
+	record := &billingapprovalrun.ApprovalRunItem{}
 	switch {
 	case err != nil && isRefusal(err):
 		record.Status = billingapprovalrun.ApprovalItemFailed
@@ -116,12 +194,12 @@ func (a *Activities) ApproveQueueItemActivity(
 	case err != nil:
 		return nil, err
 	case outcome.Approved:
-		record.Status = billingapprovalrun.ApprovalItemApproved
+		record.Status = billingapprovalrun.ApprovalItemSucceeded
 		record.InvoiceID = outcome.InvoiceID
 		record.InvoiceNumber = outcome.InvoiceNumber
 	case outcome.FailureCode == billingapprovalrun.ApprovalFailureAlreadyDone &&
 		activity.GetInfo(ctx).Attempt > 1:
-		record.Status = billingapprovalrun.ApprovalItemApproved
+		record.Status = billingapprovalrun.ApprovalItemSucceeded
 	case outcome.FailureCode == billingapprovalrun.ApprovalFailureAlreadyDone ||
 		outcome.FailureCode == billingapprovalrun.ApprovalFailureOnHold:
 		record.Status = billingapprovalrun.ApprovalItemSkipped
@@ -133,15 +211,7 @@ func (a *Activities) ApproveQueueItemActivity(
 		record.ErrorMessage = outcome.Reason
 	}
 
-	if recErr := a.repo.RecordApprovalRunItem(ctx, &billingqueueports.RecordApprovalRunItemRequest{
-		TenantInfo: tenant,
-		Item:       record,
-	}); recErr != nil {
-		return nil, recErr
-	}
-	a.publishRunChanged(ctx, tenant, payload.RunID, payload.UserID)
-
-	return &ApproveItemResult{Status: record.Status, FailureCode: record.FailureCode}, nil
+	return record, nil
 }
 
 // isRefusal is an error that says no rather than one that went wrong: a
@@ -205,11 +275,11 @@ func (a *Activities) FinalizeApprovalRunActivity(
 	a.publishRunChanged(ctx, tenant, payload.RunID, payload.UserID)
 
 	return &ApprovalRunResult{
-		RunID:         run.ID,
-		Status:        run.Status,
-		ApprovedCount: run.ApprovedCount,
-		FailedCount:   run.FailedCount,
-		SkippedCount:  run.SkippedCount,
+		RunID:          run.ID,
+		Status:         run.Status,
+		SucceededCount: run.SucceededCount,
+		FailedCount:    run.FailedCount,
+		SkippedCount:   run.SkippedCount,
 	}, nil
 }
 

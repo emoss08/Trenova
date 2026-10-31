@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingqueuemapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -186,4 +187,30 @@ func (r *MutationResolver) UndoBillingQueueIssue(ctx context.Context, id string,
 	}
 
 	return billingqueuemapping.RequiredBillingQueueItemToModel(ctx, item)
+}
+
+func (r *QueryResolver) BillingQueueItems(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingQueueItemsFilterInput) (*gqlmodel.BillingQueueItemConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := billingqueuemapping.ListRequestFromFilter(filter)
+	if err != nil {
+		return nil, err
+	}
+	req.Filter = tableInput.Filter
+	req.Cursor = tableInput.Cursor
+
+	result, err := r.BillingQueueService.ListConnection(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return billingqueuemapping.BillingQueueItemConnectionToModel(ctx, result)
 }

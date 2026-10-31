@@ -112,7 +112,11 @@ was going; a filter, sort or table-page change never reloads. It waits while
 `reloadIsSafe()` (`src/lib/reload-guards.ts`) says no: anything holding work a reload would
 lose registers a guard — `UnsavedChangesGuard` while a form has unsaved edits, the popout
 manager while a popout is open (unloading closes them). Code that reloads on its own
-initiative must ask the guards; a new kind of in-memory work must add one.
+initiative must ask the guards; a new kind of in-memory work must add one. The one exception is
+a session ended on purpose in another tab, by a sign-out or someone else signing in
+(`docs/engineering/session-context.md`): the app leaves through `leaveRegardlessOfWork`, and
+`UnsavedChangesGuard` does not raise the browser's leave-page prompt for that load. A reload
+the person chooses, and a session the server ended, still get the prompt.
 
 **Release recovery** (`src/lib/chunk-recovery.ts`). A tab still on the old build that asks for
 a file the release removed fails as it would anyway (Vite's `vite:preloadError`). Recovery then
@@ -135,7 +139,10 @@ every disk read and write checks the scope signed in at that moment, so a write 
 flight when a session ends is dropped. Caches are discarded by a new build and after a day,
 and shell queries stay in memory as long (`retainShellQueries`). Every way a session ends or
 changes hands — signing out, switching organization, signing in, an expired session — goes
-through `clearSessionCache()`.
+through `clearSessionCache()`. The cache's scope at startup comes from the auth store's restored profile
+(`RestoredProfile` in `stores/auth-store.ts`: ids, language, clock), which is all the store
+writes to `localStorage`: the user itself, with their name, email and phone number, stays in
+memory, and every answer from the server about the session replaces the restored profile.
 
 **Operating it.** `/sw.js` must be revalidated on every check: Caddy sends `no-cache` for
 everything outside `assets/`, and Cloudflare's static assets send

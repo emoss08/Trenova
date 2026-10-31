@@ -308,6 +308,23 @@ func (s *Batch) BatchStatus(
 	}, nil
 }
 
+func (s *Batch) CancelBatch(ctx context.Context, req *llmports.BatchCancelRequest) error {
+	provider, runner, err := s.batchProvider(ctx, req.TenantInfo, req.ProviderID, req.BatchID)
+	if err != nil {
+		return err
+	}
+
+	limited := s.WithDeadline(ctx, provider.ResolvedTimeout())
+	err = limited.Finish(s.WithKeyFallback(provider, func(apiKey string) error {
+		return runner.CancelBatch(limited.Ctx, s.batchCall(provider, apiKey), req.BatchID)
+	}))
+	if err != nil {
+		return fmt.Errorf("cancel batch %s on %s: %w", req.BatchID, provider.Name, err)
+	}
+
+	return nil
+}
+
 func (s *Batch) BatchResults(
 	ctx context.Context,
 	req *llmports.BatchResultsRequest,
@@ -367,6 +384,7 @@ func (r *batchReader) read(ctx context.Context, item *modeladapter.BatchItem) {
 		CustomID:       item.CustomID,
 		FailureCode:    item.FailureCode,
 		FailureMessage: item.FailureMessage,
+		NotRun:         item.NotRun,
 	}
 
 	var outcome *completionengine.RunOutcome

@@ -66,41 +66,14 @@ func TestBuildSystemPrompt_SaysNothingOfASurfaceTheClientDidNotName(t *testing.T
 	assert.Contains(t, prompt, "What the person is looking at right now:")
 }
 
-func TestBuildSystemPrompt_SaysThePersonAskedFromThePaletteAboutWhatTheyNamed(t *testing.T) {
-	t.Parallel()
-
-	rc := fullContext()
-	rc.Surface = agentpagecontext.SurfacePalette
-
-	prompt := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
-
-	assert.Contains(t, prompt, "Where the person is talking to you: the command palette")
-	assert.Contains(t, prompt, "not about the page under the palette")
-	assert.Contains(
-		t,
-		prompt,
-		"The page of Trenova open under the command palette. It is where the person was "+
-			"when they asked, not what they asked about:",
-	)
-	assert.NotContains(t, prompt, "What the person is looking at right now:")
-	assert.NotContains(t, prompt, "had open before the Desk")
-}
-
-func TestBuildSystemPrompt_RunsThePageTableUnderThePaletteOnlyWhenAskedAboutIt(t *testing.T) {
+func TestBuildSystemPrompt_RunsThePageTableToAnswerAboutItsRows(t *testing.T) {
 	t.Parallel()
 
 	rc := fullContext()
 	rc.Page.View = &agentpagecontext.PageView{Resource: "agentRun", Query: "harbor"}
-
-	rc.Surface = agentpagecontext.SurfacePalette
-	palette := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
-
-	assert.Contains(t, palette, "Only when the question points at these rows, call the matching")
-	assert.NotContains(t, palette, "To answer about these rows")
-
 	rc.Surface = agentpagecontext.SurfaceAssistant
-	assistant := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
 
-	assert.Contains(t, assistant, "To answer about these rows, call the matching list tool")
-	assert.NotContains(t, assistant, "Only when the question points at these rows")
+	prompt := agentprompt.BuildSystemPrompt(definitionWithInstructions("Be brief."), rc)
+
+	assert.Contains(t, prompt, "To answer about these rows, call the matching list tool")
 }

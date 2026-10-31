@@ -103,10 +103,6 @@ type RuntimeContext struct {
 	// Artifacts says the conversation keeps what the turn produces beside it:
 	// lists as tables, records as cards, and documents the model publishes.
 	Artifacts bool
-	// Inline says the reply is read on its own with nothing beside it — a
-	// quick question in the command palette — so everything it shows is
-	// written into it.
-	Inline bool
 	// PageGuide is what the product guide says about the page in Page: its
 	// name, where it sits and what it is for. A raw path tells the model
 	// nothing about what the person is looking at.

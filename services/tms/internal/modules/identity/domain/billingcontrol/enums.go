@@ -221,3 +221,22 @@ func (v PaymentTerm) IsValid() bool {
 		return false
 	}
 }
+
+type QueueAutoApproveMode string
+
+const (
+	QueueAutoApproveModeOff             = QueueAutoApproveMode("Off")
+	QueueAutoApproveModeWhenChecksClear = QueueAutoApproveMode("WhenChecksClear")
+	QueueAutoApproveModeWhenAgentAgrees = QueueAutoApproveMode("WhenAgentAgrees")
+)
+
+func (m QueueAutoApproveMode) IsValid() bool {
+	switch m {
+	case QueueAutoApproveModeOff,
+		QueueAutoApproveModeWhenChecksClear,
+		QueueAutoApproveModeWhenAgentAgrees:
+		return true
+	default:
+		return false
+	}
+}

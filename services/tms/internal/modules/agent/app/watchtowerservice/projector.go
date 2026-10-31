@@ -118,34 +118,46 @@ func (p *Projector) upsert(
 	ctx context.Context,
 	input watchtowerports.WatchtowerItemInput,
 ) error {
+	saved, action, err := p.project(ctx, input)
+	if err != nil || saved == nil {
+		return err
+	}
+	p.publish(ctx, saved, action)
+
+	return nil
+}
+
+func (p *Projector) project(
+	ctx context.Context,
+	input watchtowerports.WatchtowerItemInput,
+) (*watchtower.Item, string, error) {
 	item := ItemFromInput(input)
 	multiErr := errortypes.NewMultiError()
 	item.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return nil, "", multiErr
 	}
 
 	ctx = dbscope.WithTenant(ctx, input.TenantInfo.DBTenant())
 	saved, inserted, err := p.repo.Upsert(ctx, item)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	saved = p.route(ctx, saved, input.OwnerID, inserted)
 	if saved.Unchanged {
-		return nil
+		return nil, "", nil
 	}
 
 	action := agentactivityports.ActivityUpdated
 	if inserted {
 		action = agentactivityports.ActivityCreated
 	}
-	p.publish(ctx, saved, action)
 	if inserted && saved.Severity == watchtower.SeverityCritical {
 		p.notifyCritical(ctx, saved)
 	}
 
-	return nil
+	return saved, action, nil
 }
 
 // Resolve closes the item for a source record that is no longer open.

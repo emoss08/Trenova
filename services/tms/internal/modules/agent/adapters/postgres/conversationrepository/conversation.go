@@ -643,7 +643,7 @@ func (r *repository) DeleteStaleThreads(
 	ctx context.Context,
 	req conversationports.DeleteStaleThreadsRequest,
 ) (int, error) {
-	ctx = dbscope.WithSystem(ctx, "delete stale ask threads across every organization")
+	ctx = dbscope.WithSystem(ctx, "delete stale formula drafts across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if req.Origin == "" || req.Before <= 0 {
 			return 0, nil

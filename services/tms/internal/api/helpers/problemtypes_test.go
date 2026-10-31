@@ -68,6 +68,13 @@ func TestProblemType_Info(t *testing.T) {
 			expectedLog:    false,
 		},
 		{
+			name:           "session context stale",
+			problemType:    helpers.ProblemTypeSessionContextStale,
+			expectedTitle:  "Session Changed",
+			expectedStatus: http.StatusConflict,
+			expectedLog:    false,
+		},
+		{
 			name:           "internal error",
 			problemType:    helpers.ProblemTypeInternal,
 			expectedTitle:  "Internal Server Error",
@@ -145,6 +152,7 @@ func TestProblemTypeConstants(t *testing.T) {
 			helpers.ProblemTypeNotFound,
 			helpers.ProblemTypeRateLimit,
 			helpers.ProblemTypeInternal,
+			helpers.ProblemTypeSessionContextStale,
 		}
 
 		seen := make(map[helpers.ProblemType]bool)

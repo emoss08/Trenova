@@ -556,7 +556,6 @@ func (s *Service) describeToolSet(
 		rc.ToolMap = s.access.ToolMap(slices.Concat(tools.Allowed, tools.Beyond))
 	}
 	rc.Artifacts = tools.Offers(runtimetools.PublishArtifactName)
-	rc.Inline = req.Inline
 	rc.LooksUpOnly = mode == toolaccess.ProfileFanOut
 	rc.DecisionRequests = tools.Offers(runtimetools.RequestDecisionName)
 	// The prompt describes the set the person may use, not the agent's whole

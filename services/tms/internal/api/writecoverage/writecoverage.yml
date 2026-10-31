@@ -569,21 +569,26 @@ writes:
     reason: "A saved filter on the billing queue screen."
   "POST /api/v1/billing-queue/:itemID/reassign-charge/":
     tools: [billing_reassign_charge]
-  "POST /api/v1/billing-queue/bulk-approve/":
-    tools: [billing_approve_queue_item]
-  "POST /api/v1/billing-queue/bulk-approve/:runID/cancel/":
+  "POST /api/v1/billing-queue/bulk/":
+    tools: [billing_approve_queue_item, billing_assign_biller, billing_cancel_queue_item, billing_hold_queue_item, billing_resolve_issue, invoice_post]
+  "POST /api/v1/billing-queue/bulk/:runID/cancel/":
     exempt: infrastructure
-    reason: "Stops a bulk approval run the queue screen started in the background; billing_approve_queue_item approves its items within the one proposal a person decides, so an agent has no run to stop."
+    reason: "Stops a bulk run the queue screen started in the background; the agent's billing tools act on each item within the one proposal a person decides, so an agent has no run to stop."
   "POST /api/v1/billing-queue/filter-presets/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
   "POST /api/v1/billing-queue/pod-signatures/redetect/":
     exempt: infrastructure
     reason: "A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed."
+  "POST /api/v1/billing-queue/search-intent/":
+    exempt: read-only
+    reason: "Turns a sentence into filters for the queue screen and changes nothing."
   "POST /api/v1/billing-queue/transfer/":
     tools: [billing_transfer]
   "PUT /api/v1/billing-queue/:itemID/charges/":
     tools: [billing_correct_charge_codes]
+  "PUT /api/v1/billing-queue/:itemID/invoice-details/":
+    pending: "Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval"
   "PUT /api/v1/billing-queue/filter-presets/:presetId/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
@@ -1015,6 +1020,9 @@ writes:
   "POST /api/v1/documents/:documentID/signature/":
     exempt: attestation
     reason: "Saying a proof of delivery is signed or unsigned is the reviewer's reading of the evidence that lets a shipment bill, and it overrides what extraction read; an agent can point out a doubtful signature but does not attest to one."
+  "POST /api/v1/documents/:documentID/delivery-facts/":
+    exempt: attestation
+    reason: "Recording who signed, what arrived and what a receipt cost is the reviewer's reading of the paperwork, and it overrides what Nova read from it; Nova fills these itself when it reviews the item, so an agent never attests to them through this route."
   "POST /api/v1/documents/bulk-delete/":
     tools: [document_delete]
   "POST /api/v1/documents/upload-bulk/":

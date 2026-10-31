@@ -6344,6 +6344,7 @@ var Reads = map[string]Read{
 				{Name: "id", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},
 				{Name: "fuelSurchargeProgramId", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},
 				{Name: "waived", Type: "Boolean", Kind: "scalar", List: false, NonNull: true, Selected: true},
+				{Name: "programName", Type: "String", Kind: "scalar", List: false, NonNull: true, Description: "The fuel surcharge program's name."},
 			}},
 			{Name: "currentVersion", Type: "RateAgreementVersion", Kind: "object", List: false, NonNull: false, Selected: true, Description: "The version of the header terms in force now. Read by rateAgreement only.", Fields: []Field{
 				{Name: "id", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},

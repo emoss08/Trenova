@@ -36,7 +36,7 @@ func (s *Service) showAttachments(
 	tenant pagination.TenantInfo,
 	attachments []agentturn.RuntimeAttachment,
 ) {
-	if len(attachments) == 0 || thread.Origin.AnswersInline() {
+	if len(attachments) == 0 {
 		return
 	}
 	recorder := s.newArtifactRecorder(ctx, thread, tenant, actor, nil)
@@ -66,7 +66,7 @@ func (s *Service) showFinishedAttachments(
 	tenant pagination.TenantInfo,
 	emit kernelports.AssistantStreamEmitter,
 ) {
-	if (len(plan.Attachments) == 0 && len(plan.Readings) == 0) || plan.Inline {
+	if len(plan.Attachments) == 0 && len(plan.Readings) == 0 {
 		return
 	}
 	recorder := s.newArtifactRecorder(ctx, thread, tenant, actor, emit)
@@ -134,10 +134,6 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agenteventport
 		log.Debug("conversation of an extracted file could not be read", zap.Error(err))
 		return
 	}
-	if thread.Origin.AnswersInline() {
-		return
-	}
-
 	recorder := s.newArtifactRecorder(ctx, thread, tenant, permissionports.UserActor(tenant), nil)
 	recorder.AttachedExtraction(doc.ID)
 }
@@ -218,7 +214,7 @@ func (s *Service) showReading(
 	tenant pagination.TenantInfo,
 	documentID pulid.ID,
 ) string {
-	if documentID.IsNil() || thread.Origin.AnswersInline() {
+	if documentID.IsNil() {
 		return ""
 	}
 	saved := s.newArtifactRecorder(ctx, thread, tenant, actor, nil).AttachedExtraction(documentID)

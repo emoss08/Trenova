@@ -24,5 +24,6 @@
   "Traced back to the accrued cost event": "Rastreado hasta el evento de costo devengado",
   "Voiding releases cost events back to the accrual pool and reverses any GL postings.": "Anular devuelve los eventos de costo al fondo de devengo y revierte cualquier asiento contable.",
   "confirmed by {0}": "confirmado por {0}",
-  "cost event": "evento de costo"
+  "cost event": "evento de costo",
+  "rev {0}": "rev. {0}"
 }

@@ -18,6 +18,10 @@ type Request[T any] struct {
 	Then     []keel.Order
 	Keyset   *Keyset
 	Computed map[string]keel.Expr
+	// AlsoMatch widens the text search to rows the query names through another
+	// table, such as a queue item found by its shipment's PRO number: a row it
+	// matches is found beside the rows the query matches on their own columns.
+	AlsoMatch func(query string) keel.Pred
 }
 
 type Keyset struct {
@@ -79,7 +83,11 @@ func narrow[T any](p *plan, q *keel.Query[*T], req *Request[T]) *fuzzyRead[T] {
 		read = &fuzzyRead[T]{match: match, unmatched: q.Clone(), req: req}
 	}
 
-	if search := p.search(queryOf(req.Filter)); search != nil {
+	query := queryOf(req.Filter)
+	if search := p.search(query); search != nil {
+		if req.AlsoMatch != nil {
+			search = keel.Or(search, req.AlsoMatch(query))
+		}
 		q.Where(search)
 	}
 

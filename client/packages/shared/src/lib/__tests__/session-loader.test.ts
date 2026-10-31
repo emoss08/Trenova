@@ -7,7 +7,14 @@ import {
 } from "@trenova/shared/lib/session-loader";
 import { useAuthStore, type SessionCheck } from "@trenova/shared/stores/auth-store";
 import type { RouteObject, ShouldRevalidateFunctionArgs } from "react-router";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const announceSignedIn = vi.hoisted(() => vi.fn());
+
+vi.mock("@trenova/shared/lib/session-context", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@trenova/shared/lib/session-context")>()),
+  announceSignedIn,
+}));
 
 const LOGIN_PATH = "/somewhere/login";
 
@@ -40,6 +47,7 @@ async function settle(promise: Promise<Response | null>) {
 
 describe("requireSession", () => {
   beforeEach(() => {
+    announceSignedIn.mockClear();
     useAuthStore.setState({ user: null, isAuthenticated: false });
   });
 
@@ -51,10 +59,20 @@ describe("requireSession", () => {
     });
   });
 
-  it("lets a signed-in session through", async () => {
+  it("lets a signed-in session through, and tells a tab on a sign-in page it can follow", async () => {
     arrange({ status: "signed_in" }, true);
 
     await expect(requireSession(LOGIN_PATH)).resolves.toBeNull();
+    expect(announceSignedIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("announces no sign-in for a session that did not get through", async () => {
+    arrange({ status: "signed_out" }, false);
+    await requireSession(LOGIN_PATH);
+    arrange({ status: "unreachable", error: rateLimited }, true);
+    await requireSession(LOGIN_PATH);
+
+    expect(announceSignedIn).not.toHaveBeenCalled();
   });
 
   it("sends a signed-out session to the app's login path", async () => {

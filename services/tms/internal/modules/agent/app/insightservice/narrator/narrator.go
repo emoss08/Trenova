@@ -10,12 +10,12 @@ package narrator
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,19 +42,22 @@ const (
 type Params struct {
 	fx.In
 
-	Logger     *zap.Logger
-	Completion llmports.CompletionService
+	Logger  *zap.Logger
+	Nova    llmports.TaskRunner
+	Batches llmports.TaskBatcher `optional:"true"`
 }
 
 type Service struct {
-	l          *zap.Logger
-	completion llmports.CompletionService
+	l       *zap.Logger
+	nova    llmports.TaskRunner
+	batches llmports.TaskBatcher
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:          p.Logger.Named("service.insight-narrator"),
-		completion: p.Completion,
+		l:       p.Logger.Named("service.insight-narrator"),
+		nova:    p.Nova,
+		batches: p.Batches,
 	}
 }
 
@@ -91,7 +94,7 @@ func (s *Service) Narrate(
 ) map[string]Narration {
 	result := make(map[string]Narration, len(req.Findings))
 	for _, finding := range req.Findings {
-		result[finding.DedupeKey] = fallbackFor(finding)
+		result[finding.DedupeKey] = Fallback(finding)
 	}
 
 	for batch := range chunk(req.Findings, maxFindingsPerCall) {
@@ -107,15 +110,16 @@ func (s *Service) narrateBatch(
 	batch []detector.Finding,
 	into map[string]Narration,
 ) {
-	completion, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
-		TenantInfo:   req.TenantInfo,
-		Task:         aitask.TaskOperationalInsights,
-		System:       systemPrompt,
-		Context:      buildContext(batch, req.WindowDays),
-		OutputSchema: outputSchema(),
-		SchemaName:   "operational_insights",
-		MaxTokens:    maxOutputTokens,
-	})
+	var envelope narrationEnvelope
+	completion, err := s.nova.Run(ctx, narrationTask(req.TenantInfo, batch, req.WindowDays), &envelope)
+	if errors.Is(err, llmports.ErrOutsideSchema) {
+		s.l.Warn("insight narration could not be parsed",
+			zap.String("model", completion.ModelIdentifier),
+			zap.Error(err),
+		)
+
+		return
+	}
 	if err != nil {
 		// An unconfigured or failing provider is not an error for the caller: the
 		// findings are already complete and keep their own wording. It is logged at
@@ -126,23 +130,30 @@ func (s *Service) narrateBatch(
 		return
 	}
 
-	narrations, err := parseNarrations(completion.Text)
-	if err != nil {
-		s.l.Warn("insight narration could not be parsed",
-			zap.String("model", completion.ModelIdentifier),
-			zap.Error(err),
-		)
-
-		return
-	}
-
 	s.applyNarrations(applyParams{
 		batch:      batch,
-		narrations: narrations,
+		narrations: envelope.byKey(),
 		completion: completion,
 		windowDays: req.WindowDays,
 		into:       into,
 	})
+}
+
+func narrationTask(
+	tenantInfo pagination.TenantInfo,
+	batch []detector.Finding,
+	windowDays int,
+) *llmports.NovaTask {
+	return &llmports.NovaTask{
+		Name:         aitask.TaskOperationalInsights,
+		Feature:      aiusage.FeatureInsightNarration,
+		Instructions: systemPrompt,
+		Context:      buildContext(batch, windowDays),
+		Schema:       outputSchema(),
+		SchemaName:   "operational_insights",
+		MaxTokens:    maxOutputTokens,
+		TenantInfo:   tenantInfo,
+	}
 }
 
 type applyParams struct {
@@ -211,9 +222,9 @@ func (s *Service) logNarrationUnavailable(err error, findings int) {
 	)
 }
 
-// fallbackFor is what an insight says when no model wrote it: the detector's own
+// Fallback is what an insight says when no model wrote it: the detector's own
 // headline, which is plainer and always true.
-func fallbackFor(finding detector.Finding) Narration {
+func Fallback(finding detector.Finding) Narration {
 	return Narration{Headline: finding.Headline}
 }
 
@@ -265,25 +276,20 @@ func chunk[T any](items []T, size int) func(func([]T) bool) {
 	}
 }
 
-func parseNarrations(payload string) (map[string]narratedFinding, error) {
-	var envelope narrationEnvelope
-	if err := sonic.UnmarshalString(payload, &envelope); err != nil {
-		return nil, fmt.Errorf("decode narration: %w", err)
-	}
+type narrationEnvelope struct {
+	Insights []narratedFinding `json:"insights"`
+}
 
-	narrations := make(map[string]narratedFinding, len(envelope.Insights))
-	for _, item := range envelope.Insights {
+func (e *narrationEnvelope) byKey() map[string]narratedFinding {
+	narrations := make(map[string]narratedFinding, len(e.Insights))
+	for _, item := range e.Insights {
 		if item.DedupeKey == "" {
 			continue
 		}
 		narrations[item.DedupeKey] = item
 	}
 
-	return narrations, nil
-}
-
-type narrationEnvelope struct {
-	Insights []narratedFinding `json:"insights"`
+	return narrations
 }
 
 type narratedFinding struct {

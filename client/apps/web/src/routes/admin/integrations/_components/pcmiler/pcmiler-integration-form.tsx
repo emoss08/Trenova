@@ -2,19 +2,11 @@ const pcMilerLogoLight = "/integrations/logos/pc-miler-logo-light.png";
 const pcMilerLogoDark = "/integrations/logos/pc-miler-logo-dark.svg";
 
 import { useT } from "@trenova/shared/i18n/use-t";
-import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { InputField } from "@/components/fields/input-field";
-import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
-import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
+import { DialogFooter } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -26,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { IntegrationConnectHeader } from "../shared/integration-connect-header";
 
 const INTEGRATION_TYPE = "PCMiler";
 
@@ -177,30 +170,20 @@ function TextField({
 function PCMilerFormHeader() {
   const t = useT();
 
-  const { theme } = useTheme();
-  const logo = theme === "dark" ? pcMilerLogoDark : pcMilerLogoLight;
-
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-4">
-        <LazyImage src={trenovaLogo} className="size-8" />
-        <div className="flex items-center justify-center gap-1">
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-          <div className="bg-muted-foreground size-1 rounded-full" />
-        </div>
-        <LazyImage src={logo} alt={t("PC*Miler logo")} className="h-8 max-w-24 object-contain" />
-      </div>
-      <DialogHeader>
-        <DialogTitle>{t("Connect with PC*Miler")}</DialogTitle>
-        <DialogDescription>
+    <IntegrationConnectHeader
+      name="PC*Miler"
+      logo={{ light: pcMilerLogoLight, dark: pcMilerLogoDark }}
+      title={t("Connect with PC*Miler")}
+      description={
+        <>
           {t("Configure mileage rating with")}{" "}
           <ExternalLink href="https://developer.trimblemaps.com/">
             {t("Trimble maps APIs.")}
           </ExternalLink>
-        </DialogDescription>
-      </DialogHeader>
-    </div>
+        </>
+      }
+    />
   );
 }
 

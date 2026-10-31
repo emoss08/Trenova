@@ -14,24 +14,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestContractRequestIsTheProductionExtractionCall(t *testing.T) {
+func TestTheExtractionTaskBoundsEachPage(t *testing.T) {
 	t.Parallel()
 
 	pages := []documentaiextractionports.AIDocumentPage{
 		{PageNumber: 1, Text: strings.Repeat("x", extractPageLimit+500)},
 	}
-	req := Contract{}.CompletionRequest("document.pdf", pages)
-	production := newExtractCall(
+	task := newExtractCall(
 		&documentaiextractionports.AIExtractRequest{FileName: "document.pdf", Pages: pages},
-	).request()
+	).novaTask(4000)
 
-	assert.Equal(t, production.System, req.System)
-	assert.Equal(t, production.Context, req.Context)
-	assert.Equal(t, production.OutputSchema, req.OutputSchema)
-	assert.Equal(t, schemaNameExtract, req.SchemaName)
-	assert.Equal(t, aitask.TaskDocumentExtraction, req.Task)
+	assert.Equal(t, aitask.TaskDocumentExtraction, task.Name)
+	assert.Equal(t, schemaNameExtract, task.SchemaName)
+	assert.Equal(t, 4000, task.MaxTokens)
 	assert.Equal(t, extractPageLimit, Contract{}.PageLimit())
-	assert.NotContains(t, req.Context.Sections[1].Content, strings.Repeat("x", extractPageLimit+1))
+	assert.NotContains(t, task.Context.Sections[1].Content, strings.Repeat("x", extractPageLimit+1))
 }
 
 func TestContractFieldKeysMatchTheSchemaEnum(t *testing.T) {
@@ -165,7 +162,7 @@ const pipelineSchemaFixture = "../../../../../../../tools/extraction-finetune/te
 func TestFineTuningPipelineSchemaFixtureIsCurrent(t *testing.T) {
 	t.Parallel()
 
-	schema := Contract{}.CompletionRequest("", nil).OutputSchema
+	schema := buildExtractSchema()
 	encoded, err := sonic.ConfigStd.MarshalIndent(schema, "", "  ")
 	require.NoError(t, err)
 	encoded = append(encoded, '\n')

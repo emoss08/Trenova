@@ -100,6 +100,27 @@ func TestValidateMemoRequest(t *testing.T) {
 			wantErr: "Quantity must be greater than zero",
 		},
 		{
+			name: "amount is capped",
+			mutate: func(req *invoiceports.CreateMemoRequest) {
+				req.Lines[0].Amount = decimal.RequireFromString("1000000000")
+			},
+			wantErr: "Amount must be at most",
+		},
+		{
+			name: "quantity cannot be finer than the column stores",
+			mutate: func(req *invoiceports.CreateMemoRequest) {
+				req.Lines[1].Quantity = decimal.RequireFromString("0.00009")
+			},
+			wantErr: "Quantity must be at least",
+		},
+		{
+			name: "quantity is capped",
+			mutate: func(req *invoiceports.CreateMemoRequest) {
+				req.Lines[1].Quantity = decimal.RequireFromString("1000000000")
+			},
+			wantErr: "Quantity must be at most",
+		},
+		{
 			name:    "blank description",
 			mutate:  func(req *invoiceports.CreateMemoRequest) { req.Lines[0].Description = " " },
 			wantErr: "Description is required",
@@ -130,6 +151,55 @@ func TestValidateMemoRequest(t *testing.T) {
 			),
 		)
 	})
+
+	t.Run("the largest amount and both quantity limits pass", func(t *testing.T) {
+		t.Parallel()
+		req := memoRequest(tenantInfo, customerID, billingqueue.BillTypeCreditMemo)
+		req.Lines[0].Amount = decimal.RequireFromString("999999999.99")
+		req.Lines[0].Quantity = decimal.RequireFromString("0.0001")
+		req.Lines[1].Quantity = decimal.RequireFromString("999999999.9999")
+		assert.Nil(t, validateMemoRequest(req))
+	})
+
+	t.Run("an amount error names the line it belongs to", func(t *testing.T) {
+		t.Parallel()
+		req := memoRequest(tenantInfo, customerID, billingqueue.BillTypeCreditMemo)
+		req.Lines[1].Amount = decimal.RequireFromString("1000000000")
+		multiErr := validateMemoRequest(req)
+		require.NotNil(t, multiErr)
+		require.Len(t, multiErr.Errors, 1)
+		assert.Equal(t, "lines[1].amount", multiErr.Errors[0].Field)
+	})
+}
+
+func TestMemoAtEveryLimitFitsItsColumns(t *testing.T) {
+	t.Parallel()
+
+	columnMax := decimal.RequireFromString("999999999999999.9999")
+	req := memoRequest(
+		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		pulid.MustNew("cus_"),
+		billingqueue.BillTypeDebitMemo,
+	)
+	req.Lines = make([]*invoiceports.CreateMemoLineInput, maxMemoLines)
+	for idx := range req.Lines {
+		req.Lines[idx] = &invoiceports.CreateMemoLineInput{
+			Description: "Largest line",
+			Amount:      maxMemoLineAmount,
+			Quantity:    minMemoQuantity,
+		}
+	}
+	require.Nil(t, validateMemoRequest(req))
+
+	lines, err := (&Service{}).memoLines(t.Context(), req)
+	require.NoError(t, err)
+
+	total := decimal.Zero
+	for _, line := range lines {
+		assert.True(t, line.UnitPrice.Abs().LessThanOrEqual(columnMax), line.UnitPrice.String())
+		total = total.Add(line.Amount)
+	}
+	assert.True(t, total.Abs().LessThanOrEqual(columnMax), total.String())
 }
 
 func TestValidateMemoReference(t *testing.T) {

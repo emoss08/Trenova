@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -53,7 +52,7 @@ type Params struct {
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	Organizations tenantports.OrganizationRepository
 	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
-	Completion    llmports.CompletionService
+	Nova          llmports.TaskRunner
 	Cache         shipmentboardports.ShipmentBoardCache
 	Logger        *zap.Logger
 }
@@ -65,7 +64,7 @@ type Dependencies struct {
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	Organizations tenantports.OrganizationRepository
 	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
-	Completion    llmports.CompletionService
+	Nova          llmports.TaskRunner
 	Cache         shipmentboardports.ShipmentBoardCache
 	Logger        *zap.Logger
 	Now           func() time.Time
@@ -78,7 +77,7 @@ type Service struct {
 	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	organizations tenantports.OrganizationRepository
 	suggestions   shipmentbriefports.ShipmentSuggestionCandidates
-	completion    llmports.CompletionService
+	nova          llmports.TaskRunner
 	cache         shipmentboardports.ShipmentBoardCache
 	l             *zap.Logger
 	now           func() time.Time
@@ -98,7 +97,7 @@ func New(p Params) *Service {
 		QuickFilters:  p.QuickFilters,
 		Organizations: p.Organizations,
 		Suggestions:   p.Suggestions,
-		Completion:    p.Completion,
+		Nova:          p.Nova,
 		Cache:         p.Cache,
 		Logger:        p.Logger,
 		Now:           time.Now,
@@ -113,7 +112,7 @@ func NewWithDependencies(d *Dependencies) *Service {
 		quickFilters:  d.QuickFilters,
 		organizations: d.Organizations,
 		suggestions:   d.Suggestions,
-		completion:    d.Completion,
+		nova:          d.Nova,
 		cache:         d.Cache,
 		l:             d.Logger.Named("service.shipment-briefing"),
 		now:           d.Now,
@@ -413,17 +412,17 @@ func (s *Service) narrate(
 	allowed := facts.Filters()
 	narration, ok := shipmentnarration.Narrate[narrationDraft](
 		ctx,
-		s.completion,
+		s.nova,
 		s.l,
-		&llmports.StructuredCompletionRequest{
+		&llmports.NovaTask{
 			TenantInfo:   tenantInfo,
-			Task:         aitask.TaskDailyBriefing,
-			System:       systemPrompt,
+			Name:         aitask.TaskDailyBriefing,
+			Instructions: systemPrompt,
 			Context:      buildContext(facts, plain),
-			OutputSchema: outputSchema(allowed),
+			Schema:       outputSchema(allowed),
 			SchemaName:   schemaName,
 			MaxTokens:    maxOutputTokens,
-			Attribution:  aiusageports.AIUsageAttribution{UserID: tenantInfo.UserID},
+			UserID:       tenantInfo.UserID,
 		},
 	)
 	if !ok {

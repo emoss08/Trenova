@@ -1,7 +1,7 @@
 import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
 
-import { cn } from "@trenova/shared/lib/utils";
 import { CheckIcon, MinusIcon } from "@trenova/shared/components/icons";
+import { cn } from "@trenova/shared/lib/utils";
 
 function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
   const { indeterminate, checked, ...rest } = props;

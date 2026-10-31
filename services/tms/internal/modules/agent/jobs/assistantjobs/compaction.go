@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/runstream"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -121,7 +122,7 @@ func (w *Workflows) ConversationCompactionWorkflow(
 	ctx workflow.Context,
 	payload *assistantcontract.CompactionPayload,
 ) error {
-	stream, err := agentflow.HostStream(ctx)
+	stream, err := runstream.Host(ctx)
 	if err != nil {
 		return err
 	}
@@ -139,7 +140,7 @@ func (w *Workflows) ConversationCompactionWorkflow(
 // fails the workflow: every ending is told to the reader and recorded.
 func (w *Workflows) compact(
 	ctx workflow.Context,
-	stream *agentflow.Stream,
+	stream *runstream.Stream,
 	payload *assistantcontract.CompactionPayload,
 ) CompactionEnding {
 	var a *Activities

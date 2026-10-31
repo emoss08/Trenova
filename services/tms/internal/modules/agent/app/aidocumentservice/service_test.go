@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -84,12 +85,14 @@ func newTestService(t *testing.T, completion *stubCompletion) *Service {
 	require.NoError(t, err)
 
 	cfg := &config.Config{AI: aiconfig.Config{DocumentExtraction: true}}
+	nova := agenttest.NovaOnRouter(completion)
 
 	return &Service{
-		logger:     zap.NewNop(),
-		cfg:        &cfg.AI,
-		metrics:    registry,
-		completion: completion,
+		logger:   zap.NewNop(),
+		cfg:      &cfg.AI,
+		metrics:  registry,
+		nova:     nova,
+		deferrer: nova,
 	}
 }
 

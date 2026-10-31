@@ -27,6 +27,12 @@ const (
 	maxMemoLines        = 200
 )
 
+var (
+	maxMemoLineAmount = decimal.RequireFromString("999999999.99")
+	minMemoQuantity   = decimal.RequireFromString("0.0001")
+	maxMemoQuantity   = decimal.RequireFromString("999999999.9999")
+)
+
 // CreateMemo raises a credit or debit memo against a customer with nothing
 // shipped behind it: a goodwill credit, a returned-cheque fee, a late charge. It
 // sits on its own billing queue item so the queue, the posting sweep and the
@@ -167,20 +173,51 @@ func validateMemoRequest(req *invoiceports.CreateMemoRequest) *errortypes.MultiE
 			multiErr.WithIndex("lines", idx).
 				Add("description", errortypes.ErrRequired, "Description is required")
 		}
-		if line.Amount.LessThanOrEqual(decimal.Zero) {
-			multiErr.WithIndex("lines", idx).
-				Add("amount", errortypes.ErrInvalid, "Amount must be greater than zero")
-		}
-		if !line.Quantity.IsZero() && line.Quantity.LessThanOrEqual(decimal.Zero) {
-			multiErr.WithIndex("lines", idx).
-				Add("quantity", errortypes.ErrInvalid, "Quantity must be greater than zero")
-		}
+		validateMemoLineFigures(multiErr.WithIndex("lines", idx), line)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 
 	return nil
+}
+
+func validateMemoLineFigures(
+	lineErr *errortypes.MultiError,
+	line *invoiceports.CreateMemoLineInput,
+) {
+	switch {
+	case line.Amount.LessThanOrEqual(decimal.Zero):
+		lineErr.Add("amount", errortypes.ErrInvalid, "Amount must be greater than zero")
+	case line.Amount.GreaterThan(maxMemoLineAmount):
+		lineErr.Add(
+			"amount",
+			errortypes.ErrInvalid,
+			"Amount must be at most {0}",
+			maxMemoLineAmount.StringFixed(2),
+		)
+	}
+	if line.Quantity.IsZero() {
+		return
+	}
+	switch {
+	case line.Quantity.LessThanOrEqual(decimal.Zero):
+		lineErr.Add("quantity", errortypes.ErrInvalid, "Quantity must be greater than zero")
+	case line.Quantity.LessThan(minMemoQuantity):
+		lineErr.Add(
+			"quantity",
+			errortypes.ErrInvalid,
+			"Quantity must be at least {0}",
+			minMemoQuantity.String(),
+		)
+	case line.Quantity.GreaterThan(maxMemoQuantity):
+		lineErr.Add(
+			"quantity",
+			errortypes.ErrInvalid,
+			"Quantity must be at most {0}",
+			maxMemoQuantity.String(),
+		)
+	}
 }
 
 // validateMemoReference checks the invoice a memo points at belongs to the same

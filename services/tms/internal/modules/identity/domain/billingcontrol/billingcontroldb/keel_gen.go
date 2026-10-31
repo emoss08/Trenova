@@ -49,6 +49,9 @@ var billingControlsTable = schema.Table{
 		{Name: "fallback_formula_template_id", Quoted: `"fallback_formula_template_id"`, Field: "FallbackFormulaTemplateID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Fallback Formula Template ID`, JSON: `fallbackFormulaTemplateId`},
 		{Name: "require_rate_override_reason", Quoted: `"require_rate_override_reason"`, Field: "RequireRateOverrideReason", Kind: schema.KindBool, Flags: 0, Label: `Require Rate Override Reason`, JSON: `requireRateOverrideReason`},
 		{Name: "enforce_margin_floor", Quoted: `"enforce_margin_floor"`, Field: "EnforceMarginFloor", Kind: schema.KindBool, Flags: 0, Label: `Enforce Margin Floor`, JSON: `enforceMarginFloor`},
+		{Name: "queue_auto_approve_mode", Quoted: `"queue_auto_approve_mode"`, Field: "QueueAutoApproveMode", Kind: schema.KindString, Flags: 0, Label: `Queue Auto Approve Mode`, JSON: `queueAutoApproveMode`, Enum: enumQueueAutoApproveMode[:]},
+		{Name: "queue_auto_approve_max_amount", Quoted: `"queue_auto_approve_max_amount"`, Field: "QueueAutoApproveMaxAmount", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Queue Auto Approve Max Amount`, JSON: `queueAutoApproveMaxAmount`},
+		{Name: "queue_agent_review_enabled", Quoted: `"queue_agent_review_enabled"`, Field: "QueueAgentReviewEnabled", Kind: schema.KindBool, Flags: 0, Label: `Queue Agent Review Enabled`, JSON: `queueAgentReviewEnabled`},
 		{Name: "late_charge_assessment_mode", Quoted: `"late_charge_assessment_mode"`, Field: "LateChargeAssessmentMode", Kind: schema.KindString, Flags: 0, Label: `Late Charge Assessment Mode`, Doc: `LateChargeAssessmentMode says whether the nightly run previews or raises late-charge debit memos; the rate and grace live on each customer.`, JSON: `lateChargeAssessmentMode`, Enum: enumLateChargeAssessmentMode[:]},
 		{Name: "late_charge_minimum_amount", Quoted: `"late_charge_minimum_amount"`, Field: "LateChargeMinimumAmount", Kind: schema.KindOther, Flags: 0, Label: `Late Charge Minimum Amount`, Doc: `LateChargeMinimumAmount is the smallest total a run will bill a customer.`, JSON: `lateChargeMinimumAmount`},
 		{Name: "payment_reminders_enabled", Quoted: `"payment_reminders_enabled"`, Field: "PaymentRemindersEnabled", Kind: schema.KindBool, Flags: 0, Label: `Payment Reminders Enabled`, Doc: `PaymentRemindersEnabled emails customers about their overdue invoices on the days past due in PaymentReminderDays, one reminder per step.`, JSON: `paymentRemindersEnabled`},
@@ -61,14 +64,14 @@ var billingControlsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37},
 	Returning:    nil,
-	Version:      32,
+	Version:      35,
 	AutoID:       0,
-	AutoCreate:   33,
-	AutoUpdate:   34,
+	AutoCreate:   36,
+	AutoUpdate:   37,
 	IDPrefix:     "bc_",
 	New:          newBillingControl,
 	NewN:         newNBillingControl,
@@ -111,6 +114,9 @@ type BillingControlsTable struct {
 	FallbackFormulaTemplateID             keelkinds.PulidIDCol
 	RequireRateOverrideReason             keel.BoolCol
 	EnforceMarginFloor                    keel.BoolCol
+	QueueAutoApproveMode                  QueueAutoApproveModeCol
+	QueueAutoApproveMaxAmount             keelkinds.DecimalNullDecimalCol
+	QueueAgentReviewEnabled               keel.BoolCol
 	LateChargeAssessmentMode              LateChargeAssessmentModeCol
 	LateChargeMinimumAmount               keelkinds.DecimalDecimalCol
 	PaymentRemindersEnabled               keel.BoolCol
@@ -151,15 +157,18 @@ var BillingControls = &BillingControlsTable{
 	FallbackFormulaTemplateID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 23}}},
 	RequireRateOverrideReason:             keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 24}},
 	EnforceMarginFloor:                    keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 25}},
-	LateChargeAssessmentMode:              LateChargeAssessmentModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 26}}},
-	LateChargeMinimumAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 27}}},
-	PaymentRemindersEnabled:               keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 28}},
-	PaymentReminderDays:                   keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 29}},
-	MonthlyStatementsEnabled:              keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 30}},
-	MonthlyStatementDay:                   keel.Int16Col{Col: keel.Col{Ref: &billingControlsRef, Index: 31}},
-	Version:                               keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 32}},
-	CreatedAt:                             keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 33}},
-	UpdatedAt:                             keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 34}},
+	QueueAutoApproveMode:                  QueueAutoApproveModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 26}}},
+	QueueAutoApproveMaxAmount:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 27}}},
+	QueueAgentReviewEnabled:               keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 28}},
+	LateChargeAssessmentMode:              LateChargeAssessmentModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 29}}},
+	LateChargeMinimumAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 30}}},
+	PaymentRemindersEnabled:               keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 31}},
+	PaymentReminderDays:                   keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 32}},
+	MonthlyStatementsEnabled:              keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 33}},
+	MonthlyStatementDay:                   keel.Int16Col{Col: keel.Col{Ref: &billingControlsRef, Index: 34}},
+	Version:                               keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 35}},
+	CreatedAt:                             keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 36}},
+	UpdatedAt:                             keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 37}},
 }
 
 // BuildBillingControls builds the handle of billing_controls for ref. Generated relation and alias methods call it.
@@ -192,15 +201,18 @@ func BuildBillingControls(r *keel.Ref) *BillingControlsTable {
 		FallbackFormulaTemplateID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		RequireRateOverrideReason:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 24}},
 		EnforceMarginFloor:                    keel.BoolCol{Col: keel.Col{Ref: r, Index: 25}},
-		LateChargeAssessmentMode:              LateChargeAssessmentModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
-		LateChargeMinimumAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 27}}},
-		PaymentRemindersEnabled:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
-		PaymentReminderDays:                   keel.AnyCol{Col: keel.Col{Ref: r, Index: 29}},
-		MonthlyStatementsEnabled:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 30}},
-		MonthlyStatementDay:                   keel.Int16Col{Col: keel.Col{Ref: r, Index: 31}},
-		Version:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
-		CreatedAt:                             keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
-		UpdatedAt:                             keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
+		QueueAutoApproveMode:                  QueueAutoApproveModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		QueueAutoApproveMaxAmount:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 27}}},
+		QueueAgentReviewEnabled:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
+		LateChargeAssessmentMode:              LateChargeAssessmentModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		LateChargeMinimumAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 30}}},
+		PaymentRemindersEnabled:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
+		PaymentReminderDays:                   keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}},
+		MonthlyStatementsEnabled:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 33}},
+		MonthlyStatementDay:                   keel.Int16Col{Col: keel.Col{Ref: r, Index: 34}},
+		Version:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
+		CreatedAt:                             keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
+		UpdatedAt:                             keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
 	}
 }
 
@@ -279,22 +291,28 @@ func ptrBillingControl(p unsafe.Pointer, c int32) any {
 	case 25:
 		return &r.EnforceMarginFloor
 	case 26:
-		return (*string)(unsafe.Pointer(&r.LateChargeAssessmentMode))
+		return (*string)(unsafe.Pointer(&r.QueueAutoApproveMode))
 	case 27:
-		return &r.LateChargeMinimumAmount
+		return &r.QueueAutoApproveMaxAmount
 	case 28:
-		return &r.PaymentRemindersEnabled
+		return &r.QueueAgentReviewEnabled
 	case 29:
-		return &r.PaymentReminderDays
+		return (*string)(unsafe.Pointer(&r.LateChargeAssessmentMode))
 	case 30:
-		return &r.MonthlyStatementsEnabled
+		return &r.LateChargeMinimumAmount
 	case 31:
-		return &r.MonthlyStatementDay
+		return &r.PaymentRemindersEnabled
 	case 32:
-		return &r.Version
+		return &r.PaymentReminderDays
 	case 33:
-		return &r.CreatedAt
+		return &r.MonthlyStatementsEnabled
 	case 34:
+		return &r.MonthlyStatementDay
+	case 35:
+		return &r.Version
+	case 36:
+		return &r.CreatedAt
+	case 37:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -374,25 +392,31 @@ func valueBillingControl(p unsafe.Pointer, c int32) any {
 	case 25:
 		return r.EnforceMarginFloor
 	case 26:
-		return string(r.LateChargeAssessmentMode)
+		return string(r.QueueAutoApproveMode)
 	case 27:
-		return r.LateChargeMinimumAmount
+		return r.QueueAutoApproveMaxAmount
 	case 28:
-		return r.PaymentRemindersEnabled
+		return r.QueueAgentReviewEnabled
 	case 29:
+		return string(r.LateChargeAssessmentMode)
+	case 30:
+		return r.LateChargeMinimumAmount
+	case 31:
+		return r.PaymentRemindersEnabled
+	case 32:
 		if r.PaymentReminderDays == nil {
 			return []int32{}
 		}
 		return r.PaymentReminderDays
-	case 30:
-		return r.MonthlyStatementsEnabled
-	case 31:
-		return r.MonthlyStatementDay
-	case 32:
-		return r.Version
 	case 33:
-		return r.CreatedAt
+		return r.MonthlyStatementsEnabled
 	case 34:
+		return r.MonthlyStatementDay
+	case 35:
+		return r.Version
+	case 36:
+		return r.CreatedAt
+	case 37:
 		return r.UpdatedAt
 	}
 	return nil
@@ -447,6 +471,12 @@ var enumPaymentTerm = [...]schema.EnumValue{
 	{Value: `Net60`, Label: `Net 60`},
 	{Value: `Net90`, Label: `Net 90`},
 	{Value: `DueOnReceipt`, Label: `Due On Receipt`},
+}
+
+var enumQueueAutoApproveMode = [...]schema.EnumValue{
+	{Value: `Off`, Label: `Off`},
+	{Value: `WhenChecksClear`, Label: `When Checks Clear`},
+	{Value: `WhenAgentAgrees`, Label: `When Agent Agrees`},
 }
 
 var enumRateVarianceAutoResolutionMode = [...]schema.EnumValue{
@@ -690,6 +720,43 @@ func (c PaymentTermCol) In(vs ...billingcontrol.PaymentTerm) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c PaymentTermCol) NotIn(vs ...billingcontrol.PaymentTerm) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// QueueAutoApproveModeCol is a column of billingcontrol.QueueAutoApproveMode values.
+type QueueAutoApproveModeCol struct{ keel.StringCol }
+
+func (c QueueAutoApproveModeCol) Eq(v billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c QueueAutoApproveModeCol) Ne(v billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c QueueAutoApproveModeCol) Gt(v billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c QueueAutoApproveModeCol) Gte(v billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c QueueAutoApproveModeCol) Lt(v billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c QueueAutoApproveModeCol) Lte(v billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c QueueAutoApproveModeCol) IsDistinctFrom(v billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c QueueAutoApproveModeCol) Between(lo, hi billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c QueueAutoApproveModeCol) To(v billingcontrol.QueueAutoApproveMode) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c QueueAutoApproveModeCol) In(vs ...billingcontrol.QueueAutoApproveMode) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c QueueAutoApproveModeCol) NotIn(vs ...billingcontrol.QueueAutoApproveMode) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

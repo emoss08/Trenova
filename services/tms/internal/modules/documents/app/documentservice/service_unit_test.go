@@ -179,6 +179,13 @@ func (m *mockDocRepo) RecordDetectedSignature(
 	return false, nil
 }
 
+func (m *mockDocRepo) RecordDeliveryFacts(
+	context.Context,
+	*documentports.RecordDeliveryFactsRequest,
+) (*document.Document, error) {
+	return nil, nil
+}
+
 func (m *mockDocRepo) PromoteVersion(
 	ctx context.Context,
 	req *documentports.PromoteDocumentVersionRequest,

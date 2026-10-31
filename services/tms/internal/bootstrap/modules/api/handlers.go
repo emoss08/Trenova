@@ -92,6 +92,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/palettehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
@@ -134,6 +135,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/versionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/weatheralerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
+	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"go.uber.org/fx"
 )
 
@@ -161,6 +163,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	invoicesharehandler.New,
 	workerhandler.New,
 	permissionhandler.New,
+	sessionwatch.New,
 	realtimehandler.New,
 	inboxpresencehandler.New,
 	rolehandler.New,
@@ -259,6 +262,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	billingcontrolhandler.New,
 	casechecklisthandler.New,
 	billingqueuehandler.New,
+	palettehandler.New,
 	dataentrycontrolhandler.New,
 	dispatchcontrolhandler.New,
 	documentcontrolhandler.New,

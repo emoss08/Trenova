@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
@@ -52,8 +53,8 @@ func (c *stubCompletion) StreamChat(
 	return nil, errors.New("not used")
 }
 
-func newNarrator(completion llmports.CompletionService) *Service {
-	return &Service{l: zap.NewNop(), completion: completion}
+func newNarrator(completion llmports.StructuredCompleter) *Service {
+	return &Service{l: zap.NewNop(), nova: agenttest.NovaRunner(completion)}
 }
 
 func testFinding() detector.Finding {

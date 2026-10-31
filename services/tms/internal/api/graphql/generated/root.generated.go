@@ -2935,6 +2935,7 @@ type QueryResolver interface {
 	BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error)
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
+	BillingQueueItems(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingQueueItemsFilterInput) (*gqlmodel.BillingQueueItemConnection, error)
 	BillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	MyActiveBillingTransferRun(ctx context.Context) (*gqlmodel.BillingTransferRun, error)
 	BillingTransferRunItems(ctx context.Context, runID string, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingTransferRunItemsFilterInput) (*gqlmodel.BillingTransferRunItemConnection, error)

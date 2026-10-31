@@ -70,6 +70,7 @@ var documentsTable = schema.Table{
 		{Name: "signature_source", Quoted: `"signature_source"`, Field: "SignatureSource", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Signature Source`, JSON: `signatureSource`, Enum: enumSignatureSource[:]},
 		{Name: "signature_updated_by_id", Quoted: `"signature_updated_by_id"`, Field: "SignatureUpdatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Signature Updated By ID`, JSON: `signatureUpdatedById`},
 		{Name: "signature_updated_at", Quoted: `"signature_updated_at"`, Field: "SignatureUpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Signature Updated At`, JSON: `signatureUpdatedAt`},
+		{Name: "delivery_facts", Quoted: `"delivery_facts"`, Field: "DeliveryFacts", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Delivery Facts`, JSON: `deliveryFacts`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
@@ -81,14 +82,14 @@ var documentsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 49},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48, 49, 50},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48, 49, 50},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 50},
 	Returning:    nil,
-	Version:      47,
+	Version:      48,
 	AutoID:       0,
-	AutoCreate:   48,
-	AutoUpdate:   49,
+	AutoCreate:   49,
+	AutoUpdate:   50,
 	IDPrefix:     "doc_",
 	New:          newDocument,
 	NewN:         newNDocument,
@@ -149,6 +150,7 @@ type DocumentsTable struct {
 	SignatureSource       SignatureSourceCol
 	SignatureUpdatedByID  keelkinds.PulidIDCol
 	SignatureUpdatedAt    keel.Int64Col
+	DeliveryFacts         keel.JSONBCol
 	SearchVector          keel.TSVectorCol
 	Rank                  keel.StringCol
 	Version               keel.Int64Col
@@ -204,11 +206,12 @@ var Documents = &DocumentsTable{
 	SignatureSource:       SignatureSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 42}}},
 	SignatureUpdatedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 43}}},
 	SignatureUpdatedAt:    keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 44}},
-	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &documentsRef, Index: 45}},
-	Rank:                  keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 46}},
-	Version:               keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 47}},
-	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 48}},
-	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 49}},
+	DeliveryFacts:         keel.JSONBCol{Col: keel.Col{Ref: &documentsRef, Index: 45}},
+	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &documentsRef, Index: 46}},
+	Rank:                  keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 47}},
+	Version:               keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 48}},
+	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 49}},
+	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 50}},
 }
 
 // BuildDocuments builds the handle of documents for ref. Generated relation and alias methods call it.
@@ -260,11 +263,12 @@ func BuildDocuments(r *keel.Ref) *DocumentsTable {
 		SignatureSource:       SignatureSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 42}}},
 		SignatureUpdatedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 43}}},
 		SignatureUpdatedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
-		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 45}},
-		Rank:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 46}},
-		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
-		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
-		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
+		DeliveryFacts:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 45}},
+		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 46}},
+		Rank:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 47}},
+		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
+		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
+		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
 	}
 }
 
@@ -386,14 +390,16 @@ func ptrDocument(p unsafe.Pointer, c int32) any {
 	case 44:
 		return &r.SignatureUpdatedAt
 	case 45:
-		return &r.SearchVector
+		return &r.DeliveryFacts
 	case 46:
-		return &r.Rank
+		return &r.SearchVector
 	case 47:
-		return &r.Version
+		return &r.Rank
 	case 48:
-		return &r.CreatedAt
+		return &r.Version
 	case 49:
+		return &r.CreatedAt
+	case 50:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -565,14 +571,19 @@ func valueDocument(p unsafe.Pointer, c int32) any {
 		}
 		return *r.SignatureUpdatedAt
 	case 45:
-		return r.SearchVector
+		if r.DeliveryFacts == nil {
+			return nil
+		}
+		return *r.DeliveryFacts
 	case 46:
-		return r.Rank
+		return r.SearchVector
 	case 47:
-		return r.Version
+		return r.Rank
 	case 48:
-		return r.CreatedAt
+		return r.Version
 	case 49:
+		return r.CreatedAt
+	case 50:
 		return r.UpdatedAt
 	}
 	return nil
@@ -616,6 +627,7 @@ var enumProcessingProfile = [...]schema.EnumValue{
 	{Value: `inbound_attachment`, Label: `Inbound Attachment`, Doc: `ProcessingProfileInboundAttachment is a file that came in on a monitored mailbox. It is its own profile rather than borrowing the rate-confirmation one because a POD, an invoice and a tender all arrive this way, and labelling them all a rate confirmation would be a lie the pipeline then acts on.`},
 	{Value: `capture`, Label: `Capture`, Doc: `ProcessingProfileCapture is paper scanned or printed into Trenova. It is read like an inbound attachment: what a scan is, and whose it is, is only known once its text has been read.`},
 	{Value: `factoring_remittance`, Label: `Factoring Remittance`, Doc: `ProcessingProfileFactoringRemittance is a factor's PDF remittance. Its text is read and indexed so billing can read its lines, but it is never handed to the shipment extraction model: that model, its shadow runs and its training data are for freight paperwork, not a factor's statement.`},
+	{Value: `shipment_paperwork`, Label: `Shipment Paperwork`, Doc: `ProcessingProfileShipmentPaperwork is the paperwork a shipment is billed on (proof of delivery, bill of lading, receipts): read so the billing queue can place what each page says beside it and check it against the invoice.`},
 }
 
 var enumShipmentDraftStatus = [...]schema.EnumValue{

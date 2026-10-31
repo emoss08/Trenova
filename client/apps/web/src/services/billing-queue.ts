@@ -3,6 +3,11 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   billingQueueApprovalRunSchema,
+  billingQueueAssistSchema,
+  billingQueueBriefSchema,
+  billingQueueNovaGenerationSchema,
+  billingQueueRecommendationSchema,
+  billingQueueSearchIntentSchema,
   billingQueueEventPageSchema,
   billingQueueFilterPresetSchema,
   billingQueueItemSchema,
@@ -13,6 +18,14 @@ import {
   podSignatureRedetectResultSchema,
   reassignChargeResultSchema,
   type BillingQueueAssignInput,
+  type BillingQueueAssist,
+  type BillingQueueBrief,
+  type BillingQueueNovaGeneration,
+  type BillingQueueInvoiceDetailsInput,
+  type BillingQueueRecommendation,
+  type BillingQueueSearchIntent,
+  type BulkRunAction,
+  type BulkRunParams,
   type BillingQueueFilterPreset,
   type BillingQueueApprovalRun,
   type BillingQueueEventPage,
@@ -30,16 +43,79 @@ import {
 } from "@trenova/shared/types/billing-queue";
 
 export class BillingQueueService {
-  public async getStats() {
-    const response = await api.get<BillingQueueStats>("/billing-queue/stats/");
+  /** Lane counts, plus the pulse of the caller's day when `dayStart` is given. */
+  public async getStats(dayStart?: number, options: { signal?: AbortSignal } = {}) {
+    const endpoint = dayStart
+      ? `/billing-queue/stats/?dayStart=${dayStart}`
+      : "/billing-queue/stats/";
+    const response = await api.get<BillingQueueStats>(endpoint, { signal: options.signal });
     return safeParse(billingQueueStatsSchema, response, "BillingQueueStats");
   }
 
-  public async getById(id: string, params?: Record<string, string>) {
+  public async getRecommendations(options: { signal?: AbortSignal } = {}) {
+    const response = await api.get<BillingQueueRecommendation[]>(
+      "/billing-queue/recommendations/",
+      { signal: options.signal },
+    );
+    return safeParse(
+      z.array(billingQueueRecommendationSchema),
+      response ?? [],
+      "BillingQueueRecommendations",
+    );
+  }
+
+  public async getAssist(options: { signal?: AbortSignal } = {}) {
+    const response = await api.get<BillingQueueAssist>("/billing-queue/assist/", {
+      signal: options.signal,
+    });
+    return safeParse(billingQueueAssistSchema, response, "BillingQueueAssist");
+  }
+
+  public async getBrief(options: { signal?: AbortSignal } = {}) {
+    const response = await api.get<BillingQueueBrief>("/billing-queue/brief/", {
+      signal: options.signal,
+    });
+    return safeParse(billingQueueBriefSchema, response, "BillingQueueBrief");
+  }
+
+  /**
+   * What Nova is generating for the whole queue. Reading it starts a generation
+   * when the queue has items Nova has not reviewed or no brief.
+   */
+  public async getNovaGeneration(options: { signal?: AbortSignal } = {}) {
+    const response = await api.get<BillingQueueNovaGeneration>("/billing-queue/nova-generation/", {
+      signal: options.signal,
+    });
+    return safeParse(billingQueueNovaGenerationSchema, response, "BillingQueueNovaGeneration");
+  }
+
+  /** Reads the filters out of a sentence typed into the queue's search; changes nothing. */
+  /** Turns a sentence into queue filters; `today` (YYYY-MM-DD) is the person's own date. */
+  public async composeSearch(text: string, today: string) {
+    const response = await api.post<BillingQueueSearchIntent>("/billing-queue/search-intent/", {
+      text,
+      today,
+    });
+    return safeParse(billingQueueSearchIntentSchema, response, "BillingQueueSearchIntent");
+  }
+
+  public async updateInvoiceDetails(id: string, payload: BillingQueueInvoiceDetailsInput) {
+    const response = await api.put<BillingQueueItem>(
+      `/billing-queue/${id}/invoice-details/`,
+      payload,
+    );
+    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+  }
+
+  public async getById(
+    id: string,
+    params?: Record<string, string>,
+    options: { signal?: AbortSignal } = {},
+  ) {
     const endpoint = params
       ? `/billing-queue/${id}/?${new URLSearchParams(params).toString()}`
       : `/billing-queue/${id}/`;
-    const response = await api.get<BillingQueueItem>(endpoint);
+    const response = await api.get<BillingQueueItem>(endpoint, { signal: options.signal });
     return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
   }
 
@@ -141,30 +217,38 @@ export class BillingQueueService {
     return safeParse(podSignatureRedetectResultSchema, response, "PODSignatureRedetectResult");
   }
 
-  /** Starts a bulk approval; the server waits out the undo window before it writes. */
-  public async startBulkApprove(itemIds: string[], idempotencyKey: string, assignMe = false) {
-    const response = await api.post<BillingQueueApprovalRun>("/billing-queue/bulk-approve/", {
+  /**
+   * Starts one action over several items as a background run. Every action but posting
+   * waits out a short undo window before it writes.
+   */
+  public async startBulk(
+    action: BulkRunAction,
+    itemIds: string[],
+    idempotencyKey: string,
+    params: BulkRunParams = {},
+  ) {
+    const response = await api.post<BillingQueueApprovalRun>("/billing-queue/bulk/", {
+      action,
       itemIds,
       idempotencyKey,
-      // Makes the person approving the biller of the items that have none.
-      assignApprover: assignMe,
+      params,
     });
-    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueApprovalRun");
+    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueBulkRun");
   }
 
-  public async getBulkApprove(runId: string) {
-    const response = await api.get<BillingQueueApprovalRun>(
-      `/billing-queue/bulk-approve/${runId}/`,
-    );
-    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueApprovalRun");
+  public async getBulk(runId: string, options: { signal?: AbortSignal } = {}) {
+    const response = await api.get<BillingQueueApprovalRun>(`/billing-queue/bulk/${runId}/`, {
+      signal: options.signal,
+    });
+    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueBulkRun");
   }
 
-  public async undoBulkApprove(runId: string) {
+  public async undoBulk(runId: string) {
     const response = await api.post<BillingQueueApprovalRun>(
-      `/billing-queue/bulk-approve/${runId}/cancel/`,
+      `/billing-queue/bulk/${runId}/cancel/`,
       {},
     );
-    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueApprovalRun");
+    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueBulkRun");
   }
 
   public async listFilterPresets() {

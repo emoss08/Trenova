@@ -63,6 +63,7 @@ type Invoice struct {
 	ShipmentProNumber         string                     `json:"shipmentProNumber"         keel:"shipment_pro_number,nullzero"`
 	ShipmentBOL               string                     `json:"shipmentBol"               keel:"shipment_bol,nullzero"`
 	OrderNumber               string                     `json:"orderNumber"               keel:"order_number,nullzero"`
+	PONumber                  string                     `json:"poNumber"                  keel:"po_number,nullzero,label=PO Number"`
 	ServiceDate               *int64                     `json:"serviceDate"               keel:"service_date"`
 	BillToName                string                     `json:"billToName"                keel:"bill_to_name"`
 	BillToCode                string                     `json:"billToCode"                keel:"bill_to_code,nullzero"`

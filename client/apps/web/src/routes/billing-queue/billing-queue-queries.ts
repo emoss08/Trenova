@@ -6,11 +6,20 @@ import {
   type BillingTransferCandidateFilters,
   type BillingTransferItemStatus,
 } from "@/lib/graphql/billing-transfer";
+import { billingQueue } from "@/lib/queries/billing-queue";
 import { apiService } from "@/services/api";
+import { getStartOfDay } from "@trenova/shared/lib/date";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
-import { billingQueueItemSchema } from "@trenova/shared/types/billing-queue";
+import {
+  type BillingQueueItemConnection,
+  type BillingQueueRow,
+  listBillingQueueItemsGraphQL,
+} from "@/lib/graphql/billing-queue";
+import type { FieldFilterInput } from "@trenova/graphql/generated/graphql";
+import { dateWindowFilter, type DateWindow } from "@/lib/billing-queue-date-window";
+import { billingQueueItemSchema, type BillingQueueLane } from "@trenova/shared/types/billing-queue";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import { shouldPollRun } from "./_components/bulk-transfer/bulk-billing-transfer-run";
 
@@ -27,6 +36,7 @@ const BILLING_TRANSFER_RUN_ITEMS_PAGE_SIZE = 250;
 const BILLING_TRANSFER_RUN_POLL_MS = 2000;
 
 const FILTER_PRESETS_STALE_TIME_MS = 5 * 60 * 1000;
+export const BILLING_QUEUE_LANE_PAGE_SIZE = 25;
 
 const billingQueueListSchema = createLimitOffsetResponse(billingQueueItemSchema);
 
@@ -37,12 +47,13 @@ export type BillingQueueListFilters = {
   payer?: string | null;
   search: string;
   includePosted: boolean;
-};
-
-type BillingQueueFieldFilter = {
-  field: string;
-  operator: string;
-  value: string | string[];
+  minAmount?: string | null;
+  maxAmount?: string | null;
+  createdBefore?: number | null;
+  shipmentCustomer?: string | null;
+  delivered?: DateWindow | null;
+  pickedUp?: DateWindow | null;
+  queued?: DateWindow | null;
 };
 
 export function billingQueueFilterPresetsQuery() {
@@ -53,58 +64,112 @@ export function billingQueueFilterPresetsQuery() {
   };
 }
 
+/** The queue's lane counts with the pulse of the person's own day. */
+export function billingQueueStatsQuery() {
+  return billingQueue.stats(getStartOfDay());
+}
+
+function fieldFiltersOf(filters: BillingQueueListFilters): FieldFilterInput[] {
+  const fieldFilters: FieldFilterInput[] = [];
+  if (filters.status) {
+    fieldFilters.push({ field: "status", operator: "eq", value: filters.status });
+  }
+  if (filters.billers.length === 1) {
+    fieldFilters.push({ field: "assignedBillerId", operator: "eq", value: filters.billers[0] });
+  } else if (filters.billers.length > 1) {
+    fieldFilters.push({ field: "assignedBillerId", operator: "in", value: filters.billers });
+  }
+  if (filters.billType) {
+    fieldFilters.push({ field: "billType", operator: "eq", value: filters.billType });
+  }
+  if (filters.payer) {
+    fieldFilters.push({ field: "billToCustomerId", operator: "eq", value: filters.payer });
+  }
+  if (filters.shipmentCustomer) {
+    fieldFilters.push({
+      field: "shipment.customerId",
+      operator: "eq",
+      value: filters.shipmentCustomer,
+    });
+  }
+  if (filters.delivered) {
+    fieldFilters.push(dateWindowFilter("shipment.actualDeliveryDate", filters.delivered));
+  }
+  if (filters.pickedUp) {
+    fieldFilters.push(dateWindowFilter("shipment.actualShipDate", filters.pickedUp));
+  }
+  if (filters.queued) {
+    fieldFilters.push(dateWindowFilter("createdAt", filters.queued));
+  }
+  return fieldFilters;
+}
+
 /**
- * The sidebar's item list. The key spells the filters out one by one rather than as an
- * object so a prefix invalidation on BILLING_QUEUE_LIST_KEY keeps reaching every variant.
+ * One lane of the queue, a page at a time. Each lane pages on its own so a lane of
+ * thousands never crowds the others out, and a collapsed lane fetches nothing. The
+ * key starts with BILLING_QUEUE_LIST_KEY so every invalidation of the list reaches it.
  */
-export function billingQueueListQuery({
-  status,
-  billers,
-  billType,
-  payer = null,
-  search,
-  includePosted,
-}: BillingQueueListFilters) {
+export function billingQueueLaneQuery(lane: BillingQueueLane, filters: BillingQueueListFilters) {
+  const scope: BillingQueueListFilters = {
+    status: filters.status,
+    billers: filters.billers,
+    billType: filters.billType,
+    payer: filters.payer ?? null,
+    search: filters.search.trim(),
+    includePosted: filters.includePosted,
+    minAmount: filters.minAmount ?? null,
+    maxAmount: filters.maxAmount ?? null,
+    createdBefore: filters.createdBefore ?? null,
+    shipmentCustomer: filters.shipmentCustomer ?? null,
+    delivered: filters.delivered ?? null,
+    pickedUp: filters.pickedUp ?? null,
+    queued: filters.queued ?? null,
+  };
+  return infiniteQueryOptions({
+    queryKey: [BILLING_QUEUE_LIST_KEY, "lane", lane, scope] as const,
+    queryFn: ({ pageParam, signal }) =>
+      listBillingQueueItemsGraphQL(
+        {
+          first: BILLING_QUEUE_LANE_PAGE_SIZE,
+          after: pageParam,
+          query: scope.search,
+          fieldFilters: fieldFiltersOf(scope),
+          filter: {
+            lanes: [lane],
+            includePosted: scope.includePosted,
+            minAmount: scope.minAmount ?? undefined,
+            maxAmount: scope.maxAmount ?? undefined,
+            createdBefore: scope.createdBefore ?? undefined,
+          },
+        },
+        { signal },
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
+  });
+}
+
+/** The items a lane query holds, in order, across every page it has loaded. */
+export function laneItems(
+  data: { pages: BillingQueueItemConnection[] } | undefined,
+): BillingQueueRow[] {
+  return data?.pages.flatMap((page) => page.edges.map((edge) => edge.node)) ?? [];
+}
+
+/** How many items a lane holds, as its first page counted them. */
+export function laneTotal(data: { pages: BillingQueueItemConnection[] } | undefined) {
+  return data?.pages[0]?.totalCount ?? null;
+}
+
+/** A shipment's documents with their types, read by the Documents tab and its count. */
+export function shipmentDocumentsQuery(shipmentId: string) {
   return {
-    queryKey: [
-      BILLING_QUEUE_LIST_KEY,
-      status,
-      billers.join(","),
-      billers[0],
-      billType,
-      search,
-      includePosted,
-      payer,
-    ] as const,
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: "100" });
-      const filters: BillingQueueFieldFilter[] = [];
-      if (status) {
-        filters.push({ field: "status", operator: "eq", value: status });
-      }
-      if (billers.length === 1) {
-        filters.push({ field: "assignedBillerId", operator: "eq", value: billers[0] });
-      } else if (billers.length > 1) {
-        filters.push({ field: "assignedBillerId", operator: "in", value: billers });
-      }
-      if (billType) {
-        filters.push({ field: "billType", operator: "eq", value: billType });
-      }
-      if (payer) {
-        filters.push({ field: "billToCustomerId", operator: "eq", value: payer });
-      }
-      if (search.trim()) {
-        params.set("query", search.trim());
-      }
-      if (includePosted) {
-        params.set("includePosted", "true");
-      }
-      if (filters.length > 0) {
-        params.set("fieldFilters", JSON.stringify(filters));
-      }
-      const response = await api.get(`/billing-queue/?${params.toString()}`);
-      return safeParse(billingQueueListSchema, response, "BillingQueueList");
-    },
+    queryKey: ["documents", "shipment", shipmentId, "includeDocumentType"] as const,
+    queryFn: () =>
+      apiService.documentService.getByResource("shipment", shipmentId, undefined, {
+        includeDocumentType: "true",
+      }),
   };
 }
 

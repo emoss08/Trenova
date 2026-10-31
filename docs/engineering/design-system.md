@@ -380,6 +380,7 @@ One curve family and default speeds, declared in the `@theme` block, so a bare
 | `ease-spring` | a small overshoot, for the one thing that confirms an action |
 | `animate-rise` | content arriving in place |
 | `animate-confirm` | a check landing, a copied tick |
+| `animate-fill` | a meter or progress bar filling to its value (`origin-left`) |
 
 Motion answers an action. Nothing on a working screen moves on its own: no
 looping shimmer on a badge, no pulsing glow, no floating sparkle. A global
@@ -419,9 +420,10 @@ The app has one shell, drawn by `RailShell` (`components/navigation/rail-shell.t
 and it has no global header. What applies everywhere lives on a 48px **rail** down
 the left edge (`module-rail.tsx`): the organization mark at the top, one tile per
 module in its domain with hairlines between domains, then notifications, settings
-and the user at the bottom. The tile you are in is filled `--nav-active` and marked
-with a 2px `--ink` bar on the rail's edge; a count on a tile's corner is how much
-work waits behind that module, in the attention tone. `G` then a module's letter
+and the user at the bottom. The tile you are in is filled `--nav-active`; hover is one
+`--surface-hover` background per group of tiles that slides from tile to tile
+(`rail-hover-glide.tsx`) rather than a hover fill on each. A count on a tile's
+corner is how much work waits behind that module, in the attention tone. `G` then a module's letter
 (`rail-shortcuts.ts`) jumps there from anywhere; the letter shows in the tile's
 tooltip.
 

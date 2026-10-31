@@ -43,3 +43,20 @@ type ExtractionStatusReader interface {
 		tenantInfo pagination.TenantInfo,
 	) (*ExtractionStatus, error)
 }
+
+// DocumentReader is a document as it was read: each value with the page and box
+// it was found in, in the extraction card's payload, which the Desk and the
+// billing queue's document review both draw. The agent module implements it.
+type DocumentReader interface {
+	ReadDocument(
+		ctx context.Context,
+		documentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (map[string]any, error)
+}
+
+// PaperworkReadRequester asks Nova to read a shipment document the moment it
+// arrives, alongside its conversion. The agent module implements it.
+type PaperworkReadRequester interface {
+	RequestRead(ctx context.Context, doc *document.Document, userID pulid.ID)
+}

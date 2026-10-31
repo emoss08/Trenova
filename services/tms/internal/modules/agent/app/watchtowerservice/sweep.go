@@ -54,6 +54,7 @@ func (s *Service) sweep(
 	resolveMissing bool,
 ) (*watchtowerports.WatchtowerSweepResult, error) {
 	result := &watchtowerports.WatchtowerSweepResult{Failed: []string{}}
+	changed := 0
 	for _, kind := range kinds {
 		source, ok := s.sources[kind]
 		if !ok {
@@ -75,7 +76,8 @@ func (s *Service) sweep(
 		for _, input := range snapshot {
 			input.TenantInfo = tenant
 			input.SourceKind = kind
-			if uErr := s.projector.upsert(ctx, input); uErr != nil {
+			saved, _, uErr := s.projector.project(ctx, input)
+			if uErr != nil {
 				s.l.Warn("watchtower snapshot item rejected",
 					zap.String("kind", string(kind)),
 					zap.String("source", input.SourceID),
@@ -86,6 +88,9 @@ func (s *Service) sweep(
 			}
 			open = append(open, input.SourceID)
 			result.Upserted++
+			if saved != nil {
+				changed++
+			}
 		}
 
 		if !resolveMissing {
@@ -109,8 +114,8 @@ func (s *Service) sweep(
 		}
 		result.Resolved += resolved
 	}
-	if result.Resolved > 0 {
-		s.projector.publishBulk(ctx, tenant, bulkResolvedAction)
+	if changed > 0 || result.Resolved > 0 {
+		s.projector.publishBulk(ctx, tenant, bulkSweptAction)
 	}
 
 	return result, nil

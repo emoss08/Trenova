@@ -1,15 +1,16 @@
 package assistanthandler
 
 import (
+	"context"
+	"errors"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
@@ -21,10 +22,6 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/zap"
 )
-
-// lastEventIDHeader is where a reconnecting browser puts the cursor it left
-// off at, as the server-sent events specification says it should.
-const lastEventIDHeader = "Last-Event-ID"
 
 // activeTurn names the reply a conversation is still producing, so reopening
 // it rejoins rather than showing a thread that looks finished.
@@ -133,9 +130,12 @@ func (h *Handler) streamTurn(c *gin.Context) {
 	}
 	defer stream.Close()
 
-	err = h.turns.Relay(c.Request.Context(), assistantturnservice.RelayRequest{
+	ctx, stopWatching := h.sessions.Context(c.Request.Context(), authCtx.SessionID)
+	defer stopWatching()
+
+	err = h.turns.Relay(ctx, assistantturnservice.RelayRequest{
 		Turn:   turn,
-		Cursor: cursorFrom(c),
+		Cursor: helpers.EventCursor(c),
 	}, func(frame assistantstreamports.TurnStreamFrame) error {
 		// The frame's payload arrives already encoded and leaves the same
 		// way: decoding it here to encode it again would spend the stream's
@@ -144,6 +144,9 @@ func (h *Handler) streamTurn(c *gin.Context) {
 
 		return nil
 	})
+	if errors.Is(context.Cause(ctx), sessionwatch.ErrSessionEnded) {
+		return
+	}
 	if err != nil {
 		h.logger.Error("assistant turn relay failed",
 			zap.String("turn", turnID.String()),
@@ -155,19 +158,6 @@ func (h *Handler) streamTurn(c *gin.Context) {
 	}
 }
 
-// cursorFrom reads where the reader left off.
-//
-// The header is what a browser sends on its own after a dropped connection.
-// The query parameter is for a client that opened the stream by hand and
-// therefore never had one set for it.
-func cursorFrom(c *gin.Context) string {
-	if cursor := c.GetHeader(lastEventIDHeader); cursor != "" {
-		return cursor
-	}
-
-	return c.Query("after")
-}
-
 // startTurnResponse is a question handed to a worker: the turn to watch and
 // where to watch it.
 type startTurnResponse struct {
@@ -175,9 +165,6 @@ type startTurnResponse struct {
 	ThreadID  pulid.ID                         `json:"threadId"`
 	StreamURL string                           `json:"streamUrl"`
 	Status    conversation.AssistantTurnStatus `json:"status"`
-	// Thread is set when asking the question made the thread, as a quick
-	// question does.
-	Thread *conversation.Thread `json:"thread,omitempty"`
 }
 
 func turnStarted(turn *conversationturn.AssistantTurn) startTurnResponse {
@@ -259,46 +246,6 @@ func (h *Handler) sendMessage(c *gin.Context) {
 	// A refusal is a successful request with a declined answer, not an error: the
 	// turn was processed, recorded, and explained.
 	helpers.JSON(c, http.StatusOK, outcome.Result)
-}
-
-// ask starts a quick question: the hidden thread it is answered on, and the
-// turn answering it. The thread comes back first so the reader can open it in
-// the Desk even if the answer fails.
-func (h *Handler) ask(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	var body askRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	actor := requestActorFromAuthContext(authCtx)
-	thread, err := h.service.StartAsk(c.Request.Context(), &assistantports.AskRequest{
-		Content:    body.Content,
-		Page:       body.Context.page(),
-		Mentions:   body.Mentions,
-		TenantInfo: tenantFromAuthContext(authCtx),
-	}, &actor)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	turn, _, err := h.askWorker(c, thread.ID, &sendMessageRequest{
-		Content:  body.Content,
-		Context:  body.Context,
-		Surface:  agentpagecontext.SurfacePalette,
-		Mentions: body.Mentions,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	response := turnStarted(turn)
-	response.Thread = thread
-	helpers.JSON(c, http.StatusAccepted, response)
 }
 
 // askWorker records a turn and starts the workflow that answers it.

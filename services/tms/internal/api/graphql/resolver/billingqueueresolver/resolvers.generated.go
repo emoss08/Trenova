@@ -14,3 +14,5 @@ type Deps struct {
 }
 
 type MutationResolver struct{ *Deps }
+
+type QueryResolver struct{ *Deps }

@@ -95,6 +95,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/orderhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/palettehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
@@ -295,6 +296,7 @@ type RouterParams struct {
 	CaseChecklistHandler            *casechecklisthandler.Handler
 	InvoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
 	BillingQueueHandler             *billingqueuehandler.Handler
+	PaletteHandler                  *palettehandler.Handler
 	DataEntryControlHandler         *dataentrycontrolhandler.Handler
 	DispatchControlHandler          *dispatchcontrolhandler.Handler
 	DocumentControlHandler          *documentcontrolhandler.Handler
@@ -448,6 +450,7 @@ type Router struct {
 	caseChecklistHandler            *casechecklisthandler.Handler
 	invoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
 	billingQueueHandler             *billingqueuehandler.Handler
+	paletteHandler                  *palettehandler.Handler
 	dataEntryControlHandler         *dataentrycontrolhandler.Handler
 	dispatchControlHandler          *dispatchcontrolhandler.Handler
 	documentControlHandler          *documentcontrolhandler.Handler
@@ -603,6 +606,7 @@ func NewRouter(p RouterParams) *Router {
 		caseChecklistHandler:            p.CaseChecklistHandler,
 		invoiceAdjustmentControlHandler: p.InvoiceAdjustmentControlHandler,
 		billingQueueHandler:             p.BillingQueueHandler,
+		paletteHandler:                  p.PaletteHandler,
 		dataEntryControlHandler:         p.DataEntryControlHandler,
 		dispatchControlHandler:          p.DispatchControlHandler,
 		documentControlHandler:          p.DocumentControlHandler,
@@ -627,7 +631,7 @@ func (r *Router) setupCors() {
 	corsConfig := cors.Config{
 		AllowOrigins:     r.serverConfig.CORS.AllowedOrigins,
 		AllowMethods:     r.serverConfig.CORS.AllowedMethods,
-		AllowHeaders:     r.serverConfig.CORS.AllowedHeaders,
+		AllowHeaders:     middleware.WithSessionContextHeaders(r.serverConfig.CORS.AllowedHeaders),
 		ExposeHeaders:    r.serverConfig.CORS.ExposeHeaders,
 		AllowCredentials: r.serverConfig.CORS.Credentials,
 		MaxAge:           time.Duration(r.serverConfig.CORS.MaxAge) * time.Second,
@@ -818,6 +822,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.caseChecklistHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentControlHandler.RegisterRoutes(protected)
 	r.billingQueueHandler.RegisterRoutes(protected)
+	r.paletteHandler.RegisterRoutes(protected)
 	r.dataEntryControlHandler.RegisterRoutes(protected)
 	r.dispatchControlHandler.RegisterRoutes(protected)
 	r.documentControlHandler.RegisterRoutes(protected)
@@ -842,6 +847,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected.Use(r.readScopeMiddleware.Install())
 	protected.Use(r.rateLimiter.ByAPIKey())
 	protected.Use(middleware.NewLocaleMiddleware().Resolve())
+	protected.Use(middleware.NewSessionContextMiddleware(r.errorHandler).RequireCurrent())
 	protected.Use(middleware.NewCSRFMiddleware(r.securityConfig, r.errorHandler).RequireToken())
 	// After RequireAuth, which is what puts the flag in the context, and before any
 	// handler: a session that owes a password change may only reach the endpoints that

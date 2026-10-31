@@ -266,7 +266,7 @@ func (h *Handler) me(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, entity)
+	respondWithSelf(c, entity)
 }
 
 // @Summary Get a user option
@@ -515,7 +515,7 @@ func (h *Handler) updateMySettings(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, updated)
+	respondWithSelf(c, updated)
 }
 
 // @Summary Upload current user profile picture
@@ -549,7 +549,7 @@ func (h *Handler) uploadProfilePicture(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, updated)
+	respondWithSelf(c, updated)
 }
 
 // @Summary Delete current user profile picture
@@ -574,7 +574,7 @@ func (h *Handler) deleteProfilePicture(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, updated)
+	respondWithSelf(c, updated)
 }
 
 // @Summary Get user profile picture URL
@@ -656,7 +656,7 @@ func (h *Handler) changeMyPassword(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, updated)
+	respondWithSelf(c, updated)
 }
 
 func validateMySettingsFields(raw map[string]any) error {

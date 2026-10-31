@@ -21,6 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/decisioncommitjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/insightjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/palettejobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/paperworkjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/retrievaljobs"
@@ -41,6 +43,8 @@ func WorkerOptions() fx.Option {
 		agentflow.Module,
 		assistantjobs.Module,
 		chapterjobs.Module,
+		paperworkjobs.Module,
+		palettejobs.Module,
 		completionjobs.Module,
 		runstepledger.Module,
 		conversationschedulejobs.Module,

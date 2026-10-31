@@ -185,6 +185,7 @@
   "The single facility this end covers": "此端点涵盖的单一场所",
   "The state the city sits in": "该城市所属的州别",
   "The state this end covers": "此端点涵盖的州别",
+  "The tariff's defaults": "运价表的默认值",
   "The template below has every column the importer recognises, with two example rows.": "下方的模板包含导入工具可识别的所有列，并附两行示例数据。",
   "The term rolls forward automatically unless somebody gives notice": "除非有人提出终止通知，否则期限会自动延续",
   "The thinnest margin this carrier may be paid down to": "支付给此承运商时可压缩至的最低利润",

@@ -215,3 +215,11 @@ func (b *BillingQueueItem) OpenIssues() []*Issue {
 
 	return open
 }
+
+type Headline struct {
+	Code     IssueCode `json:"code"`
+	CheckKey CheckKey  `json:"checkKey"`
+	Summary  string    `json:"summary"`
+	Open     int       `json:"open"`
+	Waiting  bool      `json:"waiting"`
+}

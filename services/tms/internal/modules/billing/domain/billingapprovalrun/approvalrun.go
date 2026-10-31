@@ -34,10 +34,10 @@ func (s ApprovalRunStatus) IsTerminal() bool {
 type ApprovalItemStatus string
 
 const (
-	ApprovalItemPending  = ApprovalItemStatus("Pending")
-	ApprovalItemApproved = ApprovalItemStatus("Approved")
-	ApprovalItemFailed   = ApprovalItemStatus("Failed")
-	ApprovalItemSkipped  = ApprovalItemStatus("Skipped")
+	ApprovalItemPending   = ApprovalItemStatus("Pending")
+	ApprovalItemSucceeded = ApprovalItemStatus("Succeeded")
+	ApprovalItemFailed    = ApprovalItemStatus("Failed")
+	ApprovalItemSkipped   = ApprovalItemStatus("Skipped")
 )
 
 // ApprovalFailureCode says why an item was not approved.
@@ -49,7 +49,48 @@ const (
 	ApprovalFailureOnHold      = ApprovalFailureCode("OnHold")
 	ApprovalFailureUndone      = ApprovalFailureCode("Undone")
 	ApprovalFailureUnexpected  = ApprovalFailureCode("Unexpected")
+	ApprovalFailureNotApplies  = ApprovalFailureCode("NotApplicable")
 )
+
+type RunAction string
+
+const (
+	RunActionApprove          = RunAction("Approve")
+	RunActionPost             = RunAction("Post")
+	RunActionHold             = RunAction("Hold")
+	RunActionAssign           = RunAction("Assign")
+	RunActionCancel           = RunAction("Cancel")
+	RunActionRequestPaperwork = RunAction("RequestPaperwork")
+	RunActionResolveIssue     = RunAction("ResolveIssue")
+)
+
+func (a RunAction) IsValid() bool {
+	switch a {
+	case RunActionApprove,
+		RunActionPost,
+		RunActionHold,
+		RunActionAssign,
+		RunActionCancel,
+		RunActionRequestPaperwork,
+		RunActionResolveIssue:
+		return true
+	default:
+		return false
+	}
+}
+
+func (a RunAction) Undoable() bool {
+	return a != RunActionPost
+}
+
+type RunParams struct {
+	AssignApprover bool     `json:"assignApprover,omitempty"`
+	BillerID       pulid.ID `json:"billerId,omitempty"`
+	HoldReasonCode string   `json:"holdReasonCode,omitempty"`
+	Reason         string   `json:"reason,omitempty"`
+	IssueCode      string   `json:"issueCode,omitempty"`
+	OptionKey      string   `json:"optionKey,omitempty"`
+}
 
 // ApprovalRun is one press of Approve over several queue items.
 type ApprovalRun struct {
@@ -60,9 +101,11 @@ type ApprovalRun struct {
 	OrganizationID      pulid.ID          `json:"organizationId"      keel:"organization_id,pk,tenant"`
 	RequestedByID       pulid.ID          `json:"requestedById"       keel:"requested_by_id"`
 	IdempotencyKey      string            `json:"idempotencyKey"      keel:"idempotency_key"`
+	Action              RunAction         `json:"action"              keel:"action"`
+	Params              RunParams         `json:"params"              keel:"params,jsonb"`
 	Status              ApprovalRunStatus `json:"status"              keel:"status"`
 	TotalCount          int               `json:"totalCount"          keel:"total_count"`
-	ApprovedCount       int               `json:"approvedCount"       keel:"approved_count"`
+	SucceededCount      int               `json:"succeededCount"      keel:"succeeded_count"`
 	FailedCount         int               `json:"failedCount"         keel:"failed_count"`
 	SkippedCount        int               `json:"skippedCount"        keel:"skipped_count"`
 	CommitAt            int64             `json:"commitAt"            keel:"commit_at"`
