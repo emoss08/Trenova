@@ -111,8 +111,8 @@ export function BOLField() {
   const shipmentId = useWatch({ control, name: "id" });
 
   const customerId = useWatch({ control, name: "customerId" });
-  const { data: billingProfile } = useQuery({
-    ...customer.getBillingProfile(customerId),
+  const { data: billingRules } = useQuery({
+    ...customer.shipmentBillingRules(customerId ? [customerId] : []),
     enabled: !!customerId,
   });
   const { data: shipmentUIPolicy } = useQuery({
@@ -159,7 +159,8 @@ export function BOLField() {
     getFieldState,
   ]);
 
-  const bolRequired = billingProfile?.enforceCustomerBillingReq && billingProfile?.requireBOLNumber;
+  const bolRequired =
+    billingRules?.find((rules) => rules.customerId === customerId)?.bolRequired ?? false;
 
   // No FormControl wrapper: CapabilityFields supplies one per descriptor, and
   // nesting a second would offset the field from every sibling in the group.

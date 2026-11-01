@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { AccessorialChargeRow } from "@/lib/graphql/accessorial-charge-table";
+import { apiService } from "@/services/api";
 import { accessorialChargeSchema } from "@trenova/shared/types/accessorial-charge";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,11 +43,13 @@ export function AccessorialChargePanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/accessorial-charges/"
         queryKey="accessorial-charge-list"
         title={t("Accessorial charge")}
         fieldKey="code"
         formComponent={<AccessorialChargeForm />}
+        mutationFn={(values, currentRow) =>
+          apiService.accessorialChargeService.update(currentRow.id, values)
+        }
       />
     );
   }
@@ -56,10 +59,10 @@ export function AccessorialChargePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/accessorial-charges/"
       queryKey="accessorial-charge-list"
       title={t("Accessorial charge")}
       formComponent={<AccessorialChargeForm />}
+      mutationFn={(values) => apiService.accessorialChargeService.create(values)}
       onCreated={onCreated}
     />
   );

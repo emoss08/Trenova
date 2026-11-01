@@ -1,0 +1,21 @@
+mutation CreateAccessorialCharge($input: AccessorialChargeInput!) {
+  createAccessorialCharge(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateAccessorialCharge($id: ID!, $input: AccessorialChargeInput!) {
+  updateAccessorialCharge(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchAccessorialCharge($id: ID!, $input: AccessorialChargePatchInput!) {
+  patchAccessorialCharge(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}

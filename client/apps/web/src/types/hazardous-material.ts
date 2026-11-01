@@ -70,9 +70,3 @@ export const bulkUpdateHazardousMaterialStatusRequestSchema = z.object({
 export type BulkUpdateHazardousMaterialStatusRequest = z.infer<
   typeof bulkUpdateHazardousMaterialStatusRequestSchema
 >;
-
-export const bulkUpdateHazardousMaterialStatusResponseSchema = z.array(hazardousMaterialSchema);
-
-export type BulkUpdateHazardousMaterialStatusResponse = z.infer<
-  typeof bulkUpdateHazardousMaterialStatusResponseSchema
->;

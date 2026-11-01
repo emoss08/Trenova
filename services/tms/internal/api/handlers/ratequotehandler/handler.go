@@ -8,10 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,8 +52,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	resource := permission.ResourceRateQuote.String()
 
 	api := rg.Group("/rate-quotes")
-	api.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.list)
-	api.GET("/:rateQuoteID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
 
 	api.GET(
 		"/shipment/:shipmentID/",
@@ -73,79 +69,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.explain,
 	)
 
-	api.POST("/quote/", h.pm.RequirePermission(resource, permission.OpRead), h.quote)
 	api.POST(
 		"/shipment/:shipmentID/shop/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.shop,
 	)
-}
-
-// @Summary List rate quotes
-// @ID listRateQuotes
-// @Tags Rate Quotes
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]ratequote.RateQuote]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-quotes/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*ratequote.RateQuote], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&ratequoteports.ListRateQuotesRequest{Filter: req},
-			)
-		},
-	)
-}
-
-// @Summary Get a rate quote
-// @ID getRateQuote
-// @Tags Rate Quotes
-// @Produce json
-// @Param rateQuoteID path string true "Rate quote ID"
-// @Success 200 {object} ratequote.RateQuote
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-quotes/{rateQuoteID} [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	quoteID, err := pulid.MustParse(c.Param("rateQuoteID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.GetByID(c.Request.Context(), &ratequoteports.GetRateQuoteByIDRequest{
-		RateQuoteID: quoteID,
-		TenantInfo:  tenantOf(authCtx),
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	fieldguard.Withhold(fieldguard.Visible(c, h.engine), entity)
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List a shipment's rating history
@@ -275,56 +203,6 @@ func (h *Handler) explain(c *gin.Context) {
 		PartyType:  body.PartyType,
 		PartyID:    body.PartyID,
 		AsOf:       body.AsOf,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, rated)
-}
-
-type quoteRequest struct {
-	Shipment  *shipment.Shipment      `json:"shipment"  binding:"required"`
-	PartyType rateagreement.PartyType `json:"partyType"`
-	PartyID   pulid.ID                `json:"partyId"`
-	AsOf      int64                   `json:"asOf"`
-	// Persist keeps the quote so it can be cited when the load is booked. A
-	// screen re-pricing on every keystroke leaves it off.
-	Persist bool `json:"persist"`
-}
-
-// @Summary Price a shipment that has not been created
-// @Description Rates a hypothetical shipment against the contracts covering its lane, which is what a pre-booking quote is.
-// @ID quoteShipment
-// @Tags Rate Quotes
-// @Accept json
-// @Produce json
-// @Param request body quoteRequest true "Quote payload"
-// @Success 200 {object} ratequotehandler.ratedShipment
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 422 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-quotes/quote/ [post]
-func (h *Handler) quote(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	body := new(quoteRequest)
-	if err := authctx.BindJSON(c, authCtx, body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	rated, err := h.service.Quote(c.Request.Context(), &ratequoteservice.QuoteRequest{
-		TenantInfo: tenantOf(authCtx),
-		Shipment:   body.Shipment,
-		PartyType:  body.PartyType,
-		PartyID:    body.PartyID,
-		AsOf:       body.AsOf,
-		Persist:    body.Persist,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

@@ -204,6 +204,10 @@ type Customer {
   latitude: Float
   placeId: String
   externalId: String
+  "How often a check call is due on this customer's freight; null uses the organization's interval."
+  checkCallIntervalHours: Int
+  "How late an ETA may run before this customer's freight is flagged at risk; null uses the organization's threshold."
+  etaRiskThresholdMinutes: Int
   allowConsolidation: Boolean!
   exclusiveConsolidation: Boolean!
   consolidationPriority: Int!
@@ -240,7 +244,187 @@ type CustomerConnection {
   totalCountExact: Boolean!
 }
 
+"""
+What a shipment form shows about a customer it bills: whether the shipment needs a BOL number
+and the customer's credit standing. It carries nothing else from the billing profile, so anyone
+who reads shipments reads it without reading customers.
+"""
+type ShipmentCustomerBillingRules {
+  customerId: ID!
+  "The customer enforces its billing requirements and one of them is a BOL number."
+  bolRequired: Boolean!
+  creditStatus: CustomerCreditStatus!
+  creditHoldReason: String!
+  enforceCreditLimit: Boolean!
+  "The credit review placed the current hold or warning, rather than a person."
+  creditHoldAutomatic: Boolean!
+}
+
+input CustomerBillingProfileInput {
+  invoiceDelivery: CustomerInvoiceDelivery!
+  billingCycle: CustomerBillingCycle!
+  """Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer."""
+  billingCycleAnchorDay: Int!
+  """IANA zone the period boundaries are evaluated in."""
+  billingCycleTimezone: String!
+  splitBy: InvoiceSplitKey!
+  sectionBy: InvoiceSectionKey!
+  invoiceDetail: InvoiceDetail!
+  minConsolidatedAmount: Decimal
+  """Zero means unbounded."""
+  maxShipmentsPerInvoice: Int!
+  paymentTerm: CustomerPaymentTerm!
+  hasBillingControlOverrides: Boolean!
+  creditLimit: Decimal
+  creditStatus: CustomerCreditStatus!
+  enforceCreditLimit: Boolean!
+  autoCreditHold: Boolean!
+  creditHoldReason: String
+  autoSendInvoiceOnGeneration: Boolean!
+  sendPaymentReminders: Boolean!
+  sendStatements: Boolean!
+  emailInvoiceEnabled: Boolean!
+  ediInvoiceEnabled: Boolean!
+  invoiceNumberFormat: CustomerInvoiceNumberFormat!
+  customerInvoicePrefix: String
+  invoiceCopies: Int!
+  revenueAccountId: ID
+  arAccountId: ID
+  applyLateCharges: Boolean!
+  lateChargeRate: Decimal
+  gracePeriodDays: Int!
+  taxExempt: Boolean!
+  taxExemptNumber: String
+  enforceCustomerBillingReq: Boolean!
+  validateCustomerRates: Boolean!
+  autoTransfer: Boolean!
+  autoMarkReadyToBill: Boolean!
+  autoApprove: Boolean!
+  autoBill: Boolean!
+  countLateOnlyOnAppointmentStops: Boolean!
+  autoApplyAccessorials: Boolean!
+  billingCurrency: String!
+  requirePONumber: Boolean!
+  requireBOLNumber: Boolean!
+  requireDeliveryNumber: Boolean!
+  defaultBillerId: ID
+  billingNotes: String
+  fuelSurchargeMode: CustomerFuelSurchargeMode!
+  fuelSurchargeProgramId: ID
+  "The factor this customer's invoices are assigned to; null when they are not factored."
+  factoringCompanyId: ID
+  "The document types an invoice for this customer cannot be generated without."
+  documentTypeIds: [ID!]!
+}
+
+input CustomerEmailProfileInput {
+  subject: String
+  comment: String
+  toRecipients: String
+  ccRecipients: String
+  bccRecipients: String
+  attachmentName: String
+  readReceipt: Boolean!
+  includeShipmentDetail: Boolean!
+}
+
+input CustomerInput {
+  status: EntityStatus!
+  code: String!
+  name: String!
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  longitude: Float
+  latitude: Float
+  placeId: String
+  externalId: String
+  dotNumber: String
+  mcNumber: String
+  brokerVettingEnabled: Boolean!
+  checkCallIntervalHours: Int
+  etaRiskThresholdMinutes: Int
+  allowConsolidation: Boolean!
+  exclusiveConsolidation: Boolean!
+  consolidationPriority: Int!
+  statusUpdatePreference: CustomerStatusUpdatePreference!
+  statusUpdateRecipients: String
+  "Omit to leave the billing profile as it is; a new customer then gets the default profile."
+  billingProfile: CustomerBillingProfileInput
+  "Omit to leave the email profile as it is."
+  emailProfile: CustomerEmailProfileInput
+  version: Int
+}
+
+input CustomerPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  addressLine1: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  addressLine2: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  city: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  stateId: ID @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  postalCode: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  longitude: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  latitude: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  placeId: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  externalId: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  dotNumber: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  mcNumber: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  brokerVettingEnabled: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  checkCallIntervalHours: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  etaRiskThresholdMinutes: Int @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  allowConsolidation: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  exclusiveConsolidation: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  consolidationPriority: Int @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  statusUpdatePreference: CustomerStatusUpdatePreference @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  statusUpdateRecipients: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateCustomerStatusInput {
+  customerIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createCustomer(input: CustomerInput!): Customer!
+  updateCustomer(id: ID!, input: CustomerInput!): Customer!
+  patchCustomer(id: ID!, input: CustomerPatchInput!): Customer!
+  bulkUpdateCustomerStatus(input: BulkUpdateCustomerStatusInput!): [Customer!]!
+}
+
 extend type Query {
   customers(input: DataTableConnectionInput!): CustomerConnection!
   customer(id: ID!): Customer
+  """
+  The billing rules of the customers a shipment bills, at most 50 at once. A customer without a
+  billing profile is left out.
+  """
+  shipmentCustomerBillingRules(customerIds: [ID!]!): [ShipmentCustomerBillingRules!]!
 }

@@ -1,5 +1,5 @@
-import { apiService } from "@/services/api";
-import { useQuery } from "@tanstack/react-query";
+import { useSelectOption } from "@/hooks/use-select-option";
+import { locationOptionPlace } from "@/lib/location-option";
 import {
   AlertTriangleIcon,
   CheckIcon,
@@ -59,20 +59,23 @@ export function stopDescription(stop: Stop, t: TranslateFn): string {
 
 /**
  * A stop's place: the location the shipment read carries, or, for a stop whose location was
- * changed since, that location read on its own (once, and kept for five minutes).
+ * changed since, that location's select option read on its own.
  */
 export function useStopPlace(stop: Stop | null) {
-  const locationId = stop?.locationId ?? "";
   const embedded = stop?.location && stop.location.id === stop.locationId ? stop.location : null;
-  const { data: fetched } = useQuery({
-    queryKey: ["location", "selectOption", locationId],
-    queryFn: () => apiService.locationService.getOption(locationId),
-    enabled: !!locationId && !embedded,
-    staleTime: 5 * 60 * 1000,
-  });
-  const location = embedded ?? fetched ?? null;
+  const { option } = useSelectOption("LOCATION", embedded ? null : stop?.locationId);
+  const location = embedded
+    ? {
+        name: embedded.name ?? "",
+        addressLine1: embedded.addressLine1 ?? "",
+        city: embedded.city ?? "",
+        stateAbbreviation: embedded.state?.abbreviation ?? "",
+      }
+    : option
+      ? locationOptionPlace(option)
+      : null;
   const city = location
-    ? [location.city, location.state?.abbreviation].filter(Boolean).join(", ")
+    ? [location.city, location.stateAbbreviation].filter(Boolean).join(", ")
     : "";
   return {
     name: location?.name || location?.addressLine1 || stop?.addressLine || "",

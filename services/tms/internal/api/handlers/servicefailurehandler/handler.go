@@ -56,11 +56,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.list,
 	)
 	api.POST(
-		"/",
-		h.pm.RequirePermission(permission.ResourceServiceFailure.String(), permission.OpCreate),
-		h.createManual,
-	)
-	api.POST(
 		"/evaluate-shipment/:shipmentID/",
 		h.pm.RequirePermission(permission.ResourceServiceFailure.String(), permission.OpCreate),
 		h.evaluateShipment,
@@ -81,11 +76,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.get,
 	)
 	api.PUT(
-		"/:serviceFailureID/",
-		h.pm.RequirePermission(permission.ResourceServiceFailure.String(), permission.OpUpdate),
-		h.update,
-	)
-	api.PATCH(
 		"/:serviceFailureID/",
 		h.pm.RequirePermission(permission.ResourceServiceFailure.String(), permission.OpUpdate),
 		h.update,
@@ -163,21 +153,6 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 	helpers.JSON(c, http.StatusOK, entity)
-}
-
-func (h *Handler) createManual(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	_, err := h.service.CreateManual(
-		c.Request.Context(),
-		&servicefailureports.CreateManualServiceFailureRequest{
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-		actorutil.FromAuthContext(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
 }
 
 func (h *Handler) evaluateShipment(c *gin.Context) {

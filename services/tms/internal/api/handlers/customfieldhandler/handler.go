@@ -42,22 +42,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/custom-fields")
 
 	definitions := api.Group("/definitions")
-	definitions.GET(
-		"/",
-		h.pm.RequirePermission(
-			permission.ResourceCustomFieldDefinition.String(),
-			permission.OpRead,
-		),
-		h.list,
-	)
-	definitions.GET(
-		"/:definitionID/",
-		h.pm.RequirePermission(
-			permission.ResourceCustomFieldDefinition.String(),
-			permission.OpRead,
-		),
-		h.get,
-	)
 	definitions.POST(
 		"/",
 		h.pm.RequirePermission(
@@ -90,83 +74,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		),
 		h.delete,
 	)
-
-	api.GET("/resource-types/", h.getResourceTypes)
-	api.GET(
-		"/resources/:resourceType/",
-		h.getByResourceType,
-	)
-}
-
-// @Summary List custom field definitions
-// @ID listCustomFieldDefinitions
-// @Tags Custom Fields
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Param resourceType query string false "Filter by resource type"
-// @Success 200 {object} pagination.Response[[]customfield.CustomFieldDefinition]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /custom-fields/definitions/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*customfield.CustomFieldDefinition], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&customfieldports.ListCustomFieldDefinitionsRequest{
-					Filter:       req,
-					ResourceType: helpers.QueryString(c, "resourceType"),
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a custom field definition
-// @ID getCustomFieldDefinition
-// @Tags Custom Fields
-// @Produce json
-// @Param definitionID path string true "Custom field definition ID"
-// @Success 200 {object} customfield.CustomFieldDefinition
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /custom-fields/definitions/{definitionID}/ [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	definitionID, err := pulid.MustParse(c.Param("definitionID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		customfieldports.GetCustomFieldDefinitionByIDRequest{
-			ID:         definitionID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a custom field definition
@@ -320,53 +227,4 @@ func (h *Handler) delete(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
-}
-
-// @Summary List supported custom field resource types
-// @ID listCustomFieldResourceTypes
-// @Tags Custom Fields
-// @Produce json
-// @Success 200 {object} gin.H
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Router /custom-fields/resource-types/ [get]
-func (h *Handler) getResourceTypes(c *gin.Context) {
-	resourceTypes := h.service.GetSupportedResourceTypes()
-	helpers.JSON(c, http.StatusOK, gin.H{"resourceTypes": resourceTypes})
-}
-
-// @Summary List active custom field definitions by resource type
-// @ID getCustomFieldsByResourceType
-// @Tags Custom Fields
-// @Produce json
-// @Param resourceType path string true "Custom field resource type"
-// @Success 200 {array} customfield.CustomFieldDefinition
-// @Failure 400 {object} gin.H
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /custom-fields/resources/{resourceType}/ [get]
-func (h *Handler) getByResourceType(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	resourceType := c.Param("resourceType")
-
-	if !customfield.IsResourceTypeSupported(resourceType) {
-		helpers.JSON(c, http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
-		return
-	}
-
-	definitions, err := h.service.GetActiveByResourceType(
-		c.Request.Context(),
-		customfieldports.GetActiveByResourceTypeRequest{
-			TenantInfo:   pagination.FromAuth(authCtx),
-			ResourceType: resourceType,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, definitions)
 }

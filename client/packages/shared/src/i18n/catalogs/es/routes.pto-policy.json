@@ -46,7 +46,6 @@
   "Restored {0, plural, one {# policy} other {# policies}}": "{0, plural, one {# política restaurada} other {# políticas restauradas}}",
   "Restored {0, plural, one {# policy} other {# policies}}; {1} failed": "{0, plural, one {# política restaurada} other {# políticas restauradas}}; {1} fallaron",
   "Rule changes apply going forward": "Los cambios en las reglas se aplican de aquí en adelante",
-  "Rule {0}": "Regla {0}",
   "Select a PTO type": "Seleccione un tipo de tiempo libre remunerado",
   "Select a year basis": "Seleccione una base anual",
   "Select an accrual method": "Seleccione un método de devengo",

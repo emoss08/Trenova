@@ -16,10 +16,10 @@ the reason none should, and the writes still waiting for a tool.
 A new mutation or a new write route ships with a decision in
 `services/tms/internal/api/writecoverage/writecoverage.yml`.
 Each write is one entry under `writes:`, keyed as it appears below
-(`mutation createShipment`, `POST /api/v1/shipments/:shipmentID/cancel/`),
+(`mutation createShipment`, `POST /api/v1/tenders/:tenderID/cancel/`),
 and takes exactly one of:
 
-- `tools: [shipment_cancel]`: the agent tools that perform it. A tool
+- `tools: [dispatch_cancel_tender]`: the agent tools that perform it. A tool
   named here must be registered.
 - `exempt: <category>` with `reason: <why no agent should>`: one of
   the categories below. The reason is required.
@@ -85,37 +85,37 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 267 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 53 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 110 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 52 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1171 writes: 640 GraphQL mutations and 531 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 460 |
-| Exempt | 710 |
-| — Security | 87 |
-| — Configuration | 267 |
+| Covered by a tool | 443 |
+| Exempt | 678 |
+| — Security | 85 |
+| — Configuration | 247 |
 | — User preference | 40 |
-| — Infrastructure | 53 |
-| — Agent administration | 110 |
+| — Infrastructure | 48 |
+| — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 56 |
-| — Attestation | 52 |
+| — Read-only | 48 |
+| — Attestation | 53 |
 | — Duplicate | 10 |
-| **Pending** | **1** |
-| Total | 1171 |
+| **Pending** | **2** |
+| Total | 1123 |
 
-Of the 461 writes an agent should be able to make, 460 have a tool (99%).
+Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
 ## Pending
 
@@ -123,6 +123,7 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
+| billingqueue | `PUT /api/v1/billing-queue/:itemID/invoice-details/` | Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval |
 | edilading | `POST /api/v1/edi/flows/instances/:instanceID/release/` | Release a held or escalated EDI flow once the planner has dealt with what held it |
 
 ## By domain
@@ -149,14 +150,14 @@ The writes no tool performs yet, and what the tool would do.
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
-| assistant | 36 | 4 | 32 | 0 |
-| auth | 8 | 0 | 8 | 0 |
+| assistant | 35 | 4 | 31 | 0 |
+| auth | 7 | 0 | 7 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
 | benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
-| billingqueue | 15 | 10 | 5 | 0 |
+| billingqueue | 16 | 9 | 6 | 1 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
 | bulkedit | 2 | 0 | 2 | 0 |
@@ -181,23 +182,22 @@ The writes no tool performs yet, and what the tool would do.
 | decisions | 1 | 0 | 1 | 0 |
 | deskmemory | 6 | 2 | 4 | 0 |
 | detention | 8 | 4 | 4 | 0 |
-| detentionpolicy | 1 | 0 | 1 | 0 |
 | dispatchconsole | 5 | 4 | 1 | 0 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
-| distancecontrol | 2 | 0 | 2 | 0 |
+| distancecontrol | 1 | 0 | 1 | 0 |
 | distanceoverride | 4 | 0 | 4 | 0 |
 | distanceprofile | 5 | 0 | 5 | 0 |
 | document | 16 | 4 | 12 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |
 | documenttemplate | 12 | 0 | 12 | 0 |
-| documenttype | 3 | 0 | 3 | 0 |
+| documenttype | 2 | 0 | 2 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
 | driversettlement | 34 | 29 | 5 | 0 |
 | edi | 9 | 6 | 3 | 0 |
 | edilading | 13 | 1 | 11 | 1 |
 | edisetup | 17 | 5 | 12 | 0 |
-| editransfer | 12 | 9 | 3 | 0 |
+| editransfer | 9 | 7 | 2 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
@@ -207,20 +207,19 @@ The writes no tool performs yet, and what the tool would do.
 | extractionshadow | 1 | 0 | 1 | 0 |
 | factoring | 25 | 17 | 8 | 0 |
 | factoringcompany | 2 | 0 | 2 | 0 |
-| fiscalperiod | 9 | 5 | 4 | 0 |
-| fiscalyear | 7 | 0 | 7 | 0 |
-| fleetcode | 3 | 0 | 3 | 0 |
+| fiscalperiod | 5 | 5 | 0 | 0 |
+| fiscalyear | 5 | 0 | 5 | 0 |
+| fleetcode | 4 | 0 | 4 | 0 |
 | fleetsafety | 3 | 3 | 0 | 0 |
 | formulalibrary | 10 | 0 | 10 | 0 |
-| formulatemplate | 27 | 0 | 27 | 0 |
+| formulatemplate | 26 | 0 | 26 | 0 |
 | fuelpurchase | 13 | 7 | 6 | 0 |
 | fuelsurcharge | 9 | 2 | 7 | 0 |
-| glaccount | 5 | 0 | 5 | 0 |
 | googlemaps | 1 | 0 | 1 | 0 |
 | graphql | 1 | 0 | 1 | 0 |
 | hazardousmaterial | 4 | 4 | 0 | 0 |
-| hazmatsegregationrule | 3 | 0 | 3 | 0 |
-| holdreason | 3 | 0 | 3 | 0 |
+| hazmatsegregationrule | 2 | 0 | 2 | 0 |
+| holdreason | 2 | 0 | 2 | 0 |
 | homelayout | 5 | 1 | 4 | 0 |
 | iam | 15 | 0 | 15 | 0 |
 | ifta | 14 | 9 | 5 | 0 |
@@ -230,18 +229,18 @@ The writes no tool performs yet, and what the tool would do.
 | inboxpresence | 2 | 0 | 2 | 0 |
 | insight | 2 | 2 | 0 | 0 |
 | integration | 5 | 0 | 5 | 0 |
-| invoice | 12 | 11 | 1 | 0 |
-| invoiceadjustment | 10 | 7 | 3 | 0 |
+| invoice | 10 | 10 | 0 | 0 |
+| invoiceadjustment | 8 | 6 | 2 | 0 |
 | invoiceadjustmentcontrol | 1 | 0 | 1 | 0 |
 | invoicedispute | 3 | 3 | 0 | 0 |
-| invoicerun | 5 | 5 | 0 | 0 |
+| invoicerun | 1 | 1 | 0 | 0 |
 | invoiceshare | 1 | 1 | 0 | 0 |
 | journalentry | 2 | 0 | 2 | 0 |
 | journalreversal | 5 | 3 | 2 | 0 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
 | latecharge | 1 | 1 | 0 | 0 |
-| location | 4 | 4 | 0 | 0 |
-| locationcategory | 3 | 0 | 3 | 0 |
+| location | 3 | 3 | 0 | 0 |
+| locationcategory | 2 | 0 | 2 | 0 |
 | manualjournal | 7 | 5 | 2 | 0 |
 | notification | 5 | 0 | 5 | 0 |
 | notificationpreference | 1 | 0 | 1 | 0 |
@@ -251,34 +250,35 @@ The writes no tool performs yet, and what the tool would do.
 | orgholiday | 3 | 0 | 3 | 0 |
 | orgstructure | 6 | 0 | 6 | 0 |
 | pagefavorite | 1 | 0 | 1 | 0 |
+| palette | 3 | 0 | 3 | 0 |
 | performancereview | 11 | 3 | 8 | 0 |
 | permission | 1 | 0 | 1 | 0 |
 | permit | 3 | 2 | 1 | 0 |
 | ptopolicy | 8 | 1 | 7 | 0 |
 | push | 2 | 0 | 2 | 0 |
-| rateagreement | 12 | 11 | 1 | 0 |
+| rateagreement | 11 | 10 | 1 | 0 |
 | rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
 | rateimport | 3 | 2 | 1 | 0 |
-| ratematrix | 10 | 0 | 10 | 0 |
-| ratequote | 3 | 0 | 3 | 0 |
+| ratematrix | 9 | 0 | 9 | 0 |
+| ratequote | 2 | 0 | 2 | 0 |
 | ratesimulation | 1 | 1 | 0 | 0 |
-| ratezone | 3 | 0 | 3 | 0 |
-| realtime | 7 | 0 | 7 | 0 |
+| ratezone | 2 | 0 | 2 | 0 |
+| realtime | 4 | 0 | 4 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
 | report | 19 | 13 | 6 | 0 |
-| role | 12 | 0 | 12 | 0 |
+| role | 11 | 0 | 11 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
 | selfservice | 3 | 0 | 3 | 0 |
 | sequenceconfig | 1 | 0 | 1 | 0 |
-| servicefailure | 9 | 7 | 2 | 0 |
-| servicefailurereasoncode | 6 | 0 | 6 | 0 |
+| servicefailure | 8 | 7 | 1 | 0 |
+| servicefailurereasoncode | 5 | 0 | 5 | 0 |
 | servicetype | 4 | 0 | 4 | 0 |
-| shipment | 34 | 21 | 13 | 0 |
+| shipment | 26 | 17 | 9 | 0 |
 | shipmentboard | 4 | 3 | 1 | 0 |
 | shipmentcontrol | 1 | 0 | 1 | 0 |
-| shipmentmove | 4 | 4 | 0 | 0 |
+| shipmentmove | 2 | 2 | 0 | 0 |
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
 | storedmileage | 1 | 0 | 1 | 0 |
@@ -294,7 +294,7 @@ The writes no tool performs yet, and what the tool would do.
 | tractor | 5 | 5 | 0 | 0 |
 | trailer | 5 | 5 | 0 | 0 |
 | triage | 8 | 2 | 6 | 0 |
-| user | 21 | 0 | 21 | 0 |
+| user | 20 | 0 | 20 | 0 |
 | version | 1 | 0 | 1 | 0 |
 | watchtower | 13 | 8 | 5 | 0 |
 | worker | 8 | 5 | 3 | 0 |
@@ -316,7 +316,17 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- | --- |
 | `agent_raise_exception` | agent_exception | create |
 | `detention_escalate` | detention | update |
+| `dispatch_set_move_status` | shipment_move | update |
+| `edi_review_tender_change` | edi | update |
+| `invoice_adjust_run` | invoice_run | update |
+| `invoice_build_run` | invoice_run | create |
+| `invoice_cancel_run` | invoice_run | cancel |
+| `invoice_commit_run` | invoice_run | approve |
+| `rate_amend_agreement_rules` | rate_agreement | update |
+| `shipment_place_hold` | shipment_hold | create |
+| `shipment_release_hold` | shipment_hold | update |
 | `shipment_request_documents` | customer_communication | create |
+| `shipment_update_hold` | shipment_hold | update |
 | `web_use_portal` | portal_automation | update |
 | `web_watch` | web_research | read |
 | `worker_place_dispatch_hold` | worker_dispatch_hold | create |
@@ -329,9 +339,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/accessorial-charges/:accessorialChargeID/`<br>accessorialchargehandler.patch | Exempt, configuration: The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it. |
-| `POST /api/v1/accessorial-charges/`<br>accessorialchargehandler.create | Exempt, configuration: The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it. |
-| `PUT /api/v1/accessorial-charges/:accessorialChargeID/`<br>accessorialchargehandler.update | Exempt, configuration: The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it. |
+| `mutation createAccessorialCharge` | Exempt, configuration: The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it. |
+| `mutation patchAccessorialCharge` | Exempt, configuration: The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it. |
+| `mutation updateAccessorialCharge` | Exempt, configuration: The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it. |
 
 ### accountingcontrol
 
@@ -387,10 +397,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/account-types/:accountTypeID/`<br>accounttypehandler.patch | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
-| `POST /api/v1/account-types/`<br>accounttypehandler.create | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
-| `POST /api/v1/account-types/bulk-update-status/`<br>accounttypehandler.bulkUpdateStatus | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
-| `PUT /api/v1/account-types/:accountTypeID/`<br>accounttypehandler.update | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
+| `mutation bulkUpdateAccountTypeStatus` | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
+| `mutation createAccountType` | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
+| `mutation patchAccountType` | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
+| `mutation updateAccountType` | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
 
 ### agent
 
@@ -399,14 +409,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation approveAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
 | `mutation commitMyDecisionNow` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation createAgentMemory` | Tool: `agent_create_memory` |
-| `mutation decideAgentPlan`<br>twin `POST /api/v1/agent-plans/:planID/resolve/` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
-| `mutation decideAgentProposal`<br>twin `POST /api/v1/agent-proposals/:proposalID/resolve/` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
+| `mutation decideAgentPlan` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
+| `mutation decideAgentProposal` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyPlan` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyProposal` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyProposals` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation dismissAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
 | `mutation replayAgentRun` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
-| `mutation resolveAgentException`<br>twin `POST /api/v1/agent-exceptions/:exceptionID/resolve/` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
+| `mutation resolveAgentException` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
 | `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
 | `mutation setAgentMemoryStatus` | Tool: `agent_retire_memory` |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
@@ -560,7 +570,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `PATCH /api/v1/assistant/threads/:threadID/`<br>assistanthandler.updateThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `PATCH /api/v1/assistant/threads/:threadID/chapters/:chapterID/`<br>assistanthandler.renameChapter | Exempt, agent-administration: Chapters arrange the person's own conversation: where one subject ends and what it is called. The runtime marks and names them on its own, and no record an agent acts on changes. |
 | `PATCH /api/v1/assistant/threads/:threadID/queue/:itemID/`<br>assistanthandler.editQueued | Exempt, agent-administration: Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words. |
-| `POST /api/v1/assistant/ask/`<br>assistanthandler.ask | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/schedules/:scheduleID/run/`<br>assistanthandler.runSchedule | Exempt, agent-administration: Editing, pausing, deleting or running a schedule now is the person arranging what they asked an agent to repeat; an agent only proposes a new schedule, through agent_create_schedule, and a person approves it, so it never sets its own workload. |
 | `POST /api/v1/assistant/threads/`<br>assistanthandler.startThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/pin/`<br>assistanthandler.pinArtifact | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
@@ -599,7 +608,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/auth/reset-password`<br>authhandler.resetPassword | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/session/keepalive`<br>authhandler.keepSessionAlive | Exempt, security: Keeping a sign-in alive is the person proving they are still at the screen; an agent holds no credentials of its own. |
 | `POST /api/v1/auth/session/roles/activate`<br>authhandler.activateSessionRoles | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
-| `POST /api/v1/auth/validate-session`<br>authhandler.validateSession | Exempt, security: Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own. |
 
 ### bankreceipt
 
@@ -650,12 +658,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `billing_approve_queue_item`, `billing_cancel_queue_item`, `billing_hold_queue_item`, `billing_raise_exception`, `billing_return_to_operations`, `billing_start_review` |
 | `DELETE /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.deleteFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `billing_reassign_charge` |
-| `POST /api/v1/billing-queue/bulk-approve/`<br>billingqueuehandler.startBulkApprove | Tool: `billing_approve_queue_item` |
-| `POST /api/v1/billing-queue/bulk-approve/:runID/cancel/`<br>billingqueuehandler.cancelBulkApprove | Exempt, infrastructure: Stops a bulk approval run the queue screen started in the background; billing_approve_queue_item approves its items within the one proposal a person decides, so an agent has no run to stop. |
+| `POST /api/v1/billing-queue/bulk/`<br>billingqueuehandler.startBulk | Tool: `billing_approve_queue_item`, `billing_assign_biller`, `billing_cancel_queue_item`, `billing_hold_queue_item`, `billing_resolve_issue`, `invoice_post` |
+| `POST /api/v1/billing-queue/bulk/:runID/cancel/`<br>billingqueuehandler.cancelBulk | Exempt, infrastructure: Stops a bulk run the queue screen started in the background; the agent's billing tools act on each item within the one proposal a person decides, so an agent has no run to stop. |
 | `POST /api/v1/billing-queue/filter-presets/`<br>billingqueuehandler.createFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/pod-signatures/redetect/`<br>billingqueuehandler.redetectPODSignatures | Exempt, infrastructure: A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed. |
-| `POST /api/v1/billing-queue/transfer/`<br>billingqueuehandler.transfer | Tool: `billing_transfer` |
+| `POST /api/v1/billing-queue/search-intent/`<br>billingqueuehandler.searchIntent | Exempt, read-only: Turns a sentence into filters for the queue screen and changes nothing. |
 | `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `billing_correct_charge_codes` |
+| `PUT /api/v1/billing-queue/:itemID/invoice-details/`<br>billingqueuehandler.updateInvoiceDetails | Pending: Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval |
 | `PUT /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.updateFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 
 ### billingtransfer
@@ -802,10 +811,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/commodities/:commodityID/`<br>commodityhandler.patch | Tool: `masterdata_update_commodity` |
-| `POST /api/v1/commodities/`<br>commodityhandler.create | Tool: `masterdata_create_commodity` |
-| `POST /api/v1/commodities/bulk-update-status/`<br>commodityhandler.bulkUpdateStatus | Tool: `masterdata_set_commodity_status` |
-| `PUT /api/v1/commodities/:commodityID/`<br>commodityhandler.update | Tool: `masterdata_update_commodity` |
+| `mutation bulkUpdateCommodityStatus` | Tool: `masterdata_set_commodity_status` |
+| `mutation createCommodity` | Tool: `masterdata_create_commodity` |
+| `mutation patchCommodity` | Tool: `masterdata_update_commodity` |
+| `mutation updateCommodity` | Tool: `masterdata_update_commodity` |
 
 ### costing
 
@@ -818,20 +827,20 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/customers/:customerID/`<br>customerhandler.patch | Tool: `customer_update` |
-| `POST /api/v1/customers/`<br>customerhandler.create | Tool: `customer_create` |
-| `POST /api/v1/customers/bulk-update-status/`<br>customerhandler.bulkUpdateStatus | Tool: `customer_set_status` |
-| `PUT /api/v1/customers/:customerID/`<br>customerhandler.update | Tool: `customer_update` |
+| `mutation bulkUpdateCustomerStatus` | Tool: `customer_set_status` |
+| `mutation createCustomer` | Tool: `customer_create` |
+| `mutation patchCustomer` | Tool: `customer_update` |
+| `mutation updateCustomer` | Tool: `customer_update` |
 
 ### customerpayment
 
 | Write | Decision |
 | --- | --- |
-| `mutation applyCreditMemo`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/` | Tool: `receivable_apply_credit_memo` |
-| `mutation applyUnappliedCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/apply/` | Tool: `receivable_apply_customer_payment` |
-| `mutation postAndApplyCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/` | Tool: `receivable_post_customer_payment` |
-| `mutation reverseCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/reverse/` | Tool: `receivable_reverse_customer_payment` |
-| `mutation unapplyCreditMemoApplication`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/` | Tool: `receivable_unapply_credit_memo` |
+| `mutation applyCreditMemo` | Tool: `receivable_apply_credit_memo` |
+| `mutation applyUnappliedCustomerPayment` | Tool: `receivable_apply_customer_payment` |
+| `mutation postAndApplyCustomerPayment` | Tool: `receivable_post_customer_payment` |
+| `mutation reverseCustomerPayment` | Tool: `receivable_reverse_customer_payment` |
+| `mutation unapplyCreditMemoApplication` | Tool: `receivable_unapply_credit_memo` |
 
 ### customerstatement
 
@@ -889,20 +898,14 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/approve/` | Tool: `detention_approve` |
-| `mutation createDetentionPolicy`<br>twin `POST /api/v1/detention-policies/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
-| `mutation deleteDetentionPolicy`<br>twin `DELETE /api/v1/detention-policies/:detentionPolicyID/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
-| `mutation detentionBacktest`<br>twin `POST /api/v1/detention/backtest/` | Exempt, read-only: Replays a detention policy against past stops and saves nothing. |
-| `mutation disputeDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/dispute/` | Tool: `detention_open_dispute` |
+| `mutation approveDetentionOccurrence` | Tool: `detention_approve` |
+| `mutation createDetentionPolicy` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
+| `mutation deleteDetentionPolicy` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
+| `mutation detentionBacktest` | Exempt, read-only: Replays a detention policy against past stops and saves nothing. |
+| `mutation disputeDetentionOccurrence` | Tool: `detention_open_dispute` |
 | `mutation sendDetentionNotice` | Tool: `detention_send_notice` |
-| `mutation updateDetentionPolicy`<br>twin `PUT /api/v1/detention-policies/:detentionPolicyID/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
-| `mutation waiveDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/waive/` | Tool: `detention_waive` |
-
-### detentionpolicy
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/detention-policies/preview/`<br>detentionpolicyhandler.preview | Exempt, read-only: Previews how a detention policy would apply and saves nothing. |
+| `mutation updateDetentionPolicy` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
+| `mutation waiveDetentionOccurrence` | Tool: `detention_waive` |
 
 ### dispatchconsole
 
@@ -925,7 +928,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `PATCH /api/v1/distance-controls/`<br>distancecontrolhandler.patch | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `PUT /api/v1/distance-controls/`<br>distancecontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### distanceoverride
 
@@ -953,6 +955,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Tool: `document_delete` |
 | `POST /api/v1/documents/:documentID/approve/`<br>documenthandler.approve | Exempt, attestation: Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve. |
 | `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `shipment_attach_document` |
+| `POST /api/v1/documents/:documentID/delivery-facts/`<br>documenthandler.setDeliveryFacts | Exempt, attestation: Recording who signed, what arrived and what a receipt cost is the reviewer's reading of the paperwork, and it overrides what Nova read from it; Nova fills these itself when it reviews the item, so an agent never attests to them through this route. |
 | `POST /api/v1/documents/:documentID/import-assistant/thread/`<br>documenthandler.openImportAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/documents/:documentID/reject/`<br>documenthandler.reject | Exempt, attestation: Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it. |
 | `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `document_restore_version` |
@@ -965,7 +968,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/documents/uploads/:uploadSessionID/cancel/`<br>documenthandler.cancelUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/documents/uploads/:uploadSessionID/complete/`<br>documenthandler.completeUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/documents/uploads/:uploadSessionID/parts/`<br>documenthandler.getUploadPartURLs | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
-| `PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/`<br>documenthandler.uploadSessionPart | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 
 ### documentcontrol
 
@@ -1002,9 +1004,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/document-types/:docTypeID/`<br>documenttypehandler.patch | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/document-types/`<br>documenttypehandler.create | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `PUT /api/v1/document-types/:docTypeID/`<br>documenttypehandler.update | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createDocumentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateDocumentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### driverportal
 
@@ -1139,10 +1140,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/edi/control-numbers/reset/`<br>editransferhandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/load-tenders/`<br>editransferhandler.submitLoadTender | Tool: `edi_send_tender` |
-| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>editransferhandler.applyTenderChange | Tool: `edi_review_tender_change` |
-| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>editransferhandler.rejectTenderChange | Tool: `edi_review_tender_change` |
 | `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>editransferhandler.applyTransferChange | Tool: `edi_review_transfer_change` |
 | `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>editransferhandler.rejectTransferChange | Tool: `edi_review_transfer_change` |
 | `POST /api/v1/edi/transfers/:transferID/approve/`<br>editransferhandler.approveTransfer | Tool: `edi_accept_tender` |
@@ -1170,19 +1168,19 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation bulkUpdateEquipmentManufacturerStatus`<br>twin `POST /api/v1/equipment-manufacturers/bulk-update-status/` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `mutation createEquipmentManufacturer`<br>twin `POST /api/v1/equipment-manufacturers/` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `mutation patchEquipmentManufacturer`<br>twin `PATCH /api/v1/equipment-manufacturers/:equipManufacturerID/` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `mutation updateEquipmentManufacturer`<br>twin `PUT /api/v1/equipment-manufacturers/:equipManufacturerID/` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation bulkUpdateEquipmentManufacturerStatus` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createEquipmentManufacturer` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation patchEquipmentManufacturer` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateEquipmentManufacturer` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### equipmenttype
 
 | Write | Decision |
 | --- | --- |
-| `mutation bulkUpdateEquipmentTypeStatus`<br>twin `POST /api/v1/equipment-types/bulk-update-status/` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `mutation createEquipmentType`<br>twin `POST /api/v1/equipment-types/` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `mutation patchEquipmentType`<br>twin `PATCH /api/v1/equipment-types/:equipTypeID/` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `mutation updateEquipmentType`<br>twin `PUT /api/v1/equipment-types/:equipTypeID/` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation bulkUpdateEquipmentTypeStatus` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createEquipmentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation patchEquipmentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateEquipmentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### exchangerate
 
@@ -1248,17 +1246,13 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation createFactoringCompany`<br>twin `POST /api/v1/factoring-companies/` | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
-| `mutation updateFactoringCompany`<br>twin `PATCH /api/v1/factoring-companies/:factoringCompanyID/`<br>twin `PUT /api/v1/factoring-companies/:factoringCompanyID/` | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `mutation createFactoringCompany` | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
+| `mutation updateFactoringCompany` | Exempt, configuration: A factor's remit-to and the notice of assignment printed on every invoice assigned to it are set from the signed factoring agreement by an administrator. |
 
 ### fiscalperiod
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.delete | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
-| `PATCH /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.patch | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
-| `POST /api/v1/fiscal-periods/`<br>fiscalperiodhandler.create | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.update | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
 | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/`<br>fiscalperiodhandler.activate | Tool: `ledger_open_fiscal_period` |
 | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/`<br>fiscalperiodhandler.close | Tool: `ledger_close_fiscal_period` |
 | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/`<br>fiscalperiodhandler.lock | Tool: `ledger_lock_fiscal_period` |
@@ -1269,8 +1263,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.delete | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
-| `PATCH /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.patch | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
 | `POST /api/v1/fiscal-years/`<br>fiscalyearhandler.create | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
 | `PUT /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.update | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
 | `PUT /api/v1/fiscal-years/:fiscalYearID/activate/`<br>fiscalyearhandler.activate | Exempt, configuration: Makes a fiscal year the one the calendar runs on, part of setting up the year that an accounting administrator does once. |
@@ -1281,9 +1273,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/fleet-codes/:fleetCodeID`<br>fleetcodehandler.patch | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/fleet-codes/`<br>fleetcodehandler.create | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `PUT /api/v1/fleet-codes/:fleetCodeID`<br>fleetcodehandler.update | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation bulkUpdateFleetCodeStatus` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createFleetCode` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation patchFleetCode` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateFleetCode` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### fleetsafety
 
@@ -1312,7 +1305,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/formula-templates/:templateID/`<br>formulatemplatehandler.patch | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/effective-date`<br>formulatemplatehandler.updateVersionEffectiveDate | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/tags`<br>formulatemplatehandler.updateVersionTags | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/`<br>formulatemplatehandler.create | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
@@ -1372,16 +1364,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateFuelIndexPrice` | Tool: `rate_correct_fuel_index_price` |
 | `mutation updateFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 
-### glaccount
-
-| Write | Decision |
-| --- | --- |
-| `DELETE /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.delete | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
-| `PATCH /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.patch | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
-| `POST /api/v1/gl-accounts/`<br>glaccounthandler.create | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
-| `POST /api/v1/gl-accounts/bulk-update-status/`<br>glaccounthandler.bulkUpdateStatus | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
-| `PUT /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.update | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
-
 ### googlemaps
 
 | Write | Decision |
@@ -1398,26 +1380,24 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.patch | Tool: `masterdata_update_hazardous_material` |
-| `POST /api/v1/hazardous-materials/`<br>hazardousmaterialhandler.create | Tool: `masterdata_create_hazardous_material` |
-| `POST /api/v1/hazardous-materials/bulk-update-status/`<br>hazardousmaterialhandler.bulkUpdateStatus | Tool: `masterdata_set_hazardous_material_status` |
-| `PUT /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.update | Tool: `masterdata_update_hazardous_material` |
+| `mutation bulkUpdateHazardousMaterialStatus` | Tool: `masterdata_set_hazardous_material_status` |
+| `mutation createHazardousMaterial` | Tool: `masterdata_create_hazardous_material` |
+| `mutation patchHazardousMaterial` | Tool: `masterdata_update_hazardous_material` |
+| `mutation updateHazardousMaterial` | Tool: `masterdata_update_hazardous_material` |
 
 ### hazmatsegregationrule
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/`<br>hazmatsegregationrulehandler.patch | Exempt, configuration: Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them. |
-| `POST /api/v1/hazmat-segregation-rules/`<br>hazmatsegregationrulehandler.create | Exempt, configuration: Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them. |
-| `PUT /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/`<br>hazmatsegregationrulehandler.update | Exempt, configuration: Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them. |
+| `mutation createHazmatSegregationRule` | Exempt, configuration: Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them. |
+| `mutation updateHazmatSegregationRule` | Exempt, configuration: Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them. |
 
 ### holdreason
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/hold-reasons/:holdReasonID/`<br>holdreasonhandler.patch | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/hold-reasons/`<br>holdreasonhandler.create | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `PUT /api/v1/hold-reasons/:holdReasonID/`<br>holdreasonhandler.update | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createHoldReason` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateHoldReason` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### homelayout
 
@@ -1555,15 +1535,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation createInvoicesFromOrder` | Tool: `invoice_create` |
 | `mutation createInvoicesFromShipments` | Tool: `invoice_create` |
-| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Tool: `invoice_create_memo` |
+| `mutation createMemo` | Tool: `invoice_create_memo` |
 | `mutation sendInvoiceEdi` | Tool: `invoice_send_edi` |
-| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Tool: `invoice_void` |
+| `mutation voidInvoice` | Tool: `invoice_void` |
 | `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `invoice_update_draft` |
 | `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `invoice_generate_pdf` |
 | `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `invoice_post` |
-| `POST /api/v1/billing/invoices/:invoiceID/preview/`<br>invoicehandler.preview | Exempt, read-only: Renders an invoice for review and saves nothing. |
 | `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `invoice_send` |
-| `POST /api/v1/billing/invoices/from-order/`<br>invoicehandler.createFromOrder | Tool: `invoice_create` |
 | `POST /api/v1/billing/invoices/from-shipments/`<br>invoicehandler.createFromShipments | Tool: `invoice_create` |
 
 ### invoiceadjustment
@@ -1573,8 +1551,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Tool: `invoice_approve_adjustment` |
 | `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Tool: `invoice_reject_adjustment` |
 | `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Tool: `invoice_save_adjustment_draft` |
-| `POST /api/v1/billing/invoice-adjustments/bulk-preview/`<br>invoiceadjustmenthandler.bulkPreview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Tool: `invoice_submit_adjustment` |
 | `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Tool: `invoice_save_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/`<br>invoiceadjustmenthandler.previewDraft | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
 | `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Tool: `invoice_submit_adjustment` |
@@ -1599,10 +1575,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Tool: `invoice_adjust_run` |
-| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Tool: `invoice_cancel_run` |
-| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Tool: `invoice_commit_run` |
-| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Tool: `invoice_build_run` |
 | `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `invoice_bill_statement` |
 
 ### invoiceshare
@@ -1652,15 +1624,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `PATCH /api/v1/locations/:locationID/`<br>locationhandler.patch | Tool: `location_update` |
 | `POST /api/v1/locations/`<br>locationhandler.create | Tool: `location_create` |
 | `POST /api/v1/locations/bulk-update-status/`<br>locationhandler.bulkUpdateStatus | Tool: `location_set_status` |
-| `PUT /api/v1/locations/:locationID/`<br>locationhandler.update | Tool: `location_update` |
 
 ### locationcategory
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/location-categories/:locationCategoryID/`<br>locationcategoryhandler.patch | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `POST /api/v1/location-categories/`<br>locationcategoryhandler.create | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
-| `PUT /api/v1/location-categories/:locationCategoryID/`<br>locationcategoryhandler.update | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation createLocationCategory` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
+| `mutation updateLocationCategory` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
 ### manualjournal
 
@@ -1704,11 +1674,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation attachOrderShipments` | Tool: `order_attach_shipments` |
 | `mutation cancelOrder` | Tool: `order_cancel` |
 | `mutation closeOrder` | Tool: `order_close` |
-| `mutation createOrder`<br>twin `POST /api/v1/orders/` | Tool: `order_create` |
+| `mutation createOrder` | Tool: `order_create` |
 | `mutation detachOrderShipment` | Tool: `order_detach_shipment` |
 | `mutation removeOrderCharge` | Tool: `order_remove_charge` |
 | `mutation setOrderChargeAllocations` | Tool: `order_set_charge_allocations` |
-| `mutation updateOrder`<br>twin `PATCH /api/v1/orders/:orderID/`<br>twin `PUT /api/v1/orders/:orderID/` | Tool: `order_update` |
+| `mutation updateOrder` | Tool: `order_update` |
 | `mutation updateOrderCharge` | Tool: `order_update_charge` |
 
 ### organization
@@ -1744,6 +1714,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/page-favorites/toggle`<br>pagefavoritehandler.toggle | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+
+### palette
+
+| Write | Decision |
+| --- | --- |
+| `DELETE /api/v1/assistant/ask/:askID/`<br>palettehandler.stop | Exempt, agent-administration: Stops a question a person typed into the command palette; it is that person's own conversation with Nova, not work an agent does. |
+| `POST /api/v1/assistant/ask/`<br>palettehandler.ask | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/ask/:askID/keep/`<br>palettehandler.keep | Exempt, agent-administration: Keeps a palette answer as a Desk conversation for the person who asked; an agent has no palette question of its own to keep. |
 
 ### performancereview
 
@@ -1805,7 +1783,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/`<br>rateagreementhandler.duplicate | Tool: `rate_duplicate_agreement` |
 | `POST /api/v1/rate-agreements/:rateAgreementID/reject/`<br>rateagreementhandler.review | Tool: `rate_reject_agreement` |
 | `POST /api/v1/rate-agreements/:rateAgreementID/resume/`<br>rateagreementhandler.review | Tool: `rate_resume_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/`<br>rateagreementhandler.amendRules | Tool: `rate_amend_agreement_rules` |
 | `POST /api/v1/rate-agreements/:rateAgreementID/submit/`<br>rateagreementhandler.review | Tool: `rate_submit_agreement` |
 | `POST /api/v1/rate-agreements/:rateAgreementID/suspend/`<br>rateagreementhandler.review | Tool: `rate_suspend_agreement` |
 | `POST /api/v1/rate-agreements/rate-increase/apply/`<br>rateagreementhandler.applyRateIncrease | Tool: `rate_apply_increase` |
@@ -1839,7 +1816,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.delete | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 | `POST /api/v1/rate-matrices/`<br>ratematrixhandler.create | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 | `POST /api/v1/rate-matrices/:rateMatrixID/approve/`<br>ratematrixhandler.approve | Exempt, configuration: Publishing a rate matrix version is a reviewer's decision on pricing every tariff can pin; it waits for a person who did not write the draft. |
 | `POST /api/v1/rate-matrices/:rateMatrixID/archive/`<br>ratematrixhandler.archive | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
@@ -1854,7 +1830,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-quotes/quote/`<br>ratequotehandler.quote | Exempt, read-only: Quotes a rate from the rating engine and saves nothing. |
 | `POST /api/v1/rate-quotes/shipment/:shipmentID/explain/`<br>ratequotehandler.explain | Exempt, read-only: Explains how a shipment was rated and saves nothing. |
 | `POST /api/v1/rate-quotes/shipment/:shipmentID/shop/`<br>ratequotehandler.shop | Exempt, read-only: Compares the rates every agreement would give a shipment and saves nothing. |
 
@@ -1868,7 +1843,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.delete | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
 | `POST /api/v1/rate-zones/`<br>ratezonehandler.create | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
 | `PUT /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.update | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
 
@@ -1878,11 +1852,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `DELETE /api/v1/realtime/presence/:resource/`<br>realtimehandler.leaveView | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `DELETE /api/v1/realtime/presence/:resource/:recordID/`<br>realtimehandler.leaveRecord | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
-| `DELETE /api/v1/shipments/:shipmentID/comments/presence/`<br>realtimehandler.leaveShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `POST /api/v1/realtime/presence/:resource/`<br>realtimehandler.joinView | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `POST /api/v1/realtime/presence/:resource/:recordID/`<br>realtimehandler.joinRecord | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
-| `POST /api/v1/shipments/:shipmentID/comments/presence/`<br>realtimehandler.joinShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
-| `POST /api/v1/shipments/:shipmentID/comments/typing/`<br>realtimehandler.typingShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 
 ### recurringshipment
 
@@ -1929,7 +1900,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/roles/hierarchy/:edgeID`<br>rolehandler.deleteHierarchy | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 | `POST /api/v1/roles/`<br>rolehandler.create | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 | `POST /api/v1/roles/:roleID/assignments`<br>rolehandler.assignRole | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
-| `POST /api/v1/roles/:roleID/permissions`<br>rolehandler.addPermission | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 | `POST /api/v1/roles/constraints`<br>rolehandler.saveConstraint<br>also `PUT /api/v1/roles/constraints/:constraintID` | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 | `POST /api/v1/roles/hierarchy`<br>rolehandler.upsertHierarchy | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
 | `PUT /api/v1/roles/:roleID`<br>rolehandler.update | Exempt, security: Grants or removes access. An agent that could change access could widen its own. |
@@ -1973,8 +1943,6 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/service-failures/:serviceFailureID/`<br>servicefailurehandler.update<br>also `PUT /api/v1/service-failures/:serviceFailureID/` | Tool: `exception_update_service_failure` |
-| `POST /api/v1/service-failures/`<br>servicefailurehandler.createManual | Exempt, read-only: The service refuses every manual service failure: failures are opened only by evaluation against stop actuals, which exception_evaluate_service_failures runs, so the route changes nothing. |
 | `POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/`<br>servicefailurehandler.buildEDI214Payload | Exempt, read-only: Builds the EDI 214 a service failure would send and returns it. |
 | `POST /api/v1/service-failures/:serviceFailureID/resolve/`<br>servicefailurehandler.resolve | Tool: `exception_resolve_service_failure` |
 | `POST /api/v1/service-failures/:serviceFailureID/review/`<br>servicefailurehandler.review | Tool: `exception_review_service_failure` |
@@ -1982,12 +1950,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/service-failures/bulk-evaluate/`<br>servicefailurehandler.bulkEvaluate | Tool: `exception_evaluate_service_failures` |
 | `POST /api/v1/service-failures/evaluate-shipment/:shipmentID/`<br>servicefailurehandler.evaluateShipment | Tool: `exception_evaluate_service_failures` |
 | `POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/`<br>servicefailurehandler.evaluateStop | Tool: `exception_evaluate_service_failures` |
+| `PUT /api/v1/service-failures/:serviceFailureID/`<br>servicefailurehandler.update | Tool: `exception_update_service_failure` |
 
 ### servicefailurereasoncode
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/service-failure-reason-codes/:reasonCodeID/`<br>servicefailurereasoncodehandler.patch | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 | `POST /api/v1/service-failure-reason-codes/`<br>servicefailurereasoncodehandler.create | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 | `POST /api/v1/service-failure-reason-codes/:reasonCodeID/activate/`<br>servicefailurereasoncodehandler.activate | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 | `POST /api/v1/service-failure-reason-codes/:reasonCodeID/archive/`<br>servicefailurereasoncodehandler.archive | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
@@ -2009,38 +1977,30 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acknowledgeShipmentComment` | Exempt, attestation: Acknowledging a comment says that the person it was addressed to has read it; only that person can say so. |
 | `mutation approveShipmentRatingReview` | Exempt, attestation: Approving the reviews a tariff asked for is the sign-off that releases a held rating to billing; a named person must make it, and the service refuses an agent. |
-| `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `shipment_rerate` |
-| `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `billing_transfer` |
-| `mutation calculateShipmentDistance`<br>twin `POST /api/v1/shipments/calculate-distance/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation calculateShipmentLoadingOptimization`<br>twin `POST /api/v1/shipments/loading-optimization/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation calculateShipmentTotals`<br>twin `POST /api/v1/shipments/calculate-totals/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation cancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/cancel/` | Tool: `shipment_cancel` |
+| `mutation autoRateShipment` | Tool: `shipment_rerate` |
+| `mutation bulkTransferShipmentsToBilling` | Tool: `billing_transfer` |
+| `mutation calculateShipmentDistance` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
+| `mutation calculateShipmentLoadingOptimization` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
+| `mutation calculateShipmentTotals` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
+| `mutation cancelShipment` | Tool: `shipment_cancel` |
 | `mutation checkShipmentDuplicateBol` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation checkShipmentHazmatSegregation` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation createShipment`<br>twin `POST /api/v1/shipments/` | Tool: `shipment_create` |
-| `mutation createShipmentComment`<br>twin `POST /api/v1/shipments/:shipmentID/comments/` | Tool: `shipment_add_comment` |
-| `mutation deleteShipmentComment`<br>twin `DELETE /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `shipment_delete_comment` |
-| `mutation duplicateShipment`<br>twin `POST /api/v1/shipments/duplicate/` | Tool: `shipment_duplicate` |
+| `mutation createShipmentComment` | Tool: `shipment_add_comment` |
+| `mutation deleteShipmentComment` | Tool: `shipment_delete_comment` |
+| `mutation duplicateShipment` | Tool: `shipment_duplicate` |
 | `mutation pinShipmentComment` | Tool: `shipment_pin_comment` |
 | `mutation previewShipmentContractRate` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Tool: `shipment_recalculate_distance` |
+| `mutation recalculateShipmentDistance` | Tool: `shipment_recalculate_distance` |
 | `mutation resolveShipmentComment` | Tool: `shipment_resolve_comment` |
-| `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Tool: `shipment_transfer_ownership` |
+| `mutation transferShipmentOwnership` | Tool: `shipment_transfer_ownership` |
 | `mutation transferShipmentToBillingItems` | Tool: `billing_transfer` |
-| `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `shipment_uncancel` |
+| `mutation uncancelShipment` | Tool: `shipment_uncancel` |
 | `mutation unpinShipmentComment` | Tool: `shipment_unpin_comment` |
 | `mutation unresolveShipmentComment` | Tool: `shipment_resolve_comment` |
 | `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `shipment_update`, `shipment_reschedule_stop`, `shipment_add_charge` |
-| `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `shipment_update_comment` |
-| `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `shipment_place_hold` |
-| `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `shipment_release_hold` |
-| `POST /api/v1/shipments/:shipmentID/transfer-to-billing/`<br>shipmenthandler.transferToBilling | Tool: `billing_transfer` |
-| `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and shipment_cancel cancels one. |
-| `POST /api/v1/shipments/check-for-duplicate-bols/`<br>shipmenthandler.checkForDuplicateBOLs | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `POST /api/v1/shipments/check-hazmat-segregation/`<br>shipmenthandler.checkHazmatSegregation | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
+| `mutation updateShipmentComment` | Tool: `shipment_update_comment` |
 | `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Exempt, infrastructure: The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; exception_evaluate_service_failures records a late stop for one shipment. |
-| `POST /api/v1/shipments/previous-rates/`<br>shipmenthandler.getPreviousRates | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Tool: `shipment_update_hold` |
 
 ### shipmentboard
 
@@ -2063,8 +2023,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `POST /api/v1/shipment-moves/:moveID/split/`<br>shipmentmovehandler.splitMove | Tool: `dispatch_split_move` |
 | `POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/`<br>shipmentmovehandler.recordStopActual | Tool: `dispatch_record_stop_actual` |
-| `POST /api/v1/shipment-moves/:moveID/update-status/`<br>shipmentmovehandler.updateStatus | Tool: `dispatch_set_move_status` |
-| `POST /api/v1/shipment-moves/bulk-update-status/`<br>shipmentmovehandler.bulkUpdateStatus | Tool: `dispatch_set_move_status` |
 
 ### shipmenttype
 
@@ -2210,7 +2168,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/users/me/sessions/:sessionID/`<br>userhandler.revokeMySession | Exempt, security: Signing a device out decides who can act as the person; an agent never ends someone's sessions. |
 | `PATCH /api/v1/users/me/profile/`<br>userhandler.updateMyProfile | Exempt, user-preference: A person's own job title, phone and avatar; they describe themselves and no agent speaks for them. |
 | `PATCH /api/v1/users/me/settings/`<br>userhandler.updateMySettings | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
-| `POST /api/v1/users/:userID/permissions/simulate/`<br>userhandler.simulatePermissions | Exempt, read-only: Shows what a user could do with a set of roles and saves nothing. |
 | `POST /api/v1/users/:userID/reset-password/`<br>userhandler.sendPasswordReset | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `POST /api/v1/users/bulk-update-status/`<br>userhandler.bulkUpdateStatus | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `POST /api/v1/users/me/change-password/`<br>userhandler.changeMyPassword | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |

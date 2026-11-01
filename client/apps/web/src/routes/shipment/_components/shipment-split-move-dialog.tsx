@@ -16,6 +16,8 @@ import {
 import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useSelectOption } from "@/hooks/use-select-option";
+import { locationOptionPlace } from "@/lib/location-option";
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
 import type {
@@ -24,7 +26,7 @@ import type {
   SplitMoveResponse,
   StopType,
 } from "@trenova/shared/types/shipment";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -56,19 +58,15 @@ function MiniLocationDisplay({
 }) {
   const t = useT();
 
-  const { data: location } = useQuery({
-    queryKey: ["location", "selectOption", locationId],
-    queryFn: () => apiService.locationService.getOption(locationId),
-    enabled: !!locationId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { option } = useSelectOption("LOCATION", locationId);
 
-  if (!location) {
+  if (!option) {
     return (
       <span className="text-muted-foreground text-xs">{fallbackLabel ?? t("Loading...")}</span>
     );
   }
 
+  const location = locationOptionPlace(option);
   return (
     <div className="min-w-0">
       <p className="truncate text-xs font-medium">{location.name}</p>
@@ -77,7 +75,7 @@ function MiniLocationDisplay({
       )}
       <p className="text-muted-foreground truncate text-xs">
         {location.city}
-        {location.state?.abbreviation && `, ${location.state.abbreviation}`} {location.postalCode}
+        {location.stateAbbreviation && `, ${location.stateAbbreviation}`} {location.postalCode}
       </p>
     </div>
   );

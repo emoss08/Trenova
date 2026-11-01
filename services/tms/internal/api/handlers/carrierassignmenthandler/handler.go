@@ -42,11 +42,6 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	moveAssignments := rg.Group("/shipment-moves/:moveID/carrier-assignment")
 	moveAssignments.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpRead),
-		h.get,
-	)
-	moveAssignments.GET(
 		"/preview/",
 		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpRead),
 		h.preview,
@@ -61,48 +56,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUnassign),
 		h.cancel,
 	)
-}
-
-// @Summary Get the active carrier assignment for a move
-// @ID getMoveCarrierAssignment
-// @Tags CarrierAssignments
-// @Produce json
-// @Param moveID path string true "Shipment move ID"
-// @Success 200 {object} shipment.CarrierAssignment
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /shipment-moves/{moveID}/carrier-assignment/ [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	moveID, err := pulid.MustParse(c.Param("moveID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.GetActiveByMoveID(
-		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
-		moveID,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	if entity == nil {
-		c.Status(http.StatusNoContent)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Preview carrier eligibility for a move assignment

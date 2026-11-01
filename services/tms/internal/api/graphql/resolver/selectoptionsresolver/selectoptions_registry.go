@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/accountingselectoptions"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingselectoptions"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/documentsselectoptions"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ediselectoptions"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentselectoptions"
@@ -70,6 +71,7 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		ServiceTypeService:          r.ServiceTypeService,
 		CommodityService:            r.CommodityService,
 		HazardousMaterialService:    r.HazardousMaterialService,
+		DotHazmatReferenceService:   r.DotHazmatReferenceService,
 		OrderService:                r.OrderService,
 		ShipmentReader:              r.ShipmentReader,
 		ServiceFailureReasonCodeSvc: r.ServiceFailureReasonCodeSvc,
@@ -117,10 +119,16 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		FactoringCompanyRepo: r.FactoringCompanyRepo,
 	}
 	documents := &documentsselectoptions.Sources{
+		Core:                  r.Core,
 		CaptureProfileService: r.CaptureProfileService,
 		CaptureDeviceService:  r.CaptureDeviceService,
+		DocumentService:       r.DocumentService,
 		DocumentTypeService:   r.DocumentTypeService,
 		EmailService:          r.EmailService,
+	}
+	billing := &billingselectoptions.Sources{
+		Core:                    r.Core,
+		BankReceiptBatchService: r.BankReceiptBatchService,
 	}
 	agent := &agentselectoptions.Sources{Core: r.Core, AiProviderService: r.AiProviderService}
 
@@ -240,6 +248,13 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		gqlmodel.SelectOptionResourceDocumentType: {
 			Resolve: documents.DocumentType,
 		},
+		gqlmodel.SelectOptionResourceDocument: {
+			Resolve: documents.Document,
+		},
+		gqlmodel.SelectOptionResourceBankReceiptSource: {
+			Resolve:  billing.BankReceiptSource,
+			parseIDs: gqlid.ParseCatalogIDs,
+		},
 		gqlmodel.SelectOptionResourceCaptureDevice: {
 			Resolve: documents.CaptureDevice,
 		},
@@ -263,6 +278,9 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		},
 		gqlmodel.SelectOptionResourceHazardousMaterial: {
 			Resolve: operations.HazardousMaterial,
+		},
+		gqlmodel.SelectOptionResourceDOTHazmatReference: {
+			Resolve: operations.DotHazmatReference,
 		},
 		gqlmodel.SelectOptionResourceServiceFailureReasonCode: {
 			Resolve: operations.ServiceFailureReasonCode,

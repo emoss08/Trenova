@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,6 +27,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "CustomerConnection", Implementors: []string{"CustomerConnection"}},
 		{Name: "CustomerEdge", Implementors: []string{"CustomerEdge"}},
 		{Name: "CustomerEmailProfile", Implementors: []string{"CustomerEmailProfile"}},
+		{Name: "ShipmentCustomerBillingRules", Implementors: []string{"ShipmentCustomerBillingRules"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "Customer", Fields: []*gqlexec.Field{
@@ -181,6 +183,24 @@ var Shard = &gqlexec.Shard{
 					return obj.ExternalID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "checkCallIntervalHours",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.Customer)
+					return obj.CheckCallIntervalHours, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint16),
+			},
+			{
+				Name:     "etaRiskThresholdMinutes",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customer.Customer)
+					return obj.EtaRiskThresholdMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint16),
 			},
 			{
 				Name:     "allowConsolidation",
@@ -1130,6 +1150,60 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createCustomer",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Customer",
+				Args:       field_Mutation_createCustomer_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateCustomer(ctx, fc.Args["input"].(gqlmodel.CustomerInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
+			},
+			{
+				Name:       "updateCustomer",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Customer",
+				Args:       field_Mutation_updateCustomer_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCustomer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CustomerInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
+			},
+			{
+				Name:       "patchCustomer",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Customer",
+				Args:       field_Mutation_patchCustomer_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchCustomer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.CustomerPatchInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
+			},
+			{
+				Name:       "bulkUpdateCustomerStatus",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Customer",
+				Args:       field_Mutation_bulkUpdateCustomerStatus_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateCustomerStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateCustomerStatusInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomerᚄ),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "customers",
@@ -1158,10 +1232,94 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
+			{
+				Name:       "shipmentCustomerBillingRules",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ShipmentCustomerBillingRules",
+				Args:       field_Query_shipmentCustomerBillingRules_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentCustomerBillingRules(ctx, fc.Args["customerIds"].([]string))
+				},
+				Marshal: gqlexec.Marshal(marshalNShipmentCustomerBillingRules2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋportsᚋcustomerportsᚐShipmentBillingRulesᚄ),
+			},
 		}},
+		{Object: "ShipmentCustomerBillingRules", Fields: []*gqlexec.Field{
+			{
+				Name:     "customerId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerports.ShipmentBillingRules)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "bolRequired",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerports.ShipmentBillingRules)
+					return obj.BOLRequired, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "creditStatus",
+				NonNull:  true,
+				ChildErr: errNoChild15,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerports.ShipmentBillingRules)
+					return obj.CreditStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomerCreditStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCreditStatus),
+			},
+			{
+				Name:     "creditHoldReason",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerports.ShipmentBillingRules)
+					return obj.CreditHoldReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "enforceCreditLimit",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerports.ShipmentBillingRules)
+					return obj.EnforceCreditLimit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "creditHoldAutomatic",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerports.ShipmentBillingRules)
+					return obj.CreditHoldAutomatic, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+	},
+	Inputs: []gqlexec.Input{
+		{Name: "BulkUpdateCustomerStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkUpdateCustomerStatusInput)},
+		{Name: "CustomerBillingProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomerBillingProfileInput)},
+		{Name: "CustomerEmailProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomerEmailProfileInput)},
+		{Name: "CustomerInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomerInput)},
+		{Name: "CustomerPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCustomerPatchInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "CustomerBillingProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerBillingProfile); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -1173,9 +1331,17 @@ type resolverCustomerBillingProfile interface {
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 }
 
+type resolverMutation interface {
+	CreateCustomer(ctx context.Context, input gqlmodel.CustomerInput) (*customer.Customer, error)
+	UpdateCustomer(ctx context.Context, id string, input gqlmodel.CustomerInput) (*customer.Customer, error)
+	PatchCustomer(ctx context.Context, id string, input gqlmodel.CustomerPatchInput) (*customer.Customer, error)
+	BulkUpdateCustomerStatus(ctx context.Context, input gqlmodel.BulkUpdateCustomerStatusInput) ([]*customer.Customer, error)
+}
+
 type resolverQuery interface {
 	Customers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerConnection, error)
 	Customer(ctx context.Context, id string) (*customer.Customer, error)
+	ShipmentCustomerBillingRules(ctx context.Context, customerIds []string) ([]*customerports.ShipmentBillingRules, error)
 }
 
 var (
@@ -1198,6 +1364,74 @@ var (
 	errNoChild16 = errors.New("field of type CustomerInvoiceNumberFormat does not have child fields")
 	errNoChild17 = errors.New("field of type CustomerFuelSurchargeMode does not have child fields")
 )
+
+func field_Mutation_createCustomer_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CustomerInput, error) {
+			return unmarshalNCustomerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateCustomer_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CustomerInput, error) {
+			return unmarshalNCustomerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_patchCustomer_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CustomerPatchInput, error) {
+			return unmarshalNCustomerPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerPatchInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_bulkUpdateCustomerStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.BulkUpdateCustomerStatusInput, error) {
+			return unmarshalNBulkUpdateCustomerStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateCustomerStatusInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func field_Query_customers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -1225,12 +1459,957 @@ func field_Query_customer_args(ctx context.Context, ec *gqlexec.Exec, rawArgs ma
 	return args, nil
 }
 
+func field_Query_shipmentCustomerBillingRules_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "customerIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["customerIds"] = arg0
+	return args, nil
+}
+
+func unmarshalInputBulkUpdateCustomerStatusInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BulkUpdateCustomerStatusInput, error) {
+	var it gqlmodel.BulkUpdateCustomerStatusInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"customerIds", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "customerIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerIds"))
+			data, err := unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerIds = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCustomerBillingProfileInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomerBillingProfileInput, error) {
+	var it gqlmodel.CustomerBillingProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"invoiceDelivery", "billingCycle", "billingCycleAnchorDay", "billingCycleTimezone", "splitBy", "sectionBy", "invoiceDetail", "minConsolidatedAmount", "maxShipmentsPerInvoice", "paymentTerm", "hasBillingControlOverrides", "creditLimit", "creditStatus", "enforceCreditLimit", "autoCreditHold", "creditHoldReason", "autoSendInvoiceOnGeneration", "sendPaymentReminders", "sendStatements", "emailInvoiceEnabled", "ediInvoiceEnabled", "invoiceNumberFormat", "customerInvoicePrefix", "invoiceCopies", "revenueAccountId", "arAccountId", "applyLateCharges", "lateChargeRate", "gracePeriodDays", "taxExempt", "taxExemptNumber", "enforceCustomerBillingReq", "validateCustomerRates", "autoTransfer", "autoMarkReadyToBill", "autoApprove", "autoBill", "countLateOnlyOnAppointmentStops", "autoApplyAccessorials", "billingCurrency", "requirePONumber", "requireBOLNumber", "requireDeliveryNumber", "defaultBillerId", "billingNotes", "fuelSurchargeMode", "fuelSurchargeProgramId", "factoringCompanyId", "documentTypeIds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "invoiceDelivery":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invoiceDelivery"))
+			data, err := unmarshalNCustomerInvoiceDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceDelivery(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvoiceDelivery = data
+		case "billingCycle":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingCycle"))
+			data, err := unmarshalNCustomerBillingCycle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐBillingCycle(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingCycle = data
+		case "billingCycleAnchorDay":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingCycleAnchorDay"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingCycleAnchorDay = data
+		case "billingCycleTimezone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingCycleTimezone"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingCycleTimezone = data
+		case "splitBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("splitBy"))
+			data, err := unmarshalNInvoiceSplitKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceSplitKey(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SplitBy = data
+		case "sectionBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionBy"))
+			data, err := unmarshalNInvoiceSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceSectionKey(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SectionBy = data
+		case "invoiceDetail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invoiceDetail"))
+			data, err := unmarshalNInvoiceDetail2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceDetail(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvoiceDetail = data
+		case "minConsolidatedAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minConsolidatedAmount"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinConsolidatedAmount = data
+		case "maxShipmentsPerInvoice":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxShipmentsPerInvoice"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxShipmentsPerInvoice = data
+		case "paymentTerm":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paymentTerm"))
+			data, err := unmarshalNCustomerPaymentTerm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐPaymentTerm(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PaymentTerm = data
+		case "hasBillingControlOverrides":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasBillingControlOverrides"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasBillingControlOverrides = data
+		case "creditLimit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creditLimit"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreditLimit = data
+		case "creditStatus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creditStatus"))
+			data, err := unmarshalNCustomerCreditStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCreditStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreditStatus = data
+		case "enforceCreditLimit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enforceCreditLimit"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EnforceCreditLimit = data
+		case "autoCreditHold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoCreditHold"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoCreditHold = data
+		case "creditHoldReason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creditHoldReason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreditHoldReason = data
+		case "autoSendInvoiceOnGeneration":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoSendInvoiceOnGeneration"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoSendInvoiceOnGeneration = data
+		case "sendPaymentReminders":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sendPaymentReminders"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SendPaymentReminders = data
+		case "sendStatements":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sendStatements"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SendStatements = data
+		case "emailInvoiceEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailInvoiceEnabled"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmailInvoiceEnabled = data
+		case "ediInvoiceEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ediInvoiceEnabled"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EDIInvoiceEnabled = data
+		case "invoiceNumberFormat":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invoiceNumberFormat"))
+			data, err := unmarshalNCustomerInvoiceNumberFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceNumberFormat(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvoiceNumberFormat = data
+		case "customerInvoicePrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerInvoicePrefix"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerInvoicePrefix = data
+		case "invoiceCopies":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invoiceCopies"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvoiceCopies = data
+		case "revenueAccountId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("revenueAccountId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RevenueAccountID = data
+		case "arAccountId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("arAccountId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ArAccountID = data
+		case "applyLateCharges":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("applyLateCharges"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ApplyLateCharges = data
+		case "lateChargeRate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lateChargeRate"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LateChargeRate = data
+		case "gracePeriodDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gracePeriodDays"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.GracePeriodDays = data
+		case "taxExempt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taxExempt"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TaxExempt = data
+		case "taxExemptNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taxExemptNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TaxExemptNumber = data
+		case "enforceCustomerBillingReq":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enforceCustomerBillingReq"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EnforceCustomerBillingReq = data
+		case "validateCustomerRates":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validateCustomerRates"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ValidateCustomerRates = data
+		case "autoTransfer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoTransfer"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoTransfer = data
+		case "autoMarkReadyToBill":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoMarkReadyToBill"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoMarkReadyToBill = data
+		case "autoApprove":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoApprove"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoApprove = data
+		case "autoBill":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoBill"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoBill = data
+		case "countLateOnlyOnAppointmentStops":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("countLateOnlyOnAppointmentStops"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CountLateOnlyOnAppointmentStops = data
+		case "autoApplyAccessorials":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoApplyAccessorials"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoApplyAccessorials = data
+		case "billingCurrency":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingCurrency"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingCurrency = data
+		case "requirePONumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requirePONumber"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequirePONumber = data
+		case "requireBOLNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requireBOLNumber"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequireBOLNumber = data
+		case "requireDeliveryNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requireDeliveryNumber"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequireDeliveryNumber = data
+		case "defaultBillerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultBillerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultBillerID = data
+		case "billingNotes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingNotes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingNotes = data
+		case "fuelSurchargeMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fuelSurchargeMode"))
+			data, err := unmarshalNCustomerFuelSurchargeMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐFuelSurchargeMode(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FuelSurchargeMode = data
+		case "fuelSurchargeProgramId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fuelSurchargeProgramId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FuelSurchargeProgramID = data
+		case "factoringCompanyId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("factoringCompanyId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FactoringCompanyID = data
+		case "documentTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentTypeIds"))
+			data, err := unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentTypeIds = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCustomerEmailProfileInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomerEmailProfileInput, error) {
+	var it gqlmodel.CustomerEmailProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"subject", "comment", "toRecipients", "ccRecipients", "bccRecipients", "attachmentName", "readReceipt", "includeShipmentDetail"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "subject":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subject"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Subject = data
+		case "comment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Comment = data
+		case "toRecipients":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toRecipients"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToRecipients = data
+		case "ccRecipients":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ccRecipients"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CcRecipients = data
+		case "bccRecipients":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bccRecipients"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BCCRecipients = data
+		case "attachmentName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachmentName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AttachmentName = data
+		case "readReceipt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readReceipt"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReadReceipt = data
+		case "includeShipmentDetail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeShipmentDetail"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncludeShipmentDetail = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCustomerInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomerInput, error) {
+	var it gqlmodel.CustomerInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "code", "name", "addressLine1", "addressLine2", "city", "stateId", "postalCode", "longitude", "latitude", "placeId", "externalId", "dotNumber", "mcNumber", "brokerVettingEnabled", "checkCallIntervalHours", "etaRiskThresholdMinutes", "allowConsolidation", "exclusiveConsolidation", "consolidationPriority", "statusUpdatePreference", "statusUpdateRecipients", "billingProfile", "emailProfile", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "addressLine1":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine1"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine1 = data
+		case "addressLine2":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine2"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine2 = data
+		case "city":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("city"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.City = data
+		case "stateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateID = data
+		case "postalCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postalCode"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostalCode = data
+		case "longitude":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("longitude"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Longitude = data
+		case "latitude":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("latitude"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Latitude = data
+		case "placeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("placeId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PlaceID = data
+		case "externalId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalID = data
+		case "dotNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dotNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DOTNumber = data
+		case "mcNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mcNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.McNumber = data
+		case "brokerVettingEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("brokerVettingEnabled"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BrokerVettingEnabled = data
+		case "checkCallIntervalHours":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("checkCallIntervalHours"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CheckCallIntervalHours = data
+		case "etaRiskThresholdMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("etaRiskThresholdMinutes"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EtaRiskThresholdMinutes = data
+		case "allowConsolidation":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowConsolidation"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllowConsolidation = data
+		case "exclusiveConsolidation":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exclusiveConsolidation"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExclusiveConsolidation = data
+		case "consolidationPriority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("consolidationPriority"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConsolidationPriority = data
+		case "statusUpdatePreference":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusUpdatePreference"))
+			data, err := unmarshalNCustomerStatusUpdatePreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐStatusUpdatePreference(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StatusUpdatePreference = data
+		case "statusUpdateRecipients":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusUpdateRecipients"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StatusUpdateRecipients = data
+		case "billingProfile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingProfile"))
+			data, err := unmarshalOCustomerBillingProfileInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerBillingProfileInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillingProfile = data
+		case "emailProfile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailProfile"))
+			data, err := unmarshalOCustomerEmailProfileInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerEmailProfileInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmailProfile = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCustomerPatchInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CustomerPatchInput, error) {
+	var it gqlmodel.CustomerPatchInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "code", "name", "addressLine1", "addressLine2", "city", "stateId", "postalCode", "longitude", "latitude", "placeId", "externalId", "dotNumber", "mcNumber", "brokerVettingEnabled", "checkCallIntervalHours", "etaRiskThresholdMinutes", "allowConsolidation", "exclusiveConsolidation", "consolidationPriority", "statusUpdatePreference", "statusUpdateRecipients", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = graphql.OmittableOf(data)
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = graphql.OmittableOf(data)
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = graphql.OmittableOf(data)
+		case "addressLine1":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine1"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine1 = graphql.OmittableOf(data)
+		case "addressLine2":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine2"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine2 = graphql.OmittableOf(data)
+		case "city":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("city"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.City = graphql.OmittableOf(data)
+		case "stateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateID = graphql.OmittableOf(data)
+		case "postalCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postalCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostalCode = graphql.OmittableOf(data)
+		case "longitude":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("longitude"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Longitude = graphql.OmittableOf(data)
+		case "latitude":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("latitude"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Latitude = graphql.OmittableOf(data)
+		case "placeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("placeId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PlaceID = graphql.OmittableOf(data)
+		case "externalId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalID = graphql.OmittableOf(data)
+		case "dotNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dotNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DOTNumber = graphql.OmittableOf(data)
+		case "mcNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mcNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.McNumber = graphql.OmittableOf(data)
+		case "brokerVettingEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("brokerVettingEnabled"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BrokerVettingEnabled = graphql.OmittableOf(data)
+		case "checkCallIntervalHours":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("checkCallIntervalHours"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CheckCallIntervalHours = graphql.OmittableOf(data)
+		case "etaRiskThresholdMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("etaRiskThresholdMinutes"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EtaRiskThresholdMinutes = graphql.OmittableOf(data)
+		case "allowConsolidation":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowConsolidation"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllowConsolidation = graphql.OmittableOf(data)
+		case "exclusiveConsolidation":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exclusiveConsolidation"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExclusiveConsolidation = graphql.OmittableOf(data)
+		case "consolidationPriority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("consolidationPriority"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConsolidationPriority = graphql.OmittableOf(data)
+		case "statusUpdatePreference":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusUpdatePreference"))
+			data, err := unmarshalOCustomerStatusUpdatePreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐStatusUpdatePreference(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StatusUpdatePreference = graphql.OmittableOf(data)
+		case "statusUpdateRecipients":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusUpdateRecipients"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StatusUpdateRecipients = graphql.OmittableOf(data)
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = graphql.OmittableOf(data)
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBulkUpdateCustomerStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateCustomerStatusInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BulkUpdateCustomerStatusInput, error) {
+	res, err := unmarshalInputBulkUpdateCustomerStatusInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerBillingCycle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐBillingCycle(ctx context.Context, ec *gqlexec.Exec, v any) (customer.BillingCycle, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.BillingCycle(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerCreditStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCreditStatus(ctx context.Context, ec *gqlexec.Exec, v any) (customer.CreditStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.CreditStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerFuelSurchargeMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐFuelSurchargeMode(ctx context.Context, ec *gqlexec.Exec, v any) (customer.FuelSurchargeMode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.FuelSurchargeMode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CustomerInput, error) {
+	res, err := unmarshalInputCustomerInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerInvoiceDelivery2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceDelivery(ctx context.Context, ec *gqlexec.Exec, v any) (customer.InvoiceDelivery, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.InvoiceDelivery(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerInvoiceNumberFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceNumberFormat(ctx context.Context, ec *gqlexec.Exec, v any) (customer.InvoiceNumberFormat, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.InvoiceNumberFormat(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerPatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CustomerPatchInput, error) {
+	res, err := unmarshalInputCustomerPatchInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerPaymentTerm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐPaymentTerm(ctx context.Context, ec *gqlexec.Exec, v any) (customer.PaymentTerm, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.PaymentTerm(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCustomerStatusUpdatePreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐStatusUpdatePreference(ctx context.Context, ec *gqlexec.Exec, v any) (customer.StatusUpdatePreference, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.StatusUpdatePreference(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (domaintypes.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1239,12 +2418,134 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInvoiceDetail2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceDetail(ctx context.Context, ec *gqlexec.Exec, v any) (customer.InvoiceDetail, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.InvoiceDetail(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInvoiceSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceSectionKey(ctx context.Context, ec *gqlexec.Exec, v any) (customer.InvoiceSectionKey, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.InvoiceSectionKey(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInvoiceSplitKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐInvoiceSplitKey(ctx context.Context, ec *gqlexec.Exec, v any) (customer.InvoiceSplitKey, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.InvoiceSplitKey(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCustomerBillingProfileInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerBillingProfileInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CustomerBillingProfileInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputCustomerBillingProfileInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCustomerEmailProfileInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerEmailProfileInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CustomerEmailProfileInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputCustomerEmailProfileInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCustomerStatusUpdatePreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐStatusUpdatePreference(ctx context.Context, ec *gqlexec.Exec, v any) (*customer.StatusUpdatePreference, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := customer.StatusUpdatePreference(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*domaintypes.Status, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, v any) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customer.Customer) graphql.Marshaler {
+	return gqlexec.List[*customer.Customer]{
+		Elem:        marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
@@ -1423,6 +2724,22 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
+func marshalNShipmentCustomerBillingRules2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋportsᚋcustomerportsᚐShipmentBillingRulesᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerports.ShipmentBillingRules) graphql.Marshaler {
+	return gqlexec.List[*customerports.ShipmentBillingRules]{
+		Elem:        marshalNShipmentCustomerBillingRules2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋportsᚋcustomerportsᚐShipmentBillingRules,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNShipmentCustomerBillingRules2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋportsᚋcustomerportsᚐShipmentBillingRules(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerports.ShipmentBillingRules) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ShipmentCustomerBillingRules", v)
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -1503,6 +2820,14 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 		return graphql.Null
 	}
 	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func marshalOInt2ᚖint16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int16) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt16(*v)
 	return res
 }
 

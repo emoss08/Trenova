@@ -1,14 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import type { EDIMappingEntityType } from "@trenova/shared/types/edi";
 import type { FieldValues } from "react-hook-form";
-import {
-  getTargetOptionDescription,
-  getTargetOptionLabel,
-  getTargetOptionValue,
-  type TargetLookupSelection,
-} from "./edi-display-utils";
-import { mappingTargetEndpoints } from "./edi-schemas";
+import { joinDisplayParts, type TargetLookupSelection } from "./edi-display-utils";
+import { mappingTargetSources } from "./edi-schemas";
 
 type TargetLookupProps = {
   entityType: EDIMappingEntityType;
@@ -17,12 +13,17 @@ type TargetLookupProps = {
   onChange: (target: TargetLookupSelection) => void;
 };
 
+/** How a mapped record reads in the profile: its label, then what describes it. */
+function targetLabel(option: GraphQLSelectOption): string {
+  return joinDisplayParts(option.label, option.description, " - ") || option.id;
+}
+
 export function TargetLookup({ entityType, label, value, onChange }: TargetLookupProps) {
   const t = useT();
 
   return (
-    <Autocomplete<Record<string, unknown>, FieldValues>
-      link={mappingTargetEndpoints[entityType]}
+    <Autocomplete<GraphQLSelectOption, FieldValues>
+      graphql={mappingTargetSources[entityType]}
       label={label}
       value={value}
       placeholder={t("Select local record")}
@@ -34,23 +35,22 @@ export function TargetLookup({ entityType, label, value, onChange }: TargetLooku
       }}
       onOptionChange={(option) =>
         onChange({
-          targetId: getTargetOptionValue(option),
-          targetLabel: getTargetOptionLabel(option),
+          targetId: option?.id ?? "",
+          targetLabel: option ? targetLabel(option) : "",
         })
       }
-      getOptionValue={getTargetOptionValue}
-      getDisplayValue={getTargetOptionLabel}
-      renderOption={(option) => {
-        const description = getTargetOptionDescription(option);
-        return (
-          <div className="flex size-full min-w-0 flex-col items-start pr-4">
-            <span className="w-full truncate">{getTargetOptionLabel(option)}</span>
-            {description && (
-              <span className="text-2xs text-muted-foreground w-full truncate">{description}</span>
-            )}
-          </div>
-        );
-      }}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full min-w-0 flex-col items-start pr-4">
+          <span className="w-full truncate">{option.label}</span>
+          {option.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
+            </span>
+          )}
+        </div>
+      )}
     />
   );
 }

@@ -198,13 +198,6 @@ func (s *Service) GetOccurrenceDetail(
 	return detail, nil
 }
 
-func (s *Service) ListOccurrences(
-	ctx context.Context,
-	req *detentionports.ListDetentionOccurrencesRequest,
-) (*pagination.ListResult[*detention.DetentionOccurrence], error) {
-	return s.occurrenceRepo.List(ctx, req)
-}
-
 func (s *Service) ListByShipment(
 	ctx context.Context,
 	req *detentionports.GetOccurrencesByShipmentRequest,

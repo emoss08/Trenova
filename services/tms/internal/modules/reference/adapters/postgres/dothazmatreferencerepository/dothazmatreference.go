@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/resultcache"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -38,23 +39,28 @@ func New(p Params) dothazmatreferenceports.DotHazmatReferenceRepository {
 	}
 }
 
-func (r *repository) GetByID(
+func (r *repository) GetByIDs(
 	ctx context.Context,
-	req dothazmatreferenceports.GetDotHazmatReferenceByIDRequest,
-) (*dothazmatreference.DotHazmatReference, error) {
+	ids []pulid.ID,
+) ([]*dothazmatreference.DotHazmatReference, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*dothazmatreference.DotHazmatReference, error) {
-			d := dothazmatreferencedb.DotHazmatReferences
-			entity, err := d.Where(d.ID.Eq(req.DotHazmatReferenceID)).
-				Cache(resultcache.Catalog()...).
-				One(ctx, r.db.Keel(ctx))
-			if err != nil {
-				return nil, dotHazmatReferenceErrors.Map(err, req.DotHazmatReferenceID.String())
+		func(ctx context.Context) ([]*dothazmatreference.DotHazmatReference, error) {
+			if len(ids) == 0 {
+				return []*dothazmatreference.DotHazmatReference{}, nil
 			}
 
-			return entity, nil
+			d := dothazmatreferencedb.DotHazmatReferences
+			entities, err := d.Where(d.ID.In(ids...)).
+				Limit(len(ids)).
+				Cache(resultcache.Catalog()...).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, dotHazmatReferenceErrors.Map(err, "")
+			}
+
+			return entities, nil
 		},
 	)
 }

@@ -74,11 +74,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
 		h.getRoleAssignments,
 	)
-	api.GET(
-		"/:userID/effective-permissions/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
-		h.getUserEffectivePermissions,
-	)
 	api.POST(
 		"/bulk-update-status/",
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
@@ -104,11 +99,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpUpdate),
 		h.resetUserMFA,
 	)
-	api.POST(
-		"/:userID/permissions/simulate/",
-		h.pm.RequirePermission(permission.ResourceUser.String(), permission.OpRead),
-		h.simulatePermissions,
-	)
 
 	meAPI := api.Group("/me", responseguard.SelfScoped())
 	meAPI.GET("/", h.me)
@@ -132,10 +122,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	meAPI.POST("/mfa/recovery-codes/", h.regenerateRecoveryCodes)
 	api.GET("/:userID/profile-picture/", h.getProfilePictureURL)
 	api.GET("/avatars/", h.listAvatars)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:userID", h.getOption)
 }
 
 // @Summary List users
@@ -269,58 +255,6 @@ func (h *Handler) me(c *gin.Context) {
 	respondWithSelf(c, entity)
 }
 
-// @Summary Get a user option
-// @ID getUserOption
-// @Tags Users
-// @Produce json
-// @Param userID path string true "User ID"
-// @Success 200 {object} tenant.User
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/select-options/{userID} [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.GetByID(c.Request.Context(), tenantports.GetUserByIDRequest{
-		TenantInfo:   pagination.FromAuthAsUser(authCtx),
-		LookupUserID: userID,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary List user options
-// @ID listUserOptions
-// @Tags Users
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]tenant.User]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(c, req, h.eh, func() (*pagination.ListResult[*tenant.User], error) {
-		return h.service.SelectOptions(c.Request.Context(), req)
-	})
-}
-
 // @Summary Get user role assignments
 // @ID getUserRoleAssignments
 // @Tags Users
@@ -352,85 +286,6 @@ func (h *Handler) getRoleAssignments(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, assignments)
-}
-
-// @Summary Get user effective permissions
-// @ID getUserEffectivePermissions
-// @Tags Users
-// @Produce json
-// @Param userID path string true "User ID"
-// @Success 200 {object} services.EffectivePermissions
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/effective-permissions/ [get]
-func (h *Handler) getUserEffectivePermissions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	perms, err := h.permEngine.GetEffectivePermissions(
-		c.Request.Context(),
-		userID,
-		authCtx.OrganizationID,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, perms)
-}
-
-// @Summary Simulate user permissions
-// @ID simulateUserPermissions
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Param userID path string true "User ID"
-// @Param request body SimulatePermissionsRequest true "Permission simulation request"
-// @Success 200 {object} services.EffectivePermissions
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /users/{userID}/permissions/simulate/ [post]
-func (h *Handler) simulatePermissions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	var req SimulatePermissionsRequest
-	if err = c.ShouldBindJSON(&req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	perms, err := h.permEngine.SimulatePermissions(
-		c.Request.Context(),
-		&permissionports.SimulatePermissionsRequest{
-			UserID:         userID,
-			OrganizationID: authCtx.OrganizationID,
-			AddRoleIDs:     req.AddRoleIDs,
-			RemoveRoleIDs:  req.RemoveRoleIDs,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, perms)
 }
 
 // @Summary List current user organizations

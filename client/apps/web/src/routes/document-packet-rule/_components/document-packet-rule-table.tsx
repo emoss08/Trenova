@@ -4,7 +4,7 @@ import {
   documentPacketRuleTableGraphQLConfig,
   type DocumentPacketRuleRow,
 } from "@/lib/graphql/document-packet-rule-table";
-import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
+import { documentType } from "@/lib/queries/document-type";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,6 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { DocumentPacketRuleService } from "@/services/document-packet-rule";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
-import type { DocumentType } from "@trenova/shared/types/document-type";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
@@ -38,20 +37,16 @@ export default function DocumentPacketRuleTable() {
   const [selectedRule, setSelectedRule] = useState<DocumentPacketRuleRow | null>(null);
 
   const { data: documentTypesData } = useQuery({
-    queryKey: ["document-types-select-options"],
-    queryFn: ({ signal }) =>
-      fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100, undefined, {
-        signal,
-      }),
+    ...documentType.options(),
     staleTime: 5 * 60 * 1000,
   });
 
-  const documentTypeMap = useMemo(() => {
-    const map = new Map<string, DocumentType>();
-    for (const dt of documentTypesData?.results ?? []) {
-      if (dt.id) map.set(dt.id, dt);
+  const documentTypeNames = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const option of documentTypesData?.results ?? []) {
+      names.set(option.id, option.description ?? option.label);
     }
-    return map;
+    return names;
   }, [documentTypesData]);
 
   const deleteMutation = useMutation({
@@ -78,7 +73,7 @@ export default function DocumentPacketRuleTable() {
     setDeleteDialogOpen(true);
   }, []);
 
-  const columns = useMemo(() => getColumns(documentTypeMap, t), [documentTypeMap, t]);
+  const columns = useMemo(() => getColumns(documentTypeNames, t), [documentTypeNames, t]);
 
   const contextMenuActions = useMemo<RowAction<DocumentPacketRuleRow>[]>(
     () => [

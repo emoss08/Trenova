@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -10,6 +9,8 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { hazardousClassChoices, packingGroupChoices, statusChoices } from "@/lib/choices";
+import { dotHazmatReferenceFromOption } from "@/lib/dot-hazmat-reference-option";
+import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
 import type { DotHazmatReference } from "@/types/dot-hazmat-reference";
 import type { HazardousClass, HazardousMaterial } from "@/types/hazardous-material";
 import { useQuery } from "@tanstack/react-query";
@@ -56,23 +57,19 @@ function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReferenc
 
   const enabled = focused && debouncedSearch.length >= 2;
 
-  const { data, isLoading } = useQuery({
+  const { data: results = [], isLoading } = useQuery({
     queryKey: ["dot-hazmat-search", debouncedSearch],
     queryFn: ({ signal }) =>
-      fetchOptions<DotHazmatReference>(
-        "/dot-hazmat-references/select-options/",
-        debouncedSearch,
-        1,
-        10,
-        undefined,
+      fetchGraphQLSelectOptions(
+        { resource: "DOT_HAZMAT_REFERENCE", query: debouncedSearch, initialLimit: 10 },
         { signal },
       ),
     enabled,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    select: (data) => data.results.map(dotHazmatReferenceFromOption),
   });
 
-  const results = data?.results ?? [];
   const showDropdown = enabled && results.length > 0;
 
   const handleSelect = useCallback(

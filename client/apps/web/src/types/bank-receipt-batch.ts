@@ -25,12 +25,6 @@ export const bankReceiptBatchSchema = z.object({
 });
 export type BankReceiptBatch = z.infer<typeof bankReceiptBatchSchema>;
 
-export const batchSourceOptionSchema = z.object({
-  value: z.string(),
-  label: z.string(),
-});
-export type BatchSourceOption = z.infer<typeof batchSourceOptionSchema>;
-
 export const importBatchLineSchema = z.object({
   receiptDate: z.number().int(),
   amountMinor: z.number().int(),

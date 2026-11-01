@@ -8,15 +8,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type GetDotHazmatReferenceByIDRequest struct {
-	DotHazmatReferenceID pulid.ID `json:"dotHazmatReferenceId"`
-}
-
 type DotHazmatReferenceRepository interface {
-	GetByID(
+	GetByIDs(
 		ctx context.Context,
-		req GetDotHazmatReferenceByIDRequest,
-	) (*dothazmatreference.DotHazmatReference, error)
+		ids []pulid.ID,
+	) ([]*dothazmatreference.DotHazmatReference, error)
 	SelectOptions(
 		ctx context.Context,
 		req *pagination.SelectQueryRequest,

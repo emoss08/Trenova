@@ -21,6 +21,7 @@ export const fleetCodeSchema = z.object({
   description: optionalStringSchema,
   revenueGoal: decimalStringSchema,
   deadheadGoal: decimalStringSchema,
+  mileageGoal: decimalStringSchema.optional(),
   color: optionalStringSchema,
   managerId: z.string().min(1, {
     error: () => translate("Manager is required"),
@@ -46,10 +47,4 @@ export const bulkUpdateFleetCodeStatusRequestSchema = z.object({
 
 export type BulkUpdateFleetCodeStatusRequest = z.infer<
   typeof bulkUpdateFleetCodeStatusRequestSchema
->;
-
-export const bulkUpdateFleetCodeStatusResponseSchema = z.array(fleetCodeSchema);
-
-export type BulkUpdateFleetCodeStatusResponse = z.infer<
-  typeof bulkUpdateFleetCodeStatusResponseSchema
 >;

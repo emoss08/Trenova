@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -58,4 +59,35 @@ func (r *QueryResolver) CustomFieldDefinition(ctx context.Context, id string) (*
 		ID:         definitionID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *QueryResolver) CustomFieldFormFields(ctx context.Context, resourceType string) ([]*customfield.CustomFieldDefinition, error) {
+	if !customfield.IsResourceTypeSupported(resourceType) {
+		return nil, errortypes.NewValidationError(
+			"resourceType",
+			errortypes.ErrInvalid,
+			"Custom fields are not supported on this resource type",
+		)
+	}
+
+	authCtx, err := r.RequirePermission(ctx, permission.Resource(resourceType), permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomFieldService.GetActiveByResourceType(
+		ctx,
+		customfieldports.GetActiveByResourceTypeRequest{
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
+			ResourceType: resourceType,
+		},
+	)
+}
+
+func (r *QueryResolver) CustomFieldResourceTypes(ctx context.Context) ([]string, error) {
+	if _, err := r.RequirePermission(ctx, permission.ResourceCustomFieldDefinition, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	return r.CustomFieldService.GetSupportedResourceTypes(), nil
 }

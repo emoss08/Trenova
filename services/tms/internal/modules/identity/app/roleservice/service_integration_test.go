@@ -244,13 +244,6 @@ func (e *integrationPermEngine) GetEffectivePermissions(
 	}, nil
 }
 
-func (e *integrationPermEngine) SimulatePermissions(
-	_ context.Context,
-	_ *permissionports.SimulatePermissionsRequest,
-) (*permissionports.EffectivePermissions, error) {
-	return nil, nil
-}
-
 func (e *integrationPermEngine) AgentsUsable(
 	_ context.Context,
 	_ *permissionports.RequestActor,

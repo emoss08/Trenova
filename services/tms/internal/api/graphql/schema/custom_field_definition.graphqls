@@ -79,9 +79,35 @@ type CustomFieldDefinitionConnection {
   totalCountExact: Boolean!
 }
 
+"""
+A custom field as a record's form draws it. Anyone who reads the record's resource type reads
+the fields its form shows, without reading custom field definitions.
+"""
+type CustomFieldFormField {
+  id: ID!
+  name: String!
+  label: String!
+  description: String
+  fieldType: FieldType!
+  isRequired: Boolean!
+  displayOrder: Int!
+  color: String
+  options: [CustomFieldSelectOption!]!
+  validationRules: CustomFieldValidationRules
+  defaultValue: Any
+  uiAttributes: CustomFieldUIAttributes
+}
+
 extend type Query {
   customFieldDefinitions(
     input: DataTableConnectionInput!
   ): CustomFieldDefinitionConnection!
   customFieldDefinition(id: ID!): CustomFieldDefinition
+  """
+  The active custom fields a form for resourceType shows, in display order. Needs read on that
+  resource type.
+  """
+  customFieldFormFields(resourceType: String!): [CustomFieldFormField!]!
+  "The resource types custom fields can be defined on."
+  customFieldResourceTypes: [String!]!
 }

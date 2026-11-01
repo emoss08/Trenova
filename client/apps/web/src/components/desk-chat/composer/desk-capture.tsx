@@ -7,7 +7,8 @@ import {
   type CaptureRequest,
 } from "@/lib/graphql/capture";
 import { capture } from "@/lib/queries/capture";
-import { api } from "@trenova/shared/lib/api";
+import { documentType } from "@/lib/queries/document-type";
+import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -214,15 +215,14 @@ type DocumentTypeOption = { id: string; name: string };
 
 function useDocumentTypeOptions(enabled: boolean) {
   return useQuery({
-    queryKey: ["desk", "capture", "document-types"],
-    queryFn: async () => {
-      const response = await api.get<{ results: DocumentTypeOption[] }>(
-        "/document-types/select-options/?limit=50",
-      );
-      return response.results ?? [];
-    },
+    ...documentType.options(),
     enabled,
     staleTime: 5 * 60_000,
+    select: (data): DocumentTypeOption[] =>
+      data.results.map((option) => ({
+        id: option.id,
+        name: selectOptionMetaString(option, "name") || option.label,
+      })),
   });
 }
 

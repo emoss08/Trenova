@@ -70,49 +70,6 @@ func setupShipmentMoveHandlerWithTracking(
 	})
 }
 
-func TestShipmentMoveHandler_UpdateStatus_Success(t *testing.T) {
-	t.Parallel()
-
-	moveID := pulid.MustNew("sm_")
-	service := shipmentmoveportsmock.NewMockShipmentMoveService(t)
-	service.EXPECT().
-		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *shipmentmoveports.UpdateMoveStatusRequest) bool {
-			return req.MoveID == moveID &&
-				req.TenantInfo.OrgID == testutil.TestOrgID &&
-				req.Status == shipmentvocab.MoveStatusInTransit
-		})).
-		Return(&shipment.ShipmentMove{ID: moveID, Status: shipmentvocab.MoveStatusInTransit}, nil).
-		Once()
-
-	handler := setupShipmentMoveHandler(t, service)
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPost).
-		WithPath("/api/v1/shipment-moves/" + moveID.String() + "/update-status/").
-		WithDefaultAuthContext().
-		WithJSONBody(map[string]any{"status": "InTransit"})
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-}
-
-func TestShipmentMoveHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
-	t.Parallel()
-
-	handler := setupShipmentMoveHandler(t, shipmentmoveportsmock.NewMockShipmentMoveService(t))
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPost).
-		WithPath("/api/v1/shipment-moves/bulk-update-status/").
-		WithDefaultAuthContext().
-		WithBody("{invalid")
-
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
-}
-
 func recordActualPath(moveID, stopID pulid.ID) string {
 	return "/api/v1/shipment-moves/" + moveID.String() +
 		"/stops/" + stopID.String() +

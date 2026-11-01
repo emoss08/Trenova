@@ -18,6 +18,7 @@ import {
 } from "./accounting-start-date-schema";
 import type { AccountingVendor } from "./accounting-vendors";
 import { useAccountingSyncSetupActions } from "./use-accounting-connection";
+import { IntegrationSetupFooter } from "../shared/integration-setup-wizard";
 
 type AccountingStartDateStepProps = {
   vendor: AccountingVendor;
@@ -51,8 +52,11 @@ export function AccountingStartDateStep({
   const beforeToday = startDate != null && startDate < getStartOfDay();
 
   return (
-    <Form onSubmit={handleSubmit((values) => enable.mutate(values))} className="space-y-4">
-      <div className="space-y-2">
+    <Form
+      onSubmit={handleSubmit((values) => enable.mutate(values))}
+      className="flex flex-1 flex-col gap-4"
+    >
+      <div className="space-y-1.5">
         <h3 className="text-base font-semibold">{t("Choose when sending starts")}</h3>
         <p className="text-foreground-muted text-sm">
           {ledger
@@ -160,7 +164,7 @@ export function AccountingStartDateStep({
           </AlertDescription>
         </Alert>
       ) : null}
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <IntegrationSetupFooter>
         <Button
           type="submit"
           disabled={!canManage}
@@ -169,7 +173,7 @@ export function AccountingStartDateStep({
         >
           {t("Start sending")}
         </Button>
-      </div>
+      </IntegrationSetupFooter>
     </Form>
   );
 }

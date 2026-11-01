@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -75,6 +76,9 @@ func (r *Sources) Location(
 			},
 		)
 		if err != nil {
+			return nil, err
+		}
+		if err = r.attachStates(ctx, entities); err != nil {
 			return nil, err
 		}
 
@@ -181,13 +185,52 @@ func locationSelectOptionItem(entity *location.Location) selectoption.Item {
 	)
 }
 
+func (r *Sources) attachStates(ctx context.Context, entities []*location.Location) error {
+	stateIDs := make([]pulid.ID, 0, len(entities))
+	for _, entity := range entities {
+		if entity.State == nil && entity.StateID.IsNotNil() {
+			stateIDs = append(stateIDs, entity.StateID)
+		}
+	}
+	stateIDs = sliceutils.Dedupe(stateIDs)
+	if len(stateIDs) == 0 {
+		return nil
+	}
+
+	states, err := r.UsStateService.GetByIDs(ctx, stateIDs)
+	if err != nil {
+		return err
+	}
+
+	byID := make(map[pulid.ID]*usstate.UsState, len(states))
+	for _, state := range states {
+		byID[state.ID] = state
+	}
+	for _, entity := range entities {
+		if entity.State == nil {
+			entity.State = byID[entity.StateID]
+		}
+	}
+
+	return nil
+}
+
 func locationSelectOption(entity *location.Location) *gqlmodel.SelectOption {
+	stateAbbreviation := ""
+	if entity.State != nil {
+		stateAbbreviation = entity.State.Abbreviation
+	}
+
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Name,
 		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
 			selectoption.MetaKeyCode: entity.Code,
+			"addressLine1":           entity.AddressLine1,
+			"city":                   entity.City,
+			"stateAbbreviation":      stateAbbreviation,
+			"postalCode":             entity.PostalCode,
 		},
 	}
 }

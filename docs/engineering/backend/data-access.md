@@ -207,7 +207,12 @@ struct.
   (`ContainsFold` over the code and description). A picker hydrating its saved selection reads
   every selected ID with the kind's one `…ByIDs` read and maps it through
   `selectoption.OrderedItems`, which keeps the request order and drops an ID that was deleted or
-  is out of scope instead of failing the request (`*selectoptions` resolver packages).
+  is out of scope instead of failing the request (`*selectoptions` resolver packages). Every picker in the
+  web app reads through the GraphQL `selectOptions` query, so a new kind a picker needs gets a
+  `SelectOptionResource` value and a registry entry, never a REST route. Its option carries
+  only what everyone in the tenant may see (the kind's reference view); a kind whose list is
+  itself sensitive checks its read permission in its source (`AI_PROVIDER`, `DOCUMENT`,
+  `BANK_RECEIPT_SOURCE`).
 - **Code that pages to a total** never stops at an estimate: an estimate can sit below the rows
   that match when statistics are stale. Stop at a short or empty page, or at `Total` only when
   `TotalExact` (`invoiceshareservice/candidates.go`), and say whether there is a next page with

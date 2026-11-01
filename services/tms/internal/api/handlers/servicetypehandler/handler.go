@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
@@ -43,16 +42,6 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/service-types")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceServiceType.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET(
-		"/:serviceTypeID",
-		h.pm.RequirePermission(permission.ResourceServiceType.String(), permission.OpRead),
-		h.get,
-	)
 	api.POST(
 		"/",
 		h.pm.RequirePermission(permission.ResourceServiceType.String(), permission.OpCreate),
@@ -72,44 +61,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/bulk-update-status/",
 		h.pm.RequirePermission(permission.ResourceServiceType.String(), permission.OpUpdate),
 		h.bulkUpdateStatus,
-	)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:serviceTypeID/", h.getOption)
-}
-
-// @Summary List service types
-// @ID listServiceTypes
-// @Tags Service Types
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]servicetype.ServiceType]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /service-types/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*servicetype.ServiceType], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&servicetypeports.ListServiceTypesRequest{
-					Filter: req,
-				},
-			)
-		},
 	)
 }
 
@@ -155,107 +106,6 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, results)
-}
-
-// @Summary Get a service type option
-// @ID getServiceTypeOption
-// @Tags Service Types
-// @Produce json
-// @Param serviceTypeID path string true "Service type ID"
-// @Success 200 {object} servicetype.ServiceType
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /service-types/select-options/{serviceTypeID}/ [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	serviceTypeID, err := pulid.MustParse(c.Param("serviceTypeID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(c.Request.Context(), servicetypeports.GetServiceTypeByIDRequest{
-		ID:         serviceTypeID,
-		TenantInfo: pagination.FromAuth(authCtx),
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary List service type options
-// @ID listServiceTypeOptions
-// @Tags Service Types
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]servicetype.ServiceType]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /service-types/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*servicetype.ServiceType], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&servicetypeports.ServiceTypeSelectOptionsRequest{
-					SelectQueryRequest: req,
-					Classes:            helpers.QuerySlice(c, "classes", []string{}),
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a service type
-// @ID getServiceType
-// @Tags Service Types
-// @Produce json
-// @Param serviceTypeID path string true "Service type ID"
-// @Success 200 {object} servicetype.ServiceType
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /service-types/{serviceTypeID}/ [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	serviceTypeID, err := pulid.MustParse(c.Param("serviceTypeID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		servicetypeports.GetServiceTypeByIDRequest{
-			ID:         serviceTypeID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a service type

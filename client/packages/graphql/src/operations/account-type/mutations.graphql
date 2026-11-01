@@ -1,0 +1,29 @@
+mutation CreateAccountType($input: AccountTypeInput!) {
+  createAccountType(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateAccountType($id: ID!, $input: AccountTypeInput!) {
+  updateAccountType(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchAccountType($id: ID!, $input: AccountTypePatchInput!) {
+  patchAccountType(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateAccountTypeStatus($input: BulkUpdateAccountTypeStatusInput!) {
+  bulkUpdateAccountTypeStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

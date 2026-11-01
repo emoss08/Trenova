@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
@@ -41,14 +40,6 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/recurring-shipments")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(
-			permission.ResourceRecurringShipment.String(),
-			permission.OpRead,
-		),
-		h.list,
-	)
 	api.POST(
 		"/",
 		h.pm.RequirePermission(
@@ -112,44 +103,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 			permission.OpRead,
 		),
 		h.listRuns,
-	)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:recurringShipmentID/", h.getOption)
-}
-
-// @Summary List recurring shipments
-// @ID listRecurringShipments
-// @Tags Recurring Shipments
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]recurringshipment.RecurringShipment]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /recurring-shipments/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&recurringshipmentports.ListRecurringShipmentsRequest{
-					Filter: req,
-				},
-			)
-		},
 	)
 }
 
@@ -447,71 +400,4 @@ func (h *Handler) listRuns(c *gin.Context) {
 			)
 		},
 	)
-}
-
-// @Summary List recurring shipment options
-// @ID listRecurringShipmentOptions
-// @Tags Recurring Shipments
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]recurringshipment.RecurringShipment]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /recurring-shipments/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&recurringshipmentports.RecurringShipmentSelectOptionsRequest{
-					SelectQueryRequest: req,
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a recurring shipment option
-// @ID getRecurringShipmentOption
-// @Tags Recurring Shipments
-// @Produce json
-// @Param recurringShipmentID path string true "Recurring shipment ID"
-// @Success 200 {object} recurringshipment.RecurringShipment
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /recurring-shipments/select-options/{recurringShipmentID}/ [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	recurringShipmentID, err := pulid.MustParse(c.Param("recurringShipmentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		&recurringshipmentports.GetRecurringShipmentByIDRequest{
-			ID:         recurringShipmentID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }

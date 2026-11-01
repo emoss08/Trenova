@@ -61,23 +61,6 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/realtime/stream/", h.stream)
 
-	comments := rg.Group("/shipments/:shipmentID/comments")
-	comments.POST(
-		"/presence/",
-		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
-		h.joinShipmentComments,
-	)
-	comments.DELETE(
-		"/presence/",
-		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
-		h.leaveShipmentComments,
-	)
-	comments.POST(
-		"/typing/",
-		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
-		h.typingShipmentComments,
-	)
-
 	views := rg.Group("/realtime/presence/:resource")
 	canRead := h.pm.RequireParamPermission("resource", permission.OpRead)
 	views.POST("/", canRead, h.joinView)
@@ -88,11 +71,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 type presenceRequest struct {
 	ConnectionID string `json:"connectionId"`
-}
-
-type typingRequest struct {
-	ConnectionID string `json:"connectionId"`
-	Stop         bool   `json:"stop"`
 }
 
 // @Summary Open the live event stream
@@ -183,84 +161,6 @@ func (h *Handler) emitClose(stream *helpers.EventStream, reason string) {
 	}); err != nil {
 		h.l.Debug("could not send realtime close notice", zap.Error(err))
 	}
-}
-
-// @Summary Join shipment comment presence
-// @Description Marks the caller's live connection as viewing a shipment's comments and
-// @Description returns everyone else viewing them.
-// @ID joinShipmentCommentPresence
-// @Tags Realtime
-// @Accept json
-// @Produce json
-// @Param shipmentID path string true "Shipment ID"
-// @Param request body presenceRequest true "Live connection"
-// @Success 200 {object} services.RealtimePresenceSnapshot
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /shipments/{shipmentID}/comments/presence/ [post]
-func (h *Handler) joinShipmentComments(c *gin.Context) {
-	scope, ok := h.shipmentCommentsScope(c)
-	if !ok {
-		return
-	}
-	h.join(c, scope)
-}
-
-// @Summary Leave shipment comment presence
-// @ID leaveShipmentCommentPresence
-// @Tags Realtime
-// @Param shipmentID path string true "Shipment ID"
-// @Param connectionId query string true "Live connection ID"
-// @Success 204
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /shipments/{shipmentID}/comments/presence/ [delete]
-func (h *Handler) leaveShipmentComments(c *gin.Context) {
-	scope, ok := h.shipmentCommentsScope(c)
-	if !ok {
-		return
-	}
-	h.leave(c, scope)
-}
-
-// @Summary Signal typing in shipment comments
-// @Description Tells the other viewers of a shipment's comments that the caller is typing,
-// @Description or has stopped.
-// @ID signalShipmentCommentTyping
-// @Tags Realtime
-// @Accept json
-// @Param shipmentID path string true "Shipment ID"
-// @Param request body typingRequest true "Typing signal"
-// @Success 204
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /shipments/{shipmentID}/comments/typing/ [post]
-func (h *Handler) typingShipmentComments(c *gin.Context) {
-	scope, ok := h.shipmentCommentsScope(c)
-	if !ok {
-		return
-	}
-
-	var body typingRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	if err := h.gateway.SignalTyping(c.Request.Context(), &realtimeports.RealtimeTypingRequest{
-		RealtimeScopeRequest: *scopeRequest(c, body.ConnectionID, scope),
-		Stop:                 body.Stop,
-	}); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
 }
 
 // @Summary Join a table's presence
@@ -378,18 +278,6 @@ func (h *Handler) recordScope(c *gin.Context) (string, bool) {
 	}
 
 	return recordNS + c.Param("resource") + ":" + recordID, true
-}
-
-func (h *Handler) shipmentCommentsScope(c *gin.Context) (string, bool) {
-	shipmentID := c.Param("shipmentID")
-	if !pulid.LooksLike(shipmentID) {
-		h.eh.HandleError(c, errortypes.NewValidationError(
-			"shipmentId", errortypes.ErrInvalid, "Shipment ID is invalid",
-		))
-		return "", false
-	}
-
-	return shipmentCommentsNS + shipmentID, true
 }
 
 func scopeRequest(c *gin.Context, connectionID, scope string) *realtimeports.RealtimeScopeRequest {

@@ -372,6 +372,60 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createHazardousMaterial",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "HazardousMaterial",
+				Args:       field_Mutation_createHazardousMaterial_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateHazardousMaterial(ctx, fc.Args["input"].(gqlmodel.HazardousMaterialInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial),
+			},
+			{
+				Name:       "updateHazardousMaterial",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "HazardousMaterial",
+				Args:       field_Mutation_updateHazardousMaterial_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateHazardousMaterial(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazardousMaterialInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial),
+			},
+			{
+				Name:       "patchHazardousMaterial",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "HazardousMaterial",
+				Args:       field_Mutation_patchHazardousMaterial_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchHazardousMaterial(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HazardousMaterialPatchInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial),
+			},
+			{
+				Name:       "bulkUpdateHazardousMaterialStatus",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "HazardousMaterial",
+				Args:       field_Mutation_bulkUpdateHazardousMaterialStatus_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateHazardousMaterialStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateHazardousMaterialStatusInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNHazardousMaterial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterialᚄ),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "hazardousMaterials",
@@ -402,9 +456,22 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "BulkUpdateHazardousMaterialStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkUpdateHazardousMaterialStatusInput)},
+		{Name: "HazardousMaterialInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHazardousMaterialInput)},
+		{Name: "HazardousMaterialPatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHazardousMaterialPatchInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateHazardousMaterial(ctx context.Context, input gqlmodel.HazardousMaterialInput) (*hazardousmaterial.HazardousMaterial, error)
+	UpdateHazardousMaterial(ctx context.Context, id string, input gqlmodel.HazardousMaterialInput) (*hazardousmaterial.HazardousMaterial, error)
+	PatchHazardousMaterial(ctx context.Context, id string, input gqlmodel.HazardousMaterialPatchInput) (*hazardousmaterial.HazardousMaterial, error)
+	BulkUpdateHazardousMaterialStatus(ctx context.Context, input gqlmodel.BulkUpdateHazardousMaterialStatusInput) ([]*hazardousmaterial.HazardousMaterial, error)
 }
 
 type resolverQuery interface {
@@ -422,6 +489,74 @@ var (
 	errNoChild6 = errors.New("field of type Int does not have child fields")
 	errNoChild7 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createHazardousMaterial_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HazardousMaterialInput, error) {
+			return unmarshalNHazardousMaterialInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazardousMaterialInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateHazardousMaterial_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HazardousMaterialInput, error) {
+			return unmarshalNHazardousMaterialInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazardousMaterialInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_patchHazardousMaterial_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HazardousMaterialPatchInput, error) {
+			return unmarshalNHazardousMaterialPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazardousMaterialPatchInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_bulkUpdateHazardousMaterialStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.BulkUpdateHazardousMaterialStatusInput, error) {
+			return unmarshalNBulkUpdateHazardousMaterialStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateHazardousMaterialStatusInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func field_Query_hazardousMaterials_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -449,8 +584,395 @@ func field_Query_hazardousMaterial_args(ctx context.Context, ec *gqlexec.Exec, r
 	return args, nil
 }
 
+func unmarshalInputBulkUpdateHazardousMaterialStatusInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BulkUpdateHazardousMaterialStatusInput, error) {
+	var it gqlmodel.BulkUpdateHazardousMaterialStatusInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"hazardousMaterialIds", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "hazardousMaterialIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hazardousMaterialIds"))
+			data, err := unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HazardousMaterialIds = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputHazardousMaterialInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.HazardousMaterialInput, error) {
+	var it gqlmodel.HazardousMaterialInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "code", "name", "description", "class", "unNumber", "packingGroup", "subsidiaryHazardClass", "ergGuideNumber", "labelCodes", "specialProvisions", "properShippingName", "handlingInstructions", "emergencyContact", "emergencyContactPhoneNumber", "quantityThreshold", "placardRequired", "isReportableQuantity", "marinePollutant", "inhalationHazard", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "class":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("class"))
+			data, err := unmarshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Class = data
+		case "unNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.UnNumber = data
+		case "packingGroup":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("packingGroup"))
+			data, err := unmarshalOPackingGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐPackingGroup(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PackingGroup = data
+		case "subsidiaryHazardClass":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subsidiaryHazardClass"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubsidiaryHazardClass = data
+		case "ergGuideNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ergGuideNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ErgGuideNumber = data
+		case "labelCodes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelCodes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LabelCodes = data
+		case "specialProvisions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("specialProvisions"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SpecialProvisions = data
+		case "properShippingName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("properShippingName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProperShippingName = data
+		case "handlingInstructions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("handlingInstructions"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HandlingInstructions = data
+		case "emergencyContact":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emergencyContact"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmergencyContact = data
+		case "emergencyContactPhoneNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emergencyContactPhoneNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmergencyContactPhoneNumber = data
+		case "quantityThreshold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityThreshold"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.QuantityThreshold = data
+		case "placardRequired":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("placardRequired"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PlacardRequired = data
+		case "isReportableQuantity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReportableQuantity"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsReportableQuantity = data
+		case "marinePollutant":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marinePollutant"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarinePollutant = data
+		case "inhalationHazard":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inhalationHazard"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InhalationHazard = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputHazardousMaterialPatchInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.HazardousMaterialPatchInput, error) {
+	var it gqlmodel.HazardousMaterialPatchInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "code", "name", "description", "class", "unNumber", "packingGroup", "subsidiaryHazardClass", "ergGuideNumber", "labelCodes", "specialProvisions", "properShippingName", "handlingInstructions", "emergencyContact", "emergencyContactPhoneNumber", "quantityThreshold", "placardRequired", "isReportableQuantity", "marinePollutant", "inhalationHazard", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = graphql.OmittableOf(data)
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = graphql.OmittableOf(data)
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = graphql.OmittableOf(data)
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = graphql.OmittableOf(data)
+		case "class":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("class"))
+			data, err := unmarshalOHazardousClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Class = graphql.OmittableOf(data)
+		case "unNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.UnNumber = graphql.OmittableOf(data)
+		case "packingGroup":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("packingGroup"))
+			data, err := unmarshalOPackingGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐPackingGroup(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PackingGroup = graphql.OmittableOf(data)
+		case "subsidiaryHazardClass":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subsidiaryHazardClass"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubsidiaryHazardClass = graphql.OmittableOf(data)
+		case "ergGuideNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ergGuideNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ErgGuideNumber = graphql.OmittableOf(data)
+		case "labelCodes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelCodes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LabelCodes = graphql.OmittableOf(data)
+		case "specialProvisions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("specialProvisions"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SpecialProvisions = graphql.OmittableOf(data)
+		case "properShippingName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("properShippingName"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProperShippingName = graphql.OmittableOf(data)
+		case "handlingInstructions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("handlingInstructions"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HandlingInstructions = graphql.OmittableOf(data)
+		case "emergencyContact":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emergencyContact"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmergencyContact = graphql.OmittableOf(data)
+		case "emergencyContactPhoneNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emergencyContactPhoneNumber"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmergencyContactPhoneNumber = graphql.OmittableOf(data)
+		case "quantityThreshold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantityThreshold"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.QuantityThreshold = graphql.OmittableOf(data)
+		case "placardRequired":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("placardRequired"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PlacardRequired = graphql.OmittableOf(data)
+		case "isReportableQuantity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReportableQuantity"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsReportableQuantity = graphql.OmittableOf(data)
+		case "marinePollutant":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marinePollutant"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarinePollutant = graphql.OmittableOf(data)
+		case "inhalationHazard":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inhalationHazard"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InhalationHazard = graphql.OmittableOf(data)
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = graphql.OmittableOf(data)
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBulkUpdateHazardousMaterialStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateHazardousMaterialStatusInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BulkUpdateHazardousMaterialStatusInput, error) {
+	res, err := unmarshalInputBulkUpdateHazardousMaterialStatusInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -458,9 +980,91 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (domaintypes.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx context.Context, ec *gqlexec.Exec, v any) (hazardousmaterial.HazardousClass, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := hazardousmaterial.HazardousClass(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNHazardousMaterialInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazardousMaterialInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.HazardousMaterialInput, error) {
+	res, err := unmarshalInputHazardousMaterialInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNHazardousMaterialPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHazardousMaterialPatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.HazardousMaterialPatchInput, error) {
+	res, err := unmarshalInputHazardousMaterialPatchInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*domaintypes.Status, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOHazardousClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx context.Context, ec *gqlexec.Exec, v any) (*hazardousmaterial.HazardousClass, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := hazardousmaterial.HazardousClass(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOPackingGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐPackingGroup(ctx context.Context, ec *gqlexec.Exec, v any) (*hazardousmaterial.PackingGroup, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := hazardousmaterial.PackingGroup(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -485,6 +1089,14 @@ func marshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNHazardousMaterial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*hazardousmaterial.HazardousMaterial) graphql.Marshaler {
+	return gqlexec.List[*hazardousmaterial.HazardousMaterial]{
+		Elem:        marshalNHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNHazardousMaterial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousMaterial(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *hazardousmaterial.HazardousMaterial) graphql.Marshaler {

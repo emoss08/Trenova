@@ -519,3 +519,80 @@ func TestUpdate_AuditLogError(t *testing.T) {
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertExpectations(t)
 }
+
+func newBulkStatusRequest(ids ...pulid.ID) *fleetcodeports.BulkUpdateFleetCodeStatusRequest {
+	return &fleetcodeports.BulkUpdateFleetCodeStatusRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  pulid.MustNew("org_"),
+			BuID:   pulid.MustNew("bu_"),
+			UserID: pulid.MustNew("usr_"),
+		},
+		FleetCodeIDs: ids,
+		Status:       domaintypes.StatusInactive,
+	}
+}
+
+func TestBulkUpdateStatus_UpdatesAndAuditsEveryFleetCode(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	original1, original2 := newTestEntity(), newTestEntity()
+	updated1, updated2 := *original1, *original2
+	updated1.Status = domaintypes.StatusInactive
+	updated2.Status = domaintypes.StatusInactive
+	req := newBulkStatusRequest(original1.ID, original2.ID)
+
+	deps.repo.EXPECT().
+		GetByIDs(mock.Anything, fleetcodeports.GetFleetCodesByIDsRequest{
+			TenantInfo:   req.TenantInfo,
+			FleetCodeIDs: req.FleetCodeIDs,
+		}).
+		Return([]*fleetcode.FleetCode{original1, original2}, nil).
+		Once()
+	deps.repo.EXPECT().
+		BulkUpdateStatus(mock.Anything, req).
+		Return([]*fleetcode.FleetCode{&updated1, &updated2}, nil).
+		Once()
+	deps.audit.EXPECT().LogActions(mock.Anything).Return(nil).Once()
+
+	result, err := deps.svc.BulkUpdateStatus(t.Context(), req)
+
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	assert.Equal(t, domaintypes.StatusInactive, result[0].Status)
+	assert.Equal(t, domaintypes.StatusInactive, result[1].Status)
+}
+
+func TestBulkUpdateStatus_StopsWhenTheOriginalsCannotBeRead(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	readErr := errors.New("read failed")
+	req := newBulkStatusRequest(pulid.MustNew("fc_"))
+
+	deps.repo.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return(nil, readErr).Once()
+
+	result, err := deps.svc.BulkUpdateStatus(t.Context(), req)
+
+	require.ErrorIs(t, err, readErr)
+	assert.Nil(t, result)
+	deps.repo.AssertNotCalled(t, "BulkUpdateStatus", mock.Anything, mock.Anything)
+}
+
+func TestBulkUpdateStatus_ReturnsTheRepositoryError(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	bulkErr := errors.New("bulk update failed")
+	original := newTestEntity()
+	req := newBulkStatusRequest(original.ID)
+
+	deps.repo.EXPECT().
+		GetByIDs(mock.Anything, mock.Anything).
+		Return([]*fleetcode.FleetCode{original}, nil).
+		Once()
+	deps.repo.EXPECT().BulkUpdateStatus(mock.Anything, req).Return(nil, bulkErr).Once()
+
+	result, err := deps.svc.BulkUpdateStatus(t.Context(), req)
+
+	require.ErrorIs(t, err, bulkErr)
+	assert.Nil(t, result)
+}

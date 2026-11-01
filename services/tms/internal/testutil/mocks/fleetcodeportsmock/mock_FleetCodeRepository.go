@@ -40,6 +40,74 @@ func (_m *MockFleetCodeRepository) EXPECT() *MockFleetCodeRepository_Expecter {
 	return &MockFleetCodeRepository_Expecter{mock: &_m.Mock}
 }
 
+// BulkUpdateStatus provides a mock function for the type MockFleetCodeRepository
+func (_mock *MockFleetCodeRepository) BulkUpdateStatus(ctx context.Context, req *fleetcodeports.BulkUpdateFleetCodeStatusRequest) ([]*fleetcode.FleetCode, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BulkUpdateStatus")
+	}
+
+	var r0 []*fleetcode.FleetCode
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *fleetcodeports.BulkUpdateFleetCodeStatusRequest) ([]*fleetcode.FleetCode, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *fleetcodeports.BulkUpdateFleetCodeStatusRequest) []*fleetcode.FleetCode); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*fleetcode.FleetCode)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *fleetcodeports.BulkUpdateFleetCodeStatusRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFleetCodeRepository_BulkUpdateStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkUpdateStatus'
+type MockFleetCodeRepository_BulkUpdateStatus_Call struct {
+	*mock.Call
+}
+
+// BulkUpdateStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *fleetcodeports.BulkUpdateFleetCodeStatusRequest
+func (_e *MockFleetCodeRepository_Expecter) BulkUpdateStatus(ctx any, req any) *MockFleetCodeRepository_BulkUpdateStatus_Call {
+	return &MockFleetCodeRepository_BulkUpdateStatus_Call{Call: _e.mock.On("BulkUpdateStatus", ctx, req)}
+}
+
+func (_c *MockFleetCodeRepository_BulkUpdateStatus_Call) Run(run func(ctx context.Context, req *fleetcodeports.BulkUpdateFleetCodeStatusRequest)) *MockFleetCodeRepository_BulkUpdateStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *fleetcodeports.BulkUpdateFleetCodeStatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(*fleetcodeports.BulkUpdateFleetCodeStatusRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFleetCodeRepository_BulkUpdateStatus_Call) Return(fleetCodes []*fleetcode.FleetCode, err error) *MockFleetCodeRepository_BulkUpdateStatus_Call {
+	_c.Call.Return(fleetCodes, err)
+	return _c
+}
+
+func (_c *MockFleetCodeRepository_BulkUpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *fleetcodeports.BulkUpdateFleetCodeStatusRequest) ([]*fleetcode.FleetCode, error)) *MockFleetCodeRepository_BulkUpdateStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type MockFleetCodeRepository
 func (_mock *MockFleetCodeRepository) Create(ctx context.Context, entity *fleetcode.FleetCode) (*fleetcode.FleetCode, error) {
 	ret := _mock.Called(ctx, entity)

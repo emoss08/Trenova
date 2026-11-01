@@ -93,7 +93,7 @@ describe("ControlledDocumentTypeAutocompleteField", () => {
     });
   });
 
-  it("asks the DOCUMENT_TYPE select-option resource, never the REST route", async () => {
+  it("asks the GraphQL DOCUMENT_TYPE select-option resource", async () => {
     setCsrfToken("graphql-token");
     const user = userEvent.setup();
     const fetchMock = vi.fn(async () => selectOptionsResponse([BILL_OF_LADING]));
@@ -104,8 +104,7 @@ describe("ControlledDocumentTypeAutocompleteField", () => {
     await screen.findByText("Bill of lading");
 
     expect(fetchMock).toHaveBeenCalled();
-    for (const [input, init] of fetchMock.mock.calls as unknown as [RequestInfo, RequestInit][]) {
-      expect(String(input)).not.toContain("/document-types/select-options/");
+    for (const [, init] of fetchMock.mock.calls as unknown as [RequestInfo, RequestInit][]) {
       expect(JSON.parse(init.body as string)).toMatchObject({
         operationName: "SelectOptions",
         variables: { input: { resource: "DOCUMENT_TYPE" } },

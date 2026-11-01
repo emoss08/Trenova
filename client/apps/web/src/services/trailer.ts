@@ -28,10 +28,4 @@ export class TrailerService {
   public async locate(trailerId: string, data: LocateTrailerPayload) {
     return api.post(`/trailers/${trailerId}/locate/`, data);
   }
-
-  public async getOption(id: Trailer["id"]) {
-    const response = await api.get<Trailer>(`/trailers/select-options/${id}`);
-
-    return safeParse(trailerSchema, response, "Trailer");
-  }
 }

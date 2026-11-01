@@ -73,3 +73,71 @@ func (r *QueryResolver) AccessorialCharge(ctx context.Context, id string) (*acce
 		TenantInfo: &ti,
 	})
 }
+
+func (r *MutationResolver) CreateAccessorialCharge(ctx context.Context, input gqlmodel.AccessorialChargeInput) (*accessorialcharge.AccessorialCharge, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccessorialCharge, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := accessorialChargeFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AccessorialChargeService.Create(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateAccessorialCharge(ctx context.Context, id string, input gqlmodel.AccessorialChargeInput) (*accessorialcharge.AccessorialCharge, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccessorialCharge, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	accessorialChargeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	ti := resolvercore.TenantInfo(authCtx)
+	existing, err := r.AccessorialChargeService.Get(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
+		ID:         accessorialChargeID,
+		TenantInfo: &ti,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyAccessorialChargeInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.AccessorialChargeService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) PatchAccessorialCharge(ctx context.Context, id string, input gqlmodel.AccessorialChargePatchInput) (*accessorialcharge.AccessorialCharge, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccessorialCharge, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	accessorialChargeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	ti := resolvercore.TenantInfo(authCtx)
+	existing, err := r.AccessorialChargeService.Get(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
+		ID:         accessorialChargeID,
+		TenantInfo: &ti,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyAccessorialChargePatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.AccessorialChargeService.Update(ctx, existing, authCtx.UserID)
+}

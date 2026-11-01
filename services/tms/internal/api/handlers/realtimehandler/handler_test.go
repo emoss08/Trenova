@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/sessionwatch"
@@ -82,14 +81,6 @@ func (g *stubGateway) LeavePresence(
 	req *realtimeports.RealtimeScopeRequest,
 ) error {
 	g.left = req
-	return nil
-}
-
-func (g *stubGateway) SignalTyping(
-	_ context.Context,
-	req *realtimeports.RealtimeTypingRequest,
-) error {
-	g.typing = req
 	return nil
 }
 
@@ -336,100 +327,6 @@ func TestStream_CapacityAnswersWithRetryAfter(t *testing.T) {
 
 	assert.Equal(t, http.StatusTooManyRequests, w.Code)
 	assert.Equal(t, "5", w.Header().Get("Retry-After"))
-}
-
-func TestJoinShipmentComments_ScopesToTheShipment(t *testing.T) {
-	t.Parallel()
-
-	shipmentID := pulid.MustNew("shp_")
-	gateway := &stubGateway{snapshot: &realtimeports.RealtimePresenceSnapshot{
-		Scope: "shipment-comments:" + shipmentID.String(),
-		Members: []realtimeports.RealtimePresenceMember{
-			{UserID: "usr_other", ConnectionID: "rtc_other", Name: "Other"},
-		},
-	}}
-	router := newTestRouter(t, gateway, authUser)
-
-	req := httptest.NewRequest(
-		http.MethodPost,
-		"/api/v1/shipments/"+shipmentID.String()+"/comments/presence/",
-		bytes.NewBufferString(`{"connectionId":"rtc_01J00000000000000000000000"}`),
-	)
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
-	require.NotNil(t, gateway.joined)
-	assert.Equal(t, "shipment-comments:"+shipmentID.String(), gateway.joined.Scope)
-	assert.Equal(t, "rtc_01J00000000000000000000000", gateway.joined.ConnectionID)
-	assert.Equal(t, testUserID, gateway.joined.UserID)
-
-	var snapshot realtimeports.RealtimePresenceSnapshot
-	require.NoError(t, sonic.Unmarshal(w.Body.Bytes(), &snapshot))
-	require.Len(t, snapshot.Members, 1)
-	assert.Equal(t, "Other", snapshot.Members[0].Name)
-}
-
-func TestJoinShipmentComments_RejectsMalformedShipmentID(t *testing.T) {
-	t.Parallel()
-
-	gateway := &stubGateway{}
-	router := newTestRouter(t, gateway, authUser)
-
-	req := httptest.NewRequest(
-		http.MethodPost,
-		"/api/v1/shipments/shp_01J0000000000000000000000|x/comments/presence/",
-		bytes.NewBufferString(`{"connectionId":"rtc_01J00000000000000000000000"}`),
-	)
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Nil(t, gateway.joined)
-}
-
-func TestLeaveShipmentComments(t *testing.T) {
-	t.Parallel()
-
-	shipmentID := pulid.MustNew("shp_")
-	gateway := &stubGateway{}
-	router := newTestRouter(t, gateway, authUser)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, httptest.NewRequest(
-		http.MethodDelete,
-		"/api/v1/shipments/"+shipmentID.String()+
-			"/comments/presence/?connectionId=rtc_01J00000000000000000000000",
-		nil,
-	))
-
-	assert.Equal(t, http.StatusNoContent, w.Code)
-	require.NotNil(t, gateway.left)
-	assert.Equal(t, "rtc_01J00000000000000000000000", gateway.left.ConnectionID)
-}
-
-func TestTypingShipmentComments_PassesStop(t *testing.T) {
-	t.Parallel()
-
-	shipmentID := pulid.MustNew("shp_")
-	gateway := &stubGateway{}
-	router := newTestRouter(t, gateway, authUser)
-
-	req := httptest.NewRequest(
-		http.MethodPost,
-		"/api/v1/shipments/"+shipmentID.String()+"/comments/typing/",
-		bytes.NewBufferString(`{"connectionId":"rtc_01J00000000000000000000000","stop":true}`),
-	)
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusNoContent, w.Code)
-	require.NotNil(t, gateway.typing)
-	assert.True(t, gateway.typing.Stop)
-	assert.Equal(t, "shipment-comments:"+shipmentID.String(), gateway.typing.Scope)
 }
 
 func TestJoinView_ScopesToTheTablesResource(t *testing.T) {

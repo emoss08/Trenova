@@ -73,8 +73,6 @@ X-API-Key: <api-key>
 
 ## Endpoints
 
-- `workers_select` -> `api/v1/workers/select-options/`
-- `customers_select` -> `api/v1/customers/select-options/`
 - `workers_list` -> `api/v1/workers/`
 - `customers_list` -> `api/v1/customers/`
 - `equipment_types` -> `api/v1/equipment-types/`
@@ -90,7 +88,7 @@ Quick suite:
 Single spike test:
 
 ```bash
-./smack.sh --api-key trv_test.secret -c 100 -t 1000 test spike workers_select
+./smack.sh --api-key trv_test.secret -c 100 -t 1000 test spike workers_list
 ```
 
 Sustained run for 2 minutes:

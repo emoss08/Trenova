@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -46,4 +48,38 @@ func locationCategoryConnectionToModel(
 		TotalCount:      page.TotalCount,
 		TotalCountExact: page.TotalCountExact,
 	}, nil
+}
+
+func locationCategoryFromInput(
+	input *gqlmodel.LocationCategoryInput,
+	authCtx *authctx.AuthContext,
+) *locationcategory.LocationCategory {
+	entity := &locationcategory.LocationCategory{
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+	}
+	applyLocationCategoryInput(entity, input)
+
+	return entity
+}
+
+func applyLocationCategoryInput(
+	entity *locationcategory.LocationCategory,
+	input *gqlmodel.LocationCategoryInput,
+) {
+	entity.Name = input.Name
+	entity.Description = gqlscalar.StringValue(input.Description)
+	entity.Type = input.Type
+	entity.FacilityType = ""
+	if input.FacilityType != nil {
+		entity.FacilityType = *input.FacilityType
+	}
+	entity.Color = gqlscalar.StringValue(input.Color)
+	entity.HasSecureParking = input.HasSecureParking
+	entity.RequiresAppointment = input.RequiresAppointment
+	entity.AllowsOvernight = input.AllowsOvernight
+	entity.HasRestroom = input.HasRestroom
+	if input.Version != nil {
+		entity.Version = int64(*input.Version)
+	}
 }

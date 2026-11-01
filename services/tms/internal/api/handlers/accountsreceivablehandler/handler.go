@@ -36,16 +36,6 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/accounting/accounts-receivable")
 	api.GET(
-		"/aging/",
-		h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpRead),
-		h.aging,
-	)
-	api.GET(
-		"/open-items/",
-		h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpRead),
-		h.openItems,
-	)
-	api.GET(
 		"/customers/:customerID/ledger/",
 		h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpRead),
 		h.ledger,
@@ -55,33 +45,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpRead),
 		h.statement,
 	)
-}
-
-func (h *Handler) aging(c *gin.Context) {
-	auth := authctx.GetAuthContext(c)
-	asOfDate := int64(0)
-	if raw := c.Query("asOfDate"); raw != "" {
-		parsed, err := strconv.ParseInt(raw, 10, 64)
-		if err != nil {
-			h.eh.HandleError(c, err)
-			return
-		}
-		asOfDate = parsed
-	}
-	summary, err := h.service.GetAgingSummary(
-		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  auth.OrganizationID,
-			BuID:   auth.BusinessUnitID,
-			UserID: auth.UserID,
-		},
-		asOfDate,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, summary)
 }
 
 func (h *Handler) ledger(c *gin.Context) {
@@ -105,45 +68,6 @@ func (h *Handler) ledger(c *gin.Context) {
 		return
 	}
 	helpers.JSON(c, http.StatusOK, entries)
-}
-
-func (h *Handler) openItems(c *gin.Context) {
-	auth := authctx.GetAuthContext(c)
-	asOfDate := int64(0)
-	if raw := c.Query("asOfDate"); raw != "" {
-		parsed, err := strconv.ParseInt(raw, 10, 64)
-		if err != nil {
-			h.eh.HandleError(c, err)
-			return
-		}
-		asOfDate = parsed
-	}
-
-	var customerID pulid.ID
-	if raw := c.Query("customerId"); raw != "" {
-		parsed, err := pulid.MustParse(raw)
-		if err != nil {
-			h.eh.HandleError(c, err)
-			return
-		}
-		customerID = parsed
-	}
-
-	items, err := h.service.ListOpenItems(
-		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  auth.OrganizationID,
-			BuID:   auth.BusinessUnitID,
-			UserID: auth.UserID,
-		},
-		customerID,
-		asOfDate,
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) statement(c *gin.Context) {

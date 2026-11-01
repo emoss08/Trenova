@@ -15,10 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -153,6 +155,40 @@ func (s *Service) GetBillingProfile(
 	req customerports.GetCustomerBillingProfileRequest,
 ) (*customer.CustomerBillingProfile, error) {
 	return s.repo.GetBillingProfile(ctx, req)
+}
+
+func (s *Service) GetShipmentBillingRules(
+	ctx context.Context,
+	req customerports.GetShipmentBillingRulesRequest,
+) ([]*customerports.ShipmentBillingRules, error) {
+	req.CustomerIDs = sliceutils.Dedupe(req.CustomerIDs)
+	if len(req.CustomerIDs) > customerports.MaxShipmentBillingRulesCustomers {
+		return nil, errortypes.NewValidationError(
+			"customerIds",
+			errortypes.ErrInvalid,
+			"A shipment's billing rules can be read for at most {0} customers at once",
+			customerports.MaxShipmentBillingRulesCustomers,
+		)
+	}
+
+	profiles, err := s.repo.GetShipmentBillingProfiles(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	rules := make([]*customerports.ShipmentBillingRules, 0, len(profiles))
+	for _, profile := range profiles {
+		rules = append(rules, &customerports.ShipmentBillingRules{
+			CustomerID:          profile.CustomerID,
+			BOLRequired:         profile.RequiresBOLNumber(),
+			CreditStatus:        profile.CreditStatus,
+			CreditHoldReason:    profile.CreditHoldReason,
+			EnforceCreditLimit:  profile.EnforceCreditLimit,
+			CreditHoldAutomatic: profile.CreditHoldAutomatic,
+		})
+	}
+
+	return rules, nil
 }
 
 func (s *Service) BulkUpdateStatus(

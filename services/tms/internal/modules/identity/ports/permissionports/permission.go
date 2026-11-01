@@ -140,13 +140,6 @@ type EffectiveResourcePermission struct {
 	GrantedBy  []string               `json:"grantedBy"`
 }
 
-type SimulatePermissionsRequest struct {
-	UserID         pulid.ID
-	OrganizationID pulid.ID
-	AddRoleIDs     []pulid.ID
-	RemoveRoleIDs  []pulid.ID
-}
-
 // DelegatedPermissionSource supplies the permission set of a principal that acts
 // in an organization through a delegation bound to the request rather than through
 // role assignments in it. The engine asks it before computing role permissions; it
@@ -183,10 +176,6 @@ type PermissionEngine interface {
 	GetEffectivePermissions(
 		ctx context.Context,
 		userID, orgID pulid.ID,
-	) (*EffectivePermissions, error)
-	SimulatePermissions(
-		ctx context.Context,
-		req *SimulatePermissionsRequest,
 	) (*EffectivePermissions, error)
 	// AgentsUsable is what the actor may use of the organization's agents:
 	// whether they hold the assistant at the operation, and the agents their

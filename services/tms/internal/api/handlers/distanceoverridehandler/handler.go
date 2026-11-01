@@ -40,16 +40,6 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/distance-overrides")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceDistanceOverride.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET(
-		"/:distanceOverrideID",
-		h.pm.RequirePermission(permission.ResourceDistanceOverride.String(), permission.OpRead),
-		h.get,
-	)
 	api.POST(
 		"/",
 		h.pm.RequirePermission(permission.ResourceDistanceOverride.String(), permission.OpCreate),
@@ -70,75 +60,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDistanceOverride.String(), permission.OpDelete),
 		h.delete,
 	)
-}
-
-// @Summary List distance overrides
-// @ID listDistanceOverrides
-// @Tags Distance Overrides
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]distanceoverride.DistanceOverride]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /distance-overrides/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*distanceoverride.DistanceOverride], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&distanceoverrideports.ListDistanceOverrideRequest{
-					Filter: req,
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a distance override
-// @ID getDistanceOverride
-// @Tags Distance Overrides
-// @Produce json
-// @Param distanceOverrideID path string true "Distance override ID"
-// @Success 200 {object} distanceoverride.DistanceOverride
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /distance-overrides/{distanceOverrideID} [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	distanceOverrideID, err := pulid.MustParse(c.Param("distanceOverrideID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		distanceoverrideports.GetDistanceOverrideByIDRequest{
-			ID:         distanceOverrideID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a distance override

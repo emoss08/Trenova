@@ -56,8 +56,6 @@ declare -A TEST_PATTERNS=(
 )
 
 declare -A TEST_SCENARIOS=(
-  ["workers_select"]="api/v1/workers/select-options/"
-  ["customers_select"]="api/v1/customers/select-options/"
   ["workers_list"]="api/v1/workers/"
   ["customers_list"]="api/v1/customers/"
   ["equipment_types"]="api/v1/equipment-types/"
@@ -613,7 +611,7 @@ run_stress_test() {
 run_quick_tests() {
   local endpoint pattern
   log "INFO" "Running quick test suite"
-  for endpoint in workers_select customers_select; do
+  for endpoint in workers_list customers_list; do
     for pattern in spike sustained; do
       if [[ "$pattern" == "sustained" ]]; then
         run_stress_test "$endpoint" "$pattern" 25 30
@@ -747,9 +745,9 @@ Environment:
 
 Examples:
   $(basename "$0") --api-key trv_test.secret quick
-  $(basename "$0") --api-key trv_test.secret test spike workers_select
+  $(basename "$0") --api-key trv_test.secret test spike workers_list
   $(basename "$0") --api-key trv_test.secret -d 120 test sustained workers_list
-  $(basename "$0") --api-key trv_test.secret --auth-header X-API-Key --auth-scheme none test spike customers_select
+  $(basename "$0") --api-key trv_test.secret --auth-header X-API-Key --auth-scheme none test spike customers_list
 EOF
 }
 

@@ -58,16 +58,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.createProfile,
 	)
 	profiles.GET(
-		"/select-options/",
-		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead),
-		h.selectProfileOptions,
-	)
-	profiles.GET(
-		"/select-options/:profileID",
-		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead),
-		h.getProfileOption,
-	)
-	profiles.GET(
 		"/:profileID/",
 		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead),
 		h.getProfile,
@@ -141,43 +131,6 @@ func (h *Handler) listProfiles(c *gin.Context) {
 			Filter: req,
 		})
 	})
-}
-
-func (h *Handler) selectProfileOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*email.Profile], error) {
-			return h.service.SelectProfileOptions(
-				c.Request.Context(),
-				&emailports.EmailProfileSelectOptionsRequest{
-					SelectQueryRequest: req,
-				},
-			)
-		},
-	)
-}
-
-func (h *Handler) getProfileOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	id, err := pulid.Parse(c.Param("profileID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	profile, err := h.service.GetProfile(c.Request.Context(), emailports.GetEmailEntityRequest{
-		ID:         id,
-		TenantInfo: tenantInfo(authCtx),
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) getProfile(c *gin.Context) {

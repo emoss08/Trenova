@@ -15,7 +15,6 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -23,7 +22,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { IntegrationSetupWizard } from "../shared/integration-setup-wizard";
+import { IntegrationSetupFooter, IntegrationSetupWizard } from "../shared/integration-setup-wizard";
 import { AccountingCompanyFacts } from "./accounting-company-facts";
 import { AccountingConnectStep } from "./accounting-connect-step";
 import { AccountingConnectionPanel } from "./accounting-connection-panel";
@@ -32,7 +31,8 @@ import { AccountingModeStep } from "./accounting-mode-step";
 import { AccountingStartDateStep } from "./accounting-start-date-step";
 import { accountingVendor, type AccountingVendor } from "./accounting-vendors";
 import { useAccountingConnectionActions } from "./use-accounting-connection";
-import { ThemedLogo } from "../shared/integration-connect-header";
+import { IntegrationLogoMark } from "../shared/integration-connect-header";
+import { IntegrationDialogContent } from "../shared/integration-dialog-content";
 
 type AccountingIntegrationModalProps = {
   vendor: AccountingVendor;
@@ -53,16 +53,21 @@ export function AccountingIntegrationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="lg" className="flex max-h-[90vh] flex-col overflow-hidden">
-        <DialogHeader className="flex flex-row items-center gap-3 pr-8">
-          <ThemedLogo
+      {/* A fixed frame, so moving from one step to the next never resizes the dialog. */}
+      <IntegrationDialogContent
+        size="xl"
+        className="flex h-[min(46rem,90vh)] flex-col gap-0 overflow-hidden p-0"
+      >
+        <DialogHeader className="flex-row items-center gap-3 border-b px-5 py-4 pr-12">
+          <IntegrationLogoMark
+            name={vendor.name}
             logo={{ light: vendor.logoLight, dark: vendor.logoDark }}
-            alt={t("{0} logo", vendor.name)}
-            className="h-7 max-w-28 object-contain"
+            className="max-sm:max-w-24"
           />
-          <div className="min-w-0 space-y-0.5">
-            <DialogTitle>{t("Accounting sync")}</DialogTitle>
-            <DialogDescription className="flex flex-wrap items-center gap-1 text-xs">
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className="text-muted-foreground text-xs">{t("Accounting sync")}</span>
+            <DialogTitle className="truncate">{vendor.name}</DialogTitle>
+            <DialogDescription className="flex flex-wrap items-center gap-x-1 text-xs">
               <span>{t("Keep {0} in step with what Trenova posts.", vendor.name)}</span>
               <ExternalLink href={vendor.docsUrl} className="text-xs">
                 {t("{0} help", vendor.name)}
@@ -70,7 +75,7 @@ export function AccountingIntegrationModal({
             </DialogDescription>
           </div>
         </DialogHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto px-1 py-2">
+        <div className="flex min-h-0 flex-1 flex-col">
           <AccountingIntegrationBody
             vendor={vendor}
             open={open}
@@ -79,7 +84,7 @@ export function AccountingIntegrationModal({
             onReviewed={onReviewed}
           />
         </div>
-      </DialogContent>
+      </IntegrationDialogContent>
     </Dialog>
   );
 }
@@ -130,7 +135,7 @@ function AccountingIntegrationBody({
 
   if (permissionsLoading || (canRead && statusQuery.isLoading)) {
     return (
-      <div className="space-y-3">
+      <div aria-busy="true" aria-label={t("Loading")} className="space-y-3 p-5">
         <Skeleton className="h-8 w-1/2" />
         <Skeleton className="h-32 w-full" />
       </div>
@@ -139,30 +144,34 @@ function AccountingIntegrationBody({
 
   if (!canRead) {
     return (
-      <Alert size="sm" variant="warning">
-        <AlertDescription>
-          {t("You do not have permission to view the accounting integration.")}
-        </AlertDescription>
-      </Alert>
+      <div className="p-5">
+        <Alert size="sm" variant="warning">
+          <AlertDescription>
+            {t("You do not have permission to view the accounting integration.")}
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   const status = statusQuery.data;
   if (statusQuery.isError || !status) {
     return (
-      <Alert size="sm" variant="destructive">
-        <AlertDescription className="flex items-center justify-between gap-3">
-          <span>{t("The {0} connection could not be loaded.", vendor.name)}</span>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => void statusQuery.refetch()}
-          >
-            {t("Retry")}
-          </Button>
-        </AlertDescription>
-      </Alert>
+      <div className="p-5">
+        <Alert size="sm" variant="destructive">
+          <AlertDescription className="flex items-center justify-between gap-3">
+            <span>{t("The {0} connection could not be loaded.", vendor.name)}</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void statusQuery.refetch()}
+            >
+              {t("Retry")}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
@@ -205,7 +214,7 @@ function AccountingIntegrationBody({
         activeStepId="review"
         label={t("{0} setup", vendor.name)}
       >
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h3 className="text-base font-semibold">
             {t("Connected to {0}", connection.externalCompanyName || vendor.name)}
           </h3>
@@ -216,8 +225,10 @@ function AccountingIntegrationBody({
             )}
           </p>
         </div>
-        <AccountingCompanyFacts connection={connection} />
-        <div className="flex justify-end gap-2 border-t pt-4">
+        <div className="rounded-lg border p-4">
+          <AccountingCompanyFacts connection={connection} />
+        </div>
+        <IntegrationSetupFooter>
           <Button type="button" onClick={onReviewed}>
             {needsAccountingMode(connection) ||
             needsAccountingMappings(connection) ||
@@ -225,7 +236,7 @@ function AccountingIntegrationBody({
               ? t("Continue")
               : t("Done")}
           </Button>
-        </div>
+        </IntegrationSetupFooter>
       </IntegrationSetupWizard>
     );
   }

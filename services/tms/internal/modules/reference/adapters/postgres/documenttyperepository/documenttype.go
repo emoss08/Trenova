@@ -208,7 +208,7 @@ func (r *repository) GetByName(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *pagination.SelectQueryRequest,
+	req *documenttypeports.DocumentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*documenttype.DocumentType], error) {
 	return dbtx.Read(
 		ctx,
@@ -225,14 +225,17 @@ func (r *repository) SelectOptions(
 				dt.DocumentCategory,
 				dt.IsSystem,
 			).
-				Where(dt.Code.NotIn(systemDocumentTypeCodes...)).
+				Where(
+					dt.Code.NotIn(systemDocumentTypeCodes...),
+					keel.When(req.Category != "", dt.DocumentCategory.Eq(req.Category)),
+				).
 				Cache(resultcache.Reference()...)
 
 			return listquery.SelectOptions(
 				ctx,
 				r.db.Keel(ctx),
 				q,
-				req,
+				req.SelectQuery,
 				func(s string) keel.Pred {
 					return keel.Or(dt.Code.ContainsFold(s), dt.Name.ContainsFold(s))
 				},

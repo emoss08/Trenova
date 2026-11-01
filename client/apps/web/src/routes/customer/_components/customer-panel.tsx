@@ -7,6 +7,7 @@ import { DialogDescription, DialogTitle } from "@trenova/shared/components/ui/di
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { CustomerRow } from "@/lib/graphql/customer-table";
+import { apiService } from "@/services/api";
 import { customerSchema, type Customer } from "@trenova/shared/types/customer";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -131,12 +132,14 @@ export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/customers/"
         queryKey="customer-list"
         title={t("Customer")}
         fieldKey="name"
         size="lg"
         formComponent={<CustomerTabbedForm customerId={row?.id} />}
+        mutationFn={(values, currentRow) =>
+          apiService.customerService.update(currentRow.id, values)
+        }
         titleComponent={(currentRecord) => {
           return (
             <div className="flex flex-col gap-0.5">
@@ -164,11 +167,11 @@ export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/customers/"
       queryKey="customer-list"
       title={t("Customer")}
       size="lg"
       formComponent={<CustomerTabbedForm />}
+      mutationFn={(values) => apiService.customerService.create(values)}
     />
   );
 }

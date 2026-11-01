@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -98,6 +99,9 @@ func (r *MutationResolver) BulkUpdateEquipmentManufacturerStatus(ctx context.Con
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEquipmentManufacturer, permission.OpUpdate)
 	if err != nil {
 		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update equipment manufacturers")
 	}
 
 	equipmentManufacturerIDs, err := gqlid.ParseIDs(input.EquipmentManufacturerIds)

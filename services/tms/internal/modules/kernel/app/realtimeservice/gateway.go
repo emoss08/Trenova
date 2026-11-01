@@ -3,7 +3,6 @@ package realtimeservice
 import (
 	"context"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -111,63 +110,6 @@ func (g *Gateway) LeavePresence(
 	}
 
 	return g.broker.LeavePresence(ctx, conn, req.Scope)
-}
-
-// SignalTyping tells the scope's other members that the caller is typing, at
-// most once per throttle window per connection. A stop always goes through and
-// reopens the window, so the next keystroke is announced at once.
-func (g *Gateway) SignalTyping(
-	ctx context.Context,
-	req *realtimeports.RealtimeTypingRequest,
-) error {
-	if req == nil {
-		return errortypes.NewValidationError("scope", errortypes.ErrRequired, "Scope is required")
-	}
-
-	conn, err := g.connectionFor(ctx, &req.RealtimeScopeRequest)
-	if err != nil {
-		return err
-	}
-
-	throttleKey := "typing:" + conn.ConnectionID + ":" + req.Scope
-	if req.Stop {
-		if err = g.broker.Release(ctx, throttleKey); err != nil {
-			g.l.Warn("could not reset typing throttle", zap.Error(err))
-		}
-	} else {
-		allowed, throttleErr := g.broker.Throttle(
-			ctx,
-			throttleKey,
-			g.cfg.GetTypingThrottle(),
-		)
-		if throttleErr != nil {
-			return throttleErr
-		}
-		if !allowed {
-			return nil
-		}
-	}
-
-	payload, err := sonic.Marshal(realtimeports.RealtimeTypingEvent{
-		Scope:  req.Scope,
-		UserID: conn.UserID.String(),
-		Name:   conn.Name,
-		Stop:   req.Stop,
-	})
-	if err != nil {
-		return err
-	}
-
-	g.broker.Enqueue(&realtimeports.RealtimeEnvelope{
-		OrganizationID: conn.OrganizationID,
-		BusinessUnitID: conn.BusinessUnitID,
-		Event:          realtimeports.RealtimeEventTyping,
-		Scope:          req.Scope,
-		Payload:        payload,
-		Ephemeral:      true,
-	})
-
-	return nil
 }
 
 func (g *Gateway) Drain() {

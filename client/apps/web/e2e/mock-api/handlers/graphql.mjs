@@ -17,6 +17,7 @@ import { paletteHandlers } from "./palette.mjs";
 import { CUSTOMER_TRACKING_HANDLERS } from "./customertracking.mjs";
 import { FORMULA_HANDLERS, formulaSelectRows } from "./formula.mjs";
 import { FORMULA_LIBRARY_HANDLERS } from "./formula-library.mjs";
+import { ACCOUNTING_HANDLERS } from "./accounting.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -1176,6 +1177,7 @@ const HANDLERS = {
   ...DESK_PLAN_HANDLERS,
   ...FORMULA_HANDLERS,
   ...FORMULA_LIBRARY_HANDLERS,
+  ...ACCOUNTING_HANDLERS,
   SelectOptions: (state, v) => {
     const cards = DESK_CARD_HANDLERS.SelectOptions(state, v);
     if (v.input?.resource !== "USER" && cards.selectOptions.totalCount > 0) return cards;

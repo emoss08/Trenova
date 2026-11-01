@@ -2217,6 +2217,34 @@ type AccessorialChargeEdge {
   node: AccessorialCharge!
 }
 
+input AccessorialChargeInput {
+  amount: Decimal!
+  code: String!
+  description: String!
+  method: AccessorialMethod!
+  """Required when the method is PerUnit."""
+  rateUnit: RateUnit
+  status: EntityStatus!
+  version: Int
+}
+
+input AccessorialChargePatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  amount: Decimal @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  code: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  method: AccessorialMethod @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  rateUnit: RateUnit @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
+}
+
 enum AccessorialMethod {
   Flat
   PerUnit
@@ -2263,6 +2291,33 @@ type AccountTypeConnection {
 type AccountTypeEdge {
   cursor: String!
   node: AccountType!
+}
+
+input AccountTypeInput {
+  category: AccountCategory!
+  code: String!
+  color: String
+  description: String
+  name: String!
+  status: EntityStatus!
+  version: Int
+}
+
+input AccountTypePatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  category: AccountCategory @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  code: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  color: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  name: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
 }
 
 """
@@ -7935,6 +7990,21 @@ enum BulkSettlementActionType {
   Submit
 }
 
+input BulkUpdateAccountTypeStatusInput {
+  accountTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateCommodityStatusInput {
+  commodityIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateCustomerStatusInput {
+  customerIds: [ID!]!
+  status: EntityStatus!
+}
+
 input BulkUpdateEquipmentManufacturerStatusInput {
   equipmentManufacturerIds: [ID!]!
   status: EntityStatus!
@@ -7942,6 +8012,16 @@ input BulkUpdateEquipmentManufacturerStatusInput {
 
 input BulkUpdateEquipmentTypeStatusInput {
   equipmentTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateFleetCodeStatusInput {
+  fleetCodeIds: [ID!]!
+  status: EntityStatus!
+}
+
+input BulkUpdateHazardousMaterialStatusInput {
+  hazardousMaterialIds: [ID!]!
   status: EntityStatus!
 }
 
@@ -10509,7 +10589,9 @@ type Commodity {
   fragile: Boolean!
   freightClass: FreightClass
   hazardousMaterialId: ID
+  heightPerUnit: Float
   id: ID!
+  lengthPerUnit: Float
   linearFeetPerUnit: Float
   loadingInstructions: String
   maxQuantityPerShipment: Float
@@ -10523,6 +10605,7 @@ type Commodity {
   updatedAt: Timestamp!
   version: Int!
   weightPerUnit: Float
+  widthPerUnit: Float
 }
 
 type CommodityConnection {
@@ -10538,6 +10621,63 @@ type CommodityConnection {
 type CommodityEdge {
   cursor: String!
   node: Commodity!
+}
+
+input CommodityInput {
+  description: String!
+  fragile: Boolean!
+  freightClass: FreightClass
+  hazardousMaterialId: ID
+  heightPerUnit: Float
+  lengthPerUnit: Float
+  linearFeetPerUnit: Float
+  loadingInstructions: String
+  maxQuantityPerShipment: Float
+  maxTemperature: Int
+  minTemperature: Int
+  name: String!
+  stackable: Boolean!
+  status: EntityStatus!
+  version: Int
+  weightPerUnit: Float
+  widthPerUnit: Float
+}
+
+input CommodityPatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  fragile: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  freightClass: FreightClass @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  hazardousMaterialId: ID @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  heightPerUnit: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  lengthPerUnit: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  linearFeetPerUnit: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  loadingInstructions: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  maxQuantityPerShipment: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  maxTemperature: Int @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  minTemperature: Int @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  name: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  stackable: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  weightPerUnit: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  widthPerUnit: Float @goField(omittable: true)
 }
 
 """
@@ -11053,6 +11193,25 @@ type CustomFieldDefinitionEdge {
   node: CustomFieldDefinition!
 }
 
+"""
+A custom field as a record's form draws it. Anyone who reads the record's resource type reads
+the fields its form shows, without reading custom field definitions.
+"""
+type CustomFieldFormField {
+  color: String
+  defaultValue: Any
+  description: String
+  displayOrder: Int!
+  fieldType: FieldType!
+  id: ID!
+  isRequired: Boolean!
+  label: String!
+  name: String!
+  options: [CustomFieldSelectOption!]!
+  uiAttributes: CustomFieldUIAttributes
+  validationRules: CustomFieldValidationRules
+}
+
 """One choice offered by a select or multi-select custom field."""
 type CustomFieldSelectOption {
   color: String!
@@ -11089,12 +11248,20 @@ type Customer {
   brokerVettingEnabled: Boolean!
   businessUnit: BusinessUnit
   businessUnitId: ID!
+  """
+  How often a check call is due on this customer's freight; null uses the organization's interval.
+  """
+  checkCallIntervalHours: Int
   city: String
   code: String!
   consolidationPriority: Int!
   createdAt: Timestamp!
   dotNumber: String
   emailProfile: CustomerEmailProfile
+  """
+  How late an ETA may run before this customer's freight is flagged at risk; null uses the organization's threshold.
+  """
+  etaRiskThresholdMinutes: Int
   exclusiveConsolidation: Boolean!
   externalId: String
   id: ID!
@@ -11232,6 +11399,69 @@ type CustomerBillingProfile {
   version: Int!
 }
 
+input CustomerBillingProfileInput {
+  applyLateCharges: Boolean!
+  arAccountId: ID
+  autoApplyAccessorials: Boolean!
+  autoApprove: Boolean!
+  autoBill: Boolean!
+  autoCreditHold: Boolean!
+  autoMarkReadyToBill: Boolean!
+  autoSendInvoiceOnGeneration: Boolean!
+  autoTransfer: Boolean!
+  billingCurrency: String!
+  billingCycle: CustomerBillingCycle!
+  """
+  Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer.
+  """
+  billingCycleAnchorDay: Int!
+  """IANA zone the period boundaries are evaluated in."""
+  billingCycleTimezone: String!
+  billingNotes: String
+  countLateOnlyOnAppointmentStops: Boolean!
+  creditHoldReason: String
+  creditLimit: Decimal
+  creditStatus: CustomerCreditStatus!
+  customerInvoicePrefix: String
+  defaultBillerId: ID
+  """
+  The document types an invoice for this customer cannot be generated without.
+  """
+  documentTypeIds: [ID!]!
+  ediInvoiceEnabled: Boolean!
+  emailInvoiceEnabled: Boolean!
+  enforceCreditLimit: Boolean!
+  enforceCustomerBillingReq: Boolean!
+  """
+  The factor this customer's invoices are assigned to; null when they are not factored.
+  """
+  factoringCompanyId: ID
+  fuelSurchargeMode: CustomerFuelSurchargeMode!
+  fuelSurchargeProgramId: ID
+  gracePeriodDays: Int!
+  hasBillingControlOverrides: Boolean!
+  invoiceCopies: Int!
+  invoiceDelivery: CustomerInvoiceDelivery!
+  invoiceDetail: InvoiceDetail!
+  invoiceNumberFormat: CustomerInvoiceNumberFormat!
+  lateChargeRate: Decimal
+  """Zero means unbounded."""
+  maxShipmentsPerInvoice: Int!
+  minConsolidatedAmount: Decimal
+  paymentTerm: CustomerPaymentTerm!
+  requireBOLNumber: Boolean!
+  requireDeliveryNumber: Boolean!
+  requirePONumber: Boolean!
+  revenueAccountId: ID
+  sectionBy: InvoiceSectionKey!
+  sendPaymentReminders: Boolean!
+  sendStatements: Boolean!
+  splitBy: InvoiceSplitKey!
+  taxExempt: Boolean!
+  taxExemptNumber: String
+  validateCustomerRates: Boolean!
+}
+
 type CustomerConnection {
   edges: [CustomerEdge!]!
   pageInfo: PageInfo!
@@ -11290,10 +11520,53 @@ type CustomerEmailProfile {
   version: Int!
 }
 
+input CustomerEmailProfileInput {
+  attachmentName: String
+  bccRecipients: String
+  ccRecipients: String
+  comment: String
+  includeShipmentDetail: Boolean!
+  readReceipt: Boolean!
+  subject: String
+  toRecipients: String
+}
+
 enum CustomerFuelSurchargeMode {
   FuelIncluded
   None
   Program
+}
+
+input CustomerInput {
+  addressLine1: String!
+  addressLine2: String
+  allowConsolidation: Boolean!
+  """
+  Omit to leave the billing profile as it is; a new customer then gets the default profile.
+  """
+  billingProfile: CustomerBillingProfileInput
+  brokerVettingEnabled: Boolean!
+  checkCallIntervalHours: Int
+  city: String!
+  code: String!
+  consolidationPriority: Int!
+  dotNumber: String
+  """Omit to leave the email profile as it is."""
+  emailProfile: CustomerEmailProfileInput
+  etaRiskThresholdMinutes: Int
+  exclusiveConsolidation: Boolean!
+  externalId: String
+  latitude: Float
+  longitude: Float
+  mcNumber: String
+  name: String!
+  placeId: String
+  postalCode: String!
+  stateId: ID!
+  status: EntityStatus!
+  statusUpdatePreference: CustomerStatusUpdatePreference!
+  statusUpdateRecipients: String
+  version: Int
 }
 
 """How many invoices a customer's freight turns into."""
@@ -11312,6 +11585,55 @@ enum CustomerInvoiceNumberFormat {
   CustomPrefix
   Default
   POBased
+}
+
+input CustomerPatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  addressLine1: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  addressLine2: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  allowConsolidation: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  brokerVettingEnabled: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  checkCallIntervalHours: Int @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  city: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  code: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  consolidationPriority: Int @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  dotNumber: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  etaRiskThresholdMinutes: Int @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  exclusiveConsolidation: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  externalId: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  latitude: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  longitude: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  mcNumber: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  name: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  placeId: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  postalCode: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  stateId: ID @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  statusUpdatePreference: CustomerStatusUpdatePreference @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  statusUpdateRecipients: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
 }
 
 type CustomerPayment {
@@ -13867,6 +14189,16 @@ type DocumentTypeConnection {
 type DocumentTypeEdge {
   cursor: String!
   node: DocumentType!
+}
+
+input DocumentTypeInput {
+  code: String!
+  color: String
+  description: String
+  documentCategory: DocumentCategory!
+  documentClassification: DocumentClassification!
+  name: String!
+  version: Int
 }
 
 input DraftFactoringNoaInput {
@@ -17531,6 +17863,39 @@ type FleetCodeEdge {
   node: FleetCode!
 }
 
+input FleetCodeInput {
+  code: String!
+  color: String
+  deadheadGoal: Float
+  description: String
+  managerId: ID!
+  mileageGoal: Float
+  revenueGoal: Float
+  status: EntityStatus!
+  version: Int
+}
+
+input FleetCodePatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  code: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  color: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  deadheadGoal: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  managerId: ID @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  mileageGoal: Float @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  revenueGoal: Float @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
+}
+
 """
 What the fleet's loads cost over a window. The margin figures, and the revenue
 that would let a reader work the margin out from the cost, are null to a reader
@@ -18905,6 +19270,75 @@ type HazardousMaterialEdge {
   node: HazardousMaterial!
 }
 
+input HazardousMaterialInput {
+  class: HazardousClass!
+  code: String
+  description: String
+  emergencyContact: String
+  emergencyContactPhoneNumber: String
+  ergGuideNumber: String
+  handlingInstructions: String
+  inhalationHazard: Boolean!
+  isReportableQuantity: Boolean!
+  labelCodes: String
+  marinePollutant: Boolean!
+  name: String!
+  packingGroup: PackingGroup
+  placardRequired: Boolean!
+  properShippingName: String
+  quantityThreshold: String
+  specialProvisions: String
+  status: EntityStatus!
+  subsidiaryHazardClass: String
+  unNumber: String
+  version: Int
+}
+
+input HazardousMaterialPatchInput {
+  """Omit to leave unchanged; null is rejected."""
+  class: HazardousClass @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  code: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  description: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  emergencyContact: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  emergencyContactPhoneNumber: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  ergGuideNumber: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  handlingInstructions: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  inhalationHazard: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  isReportableQuantity: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  labelCodes: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  marinePollutant: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  name: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  packingGroup: PackingGroup @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  placardRequired: Boolean @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  properShippingName: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  quantityThreshold: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  specialProvisions: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  status: EntityStatus @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  subsidiaryHazardClass: String @goField(omittable: true)
+  """Omit to leave unchanged; pass null to clear."""
+  unNumber: String @goField(omittable: true)
+  """Omit to leave unchanged; null is rejected."""
+  version: Int @goField(omittable: true)
+}
+
 type HazmatSegregationRule {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -18943,6 +19377,27 @@ type HazmatSegregationRuleConnection {
 type HazmatSegregationRuleEdge {
   cursor: String!
   node: HazmatSegregationRule!
+}
+
+input HazmatSegregationRuleInput {
+  classA: HazardousClass!
+  classB: HazardousClass!
+  description: String
+  """Required when the segregation type is Distance."""
+  distanceUnit: String
+  """Required when the rule has exceptions."""
+  exceptionNotes: String
+  hasExceptions: Boolean!
+  hazmatAId: ID
+  hazmatBId: ID
+  """Required when the segregation type is Distance."""
+  minimumDistance: Float
+  name: String!
+  referenceCode: String
+  regulationSource: String
+  segregationType: SegregationType!
+  status: EntityStatus!
+  version: Int
 }
 
 """The roster counted three ways."""
@@ -19021,6 +19476,23 @@ type HoldReasonConnection {
 type HoldReasonEdge {
   cursor: String!
   node: HoldReason!
+}
+
+input HoldReasonInput {
+  active: Boolean!
+  code: String!
+  defaultBlocksBilling: Boolean!
+  defaultBlocksDelivery: Boolean!
+  defaultBlocksDispatch: Boolean!
+  defaultSeverity: HoldSeverity!
+  defaultVisibleToCustomer: Boolean!
+  description: String
+  """Codes this reason maps to in other systems, keyed by system."""
+  externalMap: JSON
+  label: String!
+  sortOrder: Int!
+  type: HoldType!
+  version: Int
 }
 
 enum HoldSeverity {
@@ -21705,6 +22177,19 @@ type LocationCategoryEdge {
   node: LocationCategory!
 }
 
+input LocationCategoryInput {
+  allowsOvernight: Boolean!
+  color: String
+  description: String
+  facilityType: FacilityType
+  hasRestroom: Boolean!
+  hasSecureParking: Boolean!
+  name: String!
+  requiresAppointment: Boolean!
+  type: LocationCategoryType!
+  version: Int
+}
+
 enum LocationCategoryType {
   CustomerLocation
   DistributionCenter
@@ -22092,8 +22577,13 @@ type Mutation {
   """
   bulkDriverSettlementAction(input: BulkSettlementActionInput!): BulkSettlementActionPayload!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
+  bulkUpdateAccountTypeStatus(input: BulkUpdateAccountTypeStatusInput!): [AccountType!]!
+  bulkUpdateCommodityStatus(input: BulkUpdateCommodityStatusInput!): [Commodity!]!
+  bulkUpdateCustomerStatus(input: BulkUpdateCustomerStatusInput!): [Customer!]!
   bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
   bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
+  bulkUpdateFleetCodeStatus(input: BulkUpdateFleetCodeStatusInput!): [FleetCode!]!
+  bulkUpdateHazardousMaterialStatus(input: BulkUpdateHazardousMaterialStatusInput!): [HazardousMaterial!]!
   bulkUpdateTractorStatus(input: BulkUpdateTractorStatusInput!): [Tractor!]!
   bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
   bulkWorkerPTOAction(input: BulkWorkerPTOActionInput!): BulkWorkerPTOActionPayload!
@@ -22187,6 +22677,8 @@ type Mutation {
   Says what kind of message it really is. Nova reads mail from the sender that way from now on.
   """
   correctInboundClassification(classification: InboundClassification!, id: ID!): InboundMessage!
+  createAccessorialCharge(input: AccessorialChargeInput!): AccessorialCharge!
+  createAccountType(input: AccountTypeInput!): AccountType!
   """
   Creates an item, customer or vendor in the accounting system for the mapping and confirms it.
   """
@@ -22203,10 +22695,13 @@ type Mutation {
   createCaptureRequest(input: CreateCaptureRequestInput!): CaptureRequest!
   createCarrierCapacityPosting(input: CarrierCapacityPostingInput!): CarrierCapacityPosting!
   createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
+  createCommodity(input: CommodityInput!): Commodity!
+  createCustomer(input: CustomerInput!): Customer!
   createDeskMemory(input: CreateDeskMemoryInput!): DeskMemory!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
   createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
   createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
+  createDocumentType(input: DocumentTypeInput!): DocumentType!
   createDotRandomPool(input: DOTRandomPoolInput!): DOTRandomPool!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
@@ -22214,11 +22709,15 @@ type Mutation {
   createFactoringCompany(input: FactoringCompanyInput!): FactoringCompany!
   """Opens a remittance for a factor; upload its file next, then read it."""
   createFactoringRemittance(input: CreateFactoringRemittanceInput!): FactoringRemittance!
+  createFleetCode(input: FleetCodeInput!): FleetCode!
   createFuelCard(input: FuelCardInput!): FuelCard!
   createFuelIndex(input: FuelIndexInput!): FuelIndex!
   createFuelPurchase(input: FuelPurchaseInput!): FuelPurchase!
   createFuelPurchaseImport(input: CreateFuelPurchaseImportInput!): FuelPurchaseImportBatch!
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
+  createHazardousMaterial(input: HazardousMaterialInput!): HazardousMaterial!
+  createHazmatSegregationRule(input: HazmatSegregationRuleInput!): HazmatSegregationRule!
+  createHoldReason(input: HoldReasonInput!): HoldReason!
   createHomeLayoutPreset(input: SaveHomeLayoutPresetInput!): HomeLayoutPreset!
   createIftaMileageEntry(input: IFTAMileageEntryInput!): IFTAJurisdictionMileageEntry!
   """Creates the load from the checked draft, as a new shipment."""
@@ -22235,6 +22734,7 @@ type Mutation {
   """
   createInvoicesFromShipments(offCycleReason: String, shipmentIds: [ID!]!): CreateInvoicesResult!
   createJobPosition(input: JobPositionInput!): JobPosition!
+  createLocationCategory(input: LocationCategoryInput!): LocationCategory!
   """Raises a standalone credit or debit memo against a customer."""
   createMemo(input: CreateMemoInput!): Invoice!
   """
@@ -22562,8 +23062,14 @@ type Mutation {
   openLeaveCase(input: OpenLeaveCaseInput!): WorkerLeaveCase!
   overrideCarrierEquipmentVerification(id: ID!, reason: String!): CarrierEquipmentVerification!
   patchAIProvider(id: ID!, input: AIProviderPatchInput!, version: Int!): AIProvider!
+  patchAccessorialCharge(id: ID!, input: AccessorialChargePatchInput!): AccessorialCharge!
+  patchAccountType(id: ID!, input: AccountTypePatchInput!): AccountType!
+  patchCommodity(id: ID!, input: CommodityPatchInput!): Commodity!
+  patchCustomer(id: ID!, input: CustomerPatchInput!): Customer!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
+  patchFleetCode(id: ID!, input: FleetCodePatchInput!): FleetCode!
+  patchHazardousMaterial(id: ID!, input: HazardousMaterialPatchInput!): HazardousMaterial!
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
@@ -23055,6 +23561,8 @@ type Mutation {
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
+  updateAccessorialCharge(id: ID!, input: AccessorialChargeInput!): AccessorialCharge!
+  updateAccountType(id: ID!, input: AccountTypeInput!): AccountType!
   """Change how documents are sent once setup is complete."""
   updateAccountingSyncSettings(input: UpdateAccountingSyncSettingsInput!): AccountingConnection!
   """Changes what an agent can do. Needs permission to update agents."""
@@ -23072,8 +23580,10 @@ type Mutation {
   updateCarrierCapacityPosting(id: ID!, input: CarrierCapacityPostingInput!, version: Int!): CarrierCapacityPosting!
   updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
   updateCarrierSettlementControl(input: UpdateCarrierSettlementControlInput!): CarrierSettlementControl!
+  updateCommodity(id: ID!, input: CommodityInput!): Commodity!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
   updateCostingControl(input: CostingControlInput!): CostingControl!
+  updateCustomer(id: ID!, input: CustomerInput!): Customer!
   """
   Change what a customer's tracking links show and which status emails it is sent.
   """
@@ -23083,6 +23593,7 @@ type Mutation {
   updateDetentionPolicy(id: ID!, input: DetentionPolicyInput!): DetentionPolicy!
   updateDocumentTemplate(id: ID!, input: DocumentTemplateInput!): DocumentTemplate!
   updateDocumentTemplateVersion(id: ID!, input: DocumentTemplateVersionInput!): DocumentTemplateVersion!
+  updateDocumentType(id: ID!, input: DocumentTypeInput!): DocumentType!
   updateDotRandomDrawEntry(input: UpdateDOTRandomDrawEntryInput!): DOTRandomDrawEntry!
   updateDotRandomPool(id: ID!, input: DOTRandomPoolInput!, version: Int!): DOTRandomPool!
   updateDotViolation(input: UpdateDOTViolationInput!): WorkerDOTViolation!
@@ -23103,11 +23614,15 @@ type Mutation {
   updateFactoringCompany(input: UpdateFactoringCompanyInput!): FactoringCompany!
   """Matches, unmatches, ignores, restores or re-kinds one line."""
   updateFactoringRemittanceLine(input: UpdateFactoringRemittanceLineInput!): FactoringRemittance!
+  updateFleetCode(id: ID!, input: FleetCodeInput!): FleetCode!
   updateFuelCard(id: ID!, input: FuelCardInput!, version: Int!): FuelCard!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
   updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
   updateFuelPurchase(id: ID!, input: FuelPurchaseInput!, version: Int!): FuelPurchase!
   updateFuelSurchargeProgram(id: ID!, input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
+  updateHazardousMaterial(id: ID!, input: HazardousMaterialInput!): HazardousMaterial!
+  updateHazmatSegregationRule(id: ID!, input: HazmatSegregationRuleInput!): HazmatSegregationRule!
+  updateHoldReason(id: ID!, input: HoldReasonInput!): HoldReason!
   updateHomeLayout(input: HomeLayoutInput!): HomeLayout!
   updateHomeLayoutPreset(input: UpdateHomeLayoutPresetInput!): HomeLayoutPreset!
   updateIftaMileageEntry(id: ID!, input: IFTAMileageEntryInput!, version: Int!): IFTAJurisdictionMileageEntry!
@@ -23119,6 +23634,7 @@ type Mutation {
   updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
   updateLeaveDay(input: UpdateLeaveDayInput!): WorkerLeaveEntry!
+  updateLocationCategory(id: ID!, input: LocationCategoryInput!): LocationCategory!
   """
   Updates the signed-in driver's own contact details (phone, address,
   emergency contact). Compliance fields are carrier-controlled.
@@ -25583,6 +26099,13 @@ type Query {
   currentSettlementPeriod: SettlementPeriodBounds!
   customFieldDefinition(id: ID!): CustomFieldDefinition
   customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
+  """
+  The active custom fields a form for resourceType shows, in display order. Needs read on that
+  resource type.
+  """
+  customFieldFormFields(resourceType: String!): [CustomFieldFormField!]!
+  """The resource types custom fields can be defined on."""
+  customFieldResourceTypes: [String!]!
   customer(id: ID!): Customer
   customerDocumentTemplateAssignments(customerId: ID!): [DocumentTemplateAssignment!]!
   customerPayment(id: ID!): CustomerPayment
@@ -26306,6 +26829,11 @@ type Query {
   shipmentCommentReplies(after: String, commentId: ID!, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentComments(after: String, filter: ShipmentCommentsFilterInput, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentCoverageSuggestions(shipmentId: ID!): ShipmentCoverageSuggestions!
+  """
+  The billing rules of the customers a shipment bills, at most 50 at once. A customer without a
+  billing profile is left out.
+  """
+  shipmentCustomerBillingRules(customerIds: [ID!]!): [ShipmentCustomerBillingRules!]!
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
@@ -28826,6 +29354,7 @@ enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
   AI_PROVIDER
+  BANK_RECEIPT_SOURCE
   BENEFIT_PLAN
   CAPTURE_DEVICE
   CAPTURE_PROFILE
@@ -28834,7 +29363,9 @@ enum SelectOptionResource {
   CUSTOMER
   DETENTION_POLICY
   DISTANCE_PROFILE
+  DOCUMENT
   DOCUMENT_TYPE
+  DOT_HAZMAT_REFERENCE
   EDI_COMMUNICATION_PROFILE
   EDI_CONNECTION
   EDI_DOCUMENT_TYPE
@@ -30419,6 +30950,26 @@ type ShipmentCustomer @kind(resource: "customer") {
   status: EntityStatus!
   updatedAt: Timestamp!
   version: Int!
+}
+
+"""
+What a shipment form shows about a customer it bills: whether the shipment needs a BOL number
+and the customer's credit standing. It carries nothing else from the billing profile, so anyone
+who reads shipments reads it without reading customers.
+"""
+type ShipmentCustomerBillingRules {
+  """
+  The customer enforces its billing requirements and one of them is a BOL number.
+  """
+  bolRequired: Boolean!
+  """
+  The credit review placed the current hold or warning, rather than a person.
+  """
+  creditHoldAutomatic: Boolean!
+  creditHoldReason: String!
+  creditStatus: CustomerCreditStatus!
+  customerId: ID!
+  enforceCreditLimit: Boolean!
 }
 
 type ShipmentCustomerMix {

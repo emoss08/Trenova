@@ -39,13 +39,7 @@ type record struct {
 	part bool
 }
 
-var (
-	rootRecord = &record{}
-	// referenceCarrier stands for the record a reference route's records
-	// will be linked from: one of no kind, so every record under it is
-	// linked.
-	referenceCarrier = &record{}
-)
+var rootRecord = &record{}
 
 type walker struct {
 	ctx        context.Context

@@ -5,7 +5,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { fieldTypeChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { customField } from "@/lib/queries/custom-field";
 import type { CustomFieldDefinition } from "@/types/custom-field";
 import { useQuery } from "@tanstack/react-query";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
@@ -18,12 +18,9 @@ export function CustomFieldDefinitionForm() {
   const { control } = useFormContext<CustomFieldDefinition>();
   const fieldType = useWatch({ control, name: "fieldType" });
 
-  const { data: resourceTypes } = useQuery({
-    queryKey: ["custom-field-resource-types"],
-    queryFn: () => apiService.customFieldService.getResourceTypes(),
-  });
+  const { data: resourceTypes } = useQuery(customField.resourceTypes());
 
-  const resourceTypeChoices = (resourceTypes?.resourceTypes || []).map((rt) => ({
+  const resourceTypeChoices = (resourceTypes ?? []).map((rt) => ({
     value: rt,
     label: rt.charAt(0).toUpperCase() + rt.slice(1),
   }));

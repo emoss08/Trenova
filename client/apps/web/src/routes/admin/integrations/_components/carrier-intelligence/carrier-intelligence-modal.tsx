@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -25,6 +24,7 @@ import {
 } from "./carrier-intelligence-vendors";
 import { CarrierIntelConnectionTab } from "./connection-tab";
 import { ThemedLogo } from "../shared/integration-connect-header";
+import { IntegrationDialogContent } from "../shared/integration-dialog-content";
 
 type ModalTab = "connection" | CarrierIntelSettingsTab;
 
@@ -82,7 +82,7 @@ export function CarrierIntelligenceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="xl" className="flex max-h-[90vh] flex-col overflow-hidden">
+      <IntegrationDialogContent size="xl" className="flex max-h-[90vh] flex-col overflow-hidden">
         <DialogHeader className="flex flex-row items-center gap-3 pr-8">
           <ThemedLogo
             logo={{ light: vendor.logoLight, dark: vendor.logoDark }}
@@ -144,7 +144,7 @@ export function CarrierIntelligenceModal({
             />
           ) : null}
         </Tabs>
-      </DialogContent>
+      </IntegrationDialogContent>
     </Dialog>
   );
 }

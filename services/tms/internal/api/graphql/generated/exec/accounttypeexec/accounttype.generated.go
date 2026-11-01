@@ -240,6 +240,60 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createAccountType",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AccountType",
+				Args:       field_Mutation_createAccountType_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateAccountType(ctx, fc.Args["input"].(gqlmodel.AccountTypeInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
+			},
+			{
+				Name:       "updateAccountType",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AccountType",
+				Args:       field_Mutation_updateAccountType_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAccountType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccountTypeInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
+			},
+			{
+				Name:       "patchAccountType",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AccountType",
+				Args:       field_Mutation_patchAccountType_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchAccountType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AccountTypePatchInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType),
+			},
+			{
+				Name:       "bulkUpdateAccountTypeStatus",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AccountType",
+				Args:       field_Mutation_bulkUpdateAccountTypeStatus_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateAccountTypeStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateAccountTypeStatusInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountTypeᚄ),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "accountTypes",
@@ -270,9 +324,22 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "AccountTypeInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAccountTypeInput)},
+		{Name: "AccountTypePatchInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAccountTypePatchInput)},
+		{Name: "BulkUpdateAccountTypeStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkUpdateAccountTypeStatusInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateAccountType(ctx context.Context, input gqlmodel.AccountTypeInput) (*accounttype.AccountType, error)
+	UpdateAccountType(ctx context.Context, id string, input gqlmodel.AccountTypeInput) (*accounttype.AccountType, error)
+	PatchAccountType(ctx context.Context, id string, input gqlmodel.AccountTypePatchInput) (*accounttype.AccountType, error)
+	BulkUpdateAccountTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateAccountTypeStatusInput) ([]*accounttype.AccountType, error)
 }
 
 type resolverQuery interface {
@@ -289,6 +356,74 @@ var (
 	errNoChild5 = errors.New("field of type Int does not have child fields")
 	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createAccountType_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.AccountTypeInput, error) {
+			return unmarshalNAccountTypeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountTypeInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateAccountType_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.AccountTypeInput, error) {
+			return unmarshalNAccountTypeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountTypeInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_patchAccountType_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.AccountTypePatchInput, error) {
+			return unmarshalNAccountTypePatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountTypePatchInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_bulkUpdateAccountTypeStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.BulkUpdateAccountTypeStatusInput, error) {
+			return unmarshalNBulkUpdateAccountTypeStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateAccountTypeStatusInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func field_Query_accountTypes_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -316,12 +451,220 @@ func field_Query_accountType_args(ctx context.Context, ec *gqlexec.Exec, rawArgs
 	return args, nil
 }
 
+func unmarshalInputAccountTypeInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AccountTypeInput, error) {
+	var it gqlmodel.AccountTypeInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "code", "name", "description", "category", "color", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := unmarshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
+		case "color":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Color = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputAccountTypePatchInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AccountTypePatchInput, error) {
+	var it gqlmodel.AccountTypePatchInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "code", "name", "description", "category", "color", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = graphql.OmittableOf(data)
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = graphql.OmittableOf(data)
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = graphql.OmittableOf(data)
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = graphql.OmittableOf(data)
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := unmarshalOAccountCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = graphql.OmittableOf(data)
+		case "color":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Color = graphql.OmittableOf(data)
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = graphql.OmittableOf(data)
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputBulkUpdateAccountTypeStatusInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BulkUpdateAccountTypeStatusInput, error) {
+	var it gqlmodel.BulkUpdateAccountTypeStatusInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accountTypeIds", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accountTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountTypeIds"))
+			data, err := unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccountTypeIds = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory(ctx context.Context, ec *gqlexec.Exec, v any) (accounttype.Category, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accounttype.Category(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNAccountTypeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountTypeInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AccountTypeInput, error) {
+	res, err := unmarshalInputAccountTypeInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNAccountTypePatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountTypePatchInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.AccountTypePatchInput, error) {
+	res, err := unmarshalInputAccountTypePatchInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBulkUpdateAccountTypeStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateAccountTypeStatusInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BulkUpdateAccountTypeStatusInput, error) {
+	res, err := unmarshalInputBulkUpdateAccountTypeStatusInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (domaintypes.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -330,12 +673,63 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOAccountCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory(ctx context.Context, ec *gqlexec.Exec, v any) (*accounttype.Category, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := accounttype.Category(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*domaintypes.Status, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func marshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accounttype.Category) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNAccountType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accounttype.AccountType) graphql.Marshaler {
+	return gqlexec.List[*accounttype.AccountType]{
+		Elem:        marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNAccountType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐAccountType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accounttype.AccountType) graphql.Marshaler {

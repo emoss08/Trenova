@@ -23,9 +23,4 @@ export class TractorService {
 
     return safeParse(bulkUpdateTractorStatusResponseSchema, response, "Bulk Update Tractor Status");
   }
-  public async getOption(id: Tractor["id"]) {
-    const response = await api.get<Worker>(`/tractors/select-options/${id}`);
-
-    return safeParse(tractorSchema, response, "Tractor");
-  }
 }

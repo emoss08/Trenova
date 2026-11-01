@@ -8,12 +8,15 @@ package hazardousmaterialresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -58,4 +61,91 @@ func (r *QueryResolver) HazardousMaterial(ctx context.Context, id string) (*haza
 		ID:         hazardousMaterialID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *MutationResolver) CreateHazardousMaterial(ctx context.Context, input gqlmodel.HazardousMaterialInput) (*hazardousmaterial.HazardousMaterial, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceHazardousMaterial, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.HazardousMaterialService.Create(
+		ctx,
+		hazardousMaterialFromInput(&input, authCtx),
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *MutationResolver) UpdateHazardousMaterial(ctx context.Context, id string, input gqlmodel.HazardousMaterialInput) (*hazardousmaterial.HazardousMaterial, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceHazardousMaterial, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	hazardousMaterialID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.HazardousMaterialService.Get(ctx, hazardousmaterialports.GetHazardousMaterialByIDRequest{
+		ID:         hazardousMaterialID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	applyHazardousMaterialInput(existing, &input)
+
+	return r.HazardousMaterialService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PatchHazardousMaterial(ctx context.Context, id string, input gqlmodel.HazardousMaterialPatchInput) (*hazardousmaterial.HazardousMaterial, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceHazardousMaterial, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	hazardousMaterialID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.HazardousMaterialService.Get(ctx, hazardousmaterialports.GetHazardousMaterialByIDRequest{
+		ID:         hazardousMaterialID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyHazardousMaterialPatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.HazardousMaterialService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) BulkUpdateHazardousMaterialStatus(ctx context.Context, input gqlmodel.BulkUpdateHazardousMaterialStatusInput) ([]*hazardousmaterial.HazardousMaterial, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceHazardousMaterial, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update hazardous materials")
+	}
+
+	hazardousMaterialIDs, err := gqlid.ParseIDs(input.HazardousMaterialIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.HazardousMaterialService.BulkUpdateStatus(
+		ctx,
+		&hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest{
+			TenantInfo:           resolvercore.TenantInfo(authCtx),
+			HazardousMaterialIDs: hazardousMaterialIDs,
+			Status:               input.Status,
+		},
+	)
 }

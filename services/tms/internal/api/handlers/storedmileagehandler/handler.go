@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/places/app/storedmileageservice"
-	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,58 +35,11 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/stored-mileages")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET(
-		"/:storedMileageID/",
-		h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpRead),
-		h.get,
-	)
 	api.DELETE(
 		"/:storedMileageID/",
 		h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpDelete),
 		h.delete,
 	)
-}
-
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*storedmileage.StoredMileage], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&storedmileageports.ListStoredMileageRequest{Filter: req},
-			)
-		},
-	)
-}
-
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	id, err := pulid.MustParse(c.Param("storedMileageID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		storedmileageports.GetStoredMileageByIDRequest{
-			ID:         id,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) delete(c *gin.Context) {

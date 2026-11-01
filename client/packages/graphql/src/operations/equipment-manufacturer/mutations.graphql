@@ -1,0 +1,31 @@
+mutation CreateEquipmentManufacturer($input: EquipmentManufacturerInput!) {
+  createEquipmentManufacturer(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateEquipmentManufacturer($id: ID!, $input: EquipmentManufacturerInput!) {
+  updateEquipmentManufacturer(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchEquipmentManufacturer($id: ID!, $input: EquipmentManufacturerPatchInput!) {
+  patchEquipmentManufacturer(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateEquipmentManufacturerStatus(
+  $input: BulkUpdateEquipmentManufacturerStatusInput!
+) {
+  bulkUpdateEquipmentManufacturerStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

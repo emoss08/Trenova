@@ -3,7 +3,6 @@ import { safeParse } from "@trenova/shared/lib/parse";
 import {
   serviceFailureReasonCodeSchema,
   type ServiceFailureReasonCode,
-  type ServiceFailureReasonCodeAppliesTo,
 } from "@/types/service-failure-reason-code";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
@@ -68,32 +67,5 @@ export class ServiceFailureReasonCodeService {
       { reasonIds },
     );
     return safeParse(serviceFailureReasonCodeSchema.array(), response, "ServiceFailureReasonCodes");
-  }
-
-  async selectOptions(params?: {
-    query?: string;
-    limit?: number;
-    offset?: number;
-    appliesTo?: ServiceFailureReasonCodeAppliesTo;
-  }) {
-    const search = new URLSearchParams();
-    if (params?.query) search.set("query", params.query);
-    if (params?.limit) search.set("limit", String(params.limit));
-    if (params?.offset) search.set("offset", String(params.offset));
-    if (params?.appliesTo) search.set("appliesTo", params.appliesTo);
-
-    const response = await api.get<GenericLimitOffsetResponse<ServiceFailureReasonCode>>(
-      `/service-failure-reason-codes/select-options/${search.size ? `?${search.toString()}` : ""}`,
-    );
-    const results = await safeParse(
-      serviceFailureReasonCodeSchema.array(),
-      response.results,
-      "ServiceFailureReasonCodeSelectOptions",
-    );
-
-    return {
-      ...response,
-      results,
-    };
   }
 }

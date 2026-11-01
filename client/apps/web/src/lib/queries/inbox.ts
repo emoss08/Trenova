@@ -131,11 +131,6 @@ export const inbox = createQueryKeys("inbox", {
     queryFn: ({ signal }: QueryContext) =>
       fetchGraphQLSelectOptions({ resource: "SHIPMENT", initialLimit: 20 }, { signal }),
   }),
-  documentTypes: () => ({
-    queryKey: ["documentTypes"],
-    queryFn: ({ signal }: QueryContext) =>
-      fetchGraphQLSelectOptions({ resource: "DOCUMENT_TYPE", initialLimit: 100 }, { signal }),
-  }),
 });
 
 /** A folder's cached pages, as `useInfiniteQuery` holds them. */

@@ -76,3 +76,86 @@ extend type Query {
   hazardousMaterials(input: DataTableConnectionInput!): HazardousMaterialConnection!
   hazardousMaterial(id: ID!): HazardousMaterial
 }
+
+input HazardousMaterialInput {
+  status: EntityStatus!
+  code: String
+  name: String!
+  description: String
+  class: HazardousClass!
+  unNumber: String
+  packingGroup: PackingGroup
+  subsidiaryHazardClass: String
+  ergGuideNumber: String
+  labelCodes: String
+  specialProvisions: String
+  properShippingName: String
+  handlingInstructions: String
+  emergencyContact: String
+  emergencyContactPhoneNumber: String
+  quantityThreshold: String
+  placardRequired: Boolean!
+  isReportableQuantity: Boolean!
+  marinePollutant: Boolean!
+  inhalationHazard: Boolean!
+  version: Int
+}
+
+input HazardousMaterialPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  code: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  class: HazardousClass @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  unNumber: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  packingGroup: PackingGroup @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  subsidiaryHazardClass: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  ergGuideNumber: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  labelCodes: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  specialProvisions: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  properShippingName: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  handlingInstructions: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  emergencyContact: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  emergencyContactPhoneNumber: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  quantityThreshold: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  placardRequired: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  isReportableQuantity: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  marinePollutant: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  inhalationHazard: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateHazardousMaterialStatusInput {
+  hazardousMaterialIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createHazardousMaterial(input: HazardousMaterialInput!): HazardousMaterial!
+  updateHazardousMaterial(id: ID!, input: HazardousMaterialInput!): HazardousMaterial!
+  patchHazardousMaterial(id: ID!, input: HazardousMaterialPatchInput!): HazardousMaterial!
+  bulkUpdateHazardousMaterialStatus(
+    input: BulkUpdateHazardousMaterialStatusInput!
+  ): [HazardousMaterial!]!
+}

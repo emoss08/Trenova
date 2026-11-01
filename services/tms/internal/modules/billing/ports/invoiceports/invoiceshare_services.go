@@ -34,12 +34,6 @@ type ListShareCandidatesRequest struct {
 	Pagination pagination.Info       `json:"pagination"`
 }
 
-type GetShareCandidateRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	InvoiceID  pulid.ID              `json:"-"`
-	UserID     pulid.ID              `json:"-"`
-}
-
 type InvoiceShareEmailStatus string
 
 const InvoiceShareEmailQueued = InvoiceShareEmailStatus("Queued")
@@ -89,5 +83,4 @@ type InvoiceShareService interface {
 		ctx context.Context,
 		req *ListShareCandidatesRequest,
 	) (*pagination.ListResult[*ShareCandidate], error)
-	GetCandidate(ctx context.Context, req *GetShareCandidateRequest) (*ShareCandidate, error)
 }

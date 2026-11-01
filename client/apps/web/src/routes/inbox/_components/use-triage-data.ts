@@ -1,4 +1,5 @@
 import type { InboundMessageFilter, InboundMessageRow } from "@/lib/graphql/inbox";
+import { documentType } from "@/lib/queries/document-type";
 import { inbox } from "@/lib/queries/inbox";
 import { inboxMessagesQuery, inboxReferenceQuery } from "@/lib/queries/inbox";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ export function useTriageAssignees() {
 }
 
 export function useTriageDocumentTypes() {
-  return useQuery(inboxReferenceQuery(inbox.documentTypes()));
+  return useQuery(inboxReferenceQuery(documentType.options()));
 }
 
 export type FolderPages = {

@@ -8,12 +8,15 @@ package commodityresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -66,5 +69,92 @@ func (r *QueryResolver) Commodity(ctx context.Context, id string) (*commodity.Co
 	return r.CommodityService.Get(ctx, commodityports.GetCommodityByIDRequest{
 		ID:         commodityID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) CreateCommodity(ctx context.Context, input gqlmodel.CommodityInput) (*commodity.Commodity, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCommodity, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := commodityFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CommodityService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateCommodity(ctx context.Context, id string, input gqlmodel.CommodityInput) (*commodity.Commodity, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCommodity, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	commodityID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.CommodityService.Get(ctx, commodityports.GetCommodityByIDRequest{
+		ID:         commodityID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyCommodityInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.CommodityService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PatchCommodity(ctx context.Context, id string, input gqlmodel.CommodityPatchInput) (*commodity.Commodity, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCommodity, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	commodityID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.CommodityService.Get(ctx, commodityports.GetCommodityByIDRequest{
+		ID:         commodityID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyCommodityPatch(existing, &input); err != nil {
+		return nil, err
+	}
+
+	return r.CommodityService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) BulkUpdateCommodityStatus(ctx context.Context, input gqlmodel.BulkUpdateCommodityStatusInput) ([]*commodity.Commodity, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceCommodity, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.IsAPIKey() {
+		return nil, errortypes.NewAuthorizationError("API keys cannot bulk update commodities")
+	}
+
+	commodityIDs, err := gqlid.ParseIDs(input.CommodityIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CommodityService.BulkUpdateStatus(ctx, &commodityports.BulkUpdateCommodityStatusRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		CommodityIDs: commodityIDs,
+		Status:       input.Status,
 	})
 }

@@ -8,8 +8,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -40,55 +40,55 @@ func (_m *MockDotHazmatReferenceRepository) EXPECT() *MockDotHazmatReferenceRepo
 	return &MockDotHazmatReferenceRepository_Expecter{mock: &_m.Mock}
 }
 
-// GetByID provides a mock function for the type MockDotHazmatReferenceRepository
-func (_mock *MockDotHazmatReferenceRepository) GetByID(ctx context.Context, req dothazmatreferenceports.GetDotHazmatReferenceByIDRequest) (*dothazmatreference.DotHazmatReference, error) {
-	ret := _mock.Called(ctx, req)
+// GetByIDs provides a mock function for the type MockDotHazmatReferenceRepository
+func (_mock *MockDotHazmatReferenceRepository) GetByIDs(ctx context.Context, ids []pulid.ID) ([]*dothazmatreference.DotHazmatReference, error) {
+	ret := _mock.Called(ctx, ids)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByID")
+		panic("no return value specified for GetByIDs")
 	}
 
-	var r0 *dothazmatreference.DotHazmatReference
+	var r0 []*dothazmatreference.DotHazmatReference
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dothazmatreferenceports.GetDotHazmatReferenceByIDRequest) (*dothazmatreference.DotHazmatReference, error)); ok {
-		return returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) ([]*dothazmatreference.DotHazmatReference, error)); ok {
+		return returnFunc(ctx, ids)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dothazmatreferenceports.GetDotHazmatReferenceByIDRequest) *dothazmatreference.DotHazmatReference); ok {
-		r0 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) []*dothazmatreference.DotHazmatReference); ok {
+		r0 = returnFunc(ctx, ids)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dothazmatreference.DotHazmatReference)
+			r0 = ret.Get(0).([]*dothazmatreference.DotHazmatReference)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, dothazmatreferenceports.GetDotHazmatReferenceByIDRequest) error); ok {
-		r1 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []pulid.ID) error); ok {
+		r1 = returnFunc(ctx, ids)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockDotHazmatReferenceRepository_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
-type MockDotHazmatReferenceRepository_GetByID_Call struct {
+// MockDotHazmatReferenceRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockDotHazmatReferenceRepository_GetByIDs_Call struct {
 	*mock.Call
 }
 
-// GetByID is a helper method to define mock.On call
+// GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetDotHazmatReferenceByIDRequest
-func (_e *MockDotHazmatReferenceRepository_Expecter) GetByID(ctx any, req any) *MockDotHazmatReferenceRepository_GetByID_Call {
-	return &MockDotHazmatReferenceRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
+//   - ids []pulid.ID
+func (_e *MockDotHazmatReferenceRepository_Expecter) GetByIDs(ctx any, ids any) *MockDotHazmatReferenceRepository_GetByIDs_Call {
+	return &MockDotHazmatReferenceRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, ids)}
 }
 
-func (_c *MockDotHazmatReferenceRepository_GetByID_Call) Run(run func(ctx context.Context, req dothazmatreferenceports.GetDotHazmatReferenceByIDRequest)) *MockDotHazmatReferenceRepository_GetByID_Call {
+func (_c *MockDotHazmatReferenceRepository_GetByIDs_Call) Run(run func(ctx context.Context, ids []pulid.ID)) *MockDotHazmatReferenceRepository_GetByIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 dothazmatreferenceports.GetDotHazmatReferenceByIDRequest
+		var arg1 []pulid.ID
 		if args[1] != nil {
-			arg1 = args[1].(dothazmatreferenceports.GetDotHazmatReferenceByIDRequest)
+			arg1 = args[1].([]pulid.ID)
 		}
 		run(
 			arg0,
@@ -98,12 +98,12 @@ func (_c *MockDotHazmatReferenceRepository_GetByID_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockDotHazmatReferenceRepository_GetByID_Call) Return(dotHazmatReference *dothazmatreference.DotHazmatReference, err error) *MockDotHazmatReferenceRepository_GetByID_Call {
-	_c.Call.Return(dotHazmatReference, err)
+func (_c *MockDotHazmatReferenceRepository_GetByIDs_Call) Return(dotHazmatReferences []*dothazmatreference.DotHazmatReference, err error) *MockDotHazmatReferenceRepository_GetByIDs_Call {
+	_c.Call.Return(dotHazmatReferences, err)
 	return _c
 }
 
-func (_c *MockDotHazmatReferenceRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req dothazmatreferenceports.GetDotHazmatReferenceByIDRequest) (*dothazmatreference.DotHazmatReference, error)) *MockDotHazmatReferenceRepository_GetByID_Call {
+func (_c *MockDotHazmatReferenceRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, ids []pulid.ID) ([]*dothazmatreference.DotHazmatReference, error)) *MockDotHazmatReferenceRepository_GetByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }

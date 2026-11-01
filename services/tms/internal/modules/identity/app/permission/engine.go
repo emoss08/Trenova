@@ -892,52 +892,6 @@ func (e *engine) GetEffectivePermissions(
 	return e.buildEffectivePermissions(userID, orgID, roles), nil
 }
 
-func (e *engine) SimulatePermissions(
-	ctx context.Context,
-	req *permissionports.SimulatePermissionsRequest,
-) (*permissionports.EffectivePermissions, error) {
-	log := e.l.With(
-		zap.String("operation", "SimulatePermissions"),
-		zap.String("userID", req.UserID.String()),
-		zap.String("orgID", req.OrganizationID.String()),
-	)
-
-	start := time.Now()
-	defer func() {
-		e.metrics.Permission.RecordCompute(
-			auditmetrics.PermissionPathSimulation, time.Since(start),
-		)
-	}()
-
-	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, req.UserID, req.OrganizationID)
-	if err != nil {
-		log.Error("failed to get user role assignments", zap.Error(err))
-		return nil, err
-	}
-
-	removeSet := make(map[pulid.ID]bool)
-	for _, id := range req.RemoveRoleIDs {
-		removeSet[id] = true
-	}
-
-	roleIDs := make([]pulid.ID, 0, len(assignments)+len(req.AddRoleIDs))
-	for _, a := range assignments {
-		if !a.IsExpired() && !removeSet[a.RoleID] {
-			roleIDs = append(roleIDs, a.RoleID)
-		}
-	}
-	roleIDs = append(roleIDs, req.AddRoleIDs...)
-
-	roles, err := e.roleRepo.GetRolesWithInheritance(ctx, roleIDs)
-	if err != nil {
-		log.Error("failed to get roles with inheritance", zap.Error(err))
-		return nil, err
-	}
-	e.metrics.Permission.RecordClosureSize(len(roles))
-
-	return e.buildEffectivePermissions(req.UserID, req.OrganizationID, roles), nil
-}
-
 func (e *engine) checkAPIKeyPermission(
 	ctx context.Context,
 	req *permissionports.PermissionCheckRequest,

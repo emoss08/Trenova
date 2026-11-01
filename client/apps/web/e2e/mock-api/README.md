@@ -4,8 +4,9 @@ A dependency-free Node server that stands in for the TMS API, so the shipments b
 (`/shipment-management/shipments`, with each shipment's Customer tracking tab), the customer
 tracking page (`/shipment-tracking/<token>`), AI control (`/admin/agent-control`), Triage (`/triage`, the
 redesign of `/inbox`), the Desk (`/desk`), the Formula Studio
-(`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`), the formula libraries and the
-Lading studio (`/edi/lading/<partnerId>`) can be run, clicked through and screenshotted without Postgres, Redis,
+(`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`), the formula libraries, the
+Lading studio (`/edi/lading/<partnerId>`) and the integrations page with its accounting setup
+(`/admin/integrations?type=QuickBooksOnline`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
 GraphQL operation those pages send, and the realtime stream, from a deterministic fixture.
 
@@ -51,6 +52,10 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `deskReply`          | `idle` \| `working`                              | `idle`          | The Desk's live conversation (`athr_desk_live`): nothing under way, or a reply under way that has been steered once, with two follow-ups queued                                                                                                                                                                                                                                                                   |
 | `agentMatch`         | `match` \| `none` \| `nobody` \| `hold`          | `match`         | The Desk's agent suggestion (`MyAgentMatch`, `handlers/agentrecommendation.mjs`): the agent whose tools fit the question, no tool matching, tools matching that none of the person's agents holds, or the request left open (the "finding the agent" state). Suggestions the page records (`RecordMyAgentSuggestion`, `SettleMyAgentSuggestion`) are kept and counted in AI analytics with a month of seeded ones |
 | `lading`             | `draft` \| `shadow`                              | `draft`         | The Lading studio: Acme Retail Group's version 3 as a draft, replayed once against version 2, or certified and six days into a shadow beside it                                                                                                                                                                                                                                                                   |
+| `accounting`         | `connect` \| `mode` \| `mappings` \| `startDate` \| `connected` \| `degraded` \| `failing` \| `revoked` \| `expiring` | `connect` | Accounting integrations: nothing connected, or the connected system at a setup step or in a connection state (see "Accounting integrations") |
+| `accountingSystem`   | `QuickBooksOnline` \| `Xero` \| `BusinessCentral` \| `NetSuite` | `QuickBooksOnline` | Which system holds the connection |
+| `accountingApp`      | `instance` \| `tenant` \| `none`                 | `instance`      | The provider app it connects through: the server's, the organization's own, or none (connecting needs the organization's keys) |
+| `accountingAuth`     | `signIn` \| `certificate`                        | `signIn`        | NetSuite only: connected with a sign-in or a certificate |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -63,7 +68,9 @@ curl -X POST localhost:8080/__mock/scenario \
 so an open page refetches. Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`,
 `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`, `MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`,
 `MOCK_AI_PAUSED=1`, `MOCK_DESK`, `MOCK_DESK_SLUG`, `MOCK_TRIAGE`, `MOCK_TRIAGE_TIME`,
-`MOCK_TRIAGE_REPLY_MS`, `MOCK_PALETTE=1`, `MOCK_LADING`, plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
+`MOCK_TRIAGE_REPLY_MS`, `MOCK_PALETTE=1`, `MOCK_LADING`, `MOCK_ACCOUNTING`, `MOCK_ACCOUNTING_SYSTEM`,
+`MOCK_ACCOUNTING_APP`, `MOCK_ACCOUNTING_AUTH`, `MOCK_WEB_ORIGIN` (the web app origin an accounting
+sign-in returns to, default `http://localhost:5173`), plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
 `MOCK_API_PORT` (default 8080) and `MOCK_API_PUBLIC_URL` (the origin avatar URLs are built on).
 
 The board briefing is stored the way the server stores it: written on the first read of a
@@ -328,6 +335,58 @@ and flow files, the tests panel, a run with live data and a value's lineage, the
 replay and shadow, the active version's settings, the version picker and the start form. It
 writes to `e2e/mock-api/screenshots/lading-studio` by default. `CHROMIUM_PATH` names the browser
 when Playwright's own is not installed, and `SCALE` overrides the device scale.
+
+## Accounting integrations
+
+`handlers/accounting.mjs` serves the integrations page and the accounting setup modal. The
+catalog (`GET /integrations/catalog/`) is `integrationports.CatalogDefinitions`, ported to
+`fixtures/integration-catalog.mjs`, with the status the service builds: an accounting system is
+connected while it holds a live connection, everything else starts uninstalled. Any other
+integration's dialog opens on an empty config (`GET /integrations/<type>/config/`).
+
+`fixtures/accounting.mjs` holds the four providers' profiles from `accountingprovider`'s
+`profile.go` (app name, environments, ledger and inbound payments with the server's reasons,
+webhook subscriptions, certificates, the reconnect warning), the company each connects, and the
+mappings Trenova builds: every account role the provider offers, the freight and memo lines, three
+charges, three customers and a carrier, keyed and labelled as `accountingmappingtargets` labels
+them. Required are the provider's required account roles and the freight line, so QuickBooks
+Online needs 4 and the others 2. While matching, the most certain proposal is confirmed; past
+matching, every proposal is.
+
+Writes keep the server's rules, so setup clicks through from connecting to sending:
+
+- **Sign-in.** Connect returns an authorize URL that is the app's own callback page
+  (`/admin/integrations/<system>/callback`), with `realmId` for QuickBooks Online and NetSuite,
+  whose callbacks carry the company. Xero and Business Central offer two organisations to choose
+  from. A new connection starts at choosing what is sent; a second system is refused while one is
+  connected.
+- **Certificate (NetSuite).** Generate a certificate, then connect with an account ID and the
+  certificate ID; connecting before a certificate exists is refused. Renew replaces it.
+- **Setup.** Journal entries are refused where the provider cannot take them (with its reason);
+  Finish setup is refused until every required mapping is confirmed; Start sending completes it.
+  Confirm, set, reject, clear and create-in-provider change the mapping and the summary.
+- **Connected.** Check now, the sync settings, the organization's app keys (saving new keys needs a
+  secret) and Disconnect, after which the system shows as connected before.
+
+```bash
+node e2e/mock-api/check-accounting.mjs        # MOCK_API_URL to point it elsewhere
+node e2e/mock-api/accounting-screenshots.mjs [outDir] [name,name,...]
+```
+
+The check holds every operation the modal sends to its selection set in
+`accounting-sync/operations.graphql` and the schema, walks setup for each provider with the
+refusals, and checks the catalog. The screenshots walk every setup step, the connected tabs, the
+connection's states for each provider, phone width, and the connect dialogs of Resend, PC*Miler
+and Google Maps, writing to `e2e/mock-api/screenshots/accounting` by default.
+
+To run beside a real API on :8080, give the mock and the app their own ports:
+
+```bash
+MOCK_API_PORT=8091 MOCK_API_ORIGINS=http://localhost:5174 MOCK_WEB_ORIGIN=http://localhost:5174 \
+  node e2e/mock-api/server.mjs
+VITE_API_URL=http://localhost:8091/api/v1 pnpm --filter @trenova/web exec vite --port 5174
+MOCK_API_URL=http://localhost:8091 APP_URL=http://localhost:5174 node e2e/mock-api/accounting-screenshots.mjs
+```
 
 ## Screenshots
 
@@ -630,6 +689,9 @@ fixtures/formula.mjs  Tariff sources for the templates, libraries and standards,
 rules.mjs             The client's rules.wasm in Node: every check, test, bill and scaffold
 edi.mjs               The client's edi.wasm in Node: every Lading check, test, run and replay
 fixtures/lading.mjs   Acme Retail Group's Lading project, its versions and samples, and a month of its 204s
+fixtures/accounting.mjs  Accounting providers' profiles, companies, mappings and reference records
+fixtures/integration-catalog.mjs  The integration catalog, ported from integrationports.CatalogDefinitions
+handlers/accounting.mjs  Accounting setup's GraphQL operations and the integrations catalog routes
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name

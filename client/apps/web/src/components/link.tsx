@@ -66,21 +66,24 @@ export function ExternalLink({
 }: {
   href: string;
   children: React.ReactNode;
-} & React.HTMLAttributes<HTMLDivElement>) {
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type" | "onClick">) {
   const [open, setOpen] = useState(false);
+  // A button, not a div: it sits inside sentences (a dialog's description is a paragraph) and
+  // has to be reached and pressed from the keyboard.
   return (
     <>
-      <div
+      <button
+        type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "inline-flex cursor-pointer gap-x-0.5 font-semibold text-info-foreground hover:underline",
+          "ui-focus-ring inline-flex cursor-pointer items-baseline gap-x-0.5 rounded-sm text-left font-semibold text-info-foreground hover:underline",
           className,
         )}
         {...props}
       >
         {children}
-        <LinkExternal01Icon className="size-2" />
-      </div>
+        <LinkExternal01Icon aria-hidden className="size-2 self-start" />
+      </button>
       <ExternalLinkDialog open={open} onClose={() => setOpen(false)} link={href} />
     </>
   );

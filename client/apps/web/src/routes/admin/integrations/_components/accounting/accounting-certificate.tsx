@@ -38,6 +38,7 @@ import {
 } from "./accounting-certificate-schema";
 import type { AccountingVendor } from "./accounting-vendors";
 import { useAccountingCertificateActions } from "./use-accounting-connection";
+import { IntegrationSetupFooter } from "../shared/integration-setup-wizard";
 
 const PEM_CONTENT_TYPE = "application/x-pem-file";
 const CLIENT_CREDENTIALS_HELP_URL =
@@ -242,7 +243,7 @@ export function AccountingCertificateConnect({
       onSubmit={handleSubmit((values) =>
         connect.mutateAsync(values).then(onResult, () => undefined),
       )}
-      className="space-y-4"
+      className="flex flex-1 flex-col gap-4"
     >
       <AccountingCertificateSteps vendor={vendor} appName={appName} />
       <AccountingCertificateFile vendor={vendor} pending={pending} canManage={canManage} />
@@ -269,7 +270,7 @@ export function AccountingCertificateConnect({
           />
         </FormControl>
       </FormGroup>
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <IntegrationSetupFooter>
         <Button type="button" variant="outline" onClick={onCancel}>
           {t("Cancel")}
         </Button>
@@ -281,7 +282,7 @@ export function AccountingCertificateConnect({
         >
           {t("Connect with the certificate")}
         </Button>
-      </div>
+      </IntegrationSetupFooter>
     </Form>
   );
 }

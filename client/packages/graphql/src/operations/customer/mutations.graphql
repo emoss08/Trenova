@@ -1,0 +1,29 @@
+mutation CreateCustomer($input: CustomerInput!) {
+  createCustomer(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateCustomer($id: ID!, $input: CustomerInput!) {
+  updateCustomer(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation PatchCustomer($id: ID!, $input: CustomerPatchInput!) {
+  patchCustomer(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation BulkUpdateCustomerStatus($input: BulkUpdateCustomerStatusInput!) {
+  bulkUpdateCustomerStatus(input: $input) {
+    id
+    status
+    version
+  }
+}

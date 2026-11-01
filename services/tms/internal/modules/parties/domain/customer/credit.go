@@ -36,6 +36,10 @@ func (b *CustomerBillingProfile) ReviewsCreditAutomatically() bool {
 
 // IsOnCreditHold reports whether the customer's credit is stopped: held or
 // suspended under an enforced limit. No new shipment may be booked for it.
+func (b *CustomerBillingProfile) RequiresBOLNumber() bool {
+	return b.EnforceCustomerBillingReq && b.RequireBOLNumber
+}
+
 func (b *CustomerBillingProfile) IsOnCreditHold() bool {
 	return b.EnforceCreditLimit &&
 		(b.CreditStatus == CreditStatusHold || b.CreditStatus == CreditStatusSuspended)

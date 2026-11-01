@@ -59,3 +59,36 @@ func (r *QueryResolver) HoldReason(ctx context.Context, id string) (*holdreason.
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
+
+func (r *MutationResolver) CreateHoldReason(ctx context.Context, input gqlmodel.HoldReasonInput) (*holdreason.HoldReason, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceHoldReason, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.HoldReasonService.Create(ctx, holdReasonFromInput(&input, authCtx), authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateHoldReason(ctx context.Context, id string, input gqlmodel.HoldReasonInput) (*holdreason.HoldReason, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceHoldReason, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	holdReasonID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.HoldReasonService.Get(ctx, holdreasonports.GetHoldReasonByIDRequest{
+		ID:         holdReasonID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	applyHoldReasonInput(existing, &input)
+
+	return r.HoldReasonService.Update(ctx, existing, authCtx.UserID)
+}

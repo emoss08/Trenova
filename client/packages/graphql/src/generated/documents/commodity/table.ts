@@ -2,4 +2,4 @@
 import type { TypedDocumentString, CommodityTableQuery, CommodityTableQueryVariables, CommodityTableRowFieldsFragment } from "../../graphql";
 
 export const CommodityTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"CommodityTableRowFields"}} as unknown as TypedDocumentString<CommodityTableRowFieldsFragment, unknown>;
-export const CommodityTableDocument = {"__meta__":{"kind":"query","name":"CommodityTable","hash":"sha256:563bed9f11970bc10ed428708f0673b049b3695462590cf2681fc74729a9593f"}} as unknown as TypedDocumentString<CommodityTableQuery, CommodityTableQueryVariables>;
+export const CommodityTableDocument = {"__meta__":{"kind":"query","name":"CommodityTable","hash":"sha256:20cdf710d66aeebbbbba36e2128af8c748fa48044d3bb6360b7077b70e892efc"}} as unknown as TypedDocumentString<CommodityTableQuery, CommodityTableQueryVariables>;

@@ -131,6 +131,31 @@ func (r *repository) Update(
 	})
 }
 
+func (r *repository) BulkUpdateStatus(
+	ctx context.Context,
+	req *fleetcodeports.BulkUpdateFleetCodeStatusRequest,
+) ([]*fleetcode.FleetCode, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*fleetcode.FleetCode, error) {
+		fc := fleetcodedb.FleetCodes
+		entities, err := fc.Where(fc.ID.In(req.FleetCodeIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), fc.Status.To(req.Status))
+		if err != nil {
+			r.l.Error("failed to bulk update fleet code status", zap.Error(err))
+			return nil, err
+		}
+
+		if err = dberror.CheckBulkAffected(
+			int64(len(entities)),
+			"FleetCode",
+			req.FleetCodeIDs,
+		); err != nil {
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req fleetcodeports.GetFleetCodeByIDRequest,

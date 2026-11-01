@@ -1023,6 +1023,9 @@ func FromServices(s *Services) *Resolver {
 		LocationService:              s.LocationService,
 		LocationCategoryService:      s.LocationCategoryService,
 		DocumentTypeService:          s.DocumentTypeService,
+		DocumentService:              s.DocumentService,
+		BankReceiptBatchService:      s.BankReceiptBatchService,
+		DotHazmatReferenceService:    s.DotHazmatReferenceService,
 		ServiceTypeService:           s.ServiceTypeService,
 		OrderService:                 s.OrderService,
 		ShipmentTypeService:          s.ShipmentTypeService,
@@ -1455,7 +1458,9 @@ func FromServices(s *Services) *Resolver {
 		locationCategory:                   &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps},
 		mFAAuthenticator:                   &securityactivityresolver.MFAAuthenticatorResolver{Deps: securityactivityDeps},
 		mutation: &mutationResolver{
+			accessorialchargeMutation:     &accessorialchargeMutation{Deps: accessorialchargeDeps},
 			accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
+			accounttypeMutation:           &accounttypeMutation{Deps: accounttypeDeps},
 			agentMutation:                 &agentMutation{Deps: agentDeps},
 			agentdefinitionMutation:       &agentdefinitionMutation{Deps: agentdefinitionDeps},
 			agentprofileMutation:          &agentprofileMutation{Deps: agentprofileDeps},
@@ -1477,7 +1482,9 @@ func FromServices(s *Services) *Resolver {
 			carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
 			carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
 			checkcallMutation:             &checkcallMutation{Deps: checkcallDeps},
+			commodityMutation:             &commodityMutation{Deps: commodityDeps},
 			costingMutation:               &costingMutation{Deps: costingDeps},
+			customerMutation:              &customerMutation{Deps: customerDeps},
 			customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
 			customertrackingMutation:      &customertrackingMutation{Deps: customertrackingDeps},
 			decisionsMutation:             &decisionsMutation{Deps: decisionsDeps},
@@ -1485,6 +1492,7 @@ func FromServices(s *Services) *Resolver {
 			detentionMutation:             &detentionMutation{Deps: detentionDeps},
 			dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 			documenttemplateMutation:      &documenttemplateMutation{Deps: documenttemplateDeps},
+			documenttypeMutation:          &documenttypeMutation{Deps: documenttypeDeps},
 			driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
 			driversettlementMutation:      &driversettlementMutation{Deps: driversettlementDeps},
 			equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
@@ -1494,9 +1502,13 @@ func FromServices(s *Services) *Resolver {
 			extractionshadowMutation:      &extractionshadowMutation{Deps: extractionshadowDeps},
 			factoringMutation:             &factoringMutation{Deps: factoringDeps},
 			factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
+			fleetcodeMutation:             &fleetcodeMutation{Deps: fleetcodeDeps},
 			fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
 			fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
 			fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
+			hazardousmaterialMutation:     &hazardousmaterialMutation{Deps: hazardousmaterialDeps},
+			hazmatsegregationruleMutation: &hazmatsegregationruleMutation{Deps: hazmatsegregationruleDeps},
+			holdreasonMutation:            &holdreasonMutation{Deps: holdreasonDeps},
 			homelayoutMutation:            &homelayoutMutation{Deps: homelayoutDeps},
 			iftaMutation:                  &iftaMutation{Deps: iftaDeps},
 			inboundmessageMutation:        &inboundmessageMutation{Deps: inboundmessageDeps},
@@ -1506,6 +1518,7 @@ func FromServices(s *Services) *Resolver {
 			invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
 			journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
 			latechargeMutation:            &latechargeMutation{Deps: latechargeDeps},
+			locationcategoryMutation:      &locationcategoryMutation{Deps: locationcategoryDeps},
 			notificationMutation:          &notificationMutation{Deps: notificationDeps},
 			orderMutation:                 &orderMutation{Deps: orderDeps},
 			orgholidayMutation:            &orgholidayMutation{Deps: orgholidayDeps},
@@ -2632,7 +2645,9 @@ func (r *Resolver) Mutation() generated.MutationResolver {
 }
 
 type mutationResolver struct {
+	*accessorialchargeMutation
 	*accountingsyncMutation
+	*accounttypeMutation
 	*agentMutation
 	*agentdefinitionMutation
 	*agentprofileMutation
@@ -2654,7 +2669,9 @@ type mutationResolver struct {
 	*carrierintelligenceMutation
 	*carriersettlementMutation
 	*checkcallMutation
+	*commodityMutation
 	*costingMutation
+	*customerMutation
 	*customerpaymentMutation
 	*customertrackingMutation
 	*decisionsMutation
@@ -2662,6 +2679,7 @@ type mutationResolver struct {
 	*detentionMutation
 	*dispatchconsoleMutation
 	*documenttemplateMutation
+	*documenttypeMutation
 	*driverportalMutation
 	*driversettlementMutation
 	*equipmentmanufacturerMutation
@@ -2671,9 +2689,13 @@ type mutationResolver struct {
 	*extractionshadowMutation
 	*factoringMutation
 	*factoringcompanyMutation
+	*fleetcodeMutation
 	*fleetsafetyMutation
 	*fuelpurchaseMutation
 	*fuelsurchargeMutation
+	*hazardousmaterialMutation
+	*hazmatsegregationruleMutation
+	*holdreasonMutation
 	*homelayoutMutation
 	*iftaMutation
 	*inboundmessageMutation
@@ -2683,6 +2705,7 @@ type mutationResolver struct {
 	*invoicedisputeMutation
 	*journalentryMutation
 	*latechargeMutation
+	*locationcategoryMutation
 	*notificationMutation
 	*orderMutation
 	*orgholidayMutation
@@ -3267,7 +3290,9 @@ type (
 	invoiceInvoice                  = invoiceresolver.InvoiceResolver
 	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
 	latechargeInvoice               = latechargeresolver.InvoiceResolver
+	accessorialchargeMutation       = accessorialchargeresolver.MutationResolver
 	accountingsyncMutation          = accountingsyncresolver.MutationResolver
+	accounttypeMutation             = accounttyperesolver.MutationResolver
 	agentMutation                   = agentresolver.MutationResolver
 	agentdefinitionMutation         = agentdefinitionresolver.MutationResolver
 	agentprofileMutation            = agentprofileresolver.MutationResolver
@@ -3289,7 +3314,9 @@ type (
 	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
 	carriersettlementMutation       = carriersettlementresolver.MutationResolver
 	checkcallMutation               = checkcallresolver.MutationResolver
+	commodityMutation               = commodityresolver.MutationResolver
 	costingMutation                 = costingresolver.MutationResolver
+	customerMutation                = customerresolver.MutationResolver
 	customerpaymentMutation         = customerpaymentresolver.MutationResolver
 	customertrackingMutation        = customertrackingresolver.MutationResolver
 	decisionsMutation               = decisionsresolver.MutationResolver
@@ -3297,6 +3324,7 @@ type (
 	detentionMutation               = detentionresolver.MutationResolver
 	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
 	documenttemplateMutation        = documenttemplateresolver.MutationResolver
+	documenttypeMutation            = documenttyperesolver.MutationResolver
 	driverportalMutation            = driverportalresolver.MutationResolver
 	driversettlementMutation        = driversettlementresolver.MutationResolver
 	equipmentmanufacturerMutation   = equipmentmanufacturerresolver.MutationResolver
@@ -3306,9 +3334,13 @@ type (
 	extractionshadowMutation        = extractionshadowresolver.MutationResolver
 	factoringMutation               = factoringresolver.MutationResolver
 	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
+	fleetcodeMutation               = fleetcoderesolver.MutationResolver
 	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
 	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
 	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
+	hazardousmaterialMutation       = hazardousmaterialresolver.MutationResolver
+	hazmatsegregationruleMutation   = hazmatsegregationruleresolver.MutationResolver
+	holdreasonMutation              = holdreasonresolver.MutationResolver
 	homelayoutMutation              = homelayoutresolver.MutationResolver
 	iftaMutation                    = iftaresolver.MutationResolver
 	inboundmessageMutation          = inboundmessageresolver.MutationResolver
@@ -3318,6 +3350,7 @@ type (
 	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
 	journalentryMutation            = journalentryresolver.MutationResolver
 	latechargeMutation              = latechargeresolver.MutationResolver
+	locationcategoryMutation        = locationcategoryresolver.MutationResolver
 	notificationMutation            = notificationresolver.MutationResolver
 	orderMutation                   = orderresolver.MutationResolver
 	orgholidayMutation              = orgholidayresolver.MutationResolver

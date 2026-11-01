@@ -20,6 +20,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "CustomFieldDefinition", Implementors: []string{"CustomFieldDefinition"}},
 		{Name: "CustomFieldDefinitionConnection", Implementors: []string{"CustomFieldDefinitionConnection"}},
 		{Name: "CustomFieldDefinitionEdge", Implementors: []string{"CustomFieldDefinitionEdge"}},
+		{Name: "CustomFieldFormField", Implementors: []string{"CustomFieldFormField"}},
 		{Name: "CustomFieldSelectOption", Implementors: []string{"CustomFieldSelectOption"}},
 		{Name: "CustomFieldUIAttributes", Implementors: []string{"CustomFieldUIAttributes"}},
 		{Name: "CustomFieldValidationRules", Implementors: []string{"CustomFieldValidationRules"}},
@@ -281,6 +282,126 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "CustomFieldFormField", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "fieldType",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.FieldType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFieldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐFieldType),
+			},
+			{
+				Name:     "isRequired",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.IsRequired, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "displayOrder",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.DisplayOrder, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "color",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.Color, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:      "options",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "CustomFieldSelectOption",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.Options, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomFieldSelectOption2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐSelectOptionᚄ),
+			},
+			{
+				Name:      "validationRules",
+				HasChild:  true,
+				ChildType: "CustomFieldValidationRules",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.ValidationRules, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOCustomFieldValidationRules2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐValidationRules),
+			},
+			{
+				Name:     "defaultValue",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.DefaultValue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAny2interface),
+			},
+			{
+				Name:      "uiAttributes",
+				HasChild:  true,
+				ChildType: "CustomFieldUIAttributes",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customfield.CustomFieldDefinition)
+					return obj.UIAttributes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOCustomFieldUIAttributes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐUIAttributes),
+			},
+		}},
 		{Object: "CustomFieldSelectOption", Fields: []*gqlexec.Field{
 			{
 				Name:     "value",
@@ -430,6 +551,31 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
 			},
+			{
+				Name:       "customFieldFormFields",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "CustomFieldFormField",
+				Args:       field_Query_customFieldFormFields_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomFieldFormFields(ctx, fc.Args["resourceType"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomFieldFormField2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinitionᚄ),
+			},
+			{
+				Name:       "customFieldResourceTypes",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomFieldResourceTypes(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
@@ -440,6 +586,8 @@ var Shard = &gqlexec.Shard{
 type resolverQuery interface {
 	CustomFieldDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomFieldDefinitionConnection, error)
 	CustomFieldDefinition(ctx context.Context, id string) (*customfield.CustomFieldDefinition, error)
+	CustomFieldFormFields(ctx context.Context, resourceType string) ([]*customfield.CustomFieldDefinition, error)
+	CustomFieldResourceTypes(ctx context.Context) ([]string, error)
 }
 
 var (
@@ -478,6 +626,19 @@ func field_Query_customFieldDefinition_args(ctx context.Context, ec *gqlexec.Exe
 	return args, nil
 }
 
+func field_Query_customFieldFormFields_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "resourceType",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["resourceType"] = arg0
+	return args, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -489,6 +650,11 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -530,6 +696,22 @@ func marshalNCustomFieldDefinitionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CustomFieldDefinitionEdge", v)
+}
+
+func marshalNCustomFieldFormField2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customfield.CustomFieldDefinition) graphql.Marshaler {
+	return gqlexec.List[*customfield.CustomFieldDefinition]{
+		Elem:        marshalNCustomFieldFormField2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNCustomFieldFormField2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.CustomFieldDefinition) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CustomFieldFormField", v)
 }
 
 func marshalNCustomFieldSelectOption2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐSelectOption(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customfield.SelectOption) graphql.Marshaler {
@@ -590,6 +772,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {

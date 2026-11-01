@@ -148,13 +148,6 @@ func (a *AllowAllPermissionEngine) GetEffectivePermissions(
 	}, nil
 }
 
-func (a *AllowAllPermissionEngine) SimulatePermissions(
-	_ context.Context,
-	_ *permissionports.SimulatePermissionsRequest,
-) (*permissionports.EffectivePermissions, error) {
-	return nil, nil
-}
-
 func (a *AllowAllPermissionEngine) AgentsUsable(
 	_ context.Context,
 	_ *permissionports.RequestActor,

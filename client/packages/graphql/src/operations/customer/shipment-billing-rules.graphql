@@ -1,0 +1,10 @@
+query ShipmentCustomerBillingRules($customerIds: [ID!]!) {
+  shipmentCustomerBillingRules(customerIds: $customerIds) {
+    customerId
+    bolRequired
+    creditStatus
+    creditHoldReason
+    enforceCreditLimit
+    creditHoldAutomatic
+  }
+}

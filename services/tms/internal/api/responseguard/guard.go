@@ -38,10 +38,7 @@ import (
 // null there and outside its kind's reference view was withheld, not empty.
 const WithheldHeader = "Withheld-By-Access"
 
-const (
-	selfScopedKey = "responseguard.self_scoped"
-	referencesKey = "responseguard.references"
-)
+const selfScopedKey = "responseguard.self_scoped"
 
 const paginationPackage = "github.com/emoss08/trenova/pkg/pagination"
 
@@ -114,17 +111,6 @@ type fieldKey struct {
 	field string
 }
 
-// References marks a route that hands out records for another record to
-// link to, such as a picker's select options: it authorizes no kind, so each
-// record it returns shows its kind's reference view unless the caller reads
-// the kind, as it would inside the record that links to it.
-func References() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set(referencesKey, true)
-		c.Next()
-	}
-}
-
 // Guarded is the value to write for a response: the value itself when it
 // carries nothing the caller may not see, and otherwise a copy with every
 // withheld field null. It names the withheld records in WithheldHeader.
@@ -137,10 +123,6 @@ func (r *requestGuard) Guarded(c *gin.Context, value any) any {
 		return value
 	}
 
-	var top *record
-	if c.GetBool(referencesKey) {
-		top = referenceCarrier
-	}
 	w := &walker{
 		ctx:        c.Request.Context(),
 		decider:    r,
@@ -149,7 +131,7 @@ func (r *requestGuard) Guarded(c *gin.Context, value any) any {
 		selfScoped: c.GetBool(selfScopedKey),
 		path:       make([]string, 0, 8),
 	}
-	guarded, changed := w.guard(root, top, 0)
+	guarded, changed := w.guard(root, nil, 0)
 	if withheld := w.withheldRecords(); len(withheld) > 0 {
 		c.Header(WithheldHeader, strings.Join(withheld, ", "))
 	}

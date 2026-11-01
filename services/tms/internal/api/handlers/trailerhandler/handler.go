@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
@@ -43,16 +42,6 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/trailers")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceTrailer.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET(
-		"/:trailerID/",
-		h.pm.RequirePermission(permission.ResourceTrailer.String(), permission.OpRead),
-		h.get,
-	)
 	api.POST(
 		"/",
 		h.pm.RequirePermission(permission.ResourceTrailer.String(), permission.OpCreate),
@@ -78,162 +67,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceTrailer.String(), permission.OpUpdate),
 		h.locate,
 	)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:trailerID", h.getOption)
-}
-
-// @Summary List trailers
-// @ID listTrailers
-// @Tags Trailers
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param after query string false "Opaque cursor"
-// @Param includeEquipmentDetails query bool false "Include equipment details"
-// @Param includeFleetDetails query bool false "Include fleet details"
-// @Param status query string false "Filter by trailer status"
-// @Success 200 {object} pagination.CursorResponse[[]trailer.Trailer]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /trailers/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.CursorList(
-		c,
-		req,
-		h.eh,
-		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*trailer.Trailer], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&trailerports.ListTrailersRequest{
-					Filter: req,
-					Cursor: cursor,
-					TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
-						IncludeEquipmentDetails: helpers.QueryBool(
-							c,
-							"includeEquipmentDetails",
-							false,
-						),
-						IncludeFleetDetails: helpers.QueryBool(
-							c,
-							"includeFleetDetails",
-							false,
-						),
-						IncludeLastKnownLocation: true,
-						IncludeCustomFields:      true,
-					},
-					Status: helpers.QueryString(c, "status", ""),
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a trailer option
-// @ID getTrailerOption
-// @Tags Trailers
-// @Produce json
-// @Param trailerID path string true "Trailer ID"
-// @Success 200 {object} trailer.Trailer
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /trailers/select-options/{trailerID} [get]
-func (h *Handler) getOption(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	trailerID, err := pulid.MustParse(c.Param("trailerID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	entity, err := h.service.Get(c.Request.Context(), trailerports.GetTrailerByIDRequest{
-		ID:         trailerID,
-		TenantInfo: pagination.FromAuth(authCtx),
-		TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
-			IncludeLastKnownLocation: true,
-			IncludeCustomFields:      true,
-		},
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary List trailer options
-// @ID listTrailerOptions
-// @Tags Trailers
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]trailer.Trailer]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /trailers/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*trailer.Trailer], error) {
-			return h.service.SelectOptions(c.Request.Context(), req)
-		},
-	)
-}
-
-// @Summary Get a trailer
-// @ID getTrailer
-// @Tags Trailers
-// @Produce json
-// @Param trailerID path string true "Trailer ID"
-// @Success 200 {object} trailer.Trailer
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /trailers/{trailerID}/ [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	id, err := pulid.MustParse(c.Param("trailerID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		trailerports.GetTrailerByIDRequest{
-			ID:         id,
-			TenantInfo: pagination.FromAuth(authCtx),
-			TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
-				IncludeLastKnownLocation: true,
-				IncludeCustomFields:      true,
-			},
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a trailer

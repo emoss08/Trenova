@@ -3,11 +3,10 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { resourceTypeChoices } from "@/lib/choices";
 import type { DocumentPacketRuleRow } from "@/lib/graphql/document-packet-rule-table";
-import type { DocumentType } from "@trenova/shared/types/document-type";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(
-  documentTypeMap: Map<string, DocumentType>,
+  documentTypeNames: ReadonlyMap<string, string>,
   t: TranslateFn,
 ): ColumnDef<DocumentPacketRuleRow>[] {
   return [
@@ -34,9 +33,9 @@ export function getColumns(
       accessorKey: "documentTypeId",
       header: t("Document type"),
       cell: ({ row }) => {
-        const docType = documentTypeMap.get(row.original.documentTypeId);
-        return docType ? (
-          <span className="font-medium">{docType.name}</span>
+        const name = documentTypeNames.get(row.original.documentTypeId);
+        return name ? (
+          <span className="font-medium">{name}</span>
         ) : (
           <span className="text-muted-foreground">{row.original.documentTypeId}</span>
         );

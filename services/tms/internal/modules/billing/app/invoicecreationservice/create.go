@@ -297,24 +297,6 @@ func (s *Service) groupedInvoicesFromShipments(
 	}, actor)
 }
 
-// CreateFromOrder issues the grouped invoices covering every billable leg of an
-// order and returns the primary payer's. Each billable leg gets one approved
-// billing-queue item per payer (all carrying the order id); the first of each
-// payer's items is the anchor whose id backs that invoice's single-valued FK and
-// idempotency lookup.
-func (s *Service) CreateFromOrder(
-	ctx context.Context,
-	req *invoiceports.CreateInvoiceFromOrderRequest,
-	actor *permissionports.RequestActor,
-) (*invoice.Invoice, error) {
-	result, err := s.CreateInvoicesFromOrder(ctx, req, actor)
-	if err != nil {
-		return nil, err
-	}
-
-	return result.Primary, nil
-}
-
 func (s *Service) CreateInvoicesFromOrder(
 	ctx context.Context,
 	req *invoiceports.CreateInvoiceFromOrderRequest,

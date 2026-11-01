@@ -53,11 +53,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 
 	api := rg.Group("/rate-confirmations")
-	api.GET(
-		"/:rateConfirmationID/",
-		h.pm.RequirePermission(permission.ResourceRateConfirmation.String(), permission.OpRead),
-		h.get,
-	)
 	api.POST(
 		"/:rateConfirmationID/send/",
 		h.pm.RequirePermission(permission.ResourceRateConfirmation.String(), permission.OpUpdate),
@@ -158,43 +153,6 @@ func (h *Handler) generate(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusCreated, entity)
-}
-
-// @Summary Get a rate confirmation
-// @ID getRateConfirmation
-// @Tags RateConfirmations
-// @Produce json
-// @Param rateConfirmationID path string true "Rate confirmation ID"
-// @Success 200 {object} rateconfirmation.RateConfirmation
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-confirmations/{rateConfirmationID}/ [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	rateConfirmationID, err := pulid.MustParse(c.Param("rateConfirmationID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		&rateconfirmationports.GetRateConfirmationByIDRequest{
-			TenantInfo:         pagination.FromAuth(authCtx),
-			RateConfirmationID: rateConfirmationID,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Send a rate confirmation to the carrier

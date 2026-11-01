@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
@@ -47,10 +46,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/:rateZoneID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
 	api.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.create)
 	api.PUT("/:rateZoneID/", h.pm.RequirePermission(resource, permission.OpUpdate), h.update)
-	api.DELETE("/:rateZoneID/", h.pm.RequirePermission(resource, permission.OpDelete), h.delete)
-
-	selectOptions := api.Group("/select-options", responseguard.References())
-	selectOptions.GET("/", h.selectOptions)
 }
 
 // @Summary List rate zones
@@ -190,65 +185,6 @@ func (h *Handler) update(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, updated)
-}
-
-// @Summary Delete a rate zone
-// @ID deleteRateZone
-// @Tags Rate Zones
-// @Produce json
-// @Param rateZoneID path string true "Rate zone ID"
-// @Success 204
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Failure 409 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-zones/{rateZoneID} [delete]
-func (h *Handler) delete(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	zoneID, err := h.zoneID(c)
-	if err != nil {
-		return
-	}
-
-	if err = h.service.Delete(c.Request.Context(), &ratezoneports.GetRateZoneByIDRequest{
-		RateZoneID: zoneID,
-		TenantInfo: tenantOf(authCtx),
-	}, authCtx.UserID); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
-// @Summary List rate zone options
-// @ID listRateZoneOptions
-// @Tags Rate Zones
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]ratezone.RateZone]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-zones/select-options/ [get]
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*ratezone.RateZone], error) {
-			return h.service.SelectOptions(c.Request.Context(), req)
-		},
-	)
 }
 
 func (h *Handler) zoneID(c *gin.Context) (pulid.ID, error) {

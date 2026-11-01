@@ -51,52 +51,6 @@ func setupHandler(
 	)
 }
 
-func TestHandlerOpenItems(t *testing.T) {
-	t.Parallel()
-
-	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
-	repo.EXPECT().
-		ListOpenItems(mock.Anything, mock.Anything).
-		Return([]*customerledgerports.AROpenItem{
-			{
-				InvoiceID:       pulid.MustNew("inv_"),
-				CustomerID:      pulid.MustNew("cus_"),
-				OpenAmountMinor: 5000,
-			},
-		}, nil).
-		Once()
-	handler := setupHandler(t, repo)
-
-	ginCtx := sharedtestutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/accounting/accounts-receivable/open-items/").
-		WithDefaultAuthContext()
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	var resp []*customerledgerports.AROpenItem
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	require.Len(t, resp, 1)
-	assert.Equal(t, int64(5000), resp[0].OpenAmountMinor)
-}
-
-func TestHandlerOpenItemsBadCustomerID(t *testing.T) {
-	t.Parallel()
-
-	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
-	handler := setupHandler(t, repo)
-	ginCtx := sharedtestutil.NewGinTestContext().
-		WithMethod(http.MethodGet).
-		WithPath("/api/v1/accounting/accounts-receivable/open-items/").
-		WithQuery(map[string]string{"customerId": "bad-id"}).
-		WithDefaultAuthContext()
-	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
-}
-
 func TestHandlerCustomerStatement(t *testing.T) {
 	t.Parallel()
 

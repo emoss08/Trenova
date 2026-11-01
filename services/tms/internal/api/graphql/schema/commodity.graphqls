@@ -31,6 +31,9 @@ type Commodity {
   maxTemperature: Int
   weightPerUnit: Float
   linearFeetPerUnit: Float
+  lengthPerUnit: Float
+  widthPerUnit: Float
+  heightPerUnit: Float
   maxQuantityPerShipment: Float
   freightClass: FreightClass
   loadingInstructions: String
@@ -59,4 +62,73 @@ type CommodityConnection {
 extend type Query {
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
+}
+
+input CommodityInput {
+  status: EntityStatus!
+  name: String!
+  description: String!
+  hazardousMaterialId: ID
+  minTemperature: Int
+  maxTemperature: Int
+  weightPerUnit: Float
+  linearFeetPerUnit: Float
+  lengthPerUnit: Float
+  widthPerUnit: Float
+  heightPerUnit: Float
+  maxQuantityPerShipment: Float
+  freightClass: FreightClass
+  loadingInstructions: String
+  stackable: Boolean!
+  fragile: Boolean!
+  version: Int
+}
+
+input CommodityPatchInput {
+  "Omit to leave unchanged; null is rejected."
+  status: EntityStatus @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  name: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  description: String @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  hazardousMaterialId: ID @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  minTemperature: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  maxTemperature: Int @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  weightPerUnit: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  linearFeetPerUnit: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  lengthPerUnit: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  widthPerUnit: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  heightPerUnit: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  maxQuantityPerShipment: Float @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  freightClass: FreightClass @goField(omittable: true)
+  "Omit to leave unchanged; pass null to clear."
+  loadingInstructions: String @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  stackable: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  fragile: Boolean @goField(omittable: true)
+  "Omit to leave unchanged; null is rejected."
+  version: Int @goField(omittable: true)
+}
+
+input BulkUpdateCommodityStatusInput {
+  commodityIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Mutation {
+  createCommodity(input: CommodityInput!): Commodity!
+  updateCommodity(id: ID!, input: CommodityInput!): Commodity!
+  patchCommodity(id: ID!, input: CommodityPatchInput!): Commodity!
+  bulkUpdateCommodityStatus(input: BulkUpdateCommodityStatusInput!): [Commodity!]!
 }

@@ -36,30 +36,10 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/distance-profiles")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET(
-		"/select-options/",
-		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead),
-		h.selectOptions,
-	)
-	api.GET(
-		"/select-options/:distanceProfileID",
-		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead),
-		h.getOption,
-	)
 	api.POST(
 		"/",
 		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpCreate),
 		h.create,
-	)
-	api.GET(
-		"/:distanceProfileID/",
-		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead),
-		h.get,
 	)
 	api.PUT(
 		"/:distanceProfileID/",
@@ -81,64 +61,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpUpdate),
 		h.setDefault,
 	)
-}
-
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&distanceprofileports.ListDistanceProfileRequest{Filter: req},
-			)
-		},
-	)
-}
-
-func (h *Handler) selectOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
-			return h.service.SelectOptions(
-				c.Request.Context(),
-				&distanceprofileports.DistanceProfileSelectOptionsRequest{SelectQueryRequest: req},
-			)
-		},
-	)
-}
-
-func (h *Handler) getOption(c *gin.Context) {
-	h.get(c)
-}
-
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	id, err := pulid.MustParse(c.Param("distanceProfileID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		distanceprofileports.GetDistanceProfileByIDRequest{
-			ID:         id,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) create(c *gin.Context) {

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -29,11 +30,11 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) Get(
+func (s *Service) GetByIDs(
 	ctx context.Context,
-	req dothazmatreferenceports.GetDotHazmatReferenceByIDRequest,
-) (*dothazmatreference.DotHazmatReference, error) {
-	return s.repo.GetByID(ctx, req)
+	ids []pulid.ID,
+) ([]*dothazmatreference.DotHazmatReference, error) {
+	return s.repo.GetByIDs(ctx, ids)
 }
 
 func (s *Service) SelectOptions(

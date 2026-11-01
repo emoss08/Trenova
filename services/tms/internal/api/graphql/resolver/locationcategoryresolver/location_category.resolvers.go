@@ -8,6 +8,7 @@ package locationcategoryresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -67,4 +68,41 @@ func (r *QueryResolver) LocationCategory(ctx context.Context, id string) (*locat
 		ID:         locationCategoryID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *MutationResolver) CreateLocationCategory(ctx context.Context, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceLocationCategory, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.LocationCategoryService.Create(
+		ctx,
+		locationCategoryFromInput(&input, authCtx),
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *MutationResolver) UpdateLocationCategory(ctx context.Context, id string, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceLocationCategory, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	locationCategoryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.LocationCategoryService.Get(ctx, locationcategoryports.GetLocationCategoryByIDRequest{
+		ID:         locationCategoryID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	applyLocationCategoryInput(existing, &input)
+
+	return r.LocationCategoryService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
 }

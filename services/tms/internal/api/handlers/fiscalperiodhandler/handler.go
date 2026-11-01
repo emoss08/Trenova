@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -40,36 +39,6 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/fiscal-periods")
-	api.GET(
-		"/",
-		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET(
-		"/:fiscalPeriodID",
-		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpRead),
-		h.get,
-	)
-	api.POST(
-		"/",
-		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpCreate),
-		h.create,
-	)
-	api.PUT(
-		"/:fiscalPeriodID/",
-		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpUpdate),
-		h.update,
-	)
-	api.PATCH(
-		"/:fiscalPeriodID/",
-		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpUpdate),
-		h.patch,
-	)
-	api.DELETE(
-		"/:fiscalPeriodID/",
-		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpDelete),
-		h.delete,
-	)
 	api.PUT(
 		"/:fiscalPeriodID/close/",
 		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpClose),
@@ -102,75 +71,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 }
 
-// @Summary List fiscal periods
-// @ID listFiscalPeriods
-// @Tags Fiscal Periods
-// @Accept json
-// @Produce json
-// @Param query query string false "Search query"
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]fiscalperiod.FiscalPeriod]
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /fiscal-periods/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&fiscalperiodports.ListFiscalPeriodsRequest{
-					Filter: req,
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a fiscal period
-// @ID getFiscalPeriod
-// @Tags Fiscal Periods
-// @Produce json
-// @Param fiscalPeriodID path string true "Fiscal period ID"
-// @Success 200 {object} fiscalperiod.FiscalPeriod
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /fiscal-periods/{fiscalPeriodID} [get]
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	fiscalPeriodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.Get(
-		c.Request.Context(),
-		fiscalperiodports.GetFiscalPeriodByIDRequest{
-			ID:         fiscalPeriodID,
-			TenantInfo: pagination.FromAuth(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
 func (h *Handler) closeBlockers(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	fiscalPeriodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
@@ -192,155 +92,6 @@ func (h *Handler) closeBlockers(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, result)
-}
-
-// @Summary Create a fiscal period
-// @ID createFiscalPeriod
-// @Tags Fiscal Periods
-// @Accept json
-// @Produce json
-// @Param request body fiscalperiod.FiscalPeriod true "Fiscal period payload"
-// @Success 201 {object} fiscalperiod.FiscalPeriod
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /fiscal-periods/ [post]
-func (h *Handler) create(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	entity := new(fiscalperiod.FiscalPeriod)
-	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	created, err := h.service.Create(c.Request.Context(), entity, authCtx.UserID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusCreated, created)
-}
-
-// @Summary Update a fiscal period
-// @ID updateFiscalPeriod
-// @Tags Fiscal Periods
-// @Accept json
-// @Produce json
-// @Param fiscalPeriodID path string true "Fiscal period ID"
-// @Param request body fiscalperiod.FiscalPeriod true "Fiscal period payload"
-// @Success 200 {object} fiscalperiod.FiscalPeriod
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /fiscal-periods/{fiscalPeriodID}/ [put]
-func (h *Handler) update(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	fiscalPeriodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity := new(fiscalperiod.FiscalPeriod)
-	entity.ID = fiscalPeriodID
-	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	updated, err := h.service.Update(c.Request.Context(), entity, authCtx.UserID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, updated)
-}
-
-// @Summary Patch a fiscal period
-// @ID patchFiscalPeriod
-// @Tags Fiscal Periods
-// @Accept json
-// @Produce json
-// @Param fiscalPeriodID path string true "Fiscal period ID"
-// @Param request body fiscalperiod.FiscalPeriod true "Fiscal period payload"
-// @Success 200 {object} fiscalperiod.FiscalPeriod
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /fiscal-periods/{fiscalPeriodID}/ [patch]
-func (h *Handler) patch(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	fiscalPeriodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	existing, err := h.service.Get(
-		c.Request.Context(),
-		fiscalperiodports.GetFiscalPeriodByIDRequest{
-			ID:         fiscalPeriodID,
-			TenantInfo: pagination.FromAuthAsUser(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	updatedEntity, err := h.service.Update(c.Request.Context(), existing, authCtx.UserID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, updatedEntity)
-}
-
-// @Summary Delete a fiscal period
-// @ID deleteFiscalPeriod
-// @Tags Fiscal Periods
-// @Param fiscalPeriodID path string true "Fiscal period ID"
-// @Success 204 "No Content"
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /fiscal-periods/{fiscalPeriodID}/ [delete]
-func (h *Handler) delete(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	fiscalPeriodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	if err = h.service.Delete(c.Request.Context(), fiscalperiodports.DeleteFiscalPeriodRequest{
-		ID:         fiscalPeriodID,
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-	}, authCtx.UserID); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
 }
 
 // @Summary Close a fiscal period

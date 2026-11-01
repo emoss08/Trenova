@@ -241,6 +241,34 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createDocumentType",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DocumentType",
+				Args:       field_Mutation_createDocumentType_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateDocumentType(ctx, fc.Args["input"].(gqlmodel.DocumentTypeInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType),
+			},
+			{
+				Name:       "updateDocumentType",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "DocumentType",
+				Args:       field_Mutation_updateDocumentType_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateDocumentType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTypeInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "documentTypes",
@@ -271,9 +299,18 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "DocumentTypeInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDocumentTypeInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateDocumentType(ctx context.Context, input gqlmodel.DocumentTypeInput) (*documenttype.DocumentType, error)
+	UpdateDocumentType(ctx context.Context, id string, input gqlmodel.DocumentTypeInput) (*documenttype.DocumentType, error)
 }
 
 type resolverQuery interface {
@@ -290,6 +327,40 @@ var (
 	errNoChild5 = errors.New("field of type Int does not have child fields")
 	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createDocumentType_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentTypeInput, error) {
+			return unmarshalNDocumentTypeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTypeInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateDocumentType_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentTypeInput, error) {
+			return unmarshalNDocumentTypeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTypeInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
 
 func field_Query_documentTypes_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -317,6 +388,78 @@ func field_Query_documentType_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	return args, nil
 }
 
+func unmarshalInputDocumentTypeInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DocumentTypeInput, error) {
+	var it gqlmodel.DocumentTypeInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"code", "name", "description", "color", "documentClassification", "documentCategory", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "color":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Color = data
+		case "documentClassification":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentClassification"))
+			data, err := unmarshalNDocumentClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentClassification(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentClassification = data
+		case "documentCategory":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentCategory"))
+			data, err := unmarshalNDocumentCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentCategory(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentCategory = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -326,9 +469,47 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDocumentCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentCategory(ctx context.Context, ec *gqlexec.Exec, v any) (documenttype.DocumentCategory, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttype.DocumentCategory(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDocumentClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentClassification(ctx context.Context, ec *gqlexec.Exec, v any) (documenttype.DocumentClassification, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttype.DocumentClassification(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDocumentTypeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTypeInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DocumentTypeInput, error) {
+	res, err := unmarshalInputDocumentTypeInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

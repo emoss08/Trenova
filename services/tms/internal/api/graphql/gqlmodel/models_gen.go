@@ -760,6 +760,34 @@ type AccessorialChargeEdge struct {
 	Cursor string                               `json:"cursor"`
 }
 
+type AccessorialChargeInput struct {
+	Status      domaintypes.Status       `json:"status"`
+	Code        string                   `json:"code"`
+	Description string                   `json:"description"`
+	Method      accessorialcharge.Method `json:"method"`
+	// Required when the method is PerUnit.
+	RateUnit *accessorialcharge.RateUnit `json:"rateUnit,omitempty"`
+	Amount   string                      `json:"amount"`
+	Version  *int                        `json:"version,omitempty"`
+}
+
+type AccessorialChargePatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Code graphql.Omittable[*string] `json:"code,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Method graphql.Omittable[*accessorialcharge.Method] `json:"method,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	RateUnit graphql.Omittable[*accessorialcharge.RateUnit] `json:"rateUnit,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Amount graphql.Omittable[*string] `json:"amount,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
+}
+
 type AccountTypeConnection struct {
 	Edges      []*AccountTypeEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
@@ -771,6 +799,33 @@ type AccountTypeConnection struct {
 type AccountTypeEdge struct {
 	Node   *accounttype.AccountType `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+type AccountTypeInput struct {
+	Status      domaintypes.Status   `json:"status"`
+	Code        string               `json:"code"`
+	Name        string               `json:"name"`
+	Description *string              `json:"description,omitempty"`
+	Category    accounttype.Category `json:"category"`
+	Color       *string              `json:"color,omitempty"`
+	Version     *int                 `json:"version,omitempty"`
+}
+
+type AccountTypePatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Code graphql.Omittable[*string] `json:"code,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Name graphql.Omittable[*string] `json:"name,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Category graphql.Omittable[*accounttype.Category] `json:"category,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Color graphql.Omittable[*string] `json:"color,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
 }
 
 type AccountingDriftFindingConnection struct {
@@ -2029,6 +2084,21 @@ type BulkSettlementActionInput struct {
 	PaymentReference *string `json:"paymentReference,omitempty"`
 }
 
+type BulkUpdateAccountTypeStatusInput struct {
+	AccountTypeIds []string           `json:"accountTypeIds"`
+	Status         domaintypes.Status `json:"status"`
+}
+
+type BulkUpdateCommodityStatusInput struct {
+	CommodityIds []string           `json:"commodityIds"`
+	Status       domaintypes.Status `json:"status"`
+}
+
+type BulkUpdateCustomerStatusInput struct {
+	CustomerIds []string           `json:"customerIds"`
+	Status      domaintypes.Status `json:"status"`
+}
+
 type BulkUpdateEquipmentManufacturerStatusInput struct {
 	EquipmentManufacturerIds []string           `json:"equipmentManufacturerIds"`
 	Status                   domaintypes.Status `json:"status"`
@@ -2037,6 +2107,16 @@ type BulkUpdateEquipmentManufacturerStatusInput struct {
 type BulkUpdateEquipmentTypeStatusInput struct {
 	EquipmentTypeIds []string           `json:"equipmentTypeIds"`
 	Status           domaintypes.Status `json:"status"`
+}
+
+type BulkUpdateFleetCodeStatusInput struct {
+	FleetCodeIds []string           `json:"fleetCodeIds"`
+	Status       domaintypes.Status `json:"status"`
+}
+
+type BulkUpdateHazardousMaterialStatusInput struct {
+	HazardousMaterialIds []string           `json:"hazardousMaterialIds"`
+	Status               domaintypes.Status `json:"status"`
 }
 
 type BulkUpdateTractorStatusInput struct {
@@ -2607,6 +2687,63 @@ type CommodityEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+type CommodityInput struct {
+	Status                 domaintypes.Status      `json:"status"`
+	Name                   string                  `json:"name"`
+	Description            string                  `json:"description"`
+	HazardousMaterialID    *string                 `json:"hazardousMaterialId,omitempty"`
+	MinTemperature         *int                    `json:"minTemperature,omitempty"`
+	MaxTemperature         *int                    `json:"maxTemperature,omitempty"`
+	WeightPerUnit          *float64                `json:"weightPerUnit,omitempty"`
+	LinearFeetPerUnit      *float64                `json:"linearFeetPerUnit,omitempty"`
+	LengthPerUnit          *float64                `json:"lengthPerUnit,omitempty"`
+	WidthPerUnit           *float64                `json:"widthPerUnit,omitempty"`
+	HeightPerUnit          *float64                `json:"heightPerUnit,omitempty"`
+	MaxQuantityPerShipment *float64                `json:"maxQuantityPerShipment,omitempty"`
+	FreightClass           *commodity.FreightClass `json:"freightClass,omitempty"`
+	LoadingInstructions    *string                 `json:"loadingInstructions,omitempty"`
+	Stackable              bool                    `json:"stackable"`
+	Fragile                bool                    `json:"fragile"`
+	Version                *int                    `json:"version,omitempty"`
+}
+
+type CommodityPatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Name graphql.Omittable[*string] `json:"name,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	HazardousMaterialID graphql.Omittable[*string] `json:"hazardousMaterialId,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	MinTemperature graphql.Omittable[*int] `json:"minTemperature,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	MaxTemperature graphql.Omittable[*int] `json:"maxTemperature,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	WeightPerUnit graphql.Omittable[*float64] `json:"weightPerUnit,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	LinearFeetPerUnit graphql.Omittable[*float64] `json:"linearFeetPerUnit,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	LengthPerUnit graphql.Omittable[*float64] `json:"lengthPerUnit,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	WidthPerUnit graphql.Omittable[*float64] `json:"widthPerUnit,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	HeightPerUnit graphql.Omittable[*float64] `json:"heightPerUnit,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	MaxQuantityPerShipment graphql.Omittable[*float64] `json:"maxQuantityPerShipment,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	FreightClass graphql.Omittable[*commodity.FreightClass] `json:"freightClass,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	LoadingInstructions graphql.Omittable[*string] `json:"loadingInstructions,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Stackable graphql.Omittable[*bool] `json:"stackable,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Fragile graphql.Omittable[*bool] `json:"fragile,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
+}
+
 // What the accounting system returned to the callback page after the person approved access.
 type CompleteAccountingAuthorizationInput struct {
 	IntegrationType integration.Type `json:"integrationType"`
@@ -2950,6 +3087,63 @@ type CustomFieldDefinitionEdge struct {
 	Cursor string                             `json:"cursor"`
 }
 
+type CustomerBillingProfileInput struct {
+	InvoiceDelivery customer.InvoiceDelivery `json:"invoiceDelivery"`
+	BillingCycle    customer.BillingCycle    `json:"billingCycle"`
+	// Weekday 0-6 for weekly cycles, day of month 1-28 for monthly and longer.
+	BillingCycleAnchorDay int `json:"billingCycleAnchorDay"`
+	// IANA zone the period boundaries are evaluated in.
+	BillingCycleTimezone  string                     `json:"billingCycleTimezone"`
+	SplitBy               customer.InvoiceSplitKey   `json:"splitBy"`
+	SectionBy             customer.InvoiceSectionKey `json:"sectionBy"`
+	InvoiceDetail         customer.InvoiceDetail     `json:"invoiceDetail"`
+	MinConsolidatedAmount *string                    `json:"minConsolidatedAmount,omitempty"`
+	// Zero means unbounded.
+	MaxShipmentsPerInvoice          int                          `json:"maxShipmentsPerInvoice"`
+	PaymentTerm                     customer.PaymentTerm         `json:"paymentTerm"`
+	HasBillingControlOverrides      bool                         `json:"hasBillingControlOverrides"`
+	CreditLimit                     *string                      `json:"creditLimit,omitempty"`
+	CreditStatus                    customer.CreditStatus        `json:"creditStatus"`
+	EnforceCreditLimit              bool                         `json:"enforceCreditLimit"`
+	AutoCreditHold                  bool                         `json:"autoCreditHold"`
+	CreditHoldReason                *string                      `json:"creditHoldReason,omitempty"`
+	AutoSendInvoiceOnGeneration     bool                         `json:"autoSendInvoiceOnGeneration"`
+	SendPaymentReminders            bool                         `json:"sendPaymentReminders"`
+	SendStatements                  bool                         `json:"sendStatements"`
+	EmailInvoiceEnabled             bool                         `json:"emailInvoiceEnabled"`
+	EDIInvoiceEnabled               bool                         `json:"ediInvoiceEnabled"`
+	InvoiceNumberFormat             customer.InvoiceNumberFormat `json:"invoiceNumberFormat"`
+	CustomerInvoicePrefix           *string                      `json:"customerInvoicePrefix,omitempty"`
+	InvoiceCopies                   int                          `json:"invoiceCopies"`
+	RevenueAccountID                *string                      `json:"revenueAccountId,omitempty"`
+	ArAccountID                     *string                      `json:"arAccountId,omitempty"`
+	ApplyLateCharges                bool                         `json:"applyLateCharges"`
+	LateChargeRate                  *string                      `json:"lateChargeRate,omitempty"`
+	GracePeriodDays                 int                          `json:"gracePeriodDays"`
+	TaxExempt                       bool                         `json:"taxExempt"`
+	TaxExemptNumber                 *string                      `json:"taxExemptNumber,omitempty"`
+	EnforceCustomerBillingReq       bool                         `json:"enforceCustomerBillingReq"`
+	ValidateCustomerRates           bool                         `json:"validateCustomerRates"`
+	AutoTransfer                    bool                         `json:"autoTransfer"`
+	AutoMarkReadyToBill             bool                         `json:"autoMarkReadyToBill"`
+	AutoApprove                     bool                         `json:"autoApprove"`
+	AutoBill                        bool                         `json:"autoBill"`
+	CountLateOnlyOnAppointmentStops bool                         `json:"countLateOnlyOnAppointmentStops"`
+	AutoApplyAccessorials           bool                         `json:"autoApplyAccessorials"`
+	BillingCurrency                 string                       `json:"billingCurrency"`
+	RequirePONumber                 bool                         `json:"requirePONumber"`
+	RequireBOLNumber                bool                         `json:"requireBOLNumber"`
+	RequireDeliveryNumber           bool                         `json:"requireDeliveryNumber"`
+	DefaultBillerID                 *string                      `json:"defaultBillerId,omitempty"`
+	BillingNotes                    *string                      `json:"billingNotes,omitempty"`
+	FuelSurchargeMode               customer.FuelSurchargeMode   `json:"fuelSurchargeMode"`
+	FuelSurchargeProgramID          *string                      `json:"fuelSurchargeProgramId,omitempty"`
+	// The factor this customer's invoices are assigned to; null when they are not factored.
+	FactoringCompanyID *string `json:"factoringCompanyId,omitempty"`
+	// The document types an invoice for this customer cannot be generated without.
+	DocumentTypeIds []string `json:"documentTypeIds"`
+}
+
 type CustomerConnection struct {
 	Edges      []*CustomerEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
@@ -2976,6 +3170,96 @@ type CustomerDetentionStat struct {
 type CustomerEdge struct {
 	Node   *customer.Customer `json:"node"`
 	Cursor string             `json:"cursor"`
+}
+
+type CustomerEmailProfileInput struct {
+	Subject               *string `json:"subject,omitempty"`
+	Comment               *string `json:"comment,omitempty"`
+	ToRecipients          *string `json:"toRecipients,omitempty"`
+	CcRecipients          *string `json:"ccRecipients,omitempty"`
+	BCCRecipients         *string `json:"bccRecipients,omitempty"`
+	AttachmentName        *string `json:"attachmentName,omitempty"`
+	ReadReceipt           bool    `json:"readReceipt"`
+	IncludeShipmentDetail bool    `json:"includeShipmentDetail"`
+}
+
+type CustomerInput struct {
+	Status                  domaintypes.Status              `json:"status"`
+	Code                    string                          `json:"code"`
+	Name                    string                          `json:"name"`
+	AddressLine1            string                          `json:"addressLine1"`
+	AddressLine2            *string                         `json:"addressLine2,omitempty"`
+	City                    string                          `json:"city"`
+	StateID                 string                          `json:"stateId"`
+	PostalCode              string                          `json:"postalCode"`
+	Longitude               *float64                        `json:"longitude,omitempty"`
+	Latitude                *float64                        `json:"latitude,omitempty"`
+	PlaceID                 *string                         `json:"placeId,omitempty"`
+	ExternalID              *string                         `json:"externalId,omitempty"`
+	DOTNumber               *string                         `json:"dotNumber,omitempty"`
+	McNumber                *string                         `json:"mcNumber,omitempty"`
+	BrokerVettingEnabled    bool                            `json:"brokerVettingEnabled"`
+	CheckCallIntervalHours  *int                            `json:"checkCallIntervalHours,omitempty"`
+	EtaRiskThresholdMinutes *int                            `json:"etaRiskThresholdMinutes,omitempty"`
+	AllowConsolidation      bool                            `json:"allowConsolidation"`
+	ExclusiveConsolidation  bool                            `json:"exclusiveConsolidation"`
+	ConsolidationPriority   int                             `json:"consolidationPriority"`
+	StatusUpdatePreference  customer.StatusUpdatePreference `json:"statusUpdatePreference"`
+	StatusUpdateRecipients  *string                         `json:"statusUpdateRecipients,omitempty"`
+	// Omit to leave the billing profile as it is; a new customer then gets the default profile.
+	BillingProfile *CustomerBillingProfileInput `json:"billingProfile,omitempty"`
+	// Omit to leave the email profile as it is.
+	EmailProfile *CustomerEmailProfileInput `json:"emailProfile,omitempty"`
+	Version      *int                       `json:"version,omitempty"`
+}
+
+type CustomerPatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Code graphql.Omittable[*string] `json:"code,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Name graphql.Omittable[*string] `json:"name,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	AddressLine1 graphql.Omittable[*string] `json:"addressLine1,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	AddressLine2 graphql.Omittable[*string] `json:"addressLine2,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	City graphql.Omittable[*string] `json:"city,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	StateID graphql.Omittable[*string] `json:"stateId,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	PostalCode graphql.Omittable[*string] `json:"postalCode,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Longitude graphql.Omittable[*float64] `json:"longitude,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Latitude graphql.Omittable[*float64] `json:"latitude,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	PlaceID graphql.Omittable[*string] `json:"placeId,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	ExternalID graphql.Omittable[*string] `json:"externalId,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	DOTNumber graphql.Omittable[*string] `json:"dotNumber,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	McNumber graphql.Omittable[*string] `json:"mcNumber,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	BrokerVettingEnabled graphql.Omittable[*bool] `json:"brokerVettingEnabled,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	CheckCallIntervalHours graphql.Omittable[*int] `json:"checkCallIntervalHours,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	EtaRiskThresholdMinutes graphql.Omittable[*int] `json:"etaRiskThresholdMinutes,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	AllowConsolidation graphql.Omittable[*bool] `json:"allowConsolidation,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	ExclusiveConsolidation graphql.Omittable[*bool] `json:"exclusiveConsolidation,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	ConsolidationPriority graphql.Omittable[*int] `json:"consolidationPriority,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	StatusUpdatePreference graphql.Omittable[*customer.StatusUpdatePreference] `json:"statusUpdatePreference,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	StatusUpdateRecipients graphql.Omittable[*string] `json:"statusUpdateRecipients,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
 }
 
 type CustomerPaymentApplicationInput struct {
@@ -4467,6 +4751,16 @@ type DocumentTypeEdge struct {
 	Cursor string                     `json:"cursor"`
 }
 
+type DocumentTypeInput struct {
+	Code                   string                              `json:"code"`
+	Name                   string                              `json:"name"`
+	Description            *string                             `json:"description,omitempty"`
+	Color                  *string                             `json:"color,omitempty"`
+	DocumentClassification documenttype.DocumentClassification `json:"documentClassification"`
+	DocumentCategory       documenttype.DocumentCategory       `json:"documentCategory"`
+	Version                *int                                `json:"version,omitempty"`
+}
+
 type DraftFactoringNoaInput struct {
 	CustomerID         string  `json:"customerId"`
 	FactoringCompanyID string  `json:"factoringCompanyId"`
@@ -5552,6 +5846,39 @@ type FleetCodeEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+type FleetCodeInput struct {
+	Status       domaintypes.Status `json:"status"`
+	Code         string             `json:"code"`
+	Description  *string            `json:"description,omitempty"`
+	ManagerID    string             `json:"managerId"`
+	RevenueGoal  *float64           `json:"revenueGoal,omitempty"`
+	DeadheadGoal *float64           `json:"deadheadGoal,omitempty"`
+	MileageGoal  *float64           `json:"mileageGoal,omitempty"`
+	Color        *string            `json:"color,omitempty"`
+	Version      *int               `json:"version,omitempty"`
+}
+
+type FleetCodePatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Code graphql.Omittable[*string] `json:"code,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	ManagerID graphql.Omittable[*string] `json:"managerId,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	RevenueGoal graphql.Omittable[*float64] `json:"revenueGoal,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	DeadheadGoal graphql.Omittable[*float64] `json:"deadheadGoal,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	MileageGoal graphql.Omittable[*float64] `json:"mileageGoal,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Color graphql.Omittable[*string] `json:"color,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
+}
+
 // What the fleet's loads cost over a window. The margin figures, and the revenue
 // that would let a reader work the margin out from the cost, are null to a reader
 // without the margins field group.
@@ -6098,6 +6425,75 @@ type HazardousMaterialEdge struct {
 	Cursor string                               `json:"cursor"`
 }
 
+type HazardousMaterialInput struct {
+	Status                      domaintypes.Status               `json:"status"`
+	Code                        *string                          `json:"code,omitempty"`
+	Name                        string                           `json:"name"`
+	Description                 *string                          `json:"description,omitempty"`
+	Class                       hazardousmaterial.HazardousClass `json:"class"`
+	UnNumber                    *string                          `json:"unNumber,omitempty"`
+	PackingGroup                *hazardousmaterial.PackingGroup  `json:"packingGroup,omitempty"`
+	SubsidiaryHazardClass       *string                          `json:"subsidiaryHazardClass,omitempty"`
+	ErgGuideNumber              *string                          `json:"ergGuideNumber,omitempty"`
+	LabelCodes                  *string                          `json:"labelCodes,omitempty"`
+	SpecialProvisions           *string                          `json:"specialProvisions,omitempty"`
+	ProperShippingName          *string                          `json:"properShippingName,omitempty"`
+	HandlingInstructions        *string                          `json:"handlingInstructions,omitempty"`
+	EmergencyContact            *string                          `json:"emergencyContact,omitempty"`
+	EmergencyContactPhoneNumber *string                          `json:"emergencyContactPhoneNumber,omitempty"`
+	QuantityThreshold           *string                          `json:"quantityThreshold,omitempty"`
+	PlacardRequired             bool                             `json:"placardRequired"`
+	IsReportableQuantity        bool                             `json:"isReportableQuantity"`
+	MarinePollutant             bool                             `json:"marinePollutant"`
+	InhalationHazard            bool                             `json:"inhalationHazard"`
+	Version                     *int                             `json:"version,omitempty"`
+}
+
+type HazardousMaterialPatchInput struct {
+	// Omit to leave unchanged; null is rejected.
+	Status graphql.Omittable[*domaintypes.Status] `json:"status,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Code graphql.Omittable[*string] `json:"code,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Name graphql.Omittable[*string] `json:"name,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Class graphql.Omittable[*hazardousmaterial.HazardousClass] `json:"class,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	UnNumber graphql.Omittable[*string] `json:"unNumber,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	PackingGroup graphql.Omittable[*hazardousmaterial.PackingGroup] `json:"packingGroup,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	SubsidiaryHazardClass graphql.Omittable[*string] `json:"subsidiaryHazardClass,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	ErgGuideNumber graphql.Omittable[*string] `json:"ergGuideNumber,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	LabelCodes graphql.Omittable[*string] `json:"labelCodes,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	SpecialProvisions graphql.Omittable[*string] `json:"specialProvisions,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	ProperShippingName graphql.Omittable[*string] `json:"properShippingName,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	HandlingInstructions graphql.Omittable[*string] `json:"handlingInstructions,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	EmergencyContact graphql.Omittable[*string] `json:"emergencyContact,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	EmergencyContactPhoneNumber graphql.Omittable[*string] `json:"emergencyContactPhoneNumber,omitempty"`
+	// Omit to leave unchanged; pass null to clear.
+	QuantityThreshold graphql.Omittable[*string] `json:"quantityThreshold,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	PlacardRequired graphql.Omittable[*bool] `json:"placardRequired,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	IsReportableQuantity graphql.Omittable[*bool] `json:"isReportableQuantity,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	MarinePollutant graphql.Omittable[*bool] `json:"marinePollutant,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	InhalationHazard graphql.Omittable[*bool] `json:"inhalationHazard,omitempty"`
+	// Omit to leave unchanged; null is rejected.
+	Version graphql.Omittable[*int] `json:"version,omitempty"`
+}
+
 type HazmatSegregationRuleConnection struct {
 	Edges      []*HazmatSegregationRuleEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
@@ -6109,6 +6505,27 @@ type HazmatSegregationRuleConnection struct {
 type HazmatSegregationRuleEdge struct {
 	Node   *hazmatsegregationrule.HazmatSegregationRule `json:"node"`
 	Cursor string                                       `json:"cursor"`
+}
+
+type HazmatSegregationRuleInput struct {
+	Status          domaintypes.Status                    `json:"status"`
+	Name            string                                `json:"name"`
+	Description     *string                               `json:"description,omitempty"`
+	ClassA          hazardousmaterial.HazardousClass      `json:"classA"`
+	ClassB          hazardousmaterial.HazardousClass      `json:"classB"`
+	HazmatAId       *string                               `json:"hazmatAId,omitempty"`
+	HazmatBId       *string                               `json:"hazmatBId,omitempty"`
+	SegregationType hazmatsegregationrule.SegregationType `json:"segregationType"`
+	// Required when the segregation type is Distance.
+	MinimumDistance *float64 `json:"minimumDistance,omitempty"`
+	// Required when the segregation type is Distance.
+	DistanceUnit  *string `json:"distanceUnit,omitempty"`
+	HasExceptions bool    `json:"hasExceptions"`
+	// Required when the rule has exceptions.
+	ExceptionNotes   *string `json:"exceptionNotes,omitempty"`
+	ReferenceCode    *string `json:"referenceCode,omitempty"`
+	RegulationSource *string `json:"regulationSource,omitempty"`
+	Version          *int    `json:"version,omitempty"`
 }
 
 type HoldPayEventInput struct {
@@ -6128,6 +6545,23 @@ type HoldReasonConnection struct {
 type HoldReasonEdge struct {
 	Node   *holdreason.HoldReason `json:"node"`
 	Cursor string                 `json:"cursor"`
+}
+
+type HoldReasonInput struct {
+	Type                     holdreason.HoldType     `json:"type"`
+	Code                     string                  `json:"code"`
+	Label                    string                  `json:"label"`
+	Description              *string                 `json:"description,omitempty"`
+	Active                   bool                    `json:"active"`
+	DefaultSeverity          holdreason.HoldSeverity `json:"defaultSeverity"`
+	DefaultBlocksDispatch    bool                    `json:"defaultBlocksDispatch"`
+	DefaultBlocksDelivery    bool                    `json:"defaultBlocksDelivery"`
+	DefaultBlocksBilling     bool                    `json:"defaultBlocksBilling"`
+	DefaultVisibleToCustomer bool                    `json:"defaultVisibleToCustomer"`
+	SortOrder                int                     `json:"sortOrder"`
+	// Codes this reason maps to in other systems, keyed by system.
+	ExternalMap map[string]any `json:"externalMap,omitempty"`
+	Version     *int           `json:"version,omitempty"`
 }
 
 type HomeLayout struct {
@@ -6659,6 +7093,19 @@ type LocationCategoryConnection struct {
 type LocationCategoryEdge struct {
 	Node   *locationcategory.LocationCategory `json:"node"`
 	Cursor string                             `json:"cursor"`
+}
+
+type LocationCategoryInput struct {
+	Name                string                         `json:"name"`
+	Description         *string                        `json:"description,omitempty"`
+	Type                locationcategory.Category      `json:"type"`
+	FacilityType        *locationcategory.FacilityType `json:"facilityType,omitempty"`
+	Color               *string                        `json:"color,omitempty"`
+	HasSecureParking    bool                           `json:"hasSecureParking"`
+	RequiresAppointment bool                           `json:"requiresAppointment"`
+	AllowsOvernight     bool                           `json:"allowsOvernight"`
+	HasRestroom         bool                           `json:"hasRestroom"`
+	Version             *int                           `json:"version,omitempty"`
 }
 
 type LocationConnection struct {
@@ -14786,6 +15233,7 @@ type SelectOptionResource string
 const (
 	SelectOptionResourceAccessorialCharge         SelectOptionResource = "ACCESSORIAL_CHARGE"
 	SelectOptionResourceAccountType               SelectOptionResource = "ACCOUNT_TYPE"
+	SelectOptionResourceBankReceiptSource         SelectOptionResource = "BANK_RECEIPT_SOURCE"
 	SelectOptionResourceAiProvider                SelectOptionResource = "AI_PROVIDER"
 	SelectOptionResourceCaptureDevice             SelectOptionResource = "CAPTURE_DEVICE"
 	SelectOptionResourceCaptureProfile            SelectOptionResource = "CAPTURE_PROFILE"
@@ -14794,7 +15242,9 @@ const (
 	SelectOptionResourceCustomer                  SelectOptionResource = "CUSTOMER"
 	SelectOptionResourceDetentionPolicy           SelectOptionResource = "DETENTION_POLICY"
 	SelectOptionResourceDistanceProfile           SelectOptionResource = "DISTANCE_PROFILE"
+	SelectOptionResourceDocument                  SelectOptionResource = "DOCUMENT"
 	SelectOptionResourceDocumentType              SelectOptionResource = "DOCUMENT_TYPE"
+	SelectOptionResourceDOTHazmatReference        SelectOptionResource = "DOT_HAZMAT_REFERENCE"
 	SelectOptionResourceEDIConnection             SelectOptionResource = "EDI_CONNECTION"
 	SelectOptionResourceEDITransfer               SelectOptionResource = "EDI_TRANSFER"
 	SelectOptionResourceEquipmentManufacturer     SelectOptionResource = "EQUIPMENT_MANUFACTURER"
@@ -14850,6 +15300,7 @@ const (
 var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceAccessorialCharge,
 	SelectOptionResourceAccountType,
+	SelectOptionResourceBankReceiptSource,
 	SelectOptionResourceAiProvider,
 	SelectOptionResourceCaptureDevice,
 	SelectOptionResourceCaptureProfile,
@@ -14858,7 +15309,9 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceCustomer,
 	SelectOptionResourceDetentionPolicy,
 	SelectOptionResourceDistanceProfile,
+	SelectOptionResourceDocument,
 	SelectOptionResourceDocumentType,
+	SelectOptionResourceDOTHazmatReference,
 	SelectOptionResourceEDIConnection,
 	SelectOptionResourceEDITransfer,
 	SelectOptionResourceEquipmentManufacturer,
@@ -14913,7 +15366,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceAiProvider, SelectOptionResourceCaptureDevice, SelectOptionResourceCaptureProfile, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFactoringCompany, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceJournalEntry, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
+	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceBankReceiptSource, SelectOptionResourceAiProvider, SelectOptionResourceCaptureDevice, SelectOptionResourceCaptureProfile, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocument, SelectOptionResourceDocumentType, SelectOptionResourceDOTHazmatReference, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFactoringCompany, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceJournalEntry, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
 		return true
 	}
 	return false

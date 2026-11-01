@@ -10,6 +10,9 @@ fragment CommodityTableRowFields on Commodity {
   maxTemperature
   weightPerUnit
   linearFeetPerUnit
+  lengthPerUnit
+  widthPerUnit
+  heightPerUnit
   maxQuantityPerShipment
   freightClass
   loadingInstructions

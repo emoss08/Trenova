@@ -1,39 +1,51 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
 import {
-  hazmatSegregationRuleSchema,
-  type HazmatSegregationRule,
-} from "@/types/hazmat-segregation-rule";
-import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+  CreateHazmatSegregationRuleDocument,
+  UpdateHazmatSegregationRuleDocument,
+  type HazmatSegregationRuleInput,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { HazmatSegregationRule } from "@/types/hazmat-segregation-rule";
+
+export function toHazmatSegregationRuleInput(
+  data: HazmatSegregationRule,
+): HazmatSegregationRuleInput {
+  return {
+    status: data.status,
+    name: data.name,
+    description: data.description || null,
+    classA: data.classA,
+    classB: data.classB,
+    hazmatAId: data.hazmatAId ?? null,
+    hazmatBId: data.hazmatBId ?? null,
+    segregationType: data.segregationType,
+    minimumDistance: data.minimumDistance ?? null,
+    distanceUnit: data.distanceUnit || null,
+    hasExceptions: data.hasExceptions,
+    exceptionNotes: data.exceptionNotes || null,
+    referenceCode: data.referenceCode || null,
+    regulationSource: data.regulationSource || null,
+    version: data.version,
+  };
+}
 
 export class HazmatSegregationRuleService {
-  async getAll(params?: string) {
-    const response = await api.get<GenericLimitOffsetResponse<HazmatSegregationRule>>(
-      `/hazmat-segregation-rules/${params ? `?${params}` : ""}`,
-    );
-
-    return safeParse(
-      hazmatSegregationRuleSchema.array(),
-      response.results,
-      "HazmatSegregationRules",
-    );
-  }
-
-  async getById(id: string) {
-    const response = await api.get<HazmatSegregationRule>(`/hazmat-segregation-rules/${id}/`);
-
-    return safeParse(hazmatSegregationRuleSchema, response, "HazmatSegregationRule");
-  }
-
   async create(data: HazmatSegregationRule) {
-    const response = await api.post<HazmatSegregationRule>("/hazmat-segregation-rules/", data);
+    const response = await requestGraphQL({
+      document: CreateHazmatSegregationRuleDocument,
+      operationName: "CreateHazmatSegregationRule",
+      variables: { input: toHazmatSegregationRuleInput(data) },
+    });
 
-    return safeParse(hazmatSegregationRuleSchema, response, "HazmatSegregationRule");
+    return response.createHazmatSegregationRule;
   }
 
   async update(id: string, data: HazmatSegregationRule) {
-    const response = await api.put<HazmatSegregationRule>(`/hazmat-segregation-rules/${id}/`, data);
+    const response = await requestGraphQL({
+      document: UpdateHazmatSegregationRuleDocument,
+      operationName: "UpdateHazmatSegregationRule",
+      variables: { id, input: toHazmatSegregationRuleInput(data) },
+    });
 
-    return safeParse(hazmatSegregationRuleSchema, response, "HazmatSegregationRule");
+    return response.updateHazmatSegregationRule;
   }
 }

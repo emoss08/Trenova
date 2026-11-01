@@ -47,5 +47,4 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerConnectionRoutes(api.Group("/connections"))
 	h.registerCommunicationProfileRoutes(api.Group("/communication-profiles"))
 	h.registerDocumentTypeRoutes(catalog.Group("/document-types"))
-	h.registerTransactionSetRoutes(catalog.Group("/transaction-sets"))
 }

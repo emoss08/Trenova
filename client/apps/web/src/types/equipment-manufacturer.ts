@@ -26,11 +26,3 @@ export const bulkUpdateEquipmentManufacturerStatusRequestSchema = z.object({
 export type BulkUpdateEquipmentManufacturerStatusRequest = z.infer<
   typeof bulkUpdateEquipmentManufacturerStatusRequestSchema
 >;
-
-export const bulkUpdateEquipmentManufacturerStatusResponseSchema = z.array(
-  equipmentManufacturerSchema,
-);
-
-export type BulkUpdateEquipmentManufacturerStatusResponse = z.infer<
-  typeof bulkUpdateEquipmentManufacturerStatusResponseSchema
->;

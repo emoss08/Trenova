@@ -87,6 +87,12 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   `pnpm --filter @trenova/graphql codegen` (or keep `pnpm dev` running). Documents are
   hash-only at runtime. Wrappers in `apps/web/src/lib/graphql/<area>.ts` call
   `requestGraphQL`.
+- **Pickers** (`Autocomplete`, `AutocompleteField`, `MultiSelectAutocomplete*`) take a
+  `graphql` select-options source and nothing else; a module-level constant, since an inline
+  object refetches on every render. A kind without a `SelectOptionResource` gets one on the
+  server first; there are no REST select-options routes. A picker over free text, whose
+  resource echoes an id back as its own label (bank receipt sources), passes `createOption`
+  so a value nobody has used yet can be picked.
 - **Data tables** take `defineDataTableGraphQLConfig({ document, operationName,
   connectionKey })` and infer their row type from the fragment; add a field to the fragment
   rather than hand-writing a row type. `totalCount` is requested on the first page only.

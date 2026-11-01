@@ -54,10 +54,6 @@ func (g *stubGateway) LeavePresence(
 	return nil
 }
 
-func (g *stubGateway) SignalTyping(context.Context, *realtimeports.RealtimeTypingRequest) error {
-	return nil
-}
-
 func (g *stubGateway) Drain() {}
 
 var (

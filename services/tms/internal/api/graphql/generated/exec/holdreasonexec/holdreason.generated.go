@@ -290,6 +290,34 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createHoldReason",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "HoldReason",
+				Args:       field_Mutation_createHoldReason_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateHoldReason(ctx, fc.Args["input"].(gqlmodel.HoldReasonInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNHoldReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldReason),
+			},
+			{
+				Name:       "updateHoldReason",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "HoldReason",
+				Args:       field_Mutation_updateHoldReason_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateHoldReason(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HoldReasonInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNHoldReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldReason),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "holdReasons",
@@ -320,9 +348,18 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "HoldReasonInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHoldReasonInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateHoldReason(ctx context.Context, input gqlmodel.HoldReasonInput) (*holdreason.HoldReason, error)
+	UpdateHoldReason(ctx context.Context, id string, input gqlmodel.HoldReasonInput) (*holdreason.HoldReason, error)
 }
 
 type resolverQuery interface {
@@ -340,6 +377,40 @@ var (
 	errNoChild6 = errors.New("field of type JSON does not have child fields")
 	errNoChild7 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createHoldReason_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HoldReasonInput, error) {
+			return unmarshalNHoldReasonInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHoldReasonInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateHoldReason_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.HoldReasonInput, error) {
+			return unmarshalNHoldReasonInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHoldReasonInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
 
 func field_Query_holdReasons_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -367,8 +438,127 @@ func field_Query_holdReason_args(ctx context.Context, ec *gqlexec.Exec, rawArgs 
 	return args, nil
 }
 
+func unmarshalInputHoldReasonInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.HoldReasonInput, error) {
+	var it gqlmodel.HoldReasonInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"type", "code", "label", "description", "active", "defaultSeverity", "defaultBlocksDispatch", "defaultBlocksDelivery", "defaultBlocksBilling", "defaultVisibleToCustomer", "sortOrder", "externalMap", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := unmarshalNHoldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "active":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("active"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Active = data
+		case "defaultSeverity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultSeverity"))
+			data, err := unmarshalNHoldSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldSeverity(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultSeverity = data
+		case "defaultBlocksDispatch":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultBlocksDispatch"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultBlocksDispatch = data
+		case "defaultBlocksDelivery":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultBlocksDelivery"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultBlocksDelivery = data
+		case "defaultBlocksBilling":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultBlocksBilling"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultBlocksBilling = data
+		case "defaultVisibleToCustomer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultVisibleToCustomer"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DefaultVisibleToCustomer = data
+		case "sortOrder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SortOrder = data
+		case "externalMap":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalMap"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalMap = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -376,9 +566,60 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNHoldReasonInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHoldReasonInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.HoldReasonInput, error) {
+	res, err := unmarshalInputHoldReasonInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNHoldSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldSeverity(ctx context.Context, ec *gqlexec.Exec, v any) (holdreason.HoldSeverity, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := holdreason.HoldSeverity(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNHoldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋholdreasonᚐHoldType(ctx context.Context, ec *gqlexec.Exec, v any) (holdreason.HoldType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := holdreason.HoldType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

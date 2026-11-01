@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -45,14 +44,6 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/jurisdiction-rules")
 
-	api.GET("/",
-		h.pm.RequirePermission(permission.ResourceJurisdictionRule.String(), permission.OpRead),
-		h.list,
-	)
-	api.GET("/:ruleID/",
-		h.pm.RequirePermission(permission.ResourceJurisdictionRule.String(), permission.OpRead),
-		h.get,
-	)
 	api.POST("/",
 		h.pm.RequirePermission(permission.ResourceJurisdictionRule.String(), permission.OpCreate),
 		h.create,
@@ -67,70 +58,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 
 	h.registerOverrideRoutes(rg)
-}
-
-// @Summary List jurisdiction rules
-// @Description Shared oversize limits per state. This data is global — every organization reads the same rows.
-// @ID listJurisdictionRules
-// @Tags Jurisdiction Rules
-// @Produce json
-// @Param verificationState query string false "Filter by verification state"
-// @Param status query string false "Filter by status"
-// @Success 200 {object} pagination.ListResult[jurisdictionrule.JurisdictionRule]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /jurisdiction-rules/ [get]
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&jurisdictionruleports.ListJurisdictionRulesRequest{
-					Filter: req,
-					VerificationState: jurisdictionrule.VerificationState(
-						helpers.QueryStringTrimmed(c, "verificationState"),
-					),
-					Status: jurisdictionrule.Status(helpers.QueryStringTrimmed(c, "status")),
-				},
-			)
-		},
-	)
-}
-
-// @Summary Get a jurisdiction rule
-// @ID getJurisdictionRule
-// @Tags Jurisdiction Rules
-// @Produce json
-// @Param ruleID path string true "Rule ID"
-// @Success 200 {object} jurisdictionrule.JurisdictionRule
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 404 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /jurisdiction-rules/{ruleID}/ [get]
-func (h *Handler) get(c *gin.Context) {
-	ruleID, err := pulid.MustParse(c.Param("ruleID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.GetByID(c.Request.Context(), ruleID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a jurisdiction rule
@@ -269,44 +196,12 @@ func (h *Handler) registerOverrideRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/jurisdiction-rule-overrides")
 	resource := permission.ResourceJurisdictionRuleOverride.String()
 
-	api.GET("/:overrideID/",
-		h.pm.RequirePermission(resource, permission.OpRead), h.getOverride)
 	api.POST("/",
 		h.pm.RequirePermission(resource, permission.OpCreate), h.createOverride)
 	api.PUT("/:overrideID/",
 		h.pm.RequirePermission(resource, permission.OpUpdate), h.updateOverride)
 	api.DELETE("/:overrideID/",
 		h.pm.RequirePermission(resource, permission.OpDelete), h.deleteOverride)
-}
-
-// @Summary Get a carrier override
-// @ID getJurisdictionRuleOverride
-// @Tags Jurisdiction Rules
-// @Produce json
-// @Param overrideID path string true "Override ID"
-// @Success 200 {object} jurisdictionrule.Override
-// @Security BearerAuth
-// @Router /jurisdiction-rule-overrides/{overrideID}/ [get]
-func (h *Handler) getOverride(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	overrideID, err := pulid.MustParse(c.Param("overrideID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.GetOverrideByID(
-		c.Request.Context(),
-		overrideID,
-		actorutil.TenantInfoFrom(authCtx),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a carrier override

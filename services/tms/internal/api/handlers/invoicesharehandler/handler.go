@@ -55,11 +55,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpRead),
 		h.candidates,
 	)
-	api.GET(
-		"/candidates/:userID",
-		h.pm.RequirePermission(permission.ResourceInvoice.String(), permission.OpRead),
-		h.candidate,
-	)
 }
 
 type listSharesResponse struct {
@@ -150,35 +145,6 @@ func (h *Handler) candidates(c *gin.Context) {
 			)
 		},
 	)
-}
-
-func (h *Handler) candidate(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	invoiceID, err := pulid.MustParse(c.Param("invoiceID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	userID, err := pulid.MustParse(c.Param("userID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	candidate, err := h.service.GetCandidate(
-		c.Request.Context(),
-		&invoiceports.GetShareCandidateRequest{
-			TenantInfo: tenantInfo(authCtx),
-			InvoiceID:  invoiceID,
-			UserID:     userID,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, candidate)
 }
 
 func tenantInfo(authCtx *authctx.AuthContext) pagination.TenantInfo {

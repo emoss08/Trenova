@@ -13,6 +13,7 @@ import type {
 import { AccountingAppKeys } from "./accounting-app-keys";
 import { AccountingCertificateConnect } from "./accounting-certificate";
 import type { AccountingVendor } from "./accounting-vendors";
+import { IntegrationSetupFooter } from "../shared/integration-setup-wizard";
 
 type AccountingConnectStepProps = {
   vendor: AccountingVendor;
@@ -54,7 +55,7 @@ export function AccountingConnectStep({
 
   return (
     <>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <h3 className="text-base font-semibold">{t("Connect {0}", vendor.name)}</h3>
         <p className="text-foreground-muted text-sm">
           {certificate
@@ -96,7 +97,7 @@ export function AccountingConnectStep({
           </ChoiceButton>
         </div>
       ) : null}
-      <ul className="text-foreground-muted space-y-1.5 text-sm">
+      <ul className="bg-muted/40 text-foreground-muted space-y-2 rounded-lg border p-3 text-sm">
         <li className="flex gap-2">
           <Lock01Icon aria-hidden className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />
           <span>
@@ -160,7 +161,7 @@ export function AccountingConnectStep({
           onCancel={onCancel}
         />
       ) : (
-        <div className="flex justify-end gap-2 border-t pt-4">
+        <IntegrationSetupFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             {t("Cancel")}
           </Button>
@@ -174,7 +175,7 @@ export function AccountingConnectStep({
             {t("Connect to {0}", vendor.name)}
             <LinkExternal01Icon aria-hidden className="size-3.5" />
           </Button>
-        </div>
+        </IntegrationSetupFooter>
       )}
     </>
   );

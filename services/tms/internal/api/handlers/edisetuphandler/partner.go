@@ -51,11 +51,6 @@ func (h *Handler) registerPartnerRoutes(partners *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.getPartnerReadiness,
 	)
-	partners.GET(
-		"/select-options/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.selectPartnerOptions,
-	)
 	partners.POST(
 		"/internal-pairs/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
@@ -101,22 +96,6 @@ func (h *Handler) listPartners(c *gin.Context) {
 		return h.setup.ListPartners(
 			c.Request.Context(),
 			&edipartnerports.ListEDIPartnersRequest{Filter: req},
-		)
-	})
-}
-
-func (h *Handler) selectPartnerOptions(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewSelectQueryRequest(c, authCtx)
-
-	pagination.SelectOptions(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIPartner], error) {
-		return h.setup.SelectPartnerOptions(
-			c.Request.Context(),
-			&edipartnerports.EDIPartnerSelectOptionsRequest{
-				SelectQueryRequest: req,
-				Kind:               edi.PartnerKind(helpers.QueryString(c, "kind", "")),
-				EnabledForOutbound: helpers.QueryBool(c, "enabledForOutbound", false),
-			},
 		)
 	})
 }

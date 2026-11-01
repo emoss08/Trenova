@@ -59,3 +59,36 @@ func (r *QueryResolver) DocumentType(ctx context.Context, id string) (*documentt
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
+
+func (r *MutationResolver) CreateDocumentType(ctx context.Context, input gqlmodel.DocumentTypeInput) (*documenttype.DocumentType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDocumentType, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.DocumentTypeService.Create(ctx, documentTypeFromInput(&input, authCtx), authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateDocumentType(ctx context.Context, id string, input gqlmodel.DocumentTypeInput) (*documenttype.DocumentType, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDocumentType, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	documentTypeID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.DocumentTypeService.Get(ctx, documenttypeports.GetDocumentTypeByIDRequest{
+		ID:         documentTypeID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	applyDocumentTypeInput(existing, &input)
+
+	return r.DocumentTypeService.Update(ctx, existing, authCtx.UserID)
+}

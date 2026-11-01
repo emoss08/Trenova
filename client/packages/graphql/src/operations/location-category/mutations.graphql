@@ -1,0 +1,13 @@
+mutation CreateLocationCategory($input: LocationCategoryInput!) {
+  createLocationCategory(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateLocationCategory($id: ID!, $input: LocationCategoryInput!) {
+  updateLocationCategory(id: $id, input: $input) {
+    id
+    version
+  }
+}

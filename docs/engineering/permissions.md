@@ -253,13 +253,17 @@ queries, and CI holds every path to it:
   the field guard shows it as linked, and `TestEveryLinkedFieldIsDeclared` holds client
   operations to that (`applyCreditMemo` and `unapplyCreditMemoApplication` check invoice
   read for it).
-- REST: only the kind's own handler, whose every route requires an operation on the kind
-  or marks its records `responseguard.References()`, writes one as a response's own
-  record (`TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler`).
+- REST: only the kind's own handler, whose every route requires an operation on the kind,
+  writes one as a response's own record (`TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler`).
 - Search: global search drops the index of a kind the person cannot read and a document
   attached to one before it asks `RecordVisibility`, which answers only the narrowing.
 - Agents, reports, insights and analytics check the kind's read (the tool's policy, the
   report compiler, each detector's `Resources()`, the analytics page) before they read.
+- Forms: what a form needs from a kind its users should not read (a customer's billing
+  profile, the custom field definitions an admin keeps) is a narrow GraphQL type of only the
+  fields the form uses, checked against the form's own resource, never an unchecked route.
+  `shipmentCustomerBillingRules` needs shipment read and carries the BOL requirement and
+  credit standing; `customFieldFormFields(resourceType)` needs read on that resource type.
 
 The driver portal and the `My…` self-service reads never relied on the database here:
 they read the worker linked to the caller's user and the assignments naming that worker

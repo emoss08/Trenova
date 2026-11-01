@@ -1,0 +1,13 @@
+mutation CreateFactoringCompany($input: FactoringCompanyInput!) {
+  createFactoringCompany(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateFactoringCompany($input: UpdateFactoringCompanyInput!) {
+  updateFactoringCompany(input: $input) {
+    id
+    version
+  }
+}

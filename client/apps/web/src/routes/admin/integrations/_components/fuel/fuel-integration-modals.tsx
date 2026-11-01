@@ -1,8 +1,9 @@
-import { Dialog, DialogContent } from "@trenova/shared/components/ui/dialog";
+import { Dialog } from "@trenova/shared/components/ui/dialog";
 import type { TableSheetProps } from "@trenova/shared/types/data-table";
 import { FuelFeedForm, type FuelFeedVendor } from "./fuel-feed-form";
 import { translateRich } from "@trenova/shared/i18n/rich";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { IntegrationDialogContent } from "../shared/integration-dialog-content";
 
 /**
  * The two fleet networks gate production API access behind their own partner
@@ -90,9 +91,9 @@ function FuelFeedModal({
 }: TableSheetProps & { vendor: FuelFeedVendor }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <IntegrationDialogContent className="max-h-[85vh] overflow-y-auto">
         <FuelFeedForm vendor={vendor} open={open} onClose={() => onOpenChange(false)} />
-      </DialogContent>
+      </IntegrationDialogContent>
     </Dialog>
   );
 }

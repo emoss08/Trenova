@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -46,16 +45,6 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	moves := rg.Group("/shipment-moves")
 	moves.POST(
-		"/bulk-update-status/",
-		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUpdate),
-		h.bulkUpdateStatus,
-	)
-	moves.POST(
-		"/:moveID/update-status/",
-		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUpdate),
-		h.updateStatus,
-	)
-	moves.POST(
 		"/:moveID/split/",
 		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUpdate),
 		h.splitMove,
@@ -65,15 +54,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUpdate),
 		h.recordStopActual,
 	)
-}
-
-type updateStatusRequest struct {
-	Status string `json:"status"`
-}
-
-type bulkUpdateStatusRequest struct {
-	MoveIDs []pulid.ID `json:"moveIds"`
-	Status  string     `json:"status"`
 }
 
 type recordStopActualRequest struct {
@@ -87,87 +67,6 @@ type splitMoveRequest struct {
 	NewDeliveryTimes      shipmentmoveports.SplitStopTimes `json:"newDeliveryTimes"`
 	Pieces                *int64                           `json:"pieces,omitempty"`
 	Weight                *int64                           `json:"weight,omitempty"`
-}
-
-// @Summary Update a shipment move status
-// @ID updateShipmentMoveStatus
-// @Tags Shipment Moves
-// @Accept json
-// @Produce json
-// @Param moveID path string true "Shipment move ID"
-// @Param request body updateStatusRequest true "Status update request"
-// @Success 200 {object} shipment.ShipmentMove
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /shipment-moves/{moveID}/update-status/ [post]
-func (h *Handler) updateStatus(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	moveID, err := pulid.MustParse(c.Param("moveID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	body := new(updateStatusRequest)
-	if err = c.ShouldBindJSON(body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entity, err := h.service.UpdateStatus(
-		c.Request.Context(),
-		&shipmentmoveports.UpdateMoveStatusRequest{
-			TenantInfo: pagination.FromAuth(authCtx),
-			MoveID:     moveID,
-			Status:     shipmentvocab.MoveStatus(body.Status),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entity)
-}
-
-// @Summary Bulk update shipment move statuses
-// @ID bulkUpdateShipmentMoveStatus
-// @Tags Shipment Moves
-// @Accept json
-// @Produce json
-// @Param request body bulkUpdateStatusRequest true "Bulk status update request"
-// @Success 200 {array} shipment.ShipmentMove
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /shipment-moves/bulk-update-status/ [post]
-func (h *Handler) bulkUpdateStatus(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	body := new(bulkUpdateStatusRequest)
-	if err := c.ShouldBindJSON(body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	entities, err := h.service.BulkUpdateStatus(
-		c.Request.Context(),
-		&shipmentmoveports.BulkUpdateMoveStatusRequest{
-			TenantInfo: pagination.FromAuth(authCtx),
-			MoveIDs:    body.MoveIDs,
-			Status:     shipmentvocab.MoveStatus(body.Status),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, entities)
 }
 
 // @Summary Record a stop actual arrival or departure on a shipment move

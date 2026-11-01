@@ -7,6 +7,7 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { InboundMessageFilter, TriageView } from "@/lib/graphql/inbox";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+import { documentType } from "@/lib/queries/document-type";
 import { inbox } from "@/lib/queries/inbox";
 import { inboxMessagesQuery } from "@/lib/queries/inbox";
 import type { RoutePrefetch, RoutePrefetchEntry } from "@/lib/route-prefetch";
@@ -408,7 +409,7 @@ function TriageWorkspace({
           assignees: queryClient.getQueryData(inbox.assignees().queryKey) ?? [],
           documentTypes:
             queryClient.getQueryData<GenericLimitOffsetResponse<SelectOption>>(
-              inbox.documentTypes().queryKey,
+              documentType.options().queryKey,
             )?.results ?? [],
           time: { now: Math.floor(Date.now() / 1000), timeZone, format: USER_FORMATTERS },
           open: (target) => openMessage(target),
