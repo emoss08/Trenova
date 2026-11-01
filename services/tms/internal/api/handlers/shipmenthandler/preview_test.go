@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -82,7 +82,7 @@ func TestShipmentHandler_PreviewCustomerTracking_ReturnsThePublicView(t *testing
 	tracking := &trackingPreviewStub{view: &customertrackingports.PublicTrackingView{
 		CompanyName:       "Trenova Logistics",
 		ShipmentProNumber: "S2610-0398",
-		Fields:            []customertracking.Field{customertracking.FieldStatus},
+		Fields:            []trackingprofile.Field{trackingprofile.FieldStatus},
 		Status:            customertrackingports.PublicStatusInTransit,
 		Stops: []customertrackingports.PublicStop{
 			{Sequence: 1, City: "Omaha"},

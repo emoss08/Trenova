@@ -103,3 +103,36 @@ describe("CustomerTableRowFields fragment", () => {
     expect(missing).toEqual([]);
   });
 });
+
+const TRACKING_FORM = join(import.meta.dirname, "..", "customer-tracking-settings.tsx");
+const TRACKING_FRAGMENT = join(FRAGMENT, "..", "customer-tracking-profile.graphql");
+
+function selectedTrackingFields(): Set<string> {
+  const source = readFileSync(TRACKING_FRAGMENT, "utf8");
+  const start = source.indexOf("fragment CustomerTrackingProfileFields");
+  expect(start).toBeGreaterThanOrEqual(0);
+
+  const block = source.slice(start, source.indexOf("\n}", start));
+  return new Set([...block.matchAll(/^ {2}(\w+)/gm)].map((match) => match[1]));
+}
+
+function boundTrackingFields(): string[] {
+  const source = readFileSync(TRACKING_FORM, "utf8");
+  return [...new Set([...source.matchAll(/"trackingProfile\.(\w+)"/g)].map((m) => m[1]))].sort();
+}
+
+// The tracking tab is part of the customer form, seeded from the same row, so a
+// setting the row does not select would be saved back as its default.
+describe("CustomerTrackingProfileFields fragment", () => {
+  it("is selected by the customer row", () => {
+    expect(selectedCustomerRowFields()).toContain("trackingProfile");
+  });
+
+  it("selects every field the tracking tab binds", () => {
+    const selected = selectedTrackingFields();
+    const bound = boundTrackingFields();
+
+    expect(bound.length).toBeGreaterThan(0);
+    expect(bound.filter((field) => !selected.has(field))).toEqual([]);
+  });
+});

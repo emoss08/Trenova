@@ -37,6 +37,7 @@ func SharedOptions() fx.Option {
 			carrierintelrepository.NewVerificationRepository,
 			carrierintelrepository.NewSubjectRepository,
 			customerrepository.New,
+			customerrepository.NewTrackingProfileReader,
 			factoringcompanyrepository.New,
 			factoringcompanyservice.NewValidator,
 			factoringcompanyservice.New,

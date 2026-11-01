@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
+import { customerTrackingProfileSchema } from "./customer-tracking";
 import {
   decimalStringSchema,
   nullableIntegerSchema,
@@ -255,6 +256,7 @@ export const customerSchema = z
     statusUpdateRecipients: nullableStringSchema,
     billingProfile: customerBillingProfileSchema.optional(),
     emailProfile: customerEmailProfileSchema.optional(),
+    trackingProfile: customerTrackingProfileSchema.optional(),
     ediPartner: customerEdiPartnerSchema.nullish(),
   })
   .refine(

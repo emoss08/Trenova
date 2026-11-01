@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile/trackingprofiledb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -74,6 +76,7 @@ var customersTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "BillingProfile", Alias: "bp", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Billing Profile`, JSON: `billingProfile`, NoReport: true},
 		{Name: "EmailProfile", Alias: "ep", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Email Profile`, JSON: `emailProfile`, NoReport: true},
+		{Name: "TrackingProfile", Alias: "tp", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Tracking Profile`, JSON: `trackingProfile`, NoReport: true},
 		{Name: "State", Alias: "s", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `State`, JSON: `state`, NoReport: true},
 	},
 	PK:           []int32{0, 1, 2},
@@ -231,9 +234,14 @@ func (t *CustomersTable) EmailProfile() *CustomerEmailProfilesTable {
 	return keel.Path(t.Ref, 1, BuildCustomerEmailProfiles)
 }
 
+// TrackingProfile is the one relation.
+func (t *CustomersTable) TrackingProfile() *trackingprofiledb.ProfilesTable {
+	return keel.Path(t.Ref, 2, trackingprofiledb.BuildProfiles)
+}
+
 // State is the belongs relation.
 func (t *CustomersTable) State() *usstatedb.UsStatesTable {
-	return keel.Path(t.Ref, 2, usstatedb.BuildUsStates)
+	return keel.Path(t.Ref, 3, usstatedb.BuildUsStates)
 }
 
 // Get returns the customers row with the given key, or keel.ErrNotFound.
@@ -439,6 +447,8 @@ func attachCustomer(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.EmailProfile = (*customer.CustomerEmailProfile)(child)
 	case 2:
+		r.TrackingProfile = (*trackingprofile.Profile)(child)
+	case 3:
 		r.State = (*usstate.UsState)(child)
 	}
 }
@@ -1487,7 +1497,8 @@ func valueCustomerEmailProfile(p unsafe.Pointer, c int32) any {
 func init() {
 	customersTable.Relations[0].Target = CustomerBillingProfilesSchema()
 	customersTable.Relations[1].Target = CustomerEmailProfilesSchema()
-	customersTable.Relations[2].Target = usstatedb.UsStatesSchema()
+	customersTable.Relations[2].Target = trackingprofiledb.ProfilesSchema()
+	customersTable.Relations[3].Target = usstatedb.UsStatesSchema()
 	customerBillingProfilesTable.Relations[0].Target = tenantdb.UsersSchema()
 	customerBillingProfilesTable.Relations[1].Target = glaccountdb.GLAccountsSchema()
 	customerBillingProfilesTable.Relations[2].Target = glaccountdb.GLAccountsSchema()

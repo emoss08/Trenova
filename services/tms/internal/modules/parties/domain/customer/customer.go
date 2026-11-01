@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -62,11 +63,12 @@ type Customer struct {
 	CreatedAt               int64                  `json:"createdAt"               keel:"created_at,autocreate"`
 	UpdatedAt               int64                  `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
-	BusinessUnit   *tenant.BusinessUnit    `json:"businessUnit,omitempty"`
-	Organization   *tenant.Organization    `json:"organization,omitempty"`
-	BillingProfile *CustomerBillingProfile `json:"billingProfile,omitempty" keel:"one:customer_id,noreport"`
-	EmailProfile   *CustomerEmailProfile   `json:"emailProfile,omitempty"   keel:"one:customer_id,noreport"`
-	State          *usstate.UsState        `json:"state,omitempty"          keel:"belongs:state_id,noreport"`
+	BusinessUnit    *tenant.BusinessUnit     `json:"businessUnit,omitempty"`
+	Organization    *tenant.Organization     `json:"organization,omitempty"`
+	BillingProfile  *CustomerBillingProfile  `json:"billingProfile,omitempty" keel:"one:customer_id,noreport"`
+	EmailProfile    *CustomerEmailProfile    `json:"emailProfile,omitempty"    keel:"one:customer_id,noreport"`
+	TrackingProfile *trackingprofile.Profile `json:"trackingProfile,omitempty" keel:"one:customer_id,noreport"`
+	State           *usstate.UsState         `json:"state,omitempty"           keel:"belongs:state_id,noreport"`
 }
 
 func (c *Customer) BeforeUpdate(_ context.Context) error {
@@ -196,6 +198,10 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 			multiErr.WithPrefix("emailProfile"),
 			c.BillingProfile == nil || c.BillingProfile.EmailInvoiceEnabled,
 		)
+	}
+
+	if c.TrackingProfile != nil {
+		c.TrackingProfile.Validate(multiErr.WithPrefix("trackingProfile"))
 	}
 }
 

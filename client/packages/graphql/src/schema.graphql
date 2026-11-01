@@ -11287,6 +11287,10 @@ type Customer {
   notice profile's own recipients.
   """
   statusUpdateRecipients: String
+  """
+  What the customer's tracking links show and which status emails it is sent; the defaults until first saved.
+  """
+  trackingProfile: CustomerTrackingProfile
   updatedAt: Timestamp!
   version: Int!
 }
@@ -11566,6 +11570,8 @@ input CustomerInput {
   status: EntityStatus!
   statusUpdatePreference: CustomerStatusUpdatePreference!
   statusUpdateRecipients: String
+  """Omit to leave the tracking settings as they are."""
+  trackingProfile: CustomerTrackingProfileInput
   version: Int
 }
 
@@ -11847,8 +11853,8 @@ enum CustomerTrackingLinkPurpose {
 
 """
 What a customer sees through a shipment tracking link, and which status emails
-it is sent. A customer that has never had these changed reads the defaults,
-with no id.
+it is sent. Part of the customer: it is read and saved with it. A customer that
+has never had these changed reads the defaults, with no id.
 """
 type CustomerTrackingProfile {
   customerId: ID!
@@ -11869,12 +11875,31 @@ type CustomerTrackingProfile {
   notifyPickedUp: Boolean!
   notifyPodReady: Boolean!
   """
-  Who the status emails go to. Empty falls back to the customer's status update
-  recipients, then to the To line of its email profile.
+  Who the status emails go to, comma separated. Empty falls back to the
+  customer's status update recipients, then to the To line of its email profile.
+  """
+  recipients: String!
+  updatedAt: Timestamp!
+  visibleFields: [CustomerTrackingField!]!
+}
+
+input CustomerTrackingProfileInput {
+  """Whether each status email carries its own tracking link."""
+  includeLink: Boolean!
+  """
+  Whether links can be shared for this customer's shipments. Turning it off stops every existing link.
+  """
+  linkEnabled: Boolean!
+  """How long a new link lasts, from 1 to 180 days."""
+  linkTtlDays: Int!
+  notifyDelayed: Boolean!
+  notifyDelivered: Boolean!
+  notifyPickedUp: Boolean!
+  notifyPodReady: Boolean!
+  """
+  Comma separated. Empty falls back to the status update recipients, then the email profile's To line.
   """
   recipients: String
-  updatedAt: Timestamp!
-  version: Int!
   visibleFields: [CustomerTrackingField!]!
 }
 
@@ -23584,10 +23609,6 @@ type Mutation {
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
   updateCostingControl(input: CostingControlInput!): CostingControl!
   updateCustomer(id: ID!, input: CustomerInput!): Customer!
-  """
-  Change what a customer's tracking links show and which status emails it is sent.
-  """
-  updateCustomerTrackingProfile(input: UpdateCustomerTrackingProfileInput!): CustomerTrackingProfile!
   """Updates the org's Dash feature toggles (back office)."""
   updateDashControl(input: UpdateDashControlInput!): DashControl!
   updateDetentionPolicy(id: ID!, input: DetentionPolicyInput!): DetentionPolicy!
@@ -26114,8 +26135,6 @@ type Query {
   customerStatusNotifications(shipmentId: ID!): [CustomerStatusNotification!]!
   """Every tracking link shared for a shipment, newest first, live or not."""
   customerTrackingLinks(shipmentId: ID!): [CustomerTrackingLink!]!
-  """A customer's tracking link and status email settings, or the defaults."""
-  customerTrackingProfile(customerId: ID!): CustomerTrackingProfile!
   customers(input: DataTableConnectionInput!): CustomerConnection!
   """Dash feature toggles for this organization (back office)."""
   dashControl: DashControl!
@@ -34268,23 +34287,6 @@ input UpdateCarrierSettlementControlInput {
   periodEndDayOfWeek: Int!
   varianceToleranceMinor: Int!
   version: Int!
-}
-
-input UpdateCustomerTrackingProfileInput {
-  customerId: ID!
-  """
-  The version the settings were read at. A newer version refuses the change.
-  """
-  expectedVersion: Int
-  includeLink: Boolean!
-  linkEnabled: Boolean!
-  linkTtlDays: Int!
-  notifyDelayed: Boolean!
-  notifyDelivered: Boolean!
-  notifyPickedUp: Boolean!
-  notifyPodReady: Boolean!
-  recipients: String
-  visibleFields: [CustomerTrackingField!]!
 }
 
 input UpdateDOTRandomDrawEntryInput {

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -20,53 +21,13 @@ import (
 
 func (r *CustomerTrackingProfileResolver) ID(
 	_ context.Context,
-	obj *customertracking.Profile,
+	obj *trackingprofile.Profile,
 ) (*string, error) {
 	if obj == nil || obj.ID.IsNil() {
 		return nil, nil //nolint:nilnil // settings never saved have no id, and null says so
 	}
 	id := obj.ID.String()
 	return &id, nil
-}
-
-func (r *MutationResolver) UpdateCustomerTrackingProfile(
-	ctx context.Context,
-	input gqlmodel.UpdateCustomerTrackingProfileInput,
-) (*customertracking.Profile, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomer, permission.OpUpdate)
-	if err != nil {
-		return nil, err
-	}
-	customerID, err := parseID("customerId", input.CustomerID)
-	if err != nil {
-		return nil, err
-	}
-	var expected *int64
-	if input.ExpectedVersion != nil {
-		version := int64(*input.ExpectedVersion)
-		expected = &version
-	}
-
-	return r.CustomerTrackingService.UpdateProfile(
-		ctx,
-		&customertrackingports.UpdateProfileRequest{
-			TenantInfo: resolvercore.TenantInfo(authCtx),
-			Profile: &customertracking.Profile{
-				CustomerID:      customerID,
-				LinkEnabled:     input.LinkEnabled,
-				VisibleFields:   input.VisibleFields,
-				LinkTTLDays:     clampTTL(input.LinkTTLDays),
-				NotifyPickedUp:  input.NotifyPickedUp,
-				NotifyDelayed:   input.NotifyDelayed,
-				NotifyDelivered: input.NotifyDelivered,
-				NotifyPodReady:  input.NotifyPodReady,
-				IncludeLink:     input.IncludeLink,
-				Recipients:      gqlscalar.StringValue(input.Recipients),
-			},
-			ExpectedVersion: expected,
-			UpdatedByID:     authCtx.UserID,
-		},
-	)
 }
 
 func (r *MutationResolver) IssueCustomerTrackingLink(
@@ -128,22 +89,6 @@ func (r *MutationResolver) RevokeCustomerTrackingLink(
 	})
 }
 
-func (r *QueryResolver) CustomerTrackingProfile(
-	ctx context.Context,
-	customerID string,
-) (*customertracking.Profile, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceCustomer, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
-	id, err := parseID("customerId", customerID)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.CustomerTrackingService.GetProfile(ctx, resolvercore.TenantInfo(authCtx), id)
-}
-
 func (r *QueryResolver) CustomerTrackingLinks(
 	ctx context.Context,
 	shipmentID string,
@@ -182,17 +127,4 @@ func parseID(field, value string) (pulid.ID, error) {
 		return pulid.Nil, errortypes.NewValidationError(field, errortypes.ErrInvalid, "Invalid ID")
 	}
 	return id, nil
-}
-
-// clampTTL keeps an out-of-range number from wrapping when narrowed; the
-// domain's own validation then reports it with the right message.
-func clampTTL(days int) int16 {
-	switch {
-	case days < 0:
-		return 0
-	case days > int(customertracking.MaxLinkTTLDays)+1:
-		return customertracking.MaxLinkTTLDays + 1
-	default:
-		return int16(days)
-	}
 }

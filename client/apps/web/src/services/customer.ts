@@ -7,8 +7,10 @@ import {
   type CustomerEmailProfileInput,
   type CustomerInput,
   type CustomerPatchInput,
+  type CustomerTrackingProfileInput,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { CustomerTrackingProfile } from "@trenova/shared/types/customer-tracking";
 import type {
   BulkUpdateCustomerStatusRequest,
   Customer,
@@ -97,6 +99,21 @@ function toEmailProfileInput(profile: CustomerEmailProfile): CustomerEmailProfil
   };
 }
 
+function toTrackingProfileInput(profile: CustomerTrackingProfile): CustomerTrackingProfileInput {
+  const recipients = profile.recipients.trim();
+  return {
+    linkEnabled: profile.linkEnabled,
+    visibleFields: profile.visibleFields,
+    linkTtlDays: profile.linkTtlDays,
+    notifyPickedUp: profile.notifyPickedUp,
+    notifyDelayed: profile.notifyDelayed,
+    notifyDelivered: profile.notifyDelivered,
+    notifyPodReady: profile.notifyPodReady,
+    includeLink: profile.includeLink,
+    recipients: recipients === "" ? null : recipients,
+  };
+}
+
 export function toCustomerInput(data: Customer): CustomerInput {
   return {
     status: data.status,
@@ -123,6 +140,7 @@ export function toCustomerInput(data: Customer): CustomerInput {
     statusUpdateRecipients: data.statusUpdateRecipients ?? null,
     billingProfile: data.billingProfile ? toBillingProfileInput(data.billingProfile) : null,
     emailProfile: data.emailProfile ? toEmailProfileInput(data.emailProfile) : null,
+    trackingProfile: data.trackingProfile ? toTrackingProfileInput(data.trackingProfile) : null,
     version: data.version,
   };
 }

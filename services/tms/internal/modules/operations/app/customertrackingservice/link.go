@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,7 +39,7 @@ type mintedLink struct {
 func (s *Service) mintLink(
 	ctx context.Context,
 	sh *shipment.Shipment,
-	profile *customertracking.Profile,
+	profile *trackingprofile.Profile,
 	purpose customertracking.LinkPurpose,
 	recipient string,
 	createdByID pulid.ID,
@@ -79,7 +80,7 @@ func (s *Service) mintLink(
 func (s *Service) shareable(
 	ctx context.Context,
 	req *customertrackingports.IssueLinkRequest,
-) (*shipment.Shipment, *customertracking.Profile, error) {
+) (*shipment.Shipment, *trackingprofile.Profile, error) {
 	if multiErr := validateIssueRequest(req); multiErr != nil {
 		return nil, nil, multiErr
 	}
@@ -103,7 +104,7 @@ func (s *Service) shareable(
 			"This shipment is canceled, so there is nothing to track",
 		)
 	}
-	profile, err := s.profileOrDefault(ctx, req.TenantInfo, sh.CustomerID)
+	profile, err := s.profiles.GetByCustomer(ctx, req.TenantInfo, sh.CustomerID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -365,7 +366,7 @@ func validateIssueRequest(req *customertrackingports.IssueLinkRequest) *errortyp
 	req.RecipientEmail = strings.TrimSpace(req.RecipientEmail)
 	if req.RecipientEmail != "" {
 		if err := validation.Validate(req.RecipientEmail,
-			validation.RuneLength(0, customertracking.MaxRecipientEmailLength),
+			validation.RuneLength(0, trackingprofile.MaxRecipientEmailLength),
 			is.EmailFormat,
 		); err != nil {
 			multiErr.Add(

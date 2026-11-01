@@ -5933,7 +5933,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.TrackingLink
   CustomerTrackingField:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.Field
+      - github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile.Field
   CustomerTrackingLinkPurpose:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.LinkPurpose
@@ -5948,7 +5948,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.SkipReason
   CustomerTrackingProfile:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/customertracking.Profile
+      - github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile.Profile
     fields:
       id:
         resolver: true

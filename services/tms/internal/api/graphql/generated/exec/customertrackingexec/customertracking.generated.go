@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -265,7 +266,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return gqlexec.Resolver[resolverCustomerTrackingProfile](ec, "CustomerTrackingProfile").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -275,7 +276,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.CustomerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -285,7 +286,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.LinkEnabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -295,17 +296,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.VisibleFields, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerTrackingField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐFieldᚄ),
+				Marshal: gqlexec.Marshal(marshalNCustomerTrackingField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋtrackingprofileᚐFieldᚄ),
 			},
 			{
 				Name:     "linkTtlDays",
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.LinkTTLDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int16),
@@ -315,7 +316,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.NotifyPickedUp, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -325,7 +326,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.NotifyDelayed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -335,7 +336,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.NotifyDelivered, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -345,7 +346,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.NotifyPodReady, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -355,45 +356,36 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.IncludeLink, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
 				Name:     "recipients",
+				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.Recipients, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOString2string),
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
 				Name:     "notificationsEnabledAt",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.NotificationsEnabledAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
-			},
-			{
-				Name:     "version",
-				NonNull:  true,
-				ChildErr: errNoChild6,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
-					return obj.Version, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customertracking.Profile)
+					obj := o.(*trackingprofile.Profile)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -443,19 +435,6 @@ var Shard = &gqlexec.Shard{
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
-				Name:       "updateCustomerTrackingProfile",
-				NonNull:    true,
-				IsResolver: true,
-				HasChild:   true,
-				ChildType:  "CustomerTrackingProfile",
-				Args:       field_Mutation_updateCustomerTrackingProfile_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCustomerTrackingProfile(ctx, fc.Args["input"].(gqlmodel.UpdateCustomerTrackingProfileInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNCustomerTrackingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐProfile),
-			},
-			{
 				Name:       "issueCustomerTrackingLink",
 				NonNull:    true,
 				IsResolver: true,
@@ -482,20 +461,6 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
-			{
-				Name:       "customerTrackingProfile",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "CustomerTrackingProfile",
-				Args:       field_Query_customerTrackingProfile_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomerTrackingProfile(ctx, fc.Args["customerId"].(string))
-				},
-				Marshal: gqlexec.Marshal(marshalNCustomerTrackingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐProfile),
-			},
 			{
 				Name:       "customerTrackingLinks",
 				NonNull:    true,
@@ -528,7 +493,6 @@ var Shard = &gqlexec.Shard{
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "IssueCustomerTrackingLinkInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputIssueCustomerTrackingLinkInput)},
-		{Name: "UpdateCustomerTrackingProfileInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateCustomerTrackingProfileInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "CustomerTrackingProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerTrackingProfile); return ok }},
@@ -538,17 +502,15 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverCustomerTrackingProfile interface {
-	ID(ctx context.Context, obj *customertracking.Profile) (*string, error)
+	ID(ctx context.Context, obj *trackingprofile.Profile) (*string, error)
 }
 
 type resolverMutation interface {
-	UpdateCustomerTrackingProfile(ctx context.Context, input gqlmodel.UpdateCustomerTrackingProfileInput) (*customertracking.Profile, error)
 	IssueCustomerTrackingLink(ctx context.Context, input gqlmodel.IssueCustomerTrackingLinkInput) (*gqlmodel.IssueCustomerTrackingLinkPayload, error)
 	RevokeCustomerTrackingLink(ctx context.Context, shipmentID string, linkID *string) (int, error)
 }
 
 type resolverQuery interface {
-	CustomerTrackingProfile(ctx context.Context, customerID string) (*customertracking.Profile, error)
 	CustomerTrackingLinks(ctx context.Context, shipmentID string) ([]*customertracking.Link, error)
 	CustomerStatusNotifications(ctx context.Context, shipmentID string) ([]*customertracking.Notification, error)
 }
@@ -565,19 +527,6 @@ var (
 	errNoChild8 = errors.New("field of type Boolean does not have child fields")
 	errNoChild9 = errors.New("field of type CustomerTrackingField does not have child fields")
 )
-
-func field_Mutation_updateCustomerTrackingProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.UpdateCustomerTrackingProfileInput, error) {
-			return unmarshalNUpdateCustomerTrackingProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateCustomerTrackingProfileInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
 
 func field_Mutation_issueCustomerTrackingLink_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -610,19 +559,6 @@ func field_Mutation_revokeCustomerTrackingLink_args(ctx context.Context, ec *gql
 		return nil, err
 	}
 	args["linkId"] = arg1
-	return args, nil
-}
-
-func field_Query_customerTrackingProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "customerId",
-		func(ctx context.Context, v any) (string, error) {
-			return unmarshalNID2string(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["customerId"] = arg0
 	return args, nil
 }
 
@@ -689,128 +625,8 @@ func unmarshalInputIssueCustomerTrackingLinkInput(ctx context.Context, ec *gqlex
 	return it, nil
 }
 
-func unmarshalInputUpdateCustomerTrackingProfileInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateCustomerTrackingProfileInput, error) {
-	var it gqlmodel.UpdateCustomerTrackingProfileInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"customerId", "linkEnabled", "visibleFields", "linkTtlDays", "notifyPickedUp", "notifyDelayed", "notifyDelivered", "notifyPodReady", "includeLink", "recipients", "expectedVersion"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "customerId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
-			data, err := unmarshalNID2string(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.CustomerID = data
-		case "linkEnabled":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("linkEnabled"))
-			data, err := unmarshalNBoolean2bool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.LinkEnabled = data
-		case "visibleFields":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visibleFields"))
-			data, err := unmarshalNCustomerTrackingField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐFieldᚄ(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.VisibleFields = data
-		case "linkTtlDays":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("linkTtlDays"))
-			data, err := unmarshalNInt2int(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.LinkTTLDays = data
-		case "notifyPickedUp":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notifyPickedUp"))
-			data, err := unmarshalNBoolean2bool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.NotifyPickedUp = data
-		case "notifyDelayed":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notifyDelayed"))
-			data, err := unmarshalNBoolean2bool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.NotifyDelayed = data
-		case "notifyDelivered":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notifyDelivered"))
-			data, err := unmarshalNBoolean2bool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.NotifyDelivered = data
-		case "notifyPodReady":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notifyPodReady"))
-			data, err := unmarshalNBoolean2bool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.NotifyPodReady = data
-		case "includeLink":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeLink"))
-			data, err := unmarshalNBoolean2bool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.IncludeLink = data
-		case "recipients":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipients"))
-			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Recipients = data
-		case "expectedVersion":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expectedVersion"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.ExpectedVersion = data
-		}
-	}
-	return it, nil
-}
-
-func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
-	res, err := graphql.UnmarshalBoolean(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNCustomerTrackingField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐField(ctx context.Context, ec *gqlexec.Exec, v any) (customertracking.Field, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := customertracking.Field(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNCustomerTrackingField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐFieldᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]customertracking.Field, error) {
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCustomerTrackingField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐField)
-}
-
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
-	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -819,24 +635,11 @@ func unmarshalNIssueCustomerTrackingLinkInput2githubᚗcomᚋemoss08ᚋtrenova�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNUpdateCustomerTrackingProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateCustomerTrackingProfileInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateCustomerTrackingProfileInput, error) {
-	res, err := unmarshalInputUpdateCustomerTrackingProfileInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalID(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -888,7 +691,7 @@ func marshalNCustomerStatusNotificationStatus2githubᚗcomᚋemoss08ᚋtrenova�
 	return res
 }
 
-func marshalNCustomerTrackingField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐField(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customertracking.Field) graphql.Marshaler {
+func marshalNCustomerTrackingField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋtrackingprofileᚐField(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v trackingprofile.Field) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -896,9 +699,9 @@ func marshalNCustomerTrackingField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNCustomerTrackingField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐFieldᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []customertracking.Field) graphql.Marshaler {
-	return gqlexec.List[customertracking.Field]{
-		Elem:        marshalNCustomerTrackingField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐField,
+func marshalNCustomerTrackingField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋtrackingprofileᚐFieldᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []trackingprofile.Field) graphql.Marshaler {
+	return gqlexec.List[trackingprofile.Field]{
+		Elem:        marshalNCustomerTrackingField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋtrackingprofileᚐField,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -926,14 +729,6 @@ func marshalNCustomerTrackingLinkPurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 		gqlexec.NullViolation(ctx)
 	}
 	return res
-}
-
-func marshalNCustomerTrackingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customertracking.Profile) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "CustomerTrackingProfile", v)
 }
 
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,7 +26,7 @@ type resolvedLink struct {
 	link     *customertracking.Link
 	tenant   pagination.TenantInfo
 	shipment *shipment.Shipment
-	profile  *customertracking.Profile
+	profile  *trackingprofile.Profile
 }
 
 func invalidLinkError() error {
@@ -65,7 +66,7 @@ func (s *Service) resolveToken(ctx context.Context, token string) (*resolvedLink
 	if sh.CustomerID != link.CustomerID {
 		return nil, invalidLinkError()
 	}
-	profile, err := s.profileOrDefault(ctx, tenant, sh.CustomerID)
+	profile, err := s.profiles.GetByCustomer(ctx, tenant, sh.CustomerID)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func (s *Service) PreviewForShipment(
 	if err != nil {
 		return nil, err
 	}
-	profile, err := s.profileOrDefault(ctx, tenantInfo, sh.CustomerID)
+	profile, err := s.profiles.GetByCustomer(ctx, tenantInfo, sh.CustomerID)
 	if err != nil {
 		return nil, err
 	}
@@ -137,17 +138,17 @@ func (s *Service) buildView(
 		Closed:            isClosed(sh),
 	}
 	if view.Fields == nil {
-		view.Fields = []customertracking.Field{}
+		view.Fields = []trackingprofile.Field{}
 	}
 	view.Stops = publicStops(route(sh), etas, profile)
-	if profile.Shows(customertracking.FieldStatus) {
+	if profile.Shows(trackingprofile.FieldStatus) {
 		view.Status = publicStatus(sh, etas)
 	}
-	if profile.Shows(customertracking.FieldReferences) {
+	if profile.Shows(trackingprofile.FieldReferences) {
 		view.BOL = sh.BOL
 		view.CustomerReference = sh.ExternalReference
 	}
-	if profile.Shows(customertracking.FieldFreight) {
+	if profile.Shows(trackingprofile.FieldFreight) {
 		view.Pieces, view.Weight = sh.Pieces, sh.Weight
 	}
 	if err = s.fillOptionalParts(ctx, resolved, view); err != nil {
@@ -162,41 +163,41 @@ func (s *Service) fillOptionalParts(
 	view *customertrackingports.PublicTrackingView,
 ) error {
 	tenant, sh, profile := resolved.tenant, resolved.shipment, resolved.profile
-	if profile.Shows(customertracking.FieldCarrier) ||
-		profile.Shows(customertracking.FieldEquipment) {
+	if profile.Shows(trackingprofile.FieldCarrier) ||
+		profile.Shows(trackingprofile.FieldEquipment) {
 		descriptors, err := s.facts.Descriptors(ctx, tenant, sh.ID)
 		if err != nil {
 			return err
 		}
-		if profile.Shows(customertracking.FieldCarrier) {
+		if profile.Shows(trackingprofile.FieldCarrier) {
 			view.CarrierName = descriptors.CarrierName
 		}
-		if profile.Shows(customertracking.FieldEquipment) {
+		if profile.Shows(trackingprofile.FieldEquipment) {
 			view.Equipment = descriptors.Equipment
 		}
 	}
-	if profile.Shows(customertracking.FieldLastLocation) && !view.Closed {
+	if profile.Shows(trackingprofile.FieldLastLocation) && !view.Closed {
 		location, err := s.facts.LastReportedLocation(ctx, tenant, sh.ID)
 		if err != nil {
 			return err
 		}
 		view.LastLocation = location
 	}
-	if profile.Shows(customertracking.FieldHolds) {
+	if profile.Shows(trackingprofile.FieldHolds) {
 		holds, err := s.facts.CustomerVisibleHolds(ctx, tenant, sh.ID)
 		if err != nil {
 			return err
 		}
 		view.Holds = holds
 	}
-	if profile.Shows(customertracking.FieldNotes) {
+	if profile.Shows(trackingprofile.FieldNotes) {
 		notes, err := s.facts.CustomerVisibleNotes(ctx, tenant, sh.ID, maxPublicNotes)
 		if err != nil {
 			return err
 		}
 		view.Notes = notes
 	}
-	if profile.Shows(customertracking.FieldProofOfDelivery) {
+	if profile.Shows(trackingprofile.FieldProofOfDelivery) {
 		pods, err := s.facts.LatestPods(ctx, tenant, []pulid.ID{sh.ID})
 		if err != nil {
 			return err
@@ -216,10 +217,10 @@ func (s *Service) etasByStop(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
-	profile *customertracking.Profile,
+	profile *trackingprofile.Profile,
 ) (map[pulid.ID]*stopeta.StopETA, error) {
 	result := make(map[pulid.ID]*stopeta.StopETA)
-	if !profile.Shows(customertracking.FieldEta) && !profile.Shows(customertracking.FieldStatus) {
+	if !profile.Shows(trackingprofile.FieldEta) && !profile.Shows(trackingprofile.FieldStatus) {
 		return result, nil
 	}
 	rows, err := s.stopEtas.ListByShipmentIDs(ctx, tenant, []pulid.ID{shipmentID})
@@ -235,7 +236,7 @@ func (s *Service) etasByStop(
 func publicStops(
 	stops []routeStop,
 	etas map[pulid.ID]*stopeta.StopETA,
-	profile *customertracking.Profile,
+	profile *trackingprofile.Profile,
 ) []customertrackingports.PublicStop {
 	result := make([]customertrackingports.PublicStop, 0, len(stops))
 	for i, rs := range stops {
@@ -247,22 +248,22 @@ func publicStops(
 			City:      city,
 			StateCode: state,
 		}
-		if profile.Shows(customertracking.FieldLocationNames) {
+		if profile.Shows(trackingprofile.FieldLocationNames) {
 			if stop.Location != nil {
 				row.LocationName = stop.Location.Name
 			}
 			row.AddressLine = stop.AddressLine
 		}
-		if profile.Shows(customertracking.FieldWindows) {
+		if profile.Shows(trackingprofile.FieldWindows) {
 			start := stop.ScheduledWindowStart
 			row.WindowStart = &start
 			row.WindowEnd = stop.ScheduledWindowEnd
 		}
-		if profile.Shows(customertracking.FieldActuals) {
+		if profile.Shows(trackingprofile.FieldActuals) {
 			row.ArrivedAt = stop.ActualArrival
 			row.DepartedAt = stop.ActualDeparture
 		}
-		if profile.Shows(customertracking.FieldEta) && stop.ActualArrival == nil {
+		if profile.Shows(trackingprofile.FieldEta) && stop.ActualArrival == nil {
 			if eta := etas[stop.ID]; eta != nil && !eta.Arrived {
 				row.EstimatedArrival = eta.EstimatedArrival
 				if eta.Verdict != stopeta.VerdictUnknown {
@@ -314,7 +315,7 @@ func (s *Service) DownloadPodByToken(
 	if err != nil {
 		return nil, err
 	}
-	if !resolved.profile.Shows(customertracking.FieldProofOfDelivery) {
+	if !resolved.profile.Shows(trackingprofile.FieldProofOfDelivery) {
 		return nil, invalidLinkError()
 	}
 	if s.documents == nil {

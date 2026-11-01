@@ -82,13 +82,37 @@ function stops(t, shape) {
       return [
         { ...pickup, windowStart: t + 18 * HOUR, windowEnd: t + 20 * HOUR },
         { ...drop, windowStart: t + 24 * HOUR, windowEnd: t + 25 * HOUR },
-        { ...delivery, windowStart: t + 30 * HOUR, windowEnd: t + 31 * HOUR, estimatedArrival: t + 30.2 * HOUR, running: "OnTime" },
+        {
+          ...delivery,
+          windowStart: t + 30 * HOUR,
+          windowEnd: t + 31 * HOUR,
+          estimatedArrival: t + 30.2 * HOUR,
+          running: "OnTime",
+        },
       ];
     case "delivered":
       return [
-        { ...pickup, windowStart: t - 34 * HOUR, windowEnd: t - 32 * HOUR, arrivedAt: t - 34.2 * HOUR, departedAt: t - 33.4 * HOUR },
-        { ...drop, windowStart: t - 28 * HOUR, windowEnd: t - 27 * HOUR, arrivedAt: t - 28.1 * HOUR, departedAt: t - 27.3 * HOUR },
-        { ...delivery, windowStart: t - 22 * HOUR, windowEnd: t - 21 * HOUR, arrivedAt: t - 22.3 * HOUR, departedAt: t - 21.4 * HOUR },
+        {
+          ...pickup,
+          windowStart: t - 34 * HOUR,
+          windowEnd: t - 32 * HOUR,
+          arrivedAt: t - 34.2 * HOUR,
+          departedAt: t - 33.4 * HOUR,
+        },
+        {
+          ...drop,
+          windowStart: t - 28 * HOUR,
+          windowEnd: t - 27 * HOUR,
+          arrivedAt: t - 28.1 * HOUR,
+          departedAt: t - 27.3 * HOUR,
+        },
+        {
+          ...delivery,
+          windowStart: t - 22 * HOUR,
+          windowEnd: t - 21 * HOUR,
+          arrivedAt: t - 22.3 * HOUR,
+          departedAt: t - 21.4 * HOUR,
+        },
       ];
     case "delayed":
       return [
@@ -116,7 +140,10 @@ function publicView(token) {
         stops: stops(t, "transit"),
         lastLocation: { city: "Albert Lea", stateCode: "MN", reportedAt: t - 12 * MIN },
         notes: [
-          { text: "Driver checked in after the Des Moines drop. Running ahead of schedule.", postedAt: t - 3 * HOUR },
+          {
+            text: "Driver checked in after the Des Moines drop. Running ahead of schedule.",
+            postedAt: t - 3 * HOUR,
+          },
           { text: "Reefer set to 34°F per your instructions.", postedAt: t - 9 * HOUR },
         ],
       };
@@ -128,7 +155,10 @@ function publicView(token) {
         lastLocation: { city: "Clear Lake", stateCode: "IA", reportedAt: t - 26 * MIN },
         holds: [{ type: "OperationalHold", label: "Weather on I-35", startedAt: t - 2 * HOUR }],
         notes: [
-          { text: "Snow north of Clear Lake has slowed traffic on I-35. We'll update you as soon as the road clears.", postedAt: t - 40 * MIN },
+          {
+            text: "Snow north of Clear Lake has slowed traffic on I-35. We'll update you as soon as the road clears.",
+            postedAt: t - 40 * MIN,
+          },
           { text: "Driver checked in after the Des Moines drop.", postedAt: t - 2.8 * HOUR },
         ],
       };
@@ -138,7 +168,12 @@ function publicView(token) {
         status: "Delivered",
         closed: true,
         stops: stops(t, "delivered"),
-        notes: [{ text: "Delivered complete, no exceptions noted by the receiver.", postedAt: t - 21 * HOUR }],
+        notes: [
+          {
+            text: "Delivered complete, no exceptions noted by the receiver.",
+            postedAt: t - 21 * HOUR,
+          },
+        ],
       };
     case "pod-ready":
       return {
@@ -146,13 +181,31 @@ function publicView(token) {
         status: "Delivered",
         closed: true,
         stops: stops(t, "delivered"),
-        proofOfDelivery: { documentId: "doc_pod_0398", fileName: "POD_S2610-0398.pdf", filedAt: t - 20 * HOUR },
-        notes: [{ text: "Delivered complete, no exceptions noted by the receiver.", postedAt: t - 21 * HOUR }],
+        proofOfDelivery: {
+          documentId: "doc_pod_0398",
+          fileName: "POD_S2610-0398.pdf",
+          filedAt: t - 20 * HOUR,
+        },
+        notes: [
+          {
+            text: "Delivered complete, no exceptions noted by the receiver.",
+            postedAt: t - 21 * HOUR,
+          },
+        ],
       };
     case "planned":
       return { ...view, status: "Planned", stops: stops(t, "planned"), carrierName: undefined };
     case "canceled":
-      return { ...view, status: "Canceled", closed: true, stops: stops(t, "planned").map((s) => ({ ...s, estimatedArrival: undefined, running: undefined })) };
+      return {
+        ...view,
+        status: "Canceled",
+        closed: true,
+        stops: stops(t, "planned").map((s) => ({
+          ...s,
+          estimatedArrival: undefined,
+          running: undefined,
+        })),
+      };
     case "minimal":
       return {
         companyName: ORG.name,
@@ -161,7 +214,12 @@ function publicView(token) {
         expiresAt: t + 6 * 24 * HOUR,
         closed: false,
         status: "InTransit",
-        stops: stops(t, "transit").map(({ sequence, type, city, stateCode }) => ({ sequence, type, city, stateCode })),
+        stops: stops(t, "transit").map(({ sequence, type, city, stateCode }) => ({
+          sequence,
+          type,
+          city,
+          stateCode,
+        })),
       };
     default:
       return null;
@@ -184,7 +242,13 @@ export const CUSTOMER_TRACKING_ROUTES = [
     /^\/api\/v1\/shipments\/[^/]+\/customer-tracking\/preview\/?$/,
     () => {
       const view = publicView("in-transit");
-      return { ...view, fields: view.fields.filter((f) => !["Equipment", "Freight", "Holds"].includes(f)), equipment: undefined, pieces: undefined, weight: undefined };
+      return {
+        ...view,
+        fields: view.fields.filter((f) => !["Equipment", "Freight", "Holds"].includes(f)),
+        equipment: undefined,
+        pieces: undefined,
+        weight: undefined,
+      };
     },
   ],
   [
@@ -319,7 +383,6 @@ function profile(customerId) {
     includeLink: true,
     recipients: "shipping@cargillprotein.com, ops@cargillprotein.com",
     notificationsEnabledAt: now() - 60 * 24 * HOUR,
-    version: 3,
     updatedAt: now() - 6 * 24 * HOUR,
   };
 }
@@ -328,12 +391,16 @@ const APP_ORIGIN = process.env.MOCK_APP_ORIGIN ?? "http://localhost:5173";
 
 export const CUSTOMER_TRACKING_HANDLERS = {
   CustomerTrackingLinks: (state, v) => ({
-    customerTrackingLinks: [...tabState(state, v.shipmentId).links].sort((a, b) => b.createdAt - a.createdAt),
+    customerTrackingLinks: [...tabState(state, v.shipmentId).links].sort(
+      (a, b) => b.createdAt - a.createdAt,
+    ),
   }),
   CustomerStatusNotifications: (state, v) => ({
     customerStatusNotifications: tabState(state, v.shipmentId).notifications,
   }),
-  CustomerTrackingProfile: (_state, v) => ({ customerTrackingProfile: profile(v.customerId) }),
+  CustomerTrackingProfile: (_state, v) => ({
+    customer: { id: v.customerId, trackingProfile: profile(v.customerId) },
+  }),
   IssueCustomerTrackingLink: (state, v) => {
     const tab = tabState(state, v.input.shipmentId);
     const recipient = v.input.recipientEmail ?? null;

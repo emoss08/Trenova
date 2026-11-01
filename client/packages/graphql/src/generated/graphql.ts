@@ -3251,6 +3251,8 @@ export type CustomerInput = {
   status: EntityStatus;
   statusUpdatePreference: CustomerStatusUpdatePreference;
   statusUpdateRecipients?: string | null | undefined;
+  /** Omit to leave the tracking settings as they are. */
+  trackingProfile?: CustomerTrackingProfileInput | null | undefined;
   version?: number | null | undefined;
 };
 
@@ -3412,6 +3414,22 @@ export type CustomerTrackingLinkPurpose =
   | 'Notification'
   /** Shared by a person. */
   | 'Shared';
+
+export type CustomerTrackingProfileInput = {
+  /** Whether each status email carries its own tracking link. */
+  includeLink: boolean;
+  /** Whether links can be shared for this customer's shipments. Turning it off stops every existing link. */
+  linkEnabled: boolean;
+  /** How long a new link lasts, from 1 to 180 days. */
+  linkTtlDays: number;
+  notifyDelayed: boolean;
+  notifyDelivered: boolean;
+  notifyPickedUp: boolean;
+  notifyPodReady: boolean;
+  /** Comma separated. Empty falls back to the status update recipients, then the email profile's To line. */
+  recipients?: string | null | undefined;
+  visibleFields: Array<CustomerTrackingField>;
+};
 
 export type DotRandomPoolInput = {
   alcoholRatePercent: number;
@@ -8842,21 +8860,6 @@ export type UpdateCarrierSettlementControlInput = {
   version: number;
 };
 
-export type UpdateCustomerTrackingProfileInput = {
-  customerId: string | number;
-  /** The version the settings were read at. A newer version refuses the change. */
-  expectedVersion?: number | null | undefined;
-  includeLink: boolean;
-  linkEnabled: boolean;
-  linkTtlDays: number;
-  notifyDelayed: boolean;
-  notifyDelivered: boolean;
-  notifyPickedUp: boolean;
-  notifyPodReady: boolean;
-  recipients?: string | null | undefined;
-  visibleFields: Array<CustomerTrackingField>;
-};
-
 export type UpdateDotRandomDrawEntryInput = {
   entryId: string | number;
   excuseReason?: string | null | undefined;
@@ -12962,21 +12965,14 @@ export type ReverseCustomerPaymentMutationVariables = Exact<{
 
 export type ReverseCustomerPaymentMutation = { reverseCustomerPayment: { id: string, customerId: string, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, updatedAt: number, applications: Array<{ id: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number }> | null } };
 
-export type CustomerTrackingProfileFieldsFragment = { id: string | null, customerId: string, linkEnabled: boolean, visibleFields: Array<CustomerTrackingField>, linkTtlDays: number, notifyPickedUp: boolean, notifyDelayed: boolean, notifyDelivered: boolean, notifyPodReady: boolean, includeLink: boolean, recipients: string | null, notificationsEnabledAt: number | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerTrackingProfileFieldsFragment' };
+export type CustomerTrackingProfileFieldsFragment = { id: string | null, customerId: string, linkEnabled: boolean, visibleFields: Array<CustomerTrackingField>, linkTtlDays: number, notifyPickedUp: boolean, notifyDelayed: boolean, notifyDelivered: boolean, notifyPodReady: boolean, includeLink: boolean, recipients: string, notificationsEnabledAt: number | null, updatedAt: number } & { ' $fragmentName'?: 'CustomerTrackingProfileFieldsFragment' };
 
 export type CustomerTrackingProfileQueryVariables = Exact<{
   customerId: string | number;
 }>;
 
 
-export type CustomerTrackingProfileQuery = { customerTrackingProfile: { ' $fragmentRefs'?: { 'CustomerTrackingProfileFieldsFragment': CustomerTrackingProfileFieldsFragment } } };
-
-export type UpdateCustomerTrackingProfileMutationVariables = Exact<{
-  input: UpdateCustomerTrackingProfileInput;
-}>;
-
-
-export type UpdateCustomerTrackingProfileMutation = { updateCustomerTrackingProfile: { ' $fragmentRefs'?: { 'CustomerTrackingProfileFieldsFragment': CustomerTrackingProfileFieldsFragment } } };
+export type CustomerTrackingProfileQuery = { customer: { id: string, trackingProfile: { ' $fragmentRefs'?: { 'CustomerTrackingProfileFieldsFragment': CustomerTrackingProfileFieldsFragment } } | null } | null };
 
 export type DeskCustomerCardQueryVariables = Exact<{
   id: string | number;
@@ -13040,7 +13036,7 @@ export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId:
 
 export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
 
-export type CustomerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string | null, externalId: string | null, dotNumber: string | null, mcNumber: string | null, brokerVettingEnabled: boolean, checkCallIntervalHours: number | null, etaRiskThresholdMinutes: number | null, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, statusUpdatePreference: CustomerStatusUpdatePreference, statusUpdateRecipients: string | null, version: number, createdAt: number, updatedAt: number, billingProfile: { ' $fragmentRefs'?: { 'CustomerBillingProfileFieldsFragment': CustomerBillingProfileFieldsFragment } } | null, emailProfile: { ' $fragmentRefs'?: { 'CustomerEmailProfileFieldsFragment': CustomerEmailProfileFieldsFragment } } | null } & { ' $fragmentName'?: 'CustomerTableRowFieldsFragment' };
+export type CustomerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string | null, externalId: string | null, dotNumber: string | null, mcNumber: string | null, brokerVettingEnabled: boolean, checkCallIntervalHours: number | null, etaRiskThresholdMinutes: number | null, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, statusUpdatePreference: CustomerStatusUpdatePreference, statusUpdateRecipients: string | null, version: number, createdAt: number, updatedAt: number, billingProfile: { ' $fragmentRefs'?: { 'CustomerBillingProfileFieldsFragment': CustomerBillingProfileFieldsFragment } } | null, emailProfile: { ' $fragmentRefs'?: { 'CustomerEmailProfileFieldsFragment': CustomerEmailProfileFieldsFragment } } | null, trackingProfile: { ' $fragmentRefs'?: { 'CustomerTrackingProfileFieldsFragment': CustomerTrackingProfileFieldsFragment } } | null } & { ' $fragmentName'?: 'CustomerTableRowFieldsFragment' };
 
 export type CustomerTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -20779,7 +20775,7 @@ export { CustomFieldFormFieldsDocument, CustomFieldResourceTypesDocument } from 
 export { CustomFieldDefinitionTableRowFieldsFragmentDoc, CustomFieldDefinitionTableDocument } from "./documents/custom-field/table";
 export { DeskCustomerPaymentsDocument } from "./documents/customer-payment/desk";
 export { CustomerPaymentTableDocument, CustomerPaymentDetailDocument, PostAndApplyCustomerPaymentDocument, ApplyUnappliedCustomerPaymentDocument, ReverseCustomerPaymentDocument } from "./documents/customer-payment/operations";
-export { CustomerTrackingProfileFieldsFragmentDoc, CustomerTrackingProfileDocument, UpdateCustomerTrackingProfileDocument } from "./documents/customer/customer-tracking-profile";
+export { CustomerTrackingProfileFieldsFragmentDoc, CustomerTrackingProfileDocument } from "./documents/customer/customer-tracking-profile";
 export { DeskCustomerCardDocument, DeskCustomerRateAgreementsDocument, DeskCustomerUpdatePreferencesDocument } from "./documents/customer/desk";
 export { CreateCustomerDocument, UpdateCustomerDocument, PatchCustomerDocument, BulkUpdateCustomerStatusDocument } from "./documents/customer/mutations";
 export { ShipmentCustomerBillingRulesDocument } from "./documents/customer/shipment-billing-rules";

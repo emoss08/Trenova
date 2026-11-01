@@ -4,7 +4,6 @@ import {
   CustomerTrackingProfileDocument,
   IssueCustomerTrackingLinkDocument,
   RevokeCustomerTrackingLinkDocument,
-  UpdateCustomerTrackingProfileDocument,
   type CustomerStatusNotificationFieldsFragment,
   type CustomerStatusNotificationsQuery,
   type CustomerStatusNotificationsQueryVariables,
@@ -19,16 +18,13 @@ import {
   type IssueCustomerTrackingLinkMutationVariables,
   type RevokeCustomerTrackingLinkMutation,
   type RevokeCustomerTrackingLinkMutationVariables,
-  type UpdateCustomerTrackingProfileInput,
-  type UpdateCustomerTrackingProfileMutation,
-  type UpdateCustomerTrackingProfileMutationVariables,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type CustomerTrackingLinkRow = CustomerTrackingLinkFieldsFragment;
 export type CustomerStatusNotificationRow = CustomerStatusNotificationFieldsFragment;
 export type CustomerTrackingProfile = CustomerTrackingProfileFieldsFragment;
-export type { CustomerTrackingField, UpdateCustomerTrackingProfileInput };
+export type { CustomerTrackingField };
 
 export type IssuedCustomerTrackingLink = {
   link: CustomerTrackingLinkRow;
@@ -42,7 +38,7 @@ type RequestOptions = { signal?: AbortSignal };
 export async function getCustomerTrackingProfile(
   customerId: string,
   options?: RequestOptions,
-): Promise<CustomerTrackingProfile> {
+): Promise<CustomerTrackingProfile | null> {
   const data = await requestGraphQL<
     CustomerTrackingProfileQuery,
     CustomerTrackingProfileQueryVariables
@@ -52,23 +48,7 @@ export async function getCustomerTrackingProfile(
     variables: { customerId },
     signal: options?.signal,
   });
-  return data.customerTrackingProfile as CustomerTrackingProfile;
-}
-
-export async function updateCustomerTrackingProfile(
-  input: UpdateCustomerTrackingProfileInput,
-): Promise<CustomerTrackingProfile> {
-  const data = await requestGraphQL<
-    UpdateCustomerTrackingProfileMutation,
-    UpdateCustomerTrackingProfileMutationVariables
-  >({
-    document: UpdateCustomerTrackingProfileDocument,
-    operationName: "UpdateCustomerTrackingProfile",
-    variables: {
-      input: { ...input, recipients: blankToNull(input.recipients) },
-    },
-  });
-  return data.updateCustomerTrackingProfile as CustomerTrackingProfile;
+  return (data.customer?.trackingProfile ?? null) as CustomerTrackingProfile | null;
 }
 
 export async function listCustomerTrackingLinks(

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile/trackingprofiledb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -26,6 +28,7 @@ var (
 	customerErrors       = dberror.Mapping{Entity: "Customer"}
 	billingProfileErrors = dberror.Mapping{Entity: "Customer billing profile"}
 	emailProfileErrors   = dberror.Mapping{Entity: "Customer email profile"}
+	trackingErrors       = dberror.Mapping{Entity: "Customer tracking settings"}
 )
 
 type Params struct {
@@ -54,7 +57,7 @@ func customerLoads(opts customerports.CustomerFilterOptions) []keel.Loader {
 	c := customerdb.Customers
 	bp := c.BillingProfile()
 
-	loads := make([]keel.Loader, 0, 3)
+	loads := make([]keel.Loader, 0, 4)
 	if opts.IncludeState {
 		loads = append(loads, c.State())
 	}
@@ -64,8 +67,29 @@ func customerLoads(opts customerports.CustomerFilterOptions) []keel.Loader {
 	if opts.IncludeEmailProfile {
 		loads = append(loads, c.EmailProfile())
 	}
+	if opts.IncludeTrackingProfile {
+		loads = append(loads, c.TrackingProfile())
+	}
 
 	return loads
+}
+
+func withDefaultTrackingProfiles(
+	opts customerports.CustomerFilterOptions,
+	entities ...*customer.Customer,
+) {
+	if !opts.IncludeTrackingProfile {
+		return
+	}
+	for _, entity := range entities {
+		if entity != nil && entity.TrackingProfile == nil {
+			entity.TrackingProfile = trackingprofile.NewDefault(
+				entity.OrganizationID,
+				entity.BusinessUnitID,
+				entity.ID,
+			)
+		}
+	}
 }
 
 func (r *repository) List(
@@ -92,6 +116,7 @@ func (r *repository) List(
 				r.l.Error("failed to list customers", zap.Error(err))
 				return nil, err
 			}
+			withDefaultTrackingProfiles(req.CustomerFilterOptions, result.Items...)
 
 			return result, nil
 		},
@@ -124,6 +149,7 @@ func (r *repository) ListConnection(
 				r.l.Error("failed to list customer connection", zap.Error(err))
 				return nil, err
 			}
+			withDefaultTrackingProfiles(req.CustomerFilterOptions, result.Items...)
 
 			return result, nil
 		},
@@ -146,6 +172,7 @@ func (r *repository) GetByID(
 			r.l.Error("failed to get customer", zap.String("id", req.ID.String()), zap.Error(err))
 			return nil, customerErrors.Map(err, req.ID.String())
 		}
+		withDefaultTrackingProfiles(opts, entity)
 
 		return entity, nil
 	})
@@ -299,7 +326,11 @@ func (r *repository) Create(
 				return err
 			}
 
-			return r.saveEmailProfile(c, entity)
+			if err := r.saveEmailProfile(c, entity); err != nil {
+				return err
+			}
+
+			return r.saveTrackingProfile(c, entity)
 		}, platformplanports.QuotaRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -330,6 +361,9 @@ func (r *repository) Update(
 		}
 		if err == nil {
 			err = r.saveEmailProfile(ctx, entity)
+		}
+		if err == nil {
+			err = r.saveTrackingProfile(ctx, entity)
 		}
 		if err != nil {
 			r.l.Error(
@@ -536,6 +570,52 @@ func (r *repository) saveEmailProfile(ctx context.Context, cus *customer.Custome
 		stored, readErr := cem.Where(cem.CustomerID.Eq(cus.ID)).One(ctx, db)
 		if readErr != nil {
 			return emailProfileErrors.Map(readErr, cus.ID.String())
+		}
+		*profile = *stored
+	}
+
+	return nil
+}
+
+func (r *repository) saveTrackingProfile(ctx context.Context, cus *customer.Customer) error {
+	if cus.TrackingProfile == nil {
+		return nil
+	}
+
+	profile := cus.TrackingProfile
+	profile.CustomerID = cus.ID
+	profile.OrganizationID = cus.OrganizationID
+	profile.BusinessUnitID = cus.BusinessUnitID
+
+	ctp := trackingprofiledb.Profiles
+	db := r.db.Keel(ctx)
+	inserted, err := ctp.Upsert(
+		ctx,
+		db,
+		[]*trackingprofile.Profile{profile},
+		keel.OnConflict(ctp.CustomerID, ctp.OrganizationID, ctp.BusinessUnitID).Update(
+			ctp.LinkEnabled,
+			ctp.VisibleFields,
+			ctp.LinkTTLDays,
+			ctp.NotifyPickedUp,
+			ctp.NotifyDelayed,
+			ctp.NotifyDelivered,
+			ctp.NotifyPodReady,
+			ctp.IncludeLink,
+			ctp.Recipients,
+			ctp.NotificationsEnabledAt,
+			ctp.UpdatedAt,
+		),
+	)
+	if err != nil {
+		r.l.Error("failed to save tracking profile", zap.Error(err))
+		return trackingErrors.Map(err, profile.ID.String())
+	}
+
+	if !inserted[0] {
+		stored, readErr := ctp.Where(ctp.CustomerID.Eq(cus.ID)).One(ctx, db)
+		if readErr != nil {
+			return trackingErrors.Map(readErr, cus.ID.String())
 		}
 		*profile = *stored
 	}

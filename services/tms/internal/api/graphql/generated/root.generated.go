@@ -308,6 +308,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
@@ -1293,7 +1294,7 @@ type CustomerPaymentApplicationResolver interface {
 }
 
 type CustomerTrackingProfileResolver interface {
-	ID(ctx context.Context, obj *customertracking.Profile) (*string, error)
+	ID(ctx context.Context, obj *trackingprofile.Profile) (*string, error)
 }
 
 type DOTRandomDrawResolver interface {
@@ -2216,7 +2217,6 @@ type MutationResolver interface {
 	ReverseCustomerPayment(ctx context.Context, input gqlmodel.ReverseCustomerPaymentInput) (*customerpayment.Payment, error)
 	ApplyCreditMemo(ctx context.Context, input gqlmodel.ApplyCreditMemoInput) ([]*customerpayment.CreditMemoApplication, error)
 	UnapplyCreditMemoApplication(ctx context.Context, input gqlmodel.UnapplyCreditMemoApplicationInput) (*customerpayment.CreditMemoApplication, error)
-	UpdateCustomerTrackingProfile(ctx context.Context, input gqlmodel.UpdateCustomerTrackingProfileInput) (*customertracking.Profile, error)
 	IssueCustomerTrackingLink(ctx context.Context, input gqlmodel.IssueCustomerTrackingLinkInput) (*gqlmodel.IssueCustomerTrackingLinkPayload, error)
 	RevokeCustomerTrackingLink(ctx context.Context, shipmentID string, linkID *string) (int, error)
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
@@ -3042,7 +3042,6 @@ type QueryResolver interface {
 	ShipmentCustomerBillingRules(ctx context.Context, customerIds []string) ([]*customerports.ShipmentBillingRules, error)
 	CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error)
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
-	CustomerTrackingProfile(ctx context.Context, customerID string) (*customertracking.Profile, error)
 	CustomerTrackingLinks(ctx context.Context, shipmentID string) ([]*customertracking.Link, error)
 	CustomerStatusNotifications(ctx context.Context, shipmentID string) ([]*customertracking.Notification, error)
 	DataTableFacets(ctx context.Context, input gqlmodel.DataTableFacetInput) (*gqlmodel.DataTableFacets, error)

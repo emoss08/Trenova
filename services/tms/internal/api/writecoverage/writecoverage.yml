@@ -812,9 +812,6 @@ writes:
     tools: [shipment_share_tracking_link]
   "mutation revokeCustomerTrackingLink":
     tools: [shipment_revoke_tracking_link]
-  "mutation updateCustomerTrackingProfile":
-    exempt: configuration
-    reason: "What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record."
 
   # collection
   "POST /api/v1/accounting/collections/customers/:customerID/activities/":

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -200,7 +201,56 @@ func TestApplyCustomerInput_LeavesProfilesTheInputOmits(t *testing.T) {
 	assert.Equal(t, profileID, existing.BillingProfile.ID)
 	assert.True(t, decimal.RequireFromString("120").Equal(existing.BillingProfile.CreditBalance))
 	assert.Nil(t, existing.EmailProfile)
+	assert.Nil(t, existing.TrackingProfile)
 	assert.Equal(t, int64(9), existing.Version)
+}
+
+func TestApplyCustomerInput_SetsTheTrackingSettingsOnTheStoredProfile(t *testing.T) {
+	t.Parallel()
+
+	profileID := pulid.MustNew("ctp_")
+	enabledAt := int64(1_700_000_000)
+	existing := &customer.Customer{
+		TrackingProfile: &trackingprofile.Profile{
+			ID:                     profileID,
+			NotifyDelivered:        true,
+			NotificationsEnabledAt: &enabledAt,
+		},
+	}
+	recipients := "ops@acme.test"
+	input := customerInput()
+	input.TrackingProfile = &gqlmodel.CustomerTrackingProfileInput{
+		LinkEnabled:     false,
+		VisibleFields:   []trackingprofile.Field{trackingprofile.FieldEta},
+		LinkTTLDays:     14,
+		NotifyDelivered: true,
+		NotifyPodReady:  true,
+		IncludeLink:     true,
+		Recipients:      &recipients,
+	}
+
+	require.NoError(t, applyCustomerInput(existing, &input))
+
+	profile := existing.TrackingProfile
+	require.NotNil(t, profile)
+	assert.Equal(t, profileID, profile.ID)
+	assert.False(t, profile.LinkEnabled)
+	assert.Equal(t, []trackingprofile.Field{trackingprofile.FieldEta}, profile.VisibleFields)
+	assert.Equal(t, int16(14), profile.LinkTTLDays)
+	assert.True(t, profile.NotifyDelivered)
+	assert.True(t, profile.NotifyPodReady)
+	assert.False(t, profile.NotifyPickedUp)
+	assert.True(t, profile.IncludeLink)
+	assert.Equal(t, "ops@acme.test", profile.Recipients)
+	assert.Equal(t, &enabledAt, profile.NotificationsEnabledAt, "the service stamps the start time")
+}
+
+func TestClampLinkTTLDays_KeepsAnOutOfRangeNumberFromWrapping(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, int16(0), clampLinkTTLDays(-5))
+	assert.Equal(t, int16(30), clampLinkTTLDays(30))
+	assert.Equal(t, int16(181), clampLinkTTLDays(1_000_000))
 }
 
 func TestApplyCustomerInput_KeepsTheCreditReviewOnTheExistingProfile(t *testing.T) {

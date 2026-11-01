@@ -12,13 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile/trackingprofiledb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -56,7 +56,7 @@ func (r *factRepository) ListNotifyingTenants(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "find organizations whose customers receive status emails")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		p := customertrackingdb.Profiles
+		p := trackingprofiledb.Profiles
 		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), p.AllTenants().
 			Group(p.OrganizationID, p.BusinessUnitID).
 			Pick(p.OrganizationID, p.BusinessUnitID).
@@ -74,7 +74,7 @@ func (r *factRepository) HasNotifyingCustomers(
 ) (bool, error) {
 	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		p := customertrackingdb.Profiles
+		p := trackingprofiledb.Profiles
 		notifying, err := p.Where(p.NotificationsEnabledAt.IsNotNull()).
 			Cache(resultcache.Settings()...).
 			Exists(ctx, r.db.Keel(ctx))
@@ -142,7 +142,7 @@ func candidateShipmentsQuery(since int64, limit int) *keel.Query[*keel.Row] {
 
 func notifyingShipments(match ...keel.Pred) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
-	pc := customertrackingdb.Profiles
+	pc := trackingprofiledb.Profiles
 
 	return sp.Join(pc, pc.CustomerID.EqCol(sp.CustomerID)).
 		Pick(sp.ID, sp.UpdatedAt).

@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile/trackingprofiledb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
@@ -40,7 +42,6 @@ type harness struct {
 	tenant        pagination.TenantInfo
 	data          *seedtest.TestData
 	fixture       *testutil.ShipmentIntegrationFixture
-	profiles      customertrackingports.ProfileRepository
 	links         customertrackingports.LinkRepository
 	notifications customertrackingports.NotificationRepository
 	facts         customertrackingports.FactRepository
@@ -66,7 +67,6 @@ func newHarness(t *testing.T) *harness {
 		tenant:        tenant,
 		data:          data,
 		fixture:       testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenant),
-		profiles:      customertrackingrepository.NewProfiles(params),
 		links:         customertrackingrepository.NewLinks(params),
 		notifications: customertrackingrepository.NewNotifications(params),
 		facts:         customertrackingrepository.NewFacts(params),
@@ -103,91 +103,16 @@ func (h *harness) profile(
 	t *testing.T,
 	customerID pulid.ID,
 	notify bool,
-) *customertracking.Profile {
+) *trackingprofile.Profile {
 	t.Helper()
-	profile := customertracking.DefaultProfile(h.tenant.OrgID, h.tenant.BuID, customerID)
-	profile.ID = customertracking.NewProfileID()
-	profile.CreatedAt, profile.UpdatedAt = h.now, h.now
+	profile := trackingprofile.NewDefault(h.tenant.OrgID, h.tenant.BuID, customerID)
 	if notify {
 		profile.NotifyDelivered = true
 		enabled := h.now - 3600
 		profile.NotificationsEnabledAt = &enabled
 	}
-	require.NoError(t, h.profiles.Create(h.ctx, profile))
+	require.NoError(t, trackingprofiledb.Profiles.Create(h.ctx, h.db, profile))
 	return profile
-}
-
-func TestProfilesRoundTripTheirFieldsAndGuardTheVersion(t *testing.T) {
-	h := newHarness(t)
-	graph := h.shipment(t, "PR-1", shipmentvocab.StatusInTransit)
-	customerID := graph.Shipment.CustomerID
-
-	missing, err := h.profiles.GetByCustomer(h.ctx, h.tenant, customerID)
-	require.NoError(t, err)
-	assert.Nil(t, missing)
-
-	created := h.profile(t, customerID, false)
-	created.VisibleFields = []customertracking.Field{
-		customertracking.FieldStatus,
-		customertracking.FieldProofOfDelivery,
-	}
-	created.NotifyPickedUp = true
-	enabled := h.now
-	created.NotificationsEnabledAt = &enabled
-	created.Recipients = "ops@example.com"
-	require.NoError(t, h.profiles.Update(h.ctx, created))
-	assert.Equal(t, int64(1), created.Version)
-
-	read, err := h.profiles.GetByCustomer(h.ctx, h.tenant, customerID)
-	require.NoError(t, err)
-	assert.Equal(t, created.VisibleFields, read.VisibleFields)
-	assert.True(t, read.NotifyPickedUp)
-	assert.Equal(t, "ops@example.com", read.Recipients)
-
-	created.Version = 0
-	err = h.profiles.Update(h.ctx, created)
-	require.Error(t, err)
-
-	listed, err := h.profiles.ListByCustomers(h.ctx, h.tenant, []pulid.ID{customerID})
-	require.NoError(t, err)
-	assert.Len(t, listed, 1)
-}
-
-func TestAProfileCreatedWithLinksOffStoresFalse(t *testing.T) {
-	h := newHarness(t)
-	graph := h.shipment(t, "PR-OFF", shipmentvocab.StatusInTransit)
-
-	profile := customertracking.DefaultProfile(
-		h.tenant.OrgID,
-		h.tenant.BuID,
-		graph.Shipment.CustomerID,
-	)
-	profile.ID = customertracking.NewProfileID()
-	profile.CreatedAt, profile.UpdatedAt = h.now, h.now
-	profile.LinkEnabled = false
-	profile.IncludeLink = false
-	require.NoError(t, h.profiles.Create(h.ctx, profile))
-
-	read, err := h.profiles.GetByCustomer(h.ctx, h.tenant, graph.Shipment.CustomerID)
-	require.NoError(t, err)
-	require.NotNil(t, read)
-	assert.False(t, read.LinkEnabled)
-	assert.False(t, read.IncludeLink)
-}
-
-func TestTheDatabaseRefusesAProfileWithRulesButNoStartTime(t *testing.T) {
-	h := newHarness(t)
-	graph := h.shipment(t, "PR-2", shipmentvocab.StatusInTransit)
-	profile := customertracking.DefaultProfile(
-		h.tenant.OrgID,
-		h.tenant.BuID,
-		graph.Shipment.CustomerID,
-	)
-	profile.ID = customertracking.NewProfileID()
-	profile.CreatedAt, profile.UpdatedAt = h.now, h.now
-	profile.NotifyDelivered = true
-
-	require.Error(t, h.profiles.Create(h.ctx, profile))
 }
 
 func TestLinksResolveByHashAndRevoke(t *testing.T) {

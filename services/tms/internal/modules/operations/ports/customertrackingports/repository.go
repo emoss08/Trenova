@@ -8,21 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ProfileRepository interface {
-	GetByCustomer(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		customerID pulid.ID,
-	) (*customertracking.Profile, error)
-	ListByCustomers(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		customerIDs []pulid.ID,
-	) ([]*customertracking.Profile, error)
-	Create(ctx context.Context, entity *customertracking.Profile) error
-	Update(ctx context.Context, entity *customertracking.Profile) error
-}
-
 type RevokeLinksRequest struct {
 	TenantInfo pagination.TenantInfo
 	ShipmentID pulid.ID

@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -52,9 +52,9 @@ func (f *fakeService) PreviewByToken(
 	return &customertrackingports.PublicTrackingView{
 		CompanyName:       "Trenova Logistics",
 		ShipmentProNumber: "PRO-77",
-		Fields: []customertracking.Field{
-			customertracking.FieldStatus,
-			customertracking.FieldEta,
+		Fields: []trackingprofile.Field{
+			trackingprofile.FieldStatus,
+			trackingprofile.FieldEta,
 		},
 		Status: customertrackingports.PublicStatusDelayed,
 		Stops: []customertrackingports.PublicStop{

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,7 @@ func pickedUpShipment(h *harness) *shipment.Shipment {
 func TestEvaluate_SendsAnEventExactlyOnceHoweverOftenItIsSeen(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) { p.NotifyPickedUp = true })
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) { p.NotifyPickedUp = true })
 
 	first, err := h.service.Evaluate(t.Context(), testTenant, sh.ID)
 	require.NoError(t, err)
@@ -53,7 +54,7 @@ func TestEvaluate_SendsAnEventExactlyOnceHoweverOftenItIsSeen(t *testing.T) {
 func TestEvaluate_TheEmailCarriesItsOwnTrackingLink(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) { p.NotifyPickedUp = true })
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) { p.NotifyPickedUp = true })
 
 	_, err := h.service.Evaluate(t.Context(), testTenant, sh.ID)
 	require.NoError(t, err)
@@ -63,7 +64,7 @@ func TestEvaluate_TheEmailCarriesItsOwnTrackingLink(t *testing.T) {
 	assert.Equal(t, customertracking.LinkPurposeNotification, link.Purpose)
 	assert.Equal(
 		t,
-		testNow+int64(customertracking.DefaultLinkTTLDays)*customertracking.SecondsPerDay,
+		testNow+int64(trackingprofile.DefaultLinkTTLDays)*customertracking.SecondsPerDay,
 		link.ExpiresAt,
 	)
 	require.Len(t, h.templates.calls, 1)
@@ -80,7 +81,7 @@ func TestEvaluate_TheEmailCarriesItsOwnTrackingLink(t *testing.T) {
 func TestEvaluate_NoLinkWhenTheCustomerTurnedLinksOff(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
 		p.NotifyPickedUp = true
 		p.LinkEnabled = false
 	})
@@ -97,7 +98,7 @@ func TestEvaluate_NoLinkWhenTheCustomerTurnedLinksOff(t *testing.T) {
 func TestEvaluate_RecipientsFallBackToTheCustomer(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
 		p.NotifyPickedUp = true
 		p.Recipients = ""
 	})
@@ -109,7 +110,7 @@ func TestEvaluate_RecipientsFallBackToTheCustomer(t *testing.T) {
 	assert.Equal(t, []string{"track@halstead.example", "desk@halstead.example"}, h.email.sent[0].To)
 
 	other := pickedUpShipment(h)
-	h.notify(other.CustomerID, func(p *customertracking.Profile) {
+	h.notify(other.CustomerID, func(p *trackingprofile.Profile) {
 		p.NotifyPickedUp = true
 		p.Recipients = ""
 	})
@@ -125,7 +126,7 @@ func TestEvaluate_RecipientsFallBackToTheCustomer(t *testing.T) {
 func TestEvaluate_SkipsWithoutRecipientsAndSaysWhy(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
 		p.NotifyPickedUp = true
 		p.Recipients = ""
 	})
@@ -143,7 +144,7 @@ func TestEvaluate_SkipsWithoutRecipientsAndSaysWhy(t *testing.T) {
 func TestDelivery_RetriesWithBackoffThenGivesUp(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
 		p.NotifyPickedUp = true
 		p.IncludeLink = false
 	})
@@ -170,7 +171,7 @@ func TestDelivery_RetriesWithBackoffThenGivesUp(t *testing.T) {
 
 	h2 := newHarness()
 	sh2 := pickedUpShipment(h2)
-	h2.notify(sh2.CustomerID, func(p *customertracking.Profile) {
+	h2.notify(sh2.CustomerID, func(p *trackingprofile.Profile) {
 		p.NotifyPickedUp = true
 		p.IncludeLink = false
 	})
@@ -191,7 +192,7 @@ func TestDelivery_RetriesWithBackoffThenGivesUp(t *testing.T) {
 func TestDelivery_ARuleTurnedOffBeforeTheRetrySkipsTheEmail(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
 		p.NotifyPickedUp = true
 		p.IncludeLink = false
 	})
@@ -213,7 +214,7 @@ func TestDelivery_ARuleTurnedOffBeforeTheRetrySkipsTheEmail(t *testing.T) {
 func TestEvaluate_DelayedNamesTheStopAndItsNewArrival(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) { p.NotifyDelayed = true })
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) { p.NotifyDelayed = true })
 	delivery := sh.Moves[0].Stops[1]
 	estimated := testNow + 5*3600
 	h.etas.rows = []*stopeta.StopETA{{
@@ -243,7 +244,7 @@ func TestEvaluate_PodReadyFromTheDocumentOnFile(t *testing.T) {
 		stopSpec{stopType: shipmentvocab.StopTypeDelivery, city: "Memphis", state: "TN",
 			arrival: at(-7200), departure: at(-3600)},
 	)
-	h.notify(sh.CustomerID, func(p *customertracking.Profile) {
+	h.notify(sh.CustomerID, func(p *trackingprofile.Profile) {
 		p.NotifyDelivered = true
 		p.NotifyPodReady = true
 	})

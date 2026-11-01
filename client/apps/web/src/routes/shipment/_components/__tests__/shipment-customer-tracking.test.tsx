@@ -45,7 +45,6 @@ const profile = {
   includeLink: true,
   recipients: "shipping@customer.com, ops@customer.com",
   notificationsEnabledAt: NOW - 86_400,
-  version: 2,
   updatedAt: NOW - 86_400,
 };
 

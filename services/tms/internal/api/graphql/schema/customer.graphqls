@@ -229,6 +229,8 @@ type Customer {
   state: UsState
   billingProfile: CustomerBillingProfile
   emailProfile: CustomerEmailProfile
+  "What the customer's tracking links show and which status emails it is sent; the defaults until first saved."
+  trackingProfile: CustomerTrackingProfile
 }
 
 type CustomerEdge {
@@ -328,6 +330,22 @@ input CustomerEmailProfileInput {
   includeShipmentDetail: Boolean!
 }
 
+input CustomerTrackingProfileInput {
+  "Whether links can be shared for this customer's shipments. Turning it off stops every existing link."
+  linkEnabled: Boolean!
+  visibleFields: [CustomerTrackingField!]!
+  "How long a new link lasts, from 1 to 180 days."
+  linkTtlDays: Int!
+  notifyPickedUp: Boolean!
+  notifyDelayed: Boolean!
+  notifyDelivered: Boolean!
+  notifyPodReady: Boolean!
+  "Whether each status email carries its own tracking link."
+  includeLink: Boolean!
+  "Comma separated. Empty falls back to the status update recipients, then the email profile's To line."
+  recipients: String
+}
+
 input CustomerInput {
   status: EntityStatus!
   code: String!
@@ -355,6 +373,8 @@ input CustomerInput {
   billingProfile: CustomerBillingProfileInput
   "Omit to leave the email profile as it is."
   emailProfile: CustomerEmailProfileInput
+  "Omit to leave the tracking settings as they are."
+  trackingProfile: CustomerTrackingProfileInput
   version: Int
 }
 

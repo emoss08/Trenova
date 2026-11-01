@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/customertrackingrepository"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile/trackingprofiledb"
 	"github.com/emoss08/trenova/internal/testutil/cachetest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +30,6 @@ func TestNotifyingCustomersAreCachedPerTenantUntilAProfileChanges(t *testing.T) 
 		Logger: zap.NewNop(),
 	}
 	facts := customertrackingrepository.NewFacts(params)
-	profiles := customertrackingrepository.NewProfiles(params)
 
 	var notifying bool
 	readFor := func(tenant pagination.TenantInfo) func() error {
@@ -48,17 +48,15 @@ func TestNotifyingCustomersAreCachedPerTenantUntilAProfileChanges(t *testing.T) 
 	})
 
 	t.Run("turning a customer's emails on invalidates the answer", func(t *testing.T) {
-		profile := customertracking.DefaultProfile(
+		profile := trackingprofile.NewDefault(
 			h.tenant.OrgID,
 			h.tenant.BuID,
 			graph.Shipment.CustomerID,
 		)
-		profile.ID = customertracking.NewProfileID()
-		profile.CreatedAt, profile.UpdatedAt = h.now, h.now
 		profile.NotifyDelivered = true
 		enabled := h.now - 3600
 		profile.NotificationsEnabledAt = &enabled
-		require.NoError(t, profiles.Create(h.ctx, profile))
+		require.NoError(t, trackingprofiledb.Profiles.Create(h.ctx, cached, profile))
 
 		cachetest.RequireMiss(t, cached, readFor(h.tenant))
 		assert.True(t, notifying)
