@@ -174,6 +174,214 @@ extend type Mutation {
   bulkUpdateAccountTypeStatus(input: BulkUpdateAccountTypeStatusInput!): [AccountType!]!
 }
 `, BuiltIn: false},
+	{Name: "../schema/accounting_control.graphqls", Input: `"""
+How the organization keeps its books: recognition, posting, period close, reconciliation, currency and default accounts.
+"""
+type AccountingControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  accountingBasis: AccountingBasis!
+  revenueRecognitionPolicy: RevenueRecognitionPolicy!
+  expenseRecognitionPolicy: ExpenseRecognitionPolicy!
+  journalPostingMode: JournalPostingMode!
+  autoPostSourceEvents: [JournalSourceEvent!]!
+  manualJournalEntryPolicy: ManualJournalEntryPolicy!
+  requireManualJeApproval: Boolean!
+  journalReversalPolicy: JournalReversalPolicy!
+  periodCloseMode: PeriodCloseMode!
+  requirePeriodCloseApproval: Boolean!
+  lockedPeriodPostingPolicy: LockedPeriodPostingPolicy!
+  closedPeriodPostingPolicy: ClosedPeriodPostingPolicy!
+  requireReconciliationToClose: Boolean!
+  reconciliationMode: ReconciliationMode!
+  reconciliationToleranceAmount: Decimal!
+  notifyOnReconciliationException: Boolean!
+  currencyMode: CurrencyMode!
+  functionalCurrencyCode: String!
+  exchangeRateDatePolicy: ExchangeRateDatePolicy!
+  exchangeRateOverridePolicy: ExchangeRateOverridePolicy!
+  defaultRevenueAccountId: ID
+  defaultCashAccountId: ID
+  defaultUnappliedCashAccountId: ID
+  defaultExpenseAccountId: ID
+  defaultArAccountId: ID
+  defaultApAccountId: ID
+  defaultTaxLiabilityAccountId: ID
+  defaultWriteOffAccountId: ID
+  defaultRetainedEarningsAccountId: ID
+  realizedFxGainAccountId: ID
+  realizedFxLossAccountId: ID
+  defaultDriverPayExpenseAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  defaultSettlementsPayableAccountId: ID
+  defaultDriverAdvanceAccountId: ID
+  defaultEscrowLiabilityAccountId: ID
+  defaultDriverReimbursementAccountId: ID
+  defaultEscrowInterestExpenseAccountId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the accounting control at once. version is the one read; a stale one is refused.
+"""
+input UpdateAccountingControlInput {
+  version: Int!
+  accountingBasis: AccountingBasis!
+  revenueRecognitionPolicy: RevenueRecognitionPolicy!
+  expenseRecognitionPolicy: ExpenseRecognitionPolicy!
+  journalPostingMode: JournalPostingMode!
+  autoPostSourceEvents: [JournalSourceEvent!]!
+  manualJournalEntryPolicy: ManualJournalEntryPolicy!
+  requireManualJeApproval: Boolean!
+  journalReversalPolicy: JournalReversalPolicy!
+  periodCloseMode: PeriodCloseMode!
+  requirePeriodCloseApproval: Boolean!
+  lockedPeriodPostingPolicy: LockedPeriodPostingPolicy!
+  closedPeriodPostingPolicy: ClosedPeriodPostingPolicy!
+  requireReconciliationToClose: Boolean!
+  reconciliationMode: ReconciliationMode!
+  reconciliationToleranceAmount: Decimal!
+  notifyOnReconciliationException: Boolean!
+  currencyMode: CurrencyMode!
+  functionalCurrencyCode: String!
+  exchangeRateDatePolicy: ExchangeRateDatePolicy!
+  exchangeRateOverridePolicy: ExchangeRateOverridePolicy!
+  defaultRevenueAccountId: ID
+  defaultCashAccountId: ID
+  defaultUnappliedCashAccountId: ID
+  defaultExpenseAccountId: ID
+  defaultArAccountId: ID
+  defaultApAccountId: ID
+  defaultTaxLiabilityAccountId: ID
+  defaultWriteOffAccountId: ID
+  defaultRetainedEarningsAccountId: ID
+  realizedFxGainAccountId: ID
+  realizedFxLossAccountId: ID
+  defaultDriverPayExpenseAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  defaultSettlementsPayableAccountId: ID
+  defaultDriverAdvanceAccountId: ID
+  defaultEscrowLiabilityAccountId: ID
+  defaultDriverReimbursementAccountId: ID
+  defaultEscrowInterestExpenseAccountId: ID
+}
+
+"Which events recognize revenue and expense."
+enum AccountingBasis {
+  Accrual
+  Cash
+}
+
+"The event that recognizes revenue."
+enum RevenueRecognitionPolicy {
+  OnInvoicePost
+  OnCashReceipt
+}
+
+"The event that recognizes expense."
+enum ExpenseRecognitionPolicy {
+  OnVendorBillPost
+  OnCashDisbursement
+}
+
+"Whether source events post journals on their own."
+enum JournalPostingMode {
+  Manual
+  Automatic
+}
+
+"A source event that can post a journal entry automatically."
+enum JournalSourceEvent {
+  InvoicePosted
+  CreditMemoPosted
+  DebitMemoPosted
+  CustomerPaymentPosted
+  CustomerShortPayRecognized
+  CustomerPaymentReversed
+  VendorBillPosted
+  VendorPaymentPosted
+  DriverSettlementPosted
+  DriverSettlementVoided
+  EscrowInterestAccrued
+  CarrierSettlementPosted
+  CarrierSettlementVoided
+  CarrierSettlementPaid
+  DriverSettlementPaid
+  FactoringFunded
+  FactoringReserveReleased
+  FactoringChargedBack
+  FactoringChargebackReversed
+}
+
+"Which manual journal entries are allowed."
+enum ManualJournalEntryPolicy {
+  AllowAll
+  AdjustmentOnly
+  Disallow
+}
+
+"Where a journal reversal posts."
+enum JournalReversalPolicy {
+  Disallow
+  NextOpenPeriod
+}
+
+"How fiscal periods close."
+enum PeriodCloseMode {
+  ManualOnly
+  SystemScheduled
+}
+
+"What may post into a locked period."
+enum LockedPeriodPostingPolicy {
+  BlockSubledgerAllowManualJe
+}
+
+"What happens to a posting dated in a closed period."
+enum ClosedPeriodPostingPolicy {
+  RequireReopen
+  PostToNextOpen
+}
+
+"How reconciliation differences are enforced."
+enum ReconciliationMode {
+  Disabled
+  WarnOnly
+  BlockPosting
+}
+
+"Whether the organization transacts in more than one currency."
+enum CurrencyMode {
+  SingleCurrency
+  MultiCurrency
+}
+
+"Which date picks the exchange rate."
+enum ExchangeRateDatePolicy {
+  DocumentDate
+  AccountingDate
+}
+
+"Whether a person may override an exchange rate."
+enum ExchangeRateOverridePolicy {
+  Allow
+  RequireApproval
+  Disallow
+}
+
+extend type Query {
+  "The organization's accounting control."
+  accountingControl: AccountingControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's accounting control."
+  updateAccountingControl(input: UpdateAccountingControlInput!): AccountingControl!
+}
+`, BuiltIn: false},
 	{Name: "../schema/accounting_sync.graphqls", Input: `"An accounting system Trenova keeps its books in step with."
 enum AccountingSystem {
   QuickBooksOnline
@@ -7128,6 +7336,44 @@ extend type Query {
   apiKey(id: ID!): ApiKey
 }
 `, BuiltIn: false},
+	{Name: "../schema/api_key_analytics.graphqls", Input: `"How many API keys the organization has, and how many it made this month."
+type ApiKeyTotalCount {
+  count: Int!
+  newThisMonth: Int!
+}
+
+"How many API keys are in one state, and their share of all keys."
+type ApiKeyStateCount {
+  count: Int!
+  percentOfTotal: Float!
+}
+
+"Requests made with API keys on one day."
+type ApiKeyRequestDay {
+  "The day, as Jan 2."
+  day: String!
+  value: Int!
+}
+
+"Requests made with the organization's API keys over the last 30 days."
+type ApiKeyRequestVolume {
+  total: Int!
+  sparkline: [ApiKeyRequestDay!]!
+}
+
+"The figures on the API keys page."
+type ApiKeyAnalytics {
+  totalKeys: ApiKeyTotalCount!
+  activeKeys: ApiKeyStateCount!
+  revokedKeys: ApiKeyStateCount!
+  requests30d: ApiKeyRequestVolume!
+}
+
+extend type Query {
+  "The figures on the API keys page, with days counted in the timezone given."
+  apiKeyAnalytics(timezone: String): ApiKeyAnalytics!
+}
+`, BuiltIn: false},
 	{Name: "../schema/attention.graphqls", Input: `type AttentionSummary {
   billingQueue: Int
   pendingApprovals: Int
@@ -7408,6 +7654,176 @@ extend type Mutation {
   updateBenefitPlan(input: UpdateBenefitPlanInput!): BenefitPlan!
   enrollBenefit(input: EnrollBenefitInput!): WorkerBenefitEnrollment!
   endBenefitEnrollment(input: EndBenefitEnrollmentInput!): WorkerBenefitEnrollment!
+}
+`, BuiltIn: false},
+	{Name: "../schema/billing_control.graphqls", Input: `"""
+How the organization bills: invoice defaults, the billing queue, automation, rate checks, late charges, reminders and statements.
+"""
+type BillingControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  defaultPaymentTerm: BillingPaymentTerm!
+  defaultInvoiceTerms: String!
+  defaultInvoiceFooter: String!
+  showDueDateOnInvoice: Boolean!
+  showBalanceDueOnInvoice: Boolean!
+  readyToBillAssignmentMode: ReadyToBillAssignmentMode!
+  billingQueueTransferMode: BillingQueueTransferMode!
+  billingQueueTransferSchedule: BillingTransferSchedule!
+  billingQueueTransferBatchSize: Int!
+  invoiceDraftCreationMode: InvoiceDraftCreationMode!
+  invoicePostingMode: InvoicePostingMode!
+  autoInvoiceBatchSize: Int!
+  notifyOnAutoInvoiceCreation: Boolean!
+  shipmentBillingRequirementEnforcement: EnforcementLevel!
+  rateValidationEnforcement: EnforcementLevel!
+  billingExceptionDisposition: BillingExceptionDisposition!
+  notifyOnBillingExceptions: Boolean!
+  rateVarianceTolerancePercent: Decimal!
+  rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode!
+  unratedShipmentDisposition: UnratedShipmentDisposition!
+  fallbackFormulaTemplateId: ID
+  requireRateOverrideReason: Boolean!
+  enforceMarginFloor: Boolean!
+  queueAutoApproveMode: QueueAutoApproveMode!
+  queueAutoApproveMaxAmount: Decimal
+  queueAgentReviewEnabled: Boolean!
+  lateChargeAssessmentMode: LateChargeAssessmentMode!
+  lateChargeMinimumAmount: Decimal!
+  paymentRemindersEnabled: Boolean!
+  paymentReminderDays: [Int!]!
+  monthlyStatementsEnabled: Boolean!
+  monthlyStatementDay: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the billing control at once. version is the one read; a stale one is refused.
+"""
+input UpdateBillingControlInput {
+  version: Int!
+  defaultPaymentTerm: BillingPaymentTerm!
+  defaultInvoiceTerms: String!
+  defaultInvoiceFooter: String!
+  showDueDateOnInvoice: Boolean!
+  showBalanceDueOnInvoice: Boolean!
+  readyToBillAssignmentMode: ReadyToBillAssignmentMode!
+  billingQueueTransferMode: BillingQueueTransferMode!
+  billingQueueTransferSchedule: BillingTransferSchedule!
+  billingQueueTransferBatchSize: Int!
+  invoiceDraftCreationMode: InvoiceDraftCreationMode!
+  invoicePostingMode: InvoicePostingMode!
+  autoInvoiceBatchSize: Int!
+  notifyOnAutoInvoiceCreation: Boolean!
+  shipmentBillingRequirementEnforcement: EnforcementLevel!
+  rateValidationEnforcement: EnforcementLevel!
+  billingExceptionDisposition: BillingExceptionDisposition!
+  notifyOnBillingExceptions: Boolean!
+  rateVarianceTolerancePercent: Decimal!
+  rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode!
+  unratedShipmentDisposition: UnratedShipmentDisposition!
+  fallbackFormulaTemplateId: ID
+  requireRateOverrideReason: Boolean!
+  enforceMarginFloor: Boolean!
+  queueAutoApproveMode: QueueAutoApproveMode!
+  queueAutoApproveMaxAmount: Decimal
+  queueAgentReviewEnabled: Boolean!
+  lateChargeAssessmentMode: LateChargeAssessmentMode!
+  lateChargeMinimumAmount: Decimal!
+  paymentRemindersEnabled: Boolean!
+  paymentReminderDays: [Int!]!
+  monthlyStatementsEnabled: Boolean!
+  monthlyStatementDay: Int!
+}
+
+"The organization's default invoice payment term."
+enum BillingPaymentTerm {
+  Net10
+  Net15
+  Net30
+  Net45
+  Net60
+  Net90
+  DueOnReceipt
+}
+
+"How shipments are marked ready to bill."
+enum ReadyToBillAssignmentMode {
+  ManualOnly
+  AutomaticWhenEligible
+}
+
+"How ready shipments reach the billing queue."
+enum BillingQueueTransferMode {
+  ManualOnly
+  AutomaticWhenReady
+}
+
+"How often ready shipments transfer to the billing queue."
+enum BillingTransferSchedule {
+  Continuous
+  Hourly
+  Daily
+  Weekly
+}
+
+"How invoice drafts are created from the billing queue."
+enum InvoiceDraftCreationMode {
+  ManualOnly
+  AutomaticWhenTransferred
+}
+
+"How invoice drafts are posted."
+enum InvoicePostingMode {
+  ManualReviewRequired
+  AutomaticWhenNoBlockingExceptions
+}
+
+"How strictly a billing rule is enforced."
+enum EnforcementLevel {
+  Ignore
+  Warn
+  RequireReview
+  Block
+}
+
+"Where a shipment with a billing exception goes."
+enum BillingExceptionDisposition {
+  RouteToBillingReview
+  ReturnToOperations
+}
+
+"Whether a rate variance within tolerance skips review."
+enum RateVarianceAutoResolutionMode {
+  Disabled
+  BypassReviewWithinTolerance
+}
+
+"What happens to a shipment no rate covers."
+enum UnratedShipmentDisposition {
+  FallbackFormulaTemplate
+  ZeroAndFlag
+  Block
+}
+
+"When the billing queue approves an item on its own."
+enum QueueAutoApproveMode {
+  Off
+  WhenChecksClear
+  WhenAgentAgrees
+}
+
+extend type Query {
+  "The organization's billing control."
+  billingControl: BillingControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's billing control."
+  updateBillingControl(input: UpdateBillingControlInput!): BillingControl!
 }
 `, BuiltIn: false},
 	{Name: "../schema/billing_queue.graphqls", Input: `"""Where an item sits in the queue's working order."""
@@ -10331,6 +10747,107 @@ extend type Mutation {
   rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
 }
 `, BuiltIn: false},
+	{Name: "../schema/case_checklist.graphqls", Input: `"Which case checklist a template lays out."
+enum CaseChecklistKind {
+  ReadyToBill
+  ReadyToClose
+}
+
+"Whether a checklist step must be ticked, may be, or is left off."
+enum CaseChecklistItemMode {
+  Required
+  Optional
+  Off
+}
+
+"What ticks a step the organization added."
+enum CaseChecklistCustomCheck {
+  Manual
+  Document
+}
+
+"A step the organization added: its name, what ticks it and what it asks the agent."
+type CaseChecklistCustomItem {
+  label: String!
+  check: CaseChecklistCustomCheck!
+  documentTypeId: ID
+  stepLabel: String!
+  prompt: String!
+}
+
+"One step of a template, in the order the case shows it."
+type CaseChecklistTemplateItem {
+  key: String!
+  mode: CaseChecklistItemMode!
+  custom: CaseChecklistCustomItem
+}
+
+"""
+How the organization, or one customer of it, lays out a kind of case checklist.
+The organization's template has no customer; the default, before one is saved, has no id.
+"""
+type CaseChecklistTemplate {
+  id: ID
+  kind: CaseChecklistKind!
+  customerId: ID
+  customerName: String!
+  items: [CaseChecklistTemplateItem!]!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"How an organization lays out one kind of case checklist."
+type CaseChecklistTemplates {
+  kind: CaseChecklistKind!
+  "The organization's template, or the default when it saved none."
+  organization: CaseChecklistTemplate!
+  "Each customer's template that replaces the organization's."
+  customers: [CaseChecklistTemplate!]!
+  "Built-in steps whose mode follows a rule set elsewhere: they can be moved but stay required."
+  locked: [String!]!
+}
+
+input CaseChecklistCustomItemInput {
+  label: String!
+  check: CaseChecklistCustomCheck!
+  documentTypeId: ID
+  stepLabel: String
+  prompt: String
+}
+
+input CaseChecklistTemplateItemInput {
+  key: String!
+  mode: CaseChecklistItemMode!
+  custom: CaseChecklistCustomItemInput
+}
+
+"""
+Saves the organization's template of a kind, or a customer's. id and version name
+a template being changed; without an id one is made.
+"""
+input SaveCaseChecklistTemplateInput {
+  id: ID
+  version: Int!
+  kind: CaseChecklistKind!
+  customerId: ID
+  items: [CaseChecklistTemplateItemInput!]!
+}
+
+extend type Query {
+  "How the organization and its customers lay out a kind of case checklist."
+  caseChecklistTemplates(kind: CaseChecklistKind!): CaseChecklistTemplates!
+}
+
+extend type Mutation {
+  "Saves the organization's or a customer's case checklist template."
+  saveCaseChecklistTemplate(input: SaveCaseChecklistTemplateInput!): CaseChecklistTemplate!
+  """
+  Deletes a case checklist template: a customer's falls back to the organization's,
+  the organization's to the default.
+  """
+  deleteCaseChecklistTemplate(id: ID!): Boolean!
+}
+`, BuiltIn: false},
 	{Name: "../schema/checkcall.graphqls", Input: `"Who logged a check call."
 enum CheckCallSource {
   Dispatcher
@@ -11679,6 +12196,99 @@ extend type Mutation {
   ): IssueCustomerTrackingLinkPayload!
   "Revoke one tracking link, or every live link on the shipment. Returns how many were revoked."
   revokeCustomerTrackingLink(shipmentId: ID!, linkId: ID): Int!
+}
+`, BuiltIn: false},
+	{Name: "../schema/data_entry_control.graphqls", Input: `"""
+How the organization's entered codes, names, emails and cities are cased.
+"""
+type DataEntryControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  codeCase: DataEntryCaseFormat!
+  nameCase: DataEntryCaseFormat!
+  emailCase: DataEntryCaseFormat!
+  cityCase: DataEntryCaseFormat!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the data entry control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDataEntryControlInput {
+  version: Int!
+  codeCase: DataEntryCaseFormat!
+  nameCase: DataEntryCaseFormat!
+  emailCase: DataEntryCaseFormat!
+  cityCase: DataEntryCaseFormat!
+}
+
+"How entered text is cased."
+enum DataEntryCaseFormat {
+  AsEntered
+  Upper
+  Lower
+  TitleCase
+}
+
+extend type Query {
+  "The organization's data entry control."
+  dataEntryControl: DataEntryControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's data entry control."
+  updateDataEntryControl(input: UpdateDataEntryControlInput!): DataEntryControl!
+}
+`, BuiltIn: false},
+	{Name: "../schema/data_retention.graphqls", Input: `"""
+How long the organization keeps each kind of record before it is purged, in days.
+"""
+type DataRetention {
+  "Empty until the organization saves its own retention periods."
+  id: ID
+  organizationId: ID!
+  businessUnitId: ID!
+  auditRetentionPeriod: Int!
+  "Zero disables purging of inbound EDI files."
+  ediInboundFileRetentionPeriod: Int!
+  "Zero disables purging of EDI messages."
+  ediMessageRetentionPeriod: Int!
+  "How long a terminated driver's qualification file is held before it is flagged for purge."
+  driverQualificationRetentionPeriod: Int!
+  agentEvalCaseRetentionPeriod: Int!
+  aiFeedbackRetentionPeriod: Int!
+  aiAuditRetentionPeriod: Int!
+  aiCorrectionRetentionPeriod: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+The retention periods to keep, in days. An omitted agent evaluation, AI audit or
+AI correction period keeps the one already saved.
+"""
+input UpdateDataRetentionInput {
+  auditRetentionPeriod: Int!
+  ediInboundFileRetentionPeriod: Int!
+  ediMessageRetentionPeriod: Int!
+  aiFeedbackRetentionPeriod: Int!
+  agentEvalCaseRetentionPeriod: Int
+  aiAuditRetentionPeriod: Int
+  aiCorrectionRetentionPeriod: Int
+}
+
+extend type Query {
+  "The organization's data retention periods."
+  dataRetention: DataRetention!
+}
+
+extend type Mutation {
+  "Saves the organization's data retention periods."
+  updateDataRetention(input: UpdateDataRetentionInput!): DataRetention!
 }
 `, BuiltIn: false},
 	{Name: "../schema/data_table_insight.graphqls", Input: `"How many of a table's filtered rows hold each value of one field."
@@ -13374,6 +13984,220 @@ extend type Mutation {
   dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
 }
 `, BuiltIn: false},
+	{Name: "../schema/dispatch_control.graphqls", Input: `"""
+How the organization dispatches: auto-assignment, compliance enforcement, monitoring, exceptions, tenders and service failures.
+"""
+type DispatchControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  enableAutoAssignment: Boolean!
+  autoAssignmentStrategy: AutoAssignmentStrategy!
+  enforceWorkerAssign: Boolean!
+  enforceTrailerContinuity: Boolean!
+  enforceHosCompliance: Boolean!
+  enforceWorkerPtaRestrictions: Boolean!
+  enforceWorkerTractorFleetContinuity: Boolean!
+  enforceDriverQualificationCompliance: Boolean!
+  enforceMedicalCertCompliance: Boolean!
+  enforceHazmatCompliance: Boolean!
+  enforceDrugAndAlcoholCompliance: Boolean!
+  enableAutoStopActuals: Boolean!
+  scoringWeights: JSON!
+  autoAssignConfidenceThreshold: Decimal!
+  autoAssignMaxDeadheadMiles: Int
+  autoAssignPlanningHorizonHours: Int!
+  planningMode: PlanningMode!
+  horizonMaxMovesPerDriver: Int!
+  horizonSearchIterations: Int
+  coverageRiskWindowHours: Int!
+  enableCheckCallMonitoring: Boolean!
+  checkCallIntervalHours: Int!
+  enableEtaAlerts: Boolean!
+  etaRiskThresholdMinutes: Int!
+  etaDwellMinutes: Int!
+  exceptionDueInfoMinutes: Int!
+  exceptionDueWarningMinutes: Int!
+  exceptionDueCriticalMinutes: Int!
+  exceptionEscalationMinutes: Int!
+  exceptionMaxEscalations: Int!
+  exceptionDefaultAssigneeId: ID
+  exceptionEscalationContactId: ID
+  exceptionMissedStopGraceMinutes: Int!
+  exceptionPodGraceHours: Int!
+  tenderCounterOffersEnabled: Boolean!
+  "Null to a reader without the margins field group."
+  tenderCounterMarginFloorPercent: Decimal @protected(group: Margins)
+  tenderAutoAcceptCounters: Boolean!
+  tenderCounterDecisionMinutes: Int!
+  tenderExhaustedAction: TenderExhaustedAction!
+  tenderEscalationRateIncreasePercent: Decimal!
+  tenderEscalationOfferTtlMinutes: Int!
+  tenderMaxEscalations: Int!
+  complianceEnforcementLevel: ComplianceEnforcementLevel!
+  recordServiceFailures: ServiceIncidentType!
+  serviceFailureTarget: Float
+  serviceFailureGracePeriod: Int
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the dispatch control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDispatchControlInput {
+  version: Int!
+  enableAutoAssignment: Boolean!
+  autoAssignmentStrategy: AutoAssignmentStrategy!
+  enforceWorkerAssign: Boolean!
+  enforceTrailerContinuity: Boolean!
+  enforceHosCompliance: Boolean!
+  enforceWorkerPtaRestrictions: Boolean!
+  enforceWorkerTractorFleetContinuity: Boolean!
+  enforceDriverQualificationCompliance: Boolean!
+  enforceMedicalCertCompliance: Boolean!
+  enforceHazmatCompliance: Boolean!
+  enforceDrugAndAlcoholCompliance: Boolean!
+  enableAutoStopActuals: Boolean!
+  scoringWeights: JSON
+  autoAssignConfidenceThreshold: Decimal!
+  autoAssignMaxDeadheadMiles: Int
+  autoAssignPlanningHorizonHours: Int!
+  planningMode: PlanningMode!
+  horizonMaxMovesPerDriver: Int!
+  horizonSearchIterations: Int
+  coverageRiskWindowHours: Int!
+  enableCheckCallMonitoring: Boolean!
+  checkCallIntervalHours: Int!
+  enableEtaAlerts: Boolean!
+  etaRiskThresholdMinutes: Int!
+  etaDwellMinutes: Int!
+  exceptionDueInfoMinutes: Int!
+  exceptionDueWarningMinutes: Int!
+  exceptionDueCriticalMinutes: Int!
+  exceptionEscalationMinutes: Int!
+  exceptionMaxEscalations: Int!
+  exceptionDefaultAssigneeId: ID
+  exceptionEscalationContactId: ID
+  exceptionMissedStopGraceMinutes: Int!
+  exceptionPodGraceHours: Int!
+  tenderCounterOffersEnabled: Boolean!
+  tenderCounterMarginFloorPercent: Decimal
+  tenderAutoAcceptCounters: Boolean!
+  tenderCounterDecisionMinutes: Int!
+  tenderExhaustedAction: TenderExhaustedAction!
+  tenderEscalationRateIncreasePercent: Decimal!
+  tenderEscalationOfferTtlMinutes: Int!
+  tenderMaxEscalations: Int!
+  complianceEnforcementLevel: ComplianceEnforcementLevel!
+  recordServiceFailures: ServiceIncidentType!
+  serviceFailureTarget: Float
+  serviceFailureGracePeriod: Int
+}
+
+"The preset auto-assignment ranks drivers by."
+enum AutoAssignmentStrategy {
+  Proximity
+  Availability
+  LoadBalancing
+  Performance
+}
+
+"How auto-assignment plans moves."
+enum PlanningMode {
+  Immediate
+  Horizon
+}
+
+"What happens when every carrier on a tender declines."
+enum TenderExhaustedAction {
+  Notify
+  Rebroadcast
+  Rewaterfall
+}
+
+"How a compliance failure on an assignment is enforced."
+enum ComplianceEnforcementLevel {
+  Warning
+  Block
+  Audit
+}
+
+"Which late stops record a service failure."
+enum ServiceIncidentType {
+  Never
+  Pickup
+  Delivery
+  PickupDelivery
+  AllExceptShipper
+}
+
+extend type Query {
+  "The organization's dispatch control."
+  dispatchControl: DispatchControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's dispatch control."
+  updateDispatchControl(input: UpdateDispatchControlInput!): DispatchControl!
+}
+`, BuiltIn: false},
+	{Name: "../schema/distance_control.graphqls", Input: `"""
+How the organization measures distance: stored mileage and the distance profile each purpose uses.
+"""
+type DistanceControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  storeMileage: Boolean!
+  storedDistanceUnits: String!
+  postalCodeFallbackToCity: Boolean!
+  autoCreateStoredMileage: Boolean!
+  loadedMoveDistanceProfileId: ID!
+  emptyMoveDistanceProfileId: ID!
+  payDistanceProfileId: ID!
+  billingDistanceProfileId: ID!
+  fuelDistanceProfileId: ID!
+  etaOutOfRouteDistanceProfileId: ID!
+  distanceCalculatorShortestDistanceProfileId: ID!
+  distanceCalculatorPracticalDistanceProfileId: ID!
+  captureJurisdictionMiles: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the distance control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDistanceControlInput {
+  version: Int!
+  storeMileage: Boolean!
+  storedDistanceUnits: String!
+  postalCodeFallbackToCity: Boolean!
+  autoCreateStoredMileage: Boolean!
+  loadedMoveDistanceProfileId: ID!
+  emptyMoveDistanceProfileId: ID!
+  payDistanceProfileId: ID!
+  billingDistanceProfileId: ID!
+  fuelDistanceProfileId: ID!
+  etaOutOfRouteDistanceProfileId: ID!
+  distanceCalculatorShortestDistanceProfileId: ID!
+  distanceCalculatorPracticalDistanceProfileId: ID!
+  captureJurisdictionMiles: Boolean!
+}
+
+extend type Query {
+  "The organization's distance control."
+  distanceControl: DistanceControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's distance control."
+  updateDistanceControl(input: UpdateDistanceControlInput!): DistanceControl!
+}
+`, BuiltIn: false},
 	{Name: "../schema/distance_override.graphqls", Input: `type DistanceOverrideStop {
   locationId: ID!
   stopOrder: Int!
@@ -13462,6 +14286,65 @@ type DistanceProfileConnection {
 extend type Query {
   distanceProfiles(input: DataTableConnectionInput!): DistanceProfileConnection!
   distanceProfile(id: ID!): DistanceProfile
+}
+`, BuiltIn: false},
+	{Name: "../schema/document_control.graphqls", Input: `"""
+How the organization handles documents: intelligence, classification, extraction, indexing and Capture.
+"""
+type DocumentControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  enableDocumentIntelligence: Boolean!
+  enableOcr: Boolean!
+  enableAutoClassification: Boolean!
+  enableAutoDocumentTypeAssociate: Boolean!
+  enableAutoCreateDocumentTypes: Boolean!
+  enableShipmentDraftExtraction: Boolean!
+  enableAiAssistedClassification: Boolean!
+  enableAiAssistedExtraction: Boolean!
+  shipmentDraftAllowedResources: [String!]!
+  enableFullTextIndexing: Boolean!
+  enableCapture: Boolean!
+  captureAutoFileCoverSheets: Boolean!
+  captureRetentionDays: Int!
+  captureMinAgentVersion: String!
+  captureAllowAutoUpdate: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the document control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDocumentControlInput {
+  version: Int!
+  enableDocumentIntelligence: Boolean!
+  enableOcr: Boolean!
+  enableAutoClassification: Boolean!
+  enableAutoDocumentTypeAssociate: Boolean!
+  enableAutoCreateDocumentTypes: Boolean!
+  enableShipmentDraftExtraction: Boolean!
+  enableAiAssistedClassification: Boolean!
+  enableAiAssistedExtraction: Boolean!
+  shipmentDraftAllowedResources: [String!]!
+  enableFullTextIndexing: Boolean!
+  enableCapture: Boolean!
+  captureAutoFileCoverSheets: Boolean!
+  captureRetentionDays: Int!
+  captureMinAgentVersion: String!
+  captureAllowAutoUpdate: Boolean!
+}
+
+extend type Query {
+  "The organization's document control, created with defaults on first read."
+  documentControl: DocumentControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's document control."
+  updateDocumentControl(input: UpdateDocumentControlInput!): DocumentControl!
 }
 `, BuiltIn: false},
 	{Name: "../schema/document_packet_rule.graphqls", Input: `type DocumentPacketRule {
@@ -20772,6 +21655,46 @@ extend type Mutation {
   deleteFuelSurchargeProgram(id: ID!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "../schema/global_search.graphqls", Input: `"One record a global search found."
+type GlobalSearchHit {
+  id: String!
+  "shipment, customer, worker or document."
+  entityType: String!
+  title: String!
+  subtitle: String!
+  href: String!
+  "Short labelled facts about the record, keyed by label."
+  metadata: JSON
+}
+
+"The records of one kind a global search found."
+type GlobalSearchGroup {
+  entityType: String!
+  label: String!
+  "How many records match in all, which can be more than the hits returned."
+  total: Int!
+  hits: [GlobalSearchHit!]!
+}
+
+"What a global search found, grouped by kind of record, among the records the caller may read."
+type GlobalSearchResult {
+  query: String!
+  groups: [GlobalSearchGroup!]!
+}
+
+input GlobalSearchInput {
+  query: String!
+  "Hits per kind of record; at most 25."
+  limit: Int
+  "shipment, customer, worker or document; every kind when omitted."
+  entityTypes: [String!]
+}
+
+extend type Query {
+  "Searches shipments, customers, workers and documents the caller may read."
+  globalSearch(input: GlobalSearchInput!): GlobalSearchResult!
+}
+`, BuiltIn: false},
 	{Name: "../schema/hazardous_material.graphqls", Input: `enum HazardousClass {
   HazardClass1
   HazardClass1And1
@@ -23401,6 +24324,132 @@ extend type Mutation {
   rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
 }
 `, BuiltIn: false},
+	{Name: "../schema/invoice_adjustment_control.graphqls", Input: `"""
+Which invoices may be adjusted, how adjustments post, and when they need a reason or approval.
+"""
+type InvoiceAdjustmentControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy!
+  closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy!
+  adjustmentReasonRequirement: AdjustmentRequirementPolicy!
+  standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy!
+  standardAdjustmentApprovalThreshold: Decimal!
+  writeOffApprovalPolicy: WriteOffApprovalPolicy!
+  writeOffApprovalThreshold: Decimal!
+  requireSeparateApprover: Boolean!
+  rerateVarianceTolerancePercent: Decimal!
+  replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy!
+  customerCreditBalancePolicy: CustomerCreditBalancePolicy!
+  overCreditPolicy: OverCreditPolicy!
+  supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the invoice adjustment control at once. version is the one read; a stale one is refused.
+"""
+input UpdateInvoiceAdjustmentControlInput {
+  version: Int!
+  partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy!
+  closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy!
+  adjustmentReasonRequirement: AdjustmentRequirementPolicy!
+  standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy!
+  standardAdjustmentApprovalThreshold: Decimal!
+  writeOffApprovalPolicy: WriteOffApprovalPolicy!
+  writeOffApprovalThreshold: Decimal!
+  requireSeparateApprover: Boolean!
+  rerateVarianceTolerancePercent: Decimal!
+  replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy!
+  customerCreditBalancePolicy: CustomerCreditBalancePolicy!
+  overCreditPolicy: OverCreditPolicy!
+  supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy!
+}
+
+"Whether an invoice in a given state may be adjusted."
+enum AdjustmentEligibilityPolicy {
+  Disallow
+  AllowWithApproval
+  AllowWithoutApproval
+}
+
+"Which accounting date an adjustment posts on."
+enum AdjustmentAccountingDatePolicy {
+  UseOriginalIfOpenElseNextOpen
+  AlwaysNextOpen
+}
+
+"What happens to an adjustment of an invoice in a closed period."
+enum ClosedPeriodAdjustmentPolicy {
+  Disallow
+  RequireReopen
+  PostInNextOpenPeriodWithApproval
+}
+
+"Whether an adjustment needs a reason."
+enum AdjustmentRequirementPolicy {
+  Optional
+  Required
+}
+
+"When a standard adjustment needs approval."
+enum AdjustmentApprovalPolicy {
+  None
+  Always
+  AmountThreshold
+}
+
+"When a write-off needs approval."
+enum WriteOffApprovalPolicy {
+  Disallow
+  AlwaysRequireApproval
+  RequireApprovalAboveThreshold
+}
+
+"When a replacement invoice needs review."
+enum ReplacementInvoiceReviewPolicy {
+  NoAdditionalReview
+  RequireReviewWhenEconomicTermsChange
+  AlwaysRequireReview
+}
+
+"Whether an adjustment may leave a customer credit balance."
+enum CustomerCreditBalancePolicy {
+  Disallow
+  AllowUnappliedCredit
+}
+
+"Whether a credit may exceed what the invoice still owes."
+enum OverCreditPolicy {
+  Block
+  AllowWithApproval
+}
+
+"Which invoices a customer sees after a replacement."
+enum SupersededInvoiceVisibilityPolicy {
+  ShowCurrentOnlyExternally
+  ShowCurrentAndSupersededExternally
+}
+
+extend type Query {
+  "The organization's invoice adjustment control."
+  invoiceAdjustmentControl: InvoiceAdjustmentControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's invoice adjustment control."
+  updateInvoiceAdjustmentControl(input: UpdateInvoiceAdjustmentControlInput!): InvoiceAdjustmentControl!
+}
+`, BuiltIn: false},
 	{Name: "../schema/invoice_dispute.graphqls", Input: `"Where a dispute case stands. An invoice is Disputed while it has an Open case."
 enum InvoiceDisputeCaseStatus {
   Open
@@ -24287,6 +25336,127 @@ extend type Mutation {
   restoreNotifications(ids: [ID!]!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "../schema/notification_preference.graphqls", Input: `"Which notifications reach a person outside the bell."
+enum NotificationDeliveryMode {
+  off
+  urgent
+  all
+}
+
+"""
+What reaches the signed-in person outside the notification bell, and when.
+"""
+type NotificationPreference {
+  "Empty until the person saves their own preferences."
+  id: ID
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  disabledEventTypes: [String!]!
+  desktopMode: NotificationDeliveryMode!
+  emailMode: NotificationDeliveryMode!
+  emailDigest: Boolean!
+  sound: Boolean!
+  quietHoursEnabled: Boolean!
+  "Local time of day, HH:MM."
+  quietHoursStart: String!
+  "Local time of day, HH:MM."
+  quietHoursEnd: String!
+  "Days of the week quiet hours apply, 0 for Sunday."
+  quietHoursDays: [Int!]!
+  quietHoursAllowUrgent: Boolean!
+  pausedUntil: Timestamp
+  lastDigestAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input UpdateMyNotificationPreferencesInput {
+  disabledEventTypes: [String!]!
+  desktopMode: NotificationDeliveryMode!
+  emailMode: NotificationDeliveryMode!
+  emailDigest: Boolean!
+  sound: Boolean!
+  quietHoursEnabled: Boolean!
+  quietHoursStart: String!
+  quietHoursEnd: String!
+  quietHoursDays: [Int!]!
+  quietHoursAllowUrgent: Boolean!
+  pausedUntil: Timestamp
+}
+
+extend type Query {
+  "The signed-in person's notification preferences, or the defaults when they saved none."
+  myNotificationPreferences: NotificationPreference!
+}
+
+extend type Mutation {
+  "Saves the signed-in person's notification preferences."
+  updateMyNotificationPreferences(
+    input: UpdateMyNotificationPreferencesInput!
+  ): NotificationPreference!
+}
+`, BuiltIn: false},
+	{Name: "../schema/onboarding.graphqls", Input: `"Whether a new organization has finished its first-run setup."
+enum OnboardingStatus {
+  pending
+  completed
+}
+
+"The organization's profile as onboarding collected it."
+type OnboardingOrganization {
+  name: String!
+  timezone: String!
+  addressLine1: String!
+  city: String!
+  stateId: ID
+  postalCode: String!
+  scacCode: String!
+  dotNumber: String!
+}
+
+"Where the organization stands in its first-run setup."
+type OnboardingState {
+  "Whether the signed-in person must finish onboarding before using Trenova."
+  required: Boolean!
+  status: OnboardingStatus!
+  operationType: OperationType
+  sampleDataLoaded: Boolean!
+  completedAt: Timestamp
+  organization: OnboardingOrganization
+}
+
+input OnboardingOrganizationInput {
+  name: String!
+  timezone: String!
+  addressLine1: String!
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  scacCode: String
+  dotNumber: String
+}
+
+input CompleteOnboardingInput {
+  organization: OnboardingOrganizationInput!
+  operationType: OperationType!
+  loadSampleData: Boolean!
+}
+
+extend type Query {
+  "Where the signed-in person's organization stands in its first-run setup."
+  onboardingState: OnboardingState!
+}
+
+extend type Mutation {
+  """
+  Finishes the organization's first-run setup: saves its profile and operating
+  mode and, when asked, loads sample data. A person must do it, not an API key.
+  """
+  completeOnboarding(input: CompleteOnboardingInput!): OnboardingState!
+}
+`, BuiltIn: false},
 	{Name: "../schema/order.graphqls", Input: `type Order {
   id: ID!
   businessUnitId: ID!
@@ -24844,6 +26014,42 @@ extend type Query {
   roleResourceGuides(input: RoleResourceGuideInput!): [RoleResourceGuide!]!
 }
 `, BuiltIn: false},
+	{Name: "../schema/page_favorite.graphqls", Input: `"A page the signed-in person pinned to their favorites."
+type PageFavorite {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  pageUrl: String!
+  pageTitle: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Whether a toggle left the page a favorite, and the favorite it made."
+type PageFavoriteToggleResult {
+  favorited: Boolean!
+  favorite: PageFavorite
+}
+
+input ToggleMyPageFavoriteInput {
+  pageUrl: String!
+  pageTitle: String!
+}
+
+extend type Query {
+  "The signed-in person's favorite pages."
+  myPageFavorites: [PageFavorite!]!
+  "Whether the signed-in person has the page among their favorites."
+  isMyPageFavorite(pageUrl: String!): Boolean!
+}
+
+extend type Mutation {
+  "Adds the page to the signed-in person's favorites, or removes it when it is one."
+  toggleMyPageFavorite(input: ToggleMyPageFavoriteInput!): PageFavoriteToggleResult!
+}
+`, BuiltIn: false},
 	{Name: "../schema/performance_review.graphqls", Input: `enum PerformanceReviewStatus {
   Draft
   Submitted
@@ -25050,6 +26256,38 @@ extend type Mutation {
   The signed-in driver signs off on a submitted review.
   """
   acknowledgeMyReview(id: ID!, comment: String): PerformanceReview!
+}
+`, BuiltIn: false},
+	{Name: "../schema/place_autocomplete.graphqls", Input: `"An address the maps provider suggests for what was typed."
+type PlaceSuggestion {
+  name: String!
+  addressLine1: String!
+  city: String!
+  state: String!
+  postalCode: String!
+  longitude: Float!
+  latitude: Float!
+  placeId: String!
+  "The organization's US state the suggestion falls in, when one matches."
+  stateId: ID
+  types: [String!]!
+}
+
+"The addresses the maps provider suggests."
+type PlaceAutocompleteResult {
+  details: [PlaceSuggestion!]!
+  count: Int!
+}
+
+input PlaceAutocompleteInput {
+  input: String!
+  "Groups the keystrokes of one search into one billed session."
+  sessionToken: String
+}
+
+extend type Query {
+  "US address suggestions from the organization's maps provider for what was typed."
+  placeAutocomplete(input: PlaceAutocompleteInput!): PlaceAutocompleteResult!
 }
 `, BuiltIn: false},
 	{Name: "../schema/pto_policy.graphqls", Input: `enum PTOPolicyStatus {
@@ -30483,6 +31721,65 @@ extend type Mutation {
   notifyShipmentDelay(input: NotifyShipmentDelayInput!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "../schema/shipment_control.graphqls", Input: `"""
+How the organization's shipments behave: weight limits, delays, cancellations, detention and checks.
+"""
+type ShipmentControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  maxShipmentWeightLimit: Int!
+  autoDelayShipments: Boolean!
+  autoDelayShipmentsThreshold: Int
+  detentionThreshold: Int
+  autoCancelShipmentsThreshold: Int
+  autoCancelShipments: Boolean!
+  trackDetentionTime: Boolean!
+  autoGenerateDetentionCharges: Boolean!
+  detentionChargeId: ID
+  useDetentionPolicyEngine: Boolean!
+  defaultDetentionPolicyId: ID
+  trackCustomerRejections: Boolean!
+  checkForDuplicateBols: Boolean!
+  allowMoveRemovals: Boolean!
+  checkHazmatSegregation: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the shipment control at once. version is the one read; a stale one is refused.
+"""
+input UpdateShipmentControlInput {
+  version: Int!
+  maxShipmentWeightLimit: Int!
+  autoDelayShipments: Boolean!
+  autoDelayShipmentsThreshold: Int
+  detentionThreshold: Int
+  autoCancelShipmentsThreshold: Int
+  autoCancelShipments: Boolean!
+  trackDetentionTime: Boolean!
+  autoGenerateDetentionCharges: Boolean!
+  detentionChargeId: ID
+  useDetentionPolicyEngine: Boolean!
+  defaultDetentionPolicyId: ID
+  trackCustomerRejections: Boolean!
+  checkForDuplicateBols: Boolean!
+  allowMoveRemovals: Boolean!
+  checkHazmatSegregation: Boolean!
+}
+
+extend type Query {
+  "The organization's shipment control."
+  shipmentControl: ShipmentControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's shipment control."
+  updateShipmentControl(input: UpdateShipmentControlInput!): ShipmentControl!
+}
+`, BuiltIn: false},
 	{Name: "../schema/shipment_type.graphqls", Input: `type ShipmentType {
   id: ID!
   businessUnitId: ID!
@@ -30643,6 +31940,32 @@ extend type Query {
   storedMileage(id: ID!): StoredMileage
 }
 `, BuiltIn: false},
+	{Name: "../schema/system_update.graphqls", Input: `"A published release of Trenova."
+type SystemRelease {
+  version: String!
+  tagName: String!
+  publishedAt: Timestamp!
+  releaseNotes: String!
+  downloadUrl: String!
+  htmlUrl: String!
+  isPrerelease: Boolean!
+}
+
+"The running build's version and whether a newer release exists."
+type SystemUpdateStatus {
+  currentVersion: String!
+  latestVersion: String!
+  updateAvailable: Boolean!
+  latestRelease: SystemRelease
+  "When the release server was last asked; zero when update checks are off."
+  lastChecked: Timestamp!
+}
+
+extend type Query {
+  "The running build's version and whether a newer release exists, checked at most once per interval."
+  systemUpdateStatus: SystemUpdateStatus!
+}
+`, BuiltIn: false},
 	{Name: "../schema/table_change_alert.graphqls", Input: `type TCASubscription @kind(resource: "table_change_alert") {
   id: ID!
   organizationId: ID!
@@ -30678,9 +32001,52 @@ type TCASubscriptionConnection {
   totalCountExact: Boolean!
 }
 
+"A table the organization allows change alerts on."
+type TCAAllowlistedTable {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  tableName: String!
+  displayName: String!
+  enabled: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of a change alert the signed-in person subscribes to. Conditions are
+objects with a field, an operator and a value.
+"""
+input SaveTCASubscriptionInput {
+  name: String!
+  tableName: String!
+  recordId: String
+  eventTypes: [String!]!
+  conditions: [JSON!]!
+  "all or any."
+  conditionMatch: String!
+  watchedColumns: [String!]!
+  customTitle: String!
+  customMessage: String!
+  topic: String!
+  "critical, high, medium or low."
+  priority: String!
+  "Active or Paused."
+  status: String!
+}
+
 extend type Query {
   tcaSubscriptions(input: DataTableConnectionInput!): TCASubscriptionConnection!
   tcaSubscription(id: ID!): TCASubscription
+  "The tables the organization allows change alerts on."
+  tcaAllowlistedTables: [TCAAllowlistedTable!]!
+}
+
+extend type Mutation {
+  "Subscribes the signed-in person to changes on an allowed table."
+  createTcaSubscription(input: SaveTCASubscriptionInput!): TCASubscription!
+  "Changes one of the signed-in person's change alert subscriptions; version is the one read."
+  updateTcaSubscription(id: ID!, version: Int!, input: SaveTCASubscriptionInput!): TCASubscription!
 }
 `, BuiltIn: false},
 	{Name: "../schema/table_configuration.graphqls", Input: `enum ConfigurationVisibility {
@@ -30789,6 +32155,75 @@ extend type Mutation {
   saveMyTableLayout(input: TableLayoutInput!): TableLayout!
   "Forgets the caller's arrangement of a table, so it opens as its default view."
   resetMyTableLayout(resource: String!): Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../schema/table_query.graphqls", Input: `"One field a table can be narrowed by in words."
+type TableQueryCatalogueField {
+  name: String!
+  kind: String!
+  note: String!
+  values: [String!]!
+  sortable: Boolean!
+  operators: [String!]!
+}
+
+"A table that can be narrowed by a description, and the fields it understands."
+type TableQueryCatalogueResource {
+  resource: String!
+  entity: String!
+  summary: String!
+  fields: [TableQueryCatalogueField!]!
+}
+
+"A filter a composed table view applies."
+type TableQueryFieldFilter {
+  field: String!
+  operator: String!
+  value: Any
+}
+
+"A sort a composed table view applies."
+type TableQuerySortField {
+  field: String!
+  direction: String!
+}
+
+"Something a description asked for that the table's fields cannot express."
+type TableQueryUnresolvedTerm {
+  phrase: String!
+  reason: String!
+}
+
+"The table view a description compiled to, and what it could not express."
+type TableQueryComposeResult {
+  query: String!
+  fieldFilters: [TableQueryFieldFilter!]!
+  sort: [TableQuerySortField!]!
+  "The compiled view in words, built from what compiled rather than from the description."
+  explanation: String!
+  terms: [String!]!
+  unresolved: [TableQueryUnresolvedTerm!]!
+}
+
+"What the table already shows, so a follow-up narrows rather than replaces it."
+input TableQueryCurrentViewInput {
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  sort: [SortFieldInput!]
+}
+
+input ComposeTableQueryInput {
+  "The permission resource of the table, as the catalogue names it."
+  resource: String!
+  prompt: String!
+  current: TableQueryCurrentViewInput
+}
+
+extend type Query {
+  "The tables that can be narrowed by a description, and in which terms."
+  tableQueryCatalogue: [TableQueryCatalogueResource!]!
+  "Compiles a description into a view of the table. It writes nothing; reading the table needs its read permission."
+  composeTableQuery(input: ComposeTableQueryInput!): TableQueryComposeResult!
 }
 `, BuiltIn: false},
 	{Name: "../schema/telematics.graphqls", Input: `type VehiclePosition {
@@ -32695,6 +34130,133 @@ extend type Mutation {
   markWatchtowerItemSeen(id: ID!): WatchtowerItem!
   "Brings a snoozed exception back before its time."
   wakeWatchtowerItem(id: ID!, expectedVersion: Int): WatchtowerItem!
+}
+`, BuiltIn: false},
+	{Name: "../schema/weather_alert.graphqls", Input: `"The kind of hazard a weather alert warns of, which picks its color on the map."
+enum WeatherAlertCategory {
+  winter_weather
+  wind_storm
+  flood_water
+  fire
+  heat
+  tornado_severe_storm
+  tropical_storm_hurricane
+  other
+}
+
+"What happened to a weather alert."
+enum WeatherAlertActivityType {
+  issued
+  updated
+  expired
+  cancelled
+}
+
+"The organization's active National Weather Service alerts, as a GeoJSON feature collection."
+type WeatherAlertFeatureCollection {
+  type: String!
+  features: [WeatherAlertFeature!]!
+}
+
+"One weather alert as a GeoJSON feature."
+type WeatherAlertFeature {
+  type: String!
+  id: ID!
+  "The GeoJSON geometry of the alert's area."
+  geometry: JSON
+  properties: WeatherAlertProperties!
+}
+
+"What the National Weather Service says about an alert."
+type WeatherAlertProperties {
+  id: ID!
+  nwsId: String!
+  event: String!
+  severity: String!
+  urgency: String!
+  certainty: String!
+  headline: String!
+  description: String!
+  instruction: String!
+  areaDesc: String!
+  effective: Timestamp
+  expires: Timestamp
+  onset: Timestamp
+  ends: Timestamp
+  status: String!
+  messageType: String!
+  senderName: String!
+  response: String!
+  category: String!
+  alertCategory: WeatherAlertCategory!
+  firstSeenAt: Timestamp!
+  lastUpdatedAt: Timestamp!
+  expiredAt: Timestamp
+}
+
+"One change to a weather alert."
+type WeatherAlertActivity {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  weatherAlertId: ID!
+  activityType: WeatherAlertActivityType!
+  timestamp: Timestamp!
+  details: JSON
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A weather alert with everything that happened to it."
+type WeatherAlertDetail {
+  feature: WeatherAlertFeature!
+  activities: [WeatherAlertActivity!]!
+}
+
+extend type Query {
+  "The organization's active weather alerts."
+  weatherAlerts: WeatherAlertFeatureCollection!
+  "One of the organization's weather alerts with its activity."
+  weatherAlert(id: ID!): WeatherAlertDetail!
+}
+`, BuiltIn: false},
+	{Name: "../schema/web_push.graphqls", Input: `"Whether browser push is configured, and the key a browser subscribes with."
+type WebPushConfig {
+  enabled: Boolean!
+  publicKey: String!
+}
+
+"A browser push subscription of the signed-in person's device."
+type WebPushSubscription {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  endpoint: String!
+  userAgent: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input RegisterMyPushSubscriptionInput {
+  endpoint: String!
+  p256dh: String!
+  auth: String!
+}
+
+extend type Query {
+  "Whether browser push is configured, and its public key."
+  webPushConfig: WebPushConfig!
+}
+
+extend type Mutation {
+  """
+  Registers a browser push subscription for the signed-in person's device. An
+  endpoint another person registered is refused as a conflict.
+  """
+  registerMyPushSubscription(input: RegisterMyPushSubscriptionInput!): WebPushSubscription!
+  "Removes the signed-in person's push subscription for the endpoint."
+  unregisterMyPushSubscription(endpoint: String!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/worker.graphqls", Input: `enum WorkerType {

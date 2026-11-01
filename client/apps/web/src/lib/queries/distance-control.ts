@@ -4,6 +4,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const distanceControl = createQueryKeys("distanceControl", {
   get: () => ({
     queryKey: ["get"],
-    queryFn: async () => apiService.distanceControlService.get(),
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      apiService.distanceControlService.get({ signal }),
   }),
 });

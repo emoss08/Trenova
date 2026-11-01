@@ -594,6 +594,11 @@ export type AccountingBackfillStatus =
   | 'Queued'
   | 'Running';
 
+/** Which events recognize revenue and expense. */
+export type AccountingBasis =
+  | 'Accrual'
+  | 'Cash';
+
 /** What a phrase or action of the accounting brief leads to. */
 export type AccountingBriefingLink =
   /** Promises to pay that lapsed unpaid; one customer's when the segment carries its customerId. */
@@ -992,6 +997,28 @@ export type AdjustWorkerPtoBalanceInput = {
   ptoType: PtoType;
   workerId: string | number;
 };
+
+/** Which accounting date an adjustment posts on. */
+export type AdjustmentAccountingDatePolicy =
+  | 'AlwaysNextOpen'
+  | 'UseOriginalIfOpenElseNextOpen';
+
+/** When a standard adjustment needs approval. */
+export type AdjustmentApprovalPolicy =
+  | 'Always'
+  | 'AmountThreshold'
+  | 'None';
+
+/** Whether an invoice in a given state may be adjusted. */
+export type AdjustmentEligibilityPolicy =
+  | 'AllowWithApproval'
+  | 'AllowWithoutApproval'
+  | 'Disallow';
+
+/** Whether an adjustment needs a reason. */
+export type AdjustmentRequirementPolicy =
+  | 'Optional'
+  | 'Required';
 
 /** Who may use an agent, among the people who may use the assistant. */
 export type AgentAccessMode =
@@ -1795,6 +1822,13 @@ export type AuditCategory =
   | 'System'
   | 'User';
 
+/** The preset auto-assignment ranks drivers by. */
+export type AutoAssignmentStrategy =
+  | 'Availability'
+  | 'LoadBalancing'
+  | 'Performance'
+  | 'Proximity';
+
 /**
  * What a driver would rather work on a weekday. It is a statement, never a
  * constraint: dispatch is free to override it, and the rota shows where it did so
@@ -1867,6 +1901,21 @@ export type BillType =
   | 'DebitMemo'
   | 'Invoice';
 
+/** Where a shipment with a billing exception goes. */
+export type BillingExceptionDisposition =
+  | 'ReturnToOperations'
+  | 'RouteToBillingReview';
+
+/** The organization's default invoice payment term. */
+export type BillingPaymentTerm =
+  | 'DueOnReceipt'
+  | 'Net10'
+  | 'Net15'
+  | 'Net30'
+  | 'Net45'
+  | 'Net60'
+  | 'Net90';
+
 /** What Nova made of an item it reviewed. */
 export type BillingQueueAgentVerdict =
   | 'Agrees'
@@ -1934,6 +1983,11 @@ export type BillingQueueStatus =
   | 'ReadyForReview'
   | 'SentBackToOps';
 
+/** How ready shipments reach the billing queue. */
+export type BillingQueueTransferMode =
+  | 'AutomaticWhenReady'
+  | 'ManualOnly';
+
 export type BillingQueueUpdateStatusInput = {
   cancelReason?: string | null | undefined;
   exceptionNotes?: string | null | undefined;
@@ -1971,6 +2025,13 @@ export type BillingTransferRunStatus =
   | 'Failed'
   | 'Queued'
   | 'Running';
+
+/** How often ready shipments transfer to the billing queue. */
+export type BillingTransferSchedule =
+  | 'Continuous'
+  | 'Daily'
+  | 'Hourly'
+  | 'Weekly';
 
 /** Who a briefing is written for. The same morning reads differently to a dispatcher and a biller. */
 export type BriefingRoleKey =
@@ -2666,6 +2727,36 @@ export type CarrierType =
   | 'Contract'
   | 'Exempt';
 
+/** What ticks a step the organization added. */
+export type CaseChecklistCustomCheck =
+  | 'Document'
+  | 'Manual';
+
+export type CaseChecklistCustomItemInput = {
+  check: CaseChecklistCustomCheck;
+  documentTypeId?: string | number | null | undefined;
+  label: string;
+  prompt?: string | null | undefined;
+  stepLabel?: string | null | undefined;
+};
+
+/** Whether a checklist step must be ticked, may be, or is left off. */
+export type CaseChecklistItemMode =
+  | 'Off'
+  | 'Optional'
+  | 'Required';
+
+/** Which case checklist a template lays out. */
+export type CaseChecklistKind =
+  | 'ReadyToBill'
+  | 'ReadyToClose';
+
+export type CaseChecklistTemplateItemInput = {
+  custom?: CaseChecklistCustomItemInput | null | undefined;
+  key: string;
+  mode: CaseChecklistItemMode;
+};
+
 export type ChangeAccountingBackfillInput = {
   action: AccountingBackfillAction;
   id: string | number;
@@ -2746,6 +2837,17 @@ export type ClockInput = {
   workerId: string | number;
 };
 
+/** What happens to an adjustment of an invoice in a closed period. */
+export type ClosedPeriodAdjustmentPolicy =
+  | 'Disallow'
+  | 'PostInNextOpenPeriodWithApproval'
+  | 'RequireReopen';
+
+/** What happens to a posting dated in a closed period. */
+export type ClosedPeriodPostingPolicy =
+  | 'PostToNextOpen'
+  | 'RequireReopen';
+
 export type CommodityInput = {
   description: string;
   fragile: boolean;
@@ -2822,6 +2924,12 @@ export type CompleteClearinghouseQueryInput = {
   violationCount?: number | null | undefined;
 };
 
+export type CompleteOnboardingInput = {
+  loadSampleData: boolean;
+  operationType: OperationType;
+  organization: OnboardingOrganizationInput;
+};
+
 export type CompleteWorkerTrainingInput = {
   completedAt?: number | null | undefined;
   courseId?: string | number | null | undefined;
@@ -2837,10 +2945,23 @@ export type CompleteWorkerTrainingInput = {
   workerId?: string | number | null | undefined;
 };
 
+/** How a compliance failure on an assignment is enforced. */
+export type ComplianceEnforcementLevel =
+  | 'Audit'
+  | 'Block'
+  | 'Warning';
+
 export type ComplianceStatus =
   | 'Compliant'
   | 'NonCompliant'
   | 'Pending';
+
+export type ComposeTableQueryInput = {
+  current?: TableQueryCurrentViewInput | null | undefined;
+  prompt: string;
+  /** The permission resource of the table, as the catalogue names it. */
+  resource: string;
+};
 
 export type ConfigurationVisibility =
   | 'Private'
@@ -3134,6 +3255,11 @@ export type CreditMemoApplicationStatus =
   | 'Applied'
   | 'Unapplied';
 
+/** Whether the organization transacts in more than one currency. */
+export type CurrencyMode =
+  | 'MultiCurrency'
+  | 'SingleCurrency';
+
 /** How often a statement-billed customer is billed. */
 export type CustomerBillingCycle =
   | 'BiWeekly'
@@ -3200,6 +3326,11 @@ export type CustomerBillingProfileInput = {
   taxExemptNumber?: string | null | undefined;
   validateCustomerRates: boolean;
 };
+
+/** Whether an adjustment may leave a customer credit balance. */
+export type CustomerCreditBalancePolicy =
+  | 'AllowUnappliedCredit'
+  | 'Disallow';
 
 export type CustomerCreditStatus =
   | 'Active'
@@ -3499,6 +3630,13 @@ export type DqfSection =
   | 'Documents'
   | 'DrugAlcohol'
   | 'SafetyHistory';
+
+/** How entered text is cased. */
+export type DataEntryCaseFormat =
+  | 'AsEntered'
+  | 'Lower'
+  | 'TitleCase'
+  | 'Upper';
 
 /** Totals of a table's filtered rows. */
 export type DataTableAggregateInput = {
@@ -4239,6 +4377,13 @@ export type EndorsementType =
   | 'T'
   | 'X';
 
+/** How strictly a billing rule is enforced. */
+export type EnforcementLevel =
+  | 'Block'
+  | 'Ignore'
+  | 'RequireReview'
+  | 'Warn';
+
 export type EnrollBenefitInput = {
   benefitPlanId: string | number;
   coverageTier?: CoverageTier | null | undefined;
@@ -4339,6 +4484,22 @@ export type EtaVerdict =
   | 'Late'
   | 'OnTime'
   | 'Unknown';
+
+/** Which date picks the exchange rate. */
+export type ExchangeRateDatePolicy =
+  | 'AccountingDate'
+  | 'DocumentDate';
+
+/** Whether a person may override an exchange rate. */
+export type ExchangeRateOverridePolicy =
+  | 'Allow'
+  | 'Disallow'
+  | 'RequireApproval';
+
+/** The event that recognizes expense. */
+export type ExpenseRecognitionPolicy =
+  | 'OnCashDisbursement'
+  | 'OnVendorBillPost';
 
 export type ExportTableViewInput = {
   /** csv, xlsx or pdf. */
@@ -5143,6 +5304,14 @@ export type GenerateSettlementBatchInput = {
   periodStart?: number | null | undefined;
 };
 
+export type GlobalSearchInput = {
+  /** shipment, customer, worker or document; every kind when omitted. */
+  entityTypes?: Array<string> | null | undefined;
+  /** Hits per kind of record; at most 25. */
+  limit?: number | null | undefined;
+  query: string;
+};
+
 export type GrantCarrierIntelOverrideInput = {
   carrierId: string | number;
   expiresAt?: number | null | undefined;
@@ -5758,6 +5927,11 @@ export type InvoiceDisputeStatus =
   | 'Disputed'
   | 'None';
 
+/** How invoice drafts are created from the billing queue. */
+export type InvoiceDraftCreationMode =
+  | 'AutomaticWhenTransferred'
+  | 'ManualOnly';
+
 /** Where the outbound EDI 210 for an invoice stands, separately from email. */
 export type InvoiceEdiSendStatus =
   | 'DeadLettered'
@@ -5793,6 +5967,11 @@ export type InvoicePaymentTerm =
   | 'Net45'
   | 'Net60'
   | 'Net90';
+
+/** How invoice drafts are posted. */
+export type InvoicePostingMode =
+  | 'AutomaticWhenNoBlockingExceptions'
+  | 'ManualReviewRequired';
 
 /**
  * What an invoice covers. Read this rather than inferring shape from which of
@@ -5921,6 +6100,16 @@ export type JobPositionInput = {
   title: string;
 };
 
+/** Whether source events post journals on their own. */
+export type JournalPostingMode =
+  | 'Automatic'
+  | 'Manual';
+
+/** Where a journal reversal posts. */
+export type JournalReversalPolicy =
+  | 'Disallow'
+  | 'NextOpenPeriod';
+
 export type JournalReversalStatus =
   | 'Approved'
   | 'Cancelled'
@@ -5932,6 +6121,28 @@ export type JournalReversalStatus =
 export type JournalReviewInput = {
   entryIds: Array<string | number>;
 };
+
+/** A source event that can post a journal entry automatically. */
+export type JournalSourceEvent =
+  | 'CarrierSettlementPaid'
+  | 'CarrierSettlementPosted'
+  | 'CarrierSettlementVoided'
+  | 'CreditMemoPosted'
+  | 'CustomerPaymentPosted'
+  | 'CustomerPaymentReversed'
+  | 'CustomerShortPayRecognized'
+  | 'DebitMemoPosted'
+  | 'DriverSettlementPaid'
+  | 'DriverSettlementPosted'
+  | 'DriverSettlementVoided'
+  | 'EscrowInterestAccrued'
+  | 'FactoringChargebackReversed'
+  | 'FactoringChargedBack'
+  | 'FactoringFunded'
+  | 'FactoringReserveReleased'
+  | 'InvoicePosted'
+  | 'VendorBillPosted'
+  | 'VendorPaymentPosted';
 
 export type JurisdictionRuleStatus =
   | 'Active'
@@ -6025,6 +6236,10 @@ export type LocationGeofenceType =
   | 'draw'
   | 'rectangle';
 
+/** What may post into a locked period. */
+export type LockedPeriodPostingPolicy =
+  | 'BlockSubledgerAllowManualJe';
+
 export type LogCheckCallInput = {
   city?: string | null | undefined;
   contactName?: string | null | undefined;
@@ -6050,6 +6265,12 @@ export type LogInboundExceptionInput = {
   /** What was short, over or damaged: pallets, cases, pieces. */
   unit: string;
 };
+
+/** Which manual journal entries are allowed. */
+export type ManualJournalEntryPolicy =
+  | 'AdjustmentOnly'
+  | 'AllowAll'
+  | 'Disallow';
 
 export type ManualJournalStatus =
   | 'Approved'
@@ -6161,6 +6382,12 @@ export type NotificationChannel =
   | 'role'
   | 'user';
 
+/** Which notifications reach a person outside the bell. */
+export type NotificationDeliveryMode =
+  | 'all'
+  | 'off'
+  | 'urgent';
+
 export type NotificationFilterInput = {
   state?: NotificationState | null | undefined;
   unreadOnly?: boolean | null | undefined;
@@ -6205,6 +6432,22 @@ export type OshaIllnessType =
 export type OshaSummaryStatus =
   | 'Certified'
   | 'Draft';
+
+export type OnboardingOrganizationInput = {
+  addressLine1: string;
+  city: string;
+  dotNumber?: string | null | undefined;
+  name: string;
+  postalCode: string;
+  scacCode?: string | null | undefined;
+  stateId: string | number;
+  timezone: string;
+};
+
+/** Whether a new organization has finished its first-run setup. */
+export type OnboardingStatus =
+  | 'completed'
+  | 'pending';
 
 export type OpenEscrowAccountInput = {
   annualInterestRate?: string | null | undefined;
@@ -6299,6 +6542,11 @@ export type OrganizationInput = {
   timezone: string;
   version: number;
 };
+
+/** Whether a credit may exceed what the invoice still owes. */
+export type OverCreditPolicy =
+  | 'AllowWithApproval'
+  | 'Block';
 
 export type PtoAccrualMethod =
   | 'FixedAnnualGrant'
@@ -6594,11 +6842,27 @@ export type PerformanceReviewTemplatesInput = {
   status?: EntityStatus | null | undefined;
 };
 
+/** How fiscal periods close. */
+export type PeriodCloseMode =
+  | 'ManualOnly'
+  | 'SystemScheduled';
+
 export type PeriodType =
   | 'Adjusting'
   | 'Month'
   | 'Quarter'
   | 'Week';
+
+export type PlaceAutocompleteInput = {
+  input: string;
+  /** Groups the keystrokes of one search into one billed session. */
+  sessionToken?: string | null | undefined;
+};
+
+/** How auto-assignment plans moves. */
+export type PlanningMode =
+  | 'Horizon'
+  | 'Immediate';
 
 /**
  * Who a policy binds. A handbook for employees is not a contract term for an
@@ -6712,6 +6976,12 @@ export type ProtectedFieldGroup =
   /** A worker's date of birth, licence, TWIC and credential numbers, and drug test dates. */
   | 'Personal';
 
+/** When the billing queue approves an item on its own. */
+export type QueueAutoApproveMode =
+  | 'Off'
+  | 'WhenAgentAgrees'
+  | 'WhenChecksClear';
+
 export type RandomDrawStatus =
   | 'Cancelled'
   | 'Draft'
@@ -6769,6 +7039,16 @@ export type RateUnit =
   | 'Mile'
   | 'Stop';
 
+/** Whether a rate variance within tolerance skips review. */
+export type RateVarianceAutoResolutionMode =
+  | 'BypassReviewWithinTolerance'
+  | 'Disabled';
+
+/** How shipments are marked ready to bill. */
+export type ReadyToBillAssignmentMode =
+  | 'AutomaticWhenEligible'
+  | 'ManualOnly';
+
 export type RecognitionKind =
   | 'CustomerPraise'
   | 'Other'
@@ -6776,6 +7056,12 @@ export type RecognitionKind =
   | 'SafetyMilestone'
   | 'TeamPlayer'
   | 'Tenure';
+
+/** How reconciliation differences are enforced. */
+export type ReconciliationMode =
+  | 'BlockPosting'
+  | 'Disabled'
+  | 'WarnOnly';
 
 export type RecordClearinghouseQueryInput = {
   completedAt?: number | null | undefined;
@@ -7008,6 +7294,12 @@ export type RefreezeExtractionEvalCasesInput = {
   caseIds?: Array<string | number> | null | undefined;
 };
 
+export type RegisterMyPushSubscriptionInput = {
+  auth: string;
+  endpoint: string;
+  p256dh: string;
+};
+
 export type RejectInvoiceAdjustmentInput = {
   adjustmentId: string | number;
   reason?: string | null | undefined;
@@ -7045,6 +7337,12 @@ export type RenewAccountingCertificateInput = {
   certificateId: string;
   connectionId: string | number;
 };
+
+/** When a replacement invoice needs review. */
+export type ReplacementInvoiceReviewPolicy =
+  | 'AlwaysRequireReview'
+  | 'NoAdditionalReview'
+  | 'RequireReviewWhenEconomicTermsChange';
 
 /** A dashboard filter applied to every tile whose report starts from its entity. */
 export type ReportDashboardFilterInput = {
@@ -7252,6 +7550,11 @@ export type ReturnToDutyStatus =
   | 'RTDTestRequired'
   | 'SAPEvaluation';
 
+/** The event that recognizes revenue. */
+export type RevenueRecognitionPolicy =
+  | 'OnCashReceipt'
+  | 'OnInvoicePost';
+
 export type ReverseCustomerPaymentInput = {
   accountingDate: number;
   paymentId: string | number;
@@ -7400,6 +7703,18 @@ export type SaveAccountingAppInput = {
   webhookVerifierToken?: string | null | undefined;
 };
 
+/**
+ * Saves the organization's template of a kind, or a customer's. id and version name
+ * a template being changed; without an id one is made.
+ */
+export type SaveCaseChecklistTemplateInput = {
+  customerId?: string | number | null | undefined;
+  id?: string | number | null | undefined;
+  items: Array<CaseChecklistTemplateItemInput>;
+  kind: CaseChecklistKind;
+  version: number;
+};
+
 export type SaveFactoringTransportInput = {
   attachPackets?: boolean | null | undefined;
   emailRecipients?: Array<string> | null | undefined;
@@ -7462,6 +7777,28 @@ export type SaveReportDefinitionInput = {
   status?: string | null | undefined;
   tags?: Array<string> | null | undefined;
   visibility?: string | null | undefined;
+};
+
+/**
+ * Every setting of a change alert the signed-in person subscribes to. Conditions are
+ * objects with a field, an operator and a value.
+ */
+export type SaveTcaSubscriptionInput = {
+  /** all or any. */
+  conditionMatch: string;
+  conditions: Array<unknown>;
+  customMessage: string;
+  customTitle: string;
+  eventTypes: Array<string>;
+  name: string;
+  /** critical, high, medium or low. */
+  priority: string;
+  recordId?: string | null | undefined;
+  /** Active or Paused. */
+  status: string;
+  tableName: string;
+  topic: string;
+  watchedColumns: Array<string>;
 };
 
 export type SaveTelematicsFormMappingInput = {
@@ -7626,6 +7963,14 @@ export type ServiceFailureType =
   | 'MissedDelivery'
   | 'MissedPickup'
   | 'Other';
+
+/** Which late stops record a service failure. */
+export type ServiceIncidentType =
+  | 'AllExceptShipper'
+  | 'Delivery'
+  | 'Never'
+  | 'Pickup'
+  | 'PickupDelivery';
 
 /** Chooses an accounting system record for a mapping and confirms it. */
 export type SetAccountingMappingInput = {
@@ -8360,6 +8705,11 @@ export type SubmitMyExpenseInput = {
   shipmentId?: string | number | null | undefined;
 };
 
+/** Which invoices a customer sees after a replacement. */
+export type SupersededInvoiceVisibilityPolicy =
+  | 'ShowCurrentAndSupersededExternally'
+  | 'ShowCurrentOnlyExternally';
+
 export type TableConfigurationInput = {
   description?: string | null | undefined;
   isDefault?: boolean | null | undefined;
@@ -8387,6 +8737,13 @@ export type TableLayoutInput = {
   resource: string;
 };
 
+/** What the table already shows, so a follow-up narrows rather than replaces it. */
+export type TableQueryCurrentViewInput = {
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+};
+
 export type TelematicsFormMappingItemInput = {
   sourceFieldLabel: string;
   targetCustomFieldKey?: string | null | undefined;
@@ -8397,6 +8754,12 @@ export type TelematicsFormMappingItemInput = {
 export type TenderChannel =
   | 'EDI'
   | 'Email';
+
+/** What happens when every carrier on a tender declines. */
+export type TenderExhaustedAction =
+  | 'Notify'
+  | 'Rebroadcast'
+  | 'Rewaterfall';
 
 export type TenderMode =
   | 'SpotBroadcast'
@@ -8481,6 +8844,11 @@ export type TodaysBriefingInput = {
   briefingDate?: string | null | undefined;
   /** Whose morning to read; omitted reads the one written for everybody. */
   roleKey?: BriefingRoleKey | null | undefined;
+};
+
+export type ToggleMyPageFavoriteInput = {
+  pageTitle: string;
+  pageUrl: string;
 };
 
 /** What became of a reported visit when the stop's times were settled. */
@@ -8741,6 +9109,12 @@ export type UncoveredPickupWindow =
   | 'TwoToSixHours'
   | 'UnderTwoHours';
 
+/** What happens to a shipment no rate covers. */
+export type UnratedShipmentDisposition =
+  | 'Block'
+  | 'FallbackFormulaTemplate'
+  | 'ZeroAndFlag';
+
 export type UpcomingWorkerPtoInput = {
   after?: string | null | undefined;
   endDate?: number | null | undefined;
@@ -8751,6 +9125,49 @@ export type UpcomingWorkerPtoInput = {
   timezone?: string | null | undefined;
   type?: PtoType | null | undefined;
   workerId?: string | number | null | undefined;
+};
+
+/** Every setting of the accounting control at once. version is the one read; a stale one is refused. */
+export type UpdateAccountingControlInput = {
+  accountingBasis: AccountingBasis;
+  autoPostSourceEvents: Array<JournalSourceEvent>;
+  closedPeriodPostingPolicy: ClosedPeriodPostingPolicy;
+  currencyMode: CurrencyMode;
+  defaultApAccountId?: string | number | null | undefined;
+  defaultArAccountId?: string | number | null | undefined;
+  defaultCashAccountId?: string | number | null | undefined;
+  defaultDriverAdvanceAccountId?: string | number | null | undefined;
+  defaultDriverPayExpenseAccountId?: string | number | null | undefined;
+  defaultDriverReimbursementAccountId?: string | number | null | undefined;
+  defaultEscrowInterestExpenseAccountId?: string | number | null | undefined;
+  defaultEscrowLiabilityAccountId?: string | number | null | undefined;
+  defaultExpenseAccountId?: string | number | null | undefined;
+  defaultPurchasedTransportationAccountId?: string | number | null | undefined;
+  defaultRetainedEarningsAccountId?: string | number | null | undefined;
+  defaultRevenueAccountId?: string | number | null | undefined;
+  defaultSettlementsPayableAccountId?: string | number | null | undefined;
+  defaultTaxLiabilityAccountId?: string | number | null | undefined;
+  defaultUnappliedCashAccountId?: string | number | null | undefined;
+  defaultWriteOffAccountId?: string | number | null | undefined;
+  exchangeRateDatePolicy: ExchangeRateDatePolicy;
+  exchangeRateOverridePolicy: ExchangeRateOverridePolicy;
+  expenseRecognitionPolicy: ExpenseRecognitionPolicy;
+  functionalCurrencyCode: string;
+  journalPostingMode: JournalPostingMode;
+  journalReversalPolicy: JournalReversalPolicy;
+  lockedPeriodPostingPolicy: LockedPeriodPostingPolicy;
+  manualJournalEntryPolicy: ManualJournalEntryPolicy;
+  notifyOnReconciliationException: boolean;
+  periodCloseMode: PeriodCloseMode;
+  realizedFxGainAccountId?: string | number | null | undefined;
+  realizedFxLossAccountId?: string | number | null | undefined;
+  reconciliationMode: ReconciliationMode;
+  reconciliationToleranceAmount: string;
+  requireManualJeApproval: boolean;
+  requirePeriodCloseApproval: boolean;
+  requireReconciliationToClose: boolean;
+  revenueRecognitionPolicy: RevenueRecognitionPolicy;
+  version: number;
 };
 
 export type UpdateAccountingSyncSettingsInput = {
@@ -8825,6 +9242,43 @@ export type UpdateBenefitPlanInput = {
   waitingPeriodDays?: number | null | undefined;
 };
 
+/** Every setting of the billing control at once. version is the one read; a stale one is refused. */
+export type UpdateBillingControlInput = {
+  autoInvoiceBatchSize: number;
+  billingExceptionDisposition: BillingExceptionDisposition;
+  billingQueueTransferBatchSize: number;
+  billingQueueTransferMode: BillingQueueTransferMode;
+  billingQueueTransferSchedule: BillingTransferSchedule;
+  defaultInvoiceFooter: string;
+  defaultInvoiceTerms: string;
+  defaultPaymentTerm: BillingPaymentTerm;
+  enforceMarginFloor: boolean;
+  fallbackFormulaTemplateId?: string | number | null | undefined;
+  invoiceDraftCreationMode: InvoiceDraftCreationMode;
+  invoicePostingMode: InvoicePostingMode;
+  lateChargeAssessmentMode: LateChargeAssessmentMode;
+  lateChargeMinimumAmount: string;
+  monthlyStatementDay: number;
+  monthlyStatementsEnabled: boolean;
+  notifyOnAutoInvoiceCreation: boolean;
+  notifyOnBillingExceptions: boolean;
+  paymentReminderDays: Array<number>;
+  paymentRemindersEnabled: boolean;
+  queueAgentReviewEnabled: boolean;
+  queueAutoApproveMaxAmount?: string | null | undefined;
+  queueAutoApproveMode: QueueAutoApproveMode;
+  rateValidationEnforcement: EnforcementLevel;
+  rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode;
+  rateVarianceTolerancePercent: string;
+  readyToBillAssignmentMode: ReadyToBillAssignmentMode;
+  requireRateOverrideReason: boolean;
+  shipmentBillingRequirementEnforcement: EnforcementLevel;
+  showBalanceDueOnInvoice: boolean;
+  showDueDateOnInvoice: boolean;
+  unratedShipmentDisposition: UnratedShipmentDisposition;
+  version: number;
+};
+
 export type UpdateCarrierSettlementControlInput = {
   autoAcceptWithinTolerance: boolean;
   autoGenerateBatches: boolean;
@@ -8895,6 +9349,118 @@ export type UpdateDashControlInput = {
   sendCredentialReminders: boolean;
   showLoadPay: boolean;
   showPayEstimates: boolean;
+  version: number;
+};
+
+/** Every setting of the data entry control at once. version is the one read; a stale one is refused. */
+export type UpdateDataEntryControlInput = {
+  cityCase: DataEntryCaseFormat;
+  codeCase: DataEntryCaseFormat;
+  emailCase: DataEntryCaseFormat;
+  nameCase: DataEntryCaseFormat;
+  version: number;
+};
+
+/**
+ * The retention periods to keep, in days. An omitted agent evaluation, AI audit or
+ * AI correction period keeps the one already saved.
+ */
+export type UpdateDataRetentionInput = {
+  agentEvalCaseRetentionPeriod?: number | null | undefined;
+  aiAuditRetentionPeriod?: number | null | undefined;
+  aiCorrectionRetentionPeriod?: number | null | undefined;
+  aiFeedbackRetentionPeriod: number;
+  auditRetentionPeriod: number;
+  ediInboundFileRetentionPeriod: number;
+  ediMessageRetentionPeriod: number;
+};
+
+/** Every setting of the dispatch control at once. version is the one read; a stale one is refused. */
+export type UpdateDispatchControlInput = {
+  autoAssignConfidenceThreshold: string;
+  autoAssignMaxDeadheadMiles?: number | null | undefined;
+  autoAssignPlanningHorizonHours: number;
+  autoAssignmentStrategy: AutoAssignmentStrategy;
+  checkCallIntervalHours: number;
+  complianceEnforcementLevel: ComplianceEnforcementLevel;
+  coverageRiskWindowHours: number;
+  enableAutoAssignment: boolean;
+  enableAutoStopActuals: boolean;
+  enableCheckCallMonitoring: boolean;
+  enableEtaAlerts: boolean;
+  enforceDriverQualificationCompliance: boolean;
+  enforceDrugAndAlcoholCompliance: boolean;
+  enforceHazmatCompliance: boolean;
+  enforceHosCompliance: boolean;
+  enforceMedicalCertCompliance: boolean;
+  enforceTrailerContinuity: boolean;
+  enforceWorkerAssign: boolean;
+  enforceWorkerPtaRestrictions: boolean;
+  enforceWorkerTractorFleetContinuity: boolean;
+  etaDwellMinutes: number;
+  etaRiskThresholdMinutes: number;
+  exceptionDefaultAssigneeId?: string | number | null | undefined;
+  exceptionDueCriticalMinutes: number;
+  exceptionDueInfoMinutes: number;
+  exceptionDueWarningMinutes: number;
+  exceptionEscalationContactId?: string | number | null | undefined;
+  exceptionEscalationMinutes: number;
+  exceptionMaxEscalations: number;
+  exceptionMissedStopGraceMinutes: number;
+  exceptionPodGraceHours: number;
+  horizonMaxMovesPerDriver: number;
+  horizonSearchIterations?: number | null | undefined;
+  planningMode: PlanningMode;
+  recordServiceFailures: ServiceIncidentType;
+  scoringWeights?: unknown;
+  serviceFailureGracePeriod?: number | null | undefined;
+  serviceFailureTarget?: number | null | undefined;
+  tenderAutoAcceptCounters: boolean;
+  tenderCounterDecisionMinutes: number;
+  tenderCounterMarginFloorPercent?: string | null | undefined;
+  tenderCounterOffersEnabled: boolean;
+  tenderEscalationOfferTtlMinutes: number;
+  tenderEscalationRateIncreasePercent: string;
+  tenderExhaustedAction: TenderExhaustedAction;
+  tenderMaxEscalations: number;
+  version: number;
+};
+
+/** Every setting of the distance control at once. version is the one read; a stale one is refused. */
+export type UpdateDistanceControlInput = {
+  autoCreateStoredMileage: boolean;
+  billingDistanceProfileId: string | number;
+  captureJurisdictionMiles: boolean;
+  distanceCalculatorPracticalDistanceProfileId: string | number;
+  distanceCalculatorShortestDistanceProfileId: string | number;
+  emptyMoveDistanceProfileId: string | number;
+  etaOutOfRouteDistanceProfileId: string | number;
+  fuelDistanceProfileId: string | number;
+  loadedMoveDistanceProfileId: string | number;
+  payDistanceProfileId: string | number;
+  postalCodeFallbackToCity: boolean;
+  storeMileage: boolean;
+  storedDistanceUnits: string;
+  version: number;
+};
+
+/** Every setting of the document control at once. version is the one read; a stale one is refused. */
+export type UpdateDocumentControlInput = {
+  captureAllowAutoUpdate: boolean;
+  captureAutoFileCoverSheets: boolean;
+  captureMinAgentVersion: string;
+  captureRetentionDays: number;
+  enableAiAssistedClassification: boolean;
+  enableAiAssistedExtraction: boolean;
+  enableAutoClassification: boolean;
+  enableAutoCreateDocumentTypes: boolean;
+  enableAutoDocumentTypeAssociate: boolean;
+  enableCapture: boolean;
+  enableDocumentIntelligence: boolean;
+  enableFullTextIndexing: boolean;
+  enableOcr: boolean;
+  enableShipmentDraftExtraction: boolean;
+  shipmentDraftAllowedResources: Array<string>;
   version: number;
 };
 
@@ -8999,6 +9565,27 @@ export type UpdateHomeLayoutPresetInput = {
   widgets: Array<HomeWidgetInput>;
 };
 
+/** Every setting of the invoice adjustment control at once. version is the one read; a stale one is refused. */
+export type UpdateInvoiceAdjustmentControlInput = {
+  adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy;
+  adjustmentReasonRequirement: AdjustmentRequirementPolicy;
+  closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy;
+  customerCreditBalancePolicy: CustomerCreditBalancePolicy;
+  disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy;
+  overCreditPolicy: OverCreditPolicy;
+  paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy;
+  partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy;
+  replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy;
+  requireSeparateApprover: boolean;
+  rerateVarianceTolerancePercent: string;
+  standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy;
+  standardAdjustmentApprovalThreshold: string;
+  supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy;
+  version: number;
+  writeOffApprovalPolicy: WriteOffApprovalPolicy;
+  writeOffApprovalThreshold: string;
+};
+
 export type UpdateJobPositionInput = {
   code: string;
   department: JobDepartment;
@@ -9043,6 +9630,20 @@ export type UpdateMyContactInfoInput = {
   emergencyContactPhone?: string | null | undefined;
   phoneNumber: string;
   postalCode: string;
+};
+
+export type UpdateMyNotificationPreferencesInput = {
+  desktopMode: NotificationDeliveryMode;
+  disabledEventTypes: Array<string>;
+  emailDigest: boolean;
+  emailMode: NotificationDeliveryMode;
+  pausedUntil?: number | null | undefined;
+  quietHoursAllowUrgent: boolean;
+  quietHoursDays: Array<number>;
+  quietHoursEnabled: boolean;
+  quietHoursEnd: string;
+  quietHoursStart: string;
+  sound: boolean;
 };
 
 export type UpdateOrderChargeInput = {
@@ -9201,6 +9802,26 @@ export type UpdateSettlementControlInput = {
   periodEndDayOfWeek: number;
   varianceLookbackWeeks: number;
   varianceThresholdPct: string;
+  version: number;
+};
+
+/** Every setting of the shipment control at once. version is the one read; a stale one is refused. */
+export type UpdateShipmentControlInput = {
+  allowMoveRemovals: boolean;
+  autoCancelShipments: boolean;
+  autoCancelShipmentsThreshold?: number | null | undefined;
+  autoDelayShipments: boolean;
+  autoDelayShipmentsThreshold?: number | null | undefined;
+  autoGenerateDetentionCharges: boolean;
+  checkForDuplicateBols: boolean;
+  checkHazmatSegregation: boolean;
+  defaultDetentionPolicyId?: string | number | null | undefined;
+  detentionChargeId?: string | number | null | undefined;
+  detentionThreshold?: number | null | undefined;
+  maxShipmentWeightLimit: number;
+  trackCustomerRejections: boolean;
+  trackDetentionTime: boolean;
+  useDetentionPolicyEngine: boolean;
   version: number;
 };
 
@@ -9440,6 +10061,24 @@ export type WatchtowerSourceKind =
   | 'TenderExhausted'
   | 'WeatherAlert'
   | 'WorkerCredential';
+
+/** What happened to a weather alert. */
+export type WeatherAlertActivityType =
+  | 'cancelled'
+  | 'expired'
+  | 'issued'
+  | 'updated';
+
+/** The kind of hazard a weather alert warns of, which picks its color on the map. */
+export type WeatherAlertCategory =
+  | 'fire'
+  | 'flood_water'
+  | 'heat'
+  | 'other'
+  | 'tornado_severe_storm'
+  | 'tropical_storm_hurricane'
+  | 'wind_storm'
+  | 'winter_weather';
 
 export type WithdrawInvoiceDisputeInput = {
   disputeId: string | number;
@@ -9763,6 +10402,12 @@ export type WorkersCompClaimStatus =
   | 'Filed'
   | 'NotFiled';
 
+/** When a write-off needs approval. */
+export type WriteOffApprovalPolicy =
+  | 'AlwaysRequireApproval'
+  | 'Disallow'
+  | 'RequireApprovalAboveThreshold';
+
 export type WriteOffPayAdvanceInput = {
   advanceId: string | number;
   reason: string;
@@ -9840,6 +10485,18 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AccountingControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AccountingControlQuery = { accountingControl: { id: string, organizationId: string, businessUnitId: string, accountingBasis: AccountingBasis, revenueRecognitionPolicy: RevenueRecognitionPolicy, expenseRecognitionPolicy: ExpenseRecognitionPolicy, journalPostingMode: JournalPostingMode, autoPostSourceEvents: Array<JournalSourceEvent>, manualJournalEntryPolicy: ManualJournalEntryPolicy, requireManualJeApproval: boolean, journalReversalPolicy: JournalReversalPolicy, periodCloseMode: PeriodCloseMode, requirePeriodCloseApproval: boolean, lockedPeriodPostingPolicy: LockedPeriodPostingPolicy, closedPeriodPostingPolicy: ClosedPeriodPostingPolicy, requireReconciliationToClose: boolean, reconciliationMode: ReconciliationMode, reconciliationToleranceAmount: string, notifyOnReconciliationException: boolean, currencyMode: CurrencyMode, functionalCurrencyCode: string, exchangeRateDatePolicy: ExchangeRateDatePolicy, exchangeRateOverridePolicy: ExchangeRateOverridePolicy, defaultRevenueAccountId: string | null, defaultCashAccountId: string | null, defaultUnappliedCashAccountId: string | null, defaultExpenseAccountId: string | null, defaultArAccountId: string | null, defaultApAccountId: string | null, defaultTaxLiabilityAccountId: string | null, defaultWriteOffAccountId: string | null, defaultRetainedEarningsAccountId: string | null, realizedFxGainAccountId: string | null, realizedFxLossAccountId: string | null, defaultDriverPayExpenseAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, defaultSettlementsPayableAccountId: string | null, defaultDriverAdvanceAccountId: string | null, defaultEscrowLiabilityAccountId: string | null, defaultDriverReimbursementAccountId: string | null, defaultEscrowInterestExpenseAccountId: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateAccountingControlMutationVariables = Exact<{
+  input: UpdateAccountingControlInput;
+}>;
+
+
+export type UpdateAccountingControlMutation = { updateAccountingControl: { id: string, organizationId: string, businessUnitId: string, accountingBasis: AccountingBasis, revenueRecognitionPolicy: RevenueRecognitionPolicy, expenseRecognitionPolicy: ExpenseRecognitionPolicy, journalPostingMode: JournalPostingMode, autoPostSourceEvents: Array<JournalSourceEvent>, manualJournalEntryPolicy: ManualJournalEntryPolicy, requireManualJeApproval: boolean, journalReversalPolicy: JournalReversalPolicy, periodCloseMode: PeriodCloseMode, requirePeriodCloseApproval: boolean, lockedPeriodPostingPolicy: LockedPeriodPostingPolicy, closedPeriodPostingPolicy: ClosedPeriodPostingPolicy, requireReconciliationToClose: boolean, reconciliationMode: ReconciliationMode, reconciliationToleranceAmount: string, notifyOnReconciliationException: boolean, currencyMode: CurrencyMode, functionalCurrencyCode: string, exchangeRateDatePolicy: ExchangeRateDatePolicy, exchangeRateOverridePolicy: ExchangeRateOverridePolicy, defaultRevenueAccountId: string | null, defaultCashAccountId: string | null, defaultUnappliedCashAccountId: string | null, defaultExpenseAccountId: string | null, defaultArAccountId: string | null, defaultApAccountId: string | null, defaultTaxLiabilityAccountId: string | null, defaultWriteOffAccountId: string | null, defaultRetainedEarningsAccountId: string | null, realizedFxGainAccountId: string | null, realizedFxLossAccountId: string | null, defaultDriverPayExpenseAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, defaultSettlementsPayableAccountId: string | null, defaultDriverAdvanceAccountId: string | null, defaultEscrowLiabilityAccountId: string | null, defaultDriverReimbursementAccountId: string | null, defaultEscrowInterestExpenseAccountId: string | null, version: number, createdAt: number, updatedAt: number } };
 
 export type DeskAccountingConnectionQueryVariables = Exact<{
   integrationType: AccountingSystem;
@@ -11733,6 +12390,13 @@ export type AiUsageSummaryQueryVariables = Exact<{
 
 export type AiUsageSummaryQuery = { aiUsageSummary: { since: number, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number, byProvider: Array<{ providerId: string, providerName: string, model: string, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, byFeature: Array<{ feature: AiUsageFeature | null, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, recentFailures: Array<{ providerId: string, providerName: string, model: string, task: string, errorClass: string, message: string, at: number }> } };
 
+export type ApiKeyAnalyticsQueryVariables = Exact<{
+  timezone?: string | null | undefined;
+}>;
+
+
+export type ApiKeyAnalyticsQuery = { apiKeyAnalytics: { totalKeys: { count: number, newThisMonth: number }, activeKeys: { count: number, percentOfTotal: number }, revokedKeys: { count: number, percentOfTotal: number }, requests30d: { total: number, sparkline: Array<{ day: string, value: number }> } } };
+
 export type ApiKeyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, keyPrefix: string, status: string, expiresAt: number, lastUsedAt: number, permissionScope: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ApiKeyTableRowFieldsFragment' };
 
 export type ApiKeyTableQueryVariables = Exact<{
@@ -11841,6 +12505,18 @@ export type EndBenefitEnrollmentMutationVariables = Exact<{
 
 
 export type EndBenefitEnrollmentMutation = { endBenefitEnrollment: { id: string, status: BenefitEnrollmentStatus, effectiveTo: number | null, version: number } };
+
+export type BillingControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BillingControlQuery = { billingControl: { id: string, organizationId: string, businessUnitId: string, defaultPaymentTerm: BillingPaymentTerm, defaultInvoiceTerms: string, defaultInvoiceFooter: string, showDueDateOnInvoice: boolean, showBalanceDueOnInvoice: boolean, readyToBillAssignmentMode: ReadyToBillAssignmentMode, billingQueueTransferMode: BillingQueueTransferMode, billingQueueTransferSchedule: BillingTransferSchedule, billingQueueTransferBatchSize: number, invoiceDraftCreationMode: InvoiceDraftCreationMode, invoicePostingMode: InvoicePostingMode, autoInvoiceBatchSize: number, notifyOnAutoInvoiceCreation: boolean, shipmentBillingRequirementEnforcement: EnforcementLevel, rateValidationEnforcement: EnforcementLevel, billingExceptionDisposition: BillingExceptionDisposition, notifyOnBillingExceptions: boolean, rateVarianceTolerancePercent: string, rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode, unratedShipmentDisposition: UnratedShipmentDisposition, fallbackFormulaTemplateId: string | null, requireRateOverrideReason: boolean, enforceMarginFloor: boolean, queueAutoApproveMode: QueueAutoApproveMode, queueAutoApproveMaxAmount: string | null, queueAgentReviewEnabled: boolean, lateChargeAssessmentMode: LateChargeAssessmentMode, lateChargeMinimumAmount: string, paymentRemindersEnabled: boolean, paymentReminderDays: Array<number>, monthlyStatementsEnabled: boolean, monthlyStatementDay: number, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateBillingControlMutationVariables = Exact<{
+  input: UpdateBillingControlInput;
+}>;
+
+
+export type UpdateBillingControlMutation = { updateBillingControl: { id: string, organizationId: string, businessUnitId: string, defaultPaymentTerm: BillingPaymentTerm, defaultInvoiceTerms: string, defaultInvoiceFooter: string, showDueDateOnInvoice: boolean, showBalanceDueOnInvoice: boolean, readyToBillAssignmentMode: ReadyToBillAssignmentMode, billingQueueTransferMode: BillingQueueTransferMode, billingQueueTransferSchedule: BillingTransferSchedule, billingQueueTransferBatchSize: number, invoiceDraftCreationMode: InvoiceDraftCreationMode, invoicePostingMode: InvoicePostingMode, autoInvoiceBatchSize: number, notifyOnAutoInvoiceCreation: boolean, shipmentBillingRequirementEnforcement: EnforcementLevel, rateValidationEnforcement: EnforcementLevel, billingExceptionDisposition: BillingExceptionDisposition, notifyOnBillingExceptions: boolean, rateVarianceTolerancePercent: string, rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode, unratedShipmentDisposition: UnratedShipmentDisposition, fallbackFormulaTemplateId: string | null, requireRateOverrideReason: boolean, enforceMarginFloor: boolean, queueAutoApproveMode: QueueAutoApproveMode, queueAutoApproveMaxAmount: string | null, queueAgentReviewEnabled: boolean, lateChargeAssessmentMode: LateChargeAssessmentMode, lateChargeMinimumAmount: string, paymentRemindersEnabled: boolean, paymentReminderDays: Array<number>, monthlyStatementsEnabled: boolean, monthlyStatementDay: number, version: number, createdAt: number, updatedAt: number } };
 
 export type BillingQueueActionFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shipmentId: string | null, billToCustomerId: string, allocatedTotalAmount: string, assignedBillerId: string | null, number: string, status: BillingQueueStatus, billType: BillType, exceptionReasonCode: BillingQueueExceptionReasonCode | null, reviewNotes: string, exceptionNotes: string, reviewStartedAt: number | null, reviewCompletedAt: number | null, canceledById: string | null, canceledAt: number | null, cancelReason: string, isAdjustmentOrigin: boolean, sourceInvoiceId: string | null, sourceInvoiceAdjustmentId: string | null, sourceCreditMemoInvoiceId: string | null, correctionGroupId: string | null, rebillStrategy: string | null, requiresReplacementReview: boolean, rerateVariancePercent: string, adjustmentContext: unknown, version: number, createdAt: number, updatedAt: number, billToCustomer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'BillingQueueActionFieldsFragment' };
 
@@ -12823,6 +13499,29 @@ export type CarrierTableQueryVariables = Exact<{
 
 export type CarrierTableQuery = { carriers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CaseChecklistTemplateFieldsFragment = { id: string | null, kind: CaseChecklistKind, customerId: string | null, customerName: string, version: number, updatedAt: number, items: Array<{ key: string, mode: CaseChecklistItemMode, custom: { label: string, check: CaseChecklistCustomCheck, documentTypeId: string | null, stepLabel: string, prompt: string } | null }> } & { ' $fragmentName'?: 'CaseChecklistTemplateFieldsFragment' };
+
+export type CaseChecklistTemplatesQueryVariables = Exact<{
+  kind: CaseChecklistKind;
+}>;
+
+
+export type CaseChecklistTemplatesQuery = { caseChecklistTemplates: { kind: CaseChecklistKind, locked: Array<string>, organization: { ' $fragmentRefs'?: { 'CaseChecklistTemplateFieldsFragment': CaseChecklistTemplateFieldsFragment } }, customers: Array<{ ' $fragmentRefs'?: { 'CaseChecklistTemplateFieldsFragment': CaseChecklistTemplateFieldsFragment } }> } };
+
+export type SaveCaseChecklistTemplateMutationVariables = Exact<{
+  input: SaveCaseChecklistTemplateInput;
+}>;
+
+
+export type SaveCaseChecklistTemplateMutation = { saveCaseChecklistTemplate: { ' $fragmentRefs'?: { 'CaseChecklistTemplateFieldsFragment': CaseChecklistTemplateFieldsFragment } } };
+
+export type DeleteCaseChecklistTemplateMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteCaseChecklistTemplateMutation = { deleteCaseChecklistTemplate: boolean };
+
 export type CommandPaletteCustomerPreviewQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -13049,6 +13748,30 @@ export type CustomerTableQueryVariables = Exact<{
 
 
 export type CustomerTableQuery = { customers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'CustomerTableRowFieldsFragment': CustomerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DataEntryControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DataEntryControlQuery = { dataEntryControl: { id: string, organizationId: string, businessUnitId: string, codeCase: DataEntryCaseFormat, nameCase: DataEntryCaseFormat, emailCase: DataEntryCaseFormat, cityCase: DataEntryCaseFormat, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateDataEntryControlMutationVariables = Exact<{
+  input: UpdateDataEntryControlInput;
+}>;
+
+
+export type UpdateDataEntryControlMutation = { updateDataEntryControl: { id: string, organizationId: string, businessUnitId: string, codeCase: DataEntryCaseFormat, nameCase: DataEntryCaseFormat, emailCase: DataEntryCaseFormat, cityCase: DataEntryCaseFormat, version: number, createdAt: number, updatedAt: number } };
+
+export type DataRetentionQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DataRetentionQuery = { dataRetention: { id: string | null, organizationId: string, businessUnitId: string, auditRetentionPeriod: number, ediInboundFileRetentionPeriod: number, ediMessageRetentionPeriod: number, agentEvalCaseRetentionPeriod: number, aiFeedbackRetentionPeriod: number, aiAuditRetentionPeriod: number, aiCorrectionRetentionPeriod: number, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateDataRetentionMutationVariables = Exact<{
+  input: UpdateDataRetentionInput;
+}>;
+
+
+export type UpdateDataRetentionMutation = { updateDataRetention: { id: string | null, organizationId: string, businessUnitId: string, auditRetentionPeriod: number, ediInboundFileRetentionPeriod: number, ediMessageRetentionPeriod: number, agentEvalCaseRetentionPeriod: number, aiFeedbackRetentionPeriod: number, aiAuditRetentionPeriod: number, aiCorrectionRetentionPeriod: number, version: number, createdAt: number, updatedAt: number } };
 
 export type DataTableInsightFieldsQueryVariables = Exact<{
   resource: string;
@@ -13305,6 +14028,30 @@ export type DispatchPlanAutoAssignMutationVariables = Exact<{
 
 export type DispatchPlanAutoAssignMutation = { dispatchPlanAutoAssign: { runId: string | null, shadowMode: boolean, autonomyTier: string, totalScore: number, generatedAt: number, assignments: Array<{ moveId: string, proNumber: string, workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, confidence: number, rationale: string, autoExecutable: boolean, proposalId: string | null, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }>, uncovered: Array<{ moveId: string, proNumber: string, reason: string, bestBlockedFindings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
 
+export type DispatchControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DispatchControlQuery = { dispatchControl: { id: string, organizationId: string, businessUnitId: string, enableAutoAssignment: boolean, autoAssignmentStrategy: AutoAssignmentStrategy, enforceWorkerAssign: boolean, enforceTrailerContinuity: boolean, enforceHosCompliance: boolean, enforceWorkerPtaRestrictions: boolean, enforceWorkerTractorFleetContinuity: boolean, enforceDriverQualificationCompliance: boolean, enforceMedicalCertCompliance: boolean, enforceHazmatCompliance: boolean, enforceDrugAndAlcoholCompliance: boolean, enableAutoStopActuals: boolean, scoringWeights: unknown, autoAssignConfidenceThreshold: string, autoAssignMaxDeadheadMiles: number | null, autoAssignPlanningHorizonHours: number, planningMode: PlanningMode, horizonMaxMovesPerDriver: number, horizonSearchIterations: number | null, coverageRiskWindowHours: number, enableCheckCallMonitoring: boolean, checkCallIntervalHours: number, enableEtaAlerts: boolean, etaRiskThresholdMinutes: number, etaDwellMinutes: number, exceptionDueInfoMinutes: number, exceptionDueWarningMinutes: number, exceptionDueCriticalMinutes: number, exceptionEscalationMinutes: number, exceptionMaxEscalations: number, exceptionDefaultAssigneeId: string | null, exceptionEscalationContactId: string | null, exceptionMissedStopGraceMinutes: number, exceptionPodGraceHours: number, tenderCounterOffersEnabled: boolean, tenderCounterMarginFloorPercent: string | null, tenderAutoAcceptCounters: boolean, tenderCounterDecisionMinutes: number, tenderExhaustedAction: TenderExhaustedAction, tenderEscalationRateIncreasePercent: string, tenderEscalationOfferTtlMinutes: number, tenderMaxEscalations: number, complianceEnforcementLevel: ComplianceEnforcementLevel, recordServiceFailures: ServiceIncidentType, serviceFailureTarget: number | null, serviceFailureGracePeriod: number | null, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateDispatchControlMutationVariables = Exact<{
+  input: UpdateDispatchControlInput;
+}>;
+
+
+export type UpdateDispatchControlMutation = { updateDispatchControl: { id: string, organizationId: string, businessUnitId: string, enableAutoAssignment: boolean, autoAssignmentStrategy: AutoAssignmentStrategy, enforceWorkerAssign: boolean, enforceTrailerContinuity: boolean, enforceHosCompliance: boolean, enforceWorkerPtaRestrictions: boolean, enforceWorkerTractorFleetContinuity: boolean, enforceDriverQualificationCompliance: boolean, enforceMedicalCertCompliance: boolean, enforceHazmatCompliance: boolean, enforceDrugAndAlcoholCompliance: boolean, enableAutoStopActuals: boolean, scoringWeights: unknown, autoAssignConfidenceThreshold: string, autoAssignMaxDeadheadMiles: number | null, autoAssignPlanningHorizonHours: number, planningMode: PlanningMode, horizonMaxMovesPerDriver: number, horizonSearchIterations: number | null, coverageRiskWindowHours: number, enableCheckCallMonitoring: boolean, checkCallIntervalHours: number, enableEtaAlerts: boolean, etaRiskThresholdMinutes: number, etaDwellMinutes: number, exceptionDueInfoMinutes: number, exceptionDueWarningMinutes: number, exceptionDueCriticalMinutes: number, exceptionEscalationMinutes: number, exceptionMaxEscalations: number, exceptionDefaultAssigneeId: string | null, exceptionEscalationContactId: string | null, exceptionMissedStopGraceMinutes: number, exceptionPodGraceHours: number, tenderCounterOffersEnabled: boolean, tenderCounterMarginFloorPercent: string | null, tenderAutoAcceptCounters: boolean, tenderCounterDecisionMinutes: number, tenderExhaustedAction: TenderExhaustedAction, tenderEscalationRateIncreasePercent: string, tenderEscalationOfferTtlMinutes: number, tenderMaxEscalations: number, complianceEnforcementLevel: ComplianceEnforcementLevel, recordServiceFailures: ServiceIncidentType, serviceFailureTarget: number | null, serviceFailureGracePeriod: number | null, version: number, createdAt: number, updatedAt: number } };
+
+export type DistanceControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DistanceControlQuery = { distanceControl: { id: string, organizationId: string, businessUnitId: string, storeMileage: boolean, storedDistanceUnits: string, postalCodeFallbackToCity: boolean, autoCreateStoredMileage: boolean, loadedMoveDistanceProfileId: string, emptyMoveDistanceProfileId: string, payDistanceProfileId: string, billingDistanceProfileId: string, fuelDistanceProfileId: string, etaOutOfRouteDistanceProfileId: string, distanceCalculatorShortestDistanceProfileId: string, distanceCalculatorPracticalDistanceProfileId: string, captureJurisdictionMiles: boolean, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateDistanceControlMutationVariables = Exact<{
+  input: UpdateDistanceControlInput;
+}>;
+
+
+export type UpdateDistanceControlMutation = { updateDistanceControl: { id: string, organizationId: string, businessUnitId: string, storeMileage: boolean, storedDistanceUnits: string, postalCodeFallbackToCity: boolean, autoCreateStoredMileage: boolean, loadedMoveDistanceProfileId: string, emptyMoveDistanceProfileId: string, payDistanceProfileId: string, billingDistanceProfileId: string, fuelDistanceProfileId: string, etaOutOfRouteDistanceProfileId: string, distanceCalculatorShortestDistanceProfileId: string, distanceCalculatorPracticalDistanceProfileId: string, captureJurisdictionMiles: boolean, version: number, createdAt: number, updatedAt: number } };
+
 export type DistanceOverrideLocationFieldsFragment = { id: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, state: { id: string, abbreviation: string } | null } & { ' $fragmentName'?: 'DistanceOverrideLocationFieldsFragment' };
 
 export type DistanceOverrideTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, originLocationId: string, destinationLocationId: string, customerId: string | null, distance: number, version: number, createdAt: number, updatedAt: number, originLocation: { ' $fragmentRefs'?: { 'DistanceOverrideLocationFieldsFragment': DistanceOverrideLocationFieldsFragment } } | null, destinationLocation: { ' $fragmentRefs'?: { 'DistanceOverrideLocationFieldsFragment': DistanceOverrideLocationFieldsFragment } } | null, customer: { id: string, name: string } | null, intermediateStops: Array<{ locationId: string, stopOrder: number }> | null } & { ' $fragmentName'?: 'DistanceOverrideTableRowFieldsFragment' };
@@ -13326,6 +14073,18 @@ export type DistanceProfileTableQueryVariables = Exact<{
 
 
 export type DistanceProfileTableQuery = { distanceProfiles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'DistanceProfileTableRowFieldsFragment': DistanceProfileTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DocumentControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DocumentControlQuery = { documentControl: { id: string, organizationId: string, businessUnitId: string, enableDocumentIntelligence: boolean, enableOcr: boolean, enableAutoClassification: boolean, enableAutoDocumentTypeAssociate: boolean, enableAutoCreateDocumentTypes: boolean, enableShipmentDraftExtraction: boolean, enableAiAssistedClassification: boolean, enableAiAssistedExtraction: boolean, shipmentDraftAllowedResources: Array<string>, enableFullTextIndexing: boolean, enableCapture: boolean, captureAutoFileCoverSheets: boolean, captureRetentionDays: number, captureMinAgentVersion: string, captureAllowAutoUpdate: boolean, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateDocumentControlMutationVariables = Exact<{
+  input: UpdateDocumentControlInput;
+}>;
+
+
+export type UpdateDocumentControlMutation = { updateDocumentControl: { id: string, organizationId: string, businessUnitId: string, enableDocumentIntelligence: boolean, enableOcr: boolean, enableAutoClassification: boolean, enableAutoDocumentTypeAssociate: boolean, enableAutoCreateDocumentTypes: boolean, enableShipmentDraftExtraction: boolean, enableAiAssistedClassification: boolean, enableAiAssistedExtraction: boolean, shipmentDraftAllowedResources: Array<string>, enableFullTextIndexing: boolean, enableCapture: boolean, captureAutoFileCoverSheets: boolean, captureRetentionDays: number, captureMinAgentVersion: string, captureAllowAutoUpdate: boolean, version: number, createdAt: number, updatedAt: number } };
 
 export type DocumentPacketRuleTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, resourceType: string, documentTypeId: string, required: boolean, allowMultiple: boolean, displayOrder: number, expirationRequired: boolean, expirationWarningDays: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DocumentPacketRuleTableRowFieldsFragment' };
 
@@ -15778,6 +16537,13 @@ export type DeleteFuelSurchargeProgramMutationVariables = Exact<{
 
 export type DeleteFuelSurchargeProgramMutation = { deleteFuelSurchargeProgram: boolean };
 
+export type GlobalSearchQueryVariables = Exact<{
+  input: GlobalSearchInput;
+}>;
+
+
+export type GlobalSearchQuery = { globalSearch: { query: string, groups: Array<{ entityType: string, label: string, total: number, hits: Array<{ id: string, entityType: string, title: string, subtitle: string, href: string, metadata: unknown }> }> } };
+
 export type CreateHazardousMaterialMutationVariables = Exact<{
   input: HazardousMaterialInput;
 }>;
@@ -16721,6 +17487,18 @@ export type DecideInboundStopsMutationVariables = Exact<{
 
 export type DecideInboundStopsMutation = { decideInboundStops: { ' $fragmentRefs'?: { 'InboundMessageDetailFieldsFragment': InboundMessageDetailFieldsFragment } } };
 
+export type InvoiceAdjustmentControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InvoiceAdjustmentControlQuery = { invoiceAdjustmentControl: { id: string, organizationId: string, businessUnitId: string, partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy, paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy, disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy, adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy, closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy, adjustmentReasonRequirement: AdjustmentRequirementPolicy, standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy, standardAdjustmentApprovalThreshold: string, writeOffApprovalPolicy: WriteOffApprovalPolicy, writeOffApprovalThreshold: string, requireSeparateApprover: boolean, rerateVarianceTolerancePercent: string, replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy, customerCreditBalancePolicy: CustomerCreditBalancePolicy, overCreditPolicy: OverCreditPolicy, supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateInvoiceAdjustmentControlMutationVariables = Exact<{
+  input: UpdateInvoiceAdjustmentControlInput;
+}>;
+
+
+export type UpdateInvoiceAdjustmentControlMutation = { updateInvoiceAdjustmentControl: { id: string, organizationId: string, businessUnitId: string, partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy, paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy, disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy, adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy, closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy, adjustmentReasonRequirement: AdjustmentRequirementPolicy, standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy, standardAdjustmentApprovalThreshold: string, writeOffApprovalPolicy: WriteOffApprovalPolicy, writeOffApprovalThreshold: string, requireSeparateApprover: boolean, rerateVarianceTolerancePercent: string, replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy, customerCreditBalancePolicy: CustomerCreditBalancePolicy, overCreditPolicy: OverCreditPolicy, supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy, version: number, createdAt: number, updatedAt: number } };
+
 export type InvoiceApprovalQueueItemFieldsFragment = { adjustmentId: string, originalInvoiceId: string, originalInvoiceNumber: string, originalInvoiceStatus: string, customerName: string, kind: InvoiceAdjustmentKind, reason: string, policyReason: string, policySource: string, creditTotalAmount: string, rebillTotalAmount: string, netDeltaAmount: string, wouldCreateUnappliedCredit: boolean, requiresReconciliationException: boolean, requiresReplacementInvoiceReview: boolean, submittedByName: string, submittedAt: number | null, creditMemoInvoiceId: string | null, replacementInvoiceId: string | null, rebillQueueItemId: string | null, batchId: string | null } & { ' $fragmentName'?: 'InvoiceApprovalQueueItemFieldsFragment' };
 
 export type InvoiceAdjustmentApprovalsQueryVariables = Exact<{
@@ -17115,6 +17893,18 @@ export type ManualJournalTableQueryVariables = Exact<{
 
 export type ManualJournalTableQuery = { manualJournals: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ManualJournalTableRowFieldsFragment': ManualJournalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type MyNotificationPreferencesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyNotificationPreferencesQuery = { myNotificationPreferences: { disabledEventTypes: Array<string>, desktopMode: NotificationDeliveryMode, emailMode: NotificationDeliveryMode, emailDigest: boolean, sound: boolean, quietHoursEnabled: boolean, quietHoursStart: string, quietHoursEnd: string, quietHoursDays: Array<number>, quietHoursAllowUrgent: boolean, pausedUntil: number | null } };
+
+export type UpdateMyNotificationPreferencesMutationVariables = Exact<{
+  input: UpdateMyNotificationPreferencesInput;
+}>;
+
+
+export type UpdateMyNotificationPreferencesMutation = { updateMyNotificationPreferences: { disabledEventTypes: Array<string>, desktopMode: NotificationDeliveryMode, emailMode: NotificationDeliveryMode, emailDigest: boolean, sound: boolean, quietHoursEnabled: boolean, quietHoursStart: string, quietHoursEnd: string, quietHoursDays: Array<number>, quietHoursAllowUrgent: boolean, pausedUntil: number | null } };
+
 export type NotificationFieldsFragment = { id: string, organizationId: string, businessUnitId: string | null, targetUserId: string | null, eventType: string, priority: NotificationPriority, channel: NotificationChannel, title: string, message: string, data: unknown, relatedEntities: unknown, source: string, readAt: number | null, dismissedAt: number | null, createdAt: number } & { ' $fragmentName'?: 'NotificationFieldsFragment' };
 
 export type NotificationListQueryVariables = Exact<{
@@ -17210,6 +18000,20 @@ export type RestoreNotificationsMutationVariables = Exact<{
 
 
 export type RestoreNotificationsMutation = { restoreNotifications: boolean };
+
+export type OnboardingStateFieldsFragment = { required: boolean, status: OnboardingStatus, operationType: OperationType | null, sampleDataLoaded: boolean, completedAt: number | null, organization: { name: string, timezone: string, addressLine1: string, city: string, stateId: string | null, postalCode: string, scacCode: string, dotNumber: string } | null } & { ' $fragmentName'?: 'OnboardingStateFieldsFragment' };
+
+export type OnboardingStateQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnboardingStateQuery = { onboardingState: { ' $fragmentRefs'?: { 'OnboardingStateFieldsFragment': OnboardingStateFieldsFragment } } };
+
+export type CompleteOnboardingMutationVariables = Exact<{
+  input: CompleteOnboardingInput;
+}>;
+
+
+export type CompleteOnboardingMutation = { completeOnboarding: { ' $fragmentRefs'?: { 'OnboardingStateFieldsFragment': OnboardingStateFieldsFragment } } };
 
 export type DeskOrderCardQueryVariables = Exact<{
   id: string | number;
@@ -17483,6 +18287,25 @@ export type RoleResourceGuidesQueryVariables = Exact<{
 
 export type RoleResourceGuidesQuery = { roleResourceGuides: Array<{ resource: string, name: string, granted: string, withheld: string, ceiling: string | null, screens: Array<{ path: string, name: string, use: PageAccessUse }> }> };
 
+export type MyPageFavoritesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyPageFavoritesQuery = { myPageFavorites: Array<{ id: string, organizationId: string, businessUnitId: string, userId: string, pageUrl: string, pageTitle: string, version: number, createdAt: number, updatedAt: number }> };
+
+export type IsMyPageFavoriteQueryVariables = Exact<{
+  pageUrl: string;
+}>;
+
+
+export type IsMyPageFavoriteQuery = { isMyPageFavorite: boolean };
+
+export type ToggleMyPageFavoriteMutationVariables = Exact<{
+  input: ToggleMyPageFavoriteInput;
+}>;
+
+
+export type ToggleMyPageFavoriteMutation = { toggleMyPageFavorite: { favorited: boolean, favorite: { id: string, organizationId: string, businessUnitId: string, userId: string, pageUrl: string, pageTitle: string, version: number, createdAt: number, updatedAt: number } | null } };
+
 export type DeskWorkerPerformanceReviewsQueryVariables = Exact<{
   workerId: string | number;
 }>;
@@ -17593,6 +18416,13 @@ export type DeletePerformanceReviewMutationVariables = Exact<{
 
 
 export type DeletePerformanceReviewMutation = { deletePerformanceReview: boolean };
+
+export type PlaceAutocompleteQueryVariables = Exact<{
+  input: PlaceAutocompleteInput;
+}>;
+
+
+export type PlaceAutocompleteQuery = { placeAutocomplete: { count: number, details: Array<{ name: string, addressLine1: string, city: string, state: string, stateId: string | null, postalCode: string, longitude: number, latitude: number, placeId: string, types: Array<string> }> } };
 
 export type PtoPolicyRuleFieldsFragment = { id: string, ptoPolicyId: string, ptoType: PtoType, accrualMethod: PtoAccrualMethod, accrualAmountDays: string, maxBalanceDays: string | null, carryoverCapDays: string | null, carryoverExpiryDays: number, onTermination: PtoTerminationAction, sortOrder: number, tiers: Array<{ minMonths: number, accrualAmountDays: string, maxBalanceDays: string | null }> } & { ' $fragmentName'?: 'PtoPolicyRuleFieldsFragment' };
 
@@ -18570,6 +19400,18 @@ export type ServiceTypeTableQueryVariables = Exact<{
 
 export type ServiceTypeTableQuery = { serviceTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ServiceTypeTableRowFieldsFragment': ServiceTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type ShipmentControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ShipmentControlQuery = { shipmentControl: { id: string, organizationId: string, businessUnitId: string, maxShipmentWeightLimit: number, autoDelayShipments: boolean, autoDelayShipmentsThreshold: number | null, detentionThreshold: number | null, autoCancelShipmentsThreshold: number | null, autoCancelShipments: boolean, trackDetentionTime: boolean, autoGenerateDetentionCharges: boolean, detentionChargeId: string | null, useDetentionPolicyEngine: boolean, defaultDetentionPolicyId: string | null, trackCustomerRejections: boolean, checkForDuplicateBols: boolean, allowMoveRemovals: boolean, checkHazmatSegregation: boolean, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateShipmentControlMutationVariables = Exact<{
+  input: UpdateShipmentControlInput;
+}>;
+
+
+export type UpdateShipmentControlMutation = { updateShipmentControl: { id: string, organizationId: string, businessUnitId: string, maxShipmentWeightLimit: number, autoDelayShipments: boolean, autoDelayShipmentsThreshold: number | null, detentionThreshold: number | null, autoCancelShipmentsThreshold: number | null, autoCancelShipments: boolean, trackDetentionTime: boolean, autoGenerateDetentionCharges: boolean, detentionChargeId: string | null, useDetentionPolicyEngine: boolean, defaultDetentionPolicyId: string | null, trackCustomerRejections: boolean, checkForDuplicateBols: boolean, allowMoveRemovals: boolean, checkHazmatSegregation: boolean, version: number, createdAt: number, updatedAt: number } };
+
 export type ShipmentTypeTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string | null, color: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ShipmentTypeTableRowFieldsFragment' };
 
 export type ShipmentTypeTableQueryVariables = Exact<{
@@ -19165,6 +20007,11 @@ export type StoredMileageTableQueryVariables = Exact<{
 
 export type StoredMileageTableQuery = { storedMileages: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'StoredMileageTableRowFieldsFragment': StoredMileageTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type SystemUpdateStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SystemUpdateStatusQuery = { systemUpdateStatus: { currentVersion: string, latestVersion: string, updateAvailable: boolean, lastChecked: number, latestRelease: { version: string, tagName: string, publishedAt: number, releaseNotes: string, downloadUrl: string, htmlUrl: string, isPrerelease: boolean } | null } };
+
 export type DeskTableChangeAlertsQueryVariables = Exact<{
   input: DataTableConnectionInput;
   includeTotalCount?: boolean | null | undefined;
@@ -19172,6 +20019,29 @@ export type DeskTableChangeAlertsQueryVariables = Exact<{
 
 
 export type DeskTableChangeAlertsQuery = { tcaSubscriptions: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, name: string, tableName: string, eventTypes: Array<string>, watchedColumns: Array<string>, conditions: Array<unknown>, conditionMatch: string, status: string } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type TcaSubscriptionFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, tableName: string, recordId: string | null, eventTypes: Array<string>, conditions: Array<unknown>, conditionMatch: string, watchedColumns: Array<string>, customTitle: string, customMessage: string, topic: string, priority: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TcaSubscriptionFieldsFragment' };
+
+export type TcaAllowlistedTablesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TcaAllowlistedTablesQuery = { tcaAllowlistedTables: Array<{ id: string, organizationId: string, businessUnitId: string, tableName: string, displayName: string, enabled: boolean, createdAt: number, updatedAt: number }> };
+
+export type CreateTcaSubscriptionMutationVariables = Exact<{
+  input: SaveTcaSubscriptionInput;
+}>;
+
+
+export type CreateTcaSubscriptionMutation = { createTcaSubscription: { ' $fragmentRefs'?: { 'TcaSubscriptionFieldsFragment': TcaSubscriptionFieldsFragment } } };
+
+export type UpdateTcaSubscriptionMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: SaveTcaSubscriptionInput;
+}>;
+
+
+export type UpdateTcaSubscriptionMutation = { updateTcaSubscription: { ' $fragmentRefs'?: { 'TcaSubscriptionFieldsFragment': TcaSubscriptionFieldsFragment } } };
 
 export type TcaSubscriptionTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, tableName: string, recordId: string | null, eventTypes: Array<string>, conditions: Array<unknown>, conditionMatch: string, watchedColumns: Array<string>, customTitle: string, customMessage: string, topic: string, priority: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TcaSubscriptionTableRowFieldsFragment' };
 
@@ -19266,6 +20136,18 @@ export type ResetMyTableLayoutMutationVariables = Exact<{
 
 
 export type ResetMyTableLayoutMutation = { resetMyTableLayout: boolean };
+
+export type TableQueryCatalogueQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TableQueryCatalogueQuery = { tableQueryCatalogue: Array<{ resource: string, entity: string, summary: string, fields: Array<{ name: string, kind: string, note: string, values: Array<string>, sortable: boolean, operators: Array<string> }> }> };
+
+export type ComposeTableQueryQueryVariables = Exact<{
+  input: ComposeTableQueryInput;
+}>;
+
+
+export type ComposeTableQueryQuery = { composeTableQuery: { query: string, explanation: string, terms: Array<string>, fieldFilters: Array<{ field: string, operator: string, value: unknown }>, sort: Array<{ field: string, direction: string }>, unresolved: Array<{ phrase: string, reason: string }> } };
 
 export type VehiclePositionsQueryVariables = Exact<{
   maxAgeSeconds?: number | null | undefined;
@@ -19643,6 +20525,39 @@ export type MarkWatchtowerItemSeenMutationVariables = Exact<{
 
 
 export type MarkWatchtowerItemSeenMutation = { markWatchtowerItemSeen: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
+export type WeatherAlertFeatureFieldsFragment = { type: string, id: string, geometry: unknown, properties: { id: string, nwsId: string, event: string, severity: string, urgency: string, certainty: string, headline: string, description: string, instruction: string, areaDesc: string, effective: number | null, expires: number | null, onset: number | null, ends: number | null, status: string, messageType: string, senderName: string, response: string, category: string, alertCategory: WeatherAlertCategory, firstSeenAt: number, lastUpdatedAt: number, expiredAt: number | null } } & { ' $fragmentName'?: 'WeatherAlertFeatureFieldsFragment' };
+
+export type WeatherAlertsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WeatherAlertsQuery = { weatherAlerts: { type: string, features: Array<{ ' $fragmentRefs'?: { 'WeatherAlertFeatureFieldsFragment': WeatherAlertFeatureFieldsFragment } }> } };
+
+export type WeatherAlertQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type WeatherAlertQuery = { weatherAlert: { feature: { ' $fragmentRefs'?: { 'WeatherAlertFeatureFieldsFragment': WeatherAlertFeatureFieldsFragment } }, activities: Array<{ id: string, organizationId: string, businessUnitId: string, weatherAlertId: string, activityType: WeatherAlertActivityType, timestamp: number, details: unknown, createdAt: number, updatedAt: number }> } };
+
+export type WebPushConfigQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WebPushConfigQuery = { webPushConfig: { enabled: boolean, publicKey: string } };
+
+export type RegisterMyPushSubscriptionMutationVariables = Exact<{
+  input: RegisterMyPushSubscriptionInput;
+}>;
+
+
+export type RegisterMyPushSubscriptionMutation = { registerMyPushSubscription: { id: string } };
+
+export type UnregisterMyPushSubscriptionMutationVariables = Exact<{
+  endpoint: string;
+}>;
+
+
+export type UnregisterMyPushSubscriptionMutation = { unregisterMyPushSubscription: boolean };
 
 export type DeskWorkerChecklistsQueryVariables = Exact<{
   workerId: string | number;
@@ -20718,6 +21633,7 @@ export { CreateAccessorialChargeDocument, UpdateAccessorialChargeDocument, Patch
 export { AccessorialChargeTableRowFieldsFragmentDoc, AccessorialChargeTableDocument } from "./documents/accessorial-charge/table";
 export { CreateAccountTypeDocument, UpdateAccountTypeDocument, PatchAccountTypeDocument, BulkUpdateAccountTypeStatusDocument } from "./documents/account-type/mutations";
 export { AccountTypeTableRowFieldsFragmentDoc, AccountTypeTableDocument } from "./documents/account-type/table";
+export { AccountingControlDocument, UpdateAccountingControlDocument } from "./documents/accounting-control/accounting-control";
 export { DeskAccountingSyncRecordFieldsFragmentDoc, DeskAccountingMappingFieldsFragmentDoc, DeskAccountingConnectionDocument, DeskAccountingSyncSummaryDocument, DeskAccountingSyncRecordsDocument, DeskAccountingSyncObjectStatesDocument, DeskAccountingSyncRecordDocument, DeskAccountingSyncAttemptsDocument, DeskAccountingMappingsDocument, DeskAccountingMappingSummaryDocument, DeskAccountingMappingDetailDocument, DeskAccountingDriftFindingsDocument, DeskAccountingDriftOverviewDocument, DeskAccountingInboundChangesDocument } from "./documents/accounting-sync/desk";
 export { AccountingDriftFindingFieldsFragmentDoc, AccountingDriftOverviewFieldsFragmentDoc, AccountingDriftOverviewDocument, AccountingDriftFindingDocument, AccountingDriftFixPreviewDocument, ResolveAccountingDriftDocument, DismissAccountingDriftDocument, CheckAccountingDriftDocument, AccountingDriftFindingTableDocument } from "./documents/accounting-sync/drift";
 export { AccountingInboundChangeFieldsFragmentDoc, AccountingInboundOverviewDocument, AccountingInboundChangeDocument, AccountingInboundApplyPreviewDocument, ApplyAccountingInboundChangeDocument, IgnoreAccountingInboundChangeDocument, AccountingInboundChangeTableDocument } from "./documents/accounting-sync/inbound";
@@ -20752,11 +21668,13 @@ export { AgentToolRuleImpactFieldsFragmentDoc, AgentSafetyHeaderFieldsFragmentDo
 export { MyAiFeedbackFieldsFragmentDoc, AiFeedbackTableRowFieldsFragmentDoc, MyAiFeedbackDocument, SetMyAiFeedbackDocument, ClearMyAiFeedbackDocument, AiFeedbackTableDocument, AgentFeedbackSummaryDocument } from "./documents/ai-feedback/ai-feedback";
 export { AiProviderCardFieldsFragmentDoc, AiProviderLimitFieldsFragmentDoc, AiProviderCardsDocument, AiProviderDetailDocument, AiProviderLimitsDocument, AiRoutePreviewDocument, AiProviderModelsDocument, AiProviderUsageDailyDocument, TestAiProviderDraftDocument, ReorderAiProvidersDocument, PatchAiProviderDocument } from "./documents/ai-provider/providers";
 export { AiUsageSummaryDocument } from "./documents/ai-provider/usage-summary";
+export { ApiKeyAnalyticsDocument } from "./documents/api-key-analytics/api-key-analytics";
 export { ApiKeyTableRowFieldsFragmentDoc, ApiKeyTableDocument } from "./documents/api-key/table";
 export { AttentionSummaryDocument } from "./documents/attention/summary";
 export { RecentActivityDocument } from "./documents/audit-log/recent-activity";
 export { AuditLogTableRowFieldsFragmentDoc, AuditLogTableDocument } from "./documents/audit-log/table";
 export { BenefitPlansDocument, WorkerBenefitEnrollmentsDocument, BenefitEnrollmentsDocument, BenefitCostsDocument, WorkerTotalCompensationDocument, MyTotalCompensationDocument, CreateBenefitPlanDocument, UpdateBenefitPlanDocument, EnrollBenefitDocument, EndBenefitEnrollmentDocument } from "./documents/benefits/operations";
+export { BillingControlDocument, UpdateBillingControlDocument } from "./documents/billing-control/billing-control";
 export { BillingQueueActionFieldsFragmentDoc, UpdateBillingQueueStatusDocument, AssignBillingQueueBillerDocument } from "./documents/billing-queue/mutations";
 export { BillingQueueItemsDocument } from "./documents/billing-queue/queue";
 export { BillingQueueShipmentDocument, BillingQueueRateAgreementDocument, BillingQueueFormulaTemplateDocument } from "./documents/billing-queue/shipment";
@@ -20771,6 +21689,7 @@ export { CarrierIntelFindingFieldsFragmentDoc, CarrierIntelSnapshotSummaryFields
 export { DeskCarrierSettlementCardDocument } from "./documents/carrier-settlement/desk";
 export { CarrierSettlementTableDocument, CarrierSettlementDetailDocument, CarrierSettlementBatchTableDocument, CarrierSettlementBatchDetailDocument, CarrierCostEventTableDocument, CarrierSettlementControlDocument, CurrentCarrierSettlementPeriodDocument, CarrierSettlementWorkspaceSummaryDocument, CarrierLedgerEntriesDocument, CarrierInvoiceMatchesDocument, EdiCarrierInvoicesDocument, SuggestCarrierForEdiInvoiceDocument, ExportCarrierSettlementBatchCsvDocument, GenerateCarrierSettlementBatchDocument, SubmitCarrierSettlementDocument, ApproveCarrierSettlementDocument, RejectCarrierSettlementDocument, PostCarrierSettlementDocument, MarkCarrierSettlementPaidDocument, VoidCarrierSettlementDocument, RecalculateCarrierSettlementDocument, AddCarrierSettlementAdjustmentDocument, RemoveCarrierSettlementAdjustmentDocument, UpdateCarrierSettlementControlDocument, LinkEdiCarrierInvoiceToCarrierDocument, CreateCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchWithVarianceDocument, RejectCarrierInvoiceMatchDocument } from "./documents/carrier-settlement/operations";
 export { CarrierContactFieldsFragmentDoc, CarrierInsurancePolicyFieldsFragmentDoc, CarrierTableRowFieldsFragmentDoc, CarrierTableDocument } from "./documents/carrier/table";
+export { CaseChecklistTemplateFieldsFragmentDoc, CaseChecklistTemplatesDocument, SaveCaseChecklistTemplateDocument, DeleteCaseChecklistTemplateDocument } from "./documents/case-checklist/case-checklist";
 export { CommandPaletteCustomerPreviewDocument } from "./documents/command-palette/operations";
 export { CreateCommodityDocument, UpdateCommodityDocument, PatchCommodityDocument, BulkUpdateCommodityStatusDocument } from "./documents/commodity/mutations";
 export { CommodityTableRowFieldsFragmentDoc, CommodityTableDocument } from "./documents/commodity/table";
@@ -20784,6 +21703,8 @@ export { DeskCustomerCardDocument, DeskCustomerRateAgreementsDocument, DeskCusto
 export { CreateCustomerDocument, UpdateCustomerDocument, PatchCustomerDocument, BulkUpdateCustomerStatusDocument } from "./documents/customer/mutations";
 export { ShipmentCustomerBillingRulesDocument } from "./documents/customer/shipment-billing-rules";
 export { CustomerBillingProfileFieldsFragmentDoc, CustomerEmailProfileFieldsFragmentDoc, CustomerTableRowFieldsFragmentDoc, CustomerTableDocument } from "./documents/customer/table";
+export { DataEntryControlDocument, UpdateDataEntryControlDocument } from "./documents/data-entry-control/data-entry-control";
+export { DataRetentionDocument, UpdateDataRetentionDocument } from "./documents/data-retention/data-retention";
 export { DataTableInsightFieldsDocument, DataTableFacetsDocument, DataTableAggregatesDocument, DataTableSeriesDocument } from "./documents/data-table-insight/operations";
 export { DetentionFacilityStatsDocument, DetentionCustomerStatsDocument, DetentionWaiverStatsDocument, DetentionPolicyPreviewDocument, DetentionBacktestDocument } from "./documents/detention/analytics";
 export { DeskDetentionCardDocument } from "./documents/detention/card";
@@ -20791,8 +21712,11 @@ export { DetentionOccurrenceFieldsFragmentDoc, DetentionEvidenceFieldsFragmentDo
 export { DeskDetentionOccurrencesDocument } from "./documents/detention/desk-board";
 export { DetentionPolicyTierFieldsFragmentDoc, DetentionPolicyRowFieldsFragmentDoc, DetentionPolicyTableDocument, DetentionPolicyDocument, CreateDetentionPolicyDocument, UpdateDetentionPolicyDocument, DeleteDetentionPolicyDocument } from "./documents/detention/table";
 export { DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
+export { DispatchControlDocument, UpdateDispatchControlDocument } from "./documents/dispatch-control/dispatch-control";
+export { DistanceControlDocument, UpdateDistanceControlDocument } from "./documents/distance-control/distance-control";
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";
 export { DistanceProfileTableRowFieldsFragmentDoc, DistanceProfileTableDocument } from "./documents/distance-profile/table";
+export { DocumentControlDocument, UpdateDocumentControlDocument } from "./documents/document-control/document-control";
 export { DocumentPacketRuleTableRowFieldsFragmentDoc, DocumentPacketRuleTableDocument } from "./documents/document-packet-rule/table";
 export { CreateDocumentTypeDocument, UpdateDocumentTypeDocument } from "./documents/document-type/mutations";
 export { DocumentTypeTableRowFieldsFragmentDoc, DocumentTypeTableDocument } from "./documents/document-type/table";
@@ -20842,6 +21766,7 @@ export { DeskFuelPurchaseCardDocument, DeskFuelPurchasesDocument } from "./docum
 export { FuelPurchaseFieldsFragmentDoc, FuelPurchaseTableDocument, FuelPurchaseDocument, CreateFuelPurchaseDocument, UpdateFuelPurchaseDocument, DeleteFuelPurchaseDocument } from "./documents/fuel-purchase/operations";
 export { DeskFuelIndexPricesDocument, DeskFuelProgramCurrentRatesDocument } from "./documents/fuel-surcharge/desk";
 export { FuelIndexFieldsFragmentDoc, FuelSurchargeProgramFieldsFragmentDoc, FuelIndexTableDocument, FuelSurchargeProgramTableDocument, FuelSurchargeProgramDetailDocument, FuelDashboardDocument, FuelIndexPriceHistoryDocument, FuelProgramCurrentRatesDocument, GenerateFuelSurchargeTableDocument, EiaSeriesOptionsDocument, CreateFuelIndexDocument, UpdateFuelIndexDocument, DeleteFuelIndexDocument, AddFuelIndexPriceDocument, UpdateFuelIndexPriceDocument, DeleteFuelIndexPriceDocument, CreateFuelSurchargeProgramDocument, UpdateFuelSurchargeProgramDocument, DeleteFuelSurchargeProgramDocument } from "./documents/fuel-surcharge/operations";
+export { GlobalSearchDocument } from "./documents/global-search/global-search";
 export { CreateHazardousMaterialDocument, UpdateHazardousMaterialDocument, PatchHazardousMaterialDocument, BulkUpdateHazardousMaterialStatusDocument } from "./documents/hazardous-material/mutations";
 export { HazardousMaterialTableRowFieldsFragmentDoc, HazardousMaterialTableDocument } from "./documents/hazardous-material/table";
 export { CreateHazmatSegregationRuleDocument, UpdateHazmatSegregationRuleDocument } from "./documents/hazmat-segregation-rule/mutations";
@@ -20861,6 +21786,7 @@ export { IftaTaxRateFieldsFragmentDoc, IftaTaxRateTableDocument, UpsertIftaTaxRa
 export { DeskInboundMessagesDocument, DeskInboundMessageDocument } from "./documents/inbox/desk";
 export { InboundMailboxFieldsFragmentDoc, InboundMailboxCredentialsFieldsFragmentDoc, InboundShipmentRefFieldsFragmentDoc, TriageUserFieldsFragmentDoc, InboundMessageListFieldsFragmentDoc, InboundAttachmentFieldsFragmentDoc, InboundMessageDetailFieldsFragmentDoc, InboundMessagesDocument, InboundMessageDocument, InboundMessageCountsDocument, InboundMailboxesDocument, ReviewInboundMessageDocument, LinkInboundMessageDocument, CreateInboundMailboxDocument, UpdateInboundMailboxDocument, RotateInboundMailboxTokenDocument, SetInboundMailboxSigningSecretDocument, SetInboundMailboxApiKeyDocument } from "./documents/inbox/inbox";
 export { InboundSnoozeFieldsFragmentDoc, TriageActionFieldsFragmentDoc, InboundAttachmentDetailFieldsFragmentDoc, TriageFactFieldsFragmentDoc, TriageConflictFieldsFragmentDoc, InboundActivityFieldsFragmentDoc, InboundReplyAttachmentFieldsFragmentDoc, InboundReplyFieldsFragmentDoc, TriageLoadDraftFieldsFragmentDoc, InboundReplyAttachableFieldsFragmentDoc, TriageSampleFieldsFragmentDoc, TriageRuleFieldsFragmentDoc, TriageRulePreviewFieldsFragmentDoc, TriageDeckItemFieldsFragmentDoc, TriageRiverPointFieldsFragmentDoc, TriageViewFieldsFragmentDoc, TriageReplyTemplateFieldsFragmentDoc, TriageShipmentPeekFieldsFragmentDoc, TriageBulkResultFieldsFragmentDoc, InboundThreadDocument, TriageBriefingDocument, MyTriageViewsDocument, TriageResponseTargetsDocument, TriageSettingsDocument, TriageAssigneesDocument, TriageRulesDocument, TriageRulePreviewDocument, TriageRuleMatchesDocument, TriageSenderDomainsDocument, InboundSenderProfileDocument, TriageReplyTemplatesDocument, InboundReplyAttachablesDocument, RenderTriageReplyTemplateDocument, TriageStopTimesDocument, TriageShipmentPeekDocument, TriageCustomerPeekDocument, ReviewInboundMessagesDocument, ReopenInboundMessagesDocument, AssignInboundMessagesDocument, SnoozeInboundMessagesDocument, WakeInboundMessageDocument, WaitForInboundReplyDocument, StopWaitingForInboundReplyDocument, UnlinkInboundMessageDocument, SendInboundMailboxTestDocument, HandOffTriageDocument, ReadUnreadInboundMessagesDocument, CreateMyTriageViewDocument, RenameMyTriageViewDocument, DeleteMyTriageViewDocument, UpdateTriageResponseTargetsDocument, UpdateTriageSettingsDocument, CreateTriageRuleDocument, UpdateTriageRuleDocument, SetTriageRuleEnabledDocument, DeleteTriageRuleDocument, CorrectInboundClassificationDocument, FlagInboundFactDocument, ResolveInboundConflictDocument, ReopenInboundConflictDocument, DraftInboundReplyDocument, SaveInboundReplyDraftDocument, DiscardInboundReplyDraftDocument, SendInboundReplyDocument, DraftInboundManyDocument, CreateTriageReplyTemplateDocument, UpdateTriageReplyTemplateDocument, DeleteTriageReplyTemplateDocument, DraftInboundLoadDocument, DiscardInboundLoadDocument, CreateInboundLoadDocument, FileInboundAttachmentDocument, FileInboundManyDocument, UnfileInboundAttachmentDocument, LogInboundExceptionDocument, BlockInboundSenderDocument, UnblockInboundSenderDocument, DecideInboundStopsDocument } from "./documents/inbox/triage";
+export { InvoiceAdjustmentControlDocument, UpdateInvoiceAdjustmentControlDocument } from "./documents/invoice-adjustment-control/invoice-adjustment-control";
 export { InvoiceApprovalQueueItemFieldsFragmentDoc, InvoiceAdjustmentApprovalsDocument, InvoiceAdjustmentApprovalDetailDocument, InvoiceAdjustmentOperationsSummaryDocument, ApproveInvoiceAdjustmentDocument, RejectInvoiceAdjustmentDocument } from "./documents/invoice-adjustment/approvals";
 export { DeskInvoiceAdjustmentCardDocument } from "./documents/invoice-adjustment/desk";
 export { DeskInvoiceNeighborFragmentDoc, DeskInvoiceCardDocument, DeskInvoicesDocument, DeskInvoiceDetailDocument, DeskInvoiceDisputesDocument } from "./documents/invoice/desk";
@@ -20881,7 +21807,9 @@ export { DeskLocationCardDocument, DeskLocationDwellDocument, DeskLocationPolici
 export { LocationTableRowFieldsFragmentDoc, LocationTableDocument } from "./documents/location/table";
 export { DeskManualJournalCardDocument, DeskManualJournalsDocument } from "./documents/manual-journal/desk";
 export { ManualJournalTableRowFieldsFragmentDoc, ManualJournalTableDocument } from "./documents/manual-journal/table";
+export { MyNotificationPreferencesDocument, UpdateMyNotificationPreferencesDocument } from "./documents/notification-preference/notification-preference";
 export { NotificationFieldsFragmentDoc, NotificationListDocument, NotificationUnreadCountDocument, MyNotificationListDocument, MyNotificationUnreadCountDocument, MarkAllMyNotificationsReadDocument, MarkMyNotificationsReadDocument, MarkMyNotificationsUnreadDocument, DismissMyNotificationsDocument, RestoreMyNotificationsDocument, MarkNotificationsReadDocument, MarkNotificationsUnreadDocument, MarkAllNotificationsReadDocument, DismissNotificationsDocument, RestoreNotificationsDocument } from "./documents/notification/operations";
+export { OnboardingStateFieldsFragmentDoc, OnboardingStateDocument, CompleteOnboardingDocument } from "./documents/onboarding/onboarding";
 export { DeskOrderCardDocument, DeskOrderDocument } from "./documents/order-desk/desk";
 export { OrderDetailDocument } from "./documents/order/detail";
 export { OrderMutationResultFragmentDoc, AttachOrderShipmentsDocument, DetachOrderShipmentDocument, CreateOrderDocument, UpdateOrderDocument, AddOrderChargeDocument, SetOrderChargeAllocationsDocument, UpdateOrderChargeDocument, RemoveOrderChargeDocument, CloseOrderDocument, CancelOrderDocument } from "./documents/order/mutations";
@@ -20890,8 +21818,10 @@ export { OrgHolidayFieldsFragmentDoc, OrgHolidaysDocument, CreateOrgHolidayDocum
 export { JobPositionsDocument, HeadcountDocument, JobPositionHoldersDocument, MyTeamDocument, ApprovalDelegationsDocument, AssignWorkerPositionDocument, AssignUserPositionDocument, CreateJobPositionDocument, UpdateJobPositionDocument, DelegateApprovalDocument, RevokeApprovalDelegationDocument } from "./documents/org-structure/operations";
 export { OrganizationSettingsStateFieldsFragmentDoc, OrganizationSettingsFieldsFragmentDoc, OrganizationSettingsDocument, UpdateOrganizationSettingsDocument } from "./documents/organization/page";
 export { PageAccessRequirementFieldsFragmentDoc, PageAccessFieldsFragmentDoc, PageAccessDocument, PageAccessPreviewDocument, PageAccessScreensDocument, RoleResourceGuidesDocument } from "./documents/page-access/page-access";
+export { MyPageFavoritesDocument, IsMyPageFavoriteDocument, ToggleMyPageFavoriteDocument } from "./documents/page-favorite/page-favorite";
 export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDocument } from "./documents/performance-review/desk";
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
+export { PlaceAutocompleteDocument } from "./documents/place-autocomplete/place-autocomplete";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";
 export { DeskRateAgreementPricingDocument, DeskRateAgreementsDocument, DeskRateAgreementCardDocument, DeskRateMatrixCardDocument } from "./documents/rate/desk";
 export { RateMatrixRecordDocument, RateMatrixVersionAxesDocument } from "./documents/rate/matrix-record";
@@ -20922,6 +21852,7 @@ export { ServiceFailureReasonCodeTableRowFieldsFragmentDoc, ServiceFailureReason
 export { DeskServiceFailureCardDocument, DeskRecordFailuresDocument } from "./documents/service-failure/desk";
 export { ServiceFailureTableRowFieldsFragmentDoc, ServiceFailureTableDocument } from "./documents/service-failure/table";
 export { ServiceTypeTableRowFieldsFragmentDoc, ServiceTypeTableDocument } from "./documents/service-type/table";
+export { ShipmentControlDocument, UpdateShipmentControlDocument } from "./documents/shipment-control/shipment-control";
 export { ShipmentTypeTableRowFieldsFragmentDoc, ShipmentTypeTableDocument } from "./documents/shipment-type/table";
 export { ShipmentBoardCapabilitiesDocument, ShipmentStageSummaryDocument, ShipmentBoardGroupsDocument, ShipmentQuickFilterCountsDocument, ShipmentBriefingDocument, ShipmentCapacityDocument, CapacityUnitMatchesDocument, ShipmentCoverageSuggestionsDocument, ShipmentSuggestionsDocument, ShipmentWatchlistDocument, TenderShipmentsDocument, DecideShipmentSuggestionDocument, UndoShipmentSuggestionDecisionDocument, NotifyShipmentDelayDocument } from "./documents/shipment/board";
 export { CheckCallFieldsFragmentDoc, CarrierTrackingLinkFieldsFragmentDoc, ShipmentCheckCallsDocument, CarrierTrackingLinkDocument, LogCheckCallDocument, IssueCarrierTrackingLinkDocument, RevokeCarrierTrackingLinkDocument } from "./documents/shipment/check-calls";
@@ -20931,10 +21862,13 @@ export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDo
 export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preferences/mutations";
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";
+export { SystemUpdateStatusDocument } from "./documents/system/system-update";
 export { DeskTableChangeAlertsDocument } from "./documents/table-change-alert/desk";
+export { TcaSubscriptionFieldsFragmentDoc, TcaAllowlistedTablesDocument, CreateTcaSubscriptionDocument, UpdateTcaSubscriptionDocument } from "./documents/table-change-alert/mutations";
 export { TcaSubscriptionTableRowFieldsFragmentDoc, TcaSubscriptionTableDocument } from "./documents/table-change-alert/table";
 export { TableConfigurationFieldsFragmentDoc, TableConfigurationTableDocument, DefaultTableConfigurationDocument, TableConfigurationDetailDocument, CreateTableConfigurationDocument, UpdateTableConfigurationDocument, DeleteTableConfigurationDocument, SetDefaultTableConfigurationDocument, SetOrgDefaultTableConfigurationDocument } from "./documents/table-configuration/operations";
 export { MyTableLayoutDocument, SaveMyTableLayoutDocument, ResetMyTableLayoutDocument } from "./documents/table-layout/operations";
+export { TableQueryCatalogueDocument, ComposeTableQueryDocument } from "./documents/table-query/table-query";
 export { VehiclePositionsDocument, WorkerHosStatesDocument, WorkerHosStateDocument, WorkerHosViolationsDocument, TelematicsStatusDocument, WorkerHosLogsDocument, WorkerHosDailyLogsDocument, ShipmentDriverFeasibilityDocument, VehicleInspectionsDocument, WorkerFormSubmissionsDocument, HosCertificationSummaryDocument, ShipmentFormSubmissionsDocument, TelematicsFormMappingsDocument, SaveTelematicsFormMappingDocument, DeleteTelematicsFormMappingDocument } from "./documents/telematics/page";
 export { DeskShipmentTendersDocument } from "./documents/tender/desk";
 export { TendersByShipmentDocument, LiveTenderByMoveDocument } from "./documents/tender/operations";
@@ -20944,6 +21878,8 @@ export { DeskTrailerCardDocument } from "./documents/trailer/desk";
 export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";
 export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";
+export { WeatherAlertFeatureFieldsFragmentDoc, WeatherAlertsDocument, WeatherAlertDocument } from "./documents/weather-alert/weather-alert";
+export { WebPushConfigDocument, RegisterMyPushSubscriptionDocument, UnregisterMyPushSubscriptionDocument } from "./documents/web-push/web-push";
 export { DeskWorkerChecklistsDocument, DeskWorkerChecklistTemplatesDocument } from "./documents/worker-checklist/desk";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
 export { DeskWorkerCredentialDocument, DeskWorkerCredentialListDocument, DeskWorkerCredentialTypesDocument } from "./documents/worker-credential/desk";

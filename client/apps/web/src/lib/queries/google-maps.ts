@@ -9,6 +9,7 @@ export const googleMaps = createQueryKeys("googleMaps", {
   }),
   autocomplete: (req: AutocompleteLocationRequest) => ({
     queryKey: ["autocomplete", req],
-    queryFn: async () => apiService.googleMapsService.autocomplete(req),
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      apiService.googleMapsService.autocomplete(req, { signal }),
   }),
 });

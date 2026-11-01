@@ -1,0 +1,29 @@
+query DataEntryControl {
+  dataEntryControl {
+    id
+    organizationId
+    businessUnitId
+    codeCase
+    nameCase
+    emailCase
+    cityCase
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateDataEntryControl($input: UpdateDataEntryControlInput!) {
+  updateDataEntryControl(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    codeCase
+    nameCase
+    emailCase
+    cityCase
+    version
+    createdAt
+    updatedAt
+  }
+}

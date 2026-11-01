@@ -1,0 +1,68 @@
+"One field a table can be narrowed by in words."
+type TableQueryCatalogueField {
+  name: String!
+  kind: String!
+  note: String!
+  values: [String!]!
+  sortable: Boolean!
+  operators: [String!]!
+}
+
+"A table that can be narrowed by a description, and the fields it understands."
+type TableQueryCatalogueResource {
+  resource: String!
+  entity: String!
+  summary: String!
+  fields: [TableQueryCatalogueField!]!
+}
+
+"A filter a composed table view applies."
+type TableQueryFieldFilter {
+  field: String!
+  operator: String!
+  value: Any
+}
+
+"A sort a composed table view applies."
+type TableQuerySortField {
+  field: String!
+  direction: String!
+}
+
+"Something a description asked for that the table's fields cannot express."
+type TableQueryUnresolvedTerm {
+  phrase: String!
+  reason: String!
+}
+
+"The table view a description compiled to, and what it could not express."
+type TableQueryComposeResult {
+  query: String!
+  fieldFilters: [TableQueryFieldFilter!]!
+  sort: [TableQuerySortField!]!
+  "The compiled view in words, built from what compiled rather than from the description."
+  explanation: String!
+  terms: [String!]!
+  unresolved: [TableQueryUnresolvedTerm!]!
+}
+
+"What the table already shows, so a follow-up narrows rather than replaces it."
+input TableQueryCurrentViewInput {
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  sort: [SortFieldInput!]
+}
+
+input ComposeTableQueryInput {
+  "The permission resource of the table, as the catalogue names it."
+  resource: String!
+  prompt: String!
+  current: TableQueryCurrentViewInput
+}
+
+extend type Query {
+  "The tables that can be narrowed by a description, and in which terms."
+  tableQueryCatalogue: [TableQueryCatalogueResource!]!
+  "Compiles a description into a view of the table. It writes nothing; reading the table needs its read permission."
+  composeTableQuery(input: ComposeTableQueryInput!): TableQueryComposeResult!
+}

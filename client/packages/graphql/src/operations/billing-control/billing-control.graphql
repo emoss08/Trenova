@@ -1,0 +1,85 @@
+query BillingControl {
+  billingControl {
+    id
+    organizationId
+    businessUnitId
+    defaultPaymentTerm
+    defaultInvoiceTerms
+    defaultInvoiceFooter
+    showDueDateOnInvoice
+    showBalanceDueOnInvoice
+    readyToBillAssignmentMode
+    billingQueueTransferMode
+    billingQueueTransferSchedule
+    billingQueueTransferBatchSize
+    invoiceDraftCreationMode
+    invoicePostingMode
+    autoInvoiceBatchSize
+    notifyOnAutoInvoiceCreation
+    shipmentBillingRequirementEnforcement
+    rateValidationEnforcement
+    billingExceptionDisposition
+    notifyOnBillingExceptions
+    rateVarianceTolerancePercent
+    rateVarianceAutoResolutionMode
+    unratedShipmentDisposition
+    fallbackFormulaTemplateId
+    requireRateOverrideReason
+    enforceMarginFloor
+    queueAutoApproveMode
+    queueAutoApproveMaxAmount
+    queueAgentReviewEnabled
+    lateChargeAssessmentMode
+    lateChargeMinimumAmount
+    paymentRemindersEnabled
+    paymentReminderDays
+    monthlyStatementsEnabled
+    monthlyStatementDay
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateBillingControl($input: UpdateBillingControlInput!) {
+  updateBillingControl(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    defaultPaymentTerm
+    defaultInvoiceTerms
+    defaultInvoiceFooter
+    showDueDateOnInvoice
+    showBalanceDueOnInvoice
+    readyToBillAssignmentMode
+    billingQueueTransferMode
+    billingQueueTransferSchedule
+    billingQueueTransferBatchSize
+    invoiceDraftCreationMode
+    invoicePostingMode
+    autoInvoiceBatchSize
+    notifyOnAutoInvoiceCreation
+    shipmentBillingRequirementEnforcement
+    rateValidationEnforcement
+    billingExceptionDisposition
+    notifyOnBillingExceptions
+    rateVarianceTolerancePercent
+    rateVarianceAutoResolutionMode
+    unratedShipmentDisposition
+    fallbackFormulaTemplateId
+    requireRateOverrideReason
+    enforceMarginFloor
+    queueAutoApproveMode
+    queueAutoApproveMaxAmount
+    queueAgentReviewEnabled
+    lateChargeAssessmentMode
+    lateChargeMinimumAmount
+    paymentRemindersEnabled
+    paymentReminderDays
+    monthlyStatementsEnabled
+    monthlyStatementDay
+    version
+    createdAt
+    updatedAt
+  }
+}

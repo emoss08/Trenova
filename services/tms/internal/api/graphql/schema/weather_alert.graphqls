@@ -1,0 +1,87 @@
+"The kind of hazard a weather alert warns of, which picks its color on the map."
+enum WeatherAlertCategory {
+  winter_weather
+  wind_storm
+  flood_water
+  fire
+  heat
+  tornado_severe_storm
+  tropical_storm_hurricane
+  other
+}
+
+"What happened to a weather alert."
+enum WeatherAlertActivityType {
+  issued
+  updated
+  expired
+  cancelled
+}
+
+"The organization's active National Weather Service alerts, as a GeoJSON feature collection."
+type WeatherAlertFeatureCollection {
+  type: String!
+  features: [WeatherAlertFeature!]!
+}
+
+"One weather alert as a GeoJSON feature."
+type WeatherAlertFeature {
+  type: String!
+  id: ID!
+  "The GeoJSON geometry of the alert's area."
+  geometry: JSON
+  properties: WeatherAlertProperties!
+}
+
+"What the National Weather Service says about an alert."
+type WeatherAlertProperties {
+  id: ID!
+  nwsId: String!
+  event: String!
+  severity: String!
+  urgency: String!
+  certainty: String!
+  headline: String!
+  description: String!
+  instruction: String!
+  areaDesc: String!
+  effective: Timestamp
+  expires: Timestamp
+  onset: Timestamp
+  ends: Timestamp
+  status: String!
+  messageType: String!
+  senderName: String!
+  response: String!
+  category: String!
+  alertCategory: WeatherAlertCategory!
+  firstSeenAt: Timestamp!
+  lastUpdatedAt: Timestamp!
+  expiredAt: Timestamp
+}
+
+"One change to a weather alert."
+type WeatherAlertActivity {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  weatherAlertId: ID!
+  activityType: WeatherAlertActivityType!
+  timestamp: Timestamp!
+  details: JSON
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A weather alert with everything that happened to it."
+type WeatherAlertDetail {
+  feature: WeatherAlertFeature!
+  activities: [WeatherAlertActivity!]!
+}
+
+extend type Query {
+  "The organization's active weather alerts."
+  weatherAlerts: WeatherAlertFeatureCollection!
+  "One of the organization's weather alerts with its activity."
+  weatherAlert(id: ID!): WeatherAlertDetail!
+}

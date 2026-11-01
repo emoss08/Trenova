@@ -12,6 +12,8 @@ type Deps struct {
 	TableChangeAlertService *tablechangealertservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }
 
 type TCASubscriptionResolver struct{ *Deps }

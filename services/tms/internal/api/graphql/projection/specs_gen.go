@@ -28,6 +28,8 @@ var AccountingBackfillSpec TypeSpec
 
 var AccountingConnectionSpec TypeSpec
 
+var AccountingControlSpec TypeSpec
+
 var AccountingDriftFindingSpec TypeSpec
 
 var AccountingInboundChangeSpec TypeSpec
@@ -93,6 +95,8 @@ var AuditEntrySpec TypeSpec
 var AuthEventSpec TypeSpec
 
 var BenefitPlanSpec TypeSpec
+
+var BillingControlSpec TypeSpec
 
 var BillingQueueItemSpec TypeSpec
 
@@ -166,6 +170,8 @@ var CarrierSettlementLineSpec TypeSpec
 
 var CarrierTrackingLinkSpec TypeSpec
 
+var CaseChecklistTemplateSpec TypeSpec
+
 var ChargeAllocationSpec TypeSpec
 
 var CheckCallSpec TypeSpec
@@ -204,6 +210,10 @@ var DOTRandomPoolSpec TypeSpec
 
 var DashControlSpec TypeSpec
 
+var DataEntryControlSpec TypeSpec
+
+var DataRetentionSpec TypeSpec
+
 var DetentionClockPriceSpec TypeSpec
 
 var DetentionEvidenceSpec TypeSpec
@@ -216,13 +226,19 @@ var DetentionPolicyTierSpec TypeSpec
 
 var DispatchCarrierEligibilityFindingSpec TypeSpec
 
+var DispatchControlSpec TypeSpec
+
 var DispatchTimeOffSpec TypeSpec
+
+var DistanceControlSpec TypeSpec
 
 var DistanceOverrideSpec TypeSpec
 
 var DistanceOverrideStopSpec TypeSpec
 
 var DistanceProfileSpec TypeSpec
+
+var DocumentControlSpec TypeSpec
 
 var DocumentPacketRuleSpec TypeSpec
 
@@ -388,6 +404,8 @@ var InvoiceSpec TypeSpec
 
 var InvoiceAdjustmentSpec TypeSpec
 
+var InvoiceAdjustmentControlSpec TypeSpec
+
 var InvoiceAdjustmentLineSpec TypeSpec
 
 var InvoiceDisputeSpec TypeSpec
@@ -424,6 +442,8 @@ var MyAgentSpec TypeSpec
 
 var NotificationSpec TypeSpec
 
+var NotificationPreferenceSpec TypeSpec
+
 var OSHAAnnualSummarySpec TypeSpec
 
 var OrderSpec TypeSpec
@@ -439,6 +459,8 @@ var OrganizationSpec TypeSpec
 var PTOPolicySpec TypeSpec
 
 var PTOPolicyRuleSpec TypeSpec
+
+var PageFavoriteSpec TypeSpec
 
 var PayAdvanceSpec TypeSpec
 
@@ -564,6 +586,8 @@ var ShipmentCommoditySpec TypeSpec
 
 var ShipmentCommodityDetailSpec TypeSpec
 
+var ShipmentControlSpec TypeSpec
+
 var ShipmentCustomerSpec TypeSpec
 
 var ShipmentEtaSpec TypeSpec
@@ -591,6 +615,8 @@ var ShipmentTypeSpec TypeSpec
 var StopEtaSpec TypeSpec
 
 var StoredMileageSpec TypeSpec
+
+var TCAAllowlistedTableSpec TypeSpec
 
 var TCASubscriptionSpec TypeSpec
 
@@ -635,6 +661,10 @@ var WatchtowerItemSpec TypeSpec
 var WatchtowerItemEventSpec TypeSpec
 
 var WatchtowerTrailEventSpec TypeSpec
+
+var WeatherAlertActivitySpec TypeSpec
+
+var WebPushSubscriptionSpec TypeSpec
 
 var WorkerSpec TypeSpec
 
@@ -2114,6 +2144,192 @@ func init() {
 			{
 				Name:   "version",
 				Column: "version",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	AccountingControlSpec = TypeSpec{
+		TypeName: "AccountingControl",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "accountingBasis",
+				Column: "accounting_basis",
+			},
+			{
+				Name:   "revenueRecognitionPolicy",
+				Column: "revenue_recognition_policy",
+			},
+			{
+				Name:   "expenseRecognitionPolicy",
+				Column: "expense_recognition_policy",
+			},
+			{
+				Name:   "journalPostingMode",
+				Column: "journal_posting_mode",
+			},
+			{
+				Name:   "autoPostSourceEvents",
+				Column: "auto_post_source_events",
+			},
+			{
+				Name:   "manualJournalEntryPolicy",
+				Column: "manual_journal_entry_policy",
+			},
+			{
+				Name:   "requireManualJeApproval",
+				Column: "require_manual_je_approval",
+			},
+			{
+				Name:   "journalReversalPolicy",
+				Column: "journal_reversal_policy",
+			},
+			{
+				Name:   "periodCloseMode",
+				Column: "period_close_mode",
+			},
+			{
+				Name:   "requirePeriodCloseApproval",
+				Column: "require_period_close_approval",
+			},
+			{
+				Name:   "lockedPeriodPostingPolicy",
+				Column: "locked_period_posting_policy",
+			},
+			{
+				Name:   "closedPeriodPostingPolicy",
+				Column: "closed_period_posting_policy",
+			},
+			{
+				Name:   "requireReconciliationToClose",
+				Column: "require_reconciliation_to_close",
+			},
+			{
+				Name:   "reconciliationMode",
+				Column: "reconciliation_mode",
+			},
+			{
+				Name:   "reconciliationToleranceAmount",
+				Column: "reconciliation_tolerance_amount",
+			},
+			{
+				Name:   "notifyOnReconciliationException",
+				Column: "notify_on_reconciliation_exception",
+			},
+			{
+				Name:   "currencyMode",
+				Column: "currency_mode",
+			},
+			{
+				Name:   "functionalCurrencyCode",
+				Column: "functional_currency_code",
+			},
+			{
+				Name:   "exchangeRateDatePolicy",
+				Column: "exchange_rate_date_policy",
+			},
+			{
+				Name:   "exchangeRateOverridePolicy",
+				Column: "exchange_rate_override_policy",
+			},
+			{
+				Name:   "defaultRevenueAccountId",
+				Column: "default_revenue_account_id",
+			},
+			{
+				Name:   "defaultCashAccountId",
+				Column: "default_cash_account_id",
+			},
+			{
+				Name:   "defaultUnappliedCashAccountId",
+				Column: "default_unapplied_cash_account_id",
+			},
+			{
+				Name:   "defaultExpenseAccountId",
+				Column: "default_expense_account_id",
+			},
+			{
+				Name:   "defaultArAccountId",
+				Column: "default_ar_account_id",
+			},
+			{
+				Name:   "defaultApAccountId",
+				Column: "default_ap_account_id",
+			},
+			{
+				Name:   "defaultTaxLiabilityAccountId",
+				Column: "default_tax_liability_account_id",
+			},
+			{
+				Name:   "defaultWriteOffAccountId",
+				Column: "default_write_off_account_id",
+			},
+			{
+				Name:   "defaultRetainedEarningsAccountId",
+				Column: "default_retained_earnings_account_id",
+			},
+			{
+				Name:   "realizedFxGainAccountId",
+				Column: "realized_fx_gain_account_id",
+			},
+			{
+				Name:   "realizedFxLossAccountId",
+				Column: "realized_fx_loss_account_id",
+			},
+			{
+				Name:   "defaultDriverPayExpenseAccountId",
+				Column: "default_driver_pay_expense_account_id",
+			},
+			{
+				Name:   "defaultPurchasedTransportationAccountId",
+				Column: "default_purchased_transportation_account_id",
+			},
+			{
+				Name:   "defaultSettlementsPayableAccountId",
+				Column: "default_settlements_payable_account_id",
+			},
+			{
+				Name:   "defaultDriverAdvanceAccountId",
+				Column: "default_driver_advance_account_id",
+			},
+			{
+				Name:   "defaultEscrowLiabilityAccountId",
+				Column: "default_escrow_liability_account_id",
+			},
+			{
+				Name:   "defaultDriverReimbursementAccountId",
+				Column: "default_driver_reimbursement_account_id",
+			},
+			{
+				Name:   "defaultEscrowInterestExpenseAccountId",
+				Column: "default_escrow_interest_expense_account_id",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
 				Name:   "updatedAt",
@@ -5148,6 +5364,168 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &PayCodeSpec,
 				},
+			},
+		},
+	}
+
+	BillingControlSpec = TypeSpec{
+		TypeName: "BillingControl",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "defaultPaymentTerm",
+				Column: "default_payment_term",
+			},
+			{
+				Name:   "defaultInvoiceTerms",
+				Column: "default_invoice_terms",
+			},
+			{
+				Name:   "defaultInvoiceFooter",
+				Column: "default_invoice_footer",
+			},
+			{
+				Name:   "showDueDateOnInvoice",
+				Column: "show_due_date_on_invoice",
+			},
+			{
+				Name:   "showBalanceDueOnInvoice",
+				Column: "show_balance_due_on_invoice",
+			},
+			{
+				Name:   "readyToBillAssignmentMode",
+				Column: "ready_to_bill_assignment_mode",
+			},
+			{
+				Name:   "billingQueueTransferMode",
+				Column: "billing_queue_transfer_mode",
+			},
+			{
+				Name:   "billingQueueTransferSchedule",
+				Column: "billing_queue_transfer_schedule",
+			},
+			{
+				Name:   "billingQueueTransferBatchSize",
+				Column: "billing_queue_transfer_batch_size",
+			},
+			{
+				Name:   "invoiceDraftCreationMode",
+				Column: "invoice_draft_creation_mode",
+			},
+			{
+				Name:   "invoicePostingMode",
+				Column: "invoice_posting_mode",
+			},
+			{
+				Name:   "autoInvoiceBatchSize",
+				Column: "auto_invoice_batch_size",
+			},
+			{
+				Name:   "notifyOnAutoInvoiceCreation",
+				Column: "notify_on_auto_invoice_creation",
+			},
+			{
+				Name:   "shipmentBillingRequirementEnforcement",
+				Column: "shipment_billing_requirement_enforcement",
+			},
+			{
+				Name:   "rateValidationEnforcement",
+				Column: "rate_validation_enforcement",
+			},
+			{
+				Name:   "billingExceptionDisposition",
+				Column: "billing_exception_disposition",
+			},
+			{
+				Name:   "notifyOnBillingExceptions",
+				Column: "notify_on_billing_exceptions",
+			},
+			{
+				Name:   "rateVarianceTolerancePercent",
+				Column: "rate_variance_tolerance_percent",
+			},
+			{
+				Name:   "rateVarianceAutoResolutionMode",
+				Column: "rate_variance_auto_resolution_mode",
+			},
+			{
+				Name:   "unratedShipmentDisposition",
+				Column: "unrated_shipment_disposition",
+			},
+			{
+				Name:   "fallbackFormulaTemplateId",
+				Column: "fallback_formula_template_id",
+			},
+			{
+				Name:   "requireRateOverrideReason",
+				Column: "require_rate_override_reason",
+			},
+			{
+				Name:   "enforceMarginFloor",
+				Column: "enforce_margin_floor",
+			},
+			{
+				Name:   "queueAutoApproveMode",
+				Column: "queue_auto_approve_mode",
+			},
+			{
+				Name:   "queueAutoApproveMaxAmount",
+				Column: "queue_auto_approve_max_amount",
+			},
+			{
+				Name:   "queueAgentReviewEnabled",
+				Column: "queue_agent_review_enabled",
+			},
+			{
+				Name:   "lateChargeAssessmentMode",
+				Column: "late_charge_assessment_mode",
+			},
+			{
+				Name:   "lateChargeMinimumAmount",
+				Column: "late_charge_minimum_amount",
+			},
+			{
+				Name:   "paymentRemindersEnabled",
+				Column: "payment_reminders_enabled",
+			},
+			{
+				Name:   "paymentReminderDays",
+				Column: "payment_reminder_days",
+			},
+			{
+				Name:   "monthlyStatementsEnabled",
+				Column: "monthly_statements_enabled",
+			},
+			{
+				Name:   "monthlyStatementDay",
+				Column: "monthly_statement_day",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -8522,6 +8900,44 @@ func init() {
 		},
 	}
 
+	CaseChecklistTemplateSpec = TypeSpec{
+		TypeName: "CaseChecklistTemplate",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "kind",
+				Column: "kind",
+			},
+			{
+				Name:   "customerId",
+				Column: "customer_id",
+			},
+			{
+				Name:   "customerName",
+				Column: "customer_name",
+			},
+			{
+				Name:   "items",
+				Column: "items",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	ChargeAllocationSpec = TypeSpec{
 		TypeName: "ChargeAllocation",
 		AlwaysColumns: []string{
@@ -10335,6 +10751,122 @@ func init() {
 		},
 	}
 
+	DataEntryControlSpec = TypeSpec{
+		TypeName: "DataEntryControl",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "codeCase",
+				Column: "code_case",
+			},
+			{
+				Name:   "nameCase",
+				Column: "name_case",
+			},
+			{
+				Name:   "emailCase",
+				Column: "email_case",
+			},
+			{
+				Name:   "cityCase",
+				Column: "city_case",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	DataRetentionSpec = TypeSpec{
+		TypeName: "DataRetention",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "auditRetentionPeriod",
+				Column: "audit_retention_period",
+			},
+			{
+				Name:   "ediInboundFileRetentionPeriod",
+				Column: "edi_inbound_file_retention_period",
+			},
+			{
+				Name:   "ediMessageRetentionPeriod",
+				Column: "edi_message_retention_period",
+			},
+			{
+				Name:   "driverQualificationRetentionPeriod",
+				Column: "driver_qualification_retention_period",
+			},
+			{
+				Name:   "agentEvalCaseRetentionPeriod",
+				Column: "agent_eval_case_retention_period",
+			},
+			{
+				Name:   "aiFeedbackRetentionPeriod",
+				Column: "ai_feedback_retention_period",
+			},
+			{
+				Name:   "aiAuditRetentionPeriod",
+				Column: "ai_audit_retention_period",
+			},
+			{
+				Name:   "aiCorrectionRetentionPeriod",
+				Column: "ai_correction_retention_period",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	DetentionClockPriceSpec = TypeSpec{
 		TypeName: "DetentionClockPrice",
 		AlwaysColumns: []string{
@@ -10855,6 +11387,224 @@ func init() {
 		},
 	}
 
+	DispatchControlSpec = TypeSpec{
+		TypeName: "DispatchControl",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "enableAutoAssignment",
+				Column: "enable_auto_assignment",
+			},
+			{
+				Name:   "autoAssignmentStrategy",
+				Column: "auto_assignment_strategy",
+			},
+			{
+				Name:   "enforceWorkerAssign",
+				Column: "enforce_worker_assign",
+			},
+			{
+				Name:   "enforceTrailerContinuity",
+				Column: "enforce_trailer_continuity",
+			},
+			{
+				Name:   "enforceHosCompliance",
+				Column: "enforce_hos_compliance",
+			},
+			{
+				Name:   "enforceWorkerPtaRestrictions",
+				Column: "enforce_worker_pta_restrictions",
+			},
+			{
+				Name:   "enforceWorkerTractorFleetContinuity",
+				Column: "enforce_worker_tractor_fleet_continuity",
+			},
+			{
+				Name:   "enforceDriverQualificationCompliance",
+				Column: "enforce_driver_qualification_compliance",
+			},
+			{
+				Name:   "enforceMedicalCertCompliance",
+				Column: "enforce_medical_cert_compliance",
+			},
+			{
+				Name:   "enforceHazmatCompliance",
+				Column: "enforce_hazmat_compliance",
+			},
+			{
+				Name:   "enforceDrugAndAlcoholCompliance",
+				Column: "enforce_drug_and_alcohol_compliance",
+			},
+			{
+				Name:   "enableAutoStopActuals",
+				Column: "enable_auto_stop_actuals",
+			},
+			{
+				Name:   "scoringWeights",
+				Column: "scoring_weights",
+			},
+			{
+				Name:   "autoAssignConfidenceThreshold",
+				Column: "auto_assign_confidence_threshold",
+			},
+			{
+				Name:   "autoAssignMaxDeadheadMiles",
+				Column: "auto_assign_max_deadhead_miles",
+			},
+			{
+				Name:   "autoAssignPlanningHorizonHours",
+				Column: "auto_assign_planning_horizon_hours",
+			},
+			{
+				Name:   "planningMode",
+				Column: "planning_mode",
+			},
+			{
+				Name:   "horizonMaxMovesPerDriver",
+				Column: "horizon_max_moves_per_driver",
+			},
+			{
+				Name:   "horizonSearchIterations",
+				Column: "horizon_search_iterations",
+			},
+			{
+				Name:   "coverageRiskWindowHours",
+				Column: "coverage_risk_window_hours",
+			},
+			{
+				Name:   "enableCheckCallMonitoring",
+				Column: "enable_check_call_monitoring",
+			},
+			{
+				Name:   "checkCallIntervalHours",
+				Column: "check_call_interval_hours",
+			},
+			{
+				Name:   "enableEtaAlerts",
+				Column: "enable_eta_alerts",
+			},
+			{
+				Name:   "etaRiskThresholdMinutes",
+				Column: "eta_risk_threshold_minutes",
+			},
+			{
+				Name:   "etaDwellMinutes",
+				Column: "eta_dwell_minutes",
+			},
+			{
+				Name:   "exceptionDueInfoMinutes",
+				Column: "exception_due_info_minutes",
+			},
+			{
+				Name:   "exceptionDueWarningMinutes",
+				Column: "exception_due_warning_minutes",
+			},
+			{
+				Name:   "exceptionDueCriticalMinutes",
+				Column: "exception_due_critical_minutes",
+			},
+			{
+				Name:   "exceptionEscalationMinutes",
+				Column: "exception_escalation_minutes",
+			},
+			{
+				Name:   "exceptionMaxEscalations",
+				Column: "exception_max_escalations",
+			},
+			{
+				Name:   "exceptionDefaultAssigneeId",
+				Column: "exception_default_assignee_id",
+			},
+			{
+				Name:   "exceptionEscalationContactId",
+				Column: "exception_escalation_contact_id",
+			},
+			{
+				Name:   "exceptionMissedStopGraceMinutes",
+				Column: "exception_missed_stop_grace_minutes",
+			},
+			{
+				Name:   "exceptionPodGraceHours",
+				Column: "exception_pod_grace_hours",
+			},
+			{
+				Name:   "tenderCounterOffersEnabled",
+				Column: "tender_counter_offers_enabled",
+			},
+			{
+				Name:   "tenderCounterMarginFloorPercent",
+				Column: "tender_counter_margin_floor_percent",
+			},
+			{
+				Name:   "tenderAutoAcceptCounters",
+				Column: "tender_auto_accept_counters",
+			},
+			{
+				Name:   "tenderCounterDecisionMinutes",
+				Column: "tender_counter_decision_minutes",
+			},
+			{
+				Name:   "tenderExhaustedAction",
+				Column: "tender_exhausted_action",
+			},
+			{
+				Name:   "tenderEscalationRateIncreasePercent",
+				Column: "tender_escalation_rate_increase_percent",
+			},
+			{
+				Name:   "tenderEscalationOfferTtlMinutes",
+				Column: "tender_escalation_offer_ttl_minutes",
+			},
+			{
+				Name:   "tenderMaxEscalations",
+				Column: "tender_max_escalations",
+			},
+			{
+				Name:   "complianceEnforcementLevel",
+				Column: "compliance_enforcement_level",
+			},
+			{
+				Name:   "recordServiceFailures",
+				Column: "record_service_failures",
+			},
+			{
+				Name:   "serviceFailureTarget",
+				Column: "service_failure_target",
+			},
+			{
+				Name:   "serviceFailureGracePeriod",
+				Column: "service_failure_grace_period",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	DispatchTimeOffSpec = TypeSpec{
 		TypeName: "DispatchTimeOff",
 		AlwaysColumns: []string{
@@ -10873,6 +11623,92 @@ func init() {
 			{
 				Name:   "type",
 				Column: "type",
+			},
+		},
+	}
+
+	DistanceControlSpec = TypeSpec{
+		TypeName: "DistanceControl",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "storeMileage",
+				Column: "store_mileage",
+			},
+			{
+				Name:   "storedDistanceUnits",
+				Column: "stored_distance_units",
+			},
+			{
+				Name:   "postalCodeFallbackToCity",
+				Column: "postal_code_fallback_to_city",
+			},
+			{
+				Name:   "autoCreateStoredMileage",
+				Column: "auto_create_stored_mileage",
+			},
+			{
+				Name:   "loadedMoveDistanceProfileId",
+				Column: "loaded_move_distance_profile_id",
+			},
+			{
+				Name:   "emptyMoveDistanceProfileId",
+				Column: "empty_move_distance_profile_id",
+			},
+			{
+				Name:   "payDistanceProfileId",
+				Column: "pay_distance_profile_id",
+			},
+			{
+				Name:   "billingDistanceProfileId",
+				Column: "billing_distance_profile_id",
+			},
+			{
+				Name:   "fuelDistanceProfileId",
+				Column: "fuel_distance_profile_id",
+			},
+			{
+				Name:   "etaOutOfRouteDistanceProfileId",
+				Column: "eta_out_of_route_distance_profile_id",
+			},
+			{
+				Name:   "distanceCalculatorShortestDistanceProfileId",
+				Column: "distance_calculator_shortest_distance_profile_id",
+			},
+			{
+				Name:   "distanceCalculatorPracticalDistanceProfileId",
+				Column: "distance_calculator_practical_distance_profile_id",
+			},
+			{
+				Name:   "captureJurisdictionMiles",
+				Column: "capture_jurisdiction_miles",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -11094,6 +11930,100 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	DocumentControlSpec = TypeSpec{
+		TypeName: "DocumentControl",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "enableDocumentIntelligence",
+				Column: "enable_document_intelligence",
+			},
+			{
+				Name:   "enableOcr",
+				Column: "enable_ocr",
+			},
+			{
+				Name:   "enableAutoClassification",
+				Column: "enable_auto_classification",
+			},
+			{
+				Name:   "enableAutoDocumentTypeAssociate",
+				Column: "enable_auto_document_type_associate",
+			},
+			{
+				Name:   "enableAutoCreateDocumentTypes",
+				Column: "enable_auto_create_document_types",
+			},
+			{
+				Name:   "enableShipmentDraftExtraction",
+				Column: "enable_shipment_draft_extraction",
+			},
+			{
+				Name:   "enableAiAssistedClassification",
+				Column: "enable_ai_assisted_classification",
+			},
+			{
+				Name:   "enableAiAssistedExtraction",
+				Column: "enable_ai_assisted_extraction",
+			},
+			{
+				Name:   "shipmentDraftAllowedResources",
+				Column: "shipment_draft_allowed_resources",
+			},
+			{
+				Name:   "enableFullTextIndexing",
+				Column: "enable_full_text_indexing",
+			},
+			{
+				Name:   "enableCapture",
+				Column: "enable_capture",
+			},
+			{
+				Name:   "captureAutoFileCoverSheets",
+				Column: "capture_auto_file_cover_sheets",
+			},
+			{
+				Name:   "captureRetentionDays",
+				Column: "capture_retention_days",
+			},
+			{
+				Name:   "captureMinAgentVersion",
+				Column: "capture_min_agent_version",
+			},
+			{
+				Name:   "captureAllowAutoUpdate",
+				Column: "capture_allow_auto_update",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -18963,6 +19893,104 @@ func init() {
 		},
 	}
 
+	InvoiceAdjustmentControlSpec = TypeSpec{
+		TypeName: "InvoiceAdjustmentControl",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "partiallyPaidInvoiceAdjustmentPolicy",
+				Column: "partially_paid_invoice_adjustment_policy",
+			},
+			{
+				Name:   "paidInvoiceAdjustmentPolicy",
+				Column: "paid_invoice_adjustment_policy",
+			},
+			{
+				Name:   "disputedInvoiceAdjustmentPolicy",
+				Column: "disputed_invoice_adjustment_policy",
+			},
+			{
+				Name:   "adjustmentAccountingDatePolicy",
+				Column: "adjustment_accounting_date_policy",
+			},
+			{
+				Name:   "closedPeriodAdjustmentPolicy",
+				Column: "closed_period_adjustment_policy",
+			},
+			{
+				Name:   "adjustmentReasonRequirement",
+				Column: "adjustment_reason_requirement",
+			},
+			{
+				Name:   "standardAdjustmentApprovalPolicy",
+				Column: "standard_adjustment_approval_policy",
+			},
+			{
+				Name:   "standardAdjustmentApprovalThreshold",
+				Column: "standard_adjustment_approval_threshold",
+			},
+			{
+				Name:   "writeOffApprovalPolicy",
+				Column: "write_off_approval_policy",
+			},
+			{
+				Name:   "writeOffApprovalThreshold",
+				Column: "write_off_approval_threshold",
+			},
+			{
+				Name:   "requireSeparateApprover",
+				Column: "require_separate_approver",
+			},
+			{
+				Name:   "rerateVarianceTolerancePercent",
+				Column: "rerate_variance_tolerance_percent",
+			},
+			{
+				Name:   "replacementInvoiceReviewPolicy",
+				Column: "replacement_invoice_review_policy",
+			},
+			{
+				Name:   "customerCreditBalancePolicy",
+				Column: "customer_credit_balance_policy",
+			},
+			{
+				Name:   "overCreditPolicy",
+				Column: "over_credit_policy",
+			},
+			{
+				Name:   "supersededInvoiceVisibilityPolicy",
+				Column: "superseded_invoice_visibility_policy",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	InvoiceAdjustmentLineSpec = TypeSpec{
 		TypeName: "InvoiceAdjustmentLine",
 		AlwaysColumns: []string{
@@ -20398,6 +21426,92 @@ func init() {
 		},
 	}
 
+	NotificationPreferenceSpec = TypeSpec{
+		TypeName: "NotificationPreference",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "userId",
+				Column: "user_id",
+			},
+			{
+				Name:   "disabledEventTypes",
+				Column: "disabled_event_types",
+			},
+			{
+				Name:   "desktopMode",
+				Column: "desktop_mode",
+			},
+			{
+				Name:   "emailMode",
+				Column: "email_mode",
+			},
+			{
+				Name:   "emailDigest",
+				Column: "email_digest",
+			},
+			{
+				Name:   "sound",
+				Column: "sound",
+			},
+			{
+				Name:   "quietHoursEnabled",
+				Column: "quiet_hours_enabled",
+			},
+			{
+				Name:   "quietHoursStart",
+				Column: "quiet_hours_start",
+			},
+			{
+				Name:   "quietHoursEnd",
+				Column: "quiet_hours_end",
+			},
+			{
+				Name:   "quietHoursDays",
+				Column: "quiet_hours_days",
+			},
+			{
+				Name:   "quietHoursAllowUrgent",
+				Column: "quiet_hours_allow_urgent",
+			},
+			{
+				Name:   "pausedUntil",
+				Column: "paused_until",
+			},
+			{
+				Name:   "lastDigestAt",
+				Column: "last_digest_at",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	OSHAAnnualSummarySpec = TypeSpec{
 		TypeName: "OSHAAnnualSummary",
 		AlwaysColumns: []string{
@@ -20965,6 +22079,52 @@ func init() {
 			{
 				Name:   "sortOrder",
 				Column: "sort_order",
+			},
+		},
+	}
+
+	PageFavoriteSpec = TypeSpec{
+		TypeName: "PageFavorite",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "userId",
+				Column: "user_id",
+			},
+			{
+				Name:   "pageUrl",
+				Column: "page_url",
+			},
+			{
+				Name:   "pageTitle",
+				Column: "page_title",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -25837,6 +26997,100 @@ func init() {
 		},
 	}
 
+	ShipmentControlSpec = TypeSpec{
+		TypeName: "ShipmentControl",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "maxShipmentWeightLimit",
+				Column: "max_shipment_weight_limit",
+			},
+			{
+				Name:   "autoDelayShipments",
+				Column: "auto_delay_shipments",
+			},
+			{
+				Name:   "autoDelayShipmentsThreshold",
+				Column: "auto_delay_shipments_threshold",
+			},
+			{
+				Name:   "detentionThreshold",
+				Column: "detention_threshold",
+			},
+			{
+				Name:   "autoCancelShipmentsThreshold",
+				Column: "auto_cancel_shipments_threshold",
+			},
+			{
+				Name:   "autoCancelShipments",
+				Column: "auto_cancel_shipments",
+			},
+			{
+				Name:   "trackDetentionTime",
+				Column: "track_detention_time",
+			},
+			{
+				Name:   "autoGenerateDetentionCharges",
+				Column: "auto_generate_detention_charges",
+			},
+			{
+				Name:   "detentionChargeId",
+				Column: "detention_charge_id",
+			},
+			{
+				Name:   "useDetentionPolicyEngine",
+				Column: "use_detention_policy_engine",
+			},
+			{
+				Name:   "defaultDetentionPolicyId",
+				Column: "default_detention_policy_id",
+			},
+			{
+				Name:   "trackCustomerRejections",
+				Column: "track_customer_rejections",
+			},
+			{
+				Name:   "checkForDuplicateBols",
+				Column: "check_for_duplicate_bols",
+			},
+			{
+				Name:   "allowMoveRemovals",
+				Column: "allow_move_removals",
+			},
+			{
+				Name:   "checkHazmatSegregation",
+				Column: "check_hazmat_segregation",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	ShipmentCustomerSpec = TypeSpec{
 		TypeName: "ShipmentCustomer",
 		AlwaysColumns: []string{
@@ -27093,6 +28347,48 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	TCAAllowlistedTableSpec = TypeSpec{
+		TypeName: "TCAAllowlistedTable",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "tableName",
+				Column: "table_name",
+			},
+			{
+				Name:   "displayName",
+				Column: "display_name",
+			},
+			{
+				Name:   "enabled",
+				Column: "enabled",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -29064,6 +30360,94 @@ func init() {
 			{
 				Name:   "text",
 				Column: "text",
+			},
+		},
+	}
+
+	WeatherAlertActivitySpec = TypeSpec{
+		TypeName: "WeatherAlertActivity",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "weatherAlertId",
+				Column: "weather_alert_id",
+			},
+			{
+				Name:   "activityType",
+				Column: "activity_type",
+			},
+			{
+				Name:   "timestamp",
+				Column: "timestamp",
+			},
+			{
+				Name:   "details",
+				Column: "details",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	WebPushSubscriptionSpec = TypeSpec{
+		TypeName: "WebPushSubscription",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "userId",
+				Column: "user_id",
+			},
+			{
+				Name:   "endpoint",
+				Column: "endpoint",
+			},
+			{
+				Name:   "userAgent",
+				Column: "user_agent",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}

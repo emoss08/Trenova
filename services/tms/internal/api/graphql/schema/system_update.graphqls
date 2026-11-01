@@ -1,0 +1,25 @@
+"A published release of Trenova."
+type SystemRelease {
+  version: String!
+  tagName: String!
+  publishedAt: Timestamp!
+  releaseNotes: String!
+  downloadUrl: String!
+  htmlUrl: String!
+  isPrerelease: Boolean!
+}
+
+"The running build's version and whether a newer release exists."
+type SystemUpdateStatus {
+  currentVersion: String!
+  latestVersion: String!
+  updateAvailable: Boolean!
+  latestRelease: SystemRelease
+  "When the release server was last asked; zero when update checks are off."
+  lastChecked: Timestamp!
+}
+
+extend type Query {
+  "The running build's version and whether a newer release exists, checked at most once per interval."
+  systemUpdateStatus: SystemUpdateStatus!
+}

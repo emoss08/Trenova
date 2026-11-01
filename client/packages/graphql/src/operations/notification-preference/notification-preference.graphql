@@ -1,0 +1,31 @@
+query MyNotificationPreferences {
+  myNotificationPreferences {
+    disabledEventTypes
+    desktopMode
+    emailMode
+    emailDigest
+    sound
+    quietHoursEnabled
+    quietHoursStart
+    quietHoursEnd
+    quietHoursDays
+    quietHoursAllowUrgent
+    pausedUntil
+  }
+}
+
+mutation UpdateMyNotificationPreferences($input: UpdateMyNotificationPreferencesInput!) {
+  updateMyNotificationPreferences(input: $input) {
+    disabledEventTypes
+    desktopMode
+    emailMode
+    emailDigest
+    sound
+    quietHoursEnabled
+    quietHoursStart
+    quietHoursEnd
+    quietHoursDays
+    quietHoursAllowUrgent
+    pausedUntil
+  }
+}

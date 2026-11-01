@@ -1,4 +1,9 @@
-import { api, ApiRequestError } from "@trenova/shared/lib/api";
+import {
+  RegisterMyPushSubscriptionDocument,
+  UnregisterMyPushSubscriptionDocument,
+  WebPushConfigDocument,
+} from "@trenova/graphql/generated/graphql";
+import { GraphQLRequestError, requestGraphQL } from "@trenova/shared/lib/graphql";
 
 const SERVICE_WORKER_URL = `${import.meta.env.BASE_URL}dash-sw.js`;
 
@@ -27,8 +32,23 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
-export async function fetchPushConfig(): Promise<PushPublicKeyResponse> {
-  return api.get<PushPublicKeyResponse>("/push/public-key/");
+export async function fetchPushConfig(options?: {
+  signal?: AbortSignal;
+}): Promise<PushPublicKeyResponse> {
+  const response = await requestGraphQL({
+    document: WebPushConfigDocument,
+    operationName: "WebPushConfig",
+    signal: options?.signal,
+  });
+  return response.webPushConfig;
+}
+
+async function registerSubscription(subscription: PushSubscription): Promise<void> {
+  await requestGraphQL({
+    document: RegisterMyPushSubscriptionDocument,
+    operationName: "RegisterMyPushSubscription",
+    variables: { input: subscriptionKeys(subscription) },
+  });
 }
 
 export async function getPushSubscription(): Promise<PushSubscription | null> {
@@ -78,14 +98,14 @@ export async function enablePush(): Promise<void> {
   const subscription = (await registration.pushManager.getSubscription()) ?? (await subscribe());
 
   try {
-    await api.post("/push/subscriptions/", subscriptionKeys(subscription));
+    await registerSubscription(subscription);
   } catch (error) {
-    if (!(error instanceof ApiRequestError) || error.status !== 409) {
+    if (!(error instanceof GraphQLRequestError) || !error.isConflictError()) {
       throw error;
     }
     await subscription.unsubscribe();
     const fresh = await subscribe();
-    await api.post("/push/subscriptions/", subscriptionKeys(fresh));
+    await registerSubscription(fresh);
   }
 }
 
@@ -95,8 +115,10 @@ export async function disablePush(): Promise<void> {
     return;
   }
   try {
-    await api.delete("/push/subscriptions/", {
-      body: JSON.stringify({ endpoint: subscription.endpoint }),
+    await requestGraphQL({
+      document: UnregisterMyPushSubscriptionDocument,
+      operationName: "UnregisterMyPushSubscription",
+      variables: { endpoint: subscription.endpoint },
     });
   } finally {
     await subscription.unsubscribe();

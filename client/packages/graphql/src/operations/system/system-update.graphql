@@ -1,0 +1,17 @@
+query SystemUpdateStatus {
+  systemUpdateStatus {
+    currentVersion
+    latestVersion
+    updateAvailable
+    latestRelease {
+      version
+      tagName
+      publishedAt
+      releaseNotes
+      downloadUrl
+      htmlUrl
+      isPrerelease
+    }
+    lastChecked
+  }
+}

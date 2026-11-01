@@ -89,7 +89,7 @@ export default function DistanceControlForm() {
     DistanceControlInput
   >({
     queryKey: distanceControl.get._def,
-    mutationFn: async (values: DistanceControl) => apiService.distanceControlService.patch(values),
+    mutationFn: async (values: DistanceControl) => apiService.distanceControlService.update(values),
     resourceName: "Distance Control",
     resetForm: reset,
     form,

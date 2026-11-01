@@ -5,9 +5,9 @@ import "context"
 type clientInfoKey struct{}
 
 // ClientInfo is where a request came from: the address and the client. It is
-// carried for the few operations that record it as evidence — an electronic
-// signature is a name, a moment, and where the moment happened — and nothing
-// else reads it.
+// carried for the few operations that record it: an electronic signature is a
+// name, a moment, and where the moment happened, and a push subscription names
+// the browser that registered it. Nothing else reads it.
 type ClientInfo struct {
 	IP        string
 	UserAgent string

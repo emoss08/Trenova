@@ -40,8 +40,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/system")
 	api.GET("/version", h.getVersion)
-	api.GET("/update-status", h.getUpdateStatus)
-	api.POST("/check-updates", h.checkUpdates)
 }
 
 func (h *Handler) getVersion(c *gin.Context) {
@@ -52,24 +50,4 @@ func (h *Handler) getVersion(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, info)
-}
-
-func (h *Handler) getUpdateStatus(c *gin.Context) {
-	status, err := h.service.GetUpdateStatus(c.Request.Context())
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, status)
-}
-
-func (h *Handler) checkUpdates(c *gin.Context) {
-	status, err := h.service.CheckForUpdates(c.Request.Context())
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, status)
 }

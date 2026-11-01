@@ -4,6 +4,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const dispatchControl = createQueryKeys("dispatchControl", {
   get: () => ({
     queryKey: ["get"],
-    queryFn: async () => apiService.dispatchControlService.get(),
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      apiService.dispatchControlService.get({ signal }),
   }),
 });

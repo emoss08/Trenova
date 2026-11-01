@@ -1,5 +1,5 @@
 {
-  "version": "sha256:835c4b4eeb47292da4a7688afc43428b421fbcb7da446d202290b190c8d68ce8",
+  "version": "sha256:3409789018f19eb5fcc9712464c8ee6c8ee9705e9a327a2905366ebce87fa0a3",
   "screens": [
     {
       "path": "/",
@@ -7,6 +7,7 @@
       "requires": [],
       "operations": [
         "AccountingBriefing",
+        "ApiKeyAnalytics",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -56,11 +57,6 @@
         "WorkerRosterAttention"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/analytics/",
-          "requires": []
-        },
         {
           "method": "GET",
           "path": "/api-keys/",
@@ -215,16 +211,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/weather-alerts/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/weather-alerts/:param/",
-          "requires": []
         }
       ],
       "reads": [
@@ -509,16 +495,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -563,16 +539,6 @@
         "ShipmentInvoices"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/billing-controls/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "read"
-            }
-          ]
-        },
         {
           "method": "GET",
           "path": "/billing/invoices/:param/",
@@ -704,18 +670,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "accounting_integration",
         "accounting_sync",
@@ -757,18 +712,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "account_type"
       ],
@@ -850,16 +794,6 @@
               "operation": "reopen"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -1013,16 +947,6 @@
               "operation": "reject"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -1065,18 +989,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "journal_entry",
         "journal_reversal"
@@ -1194,16 +1107,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -1697,18 +1600,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "accounting_integration",
         "accounting_sync"
@@ -1761,18 +1653,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "accounting_integration",
         "accounting_sync"
@@ -1824,18 +1705,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "accounting_integration",
         "accounting_sync"
@@ -1965,26 +1835,6 @@
       ],
       "operations": [],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/accounting-controls/",
-          "requires": [
-            {
-              "resource": "accounting_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/accounting-controls/",
-          "requires": [
-            {
-              "resource": "accounting_control",
-              "operation": "update"
-            }
-          ]
-        },
         {
           "method": "GET",
           "path": "/api-keys/",
@@ -3167,16 +3017,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -3204,6 +3044,7 @@
         }
       ],
       "operations": [
+        "ApiKeyAnalytics",
         "ApiKeyTable",
         "BulkEditFields",
         "DataTableAggregates",
@@ -3221,11 +3062,6 @@
         "UndoMyBulkEdit"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/analytics/",
-          "requires": []
-        },
         {
           "method": "GET",
           "path": "/api-keys/",
@@ -3340,16 +3176,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -3383,18 +3209,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": [
@@ -3411,28 +3226,7 @@
         }
       ],
       "operations": [],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/billing-controls/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/billing-controls/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "update"
-            }
-          ]
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -3464,26 +3258,6 @@
         "UpdateCaptureProfile"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
-              "operation": "update"
-            }
-          ]
-        },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
@@ -3655,16 +3429,6 @@
           "method": "GET",
           "path": "/custom-fields/definitions/:param/usage/",
           "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -3703,28 +3467,7 @@
         }
       ],
       "operations": [],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/data-entry-controls/",
-          "requires": [
-            {
-              "resource": "data_entry_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/data-entry-controls/",
-          "requires": [
-            {
-              "resource": "data_entry_control",
-              "operation": "update"
-            }
-          ]
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -3739,28 +3482,7 @@
         }
       ],
       "operations": [],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/dispatch-controls/",
-          "requires": [
-            {
-              "resource": "dispatch_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/dispatch-controls/",
-          "requires": [
-            {
-              "resource": "dispatch_control",
-              "operation": "update"
-            }
-          ]
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -3775,28 +3497,7 @@
         }
       ],
       "operations": [],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/distance-controls/",
-          "requires": [
-            {
-              "resource": "distance_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PATCH",
-          "path": "/distance-controls/",
-          "requires": [
-            {
-              "resource": "distance_control",
-              "operation": "update"
-            }
-          ]
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -3846,16 +3547,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -3922,16 +3613,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -3951,26 +3632,6 @@
       ],
       "operations": [],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
-              "operation": "update"
-            }
-          ]
-        },
         {
           "method": "GET",
           "path": "/documents/extraction-status/",
@@ -4011,18 +3672,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "hazmat_segregation_rule"
       ],
@@ -4054,18 +3704,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "hold_reason"
       ],
@@ -4104,6 +3743,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApiKeyAnalytics",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -4153,11 +3793,6 @@
         "WorkerRosterAttention"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/analytics/",
-          "requires": []
-        },
         {
           "method": "GET",
           "path": "/api-keys/",
@@ -4312,16 +3947,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/weather-alerts/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/weather-alerts/:param/",
-          "requires": []
         }
       ],
       "reads": [
@@ -4355,6 +3980,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApiKeyAnalytics",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -4404,11 +4030,6 @@
         "WorkerRosterAttention"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/analytics/",
-          "requires": []
-        },
         {
           "method": "GET",
           "path": "/api-keys/",
@@ -4563,16 +4184,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/weather-alerts/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/weather-alerts/:param/",
-          "requires": []
         }
       ],
       "reads": [
@@ -4961,28 +4572,7 @@
         }
       ],
       "operations": [],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/invoice-adjustment-controls/",
-          "requires": [
-            {
-              "resource": "invoice_adjustment_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/invoice-adjustment-controls/",
-          "requires": [
-            {
-              "resource": "invoice_adjustment_control",
-              "operation": "update"
-            }
-          ]
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -5032,16 +4622,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -5095,16 +4675,6 @@
               "operation": "approve"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -5307,16 +4877,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -5357,18 +4917,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "role"
       ],
@@ -5838,16 +5387,6 @@
               "operation": "archive"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -5886,28 +5425,7 @@
         }
       ],
       "operations": [],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/shipment-controls/",
-          "requires": [
-            {
-              "resource": "shipment_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/shipment-controls/",
-          "requires": [
-            {
-              "resource": "shipment_control",
-              "operation": "update"
-            }
-          ]
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -5947,16 +5465,6 @@
               "operation": "delete"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -5990,38 +5498,7 @@
         "TCASubscriptionTable",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/tca/allowlisted-tables/",
-          "requires": [
-            {
-              "resource": "table_change_alert",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/tca/subscriptions/",
-          "requires": [
-            {
-              "resource": "table_change_alert",
-              "operation": "read"
-            }
-          ]
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "table_change_alert"
       ],
@@ -6223,16 +5700,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        },
-        {
           "method": "DELETE",
           "path": "/users/:param/mfa/",
           "requires": [
@@ -6351,18 +5818,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "accessorial_charge"
       ],
@@ -6527,11 +5983,6 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/google-maps/autocomplete/",
-          "requires": []
-        },
-        {
           "method": "GET",
           "path": "/integrations/:param/config/",
           "requires": [
@@ -6580,16 +6031,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -6679,16 +6120,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [],
@@ -6722,18 +6153,7 @@
         "UndoMyBulkEdit",
         "UpdateDocumentType"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "document_type"
       ],
@@ -6872,16 +6292,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -6925,18 +6335,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "formula_library"
       ],
@@ -7693,11 +7092,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/search/global/",
-          "requires": []
         }
       ],
       "reads": [
@@ -8459,11 +7853,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/search/global/",
-          "requires": []
         }
       ],
       "reads": [
@@ -8502,18 +7891,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "formula_template"
       ],
@@ -9267,11 +8645,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/search/global/",
-          "requires": []
         }
       ],
       "reads": [
@@ -10032,11 +9405,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/search/global/",
-          "requires": []
         }
       ],
       "reads": [
@@ -10199,16 +9567,6 @@
               "operation": "submit"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -10248,18 +9606,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "rate_agreement",
         "rate_matrix",
@@ -10389,16 +9736,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -11469,11 +10806,6 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/google-maps/autocomplete/",
-          "requires": []
-        },
-        {
           "method": "GET",
           "path": "/integrations/GoogleMaps/runtime-config/",
           "requires": []
@@ -12401,16 +11733,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -12566,18 +11888,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "carrier_settlement"
       ],
@@ -12611,18 +11922,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [
         "carrier"
@@ -12963,16 +12263,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -14354,36 +13644,6 @@
             {
               "resource": "invoice",
               "operation": "submit"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/case-checklists/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/case-checklists/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "DELETE",
-          "path": "/case-checklists/:param/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "update"
             }
           ]
         },
@@ -17789,36 +17049,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/case-checklists/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/case-checklists/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "DELETE",
-          "path": "/case-checklists/:param/",
-          "requires": [
-            {
-              "resource": "billing_control",
-              "operation": "update"
-            }
-          ]
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -18244,11 +17474,6 @@
         },
         {
           "method": "GET",
-          "path": "/search/global/",
-          "requires": []
-        },
-        {
-          "method": "GET",
           "path": "/service-failures/",
           "requires": [
             {
@@ -18455,18 +17680,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "detention_policy"
       ],
@@ -18555,18 +17769,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "carrier",
         "carrier_intelligence"
@@ -18687,16 +17890,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -18735,18 +17928,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "fleet_code"
       ],
@@ -18782,18 +17964,7 @@
         "UndoMyBulkEdit",
         "UpdateLocationCategory"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "location_category"
       ],
@@ -19272,11 +18443,6 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/google-maps/autocomplete/",
-          "requires": []
-        },
-        {
           "method": "GET",
           "path": "/integrations/:param/config/",
           "requires": [
@@ -19345,16 +18511,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -19420,16 +18576,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -19897,16 +19043,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -20375,16 +19511,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -20853,16 +19979,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -20906,18 +20022,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "edi"
       ],
@@ -21695,16 +20800,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -22173,16 +21268,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -22651,16 +21736,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -23129,16 +22204,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -23607,16 +22672,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -24085,16 +23140,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -24131,18 +23176,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "equipment_manufacturer"
       ],
@@ -24176,18 +23210,7 @@
         "TrailerTable",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "equipment_type",
         "tractor",
@@ -24424,16 +23447,6 @@
           "requires": [
             {
               "resource": "invoice",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
               "operation": "read"
             }
           ]
@@ -24921,16 +23934,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         },
         {
           "method": "PATCH",
@@ -25223,16 +24226,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -25717,16 +24710,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        },
-        {
           "method": "PATCH",
           "path": "/trailers/:param/",
           "requires": [
@@ -25817,18 +24800,7 @@
         "UndoMyBulkEdit",
         "UpdateFuelCard"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "fuel_card"
       ],
@@ -25866,18 +24838,7 @@
         "UndoMyBulkEdit",
         "UpsertIftaTaxRates"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "ifta_tax_rate"
       ],
@@ -25945,18 +24906,7 @@
         "SyncFuelCardFeed",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "fuel_purchase_import"
       ],
@@ -26025,18 +24975,7 @@
         "UndoMyBulkEdit",
         "UpdateIftaMileageEntry"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [
         "tractor"
@@ -26278,16 +25217,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -26772,16 +25701,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        },
-        {
           "method": "POST",
           "path": "/trailers/:param/locate/",
           "requires": [
@@ -26852,18 +25771,7 @@
         "UndoMyBulkEdit",
         "UpdateFuelCard"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "fuel_card"
       ],
@@ -26929,18 +25837,7 @@
         "UpdateWorkerChecklistTemplate",
         "WorkerChecklistTemplateTable"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "worker_checklist_template"
       ],
@@ -26978,18 +25875,7 @@
         "UpdateWorkerCredentialType",
         "WorkerCredentialTypeTable"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "worker_credential_type"
       ],
@@ -27211,18 +26097,7 @@
         "UndoMyBulkEdit",
         "UpdatePtoPolicy"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "pto_policy"
       ],
@@ -27287,18 +26162,7 @@
         "UndoMyBulkEdit",
         "UpdatePerformanceReviewTemplate"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "performance_review_template"
       ],
@@ -27396,18 +26260,7 @@
         "UndoMyBulkEdit",
         "UpdateTrainingCourse"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "training_course"
       ],
@@ -27782,16 +26635,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
-              "operation": "read"
-            }
-          ]
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -28276,16 +27119,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        },
-        {
           "method": "POST",
           "path": "/trailers/:param/locate/",
           "requires": [
@@ -28488,29 +27321,11 @@
           "operation": "read"
         }
       ],
-      "operations": [],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/data-retention/",
-          "requires": [
-            {
-              "resource": "organization",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/data-retention/",
-          "requires": [
-            {
-              "resource": "organization",
-              "operation": "update"
-            }
-          ]
-        }
+      "operations": [
+        "DataRetention",
+        "UpdateDataRetention"
       ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -28656,16 +27471,6 @@
           "method": "GET",
           "path": "/email-suppressions/:param",
           "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -28701,18 +27506,7 @@
         "UndoMyBulkEdit",
         "WriteOffPayAdvance"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "pay_advance"
       ],
@@ -28748,18 +27542,7 @@
         "UndoMyBulkEdit",
         "UpdateRecurringDeduction"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "recurring_deduction"
       ],
@@ -28797,18 +27580,7 @@
         "StartSettlementDisputeReview",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "settlement_dispute"
       ],
@@ -28847,18 +27619,7 @@
         "UndoMyBulkEdit",
         "UpdateRecurringEarning"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "recurring_earning"
       ],
@@ -28897,18 +27658,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "escrow_account"
       ],
@@ -28944,18 +27694,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "driver_expense"
       ],
@@ -28993,18 +27732,7 @@
         "UndoMyBulkEdit",
         "UpdatePayCode"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "pay_code"
       ],
@@ -29038,18 +27766,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "driver_settlement"
       ],
@@ -29088,18 +27805,7 @@
         "UndoMyBulkEdit",
         "UpdatePayProfile"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "driver_pay_profile"
       ],
@@ -29136,18 +27842,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -29203,18 +27898,7 @@
         "UndoMyBulkEdit",
         "VoidDriverSettlement"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "accounting_integration",
         "accounting_sync",
@@ -29740,18 +28424,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -29802,18 +28475,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "commodity"
       ],
@@ -29845,18 +28507,7 @@
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "hazardous_material"
       ],
@@ -29908,16 +28559,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -29971,16 +28612,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -30026,18 +28657,7 @@
         "UpdateOrder",
         "UpdateOrderCharge"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
+      "endpoints": [],
       "reads": [
         "order"
       ],
@@ -30114,16 +28734,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -30180,16 +28790,6 @@
               "operation": "export"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
         }
       ],
       "reads": [
@@ -30469,16 +29069,6 @@
           "requires": [
             {
               "resource": "invoice",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/document-controls/",
-          "requires": [
-            {
-              "resource": "document_control",
               "operation": "read"
             }
           ]
@@ -31093,16 +29683,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        },
-        {
           "method": "POST",
           "path": "/trailers/:param/locate/",
           "requires": [
@@ -31111,16 +29691,6 @@
               "operation": "update"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/weather-alerts/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/weather-alerts/:param/",
-          "requires": []
         }
       ],
       "reads": [
@@ -32066,11 +30636,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/search/global/",
-          "requires": []
         }
       ],
       "reads": [
@@ -33016,11 +31581,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/search/global/",
-          "requires": []
         }
       ],
       "reads": [
@@ -34023,6 +32583,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "ApiKeyAnalytics",
+      "type": "query",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -36243,6 +34810,13 @@
       "reads": [
         "dash_control"
       ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DataRetention",
+      "type": "query",
+      "reads": [],
       "linked": [],
       "declared": []
     },
@@ -42778,6 +41352,13 @@
     },
     {
       "name": "UpdateDashControl",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UpdateDataRetention",
       "type": "mutation",
       "reads": [],
       "linked": [],

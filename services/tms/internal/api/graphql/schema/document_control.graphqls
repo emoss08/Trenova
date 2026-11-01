@@ -1,0 +1,58 @@
+"""
+How the organization handles documents: intelligence, classification, extraction, indexing and Capture.
+"""
+type DocumentControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  enableDocumentIntelligence: Boolean!
+  enableOcr: Boolean!
+  enableAutoClassification: Boolean!
+  enableAutoDocumentTypeAssociate: Boolean!
+  enableAutoCreateDocumentTypes: Boolean!
+  enableShipmentDraftExtraction: Boolean!
+  enableAiAssistedClassification: Boolean!
+  enableAiAssistedExtraction: Boolean!
+  shipmentDraftAllowedResources: [String!]!
+  enableFullTextIndexing: Boolean!
+  enableCapture: Boolean!
+  captureAutoFileCoverSheets: Boolean!
+  captureRetentionDays: Int!
+  captureMinAgentVersion: String!
+  captureAllowAutoUpdate: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the document control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDocumentControlInput {
+  version: Int!
+  enableDocumentIntelligence: Boolean!
+  enableOcr: Boolean!
+  enableAutoClassification: Boolean!
+  enableAutoDocumentTypeAssociate: Boolean!
+  enableAutoCreateDocumentTypes: Boolean!
+  enableShipmentDraftExtraction: Boolean!
+  enableAiAssistedClassification: Boolean!
+  enableAiAssistedExtraction: Boolean!
+  shipmentDraftAllowedResources: [String!]!
+  enableFullTextIndexing: Boolean!
+  enableCapture: Boolean!
+  captureAutoFileCoverSheets: Boolean!
+  captureRetentionDays: Int!
+  captureMinAgentVersion: String!
+  captureAllowAutoUpdate: Boolean!
+}
+
+extend type Query {
+  "The organization's document control, created with defaults on first read."
+  documentControl: DocumentControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's document control."
+  updateDocumentControl(input: UpdateDocumentControlInput!): DocumentControl!
+}

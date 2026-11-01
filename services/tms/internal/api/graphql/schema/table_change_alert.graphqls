@@ -33,7 +33,50 @@ type TCASubscriptionConnection {
   totalCountExact: Boolean!
 }
 
+"A table the organization allows change alerts on."
+type TCAAllowlistedTable {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  tableName: String!
+  displayName: String!
+  enabled: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of a change alert the signed-in person subscribes to. Conditions are
+objects with a field, an operator and a value.
+"""
+input SaveTCASubscriptionInput {
+  name: String!
+  tableName: String!
+  recordId: String
+  eventTypes: [String!]!
+  conditions: [JSON!]!
+  "all or any."
+  conditionMatch: String!
+  watchedColumns: [String!]!
+  customTitle: String!
+  customMessage: String!
+  topic: String!
+  "critical, high, medium or low."
+  priority: String!
+  "Active or Paused."
+  status: String!
+}
+
 extend type Query {
   tcaSubscriptions(input: DataTableConnectionInput!): TCASubscriptionConnection!
   tcaSubscription(id: ID!): TCASubscription
+  "The tables the organization allows change alerts on."
+  tcaAllowlistedTables: [TCAAllowlistedTable!]!
+}
+
+extend type Mutation {
+  "Subscribes the signed-in person to changes on an allowed table."
+  createTcaSubscription(input: SaveTCASubscriptionInput!): TCASubscription!
+  "Changes one of the signed-in person's change alert subscriptions; version is the one read."
+  updateTcaSubscription(id: ID!, version: Int!, input: SaveTCASubscriptionInput!): TCASubscription!
 }

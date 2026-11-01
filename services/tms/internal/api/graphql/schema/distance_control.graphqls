@@ -1,0 +1,54 @@
+"""
+How the organization measures distance: stored mileage and the distance profile each purpose uses.
+"""
+type DistanceControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  storeMileage: Boolean!
+  storedDistanceUnits: String!
+  postalCodeFallbackToCity: Boolean!
+  autoCreateStoredMileage: Boolean!
+  loadedMoveDistanceProfileId: ID!
+  emptyMoveDistanceProfileId: ID!
+  payDistanceProfileId: ID!
+  billingDistanceProfileId: ID!
+  fuelDistanceProfileId: ID!
+  etaOutOfRouteDistanceProfileId: ID!
+  distanceCalculatorShortestDistanceProfileId: ID!
+  distanceCalculatorPracticalDistanceProfileId: ID!
+  captureJurisdictionMiles: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the distance control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDistanceControlInput {
+  version: Int!
+  storeMileage: Boolean!
+  storedDistanceUnits: String!
+  postalCodeFallbackToCity: Boolean!
+  autoCreateStoredMileage: Boolean!
+  loadedMoveDistanceProfileId: ID!
+  emptyMoveDistanceProfileId: ID!
+  payDistanceProfileId: ID!
+  billingDistanceProfileId: ID!
+  fuelDistanceProfileId: ID!
+  etaOutOfRouteDistanceProfileId: ID!
+  distanceCalculatorShortestDistanceProfileId: ID!
+  distanceCalculatorPracticalDistanceProfileId: ID!
+  captureJurisdictionMiles: Boolean!
+}
+
+extend type Query {
+  "The organization's distance control."
+  distanceControl: DistanceControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's distance control."
+  updateDistanceControl(input: UpdateDistanceControlInput!): DistanceControl!
+}

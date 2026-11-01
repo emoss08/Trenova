@@ -88,34 +88,34 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 45 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1115 writes: 689 GraphQL mutations and 426 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 443 |
-| Exempt | 678 |
+| Covered by a tool | 440 |
+| Exempt | 673 |
 | — Security | 85 |
 | — Configuration | 247 |
 | — User preference | 40 |
-| — Infrastructure | 48 |
+| — Infrastructure | 46 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 45 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1115 |
 
-Of the 445 writes an agent should be able to make, 443 have a tool (99%).
+Of the 442 writes an agent should be able to make, 440 have a tool (99%).
 
 ## Pending
 
@@ -201,7 +201,6 @@ The writes no tool performs yet, and what the tool would do.
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
-| exchangerate | 2 | 0 | 2 | 0 |
 | extractioneval | 6 | 0 | 6 | 0 |
 | extractionrollout | 1 | 0 | 1 | 0 |
 | extractionshadow | 1 | 0 | 1 | 0 |
@@ -215,7 +214,6 @@ The writes no tool performs yet, and what the tool would do.
 | formulatemplate | 26 | 0 | 26 | 0 |
 | fuelpurchase | 13 | 7 | 6 | 0 |
 | fuelsurcharge | 9 | 2 | 7 | 0 |
-| googlemaps | 1 | 0 | 1 | 0 |
 | graphql | 1 | 0 | 1 | 0 |
 | hazardousmaterial | 4 | 4 | 0 | 0 |
 | hazmatsegregationrule | 2 | 0 | 2 | 0 |
@@ -255,7 +253,6 @@ The writes no tool performs yet, and what the tool would do.
 | permission | 1 | 0 | 1 | 0 |
 | permit | 3 | 2 | 1 | 0 |
 | ptopolicy | 8 | 1 | 7 | 0 |
-| push | 2 | 0 | 2 | 0 |
 | rateagreement | 11 | 10 | 1 | 0 |
 | rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
@@ -282,10 +279,9 @@ The writes no tool performs yet, and what the tool would do.
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
 | storedmileage | 1 | 0 | 1 | 0 |
-| tablechangealert | 5 | 5 | 0 | 0 |
+| tablechangealert | 2 | 2 | 0 | 0 |
 | tableconfiguration | 6 | 1 | 5 | 0 |
 | tablelayout | 2 | 0 | 2 | 0 |
-| tablequery | 1 | 0 | 1 | 0 |
 | telematics | 4 | 0 | 4 | 0 |
 | tenant | 1 | 0 | 1 | 0 |
 | tender | 5 | 5 | 0 | 0 |
@@ -295,8 +291,8 @@ The writes no tool performs yet, and what the tool would do.
 | trailer | 5 | 5 | 0 | 0 |
 | triage | 8 | 2 | 6 | 0 |
 | user | 20 | 0 | 20 | 0 |
-| version | 1 | 0 | 1 | 0 |
 | watchtower | 13 | 8 | 5 | 0 |
+| webpush | 2 | 0 | 2 | 0 |
 | worker | 8 | 5 | 3 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
 | workercredential | 9 | 4 | 5 | 0 |
@@ -323,6 +319,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | `invoice_cancel_run` | invoice_run | cancel |
 | `invoice_commit_run` | invoice_run | approve |
 | `rate_amend_agreement_rules` | rate_agreement | update |
+| `report_delete_table_change_alert` | table_change_alert | delete |
+| `report_set_table_change_alert_status` | table_change_alert | update |
 | `shipment_place_hold` | shipment_hold | create |
 | `shipment_release_hold` | shipment_hold | update |
 | `shipment_request_documents` | customer_communication | create |
@@ -347,7 +345,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/accounting-controls/`<br>accountingcontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateAccountingControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### accountingsync
 
@@ -644,7 +642,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/billing-controls/`<br>billingcontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateBillingControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### billingqueue
 
@@ -787,8 +785,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/case-checklists/:templateID/`<br>casechecklisthandler.delete | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
-| `PUT /api/v1/case-checklists/`<br>casechecklisthandler.save | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
+| `mutation deleteCaseChecklistTemplate` | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
+| `mutation saveCaseChecklistTemplate` | Exempt, configuration: How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it. |
 
 ### checkcall
 
@@ -869,13 +867,13 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/data-entry-controls/`<br>dataentrycontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateDataEntryControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### dataretention
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/data-retention/`<br>dataretentionhandler.update | Exempt, configuration: Retention periods decide what the organization deletes; an administrator sets them against its legal obligations. |
+| `mutation updateDataRetention` | Exempt, configuration: Retention periods decide what the organization deletes; an administrator sets them against its legal obligations. |
 
 ### decisions
 
@@ -921,13 +919,13 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/dispatch-controls/`<br>dispatchcontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateDispatchControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### distancecontrol
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/distance-controls/`<br>distancecontrolhandler.patch | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateDistanceControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### distanceoverride
 
@@ -973,7 +971,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/document-controls/`<br>documentcontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateDocumentControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### documentpacketrule
 
@@ -1182,13 +1180,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation patchEquipmentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 | `mutation updateEquipmentType` | Exempt, configuration: A lookup list every record points at, maintained by an administrator. |
 
-### exchangerate
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/exchange-rates/refresh`<br>exchangeratehandler.refresh | Exempt, infrastructure: Fetches exchange rates from the provider now; the scheduler refreshes them on its own. |
-| `POST /api/v1/exchange-rates/settlement-quotes`<br>exchangeratehandler.createSettlementQuote | Exempt, infrastructure: Fetches a live rate from the rate provider and keeps a short-lived quote for the screen that asked; it books nothing, and nothing uses the quote unless a person settles a payment with it. |
-
 ### extractioneval
 
 | Write | Decision |
@@ -1363,12 +1354,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation updateFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation updateFuelIndexPrice` | Tool: `rate_correct_fuel_index_price` |
 | `mutation updateFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
-
-### googlemaps
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/google-maps/autocomplete/`<br>googlemapshandler.autocomplete | Exempt, read-only: Returns address suggestions from the maps provider. |
 
 ### graphql
 
@@ -1561,7 +1546,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/invoice-adjustment-controls/`<br>invoiceadjustmentcontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateInvoiceAdjustmentControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### invoicedispute
 
@@ -1658,13 +1643,13 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/users/me/notification-preferences/`<br>notificationpreferencehandler.update | Exempt, user-preference: What reaches a person outside the bell, and when, is their own choice; it changes nothing anyone else sees. |
+| `mutation updateMyNotificationPreferences` | Exempt, user-preference: What reaches a person outside the bell, and when, is their own choice; it changes nothing anyone else sees. |
 
 ### onboarding
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/onboarding/complete/`<br>onboardinghandler.complete | Exempt, configuration: The owner's one-time setup of a new organization's profile and operating mode; every later write depends on it and it runs before any agent is configured. |
+| `mutation completeOnboarding` | Exempt, configuration: The owner's one-time setup of a new organization's profile and operating mode; every later write depends on it and it runs before any agent is configured. |
 
 ### order
 
@@ -1713,7 +1698,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/page-favorites/toggle`<br>pagefavoritehandler.toggle | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+| `mutation toggleMyPageFavorite` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 
 ### palette
 
@@ -1765,13 +1750,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation restorePtoPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation runPtoAccrual` | Exempt, infrastructure: Accrual runs on its schedule; this re-runs the job for a period, which is repair work on the ledger rather than a decision. |
 | `mutation updatePtoPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-
-### push
-
-| Write | Decision |
-| --- | --- |
-| `DELETE /api/v1/push/subscriptions/`<br>pushhandler.unsubscribe | Exempt, infrastructure: Registers or removes a browser push subscription for the device the person is using. |
-| `POST /api/v1/push/subscriptions/`<br>pushhandler.subscribe | Exempt, infrastructure: Registers or removes a browser push subscription for the device the person is using. |
 
 ### rateagreement
 
@@ -2015,7 +1993,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/shipment-controls/`<br>shipmentcontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation updateShipmentControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
 ### shipmentmove
 
@@ -2049,11 +2027,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.deleteSubscription | Tool: `report_delete_table_change_alert` |
-| `PATCH /api/v1/tca/subscriptions/:id/pause`<br>tablechangealerthandler.pauseSubscription | Tool: `report_set_table_change_alert_status` |
-| `PATCH /api/v1/tca/subscriptions/:id/resume`<br>tablechangealerthandler.resumeSubscription | Tool: `report_set_table_change_alert_status` |
-| `POST /api/v1/tca/subscriptions/`<br>tablechangealerthandler.createSubscription | Tool: `report_create_table_change_alert` |
-| `PUT /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.updateSubscription | Tool: `report_update_table_change_alert` |
+| `mutation createTcaSubscription` | Tool: `report_create_table_change_alert` |
+| `mutation updateTcaSubscription` | Tool: `report_update_table_change_alert` |
 
 ### tableconfiguration
 
@@ -2072,12 +2047,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation resetMyTableLayout` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation saveMyTableLayout` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
-
-### tablequery
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/tables/:resource/compose/`<br>tablequeryhandler.compose | Exempt, read-only: Composes a table view from a request and returns it; report_save_table_view saves one. |
 
 ### telematics
 
@@ -2182,12 +2151,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `PUT /api/v1/users/me/assistant-visibility/`<br>userhandler.updateMyAssistantVisibility | Exempt, user-preference: Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone. |
 | `PUT /api/v1/users/me/availability/`<br>userhandler.updateMyAvailability | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
 
-### version
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/system/check-updates`<br>versionhandler.checkUpdates | Exempt, read-only: Asks the release server whether a newer version exists and changes nothing. |
-
 ### watchtower
 
 | Write | Decision |
@@ -2205,6 +2168,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation snoozeWatchtowerItem` | Tool: `exception_snooze` |
 | `mutation startWatchtowerItem` | Exempt, attestation: A person saying they are working an exception now, and taking it if nobody owns it; an agent cannot start work for them. |
 | `mutation wakeWatchtowerItem` | Tool: `exception_wake` |
+
+### webpush
+
+| Write | Decision |
+| --- | --- |
+| `mutation registerMyPushSubscription` | Exempt, infrastructure: Registers or removes a browser push subscription for the device the person is using. |
+| `mutation unregisterMyPushSubscription` | Exempt, infrastructure: Registers or removes a browser push subscription for the device the person is using. |
 
 ### worker
 

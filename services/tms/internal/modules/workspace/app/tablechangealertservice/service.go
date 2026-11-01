@@ -92,13 +92,6 @@ func (s *Service) GetSubscriptionByID(
 	return s.subRepo.GetByID(ctx, req)
 }
 
-func (s *Service) ListSubscriptions(
-	ctx context.Context,
-	req *tablechangealertports.ListTCASubscriptionsRequest,
-) (*pagination.ListResult[*tablechangealert.TCASubscription], error) {
-	return s.subRepo.List(ctx, req)
-}
-
 func (s *Service) ListSubscriptionsConnection(
 	ctx context.Context,
 	req *tablechangealertports.ListTCASubscriptionConnectionRequest,

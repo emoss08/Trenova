@@ -1,4 +1,5 @@
-import { api } from "@trenova/shared/lib/api";
+import { GlobalSearchDocument } from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export interface GlobalSearchHit {
   id: string;
@@ -37,15 +38,35 @@ export class GlobalSearchService {
     entityTypes?: GlobalSearchEntityType[],
     options?: { signal?: AbortSignal },
   ): Promise<GlobalSearchResponse> {
-    const searchParams = new URLSearchParams();
-    searchParams.set("query", query);
-    searchParams.set("limit", String(limit));
-    if (entityTypes && entityTypes.length > 0) {
-      searchParams.set("entityTypes", entityTypes.join(","));
-    }
-
-    return api.get<GlobalSearchResponse>(`/search/global/?${searchParams.toString()}`, {
+    const response = await requestGraphQL({
+      document: GlobalSearchDocument,
+      operationName: "GlobalSearch",
+      variables: {
+        input: {
+          query,
+          limit,
+          entityTypes: entityTypes && entityTypes.length > 0 ? entityTypes : null,
+        },
+      },
       signal: options?.signal,
     });
+    const result = response.globalSearch;
+
+    return {
+      query: result.query,
+      groups: result.groups.map((group) => ({
+        entityType: group.entityType,
+        label: group.label,
+        total: group.total,
+        hits: group.hits.map((hit) => ({
+          id: hit.id,
+          entityType: hit.entityType,
+          title: hit.title,
+          subtitle: hit.subtitle || undefined,
+          href: hit.href,
+          metadata: (hit.metadata as Record<string, string> | null) ?? undefined,
+        })),
+      })),
+    };
   }
 }

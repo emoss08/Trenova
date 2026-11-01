@@ -10,24 +10,9 @@ type AnalyticsPage string
 
 const ShipmentAnalyticsPage = AnalyticsPage("shipment-management")
 
-const BillingClientAnalyticsPage = AnalyticsPage("billing-client")
-
-const DedicatedLaneSuggestionsPage = AnalyticsPage("dedicated-lane-suggestions")
-
 const APIKeyAnalyticsPage = AnalyticsPage("api-key-management")
 
 const AnalyticsIncludeMetrics = "metrics"
-
-type AnaltyicsRequest struct {
-	Page       AnalyticsPage `form:"page"       json:"page"`
-	StartDate  int64         `form:"startDate"  json:"startDate"`
-	EndDate    int64         `form:"endDate"    json:"endDate"`
-	Limit      int           `form:"limit"      json:"limit"`
-	Offset     int           `form:"offset"     json:"offset"`
-	Timezone   string        `form:"timezone"   json:"timezone"`
-	WindowDays int           `form:"windowDays" json:"windowDays"`
-	Include    string        `form:"include"    json:"include"`
-}
 
 type DateRange struct {
 	StartDate int64 `json:"startDate"` // Unix timestamp

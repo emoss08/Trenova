@@ -25,6 +25,8 @@ var marginName = regexp.MustCompile(`(?i)margin|profit`)
 // unprotectedMarginNames are the fields whose names match marginName and that
 // carry no margin, each with why.
 var unprotectedMarginNames = map[string]string{
+	"BillingControl.enforceMarginFloor": "a switch that turns the margin floor check " +
+		"on, not a figure",
 	"DocumentTemplateVersion.marginTop":    "a page margin of a printed document",
 	"DocumentTemplateVersion.marginBottom": "a page margin of a printed document",
 	"DocumentTemplateVersion.marginLeft":   "a page margin of a printed document",

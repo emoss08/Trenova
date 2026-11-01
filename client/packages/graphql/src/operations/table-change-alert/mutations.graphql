@@ -1,0 +1,46 @@
+fragment TCASubscriptionFields on TCASubscription {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  tableName
+  recordId
+  eventTypes
+  conditions
+  conditionMatch
+  watchedColumns
+  customTitle
+  customMessage
+  topic
+  priority
+  status
+  version
+  createdAt
+  updatedAt
+}
+
+query TCAAllowlistedTables {
+  tcaAllowlistedTables {
+    id
+    organizationId
+    businessUnitId
+    tableName
+    displayName
+    enabled
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CreateTCASubscription($input: SaveTCASubscriptionInput!) {
+  createTcaSubscription(input: $input) {
+    ...TCASubscriptionFields
+  }
+}
+
+mutation UpdateTCASubscription($id: ID!, $version: Int!, $input: SaveTCASubscriptionInput!) {
+  updateTcaSubscription(id: $id, version: $version, input: $input) {
+    ...TCASubscriptionFields
+  }
+}

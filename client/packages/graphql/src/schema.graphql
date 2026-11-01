@@ -2448,6 +2448,12 @@ enum AccountingBackfillStatus {
   Running
 }
 
+"""Which events recognize revenue and expense."""
+enum AccountingBasis {
+  Accrual
+  Cash
+}
+
 """
 The day's brief at the top of the accounting dashboard. It leads with what the
 headline figures do not show: missed promises to pay, invoices about to pass 90
@@ -2676,6 +2682,56 @@ enum AccountingConnectionStatus {
   Failing
   """The authorization was revoked or expired; someone has to reconnect."""
   Revoked
+}
+
+"""
+How the organization keeps its books: recognition, posting, period close, reconciliation, currency and default accounts.
+"""
+type AccountingControl {
+  accountingBasis: AccountingBasis!
+  autoPostSourceEvents: [JournalSourceEvent!]!
+  businessUnitId: ID!
+  closedPeriodPostingPolicy: ClosedPeriodPostingPolicy!
+  createdAt: Timestamp!
+  currencyMode: CurrencyMode!
+  defaultApAccountId: ID
+  defaultArAccountId: ID
+  defaultCashAccountId: ID
+  defaultDriverAdvanceAccountId: ID
+  defaultDriverPayExpenseAccountId: ID
+  defaultDriverReimbursementAccountId: ID
+  defaultEscrowInterestExpenseAccountId: ID
+  defaultEscrowLiabilityAccountId: ID
+  defaultExpenseAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  defaultRetainedEarningsAccountId: ID
+  defaultRevenueAccountId: ID
+  defaultSettlementsPayableAccountId: ID
+  defaultTaxLiabilityAccountId: ID
+  defaultUnappliedCashAccountId: ID
+  defaultWriteOffAccountId: ID
+  exchangeRateDatePolicy: ExchangeRateDatePolicy!
+  exchangeRateOverridePolicy: ExchangeRateOverridePolicy!
+  expenseRecognitionPolicy: ExpenseRecognitionPolicy!
+  functionalCurrencyCode: String!
+  id: ID!
+  journalPostingMode: JournalPostingMode!
+  journalReversalPolicy: JournalReversalPolicy!
+  lockedPeriodPostingPolicy: LockedPeriodPostingPolicy!
+  manualJournalEntryPolicy: ManualJournalEntryPolicy!
+  notifyOnReconciliationException: Boolean!
+  organizationId: ID!
+  periodCloseMode: PeriodCloseMode!
+  realizedFxGainAccountId: ID
+  realizedFxLossAccountId: ID
+  reconciliationMode: ReconciliationMode!
+  reconciliationToleranceAmount: Decimal!
+  requireManualJeApproval: Boolean!
+  requirePeriodCloseApproval: Boolean!
+  requireReconciliationToClose: Boolean!
+  revenueRecognitionPolicy: RevenueRecognitionPolicy!
+  updatedAt: Timestamp!
+  version: Int!
 }
 
 """Which side a fix changes."""
@@ -3687,6 +3743,32 @@ input AdjustWorkerPTOBalanceInput {
   note: String!
   ptoType: PTOType!
   workerId: ID!
+}
+
+"""Which accounting date an adjustment posts on."""
+enum AdjustmentAccountingDatePolicy {
+  AlwaysNextOpen
+  UseOriginalIfOpenElseNextOpen
+}
+
+"""When a standard adjustment needs approval."""
+enum AdjustmentApprovalPolicy {
+  Always
+  AmountThreshold
+  None
+}
+
+"""Whether an invoice in a given state may be adjusted."""
+enum AdjustmentEligibilityPolicy {
+  AllowWithApproval
+  AllowWithoutApproval
+  Disallow
+}
+
+"""Whether an adjustment needs a reason."""
+enum AdjustmentRequirementPolicy {
+  Optional
+  Required
 }
 
 """Who may use an agent, among the people who may use the assistant."""
@@ -7017,6 +7099,14 @@ type ApiKey {
   updatedAt: Timestamp!
 }
 
+"""The figures on the API keys page."""
+type ApiKeyAnalytics {
+  activeKeys: ApiKeyStateCount!
+  requests30d: ApiKeyRequestVolume!
+  revokedKeys: ApiKeyStateCount!
+  totalKeys: ApiKeyTotalCount!
+}
+
 type ApiKeyConnection {
   edges: [ApiKeyEdge!]!
   pageInfo: PageInfo!
@@ -7030,6 +7120,33 @@ type ApiKeyConnection {
 type ApiKeyEdge {
   cursor: String!
   node: ApiKey!
+}
+
+"""Requests made with API keys on one day."""
+type ApiKeyRequestDay {
+  """The day, as Jan 2."""
+  day: String!
+  value: Int!
+}
+
+"""Requests made with the organization's API keys over the last 30 days."""
+type ApiKeyRequestVolume {
+  sparkline: [ApiKeyRequestDay!]!
+  total: Int!
+}
+
+"""How many API keys are in one state, and their share of all keys."""
+type ApiKeyStateCount {
+  count: Int!
+  percentOfTotal: Float!
+}
+
+"""
+How many API keys the organization has, and how many it made this month.
+"""
+type ApiKeyTotalCount {
+  count: Int!
+  newThisMonth: Int!
 }
 
 input ApplyCarrierIntelSuggestionsInput {
@@ -7305,6 +7422,14 @@ type AuthEventEdge {
   node: AuthEvent!
 }
 
+"""The preset auto-assignment ranks drivers by."""
+enum AutoAssignmentStrategy {
+  Availability
+  LoadBalancing
+  Performance
+  Proximity
+}
+
 """
 What a driver would rather work on a weekday. It is a statement, never a
 constraint: dispatch is free to override it, and the rota shows where it did so
@@ -7426,6 +7551,67 @@ enum BillType {
   CreditMemo
   DebitMemo
   Invoice
+}
+
+"""
+How the organization bills: invoice defaults, the billing queue, automation, rate checks, late charges, reminders and statements.
+"""
+type BillingControl {
+  autoInvoiceBatchSize: Int!
+  billingExceptionDisposition: BillingExceptionDisposition!
+  billingQueueTransferBatchSize: Int!
+  billingQueueTransferMode: BillingQueueTransferMode!
+  billingQueueTransferSchedule: BillingTransferSchedule!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  defaultInvoiceFooter: String!
+  defaultInvoiceTerms: String!
+  defaultPaymentTerm: BillingPaymentTerm!
+  enforceMarginFloor: Boolean!
+  fallbackFormulaTemplateId: ID
+  id: ID!
+  invoiceDraftCreationMode: InvoiceDraftCreationMode!
+  invoicePostingMode: InvoicePostingMode!
+  lateChargeAssessmentMode: LateChargeAssessmentMode!
+  lateChargeMinimumAmount: Decimal!
+  monthlyStatementDay: Int!
+  monthlyStatementsEnabled: Boolean!
+  notifyOnAutoInvoiceCreation: Boolean!
+  notifyOnBillingExceptions: Boolean!
+  organizationId: ID!
+  paymentReminderDays: [Int!]!
+  paymentRemindersEnabled: Boolean!
+  queueAgentReviewEnabled: Boolean!
+  queueAutoApproveMaxAmount: Decimal
+  queueAutoApproveMode: QueueAutoApproveMode!
+  rateValidationEnforcement: EnforcementLevel!
+  rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode!
+  rateVarianceTolerancePercent: Decimal!
+  readyToBillAssignmentMode: ReadyToBillAssignmentMode!
+  requireRateOverrideReason: Boolean!
+  shipmentBillingRequirementEnforcement: EnforcementLevel!
+  showBalanceDueOnInvoice: Boolean!
+  showDueDateOnInvoice: Boolean!
+  unratedShipmentDisposition: UnratedShipmentDisposition!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""Where a shipment with a billing exception goes."""
+enum BillingExceptionDisposition {
+  ReturnToOperations
+  RouteToBillingReview
+}
+
+"""The organization's default invoice payment term."""
+enum BillingPaymentTerm {
+  DueOnReceipt
+  Net10
+  Net15
+  Net30
+  Net45
+  Net60
+  Net90
 }
 
 """What Nova made of an item it reviewed."""
@@ -7595,6 +7781,12 @@ enum BillingQueueStatus {
   SentBackToOps
 }
 
+"""How ready shipments reach the billing queue."""
+enum BillingQueueTransferMode {
+  AutomaticWhenReady
+  ManualOnly
+}
+
 input BillingQueueUpdateStatusInput {
   cancelReason: String
   exceptionNotes: String
@@ -7732,6 +7924,14 @@ enum BillingTransferRunStatus {
   Failed
   Queued
   Running
+}
+
+"""How often ready shipments transfer to the billing queue."""
+enum BillingTransferSchedule {
+  Continuous
+  Daily
+  Hourly
+  Weekly
 }
 
 type BillingTransferValidation {
@@ -10424,6 +10624,84 @@ enum CarrierType {
   Exempt
 }
 
+"""What ticks a step the organization added."""
+enum CaseChecklistCustomCheck {
+  Document
+  Manual
+}
+
+"""
+A step the organization added: its name, what ticks it and what it asks the agent.
+"""
+type CaseChecklistCustomItem {
+  check: CaseChecklistCustomCheck!
+  documentTypeId: ID
+  label: String!
+  prompt: String!
+  stepLabel: String!
+}
+
+input CaseChecklistCustomItemInput {
+  check: CaseChecklistCustomCheck!
+  documentTypeId: ID
+  label: String!
+  prompt: String
+  stepLabel: String
+}
+
+"""Whether a checklist step must be ticked, may be, or is left off."""
+enum CaseChecklistItemMode {
+  Off
+  Optional
+  Required
+}
+
+"""Which case checklist a template lays out."""
+enum CaseChecklistKind {
+  ReadyToBill
+  ReadyToClose
+}
+
+"""
+How the organization, or one customer of it, lays out a kind of case checklist.
+The organization's template has no customer; the default, before one is saved, has no id.
+"""
+type CaseChecklistTemplate {
+  customerId: ID
+  customerName: String!
+  id: ID
+  items: [CaseChecklistTemplateItem!]!
+  kind: CaseChecklistKind!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""One step of a template, in the order the case shows it."""
+type CaseChecklistTemplateItem {
+  custom: CaseChecklistCustomItem
+  key: String!
+  mode: CaseChecklistItemMode!
+}
+
+input CaseChecklistTemplateItemInput {
+  custom: CaseChecklistCustomItemInput
+  key: String!
+  mode: CaseChecklistItemMode!
+}
+
+"""How an organization lays out one kind of case checklist."""
+type CaseChecklistTemplates {
+  """Each customer's template that replaces the organization's."""
+  customers: [CaseChecklistTemplate!]!
+  kind: CaseChecklistKind!
+  """
+  Built-in steps whose mode follows a rule set elsewhere: they can be moved but stay required.
+  """
+  locked: [String!]!
+  """The organization's template, or the default when it saved none."""
+  organization: CaseChecklistTemplate!
+}
+
 type CategoryCostLine {
   amount: Decimal!
   category: CostCategoryType!
@@ -10581,6 +10859,19 @@ input ClockInput {
   workerId: ID!
 }
 
+"""What happens to an adjustment of an invoice in a closed period."""
+enum ClosedPeriodAdjustmentPolicy {
+  Disallow
+  PostInNextOpenPeriodWithApproval
+  RequireReopen
+}
+
+"""What happens to a posting dated in a closed period."""
+enum ClosedPeriodPostingPolicy {
+  PostToNextOpen
+  RequireReopen
+}
+
 type Commodity {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -10721,6 +11012,12 @@ input CompleteClearinghouseQueryInput {
   violationCount: Int
 }
 
+input CompleteOnboardingInput {
+  loadSampleData: Boolean!
+  operationType: OperationType!
+  organization: OnboardingOrganizationInput!
+}
+
 input CompleteWorkerTrainingInput {
   completedAt: Timestamp
   courseId: ID
@@ -10736,10 +11033,24 @@ input CompleteWorkerTrainingInput {
   workerId: ID
 }
 
+"""How a compliance failure on an assignment is enforced."""
+enum ComplianceEnforcementLevel {
+  Audit
+  Block
+  Warning
+}
+
 enum ComplianceStatus {
   Compliant
   NonCompliant
   Pending
+}
+
+input ComposeTableQueryInput {
+  current: TableQueryCurrentViewInput
+  prompt: String!
+  """The permission resource of the table, as the catalogue names it."""
+  resource: String!
 }
 
 enum ConfigurationVisibility {
@@ -11150,6 +11461,12 @@ enum CreditMemoApplicationStatus {
   Unapplied
 }
 
+"""Whether the organization transacts in more than one currency."""
+enum CurrencyMode {
+  MultiCurrency
+  SingleCurrency
+}
+
 type CustomFieldDefinition {
   businessUnitId: ID!
   color: String
@@ -11470,6 +11787,12 @@ type CustomerConnection {
   Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
   """
   totalCountExact: Boolean!
+}
+
+"""Whether an adjustment may leave a customer credit balance."""
+enum CustomerCreditBalancePolicy {
+  AllowUnappliedCredit
+  Disallow
 }
 
 enum CustomerCreditStatus {
@@ -12182,6 +12505,56 @@ type DashControl {
   Show estimated pay on loads before pay accrues (requires per-load pay).
   """
   showPayEstimates: Boolean!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""How entered text is cased."""
+enum DataEntryCaseFormat {
+  AsEntered
+  Lower
+  TitleCase
+  Upper
+}
+
+"""
+How the organization's entered codes, names, emails and cities are cased.
+"""
+type DataEntryControl {
+  businessUnitId: ID!
+  cityCase: DataEntryCaseFormat!
+  codeCase: DataEntryCaseFormat!
+  createdAt: Timestamp!
+  emailCase: DataEntryCaseFormat!
+  id: ID!
+  nameCase: DataEntryCaseFormat!
+  organizationId: ID!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""
+How long the organization keeps each kind of record before it is purged, in days.
+"""
+type DataRetention {
+  agentEvalCaseRetentionPeriod: Int!
+  aiAuditRetentionPeriod: Int!
+  aiCorrectionRetentionPeriod: Int!
+  aiFeedbackRetentionPeriod: Int!
+  auditRetentionPeriod: Int!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  """
+  How long a terminated driver's qualification file is held before it is flagged for purge.
+  """
+  driverQualificationRetentionPeriod: Int!
+  """Zero disables purging of inbound EDI files."""
+  ediInboundFileRetentionPeriod: Int!
+  """Zero disables purging of EDI messages."""
+  ediMessageRetentionPeriod: Int!
+  """Empty until the organization saves its own retention periods."""
+  id: ID
+  organizationId: ID!
   updatedAt: Timestamp!
   version: Int!
 }
@@ -13613,6 +13986,65 @@ type DispatchCommitment {
   windowStart: Timestamp!
 }
 
+"""
+How the organization dispatches: auto-assignment, compliance enforcement, monitoring, exceptions, tenders and service failures.
+"""
+type DispatchControl {
+  autoAssignConfidenceThreshold: Decimal!
+  autoAssignMaxDeadheadMiles: Int
+  autoAssignPlanningHorizonHours: Int!
+  autoAssignmentStrategy: AutoAssignmentStrategy!
+  businessUnitId: ID!
+  checkCallIntervalHours: Int!
+  complianceEnforcementLevel: ComplianceEnforcementLevel!
+  coverageRiskWindowHours: Int!
+  createdAt: Timestamp!
+  enableAutoAssignment: Boolean!
+  enableAutoStopActuals: Boolean!
+  enableCheckCallMonitoring: Boolean!
+  enableEtaAlerts: Boolean!
+  enforceDriverQualificationCompliance: Boolean!
+  enforceDrugAndAlcoholCompliance: Boolean!
+  enforceHazmatCompliance: Boolean!
+  enforceHosCompliance: Boolean!
+  enforceMedicalCertCompliance: Boolean!
+  enforceTrailerContinuity: Boolean!
+  enforceWorkerAssign: Boolean!
+  enforceWorkerPtaRestrictions: Boolean!
+  enforceWorkerTractorFleetContinuity: Boolean!
+  etaDwellMinutes: Int!
+  etaRiskThresholdMinutes: Int!
+  exceptionDefaultAssigneeId: ID
+  exceptionDueCriticalMinutes: Int!
+  exceptionDueInfoMinutes: Int!
+  exceptionDueWarningMinutes: Int!
+  exceptionEscalationContactId: ID
+  exceptionEscalationMinutes: Int!
+  exceptionMaxEscalations: Int!
+  exceptionMissedStopGraceMinutes: Int!
+  exceptionPodGraceHours: Int!
+  horizonMaxMovesPerDriver: Int!
+  horizonSearchIterations: Int
+  id: ID!
+  organizationId: ID!
+  planningMode: PlanningMode!
+  recordServiceFailures: ServiceIncidentType!
+  scoringWeights: JSON!
+  serviceFailureGracePeriod: Int
+  serviceFailureTarget: Float
+  tenderAutoAcceptCounters: Boolean!
+  tenderCounterDecisionMinutes: Int!
+  """Null to a reader without the margins field group."""
+  tenderCounterMarginFloorPercent: Decimal @protected(group: Margins)
+  tenderCounterOffersEnabled: Boolean!
+  tenderEscalationOfferTtlMinutes: Int!
+  tenderEscalationRateIncreasePercent: Decimal!
+  tenderExhaustedAction: TenderExhaustedAction!
+  tenderMaxEscalations: Int!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
 type DispatchDriverMoveMatch {
   move: DispatchBoardMove!
   score: DispatchCandidate!
@@ -13764,6 +14196,31 @@ input DisputeAdjustmentInput {
   payCodeId: ID
 }
 
+"""
+How the organization measures distance: stored mileage and the distance profile each purpose uses.
+"""
+type DistanceControl {
+  autoCreateStoredMileage: Boolean!
+  billingDistanceProfileId: ID!
+  businessUnitId: ID!
+  captureJurisdictionMiles: Boolean!
+  createdAt: Timestamp!
+  distanceCalculatorPracticalDistanceProfileId: ID!
+  distanceCalculatorShortestDistanceProfileId: ID!
+  emptyMoveDistanceProfileId: ID!
+  etaOutOfRouteDistanceProfileId: ID!
+  fuelDistanceProfileId: ID!
+  id: ID!
+  loadedMoveDistanceProfileId: ID!
+  organizationId: ID!
+  payDistanceProfileId: ID!
+  postalCodeFallbackToCity: Boolean!
+  storeMileage: Boolean!
+  storedDistanceUnits: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
 type DistanceOverride {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -13862,6 +14319,33 @@ enum DocumentClassification {
   Public
   Regulatory
   Sensitive
+}
+
+"""
+How the organization handles documents: intelligence, classification, extraction, indexing and Capture.
+"""
+type DocumentControl {
+  businessUnitId: ID!
+  captureAllowAutoUpdate: Boolean!
+  captureAutoFileCoverSheets: Boolean!
+  captureMinAgentVersion: String!
+  captureRetentionDays: Int!
+  createdAt: Timestamp!
+  enableAiAssistedClassification: Boolean!
+  enableAiAssistedExtraction: Boolean!
+  enableAutoClassification: Boolean!
+  enableAutoCreateDocumentTypes: Boolean!
+  enableAutoDocumentTypeAssociate: Boolean!
+  enableCapture: Boolean!
+  enableDocumentIntelligence: Boolean!
+  enableFullTextIndexing: Boolean!
+  enableOcr: Boolean!
+  enableShipmentDraftExtraction: Boolean!
+  id: ID!
+  organizationId: ID!
+  shipmentDraftAllowedResources: [String!]!
+  updatedAt: Timestamp!
+  version: Int!
 }
 
 type DocumentPacketRule {
@@ -15660,6 +16144,14 @@ enum EndorsementType {
   X
 }
 
+"""How strictly a billing rule is enforced."""
+enum EnforcementLevel {
+  Block
+  Ignore
+  RequireReview
+  Warn
+}
+
 input EnrollBenefitInput {
   benefitPlanId: ID!
   coverageTier: CoverageTier
@@ -15905,6 +16397,25 @@ enum EtaVerdict {
   Late
   OnTime
   Unknown
+}
+
+"""Which date picks the exchange rate."""
+enum ExchangeRateDatePolicy {
+  AccountingDate
+  DocumentDate
+}
+
+"""Whether a person may override an exchange rate."""
+enum ExchangeRateOverridePolicy {
+  Allow
+  Disallow
+  RequireApproval
+}
+
+"""The event that recognizes expense."""
+enum ExpenseRecognitionPolicy {
+  OnCashDisbursement
+  OnVendorBillPost
 }
 
 input ExportTableViewInput {
@@ -19186,6 +19697,45 @@ type GeofenceVertex {
   longitude: Float!
 }
 
+"""The records of one kind a global search found."""
+type GlobalSearchGroup {
+  entityType: String!
+  hits: [GlobalSearchHit!]!
+  label: String!
+  """
+  How many records match in all, which can be more than the hits returned.
+  """
+  total: Int!
+}
+
+"""One record a global search found."""
+type GlobalSearchHit {
+  """shipment, customer, worker or document."""
+  entityType: String!
+  href: String!
+  id: String!
+  """Short labelled facts about the record, keyed by label."""
+  metadata: JSON
+  subtitle: String!
+  title: String!
+}
+
+input GlobalSearchInput {
+  """shipment, customer, worker or document; every kind when omitted."""
+  entityTypes: [String!]
+  """Hits per kind of record; at most 25."""
+  limit: Int
+  query: String!
+}
+
+"""
+What a global search found, grouped by kind of record, among the records the caller may read.
+"""
+type GlobalSearchResult {
+  groups: [GlobalSearchGroup!]!
+  query: String!
+}
+
 input GrantCarrierIntelOverrideInput {
   carrierId: ID!
   expiresAt: Timestamp
@@ -21040,6 +21590,34 @@ input InvoiceAdjustmentApprovalsInput {
   submittedById: ID
 }
 
+"""
+Which invoices may be adjusted, how adjustments post, and when they need a reason or approval.
+"""
+type InvoiceAdjustmentControl {
+  adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy!
+  adjustmentReasonRequirement: AdjustmentRequirementPolicy!
+  businessUnitId: ID!
+  closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy!
+  createdAt: Timestamp!
+  customerCreditBalancePolicy: CustomerCreditBalancePolicy!
+  disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  id: ID!
+  organizationId: ID!
+  overCreditPolicy: OverCreditPolicy!
+  paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy!
+  requireSeparateApprover: Boolean!
+  rerateVarianceTolerancePercent: Decimal!
+  standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy!
+  standardAdjustmentApprovalThreshold: Decimal!
+  supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy!
+  updatedAt: Timestamp!
+  version: Int!
+  writeOffApprovalPolicy: WriteOffApprovalPolicy!
+  writeOffApprovalThreshold: Decimal!
+}
+
 """What an invoice adjustment does to the posted invoice it corrects."""
 enum InvoiceAdjustmentKind {
   CreditAndRebill
@@ -21231,6 +21809,12 @@ enum InvoiceDisputeStatus {
   None
 }
 
+"""How invoice drafts are created from the billing queue."""
+enum InvoiceDraftCreationMode {
+  AutomaticWhenTransferred
+  ManualOnly
+}
+
 """
 Whether an invoice's outbound 210 can go, where it would go, and where the last attempt stands.
 """
@@ -21339,6 +21923,12 @@ enum InvoicePaymentTerm {
   Net45
   Net60
   Net90
+}
+
+"""How invoice drafts are posted."""
+enum InvoicePostingMode {
+  AutomaticWhenNoBlockingExceptions
+  ManualReviewRequired
 }
 
 """
@@ -21686,6 +22276,12 @@ type JournalEntryLineAccount {
   name: String!
 }
 
+"""Whether source events post journals on their own."""
+enum JournalPostingMode {
+  Automatic
+  Manual
+}
+
 type JournalReversal {
   approvedAt: Timestamp
   approvedById: ID
@@ -21734,6 +22330,12 @@ type JournalReversalEdge {
   node: JournalReversal!
 }
 
+"""Where a journal reversal posts."""
+enum JournalReversalPolicy {
+  Disallow
+  NextOpenPeriod
+}
+
 enum JournalReversalStatus {
   Approved
   Cancelled
@@ -21770,6 +22372,29 @@ type JournalReviewSummary {
   postingMode: String!
   readyToPost: Int!
   requiresApproval: Boolean!
+}
+
+"""A source event that can post a journal entry automatically."""
+enum JournalSourceEvent {
+  CarrierSettlementPaid
+  CarrierSettlementPosted
+  CarrierSettlementVoided
+  CreditMemoPosted
+  CustomerPaymentPosted
+  CustomerPaymentReversed
+  CustomerShortPayRecognized
+  DebitMemoPosted
+  DriverSettlementPaid
+  DriverSettlementPosted
+  DriverSettlementVoided
+  EscrowInterestAccrued
+  FactoringChargebackReversed
+  FactoringChargedBack
+  FactoringFunded
+  FactoringReserveReleased
+  InvoicePosted
+  VendorBillPosted
+  VendorPaymentPosted
 }
 
 type JournalSourceInfo {
@@ -22232,6 +22857,11 @@ type LocationReference {
   name: String!
 }
 
+"""What may post into a locked period."""
+enum LockedPeriodPostingPolicy {
+  BlockSubledgerAllowManualJe
+}
+
 input LogCheckCallInput {
   city: String
   contactName: String
@@ -22363,6 +22993,13 @@ type ManualJournalConnection {
 type ManualJournalEdge {
   cursor: String!
   node: ManualJournal!
+}
+
+"""Which manual journal entries are allowed."""
+enum ManualJournalEntryPolicy {
+  AdjustmentOnly
+  AllowAll
+  Disallow
 }
 
 enum ManualJournalStatus {
@@ -22661,6 +23298,11 @@ type Mutation {
   """
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
+  """
+  Finishes the organization's first-run setup: saves its profile and operating
+  mode and, when asked, loads sample data. A person must do it, not an API key.
+  """
+  completeOnboarding(input: CompleteOnboardingInput!): OnboardingState!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   completeWorkerTraining(input: CompleteWorkerTrainingInput!): WorkerTrainingRecord!
   """
@@ -22764,6 +23406,8 @@ type Mutation {
   createShipment(input: ShipmentInput!): Shipment!
   createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
   createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
+  """Subscribes the signed-in person to changes on an allowed table."""
+  createTcaSubscription(input: SaveTCASubscriptionInput!): TCASubscription!
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
   createTrainingCourse(input: TrainingCourseInput!): TrainingCourse!
@@ -22836,6 +23480,11 @@ type Mutation {
   deleteAgentTestPrompt(agentId: ID!, id: ID!): Boolean!
   deleteCaptureProfile(id: ID!): Boolean!
   deleteCarrierCapacityPosting(id: ID!, version: Int!): Boolean!
+  """
+  Deletes a case checklist template: a customer's falls back to the organization's,
+  the organization's to the default.
+  """
+  deleteCaseChecklistTemplate(id: ID!): Boolean!
   deleteDetentionPolicy(id: ID!): Boolean!
   deleteDocumentTemplate(id: ID!): Boolean!
   deleteDocumentTemplateVersion(id: ID!): Boolean!
@@ -23176,6 +23825,11 @@ type Mutation {
   """Write the signed-in person's own profile again now."""
   regenerateMyAgentProfile: Boolean!
   """
+  Registers a browser push subscription for the signed-in person's device. An
+  endpoint another person registered is refused as a conflict.
+  """
+  registerMyPushSubscription(input: RegisterMyPushSubscriptionInput!): WebPushSubscription!
+  """
   Marks every source of one type stale; only chunks whose text changed are embedded again.
   """
   reindexAIRetrievalSource(sourceType: AIRetrievalSourceType!): AIRetrievalStatus!
@@ -23379,6 +24033,8 @@ type Mutation {
   Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
   """
   saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
+  """Saves the organization's or a customer's case checklist template."""
+  saveCaseChecklistTemplate(input: SaveCaseChecklistTemplateInput!): CaseChecklistTemplate!
   saveFactoringTransport(input: SaveFactoringTransportInput!): FactoringTransport!
   """
   Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them.
@@ -23528,6 +24184,10 @@ type Mutation {
   what they ask for. Saves nothing. Needs permission to create or update agents.
   """
   tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
+  """
+  Adds the page to the signed-in person's favorites, or removes it when it is one.
+  """
+  toggleMyPageFavorite(input: ToggleMyPageFavoriteInput!): PageFavoriteToggleResult!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   """Queues the shipment for billing, one item per payer."""
   transferShipmentToBillingItems(input: ShipmentTransferToBillingInput!): ShipmentTransferToBillingResult!
@@ -23559,10 +24219,14 @@ type Mutation {
   """Removes a link a person or the reading made."""
   unlinkInboundMessage(id: ID!, record: InboundLinkedRecord!): InboundMessage!
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  """Removes the signed-in person's push subscription for the endpoint."""
+  unregisterMyPushSubscription(endpoint: String!): Boolean!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
   updateAccessorialCharge(id: ID!, input: AccessorialChargeInput!): AccessorialCharge!
   updateAccountType(id: ID!, input: AccountTypeInput!): AccountType!
+  """Saves every setting of the organization's accounting control."""
+  updateAccountingControl(input: UpdateAccountingControlInput!): AccountingControl!
   """Change how documents are sent once setup is complete."""
   updateAccountingSyncSettings(input: UpdateAccountingSyncSettingsInput!): AccountingConnection!
   """Changes what an agent can do. Needs permission to update agents."""
@@ -23572,6 +24236,8 @@ type Mutation {
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
   updateAgentQualityControl(input: UpdateAgentQualityControlInput!): AgentQualityControl!
   updateBenefitPlan(input: UpdateBenefitPlanInput!): BenefitPlan!
+  """Saves every setting of the organization's billing control."""
+  updateBillingControl(input: UpdateBillingControlInput!): BillingControl!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   """
   Changes a profile. Stacks already captured keep the settings they were captured with.
@@ -23590,7 +24256,17 @@ type Mutation {
   updateCustomerTrackingProfile(input: UpdateCustomerTrackingProfileInput!): CustomerTrackingProfile!
   """Updates the org's Dash feature toggles (back office)."""
   updateDashControl(input: UpdateDashControlInput!): DashControl!
+  """Saves every setting of the organization's data entry control."""
+  updateDataEntryControl(input: UpdateDataEntryControlInput!): DataEntryControl!
+  """Saves the organization's data retention periods."""
+  updateDataRetention(input: UpdateDataRetentionInput!): DataRetention!
   updateDetentionPolicy(id: ID!, input: DetentionPolicyInput!): DetentionPolicy!
+  """Saves every setting of the organization's dispatch control."""
+  updateDispatchControl(input: UpdateDispatchControlInput!): DispatchControl!
+  """Saves every setting of the organization's distance control."""
+  updateDistanceControl(input: UpdateDistanceControlInput!): DistanceControl!
+  """Saves every setting of the organization's document control."""
+  updateDocumentControl(input: UpdateDocumentControlInput!): DocumentControl!
   updateDocumentTemplate(id: ID!, input: DocumentTemplateInput!): DocumentTemplate!
   updateDocumentTemplateVersion(id: ID!, input: DocumentTemplateVersionInput!): DocumentTemplateVersion!
   updateDocumentType(id: ID!, input: DocumentTypeInput!): DocumentType!
@@ -23630,6 +24306,8 @@ type Mutation {
   Changes a mailbox's settings. Changing its provider clears the signing secret and the API key.
   """
   updateInboundMailbox(id: ID!, input: InboundMailboxInput!, version: Int!): InboundMailbox!
+  """Saves every setting of the organization's invoice adjustment control."""
+  updateInvoiceAdjustmentControl(input: UpdateInvoiceAdjustmentControlInput!): InvoiceAdjustmentControl!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
   updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
@@ -23640,6 +24318,8 @@ type Mutation {
   emergency contact). Compliance fields are carrier-controlled.
   """
   updateMyContactInfo(input: UpdateMyContactInfoInput!): PortalComplianceProfile!
+  """Saves the signed-in person's notification preferences."""
+  updateMyNotificationPreferences(input: UpdateMyNotificationPreferencesInput!): NotificationPreference!
   updateOrder(id: ID!, input: OrderInput!): Order!
   updateOrderCharge(input: UpdateOrderChargeInput!): Order!
   updateOrgHoliday(id: ID!, input: OrgHolidayInput!): OrgHoliday!
@@ -23660,8 +24340,14 @@ type Mutation {
   updateShiftTemplate(id: ID!, input: ShiftTemplateInput!): ShiftTemplate!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
+  """Saves every setting of the organization's shipment control."""
+  updateShipmentControl(input: UpdateShipmentControlInput!): ShipmentControl!
   updateSidebarPreferences(input: SidebarPreferencesInput!): SidebarPreferences!
   updateTableConfiguration(id: ID!, input: TableConfigurationInput!): TableConfiguration!
+  """
+  Changes one of the signed-in person's change alert subscriptions; version is the one read.
+  """
+  updateTcaSubscription(id: ID!, input: SaveTCASubscriptionInput!, version: Int!): TCASubscription!
   updateTractor(id: ID!, input: TractorInput!): Tractor!
   updateTrailer(id: ID!, input: TrailerInput!): Trailer!
   updateTrainingCourse(id: ID!, input: TrainingCourseInput!): TrainingCourse!
@@ -23900,6 +24586,13 @@ type NotificationConnection {
   totalCountExact: Boolean!
 }
 
+"""Which notifications reach a person outside the bell."""
+enum NotificationDeliveryMode {
+  all
+  off
+  urgent
+}
+
 enum NotificationDeliveryStatus {
   delivered
   expired
@@ -23915,6 +24608,35 @@ type NotificationEdge {
 input NotificationFilterInput {
   state: NotificationState
   unreadOnly: Boolean
+}
+
+"""
+What reaches the signed-in person outside the notification bell, and when.
+"""
+type NotificationPreference {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  desktopMode: NotificationDeliveryMode!
+  disabledEventTypes: [String!]!
+  emailDigest: Boolean!
+  emailMode: NotificationDeliveryMode!
+  """Empty until the person saves their own preferences."""
+  id: ID
+  lastDigestAt: Timestamp
+  organizationId: ID!
+  pausedUntil: Timestamp
+  quietHoursAllowUrgent: Boolean!
+  """Days of the week quiet hours apply, 0 for Sunday."""
+  quietHoursDays: [Int!]!
+  quietHoursEnabled: Boolean!
+  """Local time of day, HH:MM."""
+  quietHoursEnd: String!
+  """Local time of day, HH:MM."""
+  quietHoursStart: String!
+  sound: Boolean!
+  updatedAt: Timestamp!
+  userId: ID!
+  version: Int!
 }
 
 enum NotificationPriority {
@@ -24029,6 +24751,48 @@ type OSHASummaryTotals {
   totalDaysAway: Int!
   totalDaysRestricted: Int!
   totalRecordableCases: Int!
+}
+
+"""The organization's profile as onboarding collected it."""
+type OnboardingOrganization {
+  addressLine1: String!
+  city: String!
+  dotNumber: String!
+  name: String!
+  postalCode: String!
+  scacCode: String!
+  stateId: ID
+  timezone: String!
+}
+
+input OnboardingOrganizationInput {
+  addressLine1: String!
+  city: String!
+  dotNumber: String
+  name: String!
+  postalCode: String!
+  scacCode: String
+  stateId: ID!
+  timezone: String!
+}
+
+"""Where the organization stands in its first-run setup."""
+type OnboardingState {
+  completedAt: Timestamp
+  operationType: OperationType
+  organization: OnboardingOrganization
+  """
+  Whether the signed-in person must finish onboarding before using Trenova.
+  """
+  required: Boolean!
+  sampleDataLoaded: Boolean!
+  status: OnboardingStatus!
+}
+
+"""Whether a new organization has finished its first-run setup."""
+enum OnboardingStatus {
+  completed
+  pending
 }
 
 input OpenEscrowAccountInput {
@@ -24238,6 +25002,12 @@ input OrganizationInput {
   taxId: String
   timezone: String!
   version: Int!
+}
+
+"""Whether a credit may exceed what the invoice still owes."""
+enum OverCreditPolicy {
+  AllowWithApproval
+  Block
 }
 
 enum PTOAccrualMethod {
@@ -24595,6 +25365,25 @@ enum PageAccessUse {
   REFERENCE
   """The screen's route, or a REST endpoint it calls, checks the kind."""
   REQUIRED
+}
+
+"""A page the signed-in person pinned to their favorites."""
+type PageFavorite {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  id: ID!
+  organizationId: ID!
+  pageTitle: String!
+  pageUrl: String!
+  updatedAt: Timestamp!
+  userId: ID!
+  version: Int!
+}
+
+"""Whether a toggle left the page a favorite, and the favorite it made."""
+type PageFavoriteToggleResult {
+  favorite: PageFavorite
+  favorited: Boolean!
 }
 
 type PageInfo {
@@ -25127,11 +25916,44 @@ input PerformanceReviewTemplatesInput {
   status: EntityStatus
 }
 
+"""How fiscal periods close."""
+enum PeriodCloseMode {
+  ManualOnly
+  SystemScheduled
+}
+
 enum PeriodType {
   Adjusting
   Month
   Quarter
   Week
+}
+
+input PlaceAutocompleteInput {
+  input: String!
+  """Groups the keystrokes of one search into one billed session."""
+  sessionToken: String
+}
+
+"""The addresses the maps provider suggests."""
+type PlaceAutocompleteResult {
+  count: Int!
+  details: [PlaceSuggestion!]!
+}
+
+"""An address the maps provider suggests for what was typed."""
+type PlaceSuggestion {
+  addressLine1: String!
+  city: String!
+  latitude: Float!
+  longitude: Float!
+  name: String!
+  placeId: String!
+  postalCode: String!
+  state: String!
+  """The organization's US state the suggestion falls in, when one matches."""
+  stateId: ID
+  types: [String!]!
 }
 
 type PlannedPTOAccrual {
@@ -25140,6 +25962,12 @@ type PlannedPTOAccrual {
   entryType: PTOLedgerEntryType!
   nominalDays: Decimal!
   periodKey: String!
+}
+
+"""How auto-assignment plans moves."""
+enum PlanningMode {
+  Horizon
+  Immediate
 }
 
 """
@@ -25667,6 +26495,8 @@ type Query {
   Today's accounting brief, written on first read when the morning's has not been.
   """
   accountingBriefing: AccountingBriefing!
+  """The organization's accounting control."""
+  accountingControl: AccountingControl!
   accountingDriftFinding(id: ID!): AccountingDriftFinding!
   """Differences with the accounting system as a data table, newest first."""
   accountingDriftFindingTable(
@@ -25978,6 +26808,10 @@ type Query {
   """
   aiUsageSummary(since: Timestamp): AIUsageSummary!
   apiKey(id: ID!): ApiKey
+  """
+  The figures on the API keys page, with days counted in the timezone given.
+  """
+  apiKeyAnalytics(timezone: String): ApiKeyAnalytics!
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
   """
   Delegations. Left unfiltered it is what the signed-in user has been handed;
@@ -26014,6 +26848,8 @@ type Query {
   benefitEnrollments(limit: Int, openOnly: Boolean, planId: ID, statuses: [BenefitEnrollmentStatus!]): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
   benefitPlan(id: ID!): BenefitPlan!
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
+  """The organization's billing control."""
+  billingControl: BillingControl!
   """
   The queue's items, oldest first, a page at a time. Each row carries the issue it leads with.
   """
@@ -26087,8 +26923,16 @@ type Query {
   """The live carrier tracking link on a move, if one has been issued."""
   carrierTrackingLink(shipmentMoveId: ID!): CarrierTrackingLink
   carriers(input: DataTableConnectionInput!): CarrierConnection!
+  """
+  How the organization and its customers lay out a kind of case checklist.
+  """
+  caseChecklistTemplates(kind: CaseChecklistKind!): CaseChecklistTemplates!
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
+  """
+  Compiles a description into a view of the table. It writes nothing; reading the table needs its read permission.
+  """
+  composeTableQuery(input: ComposeTableQueryInput!): TableQueryComposeResult!
   costingControl: CostingControl!
   """
   Active credentials expired within the last week or expiring within `days`,
@@ -26119,6 +26963,10 @@ type Query {
   customers(input: DataTableConnectionInput!): CustomerConnection!
   """Dash feature toggles for this organization (back office)."""
   dashControl: DashControl!
+  """The organization's data entry control."""
+  dataEntryControl: DataEntryControl!
+  """The organization's data retention periods."""
+  dataRetention: DataRetention!
   dataTableAggregates(input: DataTableAggregateInput!): DataTableAggregates!
   dataTableFacets(input: DataTableFacetInput!): DataTableFacets!
   """
@@ -26168,12 +27016,20 @@ type Query {
   dispatchAssignmentPreview(input: DispatchAssignmentPreviewInput!): DispatchAssignmentPreview!
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
   dispatchCarrierAssignmentPreview(input: DispatchCarrierAssignmentPreviewInput!): DispatchCarrierEligibility!
+  """The organization's dispatch control."""
+  dispatchControl: DispatchControl!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
+  """The organization's distance control."""
+  distanceControl: DistanceControl!
   distanceOverride(id: ID!): DistanceOverride
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
   distanceProfile(id: ID!): DistanceProfile
   distanceProfiles(input: DataTableConnectionInput!): DistanceProfileConnection!
+  """
+  The organization's document control, created with defaults on first read.
+  """
+  documentControl: DocumentControl!
   documentPacketRule(id: ID!): DocumentPacketRule
   documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
   documentTemplate(id: ID!): DocumentTemplate
@@ -26373,6 +27229,10 @@ type Query {
   fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
   fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
   generateFuelSurchargeTable(input: GenerateFuelTableInput!): [GeneratedFuelTableRow!]!
+  """
+  Searches shipments, customers, workers and documents the caller may read.
+  """
+  globalSearch(input: GlobalSearchInput!): GlobalSearchResult!
   hazardousMaterial(id: ID!): HazardousMaterial
   hazardousMaterials(input: DataTableConnectionInput!): HazardousMaterialConnection!
   hazmatSegregationRule(id: ID!): HazmatSegregationRule
@@ -26435,6 +27295,8 @@ type Query {
   invoiceAdjustment(id: ID!): InvoiceAdjustment
   """Adjustments whose policy holds them for finance approval."""
   invoiceAdjustmentApprovals(input: InvoiceAdjustmentApprovalsInput!): InvoiceAdjustmentApprovalQueueConnection!
+  """The organization's invoice adjustment control."""
+  invoiceAdjustmentControl: InvoiceAdjustmentControl!
   invoiceAdjustmentOperationsSummary: InvoiceAdjustmentOperationsSummary!
   """
   The dispute cases on one invoice, or on several, each invoice's newest first.
@@ -26447,6 +27309,8 @@ type Query {
     invoiceIds: [ID!]
   ): [InvoiceDispute!]!
   invoices(input: DataTableConnectionInput!): InvoiceConnection!
+  """Whether the signed-in person has the page among their favorites."""
+  isMyPageFavorite(pageUrl: String!): Boolean!
   jobPosition(id: ID!): JobPosition!
   """Everyone in a position from either roster, workers first."""
   jobPositionHolders(id: ID!): [PositionHolder!]!
@@ -26543,6 +27407,10 @@ type Query {
   myLoadPayEstimate(moveId: ID!, shipmentId: ID!): PortalPayEstimate!
   myLoads(limit: Int, scope: PortalLoadScope!): [PortalLoad!]!
   """
+  The signed-in person's notification preferences, or the defaults when they saved none.
+  """
+  myNotificationPreferences: NotificationPreference!
+  """
   Count of the signed-in driver's unread, personally targeted notifications.
   """
   myNotificationUnreadCount: Int!
@@ -26552,6 +27420,8 @@ type Query {
   returned.
   """
   myNotifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
+  """The signed-in person's favorite pages."""
+  myPageFavorites: [PageFavorite!]!
   myPeriodSummary: PortalPeriodSummary!
   """
   agentPlanPreview for a plan raised in one of the caller's own conversations, by an agent they may still use.
@@ -26610,6 +27480,10 @@ type Query {
   myYtdPay(year: Int!): WorkerYTDPaySummary!
   notificationUnreadCount: Int!
   notifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
+  """
+  Where the signed-in person's organization stands in its first-run setup.
+  """
+  onboardingState: OnboardingState!
   """
   Open collections across the organisation: what the office is waiting on.
   """
@@ -26678,6 +27552,10 @@ type Query {
   performanceReview(id: ID!): PerformanceReview!
   performanceReviewTemplate(id: ID!): PerformanceReviewTemplate!
   performanceReviewTemplates(input: PerformanceReviewTemplatesInput!): PerformanceReviewTemplateConnection!
+  """
+  US address suggestions from the organization's maps provider for what was typed.
+  """
+  placeAutocomplete(input: PlaceAutocompleteInput!): PlaceAutocompleteResult!
   previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
   previewDriverSettlement(periodEnd: Timestamp, periodStart: Timestamp, workerId: ID!): DriverSettlement!
   previewReport(
@@ -26828,6 +27706,8 @@ type Query {
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentCommentReplies(after: String, commentId: ID!, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
   shipmentComments(after: String, filter: ShipmentCommentsFilterInput, first: Int = 20, shipmentId: ID!): ShipmentCommentConnection!
+  """The organization's shipment control."""
+  shipmentControl: ShipmentControl!
   shipmentCoverageSuggestions(shipmentId: ID!): ShipmentCoverageSuggestions!
   """
   The billing rules of the customers a shipment bills, at most 50 at once. A customer without a
@@ -26866,8 +27746,16 @@ type Query {
   suggestCarrierForEdiInvoice(invoiceId: ID!): Carrier
   """Each role's coverage of an agent's tools, for choosing who may use it."""
   suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion! @authorizes(resource: "role")
+  """
+  The running build's version and whether a newer release exists, checked at most once per interval.
+  """
+  systemUpdateStatus: SystemUpdateStatus!
   tableConfiguration(id: ID!): TableConfiguration
   tableConfigurations(input: DataTableConnectionInput!, resource: String, visibility: ConfigurationVisibility): TableConfigurationConnection!
+  """The tables that can be narrowed by a description, and in which terms."""
+  tableQueryCatalogue: [TableQueryCatalogueResource!]!
+  """The tables the organization allows change alerts on."""
+  tcaAllowlistedTables: [TCAAllowlistedTable!]!
   tcaSubscription(id: ID!): TCASubscription
   tcaSubscriptions(input: DataTableConnectionInput!): TCASubscriptionConnection!
   telematicsFormMapping(id: ID!): TelematicsFormMapping
@@ -26960,6 +27848,12 @@ type Query {
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
   """The resolutions a person may pick."""
   watchtowerResolutionCodes: [WatchtowerResolutionCodeOption!]!
+  """One of the organization's weather alerts with its activity."""
+  weatherAlert(id: ID!): WeatherAlertDetail!
+  """The organization's active weather alerts."""
+  weatherAlerts: WeatherAlertFeatureCollection!
+  """Whether browser push is configured, and its public key."""
+  webPushConfig: WebPushConfig!
   """
   One worker, with the profile, state, fleet, manager and license state it is asked for.
   """
@@ -27162,6 +28056,13 @@ type Query {
     """
     withoutCredential: String
   ): WorkerConnection!
+}
+
+"""When the billing queue approves an item on its own."""
+enum QueueAutoApproveMode {
+  Off
+  WhenAgentAgrees
+  WhenChecksClear
 }
 
 enum RandomDrawStatus {
@@ -27589,6 +28490,12 @@ enum RateUnit {
   Stop
 }
 
+"""Whether a rate variance within tolerance skips review."""
+enum RateVarianceAutoResolutionMode {
+  BypassReviewWithinTolerance
+  Disabled
+}
+
 """
 A named grouping of geography that lane rules and rate matrices are written
 against, so a tariff can say "Southeast" rather than listing two hundred postal
@@ -27622,6 +28529,12 @@ type RateZoneEdge {
   node: RateZone!
 }
 
+"""How shipments are marked ready to bill."""
+enum ReadyToBillAssignmentMode {
+  AutomaticWhenEligible
+  ManualOnly
+}
+
 type ReadyToBillCustomer {
   count: Int!
   customerId: ID!
@@ -27652,6 +28565,13 @@ enum RecognitionKind {
   SafetyMilestone
   TeamPlayer
   Tenure
+}
+
+"""How reconciliation differences are enforced."""
+enum ReconciliationMode {
+  BlockPosting
+  Disabled
+  WarnOnly
 }
 
 input RecordClearinghouseQueryInput {
@@ -28050,6 +28970,12 @@ input RefreezeExtractionEvalCasesInput {
   caseIds: [ID!]
 }
 
+input RegisterMyPushSubscriptionInput {
+  auth: String!
+  endpoint: String!
+  p256dh: String!
+}
+
 input RejectInvoiceAdjustmentInput {
   adjustmentId: ID!
   reason: String
@@ -28093,6 +29019,13 @@ input RenewAccountingCertificateInput {
 input ReopenWatchtowerItemInput {
   expectedVersion: Int
   note: String
+}
+
+"""When a replacement invoice needs review."""
+enum ReplacementInvoiceReviewPolicy {
+  AlwaysRequireReview
+  NoAdditionalReview
+  RequireReviewWhenEconomicTermsChange
 }
 
 type ReportBand {
@@ -28767,6 +29700,12 @@ enum ReturnToDutyStatus {
   SAPEvaluation
 }
 
+"""The event that recognizes revenue."""
+enum RevenueRecognitionPolicy {
+  OnCashReceipt
+  OnInvoicePost
+}
+
 input ReverseCustomerPaymentInput {
   accountingDate: Timestamp!
   paymentId: ID!
@@ -29234,6 +30173,18 @@ input SaveAccountingAppInput {
   webhookVerifierToken: String
 }
 
+"""
+Saves the organization's template of a kind, or a customer's. id and version name
+a template being changed; without an id one is made.
+"""
+input SaveCaseChecklistTemplateInput {
+  customerId: ID
+  id: ID
+  items: [CaseChecklistTemplateItemInput!]!
+  kind: CaseChecklistKind!
+  version: Int!
+}
+
 input SaveFactoringTransportInput {
   attachPackets: Boolean = true
   emailRecipients: [String!]
@@ -29296,6 +30247,28 @@ input SaveReportDefinitionInput {
   status: String
   tags: [String!]
   visibility: String
+}
+
+"""
+Every setting of a change alert the signed-in person subscribes to. Conditions are
+objects with a field, an operator and a value.
+"""
+input SaveTCASubscriptionInput {
+  """all or any."""
+  conditionMatch: String!
+  conditions: [JSON!]!
+  customMessage: String!
+  customTitle: String!
+  eventTypes: [String!]!
+  name: String!
+  """critical, high, medium or low."""
+  priority: String!
+  recordId: String
+  """Active or Paused."""
+  status: String!
+  tableName: String!
+  topic: String!
+  watchedColumns: [String!]!
 }
 
 input SaveTelematicsFormMappingInput {
@@ -29610,6 +30583,15 @@ enum ServiceFailureType {
   MissedDelivery
   MissedPickup
   Other
+}
+
+"""Which late stops record a service failure."""
+enum ServiceIncidentType {
+  AllExceptShipper
+  Delivery
+  Never
+  Pickup
+  PickupDelivery
 }
 
 type ServiceType {
@@ -30915,6 +31897,33 @@ type ShipmentContractRateCharge {
   quantity: Decimal
   rate: Decimal
   rateUnit: String!
+}
+
+"""
+How the organization's shipments behave: weight limits, delays, cancellations, detention and checks.
+"""
+type ShipmentControl {
+  allowMoveRemovals: Boolean!
+  autoCancelShipments: Boolean!
+  autoCancelShipmentsThreshold: Int
+  autoDelayShipments: Boolean!
+  autoDelayShipmentsThreshold: Int
+  autoGenerateDetentionCharges: Boolean!
+  businessUnitId: ID!
+  checkForDuplicateBols: Boolean!
+  checkHazmatSegregation: Boolean!
+  createdAt: Timestamp!
+  defaultDetentionPolicyId: ID
+  detentionChargeId: ID
+  detentionThreshold: Int
+  id: ID!
+  maxShipmentWeightLimit: Int!
+  organizationId: ID!
+  trackCustomerRejections: Boolean!
+  trackDetentionTime: Boolean!
+  updatedAt: Timestamp!
+  useDetentionPolicyEngine: Boolean!
+  version: Int!
 }
 
 type ShipmentCoverageSuggestions {
@@ -32475,6 +33484,47 @@ input SubmitMyExpenseInput {
   shipmentId: ID
 }
 
+"""Which invoices a customer sees after a replacement."""
+enum SupersededInvoiceVisibilityPolicy {
+  ShowCurrentAndSupersededExternally
+  ShowCurrentOnlyExternally
+}
+
+"""A published release of Trenova."""
+type SystemRelease {
+  downloadUrl: String!
+  htmlUrl: String!
+  isPrerelease: Boolean!
+  publishedAt: Timestamp!
+  releaseNotes: String!
+  tagName: String!
+  version: String!
+}
+
+"""The running build's version and whether a newer release exists."""
+type SystemUpdateStatus {
+  currentVersion: String!
+  """
+  When the release server was last asked; zero when update checks are off.
+  """
+  lastChecked: Timestamp!
+  latestRelease: SystemRelease
+  latestVersion: String!
+  updateAvailable: Boolean!
+}
+
+"""A table the organization allows change alerts on."""
+type TCAAllowlistedTable {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  displayName: String!
+  enabled: Boolean!
+  id: ID!
+  organizationId: ID!
+  tableName: String!
+  updatedAt: Timestamp!
+}
+
 type TCASubscription @kind(resource: "table_change_alert") {
   businessUnitId: ID!
   conditionMatch: String!
@@ -32607,6 +33657,71 @@ type TableLayout {
 input TableLayoutInput {
   layout: JSON!
   resource: String!
+}
+
+"""One field a table can be narrowed by in words."""
+type TableQueryCatalogueField {
+  kind: String!
+  name: String!
+  note: String!
+  operators: [String!]!
+  sortable: Boolean!
+  values: [String!]!
+}
+
+"""
+A table that can be narrowed by a description, and the fields it understands.
+"""
+type TableQueryCatalogueResource {
+  entity: String!
+  fields: [TableQueryCatalogueField!]!
+  resource: String!
+  summary: String!
+}
+
+"""
+The table view a description compiled to, and what it could not express.
+"""
+type TableQueryComposeResult {
+  """
+  The compiled view in words, built from what compiled rather than from the description.
+  """
+  explanation: String!
+  fieldFilters: [TableQueryFieldFilter!]!
+  query: String!
+  sort: [TableQuerySortField!]!
+  terms: [String!]!
+  unresolved: [TableQueryUnresolvedTerm!]!
+}
+
+"""
+What the table already shows, so a follow-up narrows rather than replaces it.
+"""
+input TableQueryCurrentViewInput {
+  fieldFilters: [FieldFilterInput!]
+  query: String
+  sort: [SortFieldInput!]
+}
+
+"""A filter a composed table view applies."""
+type TableQueryFieldFilter {
+  field: String!
+  operator: String!
+  value: Any
+}
+
+"""A sort a composed table view applies."""
+type TableQuerySortField {
+  direction: String!
+  field: String!
+}
+
+"""
+Something a description asked for that the table's fields cannot express.
+"""
+type TableQueryUnresolvedTerm {
+  phrase: String!
+  reason: String!
 }
 
 """The bill a tariff produced for a shipment."""
@@ -32827,6 +33942,13 @@ type Tender {
 enum TenderChannel {
   EDI
   Email
+}
+
+"""What happens when every carrier on a tender declines."""
+enum TenderExhaustedAction {
+  Notify
+  Rebroadcast
+  Rewaterfall
 }
 
 enum TenderMode {
@@ -33067,6 +34189,11 @@ input TodaysBriefingInput {
   briefingDate: String
   """Whose morning to read; omitted reads the one written for everybody."""
   roleKey: BriefingRoleKey
+}
+
+input ToggleMyPageFavoriteInput {
+  pageTitle: String!
+  pageUrl: String!
 }
 
 """
@@ -34140,6 +35267,13 @@ type UncoveredWindowSummary {
   window: UncoveredPickupWindow!
 }
 
+"""What happens to a shipment no rate covers."""
+enum UnratedShipmentDisposition {
+  Block
+  FallbackFormulaTemplate
+  ZeroAndFlag
+}
+
 """
 A driver holding accrued, unsettled pay for the current period — one row per
 driver in the unsettled pool. Drivers without a settlement for the period can
@@ -34171,6 +35305,51 @@ input UpcomingWorkerPTOInput {
   timezone: String
   type: PTOType
   workerId: ID
+}
+
+"""
+Every setting of the accounting control at once. version is the one read; a stale one is refused.
+"""
+input UpdateAccountingControlInput {
+  accountingBasis: AccountingBasis!
+  autoPostSourceEvents: [JournalSourceEvent!]!
+  closedPeriodPostingPolicy: ClosedPeriodPostingPolicy!
+  currencyMode: CurrencyMode!
+  defaultApAccountId: ID
+  defaultArAccountId: ID
+  defaultCashAccountId: ID
+  defaultDriverAdvanceAccountId: ID
+  defaultDriverPayExpenseAccountId: ID
+  defaultDriverReimbursementAccountId: ID
+  defaultEscrowInterestExpenseAccountId: ID
+  defaultEscrowLiabilityAccountId: ID
+  defaultExpenseAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  defaultRetainedEarningsAccountId: ID
+  defaultRevenueAccountId: ID
+  defaultSettlementsPayableAccountId: ID
+  defaultTaxLiabilityAccountId: ID
+  defaultUnappliedCashAccountId: ID
+  defaultWriteOffAccountId: ID
+  exchangeRateDatePolicy: ExchangeRateDatePolicy!
+  exchangeRateOverridePolicy: ExchangeRateOverridePolicy!
+  expenseRecognitionPolicy: ExpenseRecognitionPolicy!
+  functionalCurrencyCode: String!
+  journalPostingMode: JournalPostingMode!
+  journalReversalPolicy: JournalReversalPolicy!
+  lockedPeriodPostingPolicy: LockedPeriodPostingPolicy!
+  manualJournalEntryPolicy: ManualJournalEntryPolicy!
+  notifyOnReconciliationException: Boolean!
+  periodCloseMode: PeriodCloseMode!
+  realizedFxGainAccountId: ID
+  realizedFxLossAccountId: ID
+  reconciliationMode: ReconciliationMode!
+  reconciliationToleranceAmount: Decimal!
+  requireManualJeApproval: Boolean!
+  requirePeriodCloseApproval: Boolean!
+  requireReconciliationToClose: Boolean!
+  revenueRecognitionPolicy: RevenueRecognitionPolicy!
+  version: Int!
 }
 
 input UpdateAccountingSyncSettingsInput {
@@ -34253,6 +35432,45 @@ input UpdateBenefitPlanInput {
   waitingPeriodDays: Int
 }
 
+"""
+Every setting of the billing control at once. version is the one read; a stale one is refused.
+"""
+input UpdateBillingControlInput {
+  autoInvoiceBatchSize: Int!
+  billingExceptionDisposition: BillingExceptionDisposition!
+  billingQueueTransferBatchSize: Int!
+  billingQueueTransferMode: BillingQueueTransferMode!
+  billingQueueTransferSchedule: BillingTransferSchedule!
+  defaultInvoiceFooter: String!
+  defaultInvoiceTerms: String!
+  defaultPaymentTerm: BillingPaymentTerm!
+  enforceMarginFloor: Boolean!
+  fallbackFormulaTemplateId: ID
+  invoiceDraftCreationMode: InvoiceDraftCreationMode!
+  invoicePostingMode: InvoicePostingMode!
+  lateChargeAssessmentMode: LateChargeAssessmentMode!
+  lateChargeMinimumAmount: Decimal!
+  monthlyStatementDay: Int!
+  monthlyStatementsEnabled: Boolean!
+  notifyOnAutoInvoiceCreation: Boolean!
+  notifyOnBillingExceptions: Boolean!
+  paymentReminderDays: [Int!]!
+  paymentRemindersEnabled: Boolean!
+  queueAgentReviewEnabled: Boolean!
+  queueAutoApproveMaxAmount: Decimal
+  queueAutoApproveMode: QueueAutoApproveMode!
+  rateValidationEnforcement: EnforcementLevel!
+  rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode!
+  rateVarianceTolerancePercent: Decimal!
+  readyToBillAssignmentMode: ReadyToBillAssignmentMode!
+  requireRateOverrideReason: Boolean!
+  shipmentBillingRequirementEnforcement: EnforcementLevel!
+  showBalanceDueOnInvoice: Boolean!
+  showDueDateOnInvoice: Boolean!
+  unratedShipmentDisposition: UnratedShipmentDisposition!
+  version: Int!
+}
+
 input UpdateCarrierSettlementControlInput {
   autoAcceptWithinTolerance: Boolean!
   autoGenerateBatches: Boolean!
@@ -34325,6 +35543,126 @@ input UpdateDashControlInput {
   sendCredentialReminders: Boolean!
   showLoadPay: Boolean!
   showPayEstimates: Boolean!
+  version: Int!
+}
+
+"""
+Every setting of the data entry control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDataEntryControlInput {
+  cityCase: DataEntryCaseFormat!
+  codeCase: DataEntryCaseFormat!
+  emailCase: DataEntryCaseFormat!
+  nameCase: DataEntryCaseFormat!
+  version: Int!
+}
+
+"""
+The retention periods to keep, in days. An omitted agent evaluation, AI audit or
+AI correction period keeps the one already saved.
+"""
+input UpdateDataRetentionInput {
+  agentEvalCaseRetentionPeriod: Int
+  aiAuditRetentionPeriod: Int
+  aiCorrectionRetentionPeriod: Int
+  aiFeedbackRetentionPeriod: Int!
+  auditRetentionPeriod: Int!
+  ediInboundFileRetentionPeriod: Int!
+  ediMessageRetentionPeriod: Int!
+}
+
+"""
+Every setting of the dispatch control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDispatchControlInput {
+  autoAssignConfidenceThreshold: Decimal!
+  autoAssignMaxDeadheadMiles: Int
+  autoAssignPlanningHorizonHours: Int!
+  autoAssignmentStrategy: AutoAssignmentStrategy!
+  checkCallIntervalHours: Int!
+  complianceEnforcementLevel: ComplianceEnforcementLevel!
+  coverageRiskWindowHours: Int!
+  enableAutoAssignment: Boolean!
+  enableAutoStopActuals: Boolean!
+  enableCheckCallMonitoring: Boolean!
+  enableEtaAlerts: Boolean!
+  enforceDriverQualificationCompliance: Boolean!
+  enforceDrugAndAlcoholCompliance: Boolean!
+  enforceHazmatCompliance: Boolean!
+  enforceHosCompliance: Boolean!
+  enforceMedicalCertCompliance: Boolean!
+  enforceTrailerContinuity: Boolean!
+  enforceWorkerAssign: Boolean!
+  enforceWorkerPtaRestrictions: Boolean!
+  enforceWorkerTractorFleetContinuity: Boolean!
+  etaDwellMinutes: Int!
+  etaRiskThresholdMinutes: Int!
+  exceptionDefaultAssigneeId: ID
+  exceptionDueCriticalMinutes: Int!
+  exceptionDueInfoMinutes: Int!
+  exceptionDueWarningMinutes: Int!
+  exceptionEscalationContactId: ID
+  exceptionEscalationMinutes: Int!
+  exceptionMaxEscalations: Int!
+  exceptionMissedStopGraceMinutes: Int!
+  exceptionPodGraceHours: Int!
+  horizonMaxMovesPerDriver: Int!
+  horizonSearchIterations: Int
+  planningMode: PlanningMode!
+  recordServiceFailures: ServiceIncidentType!
+  scoringWeights: JSON
+  serviceFailureGracePeriod: Int
+  serviceFailureTarget: Float
+  tenderAutoAcceptCounters: Boolean!
+  tenderCounterDecisionMinutes: Int!
+  tenderCounterMarginFloorPercent: Decimal
+  tenderCounterOffersEnabled: Boolean!
+  tenderEscalationOfferTtlMinutes: Int!
+  tenderEscalationRateIncreasePercent: Decimal!
+  tenderExhaustedAction: TenderExhaustedAction!
+  tenderMaxEscalations: Int!
+  version: Int!
+}
+
+"""
+Every setting of the distance control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDistanceControlInput {
+  autoCreateStoredMileage: Boolean!
+  billingDistanceProfileId: ID!
+  captureJurisdictionMiles: Boolean!
+  distanceCalculatorPracticalDistanceProfileId: ID!
+  distanceCalculatorShortestDistanceProfileId: ID!
+  emptyMoveDistanceProfileId: ID!
+  etaOutOfRouteDistanceProfileId: ID!
+  fuelDistanceProfileId: ID!
+  loadedMoveDistanceProfileId: ID!
+  payDistanceProfileId: ID!
+  postalCodeFallbackToCity: Boolean!
+  storeMileage: Boolean!
+  storedDistanceUnits: String!
+  version: Int!
+}
+
+"""
+Every setting of the document control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDocumentControlInput {
+  captureAllowAutoUpdate: Boolean!
+  captureAutoFileCoverSheets: Boolean!
+  captureMinAgentVersion: String!
+  captureRetentionDays: Int!
+  enableAiAssistedClassification: Boolean!
+  enableAiAssistedExtraction: Boolean!
+  enableAutoClassification: Boolean!
+  enableAutoCreateDocumentTypes: Boolean!
+  enableAutoDocumentTypeAssociate: Boolean!
+  enableCapture: Boolean!
+  enableDocumentIntelligence: Boolean!
+  enableFullTextIndexing: Boolean!
+  enableOcr: Boolean!
+  enableShipmentDraftExtraction: Boolean!
+  shipmentDraftAllowedResources: [String!]!
   version: Int!
 }
 
@@ -34429,6 +35767,29 @@ input UpdateHomeLayoutPresetInput {
   widgets: [HomeWidgetInput!]!
 }
 
+"""
+Every setting of the invoice adjustment control at once. version is the one read; a stale one is refused.
+"""
+input UpdateInvoiceAdjustmentControlInput {
+  adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy!
+  adjustmentReasonRequirement: AdjustmentRequirementPolicy!
+  closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy!
+  customerCreditBalancePolicy: CustomerCreditBalancePolicy!
+  disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  overCreditPolicy: OverCreditPolicy!
+  paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy!
+  requireSeparateApprover: Boolean!
+  rerateVarianceTolerancePercent: Decimal!
+  standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy!
+  standardAdjustmentApprovalThreshold: Decimal!
+  supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy!
+  version: Int!
+  writeOffApprovalPolicy: WriteOffApprovalPolicy!
+  writeOffApprovalThreshold: Decimal!
+}
+
 input UpdateJobPositionInput {
   code: String!
   department: JobDepartment!
@@ -34481,6 +35842,20 @@ input UpdateMyContactInfoInput {
   emergencyContactPhone: String
   phoneNumber: String!
   postalCode: String!
+}
+
+input UpdateMyNotificationPreferencesInput {
+  desktopMode: NotificationDeliveryMode!
+  disabledEventTypes: [String!]!
+  emailDigest: Boolean!
+  emailMode: NotificationDeliveryMode!
+  pausedUntil: Timestamp
+  quietHoursAllowUrgent: Boolean!
+  quietHoursDays: [Int!]!
+  quietHoursEnabled: Boolean!
+  quietHoursEnd: String!
+  quietHoursStart: String!
+  sound: Boolean!
 }
 
 input UpdateOrderChargeInput {
@@ -34639,6 +36014,28 @@ input UpdateSettlementControlInput {
   periodEndDayOfWeek: Int!
   varianceLookbackWeeks: Int!
   varianceThresholdPct: Decimal!
+  version: Int!
+}
+
+"""
+Every setting of the shipment control at once. version is the one read; a stale one is refused.
+"""
+input UpdateShipmentControlInput {
+  allowMoveRemovals: Boolean!
+  autoCancelShipments: Boolean!
+  autoCancelShipmentsThreshold: Int
+  autoDelayShipments: Boolean!
+  autoDelayShipmentsThreshold: Int
+  autoGenerateDetentionCharges: Boolean!
+  checkForDuplicateBols: Boolean!
+  checkHazmatSegregation: Boolean!
+  defaultDetentionPolicyId: ID
+  detentionChargeId: ID
+  detentionThreshold: Int
+  maxShipmentWeightLimit: Int!
+  trackCustomerRejections: Boolean!
+  trackDetentionTime: Boolean!
+  useDetentionPolicyEngine: Boolean!
   version: Int!
 }
 
@@ -35225,6 +36622,111 @@ type WatchtowerTrailEvent {
   """When it happened; absent when the source does not know."""
   at: Timestamp
   text: String!
+}
+
+"""One change to a weather alert."""
+type WeatherAlertActivity {
+  activityType: WeatherAlertActivityType!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  details: JSON
+  id: ID!
+  organizationId: ID!
+  timestamp: Timestamp!
+  updatedAt: Timestamp!
+  weatherAlertId: ID!
+}
+
+"""What happened to a weather alert."""
+enum WeatherAlertActivityType {
+  cancelled
+  expired
+  issued
+  updated
+}
+
+"""
+The kind of hazard a weather alert warns of, which picks its color on the map.
+"""
+enum WeatherAlertCategory {
+  fire
+  flood_water
+  heat
+  other
+  tornado_severe_storm
+  tropical_storm_hurricane
+  wind_storm
+  winter_weather
+}
+
+"""A weather alert with everything that happened to it."""
+type WeatherAlertDetail {
+  activities: [WeatherAlertActivity!]!
+  feature: WeatherAlertFeature!
+}
+
+"""One weather alert as a GeoJSON feature."""
+type WeatherAlertFeature {
+  """The GeoJSON geometry of the alert's area."""
+  geometry: JSON
+  id: ID!
+  properties: WeatherAlertProperties!
+  type: String!
+}
+
+"""
+The organization's active National Weather Service alerts, as a GeoJSON feature collection.
+"""
+type WeatherAlertFeatureCollection {
+  features: [WeatherAlertFeature!]!
+  type: String!
+}
+
+"""What the National Weather Service says about an alert."""
+type WeatherAlertProperties {
+  alertCategory: WeatherAlertCategory!
+  areaDesc: String!
+  category: String!
+  certainty: String!
+  description: String!
+  effective: Timestamp
+  ends: Timestamp
+  event: String!
+  expiredAt: Timestamp
+  expires: Timestamp
+  firstSeenAt: Timestamp!
+  headline: String!
+  id: ID!
+  instruction: String!
+  lastUpdatedAt: Timestamp!
+  messageType: String!
+  nwsId: String!
+  onset: Timestamp
+  response: String!
+  senderName: String!
+  severity: String!
+  status: String!
+  urgency: String!
+}
+
+"""
+Whether browser push is configured, and the key a browser subscribes with.
+"""
+type WebPushConfig {
+  enabled: Boolean!
+  publicKey: String!
+}
+
+"""A browser push subscription of the signed-in person's device."""
+type WebPushSubscription {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  endpoint: String!
+  id: ID!
+  organizationId: ID!
+  updatedAt: Timestamp!
+  userAgent: String!
+  userId: ID!
 }
 
 input WithdrawInvoiceDisputeInput {
@@ -36844,6 +38346,13 @@ enum WorkersCompClaimStatus {
   Denied
   Filed
   NotFiled
+}
+
+"""When a write-off needs approval."""
+enum WriteOffApprovalPolicy {
+  AlwaysRequireApproval
+  Disallow
+  RequireApprovalAboveThreshold
 }
 
 input WriteOffPayAdvanceInput {

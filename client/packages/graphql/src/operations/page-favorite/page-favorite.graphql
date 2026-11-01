@@ -1,0 +1,34 @@
+query MyPageFavorites {
+  myPageFavorites {
+    id
+    organizationId
+    businessUnitId
+    userId
+    pageUrl
+    pageTitle
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+query IsMyPageFavorite($pageUrl: String!) {
+  isMyPageFavorite(pageUrl: $pageUrl)
+}
+
+mutation ToggleMyPageFavorite($input: ToggleMyPageFavoriteInput!) {
+  toggleMyPageFavorite(input: $input) {
+    favorited
+    favorite {
+      id
+      organizationId
+      businessUnitId
+      userId
+      pageUrl
+      pageTitle
+      version
+      createdAt
+      updatedAt
+    }
+  }
+}

@@ -1,0 +1,47 @@
+"""
+How long the organization keeps each kind of record before it is purged, in days.
+"""
+type DataRetention {
+  "Empty until the organization saves its own retention periods."
+  id: ID
+  organizationId: ID!
+  businessUnitId: ID!
+  auditRetentionPeriod: Int!
+  "Zero disables purging of inbound EDI files."
+  ediInboundFileRetentionPeriod: Int!
+  "Zero disables purging of EDI messages."
+  ediMessageRetentionPeriod: Int!
+  "How long a terminated driver's qualification file is held before it is flagged for purge."
+  driverQualificationRetentionPeriod: Int!
+  agentEvalCaseRetentionPeriod: Int!
+  aiFeedbackRetentionPeriod: Int!
+  aiAuditRetentionPeriod: Int!
+  aiCorrectionRetentionPeriod: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+The retention periods to keep, in days. An omitted agent evaluation, AI audit or
+AI correction period keeps the one already saved.
+"""
+input UpdateDataRetentionInput {
+  auditRetentionPeriod: Int!
+  ediInboundFileRetentionPeriod: Int!
+  ediMessageRetentionPeriod: Int!
+  aiFeedbackRetentionPeriod: Int!
+  agentEvalCaseRetentionPeriod: Int
+  aiAuditRetentionPeriod: Int
+  aiCorrectionRetentionPeriod: Int
+}
+
+extend type Query {
+  "The organization's data retention periods."
+  dataRetention: DataRetention!
+}
+
+extend type Mutation {
+  "Saves the organization's data retention periods."
+  updateDataRetention(input: UpdateDataRetentionInput!): DataRetention!
+}

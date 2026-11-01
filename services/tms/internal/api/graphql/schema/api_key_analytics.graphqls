@@ -1,0 +1,37 @@
+"How many API keys the organization has, and how many it made this month."
+type ApiKeyTotalCount {
+  count: Int!
+  newThisMonth: Int!
+}
+
+"How many API keys are in one state, and their share of all keys."
+type ApiKeyStateCount {
+  count: Int!
+  percentOfTotal: Float!
+}
+
+"Requests made with API keys on one day."
+type ApiKeyRequestDay {
+  "The day, as Jan 2."
+  day: String!
+  value: Int!
+}
+
+"Requests made with the organization's API keys over the last 30 days."
+type ApiKeyRequestVolume {
+  total: Int!
+  sparkline: [ApiKeyRequestDay!]!
+}
+
+"The figures on the API keys page."
+type ApiKeyAnalytics {
+  totalKeys: ApiKeyTotalCount!
+  activeKeys: ApiKeyStateCount!
+  revokedKeys: ApiKeyStateCount!
+  requests30d: ApiKeyRequestVolume!
+}
+
+extend type Query {
+  "The figures on the API keys page, with days counted in the timezone given."
+  apiKeyAnalytics(timezone: String): ApiKeyAnalytics!
+}

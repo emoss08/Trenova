@@ -1,0 +1,17 @@
+query PlaceAutocomplete($input: PlaceAutocompleteInput!) {
+  placeAutocomplete(input: $input) {
+    details {
+      name
+      addressLine1
+      city
+      state
+      stateId
+      postalCode
+      longitude
+      latitude
+      placeId
+      types
+    }
+    count
+  }
+}

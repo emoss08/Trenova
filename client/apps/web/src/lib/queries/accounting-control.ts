@@ -4,6 +4,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const accountingControl = createQueryKeys("accountingControl", {
   get: () => ({
     queryKey: ["get"],
-    queryFn: async () => apiService.accountingControlService.get(),
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      apiService.accountingControlService.get({ signal }),
   }),
 });

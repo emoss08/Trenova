@@ -1,0 +1,169 @@
+"""
+How the organization bills: invoice defaults, the billing queue, automation, rate checks, late charges, reminders and statements.
+"""
+type BillingControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  defaultPaymentTerm: BillingPaymentTerm!
+  defaultInvoiceTerms: String!
+  defaultInvoiceFooter: String!
+  showDueDateOnInvoice: Boolean!
+  showBalanceDueOnInvoice: Boolean!
+  readyToBillAssignmentMode: ReadyToBillAssignmentMode!
+  billingQueueTransferMode: BillingQueueTransferMode!
+  billingQueueTransferSchedule: BillingTransferSchedule!
+  billingQueueTransferBatchSize: Int!
+  invoiceDraftCreationMode: InvoiceDraftCreationMode!
+  invoicePostingMode: InvoicePostingMode!
+  autoInvoiceBatchSize: Int!
+  notifyOnAutoInvoiceCreation: Boolean!
+  shipmentBillingRequirementEnforcement: EnforcementLevel!
+  rateValidationEnforcement: EnforcementLevel!
+  billingExceptionDisposition: BillingExceptionDisposition!
+  notifyOnBillingExceptions: Boolean!
+  rateVarianceTolerancePercent: Decimal!
+  rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode!
+  unratedShipmentDisposition: UnratedShipmentDisposition!
+  fallbackFormulaTemplateId: ID
+  requireRateOverrideReason: Boolean!
+  enforceMarginFloor: Boolean!
+  queueAutoApproveMode: QueueAutoApproveMode!
+  queueAutoApproveMaxAmount: Decimal
+  queueAgentReviewEnabled: Boolean!
+  lateChargeAssessmentMode: LateChargeAssessmentMode!
+  lateChargeMinimumAmount: Decimal!
+  paymentRemindersEnabled: Boolean!
+  paymentReminderDays: [Int!]!
+  monthlyStatementsEnabled: Boolean!
+  monthlyStatementDay: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the billing control at once. version is the one read; a stale one is refused.
+"""
+input UpdateBillingControlInput {
+  version: Int!
+  defaultPaymentTerm: BillingPaymentTerm!
+  defaultInvoiceTerms: String!
+  defaultInvoiceFooter: String!
+  showDueDateOnInvoice: Boolean!
+  showBalanceDueOnInvoice: Boolean!
+  readyToBillAssignmentMode: ReadyToBillAssignmentMode!
+  billingQueueTransferMode: BillingQueueTransferMode!
+  billingQueueTransferSchedule: BillingTransferSchedule!
+  billingQueueTransferBatchSize: Int!
+  invoiceDraftCreationMode: InvoiceDraftCreationMode!
+  invoicePostingMode: InvoicePostingMode!
+  autoInvoiceBatchSize: Int!
+  notifyOnAutoInvoiceCreation: Boolean!
+  shipmentBillingRequirementEnforcement: EnforcementLevel!
+  rateValidationEnforcement: EnforcementLevel!
+  billingExceptionDisposition: BillingExceptionDisposition!
+  notifyOnBillingExceptions: Boolean!
+  rateVarianceTolerancePercent: Decimal!
+  rateVarianceAutoResolutionMode: RateVarianceAutoResolutionMode!
+  unratedShipmentDisposition: UnratedShipmentDisposition!
+  fallbackFormulaTemplateId: ID
+  requireRateOverrideReason: Boolean!
+  enforceMarginFloor: Boolean!
+  queueAutoApproveMode: QueueAutoApproveMode!
+  queueAutoApproveMaxAmount: Decimal
+  queueAgentReviewEnabled: Boolean!
+  lateChargeAssessmentMode: LateChargeAssessmentMode!
+  lateChargeMinimumAmount: Decimal!
+  paymentRemindersEnabled: Boolean!
+  paymentReminderDays: [Int!]!
+  monthlyStatementsEnabled: Boolean!
+  monthlyStatementDay: Int!
+}
+
+"The organization's default invoice payment term."
+enum BillingPaymentTerm {
+  Net10
+  Net15
+  Net30
+  Net45
+  Net60
+  Net90
+  DueOnReceipt
+}
+
+"How shipments are marked ready to bill."
+enum ReadyToBillAssignmentMode {
+  ManualOnly
+  AutomaticWhenEligible
+}
+
+"How ready shipments reach the billing queue."
+enum BillingQueueTransferMode {
+  ManualOnly
+  AutomaticWhenReady
+}
+
+"How often ready shipments transfer to the billing queue."
+enum BillingTransferSchedule {
+  Continuous
+  Hourly
+  Daily
+  Weekly
+}
+
+"How invoice drafts are created from the billing queue."
+enum InvoiceDraftCreationMode {
+  ManualOnly
+  AutomaticWhenTransferred
+}
+
+"How invoice drafts are posted."
+enum InvoicePostingMode {
+  ManualReviewRequired
+  AutomaticWhenNoBlockingExceptions
+}
+
+"How strictly a billing rule is enforced."
+enum EnforcementLevel {
+  Ignore
+  Warn
+  RequireReview
+  Block
+}
+
+"Where a shipment with a billing exception goes."
+enum BillingExceptionDisposition {
+  RouteToBillingReview
+  ReturnToOperations
+}
+
+"Whether a rate variance within tolerance skips review."
+enum RateVarianceAutoResolutionMode {
+  Disabled
+  BypassReviewWithinTolerance
+}
+
+"What happens to a shipment no rate covers."
+enum UnratedShipmentDisposition {
+  FallbackFormulaTemplate
+  ZeroAndFlag
+  Block
+}
+
+"When the billing queue approves an item on its own."
+enum QueueAutoApproveMode {
+  Off
+  WhenChecksClear
+  WhenAgentAgrees
+}
+
+extend type Query {
+  "The organization's billing control."
+  billingControl: BillingControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's billing control."
+  updateBillingControl(input: UpdateBillingControlInput!): BillingControl!
+}

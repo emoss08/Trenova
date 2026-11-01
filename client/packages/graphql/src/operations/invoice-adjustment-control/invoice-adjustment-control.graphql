@@ -1,0 +1,53 @@
+query InvoiceAdjustmentControl {
+  invoiceAdjustmentControl {
+    id
+    organizationId
+    businessUnitId
+    partiallyPaidInvoiceAdjustmentPolicy
+    paidInvoiceAdjustmentPolicy
+    disputedInvoiceAdjustmentPolicy
+    adjustmentAccountingDatePolicy
+    closedPeriodAdjustmentPolicy
+    adjustmentReasonRequirement
+    standardAdjustmentApprovalPolicy
+    standardAdjustmentApprovalThreshold
+    writeOffApprovalPolicy
+    writeOffApprovalThreshold
+    requireSeparateApprover
+    rerateVarianceTolerancePercent
+    replacementInvoiceReviewPolicy
+    customerCreditBalancePolicy
+    overCreditPolicy
+    supersededInvoiceVisibilityPolicy
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateInvoiceAdjustmentControl($input: UpdateInvoiceAdjustmentControlInput!) {
+  updateInvoiceAdjustmentControl(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    partiallyPaidInvoiceAdjustmentPolicy
+    paidInvoiceAdjustmentPolicy
+    disputedInvoiceAdjustmentPolicy
+    adjustmentAccountingDatePolicy
+    closedPeriodAdjustmentPolicy
+    adjustmentReasonRequirement
+    standardAdjustmentApprovalPolicy
+    standardAdjustmentApprovalThreshold
+    writeOffApprovalPolicy
+    writeOffApprovalThreshold
+    requireSeparateApprover
+    rerateVarianceTolerancePercent
+    replacementInvoiceReviewPolicy
+    customerCreditBalancePolicy
+    overCreditPolicy
+    supersededInvoiceVisibilityPolicy
+    version
+    createdAt
+    updatedAt
+  }
+}

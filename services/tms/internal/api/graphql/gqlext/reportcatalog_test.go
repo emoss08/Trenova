@@ -22,9 +22,6 @@ var restOnlyProtected = map[permission.Resource]map[string]protectedfield.Group{
 		"marginAmount":  protectedfield.Margins,
 		"marginPercent": protectedfield.Margins,
 	},
-	permission.ResourceDispatchControl: {
-		"tenderCounterMarginFloorPercent": protectedfield.Margins,
-	},
 }
 
 func TestEveryRESTOnlyProtectedFieldIsConfidentialInTheRegistry(t *testing.T) {

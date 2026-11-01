@@ -5967,3 +5967,287 @@ models:
   StopEtaDriveMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod
+  AccountingBasis:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.AccountingBasisType
+  RevenueRecognitionPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.RevenueRecognitionPolicyType
+  ExpenseRecognitionPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.ExpenseRecognitionPolicyType
+  JournalPostingMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.JournalPostingModeType
+  JournalSourceEvent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.JournalSourceEventType
+  ManualJournalEntryPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.ManualJournalEntryPolicy
+  JournalReversalPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.JournalReversalPolicyType
+  PeriodCloseMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.PeriodCloseModeType
+  LockedPeriodPostingPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.LockedPeriodPostingPolicy
+  ClosedPeriodPostingPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.ClosedPeriodPostingPolicy
+  ReconciliationMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.ReconciliationModeType
+  CurrencyMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.CurrencyModeType
+  ExchangeRateDatePolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.ExchangeRateDatePolicy
+  ExchangeRateOverridePolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.ExchangeRateOverrideType
+  AccountingControl:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol.AccountingControl
+    fields:
+      reconciliationToleranceAmount:
+        resolver: true
+  BillingPaymentTerm:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.PaymentTerm
+  ReadyToBillAssignmentMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.ReadyToBillAssignmentMode
+  BillingQueueTransferMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.BillingQueueTransferMode
+  BillingTransferSchedule:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.TransferSchedule
+  InvoiceDraftCreationMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.InvoiceDraftCreationMode
+  InvoicePostingMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.InvoicePostingMode
+  EnforcementLevel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.EnforcementLevel
+  BillingExceptionDisposition:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.BillingExceptionDisposition
+  RateVarianceAutoResolutionMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.RateVarianceAutoResolutionMode
+  UnratedShipmentDisposition:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.UnratedShipmentDisposition
+  QueueAutoApproveMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.QueueAutoApproveMode
+  BillingControl:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.BillingControl
+    fields:
+      rateVarianceTolerancePercent:
+        resolver: true
+      queueAutoApproveMaxAmount:
+        resolver: true
+      lateChargeMinimumAmount:
+        resolver: true
+  DataEntryCaseFormat:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol.CaseFormat
+  DataEntryControl:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol.DataEntryControl
+  AutoAssignmentStrategy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol.AutoAssignmentStrategy
+  PlanningMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol.PlanningMode
+  TenderExhaustedAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol.TenderExhaustedAction
+  ComplianceEnforcementLevel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol.ComplianceEnforcementLevel
+  ServiceIncidentType:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol.ServiceIncidentType
+  DispatchControl:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol.DispatchControl
+    fields:
+      scoringWeights:
+        resolver: true
+      autoAssignConfidenceThreshold:
+        resolver: true
+      tenderCounterMarginFloorPercent:
+        resolver: true
+      tenderEscalationRateIncreasePercent:
+        resolver: true
+  DistanceControl:
+    model:
+      - github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol.DistanceControl
+  DocumentControl:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol.DocumentControl
+  AdjustmentEligibilityPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.AdjustmentEligibilityPolicy
+  AdjustmentAccountingDatePolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy
+  ClosedPeriodAdjustmentPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy
+  AdjustmentRequirementPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.RequirementPolicy
+  AdjustmentApprovalPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.ApprovalPolicy
+  WriteOffApprovalPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.WriteOffApprovalPolicy
+  ReplacementInvoiceReviewPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy
+  CustomerCreditBalancePolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.CustomerCreditBalancePolicy
+  OverCreditPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.OverCreditPolicy
+  SupersededInvoiceVisibilityPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy
+  InvoiceAdjustmentControl:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol.InvoiceAdjustmentControl
+    fields:
+      standardAdjustmentApprovalThreshold:
+        resolver: true
+      writeOffApprovalThreshold:
+        resolver: true
+      rerateVarianceTolerancePercent:
+        resolver: true
+  ShipmentControl:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol.ShipmentControl
+  DataRetention:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/dataretention.DataRetention
+  NotificationDeliveryMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/notification.DeliveryMode
+  NotificationPreference:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/notification.Preference
+  PageFavorite:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite.PageFavorite
+  PageFavoriteToggleResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice.ToggleResult
+  WebPushSubscription:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/notification.PushSubscription
+  WeatherAlertCategory:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert.AlertCategory
+  WeatherAlertActivityType:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert.ActivityType
+  WeatherAlertFeatureCollection:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports.WeatherAlertFeatureCollection
+  WeatherAlertFeature:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports.WeatherAlertFeature
+    fields:
+      geometry:
+        resolver: true
+  WeatherAlertProperties:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports.WeatherAlertFeatureProperties
+  WeatherAlertActivity:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert.Activity
+  WeatherAlertDetail:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports.WeatherAlertDetail
+  SystemRelease:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports.ReleaseInfo
+  SystemUpdateStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports.UpdateStatus
+  PlaceSuggestion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports.LocationDetails
+  PlaceAutocompleteResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports.AutocompleteLocationResult
+  OnboardingStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/domain/onboarding.Status
+  OnboardingOrganization:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports.OnboardingOrganization
+  OnboardingState:
+    model:
+      - github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports.OnboardingState
+  GlobalSearchHit:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports.GlobalSearchHit
+    fields:
+      metadata:
+        resolver: true
+  GlobalSearchGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports.GlobalSearchGroup
+  GlobalSearchResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports.GlobalSearchResult
+  TableQueryFieldFilter:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.FieldFilter
+  TableQuerySortField:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.SortField
+  TableQueryUnresolvedTerm:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice.Unresolved
+  TableQueryComposeResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice.ComposeResult
+  CaseChecklistKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/deskcase.ChecklistKind
+  CaseChecklistItemMode:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/deskcase.ItemMode
+  CaseChecklistCustomCheck:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/deskcase.CustomCheck
+  CaseChecklistCustomItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/deskcase.CustomItem
+  CaseChecklistTemplateItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/deskcase.TemplateItem
+  CaseChecklistTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/deskcase.ChecklistTemplate
+  CaseChecklistTemplates:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports.CaseChecklistTemplates
+  TCAAllowlistedTable:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert.TCAAllowlistedTable

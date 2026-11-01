@@ -1,0 +1,42 @@
+fragment CaseChecklistTemplateFields on CaseChecklistTemplate {
+  id
+  kind
+  customerId
+  customerName
+  items {
+    key
+    mode
+    custom {
+      label
+      check
+      documentTypeId
+      stepLabel
+      prompt
+    }
+  }
+  version
+  updatedAt
+}
+
+query CaseChecklistTemplates($kind: CaseChecklistKind!) {
+  caseChecklistTemplates(kind: $kind) {
+    kind
+    organization {
+      ...CaseChecklistTemplateFields
+    }
+    customers {
+      ...CaseChecklistTemplateFields
+    }
+    locked
+  }
+}
+
+mutation SaveCaseChecklistTemplate($input: SaveCaseChecklistTemplateInput!) {
+  saveCaseChecklistTemplate(input: $input) {
+    ...CaseChecklistTemplateFields
+  }
+}
+
+mutation DeleteCaseChecklistTemplate($id: ID!) {
+  deleteCaseChecklistTemplate(id: $id)
+}

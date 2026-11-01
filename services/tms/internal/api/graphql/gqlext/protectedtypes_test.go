@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -68,6 +69,14 @@ func protectedTypes() map[string]protectedType {
 			resource: permission.ResourceCostingControl,
 			entity: func() protectedfield.Withholder {
 				return &costingcontrol.CostingControl{TargetMarginPercent: amount("15")}
+			},
+		},
+		"DispatchControl": {
+			resource: permission.ResourceDispatchControl,
+			entity: func() protectedfield.Withholder {
+				return &dispatchcontrol.DispatchControl{
+					TenderCounterMarginFloorPercent: amount("6.5"),
+				}
 			},
 		},
 		"TenderOffer": {

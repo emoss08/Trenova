@@ -1,0 +1,207 @@
+"""
+How the organization keeps its books: recognition, posting, period close, reconciliation, currency and default accounts.
+"""
+type AccountingControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  accountingBasis: AccountingBasis!
+  revenueRecognitionPolicy: RevenueRecognitionPolicy!
+  expenseRecognitionPolicy: ExpenseRecognitionPolicy!
+  journalPostingMode: JournalPostingMode!
+  autoPostSourceEvents: [JournalSourceEvent!]!
+  manualJournalEntryPolicy: ManualJournalEntryPolicy!
+  requireManualJeApproval: Boolean!
+  journalReversalPolicy: JournalReversalPolicy!
+  periodCloseMode: PeriodCloseMode!
+  requirePeriodCloseApproval: Boolean!
+  lockedPeriodPostingPolicy: LockedPeriodPostingPolicy!
+  closedPeriodPostingPolicy: ClosedPeriodPostingPolicy!
+  requireReconciliationToClose: Boolean!
+  reconciliationMode: ReconciliationMode!
+  reconciliationToleranceAmount: Decimal!
+  notifyOnReconciliationException: Boolean!
+  currencyMode: CurrencyMode!
+  functionalCurrencyCode: String!
+  exchangeRateDatePolicy: ExchangeRateDatePolicy!
+  exchangeRateOverridePolicy: ExchangeRateOverridePolicy!
+  defaultRevenueAccountId: ID
+  defaultCashAccountId: ID
+  defaultUnappliedCashAccountId: ID
+  defaultExpenseAccountId: ID
+  defaultArAccountId: ID
+  defaultApAccountId: ID
+  defaultTaxLiabilityAccountId: ID
+  defaultWriteOffAccountId: ID
+  defaultRetainedEarningsAccountId: ID
+  realizedFxGainAccountId: ID
+  realizedFxLossAccountId: ID
+  defaultDriverPayExpenseAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  defaultSettlementsPayableAccountId: ID
+  defaultDriverAdvanceAccountId: ID
+  defaultEscrowLiabilityAccountId: ID
+  defaultDriverReimbursementAccountId: ID
+  defaultEscrowInterestExpenseAccountId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the accounting control at once. version is the one read; a stale one is refused.
+"""
+input UpdateAccountingControlInput {
+  version: Int!
+  accountingBasis: AccountingBasis!
+  revenueRecognitionPolicy: RevenueRecognitionPolicy!
+  expenseRecognitionPolicy: ExpenseRecognitionPolicy!
+  journalPostingMode: JournalPostingMode!
+  autoPostSourceEvents: [JournalSourceEvent!]!
+  manualJournalEntryPolicy: ManualJournalEntryPolicy!
+  requireManualJeApproval: Boolean!
+  journalReversalPolicy: JournalReversalPolicy!
+  periodCloseMode: PeriodCloseMode!
+  requirePeriodCloseApproval: Boolean!
+  lockedPeriodPostingPolicy: LockedPeriodPostingPolicy!
+  closedPeriodPostingPolicy: ClosedPeriodPostingPolicy!
+  requireReconciliationToClose: Boolean!
+  reconciliationMode: ReconciliationMode!
+  reconciliationToleranceAmount: Decimal!
+  notifyOnReconciliationException: Boolean!
+  currencyMode: CurrencyMode!
+  functionalCurrencyCode: String!
+  exchangeRateDatePolicy: ExchangeRateDatePolicy!
+  exchangeRateOverridePolicy: ExchangeRateOverridePolicy!
+  defaultRevenueAccountId: ID
+  defaultCashAccountId: ID
+  defaultUnappliedCashAccountId: ID
+  defaultExpenseAccountId: ID
+  defaultArAccountId: ID
+  defaultApAccountId: ID
+  defaultTaxLiabilityAccountId: ID
+  defaultWriteOffAccountId: ID
+  defaultRetainedEarningsAccountId: ID
+  realizedFxGainAccountId: ID
+  realizedFxLossAccountId: ID
+  defaultDriverPayExpenseAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  defaultSettlementsPayableAccountId: ID
+  defaultDriverAdvanceAccountId: ID
+  defaultEscrowLiabilityAccountId: ID
+  defaultDriverReimbursementAccountId: ID
+  defaultEscrowInterestExpenseAccountId: ID
+}
+
+"Which events recognize revenue and expense."
+enum AccountingBasis {
+  Accrual
+  Cash
+}
+
+"The event that recognizes revenue."
+enum RevenueRecognitionPolicy {
+  OnInvoicePost
+  OnCashReceipt
+}
+
+"The event that recognizes expense."
+enum ExpenseRecognitionPolicy {
+  OnVendorBillPost
+  OnCashDisbursement
+}
+
+"Whether source events post journals on their own."
+enum JournalPostingMode {
+  Manual
+  Automatic
+}
+
+"A source event that can post a journal entry automatically."
+enum JournalSourceEvent {
+  InvoicePosted
+  CreditMemoPosted
+  DebitMemoPosted
+  CustomerPaymentPosted
+  CustomerShortPayRecognized
+  CustomerPaymentReversed
+  VendorBillPosted
+  VendorPaymentPosted
+  DriverSettlementPosted
+  DriverSettlementVoided
+  EscrowInterestAccrued
+  CarrierSettlementPosted
+  CarrierSettlementVoided
+  CarrierSettlementPaid
+  DriverSettlementPaid
+  FactoringFunded
+  FactoringReserveReleased
+  FactoringChargedBack
+  FactoringChargebackReversed
+}
+
+"Which manual journal entries are allowed."
+enum ManualJournalEntryPolicy {
+  AllowAll
+  AdjustmentOnly
+  Disallow
+}
+
+"Where a journal reversal posts."
+enum JournalReversalPolicy {
+  Disallow
+  NextOpenPeriod
+}
+
+"How fiscal periods close."
+enum PeriodCloseMode {
+  ManualOnly
+  SystemScheduled
+}
+
+"What may post into a locked period."
+enum LockedPeriodPostingPolicy {
+  BlockSubledgerAllowManualJe
+}
+
+"What happens to a posting dated in a closed period."
+enum ClosedPeriodPostingPolicy {
+  RequireReopen
+  PostToNextOpen
+}
+
+"How reconciliation differences are enforced."
+enum ReconciliationMode {
+  Disabled
+  WarnOnly
+  BlockPosting
+}
+
+"Whether the organization transacts in more than one currency."
+enum CurrencyMode {
+  SingleCurrency
+  MultiCurrency
+}
+
+"Which date picks the exchange rate."
+enum ExchangeRateDatePolicy {
+  DocumentDate
+  AccountingDate
+}
+
+"Whether a person may override an exchange rate."
+enum ExchangeRateOverridePolicy {
+  Allow
+  RequireApproval
+  Disallow
+}
+
+extend type Query {
+  "The organization's accounting control."
+  accountingControl: AccountingControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's accounting control."
+  updateAccountingControl(input: UpdateAccountingControlInput!): AccountingControl!
+}

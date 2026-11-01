@@ -1,0 +1,158 @@
+"""
+How the organization dispatches: auto-assignment, compliance enforcement, monitoring, exceptions, tenders and service failures.
+"""
+type DispatchControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  enableAutoAssignment: Boolean!
+  autoAssignmentStrategy: AutoAssignmentStrategy!
+  enforceWorkerAssign: Boolean!
+  enforceTrailerContinuity: Boolean!
+  enforceHosCompliance: Boolean!
+  enforceWorkerPtaRestrictions: Boolean!
+  enforceWorkerTractorFleetContinuity: Boolean!
+  enforceDriverQualificationCompliance: Boolean!
+  enforceMedicalCertCompliance: Boolean!
+  enforceHazmatCompliance: Boolean!
+  enforceDrugAndAlcoholCompliance: Boolean!
+  enableAutoStopActuals: Boolean!
+  scoringWeights: JSON!
+  autoAssignConfidenceThreshold: Decimal!
+  autoAssignMaxDeadheadMiles: Int
+  autoAssignPlanningHorizonHours: Int!
+  planningMode: PlanningMode!
+  horizonMaxMovesPerDriver: Int!
+  horizonSearchIterations: Int
+  coverageRiskWindowHours: Int!
+  enableCheckCallMonitoring: Boolean!
+  checkCallIntervalHours: Int!
+  enableEtaAlerts: Boolean!
+  etaRiskThresholdMinutes: Int!
+  etaDwellMinutes: Int!
+  exceptionDueInfoMinutes: Int!
+  exceptionDueWarningMinutes: Int!
+  exceptionDueCriticalMinutes: Int!
+  exceptionEscalationMinutes: Int!
+  exceptionMaxEscalations: Int!
+  exceptionDefaultAssigneeId: ID
+  exceptionEscalationContactId: ID
+  exceptionMissedStopGraceMinutes: Int!
+  exceptionPodGraceHours: Int!
+  tenderCounterOffersEnabled: Boolean!
+  "Null to a reader without the margins field group."
+  tenderCounterMarginFloorPercent: Decimal @protected(group: Margins)
+  tenderAutoAcceptCounters: Boolean!
+  tenderCounterDecisionMinutes: Int!
+  tenderExhaustedAction: TenderExhaustedAction!
+  tenderEscalationRateIncreasePercent: Decimal!
+  tenderEscalationOfferTtlMinutes: Int!
+  tenderMaxEscalations: Int!
+  complianceEnforcementLevel: ComplianceEnforcementLevel!
+  recordServiceFailures: ServiceIncidentType!
+  serviceFailureTarget: Float
+  serviceFailureGracePeriod: Int
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the dispatch control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDispatchControlInput {
+  version: Int!
+  enableAutoAssignment: Boolean!
+  autoAssignmentStrategy: AutoAssignmentStrategy!
+  enforceWorkerAssign: Boolean!
+  enforceTrailerContinuity: Boolean!
+  enforceHosCompliance: Boolean!
+  enforceWorkerPtaRestrictions: Boolean!
+  enforceWorkerTractorFleetContinuity: Boolean!
+  enforceDriverQualificationCompliance: Boolean!
+  enforceMedicalCertCompliance: Boolean!
+  enforceHazmatCompliance: Boolean!
+  enforceDrugAndAlcoholCompliance: Boolean!
+  enableAutoStopActuals: Boolean!
+  scoringWeights: JSON
+  autoAssignConfidenceThreshold: Decimal!
+  autoAssignMaxDeadheadMiles: Int
+  autoAssignPlanningHorizonHours: Int!
+  planningMode: PlanningMode!
+  horizonMaxMovesPerDriver: Int!
+  horizonSearchIterations: Int
+  coverageRiskWindowHours: Int!
+  enableCheckCallMonitoring: Boolean!
+  checkCallIntervalHours: Int!
+  enableEtaAlerts: Boolean!
+  etaRiskThresholdMinutes: Int!
+  etaDwellMinutes: Int!
+  exceptionDueInfoMinutes: Int!
+  exceptionDueWarningMinutes: Int!
+  exceptionDueCriticalMinutes: Int!
+  exceptionEscalationMinutes: Int!
+  exceptionMaxEscalations: Int!
+  exceptionDefaultAssigneeId: ID
+  exceptionEscalationContactId: ID
+  exceptionMissedStopGraceMinutes: Int!
+  exceptionPodGraceHours: Int!
+  tenderCounterOffersEnabled: Boolean!
+  tenderCounterMarginFloorPercent: Decimal
+  tenderAutoAcceptCounters: Boolean!
+  tenderCounterDecisionMinutes: Int!
+  tenderExhaustedAction: TenderExhaustedAction!
+  tenderEscalationRateIncreasePercent: Decimal!
+  tenderEscalationOfferTtlMinutes: Int!
+  tenderMaxEscalations: Int!
+  complianceEnforcementLevel: ComplianceEnforcementLevel!
+  recordServiceFailures: ServiceIncidentType!
+  serviceFailureTarget: Float
+  serviceFailureGracePeriod: Int
+}
+
+"The preset auto-assignment ranks drivers by."
+enum AutoAssignmentStrategy {
+  Proximity
+  Availability
+  LoadBalancing
+  Performance
+}
+
+"How auto-assignment plans moves."
+enum PlanningMode {
+  Immediate
+  Horizon
+}
+
+"What happens when every carrier on a tender declines."
+enum TenderExhaustedAction {
+  Notify
+  Rebroadcast
+  Rewaterfall
+}
+
+"How a compliance failure on an assignment is enforced."
+enum ComplianceEnforcementLevel {
+  Warning
+  Block
+  Audit
+}
+
+"Which late stops record a service failure."
+enum ServiceIncidentType {
+  Never
+  Pickup
+  Delivery
+  PickupDelivery
+  AllExceptShipper
+}
+
+extend type Query {
+  "The organization's dispatch control."
+  dispatchControl: DispatchControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's dispatch control."
+  updateDispatchControl(input: UpdateDispatchControlInput!): DispatchControl!
+}

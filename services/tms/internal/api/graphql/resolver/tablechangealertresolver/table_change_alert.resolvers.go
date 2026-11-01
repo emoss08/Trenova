@@ -11,6 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
@@ -83,4 +84,54 @@ func (r *TCASubscriptionResolver) Conditions(ctx context.Context, obj *tablechan
 
 func (r *TCASubscriptionResolver) Status(ctx context.Context, obj *tablechangealert.TCASubscription) (string, error) {
 	return obj.Status.String(), nil
+}
+
+func (r *MutationResolver) CreateTcaSubscription(ctx context.Context, input gqlmodel.SaveTCASubscriptionInput) (*tablechangealert.TCASubscription, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTableChangeAlert, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := tcaSubscriptionFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+	entity.OrganizationID = authCtx.OrganizationID
+	entity.BusinessUnitID = authCtx.BusinessUnitID
+	entity.UserID = authCtx.UserID
+
+	return r.TableChangeAlertService.CreateSubscription(ctx, entity)
+}
+
+func (r *MutationResolver) UpdateTcaSubscription(ctx context.Context, id string, version int, input gqlmodel.SaveTCASubscriptionInput) (*tablechangealert.TCASubscription, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTableChangeAlert, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	subscriptionID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := tcaSubscriptionFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+	entity.ID = subscriptionID
+	entity.Version = int64(version)
+	entity.OrganizationID = authCtx.OrganizationID
+	entity.BusinessUnitID = authCtx.BusinessUnitID
+	entity.UserID = authCtx.UserID
+
+	return r.TableChangeAlertService.UpdateSubscription(ctx, entity)
+}
+
+func (r *QueryResolver) TcaAllowlistedTables(ctx context.Context) ([]*tablechangealert.TCAAllowlistedTable, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTableChangeAlert, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.TableChangeAlertService.ListAllowlistedTables(ctx, resolvercore.TenantInfo(authCtx))
 }

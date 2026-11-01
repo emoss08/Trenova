@@ -1,15 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const post = vi.fn();
-const get = vi.fn();
+const register = vi.fn();
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...original, api: { post, get, delete: vi.fn() } };
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return {
+    ...original,
+    requestGraphQL: vi.fn(
+      async ({ operationName, variables }: { operationName: string; variables?: unknown }) => {
+        if (operationName === "WebPushConfig") {
+          return { webPushConfig: { enabled: true, publicKey: "BEl62iUYgUivxIkv69yViEuiBIa" } };
+        }
+        if (operationName === "RegisterMyPushSubscription") {
+          return register(variables);
+        }
+        throw new Error(`unexpected operation ${operationName}`);
+      },
+    ),
+  };
 });
 
-const { ApiRequestError } = await import("@trenova/shared/lib/api");
+const { GraphQLRequestError } = await import("@trenova/shared/lib/graphql");
 const { enablePush } = await import("../push");
+
+function graphQLFailure(status: number, type: string) {
+  return new GraphQLRequestError({
+    kind: "graphql",
+    message: "Request failed",
+    status,
+    graphQLErrors: [{ message: "Request failed", extensions: { type }, type }],
+  });
+}
 
 function fakeSubscription(endpoint: string) {
   return {
@@ -28,11 +49,7 @@ describe("enablePush", () => {
   };
 
   beforeEach(() => {
-    post.mockReset();
-    get.mockReset().mockResolvedValue({
-      enabled: true,
-      publicKey: "BEl62iUYgUivxIkv69yViEuiBIa",
-    });
+    register.mockReset();
     existing.unsubscribe.mockClear();
     pushManager.getSubscription.mockReset().mockResolvedValue(existing);
     pushManager.subscribe.mockReset().mockResolvedValue(fresh);
@@ -52,51 +69,45 @@ describe("enablePush", () => {
   });
 
   it("registers the browser's existing subscription", async () => {
-    post.mockResolvedValue({});
+    register.mockResolvedValue({ registerMyPushSubscription: { id: "ups_1" } });
 
     await enablePush();
 
-    expect(post).toHaveBeenCalledTimes(1);
-    expect(post).toHaveBeenCalledWith("/push/subscriptions/", {
-      endpoint: existing.endpoint,
-      p256dh: `${existing.endpoint}-p256dh`,
-      auth: `${existing.endpoint}-auth`,
+    expect(register).toHaveBeenCalledTimes(1);
+    expect(register).toHaveBeenCalledWith({
+      input: {
+        endpoint: existing.endpoint,
+        p256dh: `${existing.endpoint}-p256dh`,
+        auth: `${existing.endpoint}-auth`,
+      },
     });
     expect(existing.unsubscribe).not.toHaveBeenCalled();
   });
 
   it("replaces a subscription another account holds instead of taking it over", async () => {
-    post
-      .mockRejectedValueOnce(
-        new ApiRequestError(409, {
-          type: "https://example.com/problems/conflict",
-          title: "Conflict",
-          status: 409,
-        }),
-      )
-      .mockResolvedValueOnce({});
+    register
+      .mockRejectedValueOnce(graphQLFailure(409, "https://example.com/problems/conflict"))
+      .mockResolvedValueOnce({ registerMyPushSubscription: { id: "ups_2" } });
 
     await enablePush();
 
     expect(existing.unsubscribe).toHaveBeenCalledTimes(1);
     expect(pushManager.subscribe).toHaveBeenCalledTimes(1);
-    expect(post).toHaveBeenLastCalledWith("/push/subscriptions/", {
-      endpoint: fresh.endpoint,
-      p256dh: `${fresh.endpoint}-p256dh`,
-      auth: `${fresh.endpoint}-auth`,
+    expect(register).toHaveBeenLastCalledWith({
+      input: {
+        endpoint: fresh.endpoint,
+        p256dh: `${fresh.endpoint}-p256dh`,
+        auth: `${fresh.endpoint}-auth`,
+      },
     });
   });
 
   it("surfaces any other failure without touching the subscription", async () => {
-    const failure = new ApiRequestError(422, {
-      type: "https://example.com/problems/validation-error",
-      title: "Invalid",
-      status: 422,
-    });
-    post.mockRejectedValueOnce(failure);
+    const failure = graphQLFailure(422, "https://example.com/problems/validation-error");
+    register.mockRejectedValueOnce(failure);
 
     await expect(enablePush()).rejects.toBe(failure);
     expect(existing.unsubscribe).not.toHaveBeenCalled();
-    expect(post).toHaveBeenCalledTimes(1);
+    expect(register).toHaveBeenCalledTimes(1);
   });
 });

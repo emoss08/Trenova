@@ -1,0 +1,36 @@
+query TableQueryCatalogue {
+  tableQueryCatalogue {
+    resource
+    entity
+    summary
+    fields {
+      name
+      kind
+      note
+      values
+      sortable
+      operators
+    }
+  }
+}
+
+query ComposeTableQuery($input: ComposeTableQueryInput!) {
+  composeTableQuery(input: $input) {
+    query
+    fieldFilters {
+      field
+      operator
+      value
+    }
+    sort {
+      field
+      direction
+    }
+    explanation
+    terms
+    unresolved {
+      phrase
+      reason
+    }
+  }
+}

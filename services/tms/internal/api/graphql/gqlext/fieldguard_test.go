@@ -57,6 +57,7 @@ func TestProtectedFieldsAreTheDeclaredSet(t *testing.T) {
 		},
 		"RateAgreement":       margins("marginFloorPercent", "maxPayPercentOfSell"),
 		"CostingControl":      margins("targetMarginPercent"),
+		"DispatchControl":     margins("tenderCounterMarginFloorPercent"),
 		"ResolvedCostProfile": margins("targetMarginPercent"),
 		"FleetCostSummary": margins(
 			"avgMarginPercent",

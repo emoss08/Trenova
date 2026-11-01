@@ -8,6 +8,7 @@ import {
   type TCASubscription,
   type TCASubscriptionFormValues,
 } from "@/types/table-change-alert";
+import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { SubscriptionForm } from "./subscription-form";
@@ -47,10 +48,17 @@ export function SubscriptionPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/tca/subscriptions/"
         queryKey="tca-subscription-list"
         title={t("Subscription")}
         fieldKey="name"
+        mutationFn={async (values, current) => {
+          await apiService.tableChangeAlertService.updateSubscription(
+            current.id,
+            current.version,
+            values,
+          );
+          return values;
+        }}
         size="lg"
         formComponent={<SubscriptionForm />}
       />
@@ -62,8 +70,11 @@ export function SubscriptionPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/tca/subscriptions/"
       queryKey="tca-subscription-list"
+      mutationFn={async (values) => {
+        await apiService.tableChangeAlertService.createSubscription(values);
+        return values;
+      }}
       title={t("Subscription")}
       size="lg"
       formComponent={<SubscriptionForm />}

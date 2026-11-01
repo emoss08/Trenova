@@ -8,6 +8,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingcontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountsreceivableexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accounttypeexec"
@@ -28,10 +29,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/airetrievalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aitrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/aiusageexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/apikeyanalyticsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/apikeyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/attentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/auditlogexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/benefitsexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingcontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingqueueexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingtransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
@@ -41,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/casechecklistexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/checkcallexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/costingexec"
@@ -48,14 +52,19 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customertrackingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dataentrycontrolexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dataretentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchcontrolexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distancecontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceoverrideexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceprofileexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documentcontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documentpacketruleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttemplateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
@@ -79,6 +88,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/formulatemplateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fuelpurchaseexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fuelsurchargeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/globalsearchexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazmatsegregationruleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
@@ -86,6 +96,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundmessageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundreplyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceadjustmentcontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceadjustmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicedisputeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceexec"
@@ -97,11 +108,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/manualjournalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/notificationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/notificationpreferenceexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/onboardingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgholidayexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgstructureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pageaccessexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pagefavoriteexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/placeautocompleteexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
@@ -120,13 +135,16 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentboardexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentcontrolexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sidebarpreferenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/storedmileageexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/systemupdateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablechangealertexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tableconfigurationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablelayoutexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablequeryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/telematicsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenderexec"
@@ -137,6 +155,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/userexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/watchtowerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/weatheralertexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/webpushexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerchecklistexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workercredentialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerdqfexec"
@@ -171,6 +191,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -205,6 +226,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
@@ -217,6 +239,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -275,18 +298,27 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -294,6 +326,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
@@ -310,6 +343,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
@@ -387,10 +421,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -416,6 +454,7 @@ type ResolverRoot interface {
 	AccountingAppCredential() AccountingAppCredentialResolver
 	AccountingAppSettings() AccountingAppSettingsResolver
 	AccountingConnection() AccountingConnectionResolver
+	AccountingControl() AccountingControlResolver
 	AccountingDriftFinding() AccountingDriftFindingResolver
 	AccountingDriftFixPreview() AccountingDriftFixPreviewResolver
 	AccountingInboundChange() AccountingInboundChangeResolver
@@ -461,6 +500,7 @@ type ResolverRoot interface {
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
 	AuthEvent() AuthEventResolver
+	BillingControl() BillingControlResolver
 	BriefingSection() BriefingSectionResolver
 	CaptureBatch() CaptureBatchResolver
 	CaptureCoverSheet() CaptureCoverSheetResolver
@@ -490,6 +530,9 @@ type ResolverRoot interface {
 	CarrierMonitoringEnrollment() CarrierMonitoringEnrollmentResolver
 	CarrierSettlement() CarrierSettlementResolver
 	CarrierSourcingResult() CarrierSourcingResultResolver
+	CaseChecklistTemplate() CaseChecklistTemplateResolver
+	CaseChecklistTemplateItem() CaseChecklistTemplateItemResolver
+	CaseChecklistTemplates() CaseChecklistTemplatesResolver
 	ChargeAllocation() ChargeAllocationResolver
 	Commodity() CommodityResolver
 	Customer() CustomerResolver
@@ -505,6 +548,7 @@ type ResolverRoot interface {
 	DetentionOccurrence() DetentionOccurrenceResolver
 	DetentionPreviewResult() DetentionPreviewResultResolver
 	DisciplinaryLadder() DisciplinaryLadderResolver
+	DispatchControl() DispatchControlResolver
 	DistanceProfile() DistanceProfileResolver
 	DocumentTemplate() DocumentTemplateResolver
 	DocumentTemplateAssignment() DocumentTemplateAssignmentResolver
@@ -566,6 +610,8 @@ type ResolverRoot interface {
 	FuelPurchaseImportRow() FuelPurchaseImportRowResolver
 	FuelPurchaseImportSummary() FuelPurchaseImportSummaryResolver
 	FuelSpend() FuelSpendResolver
+	GlobalSearchGroup() GlobalSearchGroupResolver
+	GlobalSearchHit() GlobalSearchHitResolver
 	IFTAFleetMPG() IFTAFleetMPGResolver
 	IFTAJurisdiction() IFTAJurisdictionResolver
 	IFTAJurisdictionMileageEntry() IFTAJurisdictionMileageEntryResolver
@@ -585,6 +631,7 @@ type ResolverRoot interface {
 	Invoice() InvoiceResolver
 	InvoiceAdjustment() InvoiceAdjustmentResolver
 	InvoiceAdjustmentApprovalQueueItem() InvoiceAdjustmentApprovalQueueItemResolver
+	InvoiceAdjustmentControl() InvoiceAdjustmentControlResolver
 	InvoiceAdjustmentLine() InvoiceAdjustmentLineResolver
 	InvoiceChargeGroup() InvoiceChargeGroupResolver
 	InvoiceDispute() InvoiceDisputeResolver
@@ -651,6 +698,8 @@ type ResolverRoot interface {
 	ShipmentRatingReviewApproval() ShipmentRatingReviewApprovalResolver
 	TCASubscription() TCASubscriptionResolver
 	TableConfiguration() TableConfigurationResolver
+	TableQueryFieldFilter() TableQueryFieldFilterResolver
+	TableQuerySortField() TableQuerySortFieldResolver
 	Tender() TenderResolver
 	TenderOffer() TenderOfferResolver
 	Tractor() TractorResolver
@@ -672,6 +721,7 @@ type ResolverRoot interface {
 	WatchtowerItem() WatchtowerItemResolver
 	WatchtowerItemEvent() WatchtowerItemEventResolver
 	WatchtowerRecord() WatchtowerRecordResolver
+	WeatherAlertFeature() WeatherAlertFeatureResolver
 	Worker() WorkerResolver
 	WorkerBenefitEnrollment() WorkerBenefitEnrollmentResolver
 	WorkerChecklist() WorkerChecklistResolver
@@ -794,6 +844,10 @@ type AccountingConnectionResolver interface {
 	LastErrorCategory(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingsync.ErrorCategory, error)
 	LedgerGranularity(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingconnection.LedgerGranularity, error)
 	PausedBy(ctx context.Context, obj *accountingconnection.AccountingConnection) (*tenant.User, error)
+}
+
+type AccountingControlResolver interface {
+	ReconciliationToleranceAmount(ctx context.Context, obj *accountingcontrol.AccountingControl) (string, error)
 }
 
 type AccountingDriftFindingResolver interface {
@@ -1076,6 +1130,12 @@ type AuthEventResolver interface {
 	User(ctx context.Context, obj *iam.AuthEvent) (*tenant.User, error)
 }
 
+type BillingControlResolver interface {
+	RateVarianceTolerancePercent(ctx context.Context, obj *billingcontrol.BillingControl) (string, error)
+	QueueAutoApproveMaxAmount(ctx context.Context, obj *billingcontrol.BillingControl) (*string, error)
+	LateChargeMinimumAmount(ctx context.Context, obj *billingcontrol.BillingControl) (string, error)
+}
+
 type BriefingSectionResolver interface {
 	Read(ctx context.Context, obj *briefing.Section) (string, error)
 }
@@ -1262,6 +1322,18 @@ type CarrierSourcingResultResolver interface {
 	ExistingCarrierID(ctx context.Context, obj *carrierintelsourcingservice.SourcingResult) (*string, error)
 }
 
+type CaseChecklistTemplateResolver interface {
+	Items(ctx context.Context, obj *deskcase.ChecklistTemplate) ([]*deskcase.TemplateItem, error)
+}
+
+type CaseChecklistTemplateItemResolver interface {
+	Key(ctx context.Context, obj *deskcase.TemplateItem) (string, error)
+}
+
+type CaseChecklistTemplatesResolver interface {
+	Locked(ctx context.Context, obj *deskcaseports.CaseChecklistTemplates) ([]string, error)
+}
+
 type ChargeAllocationResolver interface {
 	Percent(ctx context.Context, obj *shipment.ChargeAllocation) (*string, error)
 	Amount(ctx context.Context, obj *shipment.ChargeAllocation) (*string, error)
@@ -1336,6 +1408,13 @@ type DetentionPreviewResultResolver interface {
 
 type DisciplinaryLadderResolver interface {
 	HighestLevel(ctx context.Context, obj *workerdiscipline.DisciplinaryLadder) (*workerdiscipline.DisciplinaryLevel, error)
+}
+
+type DispatchControlResolver interface {
+	ScoringWeights(ctx context.Context, obj *dispatchcontrol.DispatchControl) (map[string]any, error)
+	AutoAssignConfidenceThreshold(ctx context.Context, obj *dispatchcontrol.DispatchControl) (string, error)
+	TenderCounterMarginFloorPercent(ctx context.Context, obj *dispatchcontrol.DispatchControl) (*string, error)
+	TenderEscalationRateIncreasePercent(ctx context.Context, obj *dispatchcontrol.DispatchControl) (string, error)
 }
 
 type DistanceProfileResolver interface {
@@ -1713,6 +1792,15 @@ type FuelSpendResolver interface {
 	TotalAmount(ctx context.Context, obj *fueldeskcardservice.Spend) (string, error)
 }
 
+type GlobalSearchGroupResolver interface {
+	EntityType(ctx context.Context, obj *kernelports.GlobalSearchGroup) (string, error)
+}
+
+type GlobalSearchHitResolver interface {
+	EntityType(ctx context.Context, obj *kernelports.GlobalSearchHit) (string, error)
+	Metadata(ctx context.Context, obj *kernelports.GlobalSearchHit) (map[string]any, error)
+}
+
 type IFTAFleetMPGResolver interface {
 	Mpg(ctx context.Context, obj *ifta.FleetMPG) (*string, error)
 	TotalMiles(ctx context.Context, obj *ifta.FleetMPG) (string, error)
@@ -1927,6 +2015,12 @@ type InvoiceAdjustmentApprovalQueueItemResolver interface {
 	RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
 }
 
+type InvoiceAdjustmentControlResolver interface {
+	StandardAdjustmentApprovalThreshold(ctx context.Context, obj *invoiceadjustmentcontrol.InvoiceAdjustmentControl) (string, error)
+	WriteOffApprovalThreshold(ctx context.Context, obj *invoiceadjustmentcontrol.InvoiceAdjustmentControl) (string, error)
+	RerateVarianceTolerancePercent(ctx context.Context, obj *invoiceadjustmentcontrol.InvoiceAdjustmentControl) (string, error)
+}
+
 type InvoiceAdjustmentLineResolver interface {
 	CreditQuantity(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
 	CreditAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
@@ -2042,6 +2136,7 @@ type MutationResolver interface {
 	UpdateAccountType(ctx context.Context, id string, input gqlmodel.AccountTypeInput) (*accounttype.AccountType, error)
 	PatchAccountType(ctx context.Context, id string, input gqlmodel.AccountTypePatchInput) (*accounttype.AccountType, error)
 	BulkUpdateAccountTypeStatus(ctx context.Context, input gqlmodel.BulkUpdateAccountTypeStatusInput) ([]*accounttype.AccountType, error)
+	UpdateAccountingControl(ctx context.Context, input gqlmodel.UpdateAccountingControlInput) (*accountingcontrol.AccountingControl, error)
 	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingconnectionports.AccountingSyncStatus, error)
 	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingSyncStatus, error)
 	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingAuthorizationStart, error)
@@ -2136,6 +2231,7 @@ type MutationResolver interface {
 	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*paybenefit.BenefitPlan, error)
 	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*paybenefit.WorkerBenefitEnrollment, error)
 	EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*paybenefit.WorkerBenefitEnrollment, error)
+	UpdateBillingControl(ctx context.Context, input gqlmodel.UpdateBillingControlInput) (*billingcontrol.BillingControl, error)
 	UpdateBillingQueueStatus(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateStatusInput) (*gqlmodel.BillingQueueItem, error)
 	AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error)
 	PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error)
@@ -2198,6 +2294,8 @@ type MutationResolver interface {
 	AcceptCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatchWithVariance(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
 	RejectCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
+	SaveCaseChecklistTemplate(ctx context.Context, input gqlmodel.SaveCaseChecklistTemplateInput) (*deskcase.ChecklistTemplate, error)
+	DeleteCaseChecklistTemplate(ctx context.Context, id string) (bool, error)
 	LogCheckCall(ctx context.Context, input gqlmodel.LogCheckCallInput) (*gqlmodel.LogCheckCallPayload, error)
 	IssueCarrierTrackingLink(ctx context.Context, input gqlmodel.IssueCarrierTrackingLinkInput) (*gqlmodel.IssueCarrierTrackingLinkPayload, error)
 	RevokeCarrierTrackingLink(ctx context.Context, shipmentMoveID string) (bool, error)
@@ -2219,6 +2317,8 @@ type MutationResolver interface {
 	UpdateCustomerTrackingProfile(ctx context.Context, input gqlmodel.UpdateCustomerTrackingProfileInput) (*customertracking.Profile, error)
 	IssueCustomerTrackingLink(ctx context.Context, input gqlmodel.IssueCustomerTrackingLinkInput) (*gqlmodel.IssueCustomerTrackingLinkPayload, error)
 	RevokeCustomerTrackingLink(ctx context.Context, shipmentID string, linkID *string) (int, error)
+	UpdateDataEntryControl(ctx context.Context, input gqlmodel.UpdateDataEntryControlInput) (*dataentrycontrol.DataEntryControl, error)
+	UpdateDataRetention(ctx context.Context, input gqlmodel.UpdateDataRetentionInput) (*dataretention.DataRetention, error)
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 	CreateDeskMemory(ctx context.Context, input gqlmodel.CreateDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	ReviseDeskMemory(ctx context.Context, id string, input gqlmodel.ReviseDeskMemoryInput) (*gqlmodel.DeskMemory, error)
@@ -2239,6 +2339,9 @@ type MutationResolver interface {
 	DispatchAssignMoveToCarrier(ctx context.Context, input gqlmodel.DispatchAssignMoveToCarrierInput) (*shipment.CarrierAssignment, error)
 	DispatchCancelCarrierAssignment(ctx context.Context, moveID string, reason string) (bool, error)
 	DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error)
+	UpdateDispatchControl(ctx context.Context, input gqlmodel.UpdateDispatchControlInput) (*dispatchcontrol.DispatchControl, error)
+	UpdateDistanceControl(ctx context.Context, input gqlmodel.UpdateDistanceControlInput) (*distancecontrol.DistanceControl, error)
+	UpdateDocumentControl(ctx context.Context, input gqlmodel.UpdateDocumentControlInput) (*documentcontrol.DocumentControl, error)
 	CreateDocumentTemplate(ctx context.Context, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
 	UpdateDocumentTemplate(ctx context.Context, id string, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
 	DeleteDocumentTemplate(ctx context.Context, id string) (bool, error)
@@ -2460,6 +2563,7 @@ type MutationResolver interface {
 	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error)
 	ApproveInvoiceAdjustment(ctx context.Context, adjustmentID string) (*invoiceadjustment.InvoiceAdjustment, error)
 	RejectInvoiceAdjustment(ctx context.Context, input gqlmodel.RejectInvoiceAdjustmentInput) (*invoiceadjustment.InvoiceAdjustment, error)
+	UpdateInvoiceAdjustmentControl(ctx context.Context, input gqlmodel.UpdateInvoiceAdjustmentControlInput) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error)
 	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
@@ -2473,6 +2577,8 @@ type MutationResolver interface {
 	MarkAllNotificationsRead(ctx context.Context) (bool, error)
 	DismissNotifications(ctx context.Context, ids []string) (bool, error)
 	RestoreNotifications(ctx context.Context, ids []string) (bool, error)
+	UpdateMyNotificationPreferences(ctx context.Context, input gqlmodel.UpdateMyNotificationPreferencesInput) (*notification.Preference, error)
+	CompleteOnboarding(ctx context.Context, input gqlmodel.CompleteOnboardingInput) (*onboardingports.OnboardingState, error)
 	CreateOrder(ctx context.Context, input gqlmodel.OrderInput) (*order.Order, error)
 	UpdateOrder(ctx context.Context, id string, input gqlmodel.OrderInput) (*order.Order, error)
 	AttachOrderShipments(ctx context.Context, orderID string, shipmentIds []string) (*order.Order, error)
@@ -2492,6 +2598,7 @@ type MutationResolver interface {
 	AssignUserPosition(ctx context.Context, userID string, positionID *string) (bool, error)
 	DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*approvaldelegation.ApprovalDelegation, error)
 	RevokeApprovalDelegation(ctx context.Context, id string) (*approvaldelegation.ApprovalDelegation, error)
+	ToggleMyPageFavorite(ctx context.Context, input gqlmodel.ToggleMyPageFavoriteInput) (*pagefavoriteservice.ToggleResult, error)
 	CreatePerformanceReviewTemplate(ctx context.Context, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error)
 	UpdatePerformanceReviewTemplate(ctx context.Context, id string, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error)
 	ArchivePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*workerreview.PerformanceReviewTemplate, error)
@@ -2568,7 +2675,10 @@ type MutationResolver interface {
 	DecideShipmentSuggestion(ctx context.Context, input gqlmodel.DecideShipmentSuggestionInput) (bool, error)
 	UndoShipmentSuggestionDecision(ctx context.Context, key string) (bool, error)
 	NotifyShipmentDelay(ctx context.Context, input gqlmodel.NotifyShipmentDelayInput) (bool, error)
+	UpdateShipmentControl(ctx context.Context, input gqlmodel.UpdateShipmentControlInput) (*shipmentcontrol.ShipmentControl, error)
 	UpdateSidebarPreferences(ctx context.Context, input gqlmodel.SidebarPreferencesInput) (*gqlmodel.SidebarPreferences, error)
+	CreateTcaSubscription(ctx context.Context, input gqlmodel.SaveTCASubscriptionInput) (*tablechangealert.TCASubscription, error)
+	UpdateTcaSubscription(ctx context.Context, id string, version int, input gqlmodel.SaveTCASubscriptionInput) (*tablechangealert.TCASubscription, error)
 	CreateTableConfiguration(ctx context.Context, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	UpdateTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	PatchTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationPatchInput) (*tableconfiguration.TableConfiguration, error)
@@ -2615,6 +2725,8 @@ type MutationResolver interface {
 	ReopenWatchtowerItem(ctx context.Context, id string, input gqlmodel.ReopenWatchtowerItemInput) (*watchtower.Item, error)
 	MarkWatchtowerItemSeen(ctx context.Context, id string) (*watchtower.Item, error)
 	WakeWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
+	RegisterMyPushSubscription(ctx context.Context, input gqlmodel.RegisterMyPushSubscriptionInput) (*notification.PushSubscription, error)
+	UnregisterMyPushSubscription(ctx context.Context, endpoint string) (bool, error)
 	PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error)
 	CreateWorkerPTO(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error)
 	UpdateWorkerPTO(ctx context.Context, input gqlmodel.UpdateWorkerPTOInput) (*worker.WorkerPTO, error)
@@ -2842,6 +2954,7 @@ type QueryResolver interface {
 	AccessorialCharge(ctx context.Context, id string) (*accessorialcharge.AccessorialCharge, error)
 	AccountTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountTypeConnection, error)
 	AccountType(ctx context.Context, id string) (*accounttype.AccountType, error)
+	AccountingControl(ctx context.Context) (*accountingcontrol.AccountingControl, error)
 	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingSyncStatus, error)
 	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingmappingports.AccountingMappingSummary, error)
 	AccountingMappingDetail(ctx context.Context, integrationType integration.Type, id *string, targetType *accountingsync.MappingTargetType, recordID *string, key *string, optionsQuery *string) (*gqlmodel.AccountingMappingDetail, error)
@@ -2956,6 +3069,7 @@ type QueryResolver interface {
 	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error)
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
+	APIKeyAnalytics(ctx context.Context, timezone *string) (*gqlmodel.APIKeyAnalytics, error)
 	AttentionSummary(ctx context.Context) (*gqlmodel.AttentionSummary, error)
 	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string) (*gqlmodel.AuditEntryConnection, error)
@@ -2967,6 +3081,7 @@ type QueryResolver interface {
 	BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error)
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
+	BillingControl(ctx context.Context) (*billingcontrol.BillingControl, error)
 	BillingQueueItems(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingQueueItemsFilterInput) (*gqlmodel.BillingQueueItemConnection, error)
 	BillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	MyActiveBillingTransferRun(ctx context.Context) (*gqlmodel.BillingTransferRun, error)
@@ -3025,6 +3140,7 @@ type QueryResolver interface {
 	EDICarrierInvoices(ctx context.Context, reconciliationStatus *string, limit *int, offset *int) (*gqlmodel.EDICarrierInvoiceList, error)
 	SuggestCarrierForEDIInvoice(ctx context.Context, invoiceID string) (*carrier.Carrier, error)
 	ExportCarrierSettlementBatchCSV(ctx context.Context, batchID string) (string, error)
+	CaseChecklistTemplates(ctx context.Context, kind deskcase.ChecklistKind) (*deskcaseports.CaseChecklistTemplates, error)
 	ShipmentCheckCalls(ctx context.Context, shipmentID string) ([]*checkcall.CheckCall, error)
 	CarrierTrackingLink(ctx context.Context, shipmentMoveID string) (*checkcall.TrackingLink, error)
 	Commodities(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CommodityConnection, error)
@@ -3045,6 +3161,8 @@ type QueryResolver interface {
 	CustomerTrackingProfile(ctx context.Context, customerID string) (*customertracking.Profile, error)
 	CustomerTrackingLinks(ctx context.Context, shipmentID string) ([]*customertracking.Link, error)
 	CustomerStatusNotifications(ctx context.Context, shipmentID string) ([]*customertracking.Notification, error)
+	DataEntryControl(ctx context.Context) (*dataentrycontrol.DataEntryControl, error)
+	DataRetention(ctx context.Context) (*dataretention.DataRetention, error)
 	DataTableFacets(ctx context.Context, input gqlmodel.DataTableFacetInput) (*gqlmodel.DataTableFacets, error)
 	DataTableAggregates(ctx context.Context, input gqlmodel.DataTableAggregateInput) (*gqlmodel.DataTableAggregates, error)
 	DataTableSeries(ctx context.Context, input gqlmodel.DataTableSeriesInput) (*gqlmodel.DataTableSeries, error)
@@ -3071,10 +3189,13 @@ type QueryResolver interface {
 	DispatchDriverMoves(ctx context.Context, input gqlmodel.DispatchDriverMovesInput) ([]*gqlmodel.DispatchDriverMoveMatch, error)
 	DispatchAssignmentPreview(ctx context.Context, input gqlmodel.DispatchAssignmentPreviewInput) (*gqlmodel.DispatchAssignmentPreview, error)
 	DispatchCarrierAssignmentPreview(ctx context.Context, input gqlmodel.DispatchCarrierAssignmentPreviewInput) (*gqlmodel.DispatchCarrierEligibility, error)
+	DispatchControl(ctx context.Context) (*dispatchcontrol.DispatchControl, error)
+	DistanceControl(ctx context.Context) (*distancecontrol.DistanceControl, error)
 	DistanceOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DistanceOverrideConnection, error)
 	DistanceOverride(ctx context.Context, id string) (*distanceoverride.DistanceOverride, error)
 	DistanceProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DistanceProfileConnection, error)
 	DistanceProfile(ctx context.Context, id string) (*distanceprofile.DistanceProfile, error)
+	DocumentControl(ctx context.Context) (*documentcontrol.DocumentControl, error)
 	DocumentPacketRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentPacketRuleConnection, error)
 	DocumentPacketRule(ctx context.Context, id string) (*documentpacketrule.DocumentPacketRule, error)
 	DocumentTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTemplateConnection, error)
@@ -3248,6 +3369,7 @@ type QueryResolver interface {
 	FuelProgramCurrentRates(ctx context.Context) ([]*gqlmodel.FuelProgramCurrentRate, error)
 	GenerateFuelSurchargeTable(ctx context.Context, input gqlmodel.GenerateFuelTableInput) ([]*gqlmodel.GeneratedFuelTableRow, error)
 	EiaSeriesOptions(ctx context.Context) ([]*gqlmodel.EIASeriesOption, error)
+	GlobalSearch(ctx context.Context, input gqlmodel.GlobalSearchInput) (*kernelports.GlobalSearchResult, error)
 	HazardousMaterials(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.HazardousMaterialConnection, error)
 	HazardousMaterial(ctx context.Context, id string) (*hazardousmaterial.HazardousMaterial, error)
 	HazmatSegregationRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.HazmatSegregationRuleConnection, error)
@@ -3289,6 +3411,7 @@ type QueryResolver interface {
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
 	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
+	InvoiceAdjustmentControl(ctx context.Context) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error)
 	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoicedispute.InvoiceDispute, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
@@ -3312,6 +3435,8 @@ type QueryResolver interface {
 	ManualJournalCard(ctx context.Context, id string) (*journalcardservice.ManualJournalCard, error)
 	Notifications(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) (*gqlmodel.NotificationConnection, error)
 	NotificationUnreadCount(ctx context.Context) (int, error)
+	MyNotificationPreferences(ctx context.Context) (*notification.Preference, error)
+	OnboardingState(ctx context.Context) (*onboardingports.OnboardingState, error)
 	Orders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.OrderConnection, error)
 	Order(ctx context.Context, id string) (*order.Order, error)
 	OrgHolidays(ctx context.Context, year *int) ([]*pto.OrgHoliday, error)
@@ -3325,12 +3450,15 @@ type QueryResolver interface {
 	PageAccessPreview(ctx context.Context, input gqlmodel.PageAccessPreviewInput) (*gqlmodel.PageAccess, error)
 	PageAccessScreens(ctx context.Context) ([]*gqlmodel.PageAccessScreen, error)
 	RoleResourceGuides(ctx context.Context, input gqlmodel.RoleResourceGuideInput) ([]*gqlmodel.RoleResourceGuide, error)
+	MyPageFavorites(ctx context.Context) ([]*pagefavorite.PageFavorite, error)
+	IsMyPageFavorite(ctx context.Context, pageURL string) (bool, error)
 	PerformanceReviewTemplates(ctx context.Context, input gqlmodel.PerformanceReviewTemplatesInput) (*gqlmodel.PerformanceReviewTemplateConnection, error)
 	PerformanceReviewTemplate(ctx context.Context, id string) (*workerreview.PerformanceReviewTemplate, error)
 	ActivePerformanceReviewTemplates(ctx context.Context) ([]*workerreview.PerformanceReviewTemplate, error)
 	WorkerPerformanceReviews(ctx context.Context, workerID string) ([]*workerreview.PerformanceReview, error)
 	PerformanceReview(ctx context.Context, id string) (*workerreview.PerformanceReview, error)
 	MyReviews(ctx context.Context) ([]*workerreview.PerformanceReview, error)
+	PlaceAutocomplete(ctx context.Context, input gqlmodel.PlaceAutocompleteInput) (*kernelports.AutocompleteLocationResult, error)
 	PTOPolicies(ctx context.Context, input gqlmodel.PTOPoliciesInput) (*gqlmodel.PTOPolicyConnection, error)
 	PTOPolicy(ctx context.Context, id string) (*pto.PTOPolicy, error)
 	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error)
@@ -3420,18 +3548,23 @@ type QueryResolver interface {
 	ShipmentCoverageSuggestions(ctx context.Context, shipmentID string) (*gqlmodel.ShipmentCoverageSuggestions, error)
 	ShipmentSuggestions(ctx context.Context, timezone string) (*gqlmodel.ShipmentSuggestionQueue, error)
 	ShipmentWatchlist(ctx context.Context, timezone string) (*gqlmodel.ShipmentWatchlist, error)
+	ShipmentControl(ctx context.Context) (*shipmentcontrol.ShipmentControl, error)
 	ShipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ShipmentTypeConnection, error)
 	ShipmentType(ctx context.Context, id string) (*shipmenttype.ShipmentType, error)
 	SidebarPreferences(ctx context.Context) (*gqlmodel.SidebarPreferences, error)
 	SidebarCustomizationOptions(ctx context.Context) (*gqlmodel.SidebarCustomizationOptions, error)
 	StoredMileages(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.StoredMileageConnection, error)
 	StoredMileage(ctx context.Context, id string) (*storedmileage.StoredMileage, error)
+	SystemUpdateStatus(ctx context.Context) (*kernelports.UpdateStatus, error)
 	TcaSubscriptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.TCASubscriptionConnection, error)
 	TcaSubscription(ctx context.Context, id string) (*tablechangealert.TCASubscription, error)
+	TcaAllowlistedTables(ctx context.Context) ([]*tablechangealert.TCAAllowlistedTable, error)
 	TableConfigurations(ctx context.Context, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) (*gqlmodel.TableConfigurationConnection, error)
 	TableConfiguration(ctx context.Context, id string) (*tableconfiguration.TableConfiguration, error)
 	DefaultTableConfiguration(ctx context.Context, resource string) (*tableconfiguration.TableConfiguration, error)
 	MyTableLayout(ctx context.Context, resource string) (*gqlmodel.TableLayout, error)
+	TableQueryCatalogue(ctx context.Context) ([]*gqlmodel.TableQueryCatalogueResource, error)
+	ComposeTableQuery(ctx context.Context, input gqlmodel.ComposeTableQueryInput) (*tablequeryservice.ComposeResult, error)
 	ShipmentFormSubmissions(ctx context.Context, shipmentID string) ([]*gqlmodel.TelematicsFormSubmission, error)
 	TelematicsFormMappings(ctx context.Context) ([]*gqlmodel.TelematicsFormMapping, error)
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
@@ -3476,6 +3609,9 @@ type QueryResolver interface {
 	WatchtowerResolutionCodes(ctx context.Context) ([]*watchtower.ResolutionCodeOption, error)
 	WatchtowerCleared(ctx context.Context, since int) (int, error)
 	WatchtowerHandOffAgents(ctx context.Context) ([]*agentdefinition.Definition, error)
+	WeatherAlerts(ctx context.Context) (*weatheralertports.WeatherAlertFeatureCollection, error)
+	WeatherAlert(ctx context.Context, id string) (*weatheralertports.WeatherAlertDetail, error)
+	WebPushConfig(ctx context.Context) (*gqlmodel.WebPushConfig, error)
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput, withoutCredential *string) (*gqlmodel.WorkerConnection, error)
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
@@ -3653,6 +3789,14 @@ type TableConfigurationResolver interface {
 	TableConfig(ctx context.Context, obj *tableconfiguration.TableConfiguration) (map[string]any, error)
 }
 
+type TableQueryFieldFilterResolver interface {
+	Operator(ctx context.Context, obj *domaintypes.FieldFilter) (string, error)
+}
+
+type TableQuerySortFieldResolver interface {
+	Direction(ctx context.Context, obj *domaintypes.SortField) (string, error)
+}
+
 type TenderResolver interface {
 	RoutingGuide(ctx context.Context, obj *tender.Tender) (*tender.RoutingGuide, error)
 }
@@ -3802,6 +3946,10 @@ type WatchtowerItemEventResolver interface {
 type WatchtowerRecordResolver interface {
 	Kind(ctx context.Context, obj *watchtower.RecordRef) (string, error)
 	Noun(ctx context.Context, obj *watchtower.RecordRef) (string, error)
+}
+
+type WeatherAlertFeatureResolver interface {
+	Geometry(ctx context.Context, obj *weatheralertports.WeatherAlertFeature) (map[string]any, error)
 }
 
 type WorkerResolver interface {
@@ -4036,6 +4184,7 @@ type WorkerTrainingRecordResolver interface {
 var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 	return gqlexec.Compile([]*gqlexec.Shard{
 		accessorialchargeexec.Shard,
+		accountingcontrolexec.Shard,
 		accountingsyncexec.Shard,
 		accountsreceivableexec.Shard,
 		accounttypeexec.Shard,
@@ -4057,9 +4206,11 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		aitrainingexec.Shard,
 		aiusageexec.Shard,
 		apikeyexec.Shard,
+		apikeyanalyticsexec.Shard,
 		attentionexec.Shard,
 		auditlogexec.Shard,
 		benefitsexec.Shard,
+		billingcontrolexec.Shard,
 		billingqueueexec.Shard,
 		billingtransferexec.Shard,
 		briefingexec.Shard,
@@ -4069,6 +4220,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		carriercapacityexec.Shard,
 		carrierintelligenceexec.Shard,
 		carriersettlementexec.Shard,
+		casechecklistexec.Shard,
 		checkcallexec.Shard,
 		commodityexec.Shard,
 		costingexec.Shard,
@@ -4076,14 +4228,19 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customerpaymentexec.Shard,
 		customertrackingexec.Shard,
 		customfielddefinitionexec.Shard,
+		dataentrycontrolexec.Shard,
+		dataretentionexec.Shard,
 		datatableinsightexec.Shard,
 		decisionsexec.Shard,
 		deskboardexec.Shard,
 		deskmemoryexec.Shard,
 		detentionexec.Shard,
 		dispatchconsoleexec.Shard,
+		dispatchcontrolexec.Shard,
+		distancecontrolexec.Shard,
 		distanceoverrideexec.Shard,
 		distanceprofileexec.Shard,
+		documentcontrolexec.Shard,
 		documentpacketruleexec.Shard,
 		documenttemplateexec.Shard,
 		documenttypeexec.Shard,
@@ -4107,6 +4264,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		formulatemplateexec.Shard,
 		fuelpurchaseexec.Shard,
 		fuelsurchargeexec.Shard,
+		globalsearchexec.Shard,
 		hazardousmaterialexec.Shard,
 		hazmatsegregationruleexec.Shard,
 		holdreasonexec.Shard,
@@ -4116,6 +4274,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		inboundreplyexec.Shard,
 		invoiceexec.Shard,
 		invoiceadjustmentexec.Shard,
+		invoiceadjustmentcontrolexec.Shard,
 		invoicedisputeexec.Shard,
 		journalentryexec.Shard,
 		journalreversalexec.Shard,
@@ -4125,11 +4284,15 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		locationcategoryexec.Shard,
 		manualjournalexec.Shard,
 		notificationexec.Shard,
+		notificationpreferenceexec.Shard,
+		onboardingexec.Shard,
 		orderexec.Shard,
 		orgholidayexec.Shard,
 		orgstructureexec.Shard,
 		pageaccessexec.Shard,
+		pagefavoriteexec.Shard,
 		performancereviewexec.Shard,
+		placeautocompleteexec.Shard,
 		preludeexec.Shard,
 		ptopolicyexec.Shard,
 		rateexec.Shard,
@@ -4148,12 +4311,15 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		sharedexec.Shard,
 		shipmentexec.Shard,
 		shipmentboardexec.Shard,
+		shipmentcontrolexec.Shard,
 		shipmenttypeexec.Shard,
 		sidebarpreferenceexec.Shard,
 		storedmileageexec.Shard,
+		systemupdateexec.Shard,
 		tablechangealertexec.Shard,
 		tableconfigurationexec.Shard,
 		tablelayoutexec.Shard,
+		tablequeryexec.Shard,
 		telematicsexec.Shard,
 		tenantexec.Shard,
 		tenderexec.Shard,
@@ -4164,6 +4330,8 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		userexec.Shard,
 		usstateexec.Shard,
 		watchtowerexec.Shard,
+		weatheralertexec.Shard,
+		webpushexec.Shard,
 		workerexec.Shard,
 		workerchecklistexec.Shard,
 		workercredentialexec.Shard,
@@ -4202,6 +4370,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AccountingAppCredential":            func() any { return r.AccountingAppCredential() },
 			"AccountingAppSettings":              func() any { return r.AccountingAppSettings() },
 			"AccountingConnection":               func() any { return r.AccountingConnection() },
+			"AccountingControl":                  func() any { return r.AccountingControl() },
 			"AccountingDriftFinding":             func() any { return r.AccountingDriftFinding() },
 			"AccountingDriftFixPreview":          func() any { return r.AccountingDriftFixPreview() },
 			"AccountingInboundChange":            func() any { return r.AccountingInboundChange() },
@@ -4247,6 +4416,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"ApprovalDelegation":                 func() any { return r.ApprovalDelegation() },
 			"AuditEntry":                         func() any { return r.AuditEntry() },
 			"AuthEvent":                          func() any { return r.AuthEvent() },
+			"BillingControl":                     func() any { return r.BillingControl() },
 			"BriefingSection":                    func() any { return r.BriefingSection() },
 			"CaptureBatch":                       func() any { return r.CaptureBatch() },
 			"CaptureCoverSheet":                  func() any { return r.CaptureCoverSheet() },
@@ -4276,6 +4446,9 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"CarrierMonitoringEnrollment":        func() any { return r.CarrierMonitoringEnrollment() },
 			"CarrierSettlement":                  func() any { return r.CarrierSettlement() },
 			"CarrierSourcingResult":              func() any { return r.CarrierSourcingResult() },
+			"CaseChecklistTemplate":              func() any { return r.CaseChecklistTemplate() },
+			"CaseChecklistTemplateItem":          func() any { return r.CaseChecklistTemplateItem() },
+			"CaseChecklistTemplates":             func() any { return r.CaseChecklistTemplates() },
 			"ChargeAllocation":                   func() any { return r.ChargeAllocation() },
 			"Commodity":                          func() any { return r.Commodity() },
 			"Customer":                           func() any { return r.Customer() },
@@ -4291,6 +4464,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DetentionOccurrence":                func() any { return r.DetentionOccurrence() },
 			"DetentionPreviewResult":             func() any { return r.DetentionPreviewResult() },
 			"DisciplinaryLadder":                 func() any { return r.DisciplinaryLadder() },
+			"DispatchControl":                    func() any { return r.DispatchControl() },
 			"DistanceProfile":                    func() any { return r.DistanceProfile() },
 			"DocumentTemplate":                   func() any { return r.DocumentTemplate() },
 			"DocumentTemplateAssignment":         func() any { return r.DocumentTemplateAssignment() },
@@ -4352,6 +4526,8 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FuelPurchaseImportRow":              func() any { return r.FuelPurchaseImportRow() },
 			"FuelPurchaseImportSummary":          func() any { return r.FuelPurchaseImportSummary() },
 			"FuelSpend":                          func() any { return r.FuelSpend() },
+			"GlobalSearchGroup":                  func() any { return r.GlobalSearchGroup() },
+			"GlobalSearchHit":                    func() any { return r.GlobalSearchHit() },
 			"IFTAFleetMPG":                       func() any { return r.IFTAFleetMPG() },
 			"IFTAJurisdiction":                   func() any { return r.IFTAJurisdiction() },
 			"IFTAJurisdictionMileageEntry":       func() any { return r.IFTAJurisdictionMileageEntry() },
@@ -4371,6 +4547,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Invoice":                            func() any { return r.Invoice() },
 			"InvoiceAdjustment":                  func() any { return r.InvoiceAdjustment() },
 			"InvoiceAdjustmentApprovalQueueItem": func() any { return r.InvoiceAdjustmentApprovalQueueItem() },
+			"InvoiceAdjustmentControl":           func() any { return r.InvoiceAdjustmentControl() },
 			"InvoiceAdjustmentLine":              func() any { return r.InvoiceAdjustmentLine() },
 			"InvoiceChargeGroup":                 func() any { return r.InvoiceChargeGroup() },
 			"InvoiceDispute":                     func() any { return r.InvoiceDispute() },
@@ -4437,6 +4614,8 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"ShipmentRatingReviewApproval":       func() any { return r.ShipmentRatingReviewApproval() },
 			"TCASubscription":                    func() any { return r.TCASubscription() },
 			"TableConfiguration":                 func() any { return r.TableConfiguration() },
+			"TableQueryFieldFilter":              func() any { return r.TableQueryFieldFilter() },
+			"TableQuerySortField":                func() any { return r.TableQuerySortField() },
 			"Tender":                             func() any { return r.Tender() },
 			"TenderOffer":                        func() any { return r.TenderOffer() },
 			"Tractor":                            func() any { return r.Tractor() },
@@ -4458,6 +4637,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"WatchtowerItem":                     func() any { return r.WatchtowerItem() },
 			"WatchtowerItemEvent":                func() any { return r.WatchtowerItemEvent() },
 			"WatchtowerRecord":                   func() any { return r.WatchtowerRecord() },
+			"WeatherAlertFeature":                func() any { return r.WeatherAlertFeature() },
 			"Worker":                             func() any { return r.Worker() },
 			"WorkerBenefitEnrollment":            func() any { return r.WorkerBenefitEnrollment() },
 			"WorkerChecklist":                    func() any { return r.WorkerChecklist() },

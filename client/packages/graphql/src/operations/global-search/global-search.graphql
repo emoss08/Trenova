@@ -1,0 +1,18 @@
+query GlobalSearch($input: GlobalSearchInput!) {
+  globalSearch(input: $input) {
+    query
+    groups {
+      entityType
+      label
+      total
+      hits {
+        id
+        entityType
+        title
+        subtitle
+        href
+        metadata
+      }
+    }
+  }
+}

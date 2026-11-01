@@ -1,0 +1,58 @@
+fragment WeatherAlertFeatureFields on WeatherAlertFeature {
+  type
+  id
+  geometry
+  properties {
+    id
+    nwsId
+    event
+    severity
+    urgency
+    certainty
+    headline
+    description
+    instruction
+    areaDesc
+    effective
+    expires
+    onset
+    ends
+    status
+    messageType
+    senderName
+    response
+    category
+    alertCategory
+    firstSeenAt
+    lastUpdatedAt
+    expiredAt
+  }
+}
+
+query WeatherAlerts {
+  weatherAlerts {
+    type
+    features {
+      ...WeatherAlertFeatureFields
+    }
+  }
+}
+
+query WeatherAlert($id: ID!) {
+  weatherAlert(id: $id) {
+    feature {
+      ...WeatherAlertFeatureFields
+    }
+    activities {
+      id
+      organizationId
+      businessUnitId
+      weatherAlertId
+      activityType
+      timestamp
+      details
+      createdAt
+      updatedAt
+    }
+  }
+}

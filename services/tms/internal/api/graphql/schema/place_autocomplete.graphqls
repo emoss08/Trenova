@@ -1,0 +1,31 @@
+"An address the maps provider suggests for what was typed."
+type PlaceSuggestion {
+  name: String!
+  addressLine1: String!
+  city: String!
+  state: String!
+  postalCode: String!
+  longitude: Float!
+  latitude: Float!
+  placeId: String!
+  "The organization's US state the suggestion falls in, when one matches."
+  stateId: ID
+  types: [String!]!
+}
+
+"The addresses the maps provider suggests."
+type PlaceAutocompleteResult {
+  details: [PlaceSuggestion!]!
+  count: Int!
+}
+
+input PlaceAutocompleteInput {
+  input: String!
+  "Groups the keystrokes of one search into one billed session."
+  sessionToken: String
+}
+
+extend type Query {
+  "US address suggestions from the organization's maps provider for what was typed."
+  placeAutocomplete(input: PlaceAutocompleteInput!): PlaceAutocompleteResult!
+}

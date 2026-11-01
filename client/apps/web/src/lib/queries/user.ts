@@ -43,6 +43,7 @@ export const user = createQueryKeys("user", {
   }),
   myNotificationPreferences: () => ({
     queryKey: ["my-notification-preferences"],
-    queryFn: async () => notificationPreferencesService.get(),
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      notificationPreferencesService.get({ signal }),
   }),
 });

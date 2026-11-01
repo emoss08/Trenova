@@ -115,6 +115,7 @@ export const accountingControlSchema = z.object({
   defaultDriverAdvanceAccountId: nullableStringSchema,
   defaultEscrowLiabilityAccountId: nullableStringSchema,
   defaultDriverReimbursementAccountId: nullableStringSchema,
+  defaultEscrowInterestExpenseAccountId: nullableStringSchema,
 });
 
 export type AccountingControl = z.infer<typeof accountingControlSchema>;

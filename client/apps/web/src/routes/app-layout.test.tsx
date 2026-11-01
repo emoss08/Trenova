@@ -49,7 +49,11 @@ vi.mock("@/hooks/use-realtime-connection", () => ({
 
 vi.mock("@/services/update", () => ({
   updateService: {
-    getVersion: vi.fn().mockResolvedValue({ version: "4.12.0", environment: "development" }),
+    getUpdateStatus: vi.fn().mockResolvedValue({
+      currentVersion: "4.12.0",
+      updateAvailable: false,
+      lastChecked: 0,
+    }),
   },
 }));
 

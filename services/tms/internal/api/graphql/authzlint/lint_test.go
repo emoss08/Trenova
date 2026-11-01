@@ -64,6 +64,23 @@ var authOnlyAllowlist = map[string]string{
 	"MutationResolver.ClearMyAIFeedback": "removes only the caller's own rating; the delete " +
 		"is scoped to the caller's user id",
 
+	"QueryResolver.WebPushConfig": "whether browser push is configured and its public " +
+		"VAPID key; carries no tenant data",
+	"QueryResolver.WeatherAlerts": "the National Weather Service alerts synced for the " +
+		"organization; public weather data, no record data",
+	"QueryResolver.WeatherAlert": "one National Weather Service alert synced for the " +
+		"organization and its lifecycle; public weather data, no record data",
+	"QueryResolver.SystemUpdateStatus": "the running build's version and whether a newer " +
+		"release exists; carries no tenant data",
+	"QueryResolver.PlaceAutocomplete": "address suggestions from the maps provider for what " +
+		"the caller typed; reads no tenant records",
+	"QueryResolver.OnboardingState": "where the caller's own organization stands in its " +
+		"first-run setup; every signed-in person needs it to know whether onboarding blocks them",
+	"QueryResolver.GlobalSearch": "globalsearchservice searches only the record kinds the " +
+		"caller may read and drops hits the caller's read scope hides",
+	"QueryResolver.TableQueryCatalogue": "the static catalogue of which tables can be " +
+		"narrowed by a description; carries no record data",
+
 	"MutationResolver.CreateSettlementDispute":   "a driver disputing their own settlement",
 	"MutationResolver.WithdrawSettlementDispute": "a driver withdrawing their own dispute",
 }
@@ -135,8 +152,12 @@ func TestEveryRootResolverIsAuthorized(t *testing.T) {
 			stale = append(stale, key)
 		}
 	}
-	assert.Empty(t, stale, "authOnlyAllowlist or selfscoped.Resolvers names resolvers that no longer exist:\n  %s",
-		strings.Join(stale, "\n  "))
+	assert.Empty(
+		t,
+		stale,
+		"authOnlyAllowlist or selfscoped.Resolvers names resolvers that no longer exist:\n  %s",
+		strings.Join(stale, "\n  "),
+	)
 }
 
 func TestAnalyzeReportsCoverage(t *testing.T) {
@@ -161,8 +182,14 @@ func TestAnalyzeReportsCoverage(t *testing.T) {
 func TestASelfScopedNameEarnsNoExemption(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, isAllowedAuthOnly(RootResolver{Receiver: "QueryResolver", Name: "MyUnlistedThing"}))
-	assert.False(t, isAllowedAuthOnly(RootResolver{Receiver: "MutationResolver", Name: "CancelMyThing"}))
+	assert.False(
+		t,
+		isAllowedAuthOnly(RootResolver{Receiver: "QueryResolver", Name: "MyUnlistedThing"}),
+	)
+	assert.False(
+		t,
+		isAllowedAuthOnly(RootResolver{Receiver: "MutationResolver", Name: "CancelMyThing"}),
+	)
 	assert.True(t, isAllowedAuthOnly(RootResolver{Receiver: "QueryResolver", Name: "MyLoads"}))
 }
 
@@ -175,7 +202,12 @@ func TestSelfScopedResolversAreListedOnce(t *testing.T) {
 			previous, dup := seen[key]
 			assert.Falsef(t, dup, "%s is listed under %q and %q", key, previous, reason)
 			_, alsoListed := authOnlyAllowlist[key]
-			assert.Falsef(t, alsoListed, "%s is in both selfscoped.Resolvers and authOnlyAllowlist", key)
+			assert.Falsef(
+				t,
+				alsoListed,
+				"%s is in both selfscoped.Resolvers and authOnlyAllowlist",
+				key,
+			)
 			seen[key] = reason
 		}
 	}

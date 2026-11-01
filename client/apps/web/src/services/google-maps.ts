@@ -1,4 +1,6 @@
+import { PlaceAutocompleteDocument } from "@trenova/graphql/generated/graphql";
 import { api } from "@trenova/shared/lib/api";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   integrationRuntimeConfigResponseSchema,
@@ -20,9 +22,21 @@ export class GoogleMapsService {
     );
   }
 
-  public async autocomplete(req: AutocompleteLocationRequest) {
-    const response = await api.post<AutocompleteLocationResult>(`/google-maps/autocomplete/`, req);
+  public async autocomplete(
+    req: AutocompleteLocationRequest,
+    options?: { signal?: AbortSignal },
+  ): Promise<AutocompleteLocationResult> {
+    const response = await requestGraphQL({
+      document: PlaceAutocompleteDocument,
+      operationName: "PlaceAutocomplete",
+      variables: { input: { input: req.input, sessionToken: req.sessionToken ?? null } },
+      signal: options?.signal,
+    });
 
-    return safeParse(autocompleteLocationResultSchema, response, "AutocompleteLocationResult");
+    return safeParse(
+      autocompleteLocationResultSchema,
+      response.placeAutocomplete,
+      "AutocompleteLocationResult",
+    );
   }
 }

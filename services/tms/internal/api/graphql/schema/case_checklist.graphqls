@@ -1,0 +1,100 @@
+"Which case checklist a template lays out."
+enum CaseChecklistKind {
+  ReadyToBill
+  ReadyToClose
+}
+
+"Whether a checklist step must be ticked, may be, or is left off."
+enum CaseChecklistItemMode {
+  Required
+  Optional
+  Off
+}
+
+"What ticks a step the organization added."
+enum CaseChecklistCustomCheck {
+  Manual
+  Document
+}
+
+"A step the organization added: its name, what ticks it and what it asks the agent."
+type CaseChecklistCustomItem {
+  label: String!
+  check: CaseChecklistCustomCheck!
+  documentTypeId: ID
+  stepLabel: String!
+  prompt: String!
+}
+
+"One step of a template, in the order the case shows it."
+type CaseChecklistTemplateItem {
+  key: String!
+  mode: CaseChecklistItemMode!
+  custom: CaseChecklistCustomItem
+}
+
+"""
+How the organization, or one customer of it, lays out a kind of case checklist.
+The organization's template has no customer; the default, before one is saved, has no id.
+"""
+type CaseChecklistTemplate {
+  id: ID
+  kind: CaseChecklistKind!
+  customerId: ID
+  customerName: String!
+  items: [CaseChecklistTemplateItem!]!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"How an organization lays out one kind of case checklist."
+type CaseChecklistTemplates {
+  kind: CaseChecklistKind!
+  "The organization's template, or the default when it saved none."
+  organization: CaseChecklistTemplate!
+  "Each customer's template that replaces the organization's."
+  customers: [CaseChecklistTemplate!]!
+  "Built-in steps whose mode follows a rule set elsewhere: they can be moved but stay required."
+  locked: [String!]!
+}
+
+input CaseChecklistCustomItemInput {
+  label: String!
+  check: CaseChecklistCustomCheck!
+  documentTypeId: ID
+  stepLabel: String
+  prompt: String
+}
+
+input CaseChecklistTemplateItemInput {
+  key: String!
+  mode: CaseChecklistItemMode!
+  custom: CaseChecklistCustomItemInput
+}
+
+"""
+Saves the organization's template of a kind, or a customer's. id and version name
+a template being changed; without an id one is made.
+"""
+input SaveCaseChecklistTemplateInput {
+  id: ID
+  version: Int!
+  kind: CaseChecklistKind!
+  customerId: ID
+  items: [CaseChecklistTemplateItemInput!]!
+}
+
+extend type Query {
+  "How the organization and its customers lay out a kind of case checklist."
+  caseChecklistTemplates(kind: CaseChecklistKind!): CaseChecklistTemplates!
+}
+
+extend type Mutation {
+  "Saves the organization's or a customer's case checklist template."
+  saveCaseChecklistTemplate(input: SaveCaseChecklistTemplateInput!): CaseChecklistTemplate!
+  """
+  Deletes a case checklist template: a customer's falls back to the organization's,
+  the organization's to the default.
+  """
+  deleteCaseChecklistTemplate(id: ID!): Boolean!
+}

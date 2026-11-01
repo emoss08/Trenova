@@ -41,10 +41,19 @@ const (
 	journalDTO          = "GraphQL journal DTO without column projection metadata"
 	costingDTO          = "GraphQL costing DTO without column projection metadata"
 	telematicsFormDTO   = "GraphQL telematics form DTO without column projection metadata"
+	apiKeyAnalyticsDTO  = "GraphQL API key analytics card DTO built from the analytics provider"
+	tableQueryDTO       = "GraphQL table query catalogue DTO built from the filter catalogue"
 )
 
 var nonProjectionObjects = map[string]string{
 	"CarrierIntelRuleSetting":         "GraphQL DTO built by its resolver",
+	"WebPushConfig":                   "GraphQL push configuration DTO built from config",
+	"ApiKeyTotalCount":                apiKeyAnalyticsDTO,
+	"ApiKeyStateCount":                apiKeyAnalyticsDTO,
+	"ApiKeyRequestDay":                apiKeyAnalyticsDTO,
+	"ApiKeyRequestVolume":             apiKeyAnalyticsDTO,
+	"TableQueryCatalogueField":        tableQueryDTO,
+	"TableQueryCatalogueResource":     tableQueryDTO,
 	"BillingQueueHeadline":            "GraphQL billing queue item headline built from its review issues",
 	"CustomFieldFormField":            "GraphQL form DTO over the active definitions a form draws, read whole",
 	"ShipmentCustomerBillingRules":    "GraphQL shipment form DTO built from a picked billing profile read",

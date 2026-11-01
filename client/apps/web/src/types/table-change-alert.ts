@@ -3,7 +3,6 @@ import {
   notificationPrioritySchema,
   type NotificationPriority,
 } from "@trenova/shared/types/notification";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export { notificationPrioritySchema, type NotificationPriority };
@@ -99,7 +98,3 @@ export const tcaSubscriptionFormSchema = z.object({
 });
 
 export type TCASubscriptionFormValues = z.input<typeof tcaSubscriptionFormSchema>;
-
-export const tcaSubscriptionResponseSchema = createLimitOffsetResponse(tcaSubscriptionSchema);
-
-export type TCASubscriptionResponse = z.infer<typeof tcaSubscriptionResponseSchema>;

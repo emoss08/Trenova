@@ -4,6 +4,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const invoiceAdjustmentControl = createQueryKeys("invoiceAdjustmentControl", {
   get: () => ({
     queryKey: ["get"],
-    queryFn: async () => apiService.invoiceAdjustmentControlService.get(),
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      apiService.invoiceAdjustmentControlService.get({ signal }),
   }),
 });

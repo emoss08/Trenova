@@ -1,0 +1,51 @@
+query DocumentControl {
+  documentControl {
+    id
+    organizationId
+    businessUnitId
+    enableDocumentIntelligence
+    enableOcr
+    enableAutoClassification
+    enableAutoDocumentTypeAssociate
+    enableAutoCreateDocumentTypes
+    enableShipmentDraftExtraction
+    enableAiAssistedClassification
+    enableAiAssistedExtraction
+    shipmentDraftAllowedResources
+    enableFullTextIndexing
+    enableCapture
+    captureAutoFileCoverSheets
+    captureRetentionDays
+    captureMinAgentVersion
+    captureAllowAutoUpdate
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateDocumentControl($input: UpdateDocumentControlInput!) {
+  updateDocumentControl(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    enableDocumentIntelligence
+    enableOcr
+    enableAutoClassification
+    enableAutoDocumentTypeAssociate
+    enableAutoCreateDocumentTypes
+    enableShipmentDraftExtraction
+    enableAiAssistedClassification
+    enableAiAssistedExtraction
+    shipmentDraftAllowedResources
+    enableFullTextIndexing
+    enableCapture
+    captureAutoFileCoverSheets
+    captureRetentionDays
+    captureMinAgentVersion
+    captureAllowAutoUpdate
+    version
+    createdAt
+    updatedAt
+  }
+}

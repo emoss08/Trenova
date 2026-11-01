@@ -1,0 +1,58 @@
+"Whether a new organization has finished its first-run setup."
+enum OnboardingStatus {
+  pending
+  completed
+}
+
+"The organization's profile as onboarding collected it."
+type OnboardingOrganization {
+  name: String!
+  timezone: String!
+  addressLine1: String!
+  city: String!
+  stateId: ID
+  postalCode: String!
+  scacCode: String!
+  dotNumber: String!
+}
+
+"Where the organization stands in its first-run setup."
+type OnboardingState {
+  "Whether the signed-in person must finish onboarding before using Trenova."
+  required: Boolean!
+  status: OnboardingStatus!
+  operationType: OperationType
+  sampleDataLoaded: Boolean!
+  completedAt: Timestamp
+  organization: OnboardingOrganization
+}
+
+input OnboardingOrganizationInput {
+  name: String!
+  timezone: String!
+  addressLine1: String!
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  scacCode: String
+  dotNumber: String
+}
+
+input CompleteOnboardingInput {
+  organization: OnboardingOrganizationInput!
+  operationType: OperationType!
+  loadSampleData: Boolean!
+}
+
+extend type Query {
+  "Where the signed-in person's organization stands in its first-run setup."
+  onboardingState: OnboardingState!
+}
+
+extend type Mutation {
+  """
+  Finishes the organization's first-run setup: saves its profile and operating
+  mode and, when asked, loads sample data. A person must do it, not an API key.
+  """
+  completeOnboarding(input: CompleteOnboardingInput!): OnboardingState!
+}

@@ -1,25 +1,14 @@
-import { api } from "@trenova/shared/lib/api";
+import { SystemUpdateStatusDocument } from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
-import {
-  updateStatusSchema,
-  versionInfoSchema,
-  type UpdateStatus,
-  type VersionInfo,
-} from "@/types/update";
+import { updateStatusSchema, type UpdateStatus } from "@/types/update";
 
 export const updateService = {
-  getVersion: async (): Promise<VersionInfo> => {
-    const response = await api.get<VersionInfo>("/system/version");
-    return safeParse(versionInfoSchema, response, "Version Info");
-  },
-
   getUpdateStatus: async (): Promise<UpdateStatus> => {
-    const response = await api.get<UpdateStatus>("/system/update-status");
-    return safeParse(updateStatusSchema, response, "Update Status");
-  },
-
-  checkForUpdates: async (): Promise<UpdateStatus> => {
-    const response = await api.post<UpdateStatus>("/system/check-updates");
-    return safeParse(updateStatusSchema, response, "Update Status");
+    const response = await requestGraphQL({
+      document: SystemUpdateStatusDocument,
+      operationName: "SystemUpdateStatus",
+    });
+    return safeParse(updateStatusSchema, response.systemUpdateStatus, "Update Status");
   },
 };

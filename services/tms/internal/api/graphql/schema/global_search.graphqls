@@ -1,0 +1,39 @@
+"One record a global search found."
+type GlobalSearchHit {
+  id: String!
+  "shipment, customer, worker or document."
+  entityType: String!
+  title: String!
+  subtitle: String!
+  href: String!
+  "Short labelled facts about the record, keyed by label."
+  metadata: JSON
+}
+
+"The records of one kind a global search found."
+type GlobalSearchGroup {
+  entityType: String!
+  label: String!
+  "How many records match in all, which can be more than the hits returned."
+  total: Int!
+  hits: [GlobalSearchHit!]!
+}
+
+"What a global search found, grouped by kind of record, among the records the caller may read."
+type GlobalSearchResult {
+  query: String!
+  groups: [GlobalSearchGroup!]!
+}
+
+input GlobalSearchInput {
+  query: String!
+  "Hits per kind of record; at most 25."
+  limit: Int
+  "shipment, customer, worker or document; every kind when omitted."
+  entityTypes: [String!]
+}
+
+extend type Query {
+  "Searches shipments, customers, workers and documents the caller may read."
+  globalSearch(input: GlobalSearchInput!): GlobalSearchResult!
+}

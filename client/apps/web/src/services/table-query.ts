@@ -3,8 +3,12 @@ import {
   tableCatalogueSchema,
   type ComposedTableQuery,
 } from "@/types/table-query";
+import {
+  ComposeTableQueryDocument,
+  TableQueryCatalogueDocument,
+} from "@trenova/graphql/generated/graphql";
 import type { FieldFilter, SortField } from "@trenova/shared/types/data-table";
-import { api } from "@trenova/shared/lib/api";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 
 export type ComposeTableQueryPayload = {
@@ -33,19 +37,42 @@ export class TableQueryService {
     payload: ComposeTableQueryPayload,
     options?: { signal?: AbortSignal },
   ): Promise<ComposedTableQuery> {
-    const response = await api.post(
-      `/tables/${encodeURIComponent(resource)}/compose/`,
-      payload,
-      options,
-    );
+    const response = await requestGraphQL({
+      document: ComposeTableQueryDocument,
+      operationName: "ComposeTableQuery",
+      variables: {
+        input: {
+          resource,
+          prompt: payload.prompt,
+          current: {
+            query: payload.current.query,
+            fieldFilters: payload.current.fieldFilters.map((filter) => ({
+              field: filter.field,
+              operator: filter.operator,
+              value: filter.value,
+            })),
+            sort: payload.current.sort.map((sort) => ({
+              field: sort.field,
+              direction: sort.direction,
+            })),
+          },
+        },
+      },
+      signal: options?.signal,
+    });
 
-    return safeParse(composedTableQuerySchema, response, "Composed query");
+    return safeParse(composedTableQuerySchema, response.composeTableQuery, "Composed query");
   }
 
   /** Which tables can be asked in words, and in which terms. */
   public async catalogue(options?: { signal?: AbortSignal }) {
-    const response = await api.get("/tables/", options);
+    const response = await requestGraphQL({
+      document: TableQueryCatalogueDocument,
+      operationName: "TableQueryCatalogue",
+      signal: options?.signal,
+    });
+    const results = response.tableQueryCatalogue;
 
-    return safeParse(tableCatalogueSchema, response, "Table catalogue");
+    return safeParse(tableCatalogueSchema, { results, count: results.length }, "Table catalogue");
   }
 }

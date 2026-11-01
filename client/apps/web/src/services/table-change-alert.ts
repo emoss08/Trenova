@@ -1,69 +1,80 @@
-import { api } from "@trenova/shared/lib/api";
+import { getFragmentData } from "@trenova/graphql/fragment-data";
+import {
+  CreateTcaSubscriptionDocument,
+  TcaAllowlistedTablesDocument,
+  TcaSubscriptionFieldsFragmentDoc,
+  UpdateTcaSubscriptionDocument,
+  type SaveTcaSubscriptionInput,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   tcaAllowlistedTableSchema,
-  tcaSubscriptionResponseSchema,
   tcaSubscriptionSchema,
-  type TCAAllowlistedTable,
   type TCASubscription,
   type TCASubscriptionFormValues,
-  type TCASubscriptionResponse,
 } from "@/types/table-change-alert";
 import { z } from "zod";
 
+export function toTCASubscriptionInput(
+  values: TCASubscriptionFormValues,
+): SaveTcaSubscriptionInput {
+  return {
+    name: values.name,
+    tableName: values.tableName,
+    recordId: values.recordId || null,
+    eventTypes: values.eventTypes,
+    conditions: values.conditions ?? [],
+    conditionMatch: values.conditionMatch ?? "all",
+    watchedColumns: values.watchedColumns ?? [],
+    customTitle: values.customTitle ?? "",
+    customMessage: values.customMessage ?? "",
+    topic: values.topic ?? "",
+    priority: values.priority ?? "medium",
+    status: values.status ?? "Active",
+  };
+}
+
 export class TableChangeAlertService {
-  public async listAllowlistedTables() {
-    const response = await api.get<TCAAllowlistedTable[]>("/tca/allowlisted-tables/");
+  public async listAllowlistedTables(options?: { signal?: AbortSignal }) {
+    const response = await requestGraphQL({
+      document: TcaAllowlistedTablesDocument,
+      operationName: "TCAAllowlistedTables",
+      signal: options?.signal,
+    });
 
-    return z.array(tcaAllowlistedTableSchema).parse(response);
-  }
-
-  public async listSubscriptions(params?: { limit?: number; offset?: number; query?: string }) {
-    const searchParams = new URLSearchParams();
-    if (params?.limit) searchParams.set("limit", String(params.limit));
-    if (params?.offset) searchParams.set("offset", String(params.offset));
-    if (params?.query) searchParams.set("query", params.query);
-
-    const queryString = searchParams.toString();
-    const response = await api.get<TCASubscriptionResponse>(`/tca/subscriptions/?${queryString}`);
-
-    return safeParse(tcaSubscriptionResponseSchema, response, "TCA Subscription List");
-  }
-
-  public async getSubscription(id: TCASubscription["id"]) {
-    const response = await api.get<TCASubscription>(`/tca/subscriptions/${id}`);
-
-    return safeParse(tcaSubscriptionSchema, response, "TCA Subscription");
+    return z.array(tcaAllowlistedTableSchema).parse(response.tcaAllowlistedTables);
   }
 
   public async createSubscription(data: TCASubscriptionFormValues) {
-    const response = await api.post<TCASubscription>("/tca/subscriptions/", data);
+    const response = await requestGraphQL({
+      document: CreateTcaSubscriptionDocument,
+      operationName: "CreateTCASubscription",
+      variables: { input: toTCASubscriptionInput(data) },
+    });
 
-    return safeParse(tcaSubscriptionSchema, response, "TCA Subscription");
+    return safeParse(
+      tcaSubscriptionSchema,
+      getFragmentData(TcaSubscriptionFieldsFragmentDoc, response.createTcaSubscription),
+      "TCA Subscription",
+    );
   }
 
   public async updateSubscription(
     id: TCASubscription["id"],
-    data: Partial<TCASubscriptionFormValues>,
+    version: number,
+    data: TCASubscriptionFormValues,
   ) {
-    const response = await api.put<TCASubscription>(`/tca/subscriptions/${id}`, data);
+    const response = await requestGraphQL({
+      document: UpdateTcaSubscriptionDocument,
+      operationName: "UpdateTCASubscription",
+      variables: { id, version, input: toTCASubscriptionInput(data) },
+    });
 
-    return safeParse(tcaSubscriptionSchema, response, "TCA Subscription");
-  }
-
-  public async deleteSubscription(id: TCASubscription["id"]) {
-    await api.delete(`/tca/subscriptions/${id}`);
-  }
-
-  public async pauseSubscription(id: TCASubscription["id"]) {
-    const response = await api.patch<TCASubscription>(`/tca/subscriptions/${id}/pause`);
-
-    return safeParse(tcaSubscriptionSchema, response, "TCA Subscription");
-  }
-
-  public async resumeSubscription(id: TCASubscription["id"]) {
-    const response = await api.patch<TCASubscription>(`/tca/subscriptions/${id}/resume`);
-
-    return safeParse(tcaSubscriptionSchema, response, "TCA Subscription");
+    return safeParse(
+      tcaSubscriptionSchema,
+      getFragmentData(TcaSubscriptionFieldsFragmentDoc, response.updateTcaSubscription),
+      "TCA Subscription",
+    );
   }
 }

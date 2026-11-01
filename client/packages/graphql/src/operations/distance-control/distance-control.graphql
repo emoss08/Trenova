@@ -1,0 +1,47 @@
+query DistanceControl {
+  distanceControl {
+    id
+    organizationId
+    businessUnitId
+    storeMileage
+    storedDistanceUnits
+    postalCodeFallbackToCity
+    autoCreateStoredMileage
+    loadedMoveDistanceProfileId
+    emptyMoveDistanceProfileId
+    payDistanceProfileId
+    billingDistanceProfileId
+    fuelDistanceProfileId
+    etaOutOfRouteDistanceProfileId
+    distanceCalculatorShortestDistanceProfileId
+    distanceCalculatorPracticalDistanceProfileId
+    captureJurisdictionMiles
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateDistanceControl($input: UpdateDistanceControlInput!) {
+  updateDistanceControl(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    storeMileage
+    storedDistanceUnits
+    postalCodeFallbackToCity
+    autoCreateStoredMileage
+    loadedMoveDistanceProfileId
+    emptyMoveDistanceProfileId
+    payDistanceProfileId
+    billingDistanceProfileId
+    fuelDistanceProfileId
+    etaOutOfRouteDistanceProfileId
+    distanceCalculatorShortestDistanceProfileId
+    distanceCalculatorPracticalDistanceProfileId
+    captureJurisdictionMiles
+    version
+    createdAt
+    updatedAt
+  }
+}

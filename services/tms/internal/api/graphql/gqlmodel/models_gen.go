@@ -46,6 +46,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -90,9 +91,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
@@ -104,6 +108,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
@@ -178,6 +183,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -1622,6 +1628,14 @@ type AmendWorkerEmploymentEventInput struct {
 	Version       *int    `json:"version,omitempty"`
 }
 
+// The figures on the API keys page.
+type APIKeyAnalytics struct {
+	TotalKeys   *APIKeyTotalCount    `json:"totalKeys"`
+	ActiveKeys  *APIKeyStateCount    `json:"activeKeys"`
+	RevokedKeys *APIKeyStateCount    `json:"revokedKeys"`
+	Requests30d *APIKeyRequestVolume `json:"requests30d"`
+}
+
 type APIKeyConnection struct {
 	Edges      []*APIKeyEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
@@ -1633,6 +1647,31 @@ type APIKeyConnection struct {
 type APIKeyEdge struct {
 	Node   *apikey.Key `json:"node"`
 	Cursor string      `json:"cursor"`
+}
+
+// Requests made with API keys on one day.
+type APIKeyRequestDay struct {
+	// The day, as Jan 2.
+	Day   string `json:"day"`
+	Value int    `json:"value"`
+}
+
+// Requests made with the organization's API keys over the last 30 days.
+type APIKeyRequestVolume struct {
+	Total     int                 `json:"total"`
+	Sparkline []*APIKeyRequestDay `json:"sparkline"`
+}
+
+// How many API keys are in one state, and their share of all keys.
+type APIKeyStateCount struct {
+	Count          int     `json:"count"`
+	PercentOfTotal float64 `json:"percentOfTotal"`
+}
+
+// How many API keys the organization has, and how many it made this month.
+type APIKeyTotalCount struct {
+	Count        int `json:"count"`
+	NewThisMonth int `json:"newThisMonth"`
 }
 
 type ApplyCarrierIntelSuggestionsInput struct {
@@ -2618,6 +2657,20 @@ type CarrierSourcingSearchInput struct {
 	Offset                  *int                                      `json:"offset,omitempty"`
 }
 
+type CaseChecklistCustomItemInput struct {
+	Label          string               `json:"label"`
+	Check          deskcase.CustomCheck `json:"check"`
+	DocumentTypeID *string              `json:"documentTypeId,omitempty"`
+	StepLabel      *string              `json:"stepLabel,omitempty"`
+	Prompt         *string              `json:"prompt,omitempty"`
+}
+
+type CaseChecklistTemplateItemInput struct {
+	Key    string                        `json:"key"`
+	Mode   deskcase.ItemMode             `json:"mode"`
+	Custom *CaseChecklistCustomItemInput `json:"custom,omitempty"`
+}
+
 type CategoryCostLine struct {
 	Category        CostCategoryType    `json:"category"`
 	Name            string              `json:"name"`
@@ -2763,6 +2816,12 @@ type CompleteClearinghouseQueryInput struct {
 	Notes          *string                              `json:"notes,omitempty"`
 }
 
+type CompleteOnboardingInput struct {
+	Organization   *OnboardingOrganizationInput `json:"organization"`
+	OperationType  tenant.OperationType         `json:"operationType"`
+	LoadSampleData bool                         `json:"loadSampleData"`
+}
+
 type CompleteWorkerTrainingInput struct {
 	// The open record to close. Leave empty to file a completion straight against
 	// workerId + courseId (a classroom session recorded after the fact).
@@ -2774,6 +2833,13 @@ type CompleteWorkerTrainingInput struct {
 	DocumentID  *string `json:"documentId,omitempty"`
 	Notes       *string `json:"notes,omitempty"`
 	Version     *int    `json:"version,omitempty"`
+}
+
+type ComposeTableQueryInput struct {
+	// The permission resource of the table, as the catalogue names it.
+	Resource string                      `json:"resource"`
+	Prompt   string                      `json:"prompt"`
+	Current  *TableQueryCurrentViewInput `json:"current,omitempty"`
 }
 
 // A proposal to confirm, with the record it proposed when it was shown.
@@ -6400,6 +6466,14 @@ type GeneratedFuelTableRow struct {
 	Value    string  `json:"value"`
 }
 
+type GlobalSearchInput struct {
+	Query string `json:"query"`
+	// Hits per kind of record; at most 25.
+	Limit *int `json:"limit,omitempty"`
+	// shipment, customer, worker or document; every kind when omitted.
+	EntityTypes []string `json:"entityTypes,omitempty"`
+}
+
 type GrantCarrierIntelOverrideInput struct {
 	CarrierID string `json:"carrierId"`
 	RuleCode  string `json:"ruleCode"`
@@ -7322,6 +7396,17 @@ type NotifyShipmentDelayInput struct {
 	Message    string `json:"message"`
 }
 
+type OnboardingOrganizationInput struct {
+	Name         string  `json:"name"`
+	Timezone     string  `json:"timezone"`
+	AddressLine1 string  `json:"addressLine1"`
+	City         string  `json:"city"`
+	StateID      string  `json:"stateId"`
+	PostalCode   string  `json:"postalCode"`
+	SCACCode     *string `json:"scacCode,omitempty"`
+	DOTNumber    *string `json:"dotNumber,omitempty"`
+}
+
 type OpenEscrowAccountInput struct {
 	WorkerID           string  `json:"workerId"`
 	TargetAmountMinor  int     `json:"targetAmountMinor"`
@@ -7768,6 +7853,12 @@ type PerformanceReviewTemplatesInput struct {
 	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput   `json:"sort,omitempty"`
 	Status       *domaintypes.Status `json:"status,omitempty"`
+}
+
+type PlaceAutocompleteInput struct {
+	Input string `json:"input"`
+	// Groups the keystrokes of one search into one billed session.
+	SessionToken *string `json:"sessionToken,omitempty"`
 }
 
 type PolicyCompliance struct {
@@ -8403,6 +8494,12 @@ type RecurringShipmentEdge struct {
 type RefreezeExtractionEvalCasesInput struct {
 	// The cases to freeze again; every active case when empty.
 	CaseIds []string `json:"caseIds,omitempty"`
+}
+
+type RegisterMyPushSubscriptionInput struct {
+	Endpoint string `json:"endpoint"`
+	P256dh   string `json:"p256dh"`
+	Auth     string `json:"auth"`
 }
 
 type RejectInvoiceAdjustmentInput struct {
@@ -9260,6 +9357,16 @@ type SaveAccountingAppInput struct {
 	ClearWebhookVerifierToken *bool `json:"clearWebhookVerifierToken,omitempty"`
 }
 
+// Saves the organization's template of a kind, or a customer's. id and version name
+// a template being changed; without an id one is made.
+type SaveCaseChecklistTemplateInput struct {
+	ID         *string                           `json:"id,omitempty"`
+	Version    int                               `json:"version"`
+	Kind       deskcase.ChecklistKind            `json:"kind"`
+	CustomerID *string                           `json:"customerId,omitempty"`
+	Items      []*CaseChecklistTemplateItemInput `json:"items"`
+}
+
 type SaveFactoringTransportInput struct {
 	FactoringCompanyID string `json:"factoringCompanyId"`
 	// Required when the factor already has delivery settings.
@@ -9322,6 +9429,26 @@ type SaveReportDefinitionInput struct {
 	DefaultFormat *string  `json:"defaultFormat,omitempty"`
 	// A report definition in keel analytics IR version 2.
 	Definition map[string]any `json:"definition"`
+}
+
+// Every setting of a change alert the signed-in person subscribes to. Conditions are
+// objects with a field, an operator and a value.
+type SaveTCASubscriptionInput struct {
+	Name       string           `json:"name"`
+	TableName  string           `json:"tableName"`
+	RecordID   *string          `json:"recordId,omitempty"`
+	EventTypes []string         `json:"eventTypes"`
+	Conditions []map[string]any `json:"conditions"`
+	// all or any.
+	ConditionMatch string   `json:"conditionMatch"`
+	WatchedColumns []string `json:"watchedColumns"`
+	CustomTitle    string   `json:"customTitle"`
+	CustomMessage  string   `json:"customMessage"`
+	Topic          string   `json:"topic"`
+	// critical, high, medium or low.
+	Priority string `json:"priority"`
+	// Active or Paused.
+	Status string `json:"status"`
 }
 
 type SaveTelematicsFormMappingInput struct {
@@ -11667,6 +11794,31 @@ type TableLayoutInput struct {
 	Layout   map[string]any `json:"layout"`
 }
 
+// One field a table can be narrowed by in words.
+type TableQueryCatalogueField struct {
+	Name      string   `json:"name"`
+	Kind      string   `json:"kind"`
+	Note      string   `json:"note"`
+	Values    []string `json:"values"`
+	Sortable  bool     `json:"sortable"`
+	Operators []string `json:"operators"`
+}
+
+// A table that can be narrowed by a description, and the fields it understands.
+type TableQueryCatalogueResource struct {
+	Resource string                      `json:"resource"`
+	Entity   string                      `json:"entity"`
+	Summary  string                      `json:"summary"`
+	Fields   []*TableQueryCatalogueField `json:"fields"`
+}
+
+// What the table already shows, so a follow-up narrows rather than replaces it.
+type TableQueryCurrentViewInput struct {
+	Query        *string             `json:"query,omitempty"`
+	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
+	Sort         []*SortFieldInput   `json:"sort,omitempty"`
+}
+
 // The bill a tariff produced for a shipment.
 type TariffBill struct {
 	Currency string            `json:"currency"`
@@ -11866,6 +12018,11 @@ type TodaysBriefingInput struct {
 	RoleKey *briefing.RoleKey `json:"roleKey,omitempty"`
 	// An organization-local day, as YYYY-MM-DD; omitted is today.
 	BriefingDate *string `json:"briefingDate,omitempty"`
+}
+
+type ToggleMyPageFavoriteInput struct {
+	PageURL   string `json:"pageUrl"`
+	PageTitle string `json:"pageTitle"`
 }
 
 type TractorConnection struct {
@@ -12146,6 +12303,49 @@ type UpcomingWorkerPTOInput struct {
 	Timezone    *string           `json:"timezone,omitempty"`
 }
 
+// Every setting of the accounting control at once. version is the one read; a stale one is refused.
+type UpdateAccountingControlInput struct {
+	Version                                 int                                            `json:"version"`
+	AccountingBasis                         accountingcontrol.AccountingBasisType          `json:"accountingBasis"`
+	RevenueRecognitionPolicy                accountingcontrol.RevenueRecognitionPolicyType `json:"revenueRecognitionPolicy"`
+	ExpenseRecognitionPolicy                accountingcontrol.ExpenseRecognitionPolicyType `json:"expenseRecognitionPolicy"`
+	JournalPostingMode                      accountingcontrol.JournalPostingModeType       `json:"journalPostingMode"`
+	AutoPostSourceEvents                    []accountingcontrol.JournalSourceEventType     `json:"autoPostSourceEvents"`
+	ManualJournalEntryPolicy                accountingcontrol.ManualJournalEntryPolicy     `json:"manualJournalEntryPolicy"`
+	RequireManualJeApproval                 bool                                           `json:"requireManualJeApproval"`
+	JournalReversalPolicy                   accountingcontrol.JournalReversalPolicyType    `json:"journalReversalPolicy"`
+	PeriodCloseMode                         accountingcontrol.PeriodCloseModeType          `json:"periodCloseMode"`
+	RequirePeriodCloseApproval              bool                                           `json:"requirePeriodCloseApproval"`
+	LockedPeriodPostingPolicy               accountingcontrol.LockedPeriodPostingPolicy    `json:"lockedPeriodPostingPolicy"`
+	ClosedPeriodPostingPolicy               accountingcontrol.ClosedPeriodPostingPolicy    `json:"closedPeriodPostingPolicy"`
+	RequireReconciliationToClose            bool                                           `json:"requireReconciliationToClose"`
+	ReconciliationMode                      accountingcontrol.ReconciliationModeType       `json:"reconciliationMode"`
+	ReconciliationToleranceAmount           string                                         `json:"reconciliationToleranceAmount"`
+	NotifyOnReconciliationException         bool                                           `json:"notifyOnReconciliationException"`
+	CurrencyMode                            accountingcontrol.CurrencyModeType             `json:"currencyMode"`
+	FunctionalCurrencyCode                  string                                         `json:"functionalCurrencyCode"`
+	ExchangeRateDatePolicy                  accountingcontrol.ExchangeRateDatePolicy       `json:"exchangeRateDatePolicy"`
+	ExchangeRateOverridePolicy              accountingcontrol.ExchangeRateOverrideType     `json:"exchangeRateOverridePolicy"`
+	DefaultRevenueAccountID                 *string                                        `json:"defaultRevenueAccountId,omitempty"`
+	DefaultCashAccountID                    *string                                        `json:"defaultCashAccountId,omitempty"`
+	DefaultUnappliedCashAccountID           *string                                        `json:"defaultUnappliedCashAccountId,omitempty"`
+	DefaultExpenseAccountID                 *string                                        `json:"defaultExpenseAccountId,omitempty"`
+	DefaultArAccountID                      *string                                        `json:"defaultArAccountId,omitempty"`
+	DefaultApAccountID                      *string                                        `json:"defaultApAccountId,omitempty"`
+	DefaultTaxLiabilityAccountID            *string                                        `json:"defaultTaxLiabilityAccountId,omitempty"`
+	DefaultWriteOffAccountID                *string                                        `json:"defaultWriteOffAccountId,omitempty"`
+	DefaultRetainedEarningsAccountID        *string                                        `json:"defaultRetainedEarningsAccountId,omitempty"`
+	RealizedFxGainAccountID                 *string                                        `json:"realizedFxGainAccountId,omitempty"`
+	RealizedFxLossAccountID                 *string                                        `json:"realizedFxLossAccountId,omitempty"`
+	DefaultDriverPayExpenseAccountID        *string                                        `json:"defaultDriverPayExpenseAccountId,omitempty"`
+	DefaultPurchasedTransportationAccountID *string                                        `json:"defaultPurchasedTransportationAccountId,omitempty"`
+	DefaultSettlementsPayableAccountID      *string                                        `json:"defaultSettlementsPayableAccountId,omitempty"`
+	DefaultDriverAdvanceAccountID           *string                                        `json:"defaultDriverAdvanceAccountId,omitempty"`
+	DefaultEscrowLiabilityAccountID         *string                                        `json:"defaultEscrowLiabilityAccountId,omitempty"`
+	DefaultDriverReimbursementAccountID     *string                                        `json:"defaultDriverReimbursementAccountId,omitempty"`
+	DefaultEscrowInterestExpenseAccountID   *string                                        `json:"defaultEscrowInterestExpenseAccountId,omitempty"`
+}
+
 type UpdateAccountingSyncSettingsInput struct {
 	IntegrationType integration.Type `json:"integrationType"`
 	// Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.
@@ -12216,6 +12416,43 @@ type UpdateBenefitPlanInput struct {
 	WaitingPeriodDays *int                       `json:"waitingPeriodDays,omitempty"`
 	Status            *domaintypes.Status        `json:"status,omitempty"`
 	Version           *int                       `json:"version,omitempty"`
+}
+
+// Every setting of the billing control at once. version is the one read; a stale one is refused.
+type UpdateBillingControlInput struct {
+	Version                               int                                           `json:"version"`
+	DefaultPaymentTerm                    billingcontrol.PaymentTerm                    `json:"defaultPaymentTerm"`
+	DefaultInvoiceTerms                   string                                        `json:"defaultInvoiceTerms"`
+	DefaultInvoiceFooter                  string                                        `json:"defaultInvoiceFooter"`
+	ShowDueDateOnInvoice                  bool                                          `json:"showDueDateOnInvoice"`
+	ShowBalanceDueOnInvoice               bool                                          `json:"showBalanceDueOnInvoice"`
+	ReadyToBillAssignmentMode             billingcontrol.ReadyToBillAssignmentMode      `json:"readyToBillAssignmentMode"`
+	BillingQueueTransferMode              billingcontrol.BillingQueueTransferMode       `json:"billingQueueTransferMode"`
+	BillingQueueTransferSchedule          billingcontrol.TransferSchedule               `json:"billingQueueTransferSchedule"`
+	BillingQueueTransferBatchSize         int                                           `json:"billingQueueTransferBatchSize"`
+	InvoiceDraftCreationMode              billingcontrol.InvoiceDraftCreationMode       `json:"invoiceDraftCreationMode"`
+	InvoicePostingMode                    billingcontrol.InvoicePostingMode             `json:"invoicePostingMode"`
+	AutoInvoiceBatchSize                  int                                           `json:"autoInvoiceBatchSize"`
+	NotifyOnAutoInvoiceCreation           bool                                          `json:"notifyOnAutoInvoiceCreation"`
+	ShipmentBillingRequirementEnforcement tenant.EnforcementLevel                       `json:"shipmentBillingRequirementEnforcement"`
+	RateValidationEnforcement             tenant.EnforcementLevel                       `json:"rateValidationEnforcement"`
+	BillingExceptionDisposition           billingcontrol.BillingExceptionDisposition    `json:"billingExceptionDisposition"`
+	NotifyOnBillingExceptions             bool                                          `json:"notifyOnBillingExceptions"`
+	RateVarianceTolerancePercent          string                                        `json:"rateVarianceTolerancePercent"`
+	RateVarianceAutoResolutionMode        billingcontrol.RateVarianceAutoResolutionMode `json:"rateVarianceAutoResolutionMode"`
+	UnratedShipmentDisposition            billingcontrol.UnratedShipmentDisposition     `json:"unratedShipmentDisposition"`
+	FallbackFormulaTemplateID             *string                                       `json:"fallbackFormulaTemplateId,omitempty"`
+	RequireRateOverrideReason             bool                                          `json:"requireRateOverrideReason"`
+	EnforceMarginFloor                    bool                                          `json:"enforceMarginFloor"`
+	QueueAutoApproveMode                  billingcontrol.QueueAutoApproveMode           `json:"queueAutoApproveMode"`
+	QueueAutoApproveMaxAmount             *string                                       `json:"queueAutoApproveMaxAmount,omitempty"`
+	QueueAgentReviewEnabled               bool                                          `json:"queueAgentReviewEnabled"`
+	LateChargeAssessmentMode              billingcontrol.LateChargeAssessmentMode       `json:"lateChargeAssessmentMode"`
+	LateChargeMinimumAmount               string                                        `json:"lateChargeMinimumAmount"`
+	PaymentRemindersEnabled               bool                                          `json:"paymentRemindersEnabled"`
+	PaymentReminderDays                   []int                                         `json:"paymentReminderDays"`
+	MonthlyStatementsEnabled              bool                                          `json:"monthlyStatementsEnabled"`
+	MonthlyStatementDay                   int                                           `json:"monthlyStatementDay"`
 }
 
 type UpdateCarrierSettlementControlInput struct {
@@ -12289,6 +12526,116 @@ type UpdateDashControlInput struct {
 	DriverDigestWeekday            *int                             `json:"driverDigestWeekday,omitempty"`
 	EnableDetentionAlerts          bool                             `json:"enableDetentionAlerts"`
 	DetentionAlertThresholdMinutes int                              `json:"detentionAlertThresholdMinutes"`
+}
+
+// Every setting of the data entry control at once. version is the one read; a stale one is refused.
+type UpdateDataEntryControlInput struct {
+	Version   int                         `json:"version"`
+	CodeCase  dataentrycontrol.CaseFormat `json:"codeCase"`
+	NameCase  dataentrycontrol.CaseFormat `json:"nameCase"`
+	EmailCase dataentrycontrol.CaseFormat `json:"emailCase"`
+	CityCase  dataentrycontrol.CaseFormat `json:"cityCase"`
+}
+
+// The retention periods to keep, in days. An omitted agent evaluation, AI audit or
+// AI correction period keeps the one already saved.
+type UpdateDataRetentionInput struct {
+	AuditRetentionPeriod          int  `json:"auditRetentionPeriod"`
+	EDIInboundFileRetentionPeriod int  `json:"ediInboundFileRetentionPeriod"`
+	EDIMessageRetentionPeriod     int  `json:"ediMessageRetentionPeriod"`
+	AiFeedbackRetentionPeriod     int  `json:"aiFeedbackRetentionPeriod"`
+	AgentEvalCaseRetentionPeriod  *int `json:"agentEvalCaseRetentionPeriod,omitempty"`
+	AiAuditRetentionPeriod        *int `json:"aiAuditRetentionPeriod,omitempty"`
+	AiCorrectionRetentionPeriod   *int `json:"aiCorrectionRetentionPeriod,omitempty"`
+}
+
+// Every setting of the dispatch control at once. version is the one read; a stale one is refused.
+type UpdateDispatchControlInput struct {
+	Version                              int                                        `json:"version"`
+	EnableAutoAssignment                 bool                                       `json:"enableAutoAssignment"`
+	AutoAssignmentStrategy               dispatchcontrol.AutoAssignmentStrategy     `json:"autoAssignmentStrategy"`
+	EnforceWorkerAssign                  bool                                       `json:"enforceWorkerAssign"`
+	EnforceTrailerContinuity             bool                                       `json:"enforceTrailerContinuity"`
+	EnforceHosCompliance                 bool                                       `json:"enforceHosCompliance"`
+	EnforceWorkerPtaRestrictions         bool                                       `json:"enforceWorkerPtaRestrictions"`
+	EnforceWorkerTractorFleetContinuity  bool                                       `json:"enforceWorkerTractorFleetContinuity"`
+	EnforceDriverQualificationCompliance bool                                       `json:"enforceDriverQualificationCompliance"`
+	EnforceMedicalCertCompliance         bool                                       `json:"enforceMedicalCertCompliance"`
+	EnforceHazmatCompliance              bool                                       `json:"enforceHazmatCompliance"`
+	EnforceDrugAndAlcoholCompliance      bool                                       `json:"enforceDrugAndAlcoholCompliance"`
+	EnableAutoStopActuals                bool                                       `json:"enableAutoStopActuals"`
+	ScoringWeights                       map[string]any                             `json:"scoringWeights,omitempty"`
+	AutoAssignConfidenceThreshold        string                                     `json:"autoAssignConfidenceThreshold"`
+	AutoAssignMaxDeadheadMiles           *int                                       `json:"autoAssignMaxDeadheadMiles,omitempty"`
+	AutoAssignPlanningHorizonHours       int                                        `json:"autoAssignPlanningHorizonHours"`
+	PlanningMode                         dispatchcontrol.PlanningMode               `json:"planningMode"`
+	HorizonMaxMovesPerDriver             int                                        `json:"horizonMaxMovesPerDriver"`
+	HorizonSearchIterations              *int                                       `json:"horizonSearchIterations,omitempty"`
+	CoverageRiskWindowHours              int                                        `json:"coverageRiskWindowHours"`
+	EnableCheckCallMonitoring            bool                                       `json:"enableCheckCallMonitoring"`
+	CheckCallIntervalHours               int                                        `json:"checkCallIntervalHours"`
+	EnableEtaAlerts                      bool                                       `json:"enableEtaAlerts"`
+	EtaRiskThresholdMinutes              int                                        `json:"etaRiskThresholdMinutes"`
+	EtaDwellMinutes                      int                                        `json:"etaDwellMinutes"`
+	ExceptionDueInfoMinutes              int                                        `json:"exceptionDueInfoMinutes"`
+	ExceptionDueWarningMinutes           int                                        `json:"exceptionDueWarningMinutes"`
+	ExceptionDueCriticalMinutes          int                                        `json:"exceptionDueCriticalMinutes"`
+	ExceptionEscalationMinutes           int                                        `json:"exceptionEscalationMinutes"`
+	ExceptionMaxEscalations              int                                        `json:"exceptionMaxEscalations"`
+	ExceptionDefaultAssigneeID           *string                                    `json:"exceptionDefaultAssigneeId,omitempty"`
+	ExceptionEscalationContactID         *string                                    `json:"exceptionEscalationContactId,omitempty"`
+	ExceptionMissedStopGraceMinutes      int                                        `json:"exceptionMissedStopGraceMinutes"`
+	ExceptionPodGraceHours               int                                        `json:"exceptionPodGraceHours"`
+	TenderCounterOffersEnabled           bool                                       `json:"tenderCounterOffersEnabled"`
+	TenderCounterMarginFloorPercent      *string                                    `json:"tenderCounterMarginFloorPercent,omitempty"`
+	TenderAutoAcceptCounters             bool                                       `json:"tenderAutoAcceptCounters"`
+	TenderCounterDecisionMinutes         int                                        `json:"tenderCounterDecisionMinutes"`
+	TenderExhaustedAction                dispatchcontrol.TenderExhaustedAction      `json:"tenderExhaustedAction"`
+	TenderEscalationRateIncreasePercent  string                                     `json:"tenderEscalationRateIncreasePercent"`
+	TenderEscalationOfferTTLMinutes      int                                        `json:"tenderEscalationOfferTtlMinutes"`
+	TenderMaxEscalations                 int                                        `json:"tenderMaxEscalations"`
+	ComplianceEnforcementLevel           dispatchcontrol.ComplianceEnforcementLevel `json:"complianceEnforcementLevel"`
+	RecordServiceFailures                dispatchcontrol.ServiceIncidentType        `json:"recordServiceFailures"`
+	ServiceFailureTarget                 *float64                                   `json:"serviceFailureTarget,omitempty"`
+	ServiceFailureGracePeriod            *int                                       `json:"serviceFailureGracePeriod,omitempty"`
+}
+
+// Every setting of the distance control at once. version is the one read; a stale one is refused.
+type UpdateDistanceControlInput struct {
+	Version                                      int    `json:"version"`
+	StoreMileage                                 bool   `json:"storeMileage"`
+	StoredDistanceUnits                          string `json:"storedDistanceUnits"`
+	PostalCodeFallbackToCity                     bool   `json:"postalCodeFallbackToCity"`
+	AutoCreateStoredMileage                      bool   `json:"autoCreateStoredMileage"`
+	LoadedMoveDistanceProfileID                  string `json:"loadedMoveDistanceProfileId"`
+	EmptyMoveDistanceProfileID                   string `json:"emptyMoveDistanceProfileId"`
+	PayDistanceProfileID                         string `json:"payDistanceProfileId"`
+	BillingDistanceProfileID                     string `json:"billingDistanceProfileId"`
+	FuelDistanceProfileID                        string `json:"fuelDistanceProfileId"`
+	EtaOutOfRouteDistanceProfileID               string `json:"etaOutOfRouteDistanceProfileId"`
+	DistanceCalculatorShortestDistanceProfileID  string `json:"distanceCalculatorShortestDistanceProfileId"`
+	DistanceCalculatorPracticalDistanceProfileID string `json:"distanceCalculatorPracticalDistanceProfileId"`
+	CaptureJurisdictionMiles                     bool   `json:"captureJurisdictionMiles"`
+}
+
+// Every setting of the document control at once. version is the one read; a stale one is refused.
+type UpdateDocumentControlInput struct {
+	Version                         int      `json:"version"`
+	EnableDocumentIntelligence      bool     `json:"enableDocumentIntelligence"`
+	EnableOcr                       bool     `json:"enableOcr"`
+	EnableAutoClassification        bool     `json:"enableAutoClassification"`
+	EnableAutoDocumentTypeAssociate bool     `json:"enableAutoDocumentTypeAssociate"`
+	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes"`
+	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction"`
+	EnableAiAssistedClassification  bool     `json:"enableAiAssistedClassification"`
+	EnableAiAssistedExtraction      bool     `json:"enableAiAssistedExtraction"`
+	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"`
+	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"`
+	EnableCapture                   bool     `json:"enableCapture"`
+	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets"`
+	CaptureRetentionDays            int      `json:"captureRetentionDays"`
+	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion"`
+	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"`
 }
 
 type UpdateEmploymentVerificationInput struct {
@@ -12392,6 +12739,27 @@ type UpdateHomeLayoutPresetInput struct {
 	Priority           int                `json:"priority"`
 }
 
+// Every setting of the invoice adjustment control at once. version is the one read; a stale one is refused.
+type UpdateInvoiceAdjustmentControlInput struct {
+	Version                              int                                                        `json:"version"`
+	PartiallyPaidInvoiceAdjustmentPolicy invoiceadjustmentcontrol.AdjustmentEligibilityPolicy       `json:"partiallyPaidInvoiceAdjustmentPolicy"`
+	PaidInvoiceAdjustmentPolicy          invoiceadjustmentcontrol.AdjustmentEligibilityPolicy       `json:"paidInvoiceAdjustmentPolicy"`
+	DisputedInvoiceAdjustmentPolicy      invoiceadjustmentcontrol.AdjustmentEligibilityPolicy       `json:"disputedInvoiceAdjustmentPolicy"`
+	AdjustmentAccountingDatePolicy       invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy    `json:"adjustmentAccountingDatePolicy"`
+	ClosedPeriodAdjustmentPolicy         invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy      `json:"closedPeriodAdjustmentPolicy"`
+	AdjustmentReasonRequirement          invoiceadjustmentcontrol.RequirementPolicy                 `json:"adjustmentReasonRequirement"`
+	StandardAdjustmentApprovalPolicy     invoiceadjustmentcontrol.ApprovalPolicy                    `json:"standardAdjustmentApprovalPolicy"`
+	StandardAdjustmentApprovalThreshold  string                                                     `json:"standardAdjustmentApprovalThreshold"`
+	WriteOffApprovalPolicy               invoiceadjustmentcontrol.WriteOffApprovalPolicy            `json:"writeOffApprovalPolicy"`
+	WriteOffApprovalThreshold            string                                                     `json:"writeOffApprovalThreshold"`
+	RequireSeparateApprover              bool                                                       `json:"requireSeparateApprover"`
+	RerateVarianceTolerancePercent       string                                                     `json:"rerateVarianceTolerancePercent"`
+	ReplacementInvoiceReviewPolicy       invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy    `json:"replacementInvoiceReviewPolicy"`
+	CustomerCreditBalancePolicy          invoiceadjustmentcontrol.CustomerCreditBalancePolicy       `json:"customerCreditBalancePolicy"`
+	OverCreditPolicy                     invoiceadjustmentcontrol.OverCreditPolicy                  `json:"overCreditPolicy"`
+	SupersededInvoiceVisibilityPolicy    invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy `json:"supersededInvoiceVisibilityPolicy"`
+}
+
 type UpdateJobPositionInput struct {
 	ID                  string               `json:"id"`
 	Code                string               `json:"code"`
@@ -12444,6 +12812,20 @@ type UpdateMyContactInfoInput struct {
 	PostalCode            string  `json:"postalCode"`
 	EmergencyContactName  *string `json:"emergencyContactName,omitempty"`
 	EmergencyContactPhone *string `json:"emergencyContactPhone,omitempty"`
+}
+
+type UpdateMyNotificationPreferencesInput struct {
+	DisabledEventTypes    []string                  `json:"disabledEventTypes"`
+	DesktopMode           notification.DeliveryMode `json:"desktopMode"`
+	EmailMode             notification.DeliveryMode `json:"emailMode"`
+	EmailDigest           bool                      `json:"emailDigest"`
+	Sound                 bool                      `json:"sound"`
+	QuietHoursEnabled     bool                      `json:"quietHoursEnabled"`
+	QuietHoursStart       string                    `json:"quietHoursStart"`
+	QuietHoursEnd         string                    `json:"quietHoursEnd"`
+	QuietHoursDays        []int                     `json:"quietHoursDays"`
+	QuietHoursAllowUrgent bool                      `json:"quietHoursAllowUrgent"`
+	PausedUntil           *int                      `json:"pausedUntil,omitempty"`
 }
 
 type UpdateOrderChargeInput struct {
@@ -12603,6 +12985,26 @@ type UpdateSettlementControlInput struct {
 	VarianceLookbackWeeks         int                                  `json:"varianceLookbackWeeks"`
 	DefaultEscrowInterestRate     string                               `json:"defaultEscrowInterestRate"`
 	EscrowInterestFrequencyMonths int                                  `json:"escrowInterestFrequencyMonths"`
+}
+
+// Every setting of the shipment control at once. version is the one read; a stale one is refused.
+type UpdateShipmentControlInput struct {
+	Version                      int     `json:"version"`
+	MaxShipmentWeightLimit       int     `json:"maxShipmentWeightLimit"`
+	AutoDelayShipments           bool    `json:"autoDelayShipments"`
+	AutoDelayShipmentsThreshold  *int    `json:"autoDelayShipmentsThreshold,omitempty"`
+	DetentionThreshold           *int    `json:"detentionThreshold,omitempty"`
+	AutoCancelShipmentsThreshold *int    `json:"autoCancelShipmentsThreshold,omitempty"`
+	AutoCancelShipments          bool    `json:"autoCancelShipments"`
+	TrackDetentionTime           bool    `json:"trackDetentionTime"`
+	AutoGenerateDetentionCharges bool    `json:"autoGenerateDetentionCharges"`
+	DetentionChargeID            *string `json:"detentionChargeId,omitempty"`
+	UseDetentionPolicyEngine     bool    `json:"useDetentionPolicyEngine"`
+	DefaultDetentionPolicyID     *string `json:"defaultDetentionPolicyId,omitempty"`
+	TrackCustomerRejections      bool    `json:"trackCustomerRejections"`
+	CheckForDuplicateBols        bool    `json:"checkForDuplicateBols"`
+	AllowMoveRemovals            bool    `json:"allowMoveRemovals"`
+	CheckHazmatSegregation       bool    `json:"checkHazmatSegregation"`
 }
 
 type UpdateWorkerCredentialInput struct {
@@ -12865,6 +13267,12 @@ type WatchtowerTrailEvent struct {
 	// When it happened; absent when the source does not know.
 	At   *int   `json:"at,omitempty"`
 	Text string `json:"text"`
+}
+
+// Whether browser push is configured, and the key a browser subscribes with.
+type WebPushConfig struct {
+	Enabled   bool   `json:"enabled"`
+	PublicKey string `json:"publicKey"`
 }
 
 type WithdrawInvoiceDisputeInput struct {

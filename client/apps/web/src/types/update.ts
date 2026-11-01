@@ -18,13 +18,5 @@ export const updateStatusSchema = z.object({
   lastChecked: z.number(),
 });
 
-export const versionInfoSchema = z.object({
-  version: z.string(),
-  environment: z.string(),
-  buildDate: z.string().optional(),
-  gitCommit: z.string().optional(),
-});
-
 export type ReleaseInfo = z.infer<typeof releaseInfoSchema>;
 export type UpdateStatus = z.infer<typeof updateStatusSchema>;
-export type VersionInfo = z.infer<typeof versionInfoSchema>;

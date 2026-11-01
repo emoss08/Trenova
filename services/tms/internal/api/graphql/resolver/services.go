@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
@@ -53,6 +54,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
@@ -105,25 +107,34 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/dataretentionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/documentcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/shipmentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
@@ -142,6 +153,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
@@ -161,6 +173,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	"github.com/emoss08/trenova/internal/modules/places/app/storedmileageservice"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
@@ -220,9 +233,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/dataentrycontrolservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
@@ -232,7 +248,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -526,6 +544,26 @@ type Params struct {
 	CarrierCostEventRepo              carriersettlementports.CarrierCostEventRepository
 	FuelPurchaseService               *fuelpurchaseservice.Service
 	IFTAService                       *iftaservice.Service
+	AccountingControlService          *accountingcontrolservice.Service
+	BillingControlService             *billingcontrolservice.Service
+	DataEntryControlService           *dataentrycontrolservice.Service
+	DataRetentionService              *dataretentionservice.Service
+	DispatchControlService            *dispatchcontrolservice.Service
+	DistanceControlService            distancecontrolports.DistanceControlService
+	DocumentControlService            *documentcontrolservice.Service
+	InvoiceAdjustmentControlService   *invoiceadjustmentcontrolservice.Service
+	ShipmentControlService            *shipmentcontrolservice.Service
+	NotificationPreferenceService     *notificationpreferenceservice.Service
+	PageFavoriteService               *pagefavoriteservice.Service
+	CaseChecklistService              deskcaseports.CaseChecklistService
+	WeatherAlertService               weatheralertports.WeatherAlertService
+	VersionService                    *versionservice.Service
+	AutoCompleteService               kernelports.AutoCompleteService
+	WebPushService                    *webpushservice.Service
+	OnboardingService                 onboardingports.OnboardingService
+	GlobalSearchService               kernelports.GlobalSearchService
+	TableQueryService                 *tablequeryservice.Service
+	FilterCatalog                     *filtercatalog.Catalog
 	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService `optional:"true"`
 	MonitoringConfig                  *monitoringconfig.Config                         `optional:"true"`
 }
@@ -815,6 +853,26 @@ type Services struct {
 	ReportViewService                 *reportviewservice.Service
 	ReportScheduleService             *reportscheduleservice.Service
 	ReportDashboardService            *reportdashboardservice.Service
+	AccountingControlService          *accountingcontrolservice.Service
+	BillingControlService             *billingcontrolservice.Service
+	DataEntryControlService           *dataentrycontrolservice.Service
+	DataRetentionService              *dataretentionservice.Service
+	DispatchControlService            *dispatchcontrolservice.Service
+	DistanceControlService            distancecontrolports.DistanceControlService
+	DocumentControlService            *documentcontrolservice.Service
+	InvoiceAdjustmentControlService   *invoiceadjustmentcontrolservice.Service
+	ShipmentControlService            *shipmentcontrolservice.Service
+	NotificationPreferenceService     *notificationpreferenceservice.Service
+	PageFavoriteService               *pagefavoriteservice.Service
+	CaseChecklistService              deskcaseports.CaseChecklistService
+	WeatherAlertService               weatheralertports.WeatherAlertService
+	VersionService                    *versionservice.Service
+	AutoCompleteService               kernelports.AutoCompleteService
+	WebPushService                    *webpushservice.Service
+	OnboardingService                 onboardingports.OnboardingService
+	GlobalSearchService               kernelports.GlobalSearchService
+	TableQueryService                 *tablequeryservice.Service
+	FilterCatalog                     *filtercatalog.Catalog
 }
 
 //nolint:funlen // one assignment per service; splitting it would only scatter the wiring
@@ -1110,5 +1168,25 @@ func newServices(p *Params) *Services {
 		FuelPurchaseService:               p.FuelPurchaseService,
 		IftaService:                       p.IFTAService,
 		DistanceCalculationService:        p.DistanceCalculationService,
+		AccountingControlService:          p.AccountingControlService,
+		BillingControlService:             p.BillingControlService,
+		DataEntryControlService:           p.DataEntryControlService,
+		DataRetentionService:              p.DataRetentionService,
+		DispatchControlService:            p.DispatchControlService,
+		DistanceControlService:            p.DistanceControlService,
+		DocumentControlService:            p.DocumentControlService,
+		InvoiceAdjustmentControlService:   p.InvoiceAdjustmentControlService,
+		ShipmentControlService:            p.ShipmentControlService,
+		NotificationPreferenceService:     p.NotificationPreferenceService,
+		PageFavoriteService:               p.PageFavoriteService,
+		CaseChecklistService:              p.CaseChecklistService,
+		WeatherAlertService:               p.WeatherAlertService,
+		VersionService:                    p.VersionService,
+		AutoCompleteService:               p.AutoCompleteService,
+		WebPushService:                    p.WebPushService,
+		OnboardingService:                 p.OnboardingService,
+		GlobalSearchService:               p.GlobalSearchService,
+		TableQueryService:                 p.TableQueryService,
+		FilterCatalog:                     p.FilterCatalog,
 	}
 }

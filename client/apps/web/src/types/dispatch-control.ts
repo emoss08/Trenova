@@ -242,6 +242,10 @@ function exceptionDueMinutes(fallback: number) {
     .default(fallback);
 }
 
+export const planningModeSchema = z.enum(["Immediate", "Horizon"]);
+
+export type PlanningMode = z.infer<typeof planningModeSchema>;
+
 export const dispatchControlSchema = z
   .object({
     id: optionalStringSchema,
@@ -252,7 +256,11 @@ export const dispatchControlSchema = z
     businessUnitId: optionalStringSchema,
 
     enableAutoAssignment: z.boolean(),
+    enableAutoStopActuals: z.boolean().default(false),
     autoAssignmentStrategy: autoAssignmentStrategySchema,
+    planningMode: planningModeSchema.default("Immediate"),
+    horizonMaxMovesPerDriver: z.number().int().default(3),
+    horizonSearchIterations: z.number().int().nullish(),
     scoringWeights: scoringWeightsSchema.optional(),
     autoAssignConfidenceThreshold: z.coerce
       .number()

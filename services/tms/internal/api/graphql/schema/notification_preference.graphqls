@@ -1,0 +1,61 @@
+"Which notifications reach a person outside the bell."
+enum NotificationDeliveryMode {
+  off
+  urgent
+  all
+}
+
+"""
+What reaches the signed-in person outside the notification bell, and when.
+"""
+type NotificationPreference {
+  "Empty until the person saves their own preferences."
+  id: ID
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  disabledEventTypes: [String!]!
+  desktopMode: NotificationDeliveryMode!
+  emailMode: NotificationDeliveryMode!
+  emailDigest: Boolean!
+  sound: Boolean!
+  quietHoursEnabled: Boolean!
+  "Local time of day, HH:MM."
+  quietHoursStart: String!
+  "Local time of day, HH:MM."
+  quietHoursEnd: String!
+  "Days of the week quiet hours apply, 0 for Sunday."
+  quietHoursDays: [Int!]!
+  quietHoursAllowUrgent: Boolean!
+  pausedUntil: Timestamp
+  lastDigestAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input UpdateMyNotificationPreferencesInput {
+  disabledEventTypes: [String!]!
+  desktopMode: NotificationDeliveryMode!
+  emailMode: NotificationDeliveryMode!
+  emailDigest: Boolean!
+  sound: Boolean!
+  quietHoursEnabled: Boolean!
+  quietHoursStart: String!
+  quietHoursEnd: String!
+  quietHoursDays: [Int!]!
+  quietHoursAllowUrgent: Boolean!
+  pausedUntil: Timestamp
+}
+
+extend type Query {
+  "The signed-in person's notification preferences, or the defaults when they saved none."
+  myNotificationPreferences: NotificationPreference!
+}
+
+extend type Mutation {
+  "Saves the signed-in person's notification preferences."
+  updateMyNotificationPreferences(
+    input: UpdateMyNotificationPreferencesInput!
+  ): NotificationPreference!
+}

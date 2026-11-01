@@ -1,0 +1,16 @@
+query WebPushConfig {
+  webPushConfig {
+    enabled
+    publicKey
+  }
+}
+
+mutation RegisterMyPushSubscription($input: RegisterMyPushSubscriptionInput!) {
+  registerMyPushSubscription(input: $input) {
+    id
+  }
+}
+
+mutation UnregisterMyPushSubscription($endpoint: String!) {
+  unregisterMyPushSubscription(endpoint: $endpoint)
+}

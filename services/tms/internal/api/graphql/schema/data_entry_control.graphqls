@@ -1,0 +1,44 @@
+"""
+How the organization's entered codes, names, emails and cities are cased.
+"""
+type DataEntryControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  codeCase: DataEntryCaseFormat!
+  nameCase: DataEntryCaseFormat!
+  emailCase: DataEntryCaseFormat!
+  cityCase: DataEntryCaseFormat!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the data entry control at once. version is the one read; a stale one is refused.
+"""
+input UpdateDataEntryControlInput {
+  version: Int!
+  codeCase: DataEntryCaseFormat!
+  nameCase: DataEntryCaseFormat!
+  emailCase: DataEntryCaseFormat!
+  cityCase: DataEntryCaseFormat!
+}
+
+"How entered text is cased."
+enum DataEntryCaseFormat {
+  AsEntered
+  Upper
+  Lower
+  TitleCase
+}
+
+extend type Query {
+  "The organization's data entry control."
+  dataEntryControl: DataEntryControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's data entry control."
+  updateDataEntryControl(input: UpdateDataEntryControlInput!): DataEntryControl!
+}

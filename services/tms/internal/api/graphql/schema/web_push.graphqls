@@ -1,0 +1,38 @@
+"Whether browser push is configured, and the key a browser subscribes with."
+type WebPushConfig {
+  enabled: Boolean!
+  publicKey: String!
+}
+
+"A browser push subscription of the signed-in person's device."
+type WebPushSubscription {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  endpoint: String!
+  userAgent: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input RegisterMyPushSubscriptionInput {
+  endpoint: String!
+  p256dh: String!
+  auth: String!
+}
+
+extend type Query {
+  "Whether browser push is configured, and its public key."
+  webPushConfig: WebPushConfig!
+}
+
+extend type Mutation {
+  """
+  Registers a browser push subscription for the signed-in person's device. An
+  endpoint another person registered is refused as a conflict.
+  """
+  registerMyPushSubscription(input: RegisterMyPushSubscriptionInput!): WebPushSubscription!
+  "Removes the signed-in person's push subscription for the endpoint."
+  unregisterMyPushSubscription(endpoint: String!): Boolean!
+}

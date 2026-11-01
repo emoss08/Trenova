@@ -1,0 +1,35 @@
+"A page the signed-in person pinned to their favorites."
+type PageFavorite {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  pageUrl: String!
+  pageTitle: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Whether a toggle left the page a favorite, and the favorite it made."
+type PageFavoriteToggleResult {
+  favorited: Boolean!
+  favorite: PageFavorite
+}
+
+input ToggleMyPageFavoriteInput {
+  pageUrl: String!
+  pageTitle: String!
+}
+
+extend type Query {
+  "The signed-in person's favorite pages."
+  myPageFavorites: [PageFavorite!]!
+  "Whether the signed-in person has the page among their favorites."
+  isMyPageFavorite(pageUrl: String!): Boolean!
+}
+
+extend type Mutation {
+  "Adds the page to the signed-in person's favorites, or removes it when it is one."
+  toggleMyPageFavorite(input: ToggleMyPageFavoriteInput!): PageFavoriteToggleResult!
+}

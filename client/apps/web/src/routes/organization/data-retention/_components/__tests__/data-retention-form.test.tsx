@@ -12,9 +12,26 @@ const mocks = vi.hoisted(() => ({
   granted: new Set<string>(),
 }));
 
-vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();
-  return { ...actual, api: { ...actual.api, get: mocks.get, put: mocks.put } };
+vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
+  return {
+    ...actual,
+    requestGraphQL: async ({
+      operationName,
+      variables,
+    }: {
+      operationName: string;
+      variables?: { input?: object };
+    }) => {
+      if (operationName === "DataRetention") {
+        return { dataRetention: await mocks.get() };
+      }
+      if (operationName === "UpdateDataRetention") {
+        return { updateDataRetention: await mocks.put(variables?.input) };
+      }
+      throw new Error(`unexpected operation ${operationName}`);
+    },
+  };
 });
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -29,7 +46,7 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
 }));
 
 /*
-The GET /data-retention/ body, as dataretention.DataRetention serializes it
+The dataRetention query's body, as dataretention.DataRetention serializes it
 (services/tms/internal/modules/identity/domain/dataretention/dataretention.go). A
 window of 0 on the EDI and evaluation-case fields means no limit.
 */
@@ -86,7 +103,7 @@ function grant(...operations: number[]) {
 
 function renderForm(body: typeof saved = saved) {
   mocks.get.mockResolvedValue(body);
-  mocks.put.mockImplementation(async (_endpoint: string, request: object) => ({
+  mocks.put.mockImplementation(async (request: object) => ({
     ...body,
     ...request,
   }));
@@ -177,7 +194,7 @@ describe("DataRetentionForm", () => {
     await user.click(await screen.findByRole("button", { name: "Save changes" }));
 
     await waitFor(() =>
-      expect(mocks.put).toHaveBeenCalledWith("/data-retention/", {
+      expect(mocks.put).toHaveBeenCalledWith({
         ...savedRequest,
         ediInboundFileRetentionPeriod: 90,
       }),
@@ -197,7 +214,7 @@ describe("DataRetentionForm", () => {
 
     await user.click(await screen.findByRole("button", { name: "Save changes" }));
     await waitFor(() =>
-      expect(mocks.put).toHaveBeenCalledWith("/data-retention/", {
+      expect(mocks.put).toHaveBeenCalledWith({
         ...savedRequest,
         ediMessageRetentionPeriod: 0,
       }),

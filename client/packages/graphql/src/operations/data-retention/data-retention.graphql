@@ -1,0 +1,35 @@
+query DataRetention {
+  dataRetention {
+    id
+    organizationId
+    businessUnitId
+    auditRetentionPeriod
+    ediInboundFileRetentionPeriod
+    ediMessageRetentionPeriod
+    agentEvalCaseRetentionPeriod
+    aiFeedbackRetentionPeriod
+    aiAuditRetentionPeriod
+    aiCorrectionRetentionPeriod
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateDataRetention($input: UpdateDataRetentionInput!) {
+  updateDataRetention(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    auditRetentionPeriod
+    ediInboundFileRetentionPeriod
+    ediMessageRetentionPeriod
+    agentEvalCaseRetentionPeriod
+    aiFeedbackRetentionPeriod
+    aiAuditRetentionPeriod
+    aiCorrectionRetentionPeriod
+    version
+    createdAt
+    updatedAt
+  }
+}

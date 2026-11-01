@@ -4,6 +4,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const dataEntryControl = createQueryKeys("dataEntryControl", {
   get: () => ({
     queryKey: ["get"],
-    queryFn: async () => apiService.dataEntryControlService.get(),
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      apiService.dataEntryControlService.get({ signal }),
   }),
 });

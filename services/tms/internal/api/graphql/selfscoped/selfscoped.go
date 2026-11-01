@@ -85,6 +85,23 @@ var Resolvers = map[string][]string{
 	"reports what capture the calling user may use, from their own session": {
 		"QueryResolver.MyCaptureAccess",
 	},
+	"notification preferences are kept per user (NotificationPreferenceService keys them " +
+		"by the caller's user id), read or changed only for them": {
+		"MutationResolver.UpdateMyNotificationPreferences",
+		"QueryResolver.MyNotificationPreferences",
+	},
+	"page favorites are kept per user (PageFavoriteService is asked with the caller's " +
+		"user id), listed, checked or toggled only for them": {
+		"MutationResolver.ToggleMyPageFavorite",
+		"QueryResolver.IsMyPageFavorite",
+		"QueryResolver.MyPageFavorites",
+	},
+	"push subscriptions belong to the caller's own devices: one is saved under the " +
+		"caller's user id, an endpoint another user holds is refused, and removal is " +
+		"scoped to the caller's user id": {
+		"MutationResolver.RegisterMyPushSubscription",
+		"MutationResolver.UnregisterMyPushSubscription",
+	},
 }
 
 var roots = func() map[string]struct{} {

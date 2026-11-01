@@ -1,0 +1,29 @@
+fragment OnboardingStateFields on OnboardingState {
+  required
+  status
+  operationType
+  sampleDataLoaded
+  completedAt
+  organization {
+    name
+    timezone
+    addressLine1
+    city
+    stateId
+    postalCode
+    scacCode
+    dotNumber
+  }
+}
+
+query OnboardingState {
+  onboardingState {
+    ...OnboardingStateFields
+  }
+}
+
+mutation CompleteOnboarding($input: CompleteOnboardingInput!) {
+  completeOnboarding(input: $input) {
+    ...OnboardingStateFields
+  }
+}

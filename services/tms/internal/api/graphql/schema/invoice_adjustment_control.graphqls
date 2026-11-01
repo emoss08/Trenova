@@ -1,0 +1,125 @@
+"""
+Which invoices may be adjusted, how adjustments post, and when they need a reason or approval.
+"""
+type InvoiceAdjustmentControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy!
+  closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy!
+  adjustmentReasonRequirement: AdjustmentRequirementPolicy!
+  standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy!
+  standardAdjustmentApprovalThreshold: Decimal!
+  writeOffApprovalPolicy: WriteOffApprovalPolicy!
+  writeOffApprovalThreshold: Decimal!
+  requireSeparateApprover: Boolean!
+  rerateVarianceTolerancePercent: Decimal!
+  replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy!
+  customerCreditBalancePolicy: CustomerCreditBalancePolicy!
+  overCreditPolicy: OverCreditPolicy!
+  supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+Every setting of the invoice adjustment control at once. version is the one read; a stale one is refused.
+"""
+input UpdateInvoiceAdjustmentControlInput {
+  version: Int!
+  partiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  paidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  disputedInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicy!
+  adjustmentAccountingDatePolicy: AdjustmentAccountingDatePolicy!
+  closedPeriodAdjustmentPolicy: ClosedPeriodAdjustmentPolicy!
+  adjustmentReasonRequirement: AdjustmentRequirementPolicy!
+  standardAdjustmentApprovalPolicy: AdjustmentApprovalPolicy!
+  standardAdjustmentApprovalThreshold: Decimal!
+  writeOffApprovalPolicy: WriteOffApprovalPolicy!
+  writeOffApprovalThreshold: Decimal!
+  requireSeparateApprover: Boolean!
+  rerateVarianceTolerancePercent: Decimal!
+  replacementInvoiceReviewPolicy: ReplacementInvoiceReviewPolicy!
+  customerCreditBalancePolicy: CustomerCreditBalancePolicy!
+  overCreditPolicy: OverCreditPolicy!
+  supersededInvoiceVisibilityPolicy: SupersededInvoiceVisibilityPolicy!
+}
+
+"Whether an invoice in a given state may be adjusted."
+enum AdjustmentEligibilityPolicy {
+  Disallow
+  AllowWithApproval
+  AllowWithoutApproval
+}
+
+"Which accounting date an adjustment posts on."
+enum AdjustmentAccountingDatePolicy {
+  UseOriginalIfOpenElseNextOpen
+  AlwaysNextOpen
+}
+
+"What happens to an adjustment of an invoice in a closed period."
+enum ClosedPeriodAdjustmentPolicy {
+  Disallow
+  RequireReopen
+  PostInNextOpenPeriodWithApproval
+}
+
+"Whether an adjustment needs a reason."
+enum AdjustmentRequirementPolicy {
+  Optional
+  Required
+}
+
+"When a standard adjustment needs approval."
+enum AdjustmentApprovalPolicy {
+  None
+  Always
+  AmountThreshold
+}
+
+"When a write-off needs approval."
+enum WriteOffApprovalPolicy {
+  Disallow
+  AlwaysRequireApproval
+  RequireApprovalAboveThreshold
+}
+
+"When a replacement invoice needs review."
+enum ReplacementInvoiceReviewPolicy {
+  NoAdditionalReview
+  RequireReviewWhenEconomicTermsChange
+  AlwaysRequireReview
+}
+
+"Whether an adjustment may leave a customer credit balance."
+enum CustomerCreditBalancePolicy {
+  Disallow
+  AllowUnappliedCredit
+}
+
+"Whether a credit may exceed what the invoice still owes."
+enum OverCreditPolicy {
+  Block
+  AllowWithApproval
+}
+
+"Which invoices a customer sees after a replacement."
+enum SupersededInvoiceVisibilityPolicy {
+  ShowCurrentOnlyExternally
+  ShowCurrentAndSupersededExternally
+}
+
+extend type Query {
+  "The organization's invoice adjustment control."
+  invoiceAdjustmentControl: InvoiceAdjustmentControl!
+}
+
+extend type Mutation {
+  "Saves every setting of the organization's invoice adjustment control."
+  updateInvoiceAdjustmentControl(input: UpdateInvoiceAdjustmentControlInput!): InvoiceAdjustmentControl!
+}

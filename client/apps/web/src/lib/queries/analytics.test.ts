@@ -2,18 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { analytics } from "./analytics";
 
 const getShipmentPageAnalyticsGraphQLMock = vi.hoisted(() => vi.fn());
-const analyticsServiceGetMock = vi.hoisted(() => vi.fn());
+const getApiKeyAnalyticsGraphQLMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/graphql/shipment", () => ({
   getShipmentPageAnalyticsGraphQL: getShipmentPageAnalyticsGraphQLMock,
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    analyticService: {
-      get: analyticsServiceGetMock,
-    },
-  },
+vi.mock("@/lib/graphql/api-key-analytics", () => ({
+  getApiKeyAnalyticsGraphQL: getApiKeyAnalyticsGraphQLMock,
 }));
 
 describe("analytics query keys", () => {
@@ -46,20 +42,27 @@ describe("analytics query keys", () => {
     expect(getShipmentPageAnalyticsGraphQLMock).toHaveBeenCalledWith({
       timezone: expect.any(String),
     });
-    expect(analyticsServiceGetMock).not.toHaveBeenCalled();
+    expect(getApiKeyAnalyticsGraphQLMock).not.toHaveBeenCalled();
   });
 
-  it("keeps api-key-management analytics on REST", async () => {
-    analyticsServiceGetMock.mockResolvedValueOnce({ page: "api-key-management" });
+  it("reads api-key-management analytics from GraphQL, forwarding the signal", async () => {
+    const figures = {
+      totalKeys: { count: 3, newThisMonth: 1 },
+      activeKeys: { count: 2, percentOfTotal: 66.7 },
+      revokedKeys: { count: 1, percentOfTotal: 33.3 },
+      requests30d: { total: 40, sparkline: [{ day: "Jan 2", value: 40 }] },
+    };
+    getApiKeyAnalyticsGraphQLMock.mockResolvedValueOnce(figures);
+    const controller = new AbortController();
 
     const query = analytics.get("api-key-management");
-    const response = await query.queryFn();
+    const response = await query.queryFn({ signal: controller.signal });
 
     expect(query.queryKey).toEqual(["analytics", "api-key-management"]);
-    expect(response).toEqual({ page: "api-key-management" });
-    expect(analyticsServiceGetMock).toHaveBeenCalledWith({
-      page: "api-key-management",
+    expect(response).toEqual(figures);
+    expect(getApiKeyAnalyticsGraphQLMock).toHaveBeenCalledWith({
       timezone: expect.any(String),
+      signal: controller.signal,
     });
     expect(getShipmentPageAnalyticsGraphQLMock).not.toHaveBeenCalled();
   });

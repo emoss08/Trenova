@@ -17,11 +17,40 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "tablechangealert",
 	Objects: []*gqlexec.Object{
+		{Name: "TCAAllowlistedTable", Implementors: []string{"TCAAllowlistedTable"}},
 		{Name: "TCASubscription", Implementors: []string{"TCASubscription"}},
 		{Name: "TCASubscriptionConnection", Implementors: []string{"TCASubscriptionConnection"}},
 		{Name: "TCASubscriptionEdge", Implementors: []string{"TCASubscriptionEdge"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createTcaSubscription",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "TCASubscription",
+				Args:       field_Mutation_createTcaSubscription_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateTcaSubscription(ctx, fc.Args["input"].(gqlmodel.SaveTCASubscriptionInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription),
+			},
+			{
+				Name:       "updateTcaSubscription",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "TCASubscription",
+				Args:       field_Mutation_updateTcaSubscription_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateTcaSubscription(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.SaveTCASubscriptionInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "tcaSubscriptions",
@@ -49,6 +78,100 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverQuery](ec, "Query").TcaSubscription(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription),
+			},
+			{
+				Name:       "tcaAllowlistedTables",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "TCAAllowlistedTable",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").TcaAllowlistedTables(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNTCAAllowlistedTable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCAAllowlistedTableᚄ),
+			},
+		}},
+		{Object: "TCAAllowlistedTable", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tablechangealert.TCAAllowlistedTable)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tablechangealert.TCAAllowlistedTable)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tablechangealert.TCAAllowlistedTable)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "tableName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tablechangealert.TCAAllowlistedTable)
+					return obj.TableName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "displayName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tablechangealert.TCAAllowlistedTable)
+					return obj.DisplayName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "enabled",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tablechangealert.TCAAllowlistedTable)
+					return obj.Enabled, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tablechangealert.TCAAllowlistedTable)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tablechangealert.TCAAllowlistedTable)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
 		{Object: "TCASubscription", Fields: []*gqlexec.Field{
@@ -136,7 +259,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild2,
+				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tablechangealert.TCASubscription)
 					return gqlexec.Resolver[resolverTCASubscription](ec, "TCASubscription").Conditions(ctx, obj)
@@ -218,7 +341,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tablechangealert.TCASubscription)
 					return obj.Version, nil
@@ -228,7 +351,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tablechangealert.TCASubscription)
 					return obj.CreatedAt, nil
@@ -238,7 +361,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tablechangealert.TCASubscription)
 					return obj.UpdatedAt, nil
@@ -271,7 +394,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TCASubscriptionConnection)
 					return obj.TotalCount, nil
@@ -281,7 +404,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TCASubscriptionConnection)
 					return obj.TotalCountExact, nil
@@ -313,15 +436,25 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "SaveTCASubscriptionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSaveTCASubscriptionInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 		{Root: "TCASubscription", Check: func(r any) bool { _, ok := r.(resolverTCASubscription); return ok }},
 	},
 }
 
+type resolverMutation interface {
+	CreateTcaSubscription(ctx context.Context, input gqlmodel.SaveTCASubscriptionInput) (*tablechangealert.TCASubscription, error)
+	UpdateTcaSubscription(ctx context.Context, id string, version int, input gqlmodel.SaveTCASubscriptionInput) (*tablechangealert.TCASubscription, error)
+}
+
 type resolverQuery interface {
 	TcaSubscriptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.TCASubscriptionConnection, error)
 	TcaSubscription(ctx context.Context, id string) (*tablechangealert.TCASubscription, error)
+	TcaAllowlistedTables(ctx context.Context) ([]*tablechangealert.TCAAllowlistedTable, error)
 }
 
 type resolverTCASubscription interface {
@@ -332,11 +465,53 @@ type resolverTCASubscription interface {
 var (
 	errNoChild0 = errors.New("field of type ID does not have child fields")
 	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type JSON does not have child fields")
-	errNoChild3 = errors.New("field of type Int does not have child fields")
-	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5 = errors.New("field of type Boolean does not have child fields")
+	errNoChild2 = errors.New("field of type Boolean does not have child fields")
+	errNoChild3 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild4 = errors.New("field of type JSON does not have child fields")
+	errNoChild5 = errors.New("field of type Int does not have child fields")
 )
+
+func field_Mutation_createTcaSubscription_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SaveTCASubscriptionInput, error) {
+			return unmarshalNSaveTCASubscriptionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveTCASubscriptionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateTcaSubscription_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "version",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["version"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SaveTCASubscriptionInput, error) {
+			return unmarshalNSaveTCASubscriptionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveTCASubscriptionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg2
+	return args, nil
+}
 
 func field_Query_tcaSubscriptions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -364,6 +539,113 @@ func field_Query_tcaSubscription_args(ctx context.Context, ec *gqlexec.Exec, raw
 	return args, nil
 }
 
+func unmarshalInputSaveTCASubscriptionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SaveTCASubscriptionInput, error) {
+	var it gqlmodel.SaveTCASubscriptionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "tableName", "recordId", "eventTypes", "conditions", "conditionMatch", "watchedColumns", "customTitle", "customMessage", "topic", "priority", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "tableName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tableName"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TableName = data
+		case "recordId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recordId"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RecordID = data
+		case "eventTypes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("eventTypes"))
+			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EventTypes = data
+		case "conditions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conditions"))
+			data, err := unmarshalNJSON2ᚕmapᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Conditions = data
+		case "conditionMatch":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conditionMatch"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConditionMatch = data
+		case "watchedColumns":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("watchedColumns"))
+			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.WatchedColumns = data
+		case "customTitle":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customTitle"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomTitle = data
+		case "customMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customMessage"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomMessage = data
+		case "topic":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topic"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Topic = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -376,6 +658,42 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[string]any, error) {
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNJSON2ᚕmapᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]map[string]any, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNJSON2map)
+}
+
+func unmarshalNSaveTCASubscriptionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveTCASubscriptionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SaveTCASubscriptionInput, error) {
+	res, err := unmarshalInputSaveTCASubscriptionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -446,6 +764,22 @@ func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.
 		NonNullElem: true,
 		Scalar:      true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTCAAllowlistedTable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCAAllowlistedTableᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tablechangealert.TCAAllowlistedTable) graphql.Marshaler {
+	return gqlexec.List[*tablechangealert.TCAAllowlistedTable]{
+		Elem:        marshalNTCAAllowlistedTable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCAAllowlistedTable,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTCAAllowlistedTable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCAAllowlistedTable(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tablechangealert.TCAAllowlistedTable) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TCAAllowlistedTable", v)
 }
 
 func marshalNTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tablechangealert.TCASubscription) graphql.Marshaler {

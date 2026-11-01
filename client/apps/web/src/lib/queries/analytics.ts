@@ -1,18 +1,18 @@
+import { getApiKeyAnalyticsGraphQL } from "@/lib/graphql/api-key-analytics";
 import { getShipmentPageAnalyticsGraphQL } from "@/lib/graphql/shipment";
-import { apiService } from "@/services/api";
 import type { AnalyticsPage } from "@/types/analytics";
 
-async function getAnalyticsPage(page: AnalyticsPage) {
+async function getAnalyticsPage(page: AnalyticsPage, signal?: AbortSignal) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   if (page === "shipment-management") {
     return getShipmentPageAnalyticsGraphQL({ timezone });
   }
-  return apiService.analyticService.get({ page, timezone });
+  return getApiKeyAnalyticsGraphQL({ timezone, signal });
 }
 
 export const analytics = {
   get: (page: AnalyticsPage) => ({
     queryKey: ["analytics", page] as const,
-    queryFn: () => getAnalyticsPage(page),
+    queryFn: ({ signal }: { signal?: AbortSignal } = {}) => getAnalyticsPage(page, signal),
   }),
 };

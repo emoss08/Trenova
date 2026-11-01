@@ -1,0 +1,23 @@
+query ApiKeyAnalytics($timezone: String) {
+  apiKeyAnalytics(timezone: $timezone) {
+    totalKeys {
+      count
+      newThisMonth
+    }
+    activeKeys {
+      count
+      percentOfTotal
+    }
+    revokedKeys {
+      count
+      percentOfTotal
+    }
+    requests30d {
+      total
+      sparkline {
+        day
+        value
+      }
+    }
+  }
+}
