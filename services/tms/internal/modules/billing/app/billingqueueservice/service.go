@@ -185,13 +185,6 @@ func NewService(p Params) *Service {
 	}
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *billingqueueports.ListBillingQueueItemsRequest,
-) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *billingqueueports.ListBillingQueueItemsRequest,

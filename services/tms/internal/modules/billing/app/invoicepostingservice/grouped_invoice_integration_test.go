@@ -108,11 +108,16 @@ func runPartialOrderScenario(
 
 	// Second pass through the single-shipment entry point: the invoice carries the
 	// order correlation (G9) and must NOT re-bill the order charge.
-	second, err := svc.CreateFromShipments(ctx, &invoiceports.CreateInvoiceFromShipmentsRequest{
-		ShipmentIDs: []pulid.ID{p.lateLeg.ID},
-		TenantInfo:  p.tenantInfo,
-	}, p.actor)
+	secondResult, err := svc.CreateInvoicesFromShipments(
+		ctx,
+		&invoiceports.CreateInvoiceFromShipmentsRequest{
+			ShipmentIDs: []pulid.ID{p.lateLeg.ID},
+			TenantInfo:  p.tenantInfo,
+		},
+		p.actor,
+	)
 	require.NoError(t, err)
+	second := secondResult.Primary
 	assert.Equal(t, ord.ID, second.OrderID, "single-leg invoice should keep the order correlation")
 	assert.Equal(t, "O-TEST-0002", second.OrderNumber)
 	assert.True(

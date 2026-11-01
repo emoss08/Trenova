@@ -31,9 +31,15 @@ function item(overrides: Partial<BillingQueueItem> = {}): BillingQueueItem {
     paymentTerm: "Net15",
     invoiceDate: null,
     packetDocumentIds: ["doc_pod"],
+    billToCustomer: {
+      id: "cus_1",
+      name: "Acme Foods",
+      billingProfile: { paymentTerm: "Net30" },
+    },
     shipment: {
       id: "shp_1",
-      customer: { id: "cus_1", name: "Acme Foods", billingProfile: { paymentTerm: "Net30" } },
+      customerId: "cus_1",
+      customer: { id: "cus_1", name: "Acme Foods" },
     },
     ...overrides,
   } as unknown as BillingQueueItem;

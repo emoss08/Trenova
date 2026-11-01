@@ -10,17 +10,15 @@ import { billingQueue } from "@/lib/queries/billing-queue";
 import { apiService } from "@/services/api";
 import { getStartOfDay } from "@trenova/shared/lib/date";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
 import {
   type BillingQueueItemConnection,
   type BillingQueueRow,
+  listBillingQueueItemsByShipmentGraphQL,
   listBillingQueueItemsGraphQL,
 } from "@/lib/graphql/billing-queue";
 import type { FieldFilterInput } from "@trenova/graphql/generated/graphql";
 import { dateWindowFilter, type DateWindow } from "@/lib/billing-queue-date-window";
-import { billingQueueItemSchema, type BillingQueueLane } from "@trenova/shared/types/billing-queue";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
+import type { BillingQueueLane } from "@trenova/shared/types/billing-queue";
 import { shouldPollRun } from "./_components/bulk-transfer/bulk-billing-transfer-run";
 
 export const BILLING_QUEUE_LIST_KEY = "billing-queue-list";
@@ -37,8 +35,6 @@ const BILLING_TRANSFER_RUN_POLL_MS = 2000;
 
 const FILTER_PRESETS_STALE_TIME_MS = 5 * 60 * 1000;
 export const BILLING_QUEUE_LANE_PAGE_SIZE = 25;
-
-const billingQueueListSchema = createLimitOffsetResponse(billingQueueItemSchema);
 
 export type BillingQueueListFilters = {
   status: string | null;
@@ -59,7 +55,8 @@ export type BillingQueueListFilters = {
 export function billingQueueFilterPresetsQuery() {
   return {
     queryKey: [BILLING_QUEUE_FILTER_PRESETS_KEY] as const,
-    queryFn: () => apiService.billingQueueService.listFilterPresets(),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.billingQueueService.listFilterPresets({ signal }),
     staleTime: FILTER_PRESETS_STALE_TIME_MS,
   };
 }
@@ -180,15 +177,8 @@ export function shipmentDocumentsQuery(shipmentId: string) {
 export function billingQueueItemsByShipmentQuery(shipmentId: string) {
   return {
     queryKey: [BILLING_QUEUE_BY_SHIPMENT_KEY, shipmentId] as const,
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: "20", includePosted: "true" });
-      params.set(
-        "fieldFilters",
-        JSON.stringify([{ field: "shipmentId", operator: "eq", value: shipmentId }]),
-      );
-      const response = await api.get(`/billing-queue/?${params.toString()}`);
-      return safeParse(billingQueueListSchema, response, "BillingQueueByShipment");
-    },
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      listBillingQueueItemsByShipmentGraphQL(shipmentId, { signal }),
   };
 }
 

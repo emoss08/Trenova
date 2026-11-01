@@ -193,9 +193,10 @@ beforeEach(() => {
   });
   fetchers.syncStates.mockReset().mockResolvedValue([synced]);
   fetchers.attempts.mockReset().mockResolvedValue({
-    count: 1,
-    next: null,
-    results: [{ toRecipients: ["ap@acmefoods.com"], sentAt: DAY.sep2 + 9 * HOUR, error: null }],
+    total: 1,
+    totalExact: true,
+    hasMore: false,
+    items: [{ toRecipients: ["ap@acmefoods.com"], sentAt: DAY.sep2 + 9 * HOUR, error: null }],
   });
   fetchers.plan.mockReset().mockResolvedValue({
     recipients: { to: ["ap@tyson.com"], cc: [], bcc: [] },
@@ -351,7 +352,7 @@ describe("DeskInvoice", () => {
       "href",
       "https://app.qbo.intuit.com/app/invoice?txnId=1042",
     );
-    expect(fetchers.attempts).toHaveBeenCalledWith("inv_412", { limit: 1 });
+    expect(fetchers.attempts).toHaveBeenCalledWith("inv_412", { limit: 1 }, expect.anything());
     expect(fetchers.plan).not.toHaveBeenCalled();
     expect(await within(went).findByText(/to ap@acmefoods\.com$/u)).toBeInTheDocument();
 

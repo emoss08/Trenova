@@ -2,7 +2,7 @@ import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { accessorialChargeMethodSchema } from "./accessorial-charge";
 import { billTypeSchema, billingQueueItemSchema } from "./billing-queue";
-import { customerPaymentTermSchema, customerSchema } from "./customer";
+import { customerPaymentTermSchema, customerReferenceSchema } from "./customer";
 import { documentSchema } from "./document";
 import { emailMessageSchema } from "./email";
 import {
@@ -13,7 +13,7 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 import { invoiceDetailSchema, invoiceSectionKeySchema } from "./customer";
-import { shipmentSchema } from "./shipment";
+import { shipmentRouteMovesSchema } from "./shipment-route";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -280,6 +280,15 @@ export const invoiceEmailAttemptSchema = z.object({
 });
 export type InvoiceEmailAttempt = z.infer<typeof invoiceEmailAttemptSchema>;
 
+/** A page of an invoice's emails, newest first. */
+export const invoiceEmailAttemptPageSchema = z.object({
+  items: z.array(invoiceEmailAttemptSchema).default([]),
+  total: z.number().int().default(0),
+  totalExact: z.boolean().default(true),
+  hasMore: z.boolean().default(false),
+});
+export type InvoiceEmailAttemptPage = z.infer<typeof invoiceEmailAttemptPageSchema>;
+
 export const invoiceSendPlanAttachmentSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
@@ -422,6 +431,16 @@ export const invoiceFactorSchema = z.object({
   remittanceInstructions: nullableStringSchema,
 });
 
+/** The shipment an invoice bills, as its detail draws the route. */
+export const invoiceShipmentSchema = z.object({
+  id: z.string(),
+  proNumber: z.string().nullish(),
+  bol: z.string().nullish(),
+  customerId: z.string().nullish(),
+  moves: shipmentRouteMovesSchema,
+});
+export type InvoiceShipment = z.infer<typeof invoiceShipmentSchema>;
+
 export const invoiceSchema = z.object({
   ...tenantInfoSchema.shape,
   id: z.string(),
@@ -468,9 +487,7 @@ export const invoiceSchema = z.object({
   billToCountry: nullableStringSchema,
   /** The customer who ordered the freight when somebody else is billed for it. */
   shipperCustomerId: nullableStringSchema,
-  shipperCustomer: linkedRecordSchema("customer", customerSchema)
-    .nullish()
-    .transform((value) => value ?? undefined),
+  shipperCustomer: customerReferenceSchema.nullish().transform((value) => value ?? undefined),
   /** The factoring company the invoice was assigned to when it posted. */
   factoringCompanyId: nullableStringSchema,
   factoringCompany: invoiceFactorSchema.nullish().transform((value) => value ?? undefined),
@@ -527,12 +544,9 @@ export const invoiceSchema = z.object({
   billingQueueItem: linkedRecordSchema("billing_queue", billingQueueItemSchema)
     .nullish()
     .transform((value) => value ?? undefined),
-  shipment: linkedRecordSchema("shipment", shipmentSchema)
-    .nullish()
-    .transform((value) => value ?? undefined),
-  customer: linkedRecordSchema("customer", customerSchema)
-    .nullish()
-    .transform((value) => value ?? undefined),
+  /** The shipment the invoice bills, with its route; read on the single-invoice detail. */
+  shipment: invoiceShipmentSchema.nullish().transform((value) => value ?? undefined),
+  customer: customerReferenceSchema.nullish().transform((value) => value ?? undefined),
   pdfDocument: linkedRecordSchema("document", documentSchema)
     .nullish()
     .transform((value) => value ?? undefined),

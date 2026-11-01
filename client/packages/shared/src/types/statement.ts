@@ -67,8 +67,3 @@ export const openStatementSchema = z.object({
   groups: z.array(statementGroupSchema).nullish(),
 });
 export type OpenStatement = z.infer<typeof openStatementSchema>;
-
-export const openStatementListSchema = z.object({
-  results: z.array(openStatementSchema).default([]),
-  count: z.number().int().default(0),
-});

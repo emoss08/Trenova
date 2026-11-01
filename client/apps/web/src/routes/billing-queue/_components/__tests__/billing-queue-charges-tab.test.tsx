@@ -135,7 +135,7 @@ describe("BillingQueueChargesTab payer bill", () => {
   });
 });
 
-// A shipment one tariff rated, as `GET /billing-queue/:id/` returns it with no split to
+// A shipment one tariff rated, as the billingQueueItem query returns it with no split to
 // resolve: two freight lines from the bill, a charge the tariff billed itself with its label,
 // quantity and rate, and the tariff's input values the shipment carries.
 function tariffRatedItem(): BillingQueueItem {

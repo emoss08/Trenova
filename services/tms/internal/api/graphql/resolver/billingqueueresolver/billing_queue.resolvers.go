@@ -12,8 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingqueuemapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -213,4 +217,241 @@ func (r *QueryResolver) BillingQueueItems(ctx context.Context, input gqlmodel.Da
 	}
 
 	return billingqueuemapping.BillingQueueItemConnectionToModel(ctx, result)
+}
+
+func (r *BillingQueuePayerSharePartyResolver) Amount(ctx context.Context, obj *billingqueue.PayerShareParty) (string, error) {
+	return obj.Amount.String(), nil
+}
+
+func (r *BillingQueuePayerSharePartyResolver) Percent(ctx context.Context, obj *billingqueue.PayerShareParty) (*string, error) {
+	return gqldecimal.NullDecimalStringPtr(obj.Percent), nil
+}
+
+func (r *BillingQueuePayerShareLineResolver) ChargeTotal(ctx context.Context, obj *billingqueue.PayerShareLine) (string, error) {
+	return obj.ChargeTotal.String(), nil
+}
+
+func (r *BillingQueuePayerShareLineResolver) Amount(ctx context.Context, obj *billingqueue.PayerShareLine) (string, error) {
+	return obj.Amount.String(), nil
+}
+
+func (r *BillingQueuePayerShareLineResolver) Percent(ctx context.Context, obj *billingqueue.PayerShareLine) (*string, error) {
+	return gqldecimal.NullDecimalStringPtr(obj.Percent), nil
+}
+
+func (r *BillingQueuePayerShareResolver) FreightAmount(ctx context.Context, obj *billingqueue.PayerShare) (string, error) {
+	return obj.FreightAmount.String(), nil
+}
+
+func (r *BillingQueuePayerShareResolver) AccessorialAmount(ctx context.Context, obj *billingqueue.PayerShare) (string, error) {
+	return obj.AccessorialAmount.String(), nil
+}
+
+func (r *BillingQueuePayerShareResolver) TotalAmount(ctx context.Context, obj *billingqueue.PayerShare) (string, error) {
+	return obj.TotalAmount.String(), nil
+}
+
+func (r *BillingQueuePayerShareResolver) ShipmentTotal(ctx context.Context, obj *billingqueue.PayerShare) (string, error) {
+	return obj.ShipmentTotal.String(), nil
+}
+
+func (r *BillingQueueDetentionHoldResolver) StopType(ctx context.Context, obj *billingqueue.DetentionHold) (string, error) {
+	return string(obj.StopType), nil
+}
+
+func (r *BillingQueueDetentionHoldResolver) BillableAmount(ctx context.Context, obj *billingqueue.DetentionHold) (string, error) {
+	return obj.BillableAmount.String(), nil
+}
+
+func (r *BillingQueueDetentionHoldResolver) Reason(ctx context.Context, obj *billingqueue.DetentionHold) (string, error) {
+	return obj.Reason.String(), nil
+}
+
+func (r *BillingQueueIssueEffectResolver) Amount(ctx context.Context, obj *billingqueue.IssueEffect) (*string, error) {
+	return gqldecimal.NullDecimalStringPtr(obj.Amount), nil
+}
+
+func (r *BillingQueueIssueOptionResolver) Amount(ctx context.Context, obj *billingqueue.IssueOption) (*string, error) {
+	return gqldecimal.NullDecimalStringPtr(obj.Amount), nil
+}
+
+func (r *BillingQueueIssueResolver) Code(ctx context.Context, obj *billingqueue.Issue) (string, error) {
+	return string(obj.Code), nil
+}
+
+func (r *BillingQueueIssueResolver) Source(ctx context.Context, obj *billingqueue.Issue) (string, error) {
+	return string(obj.Source), nil
+}
+
+func (r *BillingQueueChargeLineResolver) Expected(ctx context.Context, obj *billingqueue.ChargeLine) (*string, error) {
+	return gqldecimal.NullDecimalStringPtr(obj.Expected), nil
+}
+
+func (r *BillingQueueChargeLineResolver) Billed(ctx context.Context, obj *billingqueue.ChargeLine) (string, error) {
+	return obj.Billed.String(), nil
+}
+
+func (r *BillingQueueChargeLineResolver) Source(ctx context.Context, obj *billingqueue.ChargeLine) (string, error) {
+	return string(obj.Source), nil
+}
+
+func (r *BillingQueueChargeReviewResolver) ExpectedTotal(ctx context.Context, obj *billingqueue.ChargeReview) (string, error) {
+	return obj.ExpectedTotal.String(), nil
+}
+
+func (r *BillingQueueChargeReviewResolver) BilledTotal(ctx context.Context, obj *billingqueue.ChargeReview) (string, error) {
+	return obj.BilledTotal.String(), nil
+}
+
+func (r *BillingQueueChargeReviewResolver) Difference(ctx context.Context, obj *billingqueue.ChargeReview) (string, error) {
+	return obj.Difference.String(), nil
+}
+
+func (r *BillingQueueEventResolver) Kind(ctx context.Context, obj *billingqueueevent.ItemEvent) (string, error) {
+	return string(obj.Kind), nil
+}
+
+func (r *BillingQueueItemSummaryResolver) AllocatedTotalAmount(ctx context.Context, obj *billingqueueports.BillingQueueItemSummary) (string, error) {
+	return obj.AllocatedTotalAmount.StringFixed(2), nil
+}
+
+func (r *QueryResolver) BillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueueItem, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	itemID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	item, err := r.BillingQueueService.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
+		ItemID:                itemID,
+		TenantInfo:            resolvercore.TenantInfo(authCtx),
+		ExpandShipmentDetails: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return billingqueuemapping.BillingQueueItemToModel(ctx, item)
+}
+
+func (r *QueryResolver) BillingQueueItemActivity(ctx context.Context, id string, limit *int, before *gqlmodel.BillingQueueActivityCursorInput) (*billingqueueports.BillingQueueEventPage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := activityRequest(id, limit, before, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.BillingQueueReviewService.ListActivity(ctx, req)
+}
+
+func (r *QueryResolver) BillingQueueNeighbors(ctx context.Context, id string, input *gqlmodel.DataTableConnectionInput, includePosted *bool) (*billingqueueports.BillingQueueNeighbors, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	itemID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.BillingQueueReviewService.Neighbors(ctx, &billingqueueports.GetBillingQueueNeighborsRequest{
+		ItemID:        itemID,
+		Filter:        tableInput.Filter,
+		IncludePosted: gqlscalar.BoolValue(includePosted),
+	})
+}
+
+func (r *QueryResolver) BillingQueueSummaries(ctx context.Context, ids []string) ([]*billingqueueports.BillingQueueItemSummary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	itemIDs, err := gqlid.ParseIDListField("ids", ids)
+	if err != nil {
+		return nil, err
+	}
+
+	summaries, err := r.BillingQueueReviewService.Summaries(ctx, &billingqueueports.ListBillingQueueSummariesRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ItemIDs:    itemIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if summaries == nil {
+		return []*billingqueueports.BillingQueueItemSummary{}, nil
+	}
+
+	return summaries, nil
+}
+
+func (r *MutationResolver) UpdateBillingQueueCharges(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateChargesInput) (*gqlmodel.BillingQueueItem, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := updateChargesRequest(id, &input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	item, err := r.BillingQueueService.UpdateCharges(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return billingqueuemapping.RequiredBillingQueueItemToModel(ctx, item)
+}
+
+func (r *MutationResolver) UpdateBillingQueueInvoiceDetails(ctx context.Context, id string, input gqlmodel.BillingQueueInvoiceDetailsInput) (*gqlmodel.BillingQueueItem, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := invoiceDetailsRequest(id, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	item, err := r.BillingQueueService.UpdateInvoiceDetails(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return billingqueuemapping.RequiredBillingQueueItemToModel(ctx, item)
+}
+
+func (r *MutationResolver) ReassignBillingQueueCharge(ctx context.Context, id string, input gqlmodel.BillingQueueReassignChargeInput) (*gqlmodel.BillingQueueReassignChargeResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := reassignChargeRequest(id, &input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.BillingQueueService.ReassignCharge(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return reassignChargeResultToModel(ctx, result)
 }

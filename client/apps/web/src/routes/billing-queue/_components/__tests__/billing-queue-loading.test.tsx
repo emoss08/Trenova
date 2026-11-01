@@ -84,7 +84,7 @@ describe("billing queue loading states", () => {
 
     expect(screen.getByLabelText("Loading the statement")).toHaveAttribute("aria-busy", "true");
     expect(screen.queryByText("Pick a statement")).not.toBeInTheDocument();
-    expect(mocks.getStatement).toHaveBeenCalledWith("cus_1");
+    expect(mocks.getStatement).toHaveBeenCalledWith("cus_1", expect.anything());
   });
 
   it("asks for a statement to be picked when no customer is chosen", () => {

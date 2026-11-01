@@ -1,30 +1,34 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
-import { commitInvoiceRunResultSchema } from "@trenova/shared/types/invoice-run";
 import {
-  openStatementListSchema,
-  openStatementSchema,
-  type OpenStatement,
-} from "@trenova/shared/types/statement";
+  BillStatementNowDocument,
+  OpenStatementDocument,
+  OpenStatementsDocument,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { safeParse } from "@trenova/shared/lib/parse";
+import { z } from "zod";
+import { commitInvoiceRunResultSchema } from "@trenova/shared/types/invoice-run";
+import { openStatementSchema } from "@trenova/shared/types/statement";
 
-/**
- * Statements are how a biller reaches invoice runs.
- *
- * The run endpoints under /billing/invoice-runs exist and are exercised
- * server-side by the scheduled sweep, but nothing in the client drives a run
- * directly: billing a statement previews, adjusts and commits one in a single
- * call. Wrappers for the rest would be code no screen calls.
- */
+/** Statements are how a biller reaches invoice runs: the open period, and billing it. */
 export class InvoiceRunService {
   /** Every statement customer's open period, derived live from the billing queue. */
-  public async listStatements() {
-    const response = await api.get("/billing/statements/");
-    return safeParse(openStatementListSchema, response, "OpenStatementList");
+  public async listStatements(options: { signal?: AbortSignal } = {}) {
+    const data = await requestGraphQL<{ openStatements: unknown }>({
+      document: OpenStatementsDocument,
+      operationName: "OpenStatements",
+      signal: options.signal,
+    });
+    return safeParse(z.array(openStatementSchema), data.openStatements ?? [], "OpenStatementList");
   }
 
-  public async getStatement(customerId: string) {
-    const response = await api.get<OpenStatement>(`/billing/statements/${customerId}/`);
-    return safeParse(openStatementSchema, response, "OpenStatement");
+  public async getStatement(customerId: string, options: { signal?: AbortSignal } = {}) {
+    const data = await requestGraphQL<{ openStatement: unknown }>({
+      document: OpenStatementDocument,
+      operationName: "OpenStatement",
+      variables: { customerId },
+      signal: options.signal,
+    });
+    return safeParse(openStatementSchema, data.openStatement, "OpenStatement");
   }
 
   /**
@@ -37,13 +41,20 @@ export class InvoiceRunService {
     reason: string,
     heldBillingQueueItemIds: string[] = [],
   ) {
-    const response = await api.post(`/billing/statements/${customerId}/bill/`, {
-      reason,
-      exclude: heldBillingQueueItemIds.map((billingQueueItemId) => ({
-        billingQueueItemId,
-        reason: "Held back by the biller before this statement billed",
-      })),
+    const data = await requestGraphQL<{ billStatementNow: unknown }>({
+      document: BillStatementNowDocument,
+      operationName: "BillStatementNow",
+      variables: {
+        customerId,
+        input: {
+          reason,
+          exclude: heldBillingQueueItemIds.map((billingQueueItemId) => ({
+            billingQueueItemId,
+            reason: "Held back by the biller before this statement billed",
+          })),
+        },
+      },
     });
-    return safeParse(commitInvoiceRunResultSchema, response, "CommitInvoiceRunResult");
+    return safeParse(commitInvoiceRunResultSchema, data.billStatementNow, "CommitInvoiceRunResult");
   }
 }

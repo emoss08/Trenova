@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -182,4 +183,209 @@ func (r *InvoiceAdjustmentResolver) SupportingDocumentIds(ctx context.Context, o
 	}
 
 	return ids, nil
+}
+
+func (r *InvoiceAdjustmentResolver) ReferencedDocuments(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, error) {
+	if obj == nil || obj.DocumentReferences == nil {
+		return []*invoiceadjustment.InvoiceAdjustmentDocumentReference{}, nil
+	}
+
+	return obj.DocumentReferences, nil
+}
+
+func (r *InvoiceAdjustmentReconciliationQueueItemResolver) Amount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem) (string, error) {
+	return obj.Amount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewLineResolver) EligibleAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error) {
+	return obj.EligibleAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewLineResolver) AlreadyCreditedAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error) {
+	return obj.AlreadyCreditedAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewLineResolver) RequestedCreditAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error) {
+	return obj.RequestedCreditAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewLineResolver) RequestedRebillAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error) {
+	return obj.RequestedRebillAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewLineResolver) RemainingEligibleAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error) {
+	return obj.RemainingEligibleAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewLineResolver) EligibilityOverageAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error) {
+	return obj.EligibilityOverageAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewResolver) CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error) {
+	return obj.CreditTotalAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewResolver) RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error) {
+	return obj.RebillTotalAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewResolver) NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error) {
+	return obj.NetDeltaAmount.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewResolver) RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error) {
+	return obj.RerateVariancePercent.String(), nil
+}
+
+func (r *InvoiceAdjustmentPreviewResolver) Errors(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (map[string]any, error) {
+	return previewErrorsToModel(obj.Errors), nil
+}
+
+func (r *QueryResolver) InvoiceAdjustmentLineage(ctx context.Context, correctionGroupID string) (*invoiceadjustmentports.InvoiceAdjustmentLineage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	groupID, err := gqlid.ParseIDField("correctionGroupId", correctionGroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InvoiceAdjustmentService.GetLineage(
+		ctx,
+		&invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest{
+			CorrectionGroupID: groupID,
+			TenantInfo:        resolvercore.TenantInfo(authCtx),
+		},
+	)
+}
+
+func (r *QueryResolver) InvoiceAdjustmentBatches(ctx context.Context, input gqlmodel.InvoiceAdjustmentQueueInput) (*gqlmodel.InvoiceAdjustmentBatchPage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.InvoiceAdjustmentService.ListBatches(
+		ctx,
+		queueQueryOptions(&input, resolvercore.TenantInfo(authCtx)),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return batchPageToModel(result), nil
+}
+
+func (r *QueryResolver) InvoiceAdjustmentBatch(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	batchID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InvoiceAdjustmentService.GetBatch(ctx, batchID, resolvercore.TenantInfo(authCtx))
+}
+
+func (r *QueryResolver) InvoiceAdjustmentReconciliationExceptions(ctx context.Context, input gqlmodel.InvoiceAdjustmentQueueInput) (*gqlmodel.InvoiceAdjustmentReconciliationPage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.InvoiceAdjustmentService.ListReconciliationExceptions(
+		ctx,
+		queueQueryOptions(&input, resolvercore.TenantInfo(authCtx)),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return reconciliationPageToModel(result), nil
+}
+
+func (r *QueryResolver) InvoiceAdjustmentDraftPreview(ctx context.Context, id string) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	adjustmentID, err := parseInvoiceAdjustmentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InvoiceAdjustmentDraftService.PreviewDraft(
+		ctx,
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
+			AdjustmentID: adjustmentID,
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *MutationResolver) CreateInvoiceAdjustmentDraft(ctx context.Context, invoiceID string) (*invoiceadjustment.InvoiceAdjustment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := gqlid.ParseIDField("invoiceId", invoiceID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InvoiceAdjustmentDraftService.CreateDraft(
+		ctx,
+		&invoiceadjustmentports.CreateDraftInvoiceAdjustmentRequest{
+			InvoiceID:  id,
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *MutationResolver) UpdateInvoiceAdjustmentDraft(ctx context.Context, id string, input gqlmodel.InvoiceAdjustmentDraftInput) (*invoiceadjustment.InvoiceAdjustment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	adjustmentID, err := parseInvoiceAdjustmentID(id)
+	if err != nil {
+		return nil, err
+	}
+	req, err := updateDraftRequestFromInput(adjustmentID, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InvoiceAdjustmentDraftService.UpdateDraft(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) SubmitInvoiceAdjustmentDraft(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	adjustmentID, err := parseInvoiceAdjustmentID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.InvoiceAdjustmentDraftService.SubmitDraft(
+		ctx,
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
+			AdjustmentID: adjustmentID,
+			TenantInfo:   resolvercore.TenantInfo(authCtx),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 }

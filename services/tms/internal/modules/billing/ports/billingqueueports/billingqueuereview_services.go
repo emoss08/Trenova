@@ -195,19 +195,3 @@ type BillingQueueApprovalService interface {
 		req *BillingQueueApprovalRunRequest,
 	) (*billingapprovalrun.ApprovalRun, error)
 }
-
-func (r *PostBillingQueueItemResult) WithoutFormulaContent() *PostBillingQueueItemResult {
-	if r == nil || r.Item == nil {
-		return r
-	}
-
-	item := r.Item.WithoutFormulaContent()
-	if item == r.Item {
-		return r
-	}
-
-	redacted := *r
-	redacted.Item = item
-
-	return &redacted
-}

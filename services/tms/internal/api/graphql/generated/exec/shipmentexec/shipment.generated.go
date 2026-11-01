@@ -536,6 +536,152 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOBillingQueueHeadline2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueHeadline),
 			},
+			{
+				Name:     "heldAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.HeldAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "heldById",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.HeldByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "statusBeforeHold",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.StatusBeforeHold, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOBillingQueueStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐStatus),
+			},
+			{
+				Name:     "checkedAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.CheckedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "invoiceId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.InvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "invoiceMemo",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.InvoiceMemo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "paymentTerm",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.PaymentTerm, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "invoiceDate",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.InvoiceDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "packetDocumentIds",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.PacketDocumentIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
+				Name:      "agentReads",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BillingQueueAgentRead",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.AgentReads, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueAgentRead2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐAgentReadᚄ),
+			},
+			{
+				Name:      "payerShare",
+				HasChild:  true,
+				ChildType: "BillingQueuePayerShare",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.PayerShare, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOBillingQueuePayerShare2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐPayerShare),
+			},
+			{
+				Name:      "ratedBy",
+				HasChild:  true,
+				ChildType: "BillingQueueRatedBy",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.RatedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOBillingQueueRatedBy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐRatedBy),
+			},
+			{
+				Name:      "detentionHolds",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BillingQueueDetentionHold",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.DetentionHolds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingQueueDetentionHold2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐDetentionHoldᚄ),
+			},
+			{
+				Name:      "ratingReviewHold",
+				HasChild:  true,
+				ChildType: "BillingQueueRatingReviewHold",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.RatingReviewHold, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOBillingQueueRatingReviewHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐRatingReviewHold),
+			},
+			{
+				Name:      "review",
+				HasChild:  true,
+				ChildType: "BillingQueueReview",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingQueueItem)
+					return obj.Review, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOBillingQueueReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐReview),
+			},
 		}},
 		{Object: "CarrierAssignment", Fields: []*gqlexec.Field{
 			{
@@ -13755,6 +13901,38 @@ func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbi
 	return res
 }
 
+func marshalNBillingQueueAgentRead2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐAgentReadᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*billingqueue.AgentRead) graphql.Marshaler {
+	return gqlexec.List[*billingqueue.AgentRead]{
+		Elem:        marshalNBillingQueueAgentRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐAgentRead,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNBillingQueueAgentRead2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐAgentRead(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.AgentRead) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueAgentRead", v)
+}
+
+func marshalNBillingQueueDetentionHold2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐDetentionHoldᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*billingqueue.DetentionHold) graphql.Marshaler {
+	return gqlexec.List[*billingqueue.DetentionHold]{
+		Elem:        marshalNBillingQueueDetentionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐDetentionHold,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNBillingQueueDetentionHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐDetentionHold(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.DetentionHold) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueDetentionHold", v)
+}
+
 func marshalNBillingQueueItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.BillingQueueItem) graphql.Marshaler {
 	return gqlexec.List[*gqlmodel.BillingQueueItem]{
 		Elem:        marshalNBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBillingQueueItem,
@@ -14869,6 +15047,42 @@ func marshalOBillingQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BillingQueueItem", v)
+}
+
+func marshalOBillingQueuePayerShare2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐPayerShare(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.PayerShare) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueuePayerShare", v)
+}
+
+func marshalOBillingQueueRatedBy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐRatedBy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.RatedBy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueRatedBy", v)
+}
+
+func marshalOBillingQueueRatingReviewHold2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐRatingReviewHold(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.RatingReviewHold) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueRatingReviewHold", v)
+}
+
+func marshalOBillingQueueReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.Review) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingQueueReview", v)
+}
+
+func marshalOBillingQueueStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingqueueᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingqueue.Status) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func marshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *bool) graphql.Marshaler {

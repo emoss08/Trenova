@@ -9,8 +9,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -22,8 +24,19 @@ var Shard = &gqlexec.Shard{
 		{Name: "InvoiceAdjustmentApprovalQueueConnection", Implementors: []string{"InvoiceAdjustmentApprovalQueueConnection"}},
 		{Name: "InvoiceAdjustmentApprovalQueueEdge", Implementors: []string{"InvoiceAdjustmentApprovalQueueEdge"}},
 		{Name: "InvoiceAdjustmentApprovalQueueItem", Implementors: []string{"InvoiceAdjustmentApprovalQueueItem"}},
+		{Name: "InvoiceAdjustmentBatch", Implementors: []string{"InvoiceAdjustmentBatch"}},
+		{Name: "InvoiceAdjustmentBatchItem", Implementors: []string{"InvoiceAdjustmentBatchItem"}},
+		{Name: "InvoiceAdjustmentBatchPage", Implementors: []string{"InvoiceAdjustmentBatchPage"}},
+		{Name: "InvoiceAdjustmentCorrectionGroup", Implementors: []string{"InvoiceAdjustmentCorrectionGroup"}},
+		{Name: "InvoiceAdjustmentDocument", Implementors: []string{"InvoiceAdjustmentDocument"}},
+		{Name: "InvoiceAdjustmentDocumentReference", Implementors: []string{"InvoiceAdjustmentDocumentReference"}},
 		{Name: "InvoiceAdjustmentLine", Implementors: []string{"InvoiceAdjustmentLine"}},
+		{Name: "InvoiceAdjustmentLineage", Implementors: []string{"InvoiceAdjustmentLineage"}},
 		{Name: "InvoiceAdjustmentOperationsSummary", Implementors: []string{"InvoiceAdjustmentOperationsSummary"}},
+		{Name: "InvoiceAdjustmentPreview", Implementors: []string{"InvoiceAdjustmentPreview"}},
+		{Name: "InvoiceAdjustmentPreviewLine", Implementors: []string{"InvoiceAdjustmentPreviewLine"}},
+		{Name: "InvoiceAdjustmentReconciliationPage", Implementors: []string{"InvoiceAdjustmentReconciliationPage"}},
+		{Name: "InvoiceAdjustmentReconciliationQueueItem", Implementors: []string{"InvoiceAdjustmentReconciliationQueueItem"}},
 		{Name: "InvoiceAdjustmentRepeatedSummary", Implementors: []string{"InvoiceAdjustmentRepeatedSummary"}},
 		{Name: "InvoiceAdjustmentSummaryCount", Implementors: []string{"InvoiceAdjustmentSummaryCount"}},
 	},
@@ -400,6 +413,50 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").SupportingDocumentIds(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
+				Name:     "idempotencyKey",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustment)
+					return obj.IdempotencyKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "metadata",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustment)
+					return obj.Metadata, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:       "referencedDocuments",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustmentDocumentReference",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustment)
+					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").ReferencedDocuments(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentDocumentReference2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentDocumentReferenceᚄ),
+			},
+			{
+				Name:      "adjustmentDocuments",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "InvoiceAdjustmentDocument",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustment)
+					return obj.AdjustmentDocuments, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentDocument2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocumentᚄ),
 			},
 		}},
 		{Object: "InvoiceAdjustmentApprovalQueueConnection", Fields: []*gqlexec.Field{
@@ -859,6 +916,634 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "InvoiceAdjustmentBatch", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "idempotencyKey",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.IdempotencyKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐBatchStatus),
+			},
+			{
+				Name:     "totalCount",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "processedCount",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.ProcessedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "succeededCount",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.SucceededCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "failedCount",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.FailedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "pendingCount",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.PendingCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "submittedById",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.SubmittedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "submittedByName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.SubmittedByName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "submittedAt",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.SubmittedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "lastFailure",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.LastFailure, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lastFailureCount",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.LastFailureCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "metadata",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.Metadata, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "version",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.Version, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:      "items",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "InvoiceAdjustmentBatchItem",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatch)
+					return obj.Items, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentBatchItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatchItemᚄ),
+			},
+		}},
+		{Object: "InvoiceAdjustmentBatchItem", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "batchId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.BatchID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "adjustmentId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.AdjustmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "invoiceId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.InvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "idempotencyKey",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.IdempotencyKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild13,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentBatchItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐBatchItemStatus),
+			},
+			{
+				Name:     "errorMessage",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.ErrorMessage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "requestPayload",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.RequestPayload, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "resultPayload",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.ResultPayload, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentBatchItem)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "InvoiceAdjustmentBatchPage", Fields: []*gqlexec.Field{
+			{
+				Name:      "items",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "InvoiceAdjustmentBatch",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.InvoiceAdjustmentBatchPage)
+					return obj.Items, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentBatch2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatchᚄ),
+			},
+			{
+				Name:     "total",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.InvoiceAdjustmentBatchPage)
+					return obj.Total, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "totalExact",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.InvoiceAdjustmentBatchPage)
+					return obj.TotalExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "InvoiceAdjustmentCorrectionGroup", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "rootInvoiceId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+					return obj.RootInvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "currentInvoiceId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+					return obj.CurrentInvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "metadata",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+					return obj.Metadata, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "InvoiceAdjustmentDocument", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*document.Document)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "fileName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*document.Document)
+					return obj.FileName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "originalName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*document.Document)
+					return obj.OriginalName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "InvoiceAdjustmentDocumentReference", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "adjustmentId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.AdjustmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "documentId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.DocumentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "selectedById",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.SelectedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "selectedAt",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.SelectedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "snapshotFileName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.SnapshotFileName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "snapshotOriginalName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.SnapshotOriginalName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "snapshotFileType",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.SnapshotFileType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "snapshotResourceType",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.SnapshotResourceType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "snapshotResourceId",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.SnapshotResourceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "version",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.Version, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentDocumentReference)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
 		{Object: "InvoiceAdjustmentLine", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -999,6 +1684,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
+				Name:     "replacementPayload",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustmentLine)
+					return obj.ReplacementPayload, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
 				Name:     "createdAt",
 				NonNull:  true,
 				ChildErr: errNoChild7,
@@ -1017,6 +1712,41 @@ var Shard = &gqlexec.Shard{
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "InvoiceAdjustmentLineage", Fields: []*gqlexec.Field{
+			{
+				Name:      "correctionGroup",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "InvoiceAdjustmentCorrectionGroup",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentLineage)
+					return obj.CorrectionGroup, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentCorrectionGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentCorrectionGroup),
+			},
+			{
+				Name:      "invoices",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "Invoice",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentLineage)
+					return obj.Invoices, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceᚄ),
+			},
+			{
+				Name:      "adjustments",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "InvoiceAdjustment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentLineage)
+					return obj.Adjustments, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentᚄ),
 			},
 		}},
 		{Object: "InvoiceAdjustmentOperationsSummary", Fields: []*gqlexec.Field{
@@ -1115,6 +1845,604 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentRepeatedSummaryᚄ),
 			},
 		}},
+		{Object: "InvoiceAdjustmentPreview", Fields: []*gqlexec.Field{
+			{
+				Name:     "invoiceId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.InvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "invoiceNumber",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.InvoiceNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "currencyCode",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.CurrencyCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "correctionGroupId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.CorrectionGroupID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind),
+			},
+			{
+				Name:     "rebillStrategy",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.RebillStrategy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentRebillStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy),
+			},
+			{
+				Name:     "accountingDate",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.AccountingDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:       "creditTotalAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreview](ec, "InvoiceAdjustmentPreview").CreditTotalAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:       "rebillTotalAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreview](ec, "InvoiceAdjustmentPreview").RebillTotalAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:       "netDeltaAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreview](ec, "InvoiceAdjustmentPreview").NetDeltaAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:       "rerateVariancePercent",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreview](ec, "InvoiceAdjustmentPreview").RerateVariancePercent(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "wouldCreateUnappliedCredit",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.WouldCreateUnappliedCredit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "requiresApproval",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.RequiresApproval, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "requiresReplacementInvoiceReview",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.RequiresReplacementInvoiceReview, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "requiresReconciliationException",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.RequiresReconciliationException, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "warnings",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.Warnings, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:       "errors",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreview](ec, "InvoiceAdjustmentPreview").Errors(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:      "lines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "InvoiceAdjustmentPreviewLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreview)
+					return obj.Lines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentPreviewLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentPreviewLineᚄ),
+			},
+		}},
+		{Object: "InvoiceAdjustmentPreviewLine", Fields: []*gqlexec.Field{
+			{
+				Name:     "lineNumber",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return obj.LineNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "originalLineId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return obj.OriginalLineID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "eligibleAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreviewLine](ec, "InvoiceAdjustmentPreviewLine").EligibleAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:       "alreadyCreditedAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreviewLine](ec, "InvoiceAdjustmentPreviewLine").AlreadyCreditedAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:       "requestedCreditAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreviewLine](ec, "InvoiceAdjustmentPreviewLine").RequestedCreditAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:       "requestedRebillAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreviewLine](ec, "InvoiceAdjustmentPreviewLine").RequestedRebillAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:       "remainingEligibleAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreviewLine](ec, "InvoiceAdjustmentPreviewLine").RemainingEligibleAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "hasEligibilityError",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return obj.HasEligibilityError, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "eligibilityOverageAmount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentPreviewLine](ec, "InvoiceAdjustmentPreviewLine").EligibilityOverageAmount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "eligibilityMessage",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentPreviewLine)
+					return obj.EligibilityMessage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "InvoiceAdjustmentReconciliationPage", Fields: []*gqlexec.Field{
+			{
+				Name:      "items",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "InvoiceAdjustmentReconciliationQueueItem",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.InvoiceAdjustmentReconciliationPage)
+					return obj.Items, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentReconciliationQueueItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentReconciliationQueueItemᚄ),
+			},
+			{
+				Name:     "total",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.InvoiceAdjustmentReconciliationPage)
+					return obj.Total, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "totalExact",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.InvoiceAdjustmentReconciliationPage)
+					return obj.TotalExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "InvoiceAdjustmentReconciliationQueueItem", Fields: []*gqlexec.Field{
+			{
+				Name:     "exceptionId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.ExceptionID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "adjustmentId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.AdjustmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "correctionGroupId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.CorrectionGroupID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceReconciliationExceptionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐExceptionStatus),
+			},
+			{
+				Name:     "reason",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "amount",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return gqlexec.Resolver[resolverInvoiceAdjustmentReconciliationQueueItem](ec, "InvoiceAdjustmentReconciliationQueueItem").Amount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "originalInvoiceId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.OriginalInvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "originalInvoiceNumber",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.OriginalInvoiceNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "originalInvoiceStatus",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.OriginalInvoiceStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "creditMemoInvoiceId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.CreditMemoInvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "creditMemoInvoiceNumber",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.CreditMemoInvoiceNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "replacementInvoiceId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.ReplacementInvoiceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "replacementInvoiceNumber",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.ReplacementInvoiceNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "rebillQueueItemId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.RebillQueueItemID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "rebillQueueNumber",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.RebillQueueNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "customerName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.CustomerName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "adjustmentKind",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.AdjustmentKind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind),
+			},
+			{
+				Name:     "adjustmentStatus",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.AdjustmentStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐStatus),
+			},
+			{
+				Name:     "policySource",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.PolicySource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "submittedById",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.SubmittedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "submittedByName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.SubmittedByName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "submittedAt",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.SubmittedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "financeNotes",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.FinanceNotes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
 		{Object: "InvoiceAdjustmentRepeatedSummary", Fields: []*gqlexec.Field{
 			{
 				Name:     "entityId",
@@ -1206,6 +2534,45 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
 			},
+			{
+				Name:       "createInvoiceAdjustmentDraft",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustment",
+				Args:       field_Mutation_createInvoiceAdjustmentDraft_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInvoiceAdjustmentDraft(ctx, fc.Args["invoiceId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
+			},
+			{
+				Name:       "updateInvoiceAdjustmentDraft",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustment",
+				Args:       field_Mutation_updateInvoiceAdjustmentDraft_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateInvoiceAdjustmentDraft(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.InvoiceAdjustmentDraftInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
+			},
+			{
+				Name:       "submitInvoiceAdjustmentDraft",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustment",
+				Args:       field_Mutation_submitInvoiceAdjustmentDraft_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitInvoiceAdjustmentDraft(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
@@ -1247,16 +2614,91 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentOperationsSummary),
 			},
+			{
+				Name:       "invoiceAdjustmentLineage",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustmentLineage",
+				Args:       field_Query_invoiceAdjustmentLineage_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustmentLineage(ctx, fc.Args["correctionGroupId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentLineage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentLineage),
+			},
+			{
+				Name:       "invoiceAdjustmentBatches",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustmentBatchPage",
+				Args:       field_Query_invoiceAdjustmentBatches_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustmentBatches(ctx, fc.Args["input"].(gqlmodel.InvoiceAdjustmentQueueInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentBatchPage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentBatchPage),
+			},
+			{
+				Name:       "invoiceAdjustmentBatch",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustmentBatch",
+				Args:       field_Query_invoiceAdjustmentBatch_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustmentBatch(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatch),
+			},
+			{
+				Name:       "invoiceAdjustmentReconciliationExceptions",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustmentReconciliationPage",
+				Args:       field_Query_invoiceAdjustmentReconciliationExceptions_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustmentReconciliationExceptions(ctx, fc.Args["input"].(gqlmodel.InvoiceAdjustmentQueueInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentReconciliationPage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentReconciliationPage),
+			},
+			{
+				Name:       "invoiceAdjustmentDraftPreview",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "InvoiceAdjustmentPreview",
+				Args:       field_Query_invoiceAdjustmentDraftPreview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustmentDraftPreview(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentPreview),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "InvoiceAdjustmentApprovalsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputInvoiceAdjustmentApprovalsInput)},
+		{Name: "InvoiceAdjustmentDraftInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputInvoiceAdjustmentDraftInput)},
+		{Name: "InvoiceAdjustmentLineInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputInvoiceAdjustmentLineInput)},
+		{Name: "InvoiceAdjustmentQueueInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputInvoiceAdjustmentQueueInput)},
 		{Name: "RejectInvoiceAdjustmentInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRejectInvoiceAdjustmentInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "InvoiceAdjustment", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustment); return ok }},
 		{Root: "InvoiceAdjustmentApprovalQueueItem", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustmentApprovalQueueItem); return ok }},
 		{Root: "InvoiceAdjustmentLine", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustmentLine); return ok }},
+		{Root: "InvoiceAdjustmentPreview", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustmentPreview); return ok }},
+		{Root: "InvoiceAdjustmentPreviewLine", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustmentPreviewLine); return ok }},
+		{Root: "InvoiceAdjustmentReconciliationQueueItem", Check: func(r any) bool { _, ok := r.(resolverInvoiceAdjustmentReconciliationQueueItem); return ok }},
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
@@ -1269,6 +2711,7 @@ type resolverInvoiceAdjustment interface {
 	NetDeltaAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	RerateVariancePercent(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	SupportingDocumentIds(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]string, error)
+	ReferencedDocuments(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, error)
 }
 
 type resolverInvoiceAdjustmentApprovalQueueItem interface {
@@ -1287,15 +2730,44 @@ type resolverInvoiceAdjustmentLine interface {
 	RebillAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
 }
 
+type resolverInvoiceAdjustmentPreview interface {
+	CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error)
+	RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error)
+	NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error)
+	RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error)
+	Errors(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (map[string]any, error)
+}
+
+type resolverInvoiceAdjustmentPreviewLine interface {
+	EligibleAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	AlreadyCreditedAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	RequestedCreditAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	RequestedRebillAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	RemainingEligibleAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	EligibilityOverageAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+}
+
+type resolverInvoiceAdjustmentReconciliationQueueItem interface {
+	Amount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem) (string, error)
+}
+
 type resolverMutation interface {
 	ApproveInvoiceAdjustment(ctx context.Context, adjustmentID string) (*invoiceadjustment.InvoiceAdjustment, error)
 	RejectInvoiceAdjustment(ctx context.Context, input gqlmodel.RejectInvoiceAdjustmentInput) (*invoiceadjustment.InvoiceAdjustment, error)
+	CreateInvoiceAdjustmentDraft(ctx context.Context, invoiceID string) (*invoiceadjustment.InvoiceAdjustment, error)
+	UpdateInvoiceAdjustmentDraft(ctx context.Context, id string, input gqlmodel.InvoiceAdjustmentDraftInput) (*invoiceadjustment.InvoiceAdjustment, error)
+	SubmitInvoiceAdjustmentDraft(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 }
 
 type resolverQuery interface {
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
 	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
+	InvoiceAdjustmentLineage(ctx context.Context, correctionGroupID string) (*invoiceadjustmentports.InvoiceAdjustmentLineage, error)
+	InvoiceAdjustmentBatches(ctx context.Context, input gqlmodel.InvoiceAdjustmentQueueInput) (*gqlmodel.InvoiceAdjustmentBatchPage, error)
+	InvoiceAdjustmentBatch(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustmentBatch, error)
+	InvoiceAdjustmentReconciliationExceptions(ctx context.Context, input gqlmodel.InvoiceAdjustmentQueueInput) (*gqlmodel.InvoiceAdjustmentReconciliationPage, error)
+	InvoiceAdjustmentDraftPreview(ctx context.Context, id string) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error)
 }
 
 var (
@@ -1310,6 +2782,10 @@ var (
 	errNoChild8  = errors.New("field of type Decimal does not have child fields")
 	errNoChild9  = errors.New("field of type Boolean does not have child fields")
 	errNoChild10 = errors.New("field of type Int does not have child fields")
+	errNoChild11 = errors.New("field of type JSON does not have child fields")
+	errNoChild12 = errors.New("field of type InvoiceAdjustmentBatchStatus does not have child fields")
+	errNoChild13 = errors.New("field of type InvoiceAdjustmentBatchItemStatus does not have child fields")
+	errNoChild14 = errors.New("field of type InvoiceReconciliationExceptionStatus does not have child fields")
 )
 
 func field_Mutation_approveInvoiceAdjustment_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1338,6 +2814,53 @@ func field_Mutation_rejectInvoiceAdjustment_args(ctx context.Context, ec *gqlexe
 	return args, nil
 }
 
+func field_Mutation_createInvoiceAdjustmentDraft_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "invoiceId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["invoiceId"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateInvoiceAdjustmentDraft_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.InvoiceAdjustmentDraftInput, error) {
+			return unmarshalNInvoiceAdjustmentDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentDraftInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_submitInvoiceAdjustmentDraft_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func field_Query_invoiceAdjustment_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
@@ -1361,6 +2884,71 @@ func field_Query_invoiceAdjustmentApprovals_args(ctx context.Context, ec *gqlexe
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_invoiceAdjustmentLineage_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "correctionGroupId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["correctionGroupId"] = arg0
+	return args, nil
+}
+
+func field_Query_invoiceAdjustmentBatches_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.InvoiceAdjustmentQueueInput, error) {
+			return unmarshalNInvoiceAdjustmentQueueInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentQueueInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_invoiceAdjustmentBatch_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Query_invoiceAdjustmentReconciliationExceptions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.InvoiceAdjustmentQueueInput, error) {
+			return unmarshalNInvoiceAdjustmentQueueInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentQueueInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_invoiceAdjustmentDraftPreview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1425,6 +3013,193 @@ func unmarshalInputInvoiceAdjustmentApprovalsInput(ctx context.Context, ec *gqle
 	return it, nil
 }
 
+func unmarshalInputInvoiceAdjustmentDraftInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.InvoiceAdjustmentDraftInput, error) {
+	var it gqlmodel.InvoiceAdjustmentDraftInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"kind", "rebillStrategy", "reason", "referencedDocumentIds", "lines"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := unmarshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "rebillStrategy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rebillStrategy"))
+			data, err := unmarshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RebillStrategy = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
+		case "referencedDocumentIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("referencedDocumentIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReferencedDocumentIds = data
+		case "lines":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lines"))
+			data, err := unmarshalOInvoiceAdjustmentLineInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentLineInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lines = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputInvoiceAdjustmentLineInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.InvoiceAdjustmentLineInput, error) {
+	var it gqlmodel.InvoiceAdjustmentLineInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"originalLineId", "creditQuantity", "creditAmount", "rebillQuantity", "rebillAmount", "description", "replacementPayload"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "originalLineId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originalLineId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginalLineID = data
+		case "creditQuantity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creditQuantity"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreditQuantity = data
+		case "creditAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creditAmount"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreditAmount = data
+		case "rebillQuantity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rebillQuantity"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RebillQuantity = data
+		case "rebillAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rebillAmount"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RebillAmount = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "replacementPayload":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("replacementPayload"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReplacementPayload = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputInvoiceAdjustmentQueueInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.InvoiceAdjustmentQueueInput, error) {
+	var it gqlmodel.InvoiceAdjustmentQueueInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+	if _, present := asMap["limit"]; !present {
+		asMap["limit"] = 100
+	}
+	if _, present := asMap["offset"]; !present {
+		asMap["offset"] = 0
+	}
+
+	fieldsInOrder := [...]string{"limit", "offset", "query", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		case "offset":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Offset = data
+		case "query":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Query = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputRejectInvoiceAdjustmentInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RejectInvoiceAdjustmentInput, error) {
 	var it gqlmodel.RejectInvoiceAdjustmentInput
 	if obj == nil {
@@ -1462,6 +3237,11 @@ func unmarshalInputRejectInvoiceAdjustmentInput(ctx context.Context, ec *gqlexec
 	return it, nil
 }
 
+func unmarshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1472,9 +3252,37 @@ func unmarshalNInvoiceAdjustmentApprovalsInput2githubᚗcomᚋemoss08ᚋtrenova�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNInvoiceAdjustmentDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentDraftInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.InvoiceAdjustmentDraftInput, error) {
+	res, err := unmarshalInputInvoiceAdjustmentDraftInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind(ctx context.Context, ec *gqlexec.Exec, v any) (invoiceadjustment.Kind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := invoiceadjustment.Kind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInvoiceAdjustmentLineInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentLineInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.InvoiceAdjustmentLineInput, error) {
+	res, err := unmarshalInputInvoiceAdjustmentLineInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInvoiceAdjustmentQueueInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentQueueInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.InvoiceAdjustmentQueueInput, error) {
+	res, err := unmarshalInputInvoiceAdjustmentQueueInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNRejectInvoiceAdjustmentInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRejectInvoiceAdjustmentInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RejectInvoiceAdjustmentInput, error) {
 	res, err := unmarshalInputRejectInvoiceAdjustmentInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -1500,6 +3308,30 @@ func unmarshalOInvoiceAdjustmentKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	tmp, err := graphql.UnmarshalString(v)
 	res := invoiceadjustment.Kind(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInvoiceAdjustmentLineInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentLineInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.InvoiceAdjustmentLineInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNInvoiceAdjustmentLineInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentLineInput)
+}
+
+func unmarshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy(ctx context.Context, ec *gqlexec.Exec, v any) (*invoiceadjustment.RebillStrategy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := invoiceadjustment.RebillStrategy(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -1567,6 +3399,30 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoice.Invoice) graphql.Marshaler {
+	return gqlexec.List[*invoice.Invoice]{
+		Elem:        marshalNInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "Invoice", v)
+}
+
+func marshalNInvoiceAdjustment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustment.InvoiceAdjustment) graphql.Marshaler {
+	return gqlexec.List[*invoiceadjustment.InvoiceAdjustment]{
+		Elem:        marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -1615,6 +3471,102 @@ func marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return res
 }
 
+func marshalNInvoiceAdjustmentBatch2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatchᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustment.InvoiceAdjustmentBatch) graphql.Marshaler {
+	return gqlexec.List[*invoiceadjustment.InvoiceAdjustmentBatch]{
+		Elem:        marshalNInvoiceAdjustmentBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatch,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNInvoiceAdjustmentBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustmentBatch) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentBatch", v)
+}
+
+func marshalNInvoiceAdjustmentBatchItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatchItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustment.InvoiceAdjustmentBatchItem) graphql.Marshaler {
+	return gqlexec.List[*invoiceadjustment.InvoiceAdjustmentBatchItem]{
+		Elem:        marshalNInvoiceAdjustmentBatchItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatchItem,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNInvoiceAdjustmentBatchItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatchItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustmentBatchItem) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentBatchItem", v)
+}
+
+func marshalNInvoiceAdjustmentBatchItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐBatchItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.BatchItemStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInvoiceAdjustmentBatchPage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentBatchPage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.InvoiceAdjustmentBatchPage) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentBatchPage", v)
+}
+
+func marshalNInvoiceAdjustmentBatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐBatchStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.BatchStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInvoiceAdjustmentCorrectionGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentCorrectionGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentCorrectionGroup", v)
+}
+
+func marshalNInvoiceAdjustmentDocument2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocumentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*document.Document) graphql.Marshaler {
+	return gqlexec.List[*document.Document]{
+		Elem:        marshalNInvoiceAdjustmentDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNInvoiceAdjustmentDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *document.Document) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentDocument", v)
+}
+
+func marshalNInvoiceAdjustmentDocumentReference2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentDocumentReferenceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustment.InvoiceAdjustmentDocumentReference) graphql.Marshaler {
+	return gqlexec.List[*invoiceadjustment.InvoiceAdjustmentDocumentReference]{
+		Elem:        marshalNInvoiceAdjustmentDocumentReference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentDocumentReference,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNInvoiceAdjustmentDocumentReference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentDocumentReference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustmentDocumentReference) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentDocumentReference", v)
+}
+
 func marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.Kind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -1639,12 +3591,68 @@ func marshalNInvoiceAdjustmentLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentLine", v)
 }
 
+func marshalNInvoiceAdjustmentLineage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentLineage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentLineage) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentLineage", v)
+}
+
 func marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentOperationsSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentOperationsSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentOperationsSummary", v)
+}
+
+func marshalNInvoiceAdjustmentPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentPreview) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentPreview", v)
+}
+
+func marshalNInvoiceAdjustmentPreviewLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentPreviewLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentPreviewLine) graphql.Marshaler {
+	return gqlexec.List[*invoiceadjustmentports.InvoiceAdjustmentPreviewLine]{
+		Elem:        marshalNInvoiceAdjustmentPreviewLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentPreviewLine,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNInvoiceAdjustmentPreviewLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentPreviewLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentPreviewLine", v)
+}
+
+func marshalNInvoiceAdjustmentReconciliationPage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInvoiceAdjustmentReconciliationPage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.InvoiceAdjustmentReconciliationPage) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentReconciliationPage", v)
+}
+
+func marshalNInvoiceAdjustmentReconciliationQueueItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentReconciliationQueueItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem) graphql.Marshaler {
+	return gqlexec.List[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem]{
+		Elem:        marshalNInvoiceAdjustmentReconciliationQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentReconciliationQueueItem,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNInvoiceAdjustmentReconciliationQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentReconciliationQueueItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentReconciliationQueueItem", v)
 }
 
 func marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentRepeatedSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
@@ -1695,6 +3703,26 @@ func marshalNInvoiceAdjustmentSummaryCount2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentSummaryCount", v)
 }
 
+func marshalNInvoiceReconciliationExceptionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐExceptionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.ExceptionStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -1709,6 +3737,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
@@ -1737,6 +3774,18 @@ func marshalOInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustment", v)
+}
+
+func marshalOInvoiceAdjustmentBatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentBatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustmentBatch) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentBatch", v)
+}
+
+func marshalOInvoiceAdjustmentRebillStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.RebillStrategy) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.RebillStrategy) graphql.Marshaler {

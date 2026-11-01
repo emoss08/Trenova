@@ -189,7 +189,7 @@ func applyShipmentChildren(
 	if err != nil {
 		return err
 	}
-	additionalCharges, err := shipmentAdditionalChargesFromInput(input.AdditionalCharges, authCtx)
+	additionalCharges, err := ShipmentAdditionalChargesFromInput(input.AdditionalCharges, authCtx)
 	if err != nil {
 		return err
 	}
@@ -328,7 +328,7 @@ func shipmentStopsFromInput(
 	return stops, nil
 }
 
-func shipmentAdditionalChargesFromInput(
+func ShipmentAdditionalChargesFromInput(
 	inputs []*gqlmodel.ShipmentAdditionalChargeInput,
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.AdditionalCharge, error) {

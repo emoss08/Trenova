@@ -25,8 +25,7 @@ export const billingQueue = createQueryKeys("billingQueue", {
   }),
   get: (itemId: string) => ({
     queryKey: ["get", itemId],
-    queryFn: async ({ signal }) =>
-      apiService.billingQueueService.getById(itemId, { expandShipmentDetails: "true" }, { signal }),
+    queryFn: async ({ signal }) => apiService.billingQueueService.getById(itemId, { signal }),
   }),
   /** The item's shipment as the Shipment tab reads it, fetched when the tab opens. */
   shipment: (shipmentId: string) => ({
@@ -43,17 +42,18 @@ export const billingQueue = createQueryKeys("billingQueue", {
     queryKey: ["formulaTemplate", templateId],
     queryFn: async ({ signal }) => getBillingQueueFormulaTemplateGraphQL(templateId, { signal }),
   }),
-  neighbors: (itemId: string, params: Record<string, string> = {}) => ({
-    queryKey: ["neighbors", itemId, params],
-    queryFn: async () => apiService.billingQueueService.getNeighbors(itemId, params),
+  neighbors: (itemId: string) => ({
+    queryKey: ["neighbors", itemId],
+    queryFn: async ({ signal }) => apiService.billingQueueService.getNeighbors(itemId, { signal }),
   }),
   activity: (itemId: string) => ({
     queryKey: ["activity", itemId],
-    queryFn: async () => apiService.billingQueueService.getActivity(itemId),
+    queryFn: async ({ signal }) =>
+      apiService.billingQueueService.getActivity(itemId, undefined, undefined, { signal }),
   }),
   summaries: (itemIds: string[]) => ({
     queryKey: ["summaries", itemIds],
-    queryFn: async () => apiService.billingQueueService.getSummaries(itemIds),
+    queryFn: async ({ signal }) => apiService.billingQueueService.getSummaries(itemIds, { signal }),
   }),
   bulkRun: (runId: string) => ({
     queryKey: ["bulkRun", runId],

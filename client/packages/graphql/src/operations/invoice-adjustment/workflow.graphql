@@ -1,0 +1,288 @@
+fragment InvoiceAdjustmentDetailFields on InvoiceAdjustment {
+  id
+  organizationId
+  businessUnitId
+  correctionGroupId
+  originalInvoiceId
+  creditMemoInvoiceId
+  replacementInvoiceId
+  rebillQueueItemId
+  batchId
+  kind
+  status
+  approvalStatus
+  replacementReviewStatus
+  rebillStrategy
+  reason
+  policyReason
+  idempotencyKey
+  accountingDate
+  creditTotalAmount
+  rebillTotalAmount
+  netDeltaAmount
+  rerateVariancePercent
+  wouldCreateUnappliedCredit
+  requiresReconciliationException
+  approvalRequired
+  submittedById
+  submittedAt
+  approvedById
+  approvedAt
+  rejectedById
+  rejectedAt
+  rejectionReason
+  executionError
+  metadata
+  version
+  createdAt
+  updatedAt
+  lines {
+    id
+    adjustmentId
+    originalInvoiceId
+    originalLineId
+    creditMemoLineId
+    replacementLineId
+    lineNumber
+    description
+    creditQuantity
+    creditAmount
+    remainingEligibleAmount
+    rebillQuantity
+    rebillAmount
+    replacementPayload
+    createdAt
+    updatedAt
+  }
+  referencedDocuments {
+    id
+    organizationId
+    businessUnitId
+    adjustmentId
+    documentId
+    selectedById
+    selectedAt
+    snapshotFileName
+    snapshotOriginalName
+    snapshotFileType
+    snapshotResourceType
+    snapshotResourceId
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+query InvoiceAdjustmentDetail($id: ID!) {
+  invoiceAdjustment(id: $id) {
+    ...InvoiceAdjustmentDetailFields
+    adjustmentDocuments {
+      id
+      fileName
+      originalName
+    }
+  }
+}
+
+query InvoiceAdjustmentLineage($correctionGroupId: ID!) {
+  invoiceAdjustmentLineage(correctionGroupId: $correctionGroupId) {
+    correctionGroup {
+      id
+      organizationId
+      businessUnitId
+      rootInvoiceId
+      currentInvoiceId
+      metadata
+      createdAt
+      updatedAt
+    }
+    invoices {
+      ...InvoiceDetailFields
+    }
+    adjustments {
+      ...InvoiceAdjustmentDetailFields
+    }
+  }
+}
+
+fragment InvoiceAdjustmentBatchFields on InvoiceAdjustmentBatch {
+  id
+  organizationId
+  businessUnitId
+  idempotencyKey
+  status
+  totalCount
+  processedCount
+  succeededCount
+  failedCount
+  pendingCount
+  submittedById
+  submittedByName
+  submittedAt
+  lastFailure
+  lastFailureCount
+  metadata
+  version
+  createdAt
+  updatedAt
+}
+
+query InvoiceAdjustmentBatches($input: InvoiceAdjustmentQueueInput!) {
+  invoiceAdjustmentBatches(input: $input) {
+    items {
+      ...InvoiceAdjustmentBatchFields
+    }
+    total
+    totalExact
+  }
+}
+
+query InvoiceAdjustmentBatch($id: ID!) {
+  invoiceAdjustmentBatch(id: $id) {
+    ...InvoiceAdjustmentBatchFields
+    items {
+      id
+      organizationId
+      businessUnitId
+      batchId
+      adjustmentId
+      invoiceId
+      idempotencyKey
+      status
+      errorMessage
+      requestPayload
+      resultPayload
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+query InvoiceAdjustmentReconciliationExceptions($input: InvoiceAdjustmentQueueInput!) {
+  invoiceAdjustmentReconciliationExceptions(input: $input) {
+    items {
+      exceptionId
+      adjustmentId
+      correctionGroupId
+      status
+      reason
+      amount
+      originalInvoiceId
+      originalInvoiceNumber
+      originalInvoiceStatus
+      creditMemoInvoiceId
+      creditMemoInvoiceNumber
+      replacementInvoiceId
+      replacementInvoiceNumber
+      rebillQueueItemId
+      rebillQueueNumber
+      customerName
+      adjustmentKind
+      adjustmentStatus
+      policySource
+      submittedById
+      submittedByName
+      submittedAt
+      financeNotes
+      createdAt
+      updatedAt
+    }
+    total
+    totalExact
+  }
+}
+
+query InvoiceAdjustmentWorkloadSummary {
+  invoiceAdjustmentOperationsSummary {
+    adjustmentsByStatus {
+      label
+      count
+    }
+    approvalsPending
+    reconciliationPending
+    writeOffPending
+    batchesInFlight
+    failedBatchItems
+    reasonDistribution {
+      label
+      count
+    }
+    repeatedAdjustments {
+      entityId
+      entityType
+      label
+      count
+    }
+    repeatedCustomerAdjustments {
+      entityId
+      entityType
+      label
+      count
+    }
+  }
+}
+
+query InvoiceAdjustmentDraftPreview($id: ID!) {
+  invoiceAdjustmentDraftPreview(id: $id) {
+    invoiceId
+    invoiceNumber
+    currencyCode
+    correctionGroupId
+    kind
+    rebillStrategy
+    accountingDate
+    creditTotalAmount
+    rebillTotalAmount
+    netDeltaAmount
+    rerateVariancePercent
+    wouldCreateUnappliedCredit
+    requiresApproval
+    requiresReplacementInvoiceReview
+    requiresReconciliationException
+    warnings
+    errors
+    lines {
+      lineNumber
+      originalLineId
+      description
+      eligibleAmount
+      alreadyCreditedAmount
+      requestedCreditAmount
+      requestedRebillAmount
+      remainingEligibleAmount
+      hasEligibilityError
+      eligibilityOverageAmount
+      eligibilityMessage
+    }
+  }
+}
+
+mutation CreateInvoiceAdjustmentDraft($invoiceId: ID!) {
+  createInvoiceAdjustmentDraft(invoiceId: $invoiceId) {
+    ...InvoiceAdjustmentDetailFields
+  }
+}
+
+mutation UpdateInvoiceAdjustmentDraft($id: ID!, $input: InvoiceAdjustmentDraftInput!) {
+  updateInvoiceAdjustmentDraft(id: $id, input: $input) {
+    ...InvoiceAdjustmentDetailFields
+  }
+}
+
+mutation SubmitInvoiceAdjustmentDraft($id: ID!) {
+  submitInvoiceAdjustmentDraft(id: $id) {
+    ...InvoiceAdjustmentDetailFields
+  }
+}
+
+mutation ApproveInvoiceAdjustmentDetail($adjustmentId: ID!) {
+  approveInvoiceAdjustment(adjustmentId: $adjustmentId) {
+    ...InvoiceAdjustmentDetailFields
+  }
+}
+
+mutation RejectInvoiceAdjustmentDetail($input: RejectInvoiceAdjustmentInput!) {
+  rejectInvoiceAdjustment(input: $input) {
+    ...InvoiceAdjustmentDetailFields
+  }
+}

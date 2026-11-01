@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { nullableStringSchema } from "./helpers";
-import { createLimitOffsetResponse } from "./server";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const INVOICE_DETAIL_TABS = [
@@ -29,9 +28,6 @@ export const invoiceShareUserSchema = z.object({
 });
 export type InvoiceShareUser = z.infer<typeof invoiceShareUserSchema>;
 
-export const invoiceShareCandidateListSchema = createLimitOffsetResponse(invoiceShareUserSchema);
-export type InvoiceShareCandidateList = z.infer<typeof invoiceShareCandidateListSchema>;
-
 export const invoiceShareSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -48,14 +44,6 @@ export const invoiceShareSchema = z.object({
   sharedBy: invoiceShareUserSchema.nullish(),
 });
 export type InvoiceShare = z.infer<typeof invoiceShareSchema>;
-
-export const invoiceShareListSchema = z.object({
-  shares: z
-    .array(invoiceShareSchema)
-    .nullish()
-    .transform((value) => value ?? []),
-});
-export type InvoiceShareList = z.infer<typeof invoiceShareListSchema>;
 
 export const invoiceShareEmailStatusSchema = z.enum([
   "Queued",

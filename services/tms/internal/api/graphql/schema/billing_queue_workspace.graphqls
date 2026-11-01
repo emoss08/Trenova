@@ -1,0 +1,259 @@
+"How many items one lane holds and what they total."
+type BillingQueueLaneStat {
+  lane: BillingQueueLane!
+  count: Int!
+  total: Decimal!
+}
+
+"The day's figures for the queue, computed against the caller's day."
+type BillingQueuePulse {
+  oldestWaitingAt: Timestamp
+  deliveryToInvoiceDays: Decimal
+  priorDeliveryToInvoiceDays: Decimal
+  approvedTodayCount: Int!
+  approvedTodayTotal: Decimal!
+  medianReviewSecondsToday: Int
+}
+
+type BillingQueueStats {
+  lanes: [BillingQueueLaneStat!]!
+  openCount: Int!
+  openTotal: Decimal!
+  "Set when dayStart is given."
+  pulse: BillingQueuePulse
+}
+
+enum BillingQueueRecommendationKind {
+  ApproveReady
+  AssignToMe
+  PostApproved
+  RequestPaperwork
+  ReviewUnbilled
+  HoldDuplicates
+  ApproveAgentAgreed
+  ReviewAgentConcerns
+}
+
+enum BillingQueueRecommendationSource {
+  Rules
+  Agent
+}
+
+"A batch the queue can clear in one action, naming exactly the items it covers."
+type BillingQueueRecommendation {
+  kind: BillingQueueRecommendationKind!
+  source: BillingQueueRecommendationSource!
+  count: Int!
+  total: Decimal!
+  itemIds: [ID!]!
+}
+
+"What Nova can do on the billing queue for this organization."
+type BillingQueueAssistAvailability {
+  "Nova reviews items before approval."
+  review: Boolean!
+  "Nova writes the queue's brief."
+  brief: Boolean!
+  "Nova reads a search typed as a sentence."
+  search: Boolean!
+}
+
+type BillingQueueBrief {
+  available: Boolean!
+  text: String!
+  generatedAt: Timestamp!
+}
+
+enum BillingQueueNovaPhase {
+  Reviewing
+  Briefing
+  Done
+  "The last generation stopped with items unreviewed; retryAt says when opening the queue tries again."
+  Left
+}
+
+"Nova writing, in bulk, the reviews the queue is missing and then its brief."
+type BillingQueueNovaGeneration {
+  phase: BillingQueueNovaPhase!
+  total: Int!
+  done: Int!
+  retryAt: Timestamp
+}
+
+"A window of days a queue search names: the last N days, or calendar days from and to (YYYY-MM-DD)."
+type BillingQueueSearchDates {
+  lastDays: Int
+  from: String
+  to: String
+}
+
+"The filters Nova read out of a sentence typed into the queue's search."
+type BillingQueueSearchIntent {
+  lanes: [BillingQueueLane!]!
+  search: String!
+  payerId: ID
+  payerName: String!
+  shipmentCustomerId: ID
+  shipmentCustomerName: String!
+  minAmount: Decimal
+  maxAmount: Decimal
+  createdBefore: Timestamp
+  delivered: BillingQueueSearchDates
+  pickedUp: BillingQueueSearchDates
+  queued: BillingQueueSearchDates
+  "The part of the sentence Nova could not turn into a filter."
+  unresolved: String!
+}
+
+"A saved set of queue filters, the caller's own."
+type BillingQueueFilterPreset {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  name: String!
+  filters: JSON!
+  isDefault: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input BillingQueueFilterPresetInput {
+  name: String!
+  filters: JSON!
+  isDefault: Boolean
+}
+
+enum BillingQueueBulkAction {
+  Approve
+  Post
+  Hold
+  Assign
+  Cancel
+  RequestPaperwork
+  ResolveIssue
+}
+
+enum BillingQueueBulkRunStatus {
+  Scheduled
+  Running
+  Completed
+  Undone
+  Failed
+}
+
+enum BillingQueueBulkRunItemStatus {
+  Pending
+  Succeeded
+  Failed
+  Skipped
+}
+
+type BillingQueueBulkRunItem {
+  itemId: ID!
+  status: BillingQueueBulkRunItemStatus!
+  failureCode: String!
+  errorMessage: String!
+  invoiceNumber: String!
+}
+
+"One action over several items, run as a job behind an undo window."
+type BillingQueueBulkRun {
+  id: ID!
+  action: BillingQueueBulkAction!
+  status: BillingQueueBulkRunStatus!
+  totalCount: Int!
+  succeededCount: Int!
+  failedCount: Int!
+  skippedCount: Int!
+  "When the run starts writing; until then the person who started it can undo it."
+  commitAt: Timestamp!
+  cancelRequestedAt: Timestamp
+  failureMessage: String!
+  "Per-item results, on the read through billingQueueBulkRun(id)."
+  items: [BillingQueueBulkRunItem!]!
+}
+
+input BillingQueueBulkRunParamsInput {
+  "Approve: make the caller the approver of items with no biller."
+  assignApprover: Boolean
+  "Assign: the biller."
+  billerId: ID
+  "Hold: why."
+  holdReasonCode: BillingQueueHoldReasonCode
+  "Hold or Cancel: the note."
+  reason: String
+  "ResolveIssue: the issue and the option that settles it."
+  issueCode: String
+  optionKey: String
+}
+
+input StartBillingQueueBulkRunInput {
+  action: BillingQueueBulkAction!
+  "At most 500 items."
+  itemIds: [ID!]!
+  "A retry with the same key returns the run the first request started."
+  idempotencyKey: String!
+  params: BillingQueueBulkRunParamsInput
+}
+
+"What re-reading the queued PODs' signatures did."
+type BillingQueuePodSignatureRedetectResult {
+  shipments: Int!
+  documents: Int!
+  queued: Int!
+  alreadyRead: Int!
+  setByPerson: Int!
+  notReadByMachine: Int!
+  deferred: Int!
+  failed: Int!
+}
+
+extend type Query {
+  "Lane counts and totals, plus the pulse of the caller's day when dayStart is given."
+  billingQueueStats(dayStart: Timestamp): BillingQueueStats!
+  "What a biller can clear in one action now, each naming its items."
+  billingQueueRecommendations: [BillingQueueRecommendation!]!
+  billingQueueAssist: BillingQueueAssistAvailability!
+  "The brief Nova wrote for the queue."
+  billingQueueBrief: BillingQueueBrief!
+  """
+  What Nova is generating for the whole queue, or null when nothing is. Reading
+  it starts a generation when the queue has items Nova has not reviewed or no
+  brief; one runs per organization, so every reader sees the same one.
+  """
+  billingQueueNovaGeneration: BillingQueueNovaGeneration
+  """
+  Reads a search such as "Acme over $5k delivered last week" into queue filters.
+  today is the person's date, YYYY-MM-DD, that "last week" counts from. Nothing
+  is changed.
+  """
+  billingQueueSearchIntent(text: String!, today: String): BillingQueueSearchIntent!
+  "The caller's saved queue filters."
+  billingQueueFilterPresets: [BillingQueueFilterPreset!]!
+  "A bulk action and its per-item results."
+  billingQueueBulkRun(id: ID!): BillingQueueBulkRun
+}
+
+extend type Mutation {
+  createBillingQueueFilterPreset(input: BillingQueueFilterPresetInput!): BillingQueueFilterPreset!
+  updateBillingQueueFilterPreset(
+    id: ID!
+    input: BillingQueueFilterPresetInput!
+  ): BillingQueueFilterPreset!
+  deleteBillingQueueFilterPreset(id: ID!): Boolean!
+  """
+  Applies one action to up to 500 items as one job. Every action but posting
+  waits out a short undo window first. Posting also needs invoice post
+  permission; assigning needs billing queue assign.
+  """
+  startBillingQueueBulkRun(input: StartBillingQueueBulkRunInput!): BillingQueueBulkRun!
+  "Undoes a bulk action inside its window. Only the person who started it can."
+  cancelBillingQueueBulkRun(id: ID!): BillingQueueBulkRun!
+  """
+  Runs document intelligence again on the current PODs of every queued shipment
+  whose signature nobody has read yet. Needs document update as well.
+  """
+  redetectBillingQueuePodSignatures: BillingQueuePodSignatureRedetectResult!
+}

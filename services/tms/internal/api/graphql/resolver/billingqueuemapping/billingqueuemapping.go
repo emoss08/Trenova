@@ -87,7 +87,58 @@ func BillingQueueItemToModel(ctx context.Context,
 		AgentSummary:              gqlscalar.StringPtrFromValue(item.AgentSummary),
 		AgentReviewedAt:           gqlscalar.IntPtr(item.AgentReviewedAt),
 		Headline:                  headlineToModel(item.Headline),
+		HeldAt:                    gqlscalar.IntPtr(item.HeldAt),
+		HeldByID:                  gqlid.IDPtrFromPulidPtr(item.HeldByID),
+		StatusBeforeHold:          item.StatusBeforeHold,
+		CheckedAt:                 gqlscalar.IntPtr(item.CheckedAt),
+		InvoiceID:                 gqlid.IDPtr(item.InvoiceID),
+		InvoiceMemo:               item.InvoiceMemo,
+		PaymentTerm:               item.PaymentTerm,
+		InvoiceDate:               gqlscalar.IntPtr(item.InvoiceDate),
+		PacketDocumentIds:         gqlid.PulidsToStrings(item.PacketDocumentIDs),
+		AgentReads:                agentReadsToModel(item.AgentReads),
+		PayerShare:                item.PayerShare,
+		RatedBy:                   item.RatedBy,
+		DetentionHolds:            detentionHoldsToModel(item.DetentionHolds),
+		RatingReviewHold:          item.RatingReviewHold,
+		Review:                    item.Review,
 	}, nil
+}
+
+func BillingQueueItemsToModel(
+	ctx context.Context,
+	items []*billingqueue.BillingQueueItem,
+) ([]*gqlmodel.BillingQueueItem, error) {
+	out := make([]*gqlmodel.BillingQueueItem, 0, len(items))
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		model, err := BillingQueueItemToModel(ctx, item)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, model)
+	}
+
+	return out, nil
+}
+
+func agentReadsToModel(reads []billingqueue.AgentRead) []*billingqueue.AgentRead {
+	out := make([]*billingqueue.AgentRead, 0, len(reads))
+	for i := range reads {
+		out = append(out, &reads[i])
+	}
+
+	return out
+}
+
+func detentionHoldsToModel(holds []*billingqueue.DetentionHold) []*billingqueue.DetentionHold {
+	if holds == nil {
+		return []*billingqueue.DetentionHold{}
+	}
+
+	return holds
 }
 
 func headlineToModel(headline *billingqueue.Headline) *gqlmodel.BillingQueueHeadline {

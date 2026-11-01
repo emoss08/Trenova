@@ -1,0 +1,170 @@
+query BillingQueueStats($dayStart: Timestamp) {
+  billingQueueStats(dayStart: $dayStart) {
+    lanes {
+      lane
+      count
+      total
+    }
+    openCount
+    openTotal
+    pulse {
+      oldestWaitingAt
+      deliveryToInvoiceDays
+      priorDeliveryToInvoiceDays
+      approvedTodayCount
+      approvedTodayTotal
+      medianReviewSecondsToday
+    }
+  }
+}
+
+query BillingQueueRecommendations {
+  billingQueueRecommendations {
+    kind
+    source
+    count
+    total
+    itemIds
+  }
+}
+
+query BillingQueueAssist {
+  billingQueueAssist {
+    review
+    brief
+    search
+  }
+}
+
+query BillingQueueBrief {
+  billingQueueBrief {
+    available
+    text
+    generatedAt
+  }
+}
+
+query BillingQueueNovaGeneration {
+  billingQueueNovaGeneration {
+    phase
+    total
+    done
+    retryAt
+  }
+}
+
+fragment BillingQueueSearchDatesFields on BillingQueueSearchDates {
+  lastDays
+  from
+  to
+}
+
+query BillingQueueSearchIntent($text: String!, $today: String) {
+  billingQueueSearchIntent(text: $text, today: $today) {
+    lanes
+    search
+    payerId
+    payerName
+    shipmentCustomerId
+    shipmentCustomerName
+    minAmount
+    maxAmount
+    createdBefore
+    delivered {
+      ...BillingQueueSearchDatesFields
+    }
+    pickedUp {
+      ...BillingQueueSearchDatesFields
+    }
+    queued {
+      ...BillingQueueSearchDatesFields
+    }
+    unresolved
+  }
+}
+
+fragment BillingQueueFilterPresetFields on BillingQueueFilterPreset {
+  id
+  organizationId
+  businessUnitId
+  userId
+  name
+  filters
+  isDefault
+  version
+  createdAt
+  updatedAt
+}
+
+query BillingQueueFilterPresets {
+  billingQueueFilterPresets {
+    ...BillingQueueFilterPresetFields
+  }
+}
+
+mutation CreateBillingQueueFilterPreset($input: BillingQueueFilterPresetInput!) {
+  createBillingQueueFilterPreset(input: $input) {
+    ...BillingQueueFilterPresetFields
+  }
+}
+
+mutation UpdateBillingQueueFilterPreset($id: ID!, $input: BillingQueueFilterPresetInput!) {
+  updateBillingQueueFilterPreset(id: $id, input: $input) {
+    ...BillingQueueFilterPresetFields
+  }
+}
+
+mutation DeleteBillingQueueFilterPreset($id: ID!) {
+  deleteBillingQueueFilterPreset(id: $id)
+}
+
+fragment BillingQueueBulkRunFields on BillingQueueBulkRun {
+  id
+  action
+  status
+  totalCount
+  succeededCount
+  failedCount
+  skippedCount
+  commitAt
+  cancelRequestedAt
+  failureMessage
+  items {
+    itemId
+    status
+    failureCode
+    errorMessage
+    invoiceNumber
+  }
+}
+
+query BillingQueueBulkRun($id: ID!) {
+  billingQueueBulkRun(id: $id) {
+    ...BillingQueueBulkRunFields
+  }
+}
+
+mutation StartBillingQueueBulkRun($input: StartBillingQueueBulkRunInput!) {
+  startBillingQueueBulkRun(input: $input) {
+    ...BillingQueueBulkRunFields
+  }
+}
+
+mutation CancelBillingQueueBulkRun($id: ID!) {
+  cancelBillingQueueBulkRun(id: $id) {
+    ...BillingQueueBulkRunFields
+  }
+}
+
+mutation RedetectBillingQueuePodSignatures {
+  redetectBillingQueuePodSignatures {
+    shipments
+    documents
+    queued
+    alreadyRead
+    setByPerson
+    notReadByMachine
+    deferred
+    failed
+  }
+}

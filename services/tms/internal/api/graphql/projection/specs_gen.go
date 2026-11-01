@@ -94,6 +94,16 @@ var AuthEventSpec TypeSpec
 
 var BenefitPlanSpec TypeSpec
 
+var BillingQueueBulkRunSpec TypeSpec
+
+var BillingQueueBulkRunItemSpec TypeSpec
+
+var BillingQueueEventSpec TypeSpec
+
+var BillingQueueFilterPresetSpec TypeSpec
+
+var BillingQueueIssueSpec TypeSpec
+
 var BillingQueueItemSpec TypeSpec
 
 var BillingTransferRunSpec TypeSpec
@@ -388,11 +398,27 @@ var InvoiceSpec TypeSpec
 
 var InvoiceAdjustmentSpec TypeSpec
 
+var InvoiceAdjustmentBatchSpec TypeSpec
+
+var InvoiceAdjustmentBatchItemSpec TypeSpec
+
+var InvoiceAdjustmentCorrectionGroupSpec TypeSpec
+
+var InvoiceAdjustmentDocumentSpec TypeSpec
+
+var InvoiceAdjustmentDocumentReferenceSpec TypeSpec
+
 var InvoiceAdjustmentLineSpec TypeSpec
 
 var InvoiceDisputeSpec TypeSpec
 
+var InvoiceEmailAttemptSpec TypeSpec
+
+var InvoiceEmailAttemptAttachmentSpec TypeSpec
+
 var InvoiceLineSpec TypeSpec
+
+var InvoiceShareSpec TypeSpec
 
 var JobPositionSpec TypeSpec
 
@@ -5152,6 +5178,258 @@ func init() {
 		},
 	}
 
+	BillingQueueBulkRunSpec = TypeSpec{
+		TypeName: "BillingQueueBulkRun",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "action",
+				Column: "action",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "totalCount",
+				Column: "total_count",
+			},
+			{
+				Name:   "succeededCount",
+				Column: "succeeded_count",
+			},
+			{
+				Name:   "failedCount",
+				Column: "failed_count",
+			},
+			{
+				Name:   "skippedCount",
+				Column: "skipped_count",
+			},
+			{
+				Name:   "commitAt",
+				Column: "commit_at",
+			},
+			{
+				Name:   "cancelRequestedAt",
+				Column: "cancel_requested_at",
+			},
+			{
+				Name:   "failureMessage",
+				Column: "failure_message",
+			},
+			{
+				Name: "items",
+				Relation: &RelationSpec{
+					Target: &BillingQueueBulkRunItemSpec,
+				},
+			},
+		},
+	}
+
+	BillingQueueBulkRunItemSpec = TypeSpec{
+		TypeName: "BillingQueueBulkRunItem",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "itemId",
+				Column: "item_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "failureCode",
+				Column: "failure_code",
+			},
+			{
+				Name:   "errorMessage",
+				Column: "error_message",
+			},
+			{
+				Name:   "invoiceNumber",
+				Column: "invoice_number",
+			},
+		},
+	}
+
+	BillingQueueEventSpec = TypeSpec{
+		TypeName: "BillingQueueEvent",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "kind",
+				Column: "kind",
+			},
+			{
+				Name:   "text",
+				Column: "text",
+			},
+			{
+				Name:   "actorType",
+				Column: "actor_type",
+			},
+			{
+				Name:   "actorId",
+				Column: "actor_id",
+			},
+			{
+				Name:   "actorName",
+				Column: "actor_name",
+			},
+			{
+				Name:   "at",
+				Column: "at",
+			},
+		},
+	}
+
+	BillingQueueFilterPresetSpec = TypeSpec{
+		TypeName: "BillingQueueFilterPreset",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "userId",
+				Column: "user_id",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "filters",
+				Column: "filters",
+			},
+			{
+				Name:   "isDefault",
+				Column: "is_default",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	BillingQueueIssueSpec = TypeSpec{
+		TypeName: "BillingQueueIssue",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "itemId",
+				Column: "item_id",
+			},
+			{
+				Name:   "checkKey",
+				Column: "check_key",
+			},
+			{
+				Name:   "code",
+				Column: "code",
+			},
+			{
+				Name:   "subjectKey",
+				Column: "subject_key",
+			},
+			{
+				Name:   "summary",
+				Column: "summary",
+			},
+			{
+				Name:   "reasoning",
+				Column: "reasoning",
+			},
+			{
+				Name:   "source",
+				Column: "source",
+			},
+			{
+				Name:   "flaggedChargeId",
+				Column: "flagged_charge_id",
+			},
+			{
+				Name:   "options",
+				Column: "options",
+			},
+			{
+				Name:   "resolutionKey",
+				Column: "resolution_key",
+			},
+			{
+				Name:   "resolutionText",
+				Column: "resolution_text",
+			},
+			{
+				Name:   "resolvedById",
+				Column: "resolved_by_id",
+			},
+			{
+				Name:   "resolvedAt",
+				Column: "resolved_at",
+			},
+			{
+				Name:   "requestedAt",
+				Column: "requested_at",
+			},
+			{
+				Name:    "undoable",
+				Special: "undoable",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+		},
+	}
+
 	BillingQueueItemSpec = TypeSpec{
 		TypeName: "BillingQueueItem",
 		AlwaysColumns: []string{
@@ -5335,6 +5613,66 @@ func init() {
 			{
 				Name:    "headline",
 				Special: "headline",
+			},
+			{
+				Name:   "heldAt",
+				Column: "held_at",
+			},
+			{
+				Name:   "heldById",
+				Column: "held_by_id",
+			},
+			{
+				Name:   "statusBeforeHold",
+				Column: "status_before_hold",
+			},
+			{
+				Name:   "checkedAt",
+				Column: "checked_at",
+			},
+			{
+				Name:   "invoiceId",
+				Column: "invoice_id",
+			},
+			{
+				Name:   "invoiceMemo",
+				Column: "invoice_memo",
+			},
+			{
+				Name:   "paymentTerm",
+				Column: "payment_term",
+			},
+			{
+				Name:   "invoiceDate",
+				Column: "invoice_date",
+			},
+			{
+				Name:   "packetDocumentIds",
+				Column: "packet_document_ids",
+			},
+			{
+				Name:   "agentReads",
+				Column: "agent_reads",
+			},
+			{
+				Name:    "payerShare",
+				Special: "payerShare",
+			},
+			{
+				Name:    "ratedBy",
+				Special: "ratedBy",
+			},
+			{
+				Name:    "detentionHolds",
+				Special: "detentionHolds",
+			},
+			{
+				Name:    "ratingReviewHold",
+				Special: "ratingReviewHold",
+			},
+			{
+				Name:    "review",
+				Special: "review",
 			},
 		},
 	}
@@ -18797,6 +19135,57 @@ func init() {
 				Special: "openDispute",
 			},
 			{
+				Name:   "poNumber",
+				Column: "po_number",
+			},
+			{
+				Name:   "invoiceRunId",
+				Column: "invoice_run_id",
+			},
+			{
+				Name:   "sentById",
+				Column: "sent_by_id",
+			},
+			{
+				Name:   "lastSendWarning",
+				Column: "last_send_warning",
+			},
+			{
+				Name:   "emailSubjectSnapshot",
+				Column: "email_subject_snapshot",
+			},
+			{
+				Name:   "emailBodySnapshot",
+				Column: "email_body_snapshot",
+			},
+			{
+				Name:   "emailToSnapshot",
+				Column: "email_to_snapshot",
+			},
+			{
+				Name:   "emailCcSnapshot",
+				Column: "email_cc_snapshot",
+			},
+			{
+				Name:   "emailBccSnapshot",
+				Column: "email_bcc_snapshot",
+			},
+			{
+				Name:   "correctionGroupId",
+				Column: "correction_group_id",
+			},
+			{
+				Name:   "sourceInvoiceAdjustmentId",
+				Column: "source_invoice_adjustment_id",
+			},
+			{
+				Name:   "shipment",
+				Column: "shipment_id",
+				Relation: &RelationSpec{
+					Target: &ShipmentSpec,
+				},
+			},
+			{
 				Name:    "lateChargeAssessments",
 				Special: "lateChargeAssessments",
 			},
@@ -18960,6 +19349,312 @@ func init() {
 				Name:    "supportingDocumentIds",
 				Special: "supportingDocumentIds",
 			},
+			{
+				Name:   "idempotencyKey",
+				Column: "idempotency_key",
+			},
+			{
+				Name:   "metadata",
+				Column: "metadata",
+			},
+			{
+				Name: "referencedDocuments",
+				Relation: &RelationSpec{
+					Target: &InvoiceAdjustmentDocumentReferenceSpec,
+				},
+			},
+			{
+				Name:    "adjustmentDocuments",
+				Special: "adjustmentDocuments",
+			},
+		},
+	}
+
+	InvoiceAdjustmentBatchSpec = TypeSpec{
+		TypeName: "InvoiceAdjustmentBatch",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "idempotencyKey",
+				Column: "idempotency_key",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "totalCount",
+				Column: "total_count",
+			},
+			{
+				Name:   "processedCount",
+				Column: "processed_count",
+			},
+			{
+				Name:   "succeededCount",
+				Column: "succeeded_count",
+			},
+			{
+				Name:   "failedCount",
+				Column: "failed_count",
+			},
+			{
+				Name:   "pendingCount",
+				Column: "pending_count",
+			},
+			{
+				Name:   "submittedById",
+				Column: "submitted_by_id",
+			},
+			{
+				Name:   "submittedByName",
+				Column: "submitted_by_name",
+			},
+			{
+				Name:   "submittedAt",
+				Column: "submitted_at",
+			},
+			{
+				Name:   "lastFailure",
+				Column: "last_failure",
+			},
+			{
+				Name:   "lastFailureCount",
+				Column: "last_failure_count",
+			},
+			{
+				Name:   "metadata",
+				Column: "metadata",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name: "items",
+				Relation: &RelationSpec{
+					Target: &InvoiceAdjustmentBatchItemSpec,
+				},
+			},
+		},
+	}
+
+	InvoiceAdjustmentBatchItemSpec = TypeSpec{
+		TypeName: "InvoiceAdjustmentBatchItem",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "batchId",
+				Column: "batch_id",
+			},
+			{
+				Name:   "adjustmentId",
+				Column: "adjustment_id",
+			},
+			{
+				Name:   "invoiceId",
+				Column: "invoice_id",
+			},
+			{
+				Name:   "idempotencyKey",
+				Column: "idempotency_key",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "errorMessage",
+				Column: "error_message",
+			},
+			{
+				Name:   "requestPayload",
+				Column: "request_payload",
+			},
+			{
+				Name:   "resultPayload",
+				Column: "result_payload",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	InvoiceAdjustmentCorrectionGroupSpec = TypeSpec{
+		TypeName: "InvoiceAdjustmentCorrectionGroup",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "rootInvoiceId",
+				Column: "root_invoice_id",
+			},
+			{
+				Name:   "currentInvoiceId",
+				Column: "current_invoice_id",
+			},
+			{
+				Name:   "metadata",
+				Column: "metadata",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	InvoiceAdjustmentDocumentSpec = TypeSpec{
+		TypeName: "InvoiceAdjustmentDocument",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "fileName",
+				Column: "file_name",
+			},
+			{
+				Name:   "originalName",
+				Column: "original_name",
+			},
+		},
+	}
+
+	InvoiceAdjustmentDocumentReferenceSpec = TypeSpec{
+		TypeName: "InvoiceAdjustmentDocumentReference",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "adjustmentId",
+				Column: "adjustment_id",
+			},
+			{
+				Name:   "documentId",
+				Column: "document_id",
+			},
+			{
+				Name:   "selectedById",
+				Column: "selected_by_id",
+			},
+			{
+				Name:   "selectedAt",
+				Column: "selected_at",
+			},
+			{
+				Name:   "snapshotFileName",
+				Column: "snapshot_file_name",
+			},
+			{
+				Name:   "snapshotOriginalName",
+				Column: "snapshot_original_name",
+			},
+			{
+				Name:   "snapshotFileType",
+				Column: "snapshot_file_type",
+			},
+			{
+				Name:   "snapshotResourceType",
+				Column: "snapshot_resource_type",
+			},
+			{
+				Name:   "snapshotResourceId",
+				Column: "snapshot_resource_id",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
 		},
 	}
 
@@ -19021,6 +19716,10 @@ func init() {
 			{
 				Name:   "rebillAmount",
 				Column: "rebill_amount",
+			},
+			{
+				Name:   "replacementPayload",
+				Column: "replacement_payload",
 			},
 			{
 				Name:   "createdAt",
@@ -19139,6 +19838,176 @@ func init() {
 		},
 	}
 
+	InvoiceEmailAttemptSpec = TypeSpec{
+		TypeName: "InvoiceEmailAttempt",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "invoiceId",
+				Column: "invoice_id",
+			},
+			{
+				Name:   "emailMessageId",
+				Column: "email_message_id",
+			},
+			{
+				Name:   "attemptNumber",
+				Column: "attempt_number",
+			},
+			{
+				Name:   "partNumber",
+				Column: "part_number",
+			},
+			{
+				Name:   "totalParts",
+				Column: "total_parts",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "provider",
+				Column: "provider",
+			},
+			{
+				Name:   "providerMessageId",
+				Column: "provider_message_id",
+			},
+			{
+				Name:   "toRecipients",
+				Column: "to_recipients",
+			},
+			{
+				Name:   "ccRecipients",
+				Column: "cc_recipients",
+			},
+			{
+				Name:   "bccRecipients",
+				Column: "bcc_recipients",
+			},
+			{
+				Name:   "subject",
+				Column: "subject",
+			},
+			{
+				Name:   "body",
+				Column: "body",
+			},
+			{
+				Name:   "estimatedSize",
+				Column: "estimated_size",
+			},
+			{
+				Name:   "warnings",
+				Column: "warnings",
+			},
+			{
+				Name:   "error",
+				Column: "error",
+			},
+			{
+				Name:   "sentAt",
+				Column: "sent_at",
+			},
+			{
+				Name:   "createdById",
+				Column: "created_by_id",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name: "attachments",
+				Relation: &RelationSpec{
+					Target: &InvoiceEmailAttemptAttachmentSpec,
+				},
+			},
+		},
+	}
+
+	InvoiceEmailAttemptAttachmentSpec = TypeSpec{
+		TypeName: "InvoiceEmailAttemptAttachment",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "attemptId",
+				Column: "attempt_id",
+			},
+			{
+				Name:   "documentId",
+				Column: "document_id",
+			},
+			{
+				Name:   "fileName",
+				Column: "file_name",
+			},
+			{
+				Name:   "contentType",
+				Column: "content_type",
+			},
+			{
+				Name:   "sizeBytes",
+				Column: "size_bytes",
+			},
+			{
+				Name:   "encodedBytes",
+				Column: "encoded_bytes",
+			},
+			{
+				Name:   "method",
+				Column: "method",
+			},
+			{
+				Name:   "shareTokenId",
+				Column: "share_token_id",
+			},
+			{
+				Name:   "reason",
+				Column: "reason",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+		},
+	}
+
 	InvoiceLineSpec = TypeSpec{
 		TypeName: "InvoiceLine",
 		AlwaysColumns: []string{
@@ -19241,6 +20110,82 @@ func init() {
 			{
 				Name:   "updatedAt",
 				Column: "updated_at",
+			},
+		},
+	}
+
+	InvoiceShareSpec = TypeSpec{
+		TypeName: "InvoiceShare",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "invoiceId",
+				Column: "invoice_id",
+			},
+			{
+				Name:   "sharedWithId",
+				Column: "shared_with_id",
+			},
+			{
+				Name:   "sharedById",
+				Column: "shared_by_id",
+			},
+			{
+				Name:   "note",
+				Column: "note",
+			},
+			{
+				Name:   "tab",
+				Column: "tab",
+			},
+			{
+				Name:   "shareCount",
+				Column: "share_count",
+			},
+			{
+				Name:   "firstSharedAt",
+				Column: "first_shared_at",
+			},
+			{
+				Name:   "lastSharedAt",
+				Column: "last_shared_at",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name:   "sharedWith",
+				Column: "shared_with_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "sharedBy",
+				Column: "shared_by_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
 			},
 		},
 	}

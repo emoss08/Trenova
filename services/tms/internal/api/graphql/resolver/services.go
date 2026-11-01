@@ -61,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueuefilterpresetports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
@@ -69,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
@@ -405,6 +407,16 @@ type Params struct {
 	InvoiceMemoService                invoiceports.InvoiceMemoService
 	InvoiceVoidService                invoiceports.InvoiceVoidService
 	InvoiceEDIService                 invoiceports.InvoiceEDIService
+	BillingQueueApprovalService       billingqueueports.BillingQueueApprovalService
+	BillingQueueAssistService         billingqueueports.BillingQueueAssistService
+	BillingQueueFilterPresetRepo      billingqueuefilterpresetports.BillingQueueFilterPresetRepository
+	InvoicePostingService             invoiceports.InvoicePostingService
+	InvoicePDFService                 invoiceports.InvoicePDFService
+	InvoiceSendService                invoiceports.InvoiceSendService
+	InvoiceDraftService               invoiceports.InvoiceDraftService
+	InvoiceShareService               invoiceports.InvoiceShareService
+	InvoiceStatementService           invoicerunports.InvoiceStatementService
+	InvoiceAdjustmentDraftService     invoiceadjustmentports.InvoiceAdjustmentDraftService
 	InvoiceAdjustmentService          invoiceadjustmentports.InvoiceAdjustmentService
 	FactoringAgreementService         factoringports.AgreementService
 	FactoringNoaService               factoringports.NoaService
@@ -694,6 +706,16 @@ type Services struct {
 	InvoiceMemoService                invoiceports.InvoiceMemoService
 	InvoiceVoidService                invoiceports.InvoiceVoidService
 	InvoiceEDIService                 invoiceports.InvoiceEDIService
+	BillingQueueApprovalService       billingqueueports.BillingQueueApprovalService
+	BillingQueueAssistService         billingqueueports.BillingQueueAssistService
+	BillingQueueFilterPresetRepo      billingqueuefilterpresetports.BillingQueueFilterPresetRepository
+	InvoicePostingService             invoiceports.InvoicePostingService
+	InvoicePDFService                 invoiceports.InvoicePDFService
+	InvoiceSendService                invoiceports.InvoiceSendService
+	InvoiceDraftService               invoiceports.InvoiceDraftService
+	InvoiceShareService               invoiceports.InvoiceShareService
+	InvoiceStatementService           invoicerunports.InvoiceStatementService
+	InvoiceAdjustmentDraftService     invoiceadjustmentports.InvoiceAdjustmentDraftService
 	InvoiceAdjustmentService          invoiceadjustmentports.InvoiceAdjustmentService
 	FactoringAgreementService         factoringports.AgreementService
 	FactoringNoaService               factoringports.NoaService
@@ -989,6 +1011,16 @@ func newServices(p *Params) *Services {
 		InvoiceMemoService:                p.InvoiceMemoService,
 		InvoiceVoidService:                p.InvoiceVoidService,
 		InvoiceEDIService:                 p.InvoiceEDIService,
+		BillingQueueApprovalService:       p.BillingQueueApprovalService,
+		BillingQueueAssistService:         p.BillingQueueAssistService,
+		BillingQueueFilterPresetRepo:      p.BillingQueueFilterPresetRepo,
+		InvoicePostingService:             p.InvoicePostingService,
+		InvoicePDFService:                 p.InvoicePDFService,
+		InvoiceSendService:                p.InvoiceSendService,
+		InvoiceDraftService:               p.InvoiceDraftService,
+		InvoiceShareService:               p.InvoiceShareService,
+		InvoiceStatementService:           p.InvoiceStatementService,
+		InvoiceAdjustmentDraftService:     p.InvoiceAdjustmentDraftService,
 		InvoiceAdjustmentService:          p.InvoiceAdjustmentService,
 		InvoiceDisputeService:             p.InvoiceDisputeService,
 		FactoringAgreementService:         p.FactoringAgreementService,

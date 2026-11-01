@@ -1,0 +1,79 @@
+"The invoice tab a share opens on."
+enum InvoiceShareTab {
+  overview
+  delivery
+  charges
+  documents
+  activity
+}
+
+"How the emails a share sends went."
+enum InvoiceShareEmailStatus {
+  Queued
+  Partial
+  Failed
+  NotConfigured
+}
+
+"""
+One teammate an invoice was shared with. Sharing the same invoice with the same
+person again bumps shareCount and lastSharedAt rather than adding a row.
+"""
+type InvoiceShare {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  invoiceId: ID!
+  sharedWithId: ID!
+  sharedById: ID!
+  note: String!
+  tab: InvoiceShareTab!
+  shareCount: Int!
+  firstSharedAt: Timestamp!
+  lastSharedAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  sharedWith: User
+  sharedBy: User
+}
+
+"A teammate the invoice can be shared with."
+type InvoiceShareCandidate {
+  id: ID!
+  name: String!
+  username: String!
+  emailAddress: String!
+  profilePicUrl: String!
+  thumbnailUrl: String!
+}
+
+type ShareInvoiceResult {
+  "Every share on the invoice after this one, newest first."
+  shares: [InvoiceShare!]!
+  recipientCount: Int!
+  emailsQueued: Int!
+  emailStatus: InvoiceShareEmailStatus!
+}
+
+input ShareInvoiceInput {
+  "At most 25 teammates."
+  userIds: [ID!]!
+  "At most 1,000 characters."
+  note: String
+  tab: InvoiceShareTab!
+}
+
+extend type Query {
+  "Who an invoice was shared with, most recently shared first."
+  invoiceShares(invoiceId: ID!): [InvoiceShare!]!
+  """
+  Teammates the invoice can be shared with, matched on name, username and email.
+  limit is at most 25.
+  """
+  invoiceShareCandidates(invoiceId: ID!, query: String, limit: Int = 10): [InvoiceShareCandidate!]!
+}
+
+extend type Mutation {
+  "Shares an invoice with teammates and emails each a link to the tab it opens on."
+  shareInvoice(invoiceId: ID!, input: ShareInvoiceInput!): ShareInvoiceResult!
+}

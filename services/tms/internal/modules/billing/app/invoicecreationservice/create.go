@@ -27,22 +27,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// CreateFromShipments bills the shipments and returns the primary payer's
-// invoice. A split-billed shipment produces one invoice per payer; callers that
-// need every invoice use CreateInvoicesFromShipments.
-func (s *Service) CreateFromShipments(
-	ctx context.Context,
-	req *invoiceports.CreateInvoiceFromShipmentsRequest,
-	actor *permissionports.RequestActor,
-) (*invoice.Invoice, error) {
-	result, err := s.CreateInvoicesFromShipments(ctx, req, actor)
-	if err != nil {
-		return nil, err
-	}
-
-	return result.Primary, nil
-}
-
 // payerPlan is one payer's part of a shipment, resolved before the transaction
 // so every number is minted and every guard checked before anything is written.
 type payerPlan struct {

@@ -43,7 +43,7 @@ function formValuesOf(item: BillingQueueItem): InvoiceDetailsForm {
 export function BillingQueueInvoiceTab({ item }: { item: BillingQueueItem }) {
   const t = useT();
   const { save, isSaving, editable } = useInvoiceDetails(item);
-  const customerTerm = item.shipment?.customer?.billingProfile?.paymentTerm;
+  const customerTerm = item.billToCustomer?.billingProfile?.paymentTerm;
 
   const form = useForm<InvoiceDetailsForm>({
     resolver: zodResolver(invoiceDetailsFormSchema),

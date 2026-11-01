@@ -13,6 +13,28 @@ type Deps struct {
 	BillingQueueReviewService billingqueueports.BillingQueueReviewService
 }
 
+type BillingQueueChargeLineResolver struct{ *Deps }
+
+type BillingQueueChargeReviewResolver struct{ *Deps }
+
+type BillingQueueDetentionHoldResolver struct{ *Deps }
+
+type BillingQueueEventResolver struct{ *Deps }
+
+type BillingQueueIssueEffectResolver struct{ *Deps }
+
+type BillingQueueIssueOptionResolver struct{ *Deps }
+
+type BillingQueueIssueResolver struct{ *Deps }
+
+type BillingQueueItemSummaryResolver struct{ *Deps }
+
+type BillingQueuePayerShareLineResolver struct{ *Deps }
+
+type BillingQueuePayerSharePartyResolver struct{ *Deps }
+
+type BillingQueuePayerShareResolver struct{ *Deps }
+
 type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

@@ -1,6 +1,8 @@
 import {
   AssignBillingQueueBillerDocument,
   BillingQueueFormulaTemplateDocument,
+  BillingQueueItemsByShipmentDocument,
+  type BillingQueueItemsByShipmentQuery,
   BillingQueueItemsDocument,
   BillingQueueRateAgreementDocument,
   BillingQueueShipmentDocument,
@@ -141,4 +143,30 @@ export async function getBillingQueueFormulaTemplateGraphQL(
   });
 
   return data.formulaTemplate ?? null;
+}
+
+/** One queue item a shipment produced, as the shipment's payer rows show it. */
+export type ShipmentBillingQueueItem =
+  BillingQueueItemsByShipmentQuery["billingQueueItems"]["edges"][number]["node"];
+
+const SHIPMENT_QUEUE_ITEMS_LIMIT = 20;
+
+/** Every queue item a shipment produced, posted ones included: one per payer of a split. */
+export async function listBillingQueueItemsByShipmentGraphQL(
+  shipmentId: string,
+  options: RequestOptions = {},
+): Promise<ShipmentBillingQueueItem[]> {
+  const data = await requestGraphQL<BillingQueueItemsByShipmentQuery>({
+    document: BillingQueueItemsByShipmentDocument,
+    operationName: "BillingQueueItemsByShipment",
+    variables: {
+      input: {
+        first: SHIPMENT_QUEUE_ITEMS_LIMIT,
+        fieldFilters: [{ field: "shipmentId", operator: "eq", value: shipmentId }],
+      },
+    },
+    signal: options.signal,
+  });
+
+  return data.billingQueueItems.edges.map((edge) => edge.node);
 }

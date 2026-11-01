@@ -1862,10 +1862,33 @@ export type BenefitPlanType =
   | 'Retirement'
   | 'Vision';
 
+export type BillStatementNowInput = {
+  /** Items held back for the next period; they stay approved and uninvoiced. */
+  exclude?: Array<StatementExclusionInput> | null | undefined;
+  /** Required when the period has not closed yet. */
+  reason?: string | null | undefined;
+};
+
 export type BillType =
   | 'CreditMemo'
   | 'DebitMemo'
   | 'Invoice';
+
+/** Where the next page of activity starts: before this entry. */
+export type BillingQueueActivityCursorInput = {
+  at: number;
+  id: string | number;
+};
+
+export type BillingQueueAgentReadKind =
+  | 'BillingNotes'
+  | 'ChargeHistory'
+  | 'Comments'
+  | 'Document'
+  | 'Invoice'
+  | 'PastInvoices'
+  | 'Stops'
+  | 'Terms';
 
 /** What Nova made of an item it reviewed. */
 export type BillingQueueAgentVerdict =
@@ -1875,6 +1898,65 @@ export type BillingQueueAgentVerdict =
 export type BillingQueueAssignInput = {
   billerId: string | number;
 };
+
+export type BillingQueueBulkAction =
+  | 'Approve'
+  | 'Assign'
+  | 'Cancel'
+  | 'Hold'
+  | 'Post'
+  | 'RequestPaperwork'
+  | 'ResolveIssue';
+
+export type BillingQueueBulkRunItemStatus =
+  | 'Failed'
+  | 'Pending'
+  | 'Skipped'
+  | 'Succeeded';
+
+export type BillingQueueBulkRunParamsInput = {
+  /** Approve: make the caller the approver of items with no biller. */
+  assignApprover?: boolean | null | undefined;
+  /** Assign: the biller. */
+  billerId?: string | number | null | undefined;
+  /** Hold: why. */
+  holdReasonCode?: BillingQueueHoldReasonCode | null | undefined;
+  /** ResolveIssue: the issue and the option that settles it. */
+  issueCode?: string | null | undefined;
+  optionKey?: string | null | undefined;
+  /** Hold or Cancel: the note. */
+  reason?: string | null | undefined;
+};
+
+export type BillingQueueBulkRunStatus =
+  | 'Completed'
+  | 'Failed'
+  | 'Running'
+  | 'Scheduled'
+  | 'Undone';
+
+/** One of the five checks a biller confirms before approving. */
+export type BillingQueueCheckKey =
+  | 'biller'
+  | 'charges'
+  | 'duplicate'
+  | 'pod'
+  | 'terms';
+
+export type BillingQueueCheckState =
+  | 'fail'
+  | 'ok'
+  | 'warn';
+
+export type BillingQueueDocumentState =
+  | 'missing'
+  | 'ok'
+  | 'unsigned';
+
+export type BillingQueueEventActorType =
+  | 'Agent'
+  | 'System'
+  | 'User';
 
 export type BillingQueueExceptionReasonCode =
   | 'AccessorialDispute'
@@ -1888,11 +1970,38 @@ export type BillingQueueExceptionReasonCode =
   | 'ServiceFailure'
   | 'WeightDiscrepancy';
 
+export type BillingQueueFilterPresetInput = {
+  filters: unknown;
+  isDefault?: boolean | null | undefined;
+  name: string;
+};
+
 /** Why a biller set an item aside. */
 export type BillingQueueHoldReasonCode =
   | 'CustomerDispute'
   | 'RateQuestion'
   | 'WaitingOnPaperwork';
+
+/** What the invoice will say, set before approval. */
+export type BillingQueueInvoiceDetailsInput = {
+  /** Null keeps today. */
+  invoiceDate?: number | null | undefined;
+  invoiceMemo?: string | null | undefined;
+  packetDocumentIds?: Array<string | number> | null | undefined;
+  /** Empty keeps the customer's term. */
+  paymentTerm?: string | null | undefined;
+  poNumber?: string | null | undefined;
+  /** The item's version as the person read it. */
+  version: number;
+};
+
+export type BillingQueueIssueEffectKind =
+  | 'accept'
+  | 'add'
+  | 'drop'
+  | 'keep'
+  | 'request'
+  | 'set';
 
 export type BillingQueueItemsFilterInput = {
   /** Only items queued before this time. */
@@ -1924,6 +2033,39 @@ export type BillingQueueLane =
   /** Waiting on a driver, an approver or credit. */
   | 'Waiting';
 
+export type BillingQueueNovaPhase =
+  | 'Briefing'
+  | 'Done'
+  /** The last generation stopped with items unreviewed; retryAt says when opening the queue tries again. */
+  | 'Left'
+  | 'Reviewing';
+
+export type BillingQueueRatedByKind =
+  | 'Agreement'
+  | 'Template';
+
+export type BillingQueueReassignChargeInput = {
+  /** The accessorial being moved; omit for freight. */
+  additionalChargeId?: string | number | null | undefined;
+  /** How the charge is divided among payers; empty gives it back whole to the shipment's payer. */
+  allocations: Array<ChargeAllocationInput>;
+  chargeKind: ChargeAllocationKind;
+};
+
+export type BillingQueueRecommendationKind =
+  | 'ApproveAgentAgreed'
+  | 'ApproveReady'
+  | 'AssignToMe'
+  | 'HoldDuplicates'
+  | 'PostApproved'
+  | 'RequestPaperwork'
+  | 'ReviewAgentConcerns'
+  | 'ReviewUnbilled';
+
+export type BillingQueueRecommendationSource =
+  | 'Agent'
+  | 'Rules';
+
 export type BillingQueueStatus =
   | 'Approved'
   | 'Canceled'
@@ -1933,6 +2075,16 @@ export type BillingQueueStatus =
   | 'Posted'
   | 'ReadyForReview'
   | 'SentBackToOps';
+
+export type BillingQueueUpdateChargesInput = {
+  /** The shipment's accessorial charges as they should stand; omit to leave them alone. */
+  additionalCharges?: Array<ShipmentAdditionalChargeInput> | null | undefined;
+  /** Retries an edit refused because it left an amount split that no longer adds up. */
+  convertAmountSplitsToPercent?: boolean | null | undefined;
+  formulaTemplateId?: string | number | null | undefined;
+  /** The tariff's input values for the shipment, replacing what it carries. */
+  tariffInputs?: unknown;
+};
 
 export type BillingQueueUpdateStatusInput = {
   cancelReason?: string | null | undefined;
@@ -5700,6 +5852,34 @@ export type InvoiceAdjustmentApprovalsInput = {
   submittedById?: string | number | null | undefined;
 };
 
+export type InvoiceAdjustmentBatchItemStatus =
+  | 'Executed'
+  | 'Executing'
+  | 'Failed'
+  | 'Pending'
+  | 'PendingApproval'
+  | 'Previewed'
+  | 'Rejected'
+  | 'Submitted';
+
+export type InvoiceAdjustmentBatchStatus =
+  | 'Completed'
+  | 'Failed'
+  | 'PartialSuccess'
+  | 'Pending'
+  | 'Queued'
+  | 'Running'
+  | 'Submitted';
+
+/** A draft adjustment as the biller has it now; it replaces the draft's kind, reason, evidence and lines. */
+export type InvoiceAdjustmentDraftInput = {
+  kind: InvoiceAdjustmentKind;
+  lines?: Array<InvoiceAdjustmentLineInput> | null | undefined;
+  reason?: string | null | undefined;
+  rebillStrategy?: InvoiceAdjustmentRebillStrategy | null | undefined;
+  referencedDocumentIds?: Array<string | number> | null | undefined;
+};
+
 /** What an invoice adjustment does to the posted invoice it corrects. */
 export type InvoiceAdjustmentKind =
   | 'CreditAndRebill'
@@ -5707,11 +5887,37 @@ export type InvoiceAdjustmentKind =
   | 'FullReversal'
   | 'WriteOff';
 
+export type InvoiceAdjustmentLineInput = {
+  creditAmount: string;
+  creditQuantity: string;
+  description?: string | null | undefined;
+  originalLineId: string | number;
+  rebillAmount: string;
+  rebillQuantity: string;
+  replacementPayload?: unknown;
+};
+
+/**
+ * A page of an adjustment work queue. query matches the queue's text; status
+ * narrows it to one status. limit is at most 100.
+ */
+export type InvoiceAdjustmentQueueInput = {
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+  query?: string | null | undefined;
+  status?: string | null | undefined;
+};
+
 /** How the replacement invoice of a credit-and-rebill is produced. */
 export type InvoiceAdjustmentRebillStrategy =
   | 'CloneExact'
   | 'Manual'
   | 'Rerate';
+
+export type InvoiceAdjustmentReplacementReviewStatus =
+  | 'Completed'
+  | 'NotRequired'
+  | 'Required';
 
 export type InvoiceAdjustmentStatus =
   | 'Approved'
@@ -5721,6 +5927,13 @@ export type InvoiceAdjustmentStatus =
   | 'ExecutionFailed'
   | 'PendingApproval'
   | 'Rejected';
+
+/** How one document went out with an invoice email. */
+export type InvoiceAttachmentDeliveryMethod =
+  | 'Attached'
+  | 'Failed'
+  | 'Link'
+  | 'Skipped';
 
 /** How verbose each section of a consolidated invoice is. */
 export type InvoiceDetail =
@@ -5794,6 +6007,10 @@ export type InvoicePaymentTerm =
   | 'Net60'
   | 'Net90';
 
+export type InvoiceReconciliationExceptionStatus =
+  | 'Open'
+  | 'Resolved';
+
 /**
  * What an invoice covers. Read this rather than inferring shape from which of
  * shipmentId / orderId happens to be set.
@@ -5828,6 +6045,21 @@ export type InvoiceSettlementStatus =
   | 'Paid'
   | 'PartiallyPaid'
   | 'Unpaid';
+
+/** How the emails a share sends went. */
+export type InvoiceShareEmailStatus =
+  | 'Failed'
+  | 'NotConfigured'
+  | 'Partial'
+  | 'Queued';
+
+/** The invoice tab a share opens on. */
+export type InvoiceShareTab =
+  | 'activity'
+  | 'charges'
+  | 'delivery'
+  | 'documents'
+  | 'overview';
 
 /**
  * How many invoices a billing period yields. Customer means one; every other
@@ -7724,6 +7956,14 @@ export type SettlementPayTrigger =
   | 'ShipmentDelivered'
   | 'ShipmentInvoiced';
 
+export type ShareInvoiceInput = {
+  /** At most 1,000 characters. */
+  note?: string | null | undefined;
+  tab: InvoiceShareTab;
+  /** At most 25 teammates. */
+  userIds: Array<string | number>;
+};
+
 /**
  * How far a swap has got. Two acceptances are needed — the colleague's and a
  * manager's — because a swap the office never saw is a shift nobody is covering.
@@ -8311,6 +8551,15 @@ export type StageFuelPurchaseImportInput = {
   mapping?: unknown;
 };
 
+export type StartBillingQueueBulkRunInput = {
+  action: BillingQueueBulkAction;
+  /** A retry with the same key returns the run the first request started. */
+  idempotencyKey: string;
+  /** At most 500 items. */
+  itemIds: Array<string | number>;
+  params?: BillingQueueBulkRunParamsInput | null | undefined;
+};
+
 export type StartBillingTransferRunInput = {
   billType?: BillType | null | undefined;
   /** Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it. */
@@ -8334,6 +8583,11 @@ export type StartWorkerChecklistInput = {
   startedAt?: number | null | undefined;
   templateId: string | number;
   workerId: string | number;
+};
+
+export type StatementExclusionInput = {
+  billingQueueItemId: string | number;
+  reason: string;
 };
 
 export type StopScheduleType =
@@ -8997,6 +9251,18 @@ export type UpdateHomeLayoutPresetInput = {
   roleIds?: Array<string | number> | null | undefined;
   version: number;
   widgets: Array<HomeWidgetInput>;
+};
+
+/** A draft invoice's printed note and delivery overrides. An absent field is left as it is. */
+export type UpdateInvoiceDraftInput = {
+  attachmentIds?: Array<string | number> | null | undefined;
+  emailBcc?: Array<string> | null | undefined;
+  emailBody?: string | null | undefined;
+  emailCc?: Array<string> | null | undefined;
+  emailSubject?: string | null | undefined;
+  emailTo?: Array<string> | null | undefined;
+  memo?: string | null | undefined;
+  remittanceInstructions?: string | null | undefined;
 };
 
 export type UpdateJobPositionInput = {
@@ -11869,6 +12135,126 @@ export type BillingQueueItemsQueryVariables = Exact<{
 
 export type BillingQueueItemsQuery = { billingQueueItems: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, number: string, status: BillingQueueStatus, lane: BillingQueueLane, billType: BillType, shipmentId: string | null, billToCustomerId: string, allocatedTotalAmount: string, assignedBillerId: string | null, holdReasonCode: BillingQueueHoldReasonCode | null, isAdjustmentOrigin: boolean, agentVerdict: BillingQueueAgentVerdict | null, agentSummary: string | null, version: number, createdAt: number, headline: { code: string, checkKey: string, summary: string, open: number, waiting: boolean } | null, billToCustomer: { id: string, code: string, name: string } | null, shipment: { id: string, proNumber: string, customerId: string, totalChargeAmount: string, customer: { id: string, code: string, name: string } | null } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
+export type ShipmentRouteMoveFieldsFragment = { id: string | null, sequence: number, loaded: boolean, distance: number | null, assignment: { id: string | null, primaryWorker: { id: string, wholeName: string } | null } | null, stops: Array<{ id: string | null, type: StopType, sequence: number, actualArrival: number | null, location: { id: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, latitude: number | null, longitude: number | null, state: { id: string, abbreviation: string } | null } | null }> } & { ' $fragmentName'?: 'ShipmentRouteMoveFieldsFragment' };
+
+export type BillingQueueUserFieldsFragment = { id: string, businessUnitId: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'BillingQueueUserFieldsFragment' };
+
+export type BillingQueueReviewFieldsFragment = { needsCount: number, ready: boolean, blocker: string, billerName: string, checks: Array<{ key: BillingQueueCheckKey, state: BillingQueueCheckState, code: string, detail: string, issueId: string | null, facts: unknown }>, issues: Array<{ id: string, itemId: string, checkKey: BillingQueueCheckKey, code: string, subjectKey: string, summary: string, reasoning: string, source: string, flaggedChargeId: string | null, resolutionKey: string | null, resolutionText: string, resolvedById: string | null, resolvedAt: number | null, requestedAt: number | null, undoable: boolean, createdAt: number, options: Array<{ key: string, label: string, amount: string | null, done: string, effect: { kind: BillingQueueIssueEffectKind, chargeId: string | null, accessorialChargeId: string | null, label: string, amount: string | null, basis: string } }> }>, charges: { expectedTotal: string, billedTotal: string, difference: string, hasRateCon: boolean, lines: Array<{ key: string, additionalChargeId: string | null, label: string, basis: string, expected: string | null, billed: string, source: string, flagged: boolean, removed: boolean, adjusted: boolean, issueId: string | null }> } | null, invoice: { id: string, number: string, draftNumber: string, status: string, invoiceDate: number, dueDate: number | null, postedAt: number | null, posted: boolean } | null, terms: { paymentTerm: string, netDays: number, dueDate: number | null, recipients: Array<string>, creditHold: boolean } | null, documents: Array<{ code: string, name: string, documentId: string | null, state: BillingQueueDocumentState, required: boolean, signed: boolean, fileName: string }> } & { ' $fragmentName'?: 'BillingQueueReviewFieldsFragment' };
+
+export type BillingQueuePayerShareLineFieldsFragment = { kind: ChargeAllocationKind, additionalChargeId: string | null, description: string, chargeTotal: string, amount: string, percent: string | null, method: ChargeAllocationMethod | null, partial: boolean, payers: Array<{ payerId: string, payerName: string, payerCode: string, amount: string, percent: string | null }> } & { ' $fragmentName'?: 'BillingQueuePayerShareLineFieldsFragment' };
+
+export type BillingQueueItemDetailFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shipmentId: string | null, billToCustomerId: string, allocatedTotalAmount: string, assignedBillerId: string | null, number: string, status: BillingQueueStatus, billType: BillType, exceptionReasonCode: BillingQueueExceptionReasonCode | null, reviewNotes: string, exceptionNotes: string, reviewStartedAt: number | null, reviewCompletedAt: number | null, canceledById: string | null, canceledAt: number | null, cancelReason: string, isAdjustmentOrigin: boolean, sourceInvoiceId: string | null, sourceInvoiceAdjustmentId: string | null, sourceCreditMemoInvoiceId: string | null, correctionGroupId: string | null, rebillStrategy: string | null, requiresReplacementReview: boolean, rerateVariancePercent: string, adjustmentContext: unknown, version: number, createdAt: number, updatedAt: number, lane: BillingQueueLane, holdReasonCode: BillingQueueHoldReasonCode | null, heldAt: number | null, heldById: string | null, statusBeforeHold: BillingQueueStatus | null, checkedAt: number | null, poNumber: string, invoiceMemo: string, paymentTerm: string, invoiceDate: number | null, packetDocumentIds: Array<string>, agentVerdict: BillingQueueAgentVerdict | null, agentSummary: string | null, agentReviewedAt: number | null, agentReads: Array<{ kind: BillingQueueAgentReadKind, count: number, code: string, documentId: string | null, name: string, fileName: string, part: number, parts: number, of: number }>, headline: { code: string, checkKey: string, summary: string, open: number, waiting: boolean } | null, billToCustomer: { id: string, name: string, code: string, billingProfile: { id: string, billingNotes: string, paymentTerm: CustomerPaymentTerm } | null } | null, assignedBiller: { ' $fragmentRefs'?: { 'BillingQueueUserFieldsFragment': BillingQueueUserFieldsFragment } } | null, canceledBy: { ' $fragmentRefs'?: { 'BillingQueueUserFieldsFragment': BillingQueueUserFieldsFragment } } | null, shipment: { id: string, organizationId: string, businessUnitId: string, version: number, createdAt: number, updatedAt: number, customerId: string, billToCustomerId: string | null, proNumber: string, bol: string | null, externalReference: string | null, status: ShipmentStatus, totalChargeAmount: string, freightChargeAmount: string, otherChargeAmount: string, formulaTemplateId: string | null, tariffInputs: unknown, actualDeliveryDate: number | null, freightLines: Array<{ label: string, quantity: string | null, quantityUnit: string, rate: string | null, rateUnit: string, amount: string }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, chargeAllocations: Array<{ id: string, shipmentId: string | null, additionalChargeId: string | null, orderChargeId: string | null, chargeKind: ChargeAllocationKind, billToCustomerId: string, method: ChargeAllocationMethod, percent: string | null, amount: string | null, sequence: number, invoiceId: string | null, invoicedAt: number | null, version: number, billToCustomer: { id: string, name: string, code: string } | null }>, customer: { id: string, name: string, code: string } | null, formulaTemplate: { id: string, name: string } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentRouteMoveFieldsFragment': ShipmentRouteMoveFieldsFragment } }> } | null, payerShare: { payerId: string, isSplit: boolean, freightAmount: string, accessorialAmount: string, totalAmount: string, shipmentTotal: string, resolutionError: string, payers: Array<{ id: string, name: string, code: string }>, lines: Array<{ ' $fragmentRefs'?: { 'BillingQueuePayerShareLineFieldsFragment': BillingQueuePayerShareLineFieldsFragment } }>, otherPayerLines: Array<{ ' $fragmentRefs'?: { 'BillingQueuePayerShareLineFieldsFragment': BillingQueuePayerShareLineFieldsFragment } }> } | null, ratedBy: { kind: BillingQueueRatedByKind, id: string, code: string, name: string } | null, detentionHolds: Array<{ occurrenceId: string, stopId: string, stopType: string, locationName: string, clockStartAt: number, billableAmount: string, currency: string, reason: string }>, ratingReviewHold: { shipmentId: string, reasons: Array<string>, ratedAt: number | null, formulaTemplateName: string } | null, review: { ' $fragmentRefs'?: { 'BillingQueueReviewFieldsFragment': BillingQueueReviewFieldsFragment } } | null } & { ' $fragmentName'?: 'BillingQueueItemDetailFieldsFragment' };
+
+export type BillingQueueItemDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BillingQueueItemDetailQuery = { billingQueueItem: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } | null };
+
+export type BillingQueueItemActivityQueryVariables = Exact<{
+  id: string | number;
+  limit?: number | null | undefined;
+  before?: BillingQueueActivityCursorInput | null | undefined;
+}>;
+
+
+export type BillingQueueItemActivityQuery = { billingQueueItemActivity: { hasMore: boolean, total: number, items: Array<{ id: string, kind: string, text: string, actorType: BillingQueueEventActorType, actorId: string | null, actorName: string, at: number }> } };
+
+export type BillingQueueNeighborsQueryVariables = Exact<{
+  id: string | number;
+  input?: DataTableConnectionInput | null | undefined;
+  includePosted?: boolean | null | undefined;
+}>;
+
+
+export type BillingQueueNeighborsQuery = { billingQueueNeighbors: { prevId: string | null, nextId: string | null, position: number, total: number } };
+
+export type BillingQueueSummariesQueryVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type BillingQueueSummariesQuery = { billingQueueSummaries: Array<{ id: string, number: string, status: BillingQueueStatus, holdReasonCode: BillingQueueHoldReasonCode | null, assignedBillerId: string | null, allocatedTotalAmount: string, needsCount: number, ready: boolean }> };
+
+export type BillingQueueItemsByShipmentQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type BillingQueueItemsByShipmentQuery = { billingQueueItems: { edges: Array<{ node: { id: string, number: string, status: BillingQueueStatus, billToCustomerId: string, allocatedTotalAmount: string } }> } };
+
+export type UpdateBillingQueueChargesMutationVariables = Exact<{
+  id: string | number;
+  input: BillingQueueUpdateChargesInput;
+}>;
+
+
+export type UpdateBillingQueueChargesMutation = { updateBillingQueueCharges: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } };
+
+export type UpdateBillingQueueInvoiceDetailsMutationVariables = Exact<{
+  id: string | number;
+  input: BillingQueueInvoiceDetailsInput;
+}>;
+
+
+export type UpdateBillingQueueInvoiceDetailsMutation = { updateBillingQueueInvoiceDetails: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } };
+
+export type ReassignBillingQueueChargeMutationVariables = Exact<{
+  id: string | number;
+  input: BillingQueueReassignChargeInput;
+}>;
+
+
+export type ReassignBillingQueueChargeMutation = { reassignBillingQueueCharge: { createdItemIds: Array<string>, canceledItemIds: Array<string>, item: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } }, items: Array<{ ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } }> } };
+
+export type UpdateBillingQueueItemStatusMutationVariables = Exact<{
+  id: string | number;
+  input: BillingQueueUpdateStatusInput;
+}>;
+
+
+export type UpdateBillingQueueItemStatusMutation = { updateBillingQueueStatus: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } };
+
+export type AssignBillingQueueItemBillerMutationVariables = Exact<{
+  id: string | number;
+  input: BillingQueueAssignInput;
+}>;
+
+
+export type AssignBillingQueueItemBillerMutation = { assignBillingQueueBiller: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } };
+
+export type PostBillingQueueItemMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type PostBillingQueueItemMutation = { postBillingQueueItem: { invoiceId: string, invoiceNumber: string, sentTo: string | null, recipients: Array<string>, item: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } } };
+
+export type ReleaseBillingQueueItemMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReleaseBillingQueueItemMutation = { releaseBillingQueueItem: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } };
+
+export type ResolveBillingQueueIssueMutationVariables = Exact<{
+  id: string | number;
+  issueId: string | number;
+  optionKey: string;
+}>;
+
+
+export type ResolveBillingQueueIssueMutation = { resolveBillingQueueIssue: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } };
+
+export type UndoBillingQueueIssueMutationVariables = Exact<{
+  id: string | number;
+  issueId: string | number;
+}>;
+
+
+export type UndoBillingQueueIssueMutation = { undoBillingQueueIssue: { ' $fragmentRefs'?: { 'BillingQueueItemDetailFieldsFragment': BillingQueueItemDetailFieldsFragment } } };
+
 export type BillingQueueShipmentQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -11947,6 +12333,100 @@ export type RetryBillingTransferRunMutationVariables = Exact<{
 
 
 export type RetryBillingTransferRunMutation = { retryBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+
+export type BillingQueueStatsQueryVariables = Exact<{
+  dayStart?: number | null | undefined;
+}>;
+
+
+export type BillingQueueStatsQuery = { billingQueueStats: { openCount: number, openTotal: string, lanes: Array<{ lane: BillingQueueLane, count: number, total: string }>, pulse: { oldestWaitingAt: number | null, deliveryToInvoiceDays: string | null, priorDeliveryToInvoiceDays: string | null, approvedTodayCount: number, approvedTodayTotal: string, medianReviewSecondsToday: number | null } | null } };
+
+export type BillingQueueRecommendationsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BillingQueueRecommendationsQuery = { billingQueueRecommendations: Array<{ kind: BillingQueueRecommendationKind, source: BillingQueueRecommendationSource, count: number, total: string, itemIds: Array<string> }> };
+
+export type BillingQueueAssistQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BillingQueueAssistQuery = { billingQueueAssist: { review: boolean, brief: boolean, search: boolean } };
+
+export type BillingQueueBriefQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BillingQueueBriefQuery = { billingQueueBrief: { available: boolean, text: string, generatedAt: number } };
+
+export type BillingQueueNovaGenerationQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BillingQueueNovaGenerationQuery = { billingQueueNovaGeneration: { phase: BillingQueueNovaPhase, total: number, done: number, retryAt: number | null } | null };
+
+export type BillingQueueSearchDatesFieldsFragment = { lastDays: number | null, from: string | null, to: string | null } & { ' $fragmentName'?: 'BillingQueueSearchDatesFieldsFragment' };
+
+export type BillingQueueSearchIntentQueryVariables = Exact<{
+  text: string;
+  today?: string | null | undefined;
+}>;
+
+
+export type BillingQueueSearchIntentQuery = { billingQueueSearchIntent: { lanes: Array<BillingQueueLane>, search: string, payerId: string | null, payerName: string, shipmentCustomerId: string | null, shipmentCustomerName: string, minAmount: string | null, maxAmount: string | null, createdBefore: number | null, unresolved: string, delivered: { ' $fragmentRefs'?: { 'BillingQueueSearchDatesFieldsFragment': BillingQueueSearchDatesFieldsFragment } } | null, pickedUp: { ' $fragmentRefs'?: { 'BillingQueueSearchDatesFieldsFragment': BillingQueueSearchDatesFieldsFragment } } | null, queued: { ' $fragmentRefs'?: { 'BillingQueueSearchDatesFieldsFragment': BillingQueueSearchDatesFieldsFragment } } | null } };
+
+export type BillingQueueFilterPresetFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, filters: unknown, isDefault: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'BillingQueueFilterPresetFieldsFragment' };
+
+export type BillingQueueFilterPresetsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BillingQueueFilterPresetsQuery = { billingQueueFilterPresets: Array<{ ' $fragmentRefs'?: { 'BillingQueueFilterPresetFieldsFragment': BillingQueueFilterPresetFieldsFragment } }> };
+
+export type CreateBillingQueueFilterPresetMutationVariables = Exact<{
+  input: BillingQueueFilterPresetInput;
+}>;
+
+
+export type CreateBillingQueueFilterPresetMutation = { createBillingQueueFilterPreset: { ' $fragmentRefs'?: { 'BillingQueueFilterPresetFieldsFragment': BillingQueueFilterPresetFieldsFragment } } };
+
+export type UpdateBillingQueueFilterPresetMutationVariables = Exact<{
+  id: string | number;
+  input: BillingQueueFilterPresetInput;
+}>;
+
+
+export type UpdateBillingQueueFilterPresetMutation = { updateBillingQueueFilterPreset: { ' $fragmentRefs'?: { 'BillingQueueFilterPresetFieldsFragment': BillingQueueFilterPresetFieldsFragment } } };
+
+export type DeleteBillingQueueFilterPresetMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteBillingQueueFilterPresetMutation = { deleteBillingQueueFilterPreset: boolean };
+
+export type BillingQueueBulkRunFieldsFragment = { id: string, action: BillingQueueBulkAction, status: BillingQueueBulkRunStatus, totalCount: number, succeededCount: number, failedCount: number, skippedCount: number, commitAt: number, cancelRequestedAt: number | null, failureMessage: string, items: Array<{ itemId: string, status: BillingQueueBulkRunItemStatus, failureCode: string, errorMessage: string, invoiceNumber: string }> } & { ' $fragmentName'?: 'BillingQueueBulkRunFieldsFragment' };
+
+export type BillingQueueBulkRunQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BillingQueueBulkRunQuery = { billingQueueBulkRun: { ' $fragmentRefs'?: { 'BillingQueueBulkRunFieldsFragment': BillingQueueBulkRunFieldsFragment } } | null };
+
+export type StartBillingQueueBulkRunMutationVariables = Exact<{
+  input: StartBillingQueueBulkRunInput;
+}>;
+
+
+export type StartBillingQueueBulkRunMutation = { startBillingQueueBulkRun: { ' $fragmentRefs'?: { 'BillingQueueBulkRunFieldsFragment': BillingQueueBulkRunFieldsFragment } } };
+
+export type CancelBillingQueueBulkRunMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelBillingQueueBulkRunMutation = { cancelBillingQueueBulkRun: { ' $fragmentRefs'?: { 'BillingQueueBulkRunFieldsFragment': BillingQueueBulkRunFieldsFragment } } };
+
+export type RedetectBillingQueuePodSignaturesMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RedetectBillingQueuePodSignaturesMutation = { redetectBillingQueuePodSignatures: { shipments: number, documents: number, queued: number, alreadyRead: number, setByPerson: number, notReadByMachine: number, deferred: number, failed: number } };
 
 export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, withheldSections: Array<{ key: BriefingSectionKey, title: string, partial: boolean }>, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
 
@@ -16763,6 +17243,99 @@ export type DeskInvoiceAdjustmentCardQueryVariables = Exact<{
 
 export type DeskInvoiceAdjustmentCardQuery = { invoiceAdjustment: { id: string, originalInvoiceId: string, kind: InvoiceAdjustmentKind, status: InvoiceAdjustmentStatus, approvalStatus: InvoiceAdjustmentApprovalStatus, approvalRequired: boolean, rebillStrategy: InvoiceAdjustmentRebillStrategy | null, reason: string, policyReason: string, rejectionReason: string, executionError: string, creditTotalAmount: string, rebillTotalAmount: string, creditMemoInvoiceId: string | null, replacementInvoiceId: string | null, submittedAt: number | null, supportingDocumentIds: Array<string>, lines: Array<{ id: string, originalLineId: string, lineNumber: number, description: string, creditQuantity: string, creditAmount: string, rebillQuantity: string, rebillAmount: string, remainingEligibleAmount: string }> } | null };
 
+export type InvoiceAdjustmentDetailFieldsFragment = { id: string, organizationId: string, businessUnitId: string, correctionGroupId: string, originalInvoiceId: string, creditMemoInvoiceId: string | null, replacementInvoiceId: string | null, rebillQueueItemId: string | null, batchId: string | null, kind: InvoiceAdjustmentKind, status: InvoiceAdjustmentStatus, approvalStatus: InvoiceAdjustmentApprovalStatus, replacementReviewStatus: InvoiceAdjustmentReplacementReviewStatus, rebillStrategy: InvoiceAdjustmentRebillStrategy | null, reason: string, policyReason: string, idempotencyKey: string, accountingDate: number, creditTotalAmount: string, rebillTotalAmount: string, netDeltaAmount: string, rerateVariancePercent: string, wouldCreateUnappliedCredit: boolean, requiresReconciliationException: boolean, approvalRequired: boolean, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, rejectedById: string | null, rejectedAt: number | null, rejectionReason: string, executionError: string, metadata: unknown, version: number, createdAt: number, updatedAt: number, lines: Array<{ id: string, adjustmentId: string, originalInvoiceId: string, originalLineId: string, creditMemoLineId: string | null, replacementLineId: string | null, lineNumber: number, description: string, creditQuantity: string, creditAmount: string, remainingEligibleAmount: string, rebillQuantity: string, rebillAmount: string, replacementPayload: unknown, createdAt: number, updatedAt: number }>, referencedDocuments: Array<{ id: string, organizationId: string, businessUnitId: string, adjustmentId: string, documentId: string, selectedById: string | null, selectedAt: number | null, snapshotFileName: string, snapshotOriginalName: string, snapshotFileType: string, snapshotResourceType: string, snapshotResourceId: string, version: number, createdAt: number, updatedAt: number }> } & { ' $fragmentName'?: 'InvoiceAdjustmentDetailFieldsFragment' };
+
+export type InvoiceAdjustmentDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type InvoiceAdjustmentDetailQuery = { invoiceAdjustment: (
+    { adjustmentDocuments: Array<{ id: string, fileName: string, originalName: string }> }
+    & { ' $fragmentRefs'?: { 'InvoiceAdjustmentDetailFieldsFragment': InvoiceAdjustmentDetailFieldsFragment } }
+  ) | null };
+
+export type InvoiceAdjustmentLineageQueryVariables = Exact<{
+  correctionGroupId: string | number;
+}>;
+
+
+export type InvoiceAdjustmentLineageQuery = { invoiceAdjustmentLineage: { correctionGroup: { id: string, organizationId: string, businessUnitId: string, rootInvoiceId: string, currentInvoiceId: string | null, metadata: unknown, createdAt: number, updatedAt: number }, invoices: Array<{ ' $fragmentRefs'?: { 'InvoiceDetailFieldsFragment': InvoiceDetailFieldsFragment } }>, adjustments: Array<{ ' $fragmentRefs'?: { 'InvoiceAdjustmentDetailFieldsFragment': InvoiceAdjustmentDetailFieldsFragment } }> } };
+
+export type InvoiceAdjustmentBatchFieldsFragment = { id: string, organizationId: string, businessUnitId: string, idempotencyKey: string, status: InvoiceAdjustmentBatchStatus, totalCount: number, processedCount: number, succeededCount: number, failedCount: number, pendingCount: number, submittedById: string | null, submittedByName: string, submittedAt: number | null, lastFailure: string, lastFailureCount: number, metadata: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'InvoiceAdjustmentBatchFieldsFragment' };
+
+export type InvoiceAdjustmentBatchesQueryVariables = Exact<{
+  input: InvoiceAdjustmentQueueInput;
+}>;
+
+
+export type InvoiceAdjustmentBatchesQuery = { invoiceAdjustmentBatches: { total: number, totalExact: boolean, items: Array<{ ' $fragmentRefs'?: { 'InvoiceAdjustmentBatchFieldsFragment': InvoiceAdjustmentBatchFieldsFragment } }> } };
+
+export type InvoiceAdjustmentBatchQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type InvoiceAdjustmentBatchQuery = { invoiceAdjustmentBatch: (
+    { items: Array<{ id: string, organizationId: string, businessUnitId: string, batchId: string, adjustmentId: string | null, invoiceId: string, idempotencyKey: string, status: InvoiceAdjustmentBatchItemStatus, errorMessage: string, requestPayload: unknown, resultPayload: unknown, createdAt: number, updatedAt: number }> }
+    & { ' $fragmentRefs'?: { 'InvoiceAdjustmentBatchFieldsFragment': InvoiceAdjustmentBatchFieldsFragment } }
+  ) | null };
+
+export type InvoiceAdjustmentReconciliationExceptionsQueryVariables = Exact<{
+  input: InvoiceAdjustmentQueueInput;
+}>;
+
+
+export type InvoiceAdjustmentReconciliationExceptionsQuery = { invoiceAdjustmentReconciliationExceptions: { total: number, totalExact: boolean, items: Array<{ exceptionId: string, adjustmentId: string, correctionGroupId: string, status: InvoiceReconciliationExceptionStatus, reason: string, amount: string, originalInvoiceId: string, originalInvoiceNumber: string, originalInvoiceStatus: string, creditMemoInvoiceId: string | null, creditMemoInvoiceNumber: string, replacementInvoiceId: string | null, replacementInvoiceNumber: string, rebillQueueItemId: string | null, rebillQueueNumber: string, customerName: string, adjustmentKind: InvoiceAdjustmentKind, adjustmentStatus: InvoiceAdjustmentStatus, policySource: string, submittedById: string | null, submittedByName: string, submittedAt: number | null, financeNotes: string, createdAt: number, updatedAt: number }> } };
+
+export type InvoiceAdjustmentWorkloadSummaryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InvoiceAdjustmentWorkloadSummaryQuery = { invoiceAdjustmentOperationsSummary: { approvalsPending: number, reconciliationPending: number, writeOffPending: number, batchesInFlight: number, failedBatchItems: number, adjustmentsByStatus: Array<{ label: string, count: number }>, reasonDistribution: Array<{ label: string, count: number }>, repeatedAdjustments: Array<{ entityId: string, entityType: string, label: string, count: number }>, repeatedCustomerAdjustments: Array<{ entityId: string, entityType: string, label: string, count: number }> } };
+
+export type InvoiceAdjustmentDraftPreviewQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type InvoiceAdjustmentDraftPreviewQuery = { invoiceAdjustmentDraftPreview: { invoiceId: string, invoiceNumber: string, currencyCode: string, correctionGroupId: string, kind: InvoiceAdjustmentKind, rebillStrategy: InvoiceAdjustmentRebillStrategy | null, accountingDate: number, creditTotalAmount: string, rebillTotalAmount: string, netDeltaAmount: string, rerateVariancePercent: string, wouldCreateUnappliedCredit: boolean, requiresApproval: boolean, requiresReplacementInvoiceReview: boolean, requiresReconciliationException: boolean, warnings: Array<string>, errors: unknown, lines: Array<{ lineNumber: number, originalLineId: string, description: string, eligibleAmount: string, alreadyCreditedAmount: string, requestedCreditAmount: string, requestedRebillAmount: string, remainingEligibleAmount: string, hasEligibilityError: boolean, eligibilityOverageAmount: string, eligibilityMessage: string }> } };
+
+export type CreateInvoiceAdjustmentDraftMutationVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type CreateInvoiceAdjustmentDraftMutation = { createInvoiceAdjustmentDraft: { ' $fragmentRefs'?: { 'InvoiceAdjustmentDetailFieldsFragment': InvoiceAdjustmentDetailFieldsFragment } } };
+
+export type UpdateInvoiceAdjustmentDraftMutationVariables = Exact<{
+  id: string | number;
+  input: InvoiceAdjustmentDraftInput;
+}>;
+
+
+export type UpdateInvoiceAdjustmentDraftMutation = { updateInvoiceAdjustmentDraft: { ' $fragmentRefs'?: { 'InvoiceAdjustmentDetailFieldsFragment': InvoiceAdjustmentDetailFieldsFragment } } };
+
+export type SubmitInvoiceAdjustmentDraftMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SubmitInvoiceAdjustmentDraftMutation = { submitInvoiceAdjustmentDraft: { ' $fragmentRefs'?: { 'InvoiceAdjustmentDetailFieldsFragment': InvoiceAdjustmentDetailFieldsFragment } } };
+
+export type ApproveInvoiceAdjustmentDetailMutationVariables = Exact<{
+  adjustmentId: string | number;
+}>;
+
+
+export type ApproveInvoiceAdjustmentDetailMutation = { approveInvoiceAdjustment: { ' $fragmentRefs'?: { 'InvoiceAdjustmentDetailFieldsFragment': InvoiceAdjustmentDetailFieldsFragment } } };
+
+export type RejectInvoiceAdjustmentDetailMutationVariables = Exact<{
+  input: RejectInvoiceAdjustmentInput;
+}>;
+
+
+export type RejectInvoiceAdjustmentDetailMutation = { rejectInvoiceAdjustment: { ' $fragmentRefs'?: { 'InvoiceAdjustmentDetailFieldsFragment': InvoiceAdjustmentDetailFieldsFragment } } };
+
 export type DeskInvoiceCardQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -16820,6 +17393,74 @@ export type ShipmentInvoicesQueryVariables = Exact<{
 
 
 export type ShipmentInvoicesQuery = { invoices: { edges: Array<{ node: { ' $fragmentRefs'?: { 'InvoiceRelatedFieldsFragment': InvoiceRelatedFieldsFragment } } }> } };
+
+export type InvoiceDetailFieldsFragment = { id: string, organizationId: string, businessUnitId: string, billingQueueItemId: string, shipmentId: string | null, orderId: string | null, orderNumber: string | null, customerId: string, scope: InvoiceScope, invoiceRunId: string | null, periodStart: number | null, periodEnd: number | null, shipmentCount: number, detail: InvoiceDetail, sectionBy: InvoiceSectionKey, offCycleReason: string | null, number: string, billType: BillType, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, exchangeRate: string | null, exchangeRateDate: number | null, invoiceDate: number, dueDate: number | null, postedAt: number | null, shipmentProNumber: string, shipmentBol: string, poNumber: string, serviceDate: number | null, billToName: string, billToCode: string | null, billToAddressLine1: string | null, billToAddressLine2: string | null, billToCity: string | null, billToState: string | null, billToPostalCode: string | null, billToCountry: string | null, shipperCustomerId: string | null, factoringCompanyId: string | null, factoringOverride: InvoiceFactoringOverride, isSplitBill: boolean, ratingNotes: Array<string>, subtotalAmount: string, otherAmount: string, totalAmount: string | null, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, sentAt: number | null, sentById: string | null, pdfDocumentId: string | null, lastSendError: string, lastSendWarning: string, memo: string, remittanceInstructions: string, emailSubjectSnapshot: string, emailBodySnapshot: string, emailToSnapshot: Array<string>, emailCcSnapshot: Array<string>, emailBccSnapshot: Array<string>, correctionGroupId: string | null, supersedesInvoiceId: string | null, supersededByInvoiceId: string | null, sourceInvoiceAdjustmentId: string | null, isAdjustmentArtifact: boolean, voidedAt: number | null, voidedById: string | null, voidReason: string, voidDisposition: InvoiceVoidDisposition | null, voidedByAdjustmentId: string | null, referenceInvoiceId: string | null, memoReason: string, memoKind: InvoiceMemoKind | null, balanceDueMinor: number, ediSendStatus: InvoiceEdiSendStatus, lastEdiMessageId: string | null, ediSentAt: number | null, lastEdiError: string, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, shipperCustomer: { id: string, name: string, code: string } | null, lines: Array<{ id: string, organizationId: string, businessUnitId: string, invoiceId: string, shipmentId: string | null, shipmentProNumber: string | null, shipmentBol: string | null, lineNumber: number, type: InvoiceLineType, description: string, quantity: string, unitPrice: string, amount: string, accessorialChargeId: string | null, chargeCode: string | null, chargeMethod: string | null, rate: string | null, rateUnit: string | null, allocationPercent: string | null, formulaTemplateId: string | null, formulaTemplateName: string | null, chargeAllocationId: string | null, createdAt: number, updatedAt: number }> | null } & { ' $fragmentName'?: 'InvoiceDetailFieldsFragment' };
+
+export type InvoiceDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type InvoiceDetailQuery = { invoice: (
+    { shipment: { id: string, proNumber: string, bol: string | null, customerId: string, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentRouteMoveFieldsFragment': ShipmentRouteMoveFieldsFragment } }> } | null }
+    & { ' $fragmentRefs'?: { 'InvoiceDetailFieldsFragment': InvoiceDetailFieldsFragment } }
+  ) | null };
+
+export type InvoiceEmailAttemptFieldsFragment = { id: string, organizationId: string, businessUnitId: string, invoiceId: string, emailMessageId: string | null, attemptNumber: number, partNumber: number, totalParts: number, status: InvoiceSendStatus, provider: string, providerMessageId: string, toRecipients: Array<string>, ccRecipients: Array<string>, bccRecipients: Array<string>, subject: string, body: string, estimatedSize: number, warnings: Array<string>, error: string, sentAt: number | null, createdById: string | null, createdAt: number, updatedAt: number, attachments: Array<{ id: string, organizationId: string, businessUnitId: string, attemptId: string, documentId: string, fileName: string, contentType: string, sizeBytes: number, encodedBytes: number, method: InvoiceAttachmentDeliveryMethod, shareTokenId: string | null, reason: string, createdAt: number }> } & { ' $fragmentName'?: 'InvoiceEmailAttemptFieldsFragment' };
+
+export type InvoiceEmailAttemptsQueryVariables = Exact<{
+  invoiceId: string | number;
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type InvoiceEmailAttemptsQuery = { invoiceEmailAttempts: { total: number, totalExact: boolean, hasMore: boolean, items: Array<{ ' $fragmentRefs'?: { 'InvoiceEmailAttemptFieldsFragment': InvoiceEmailAttemptFieldsFragment } }> } };
+
+export type InvoiceSendPlanFieldsFragment = { invoiceId: string, providerLimitBytes: number, estimatedBodyBytes: number, warnings: Array<string>, errors: Array<string>, fromEmail: string, headers: unknown, openTracking: boolean, subject: string, body: string, invoicePdfDocumentId: string | null, parts: Array<{ partNumber: number, estimatedSizeBytes: number, warnings: Array<string>, attachments: Array<{ documentId: string, fileName: string, contentType: string, sizeBytes: number, encodedBytes: number, invoicePdf: boolean }>, links: Array<{ documentId: string, fileName: string, sizeBytes: number, reason: string, url: string }> }>, recipients: { to: Array<string>, cc: Array<string>, bcc: Array<string> } } & { ' $fragmentName'?: 'InvoiceSendPlanFieldsFragment' };
+
+export type InvoiceSendPlanQueryVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type InvoiceSendPlanQuery = { invoiceSendPlan: { ' $fragmentRefs'?: { 'InvoiceSendPlanFieldsFragment': InvoiceSendPlanFieldsFragment } } };
+
+export type InvoicePostPreviewQueryVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type InvoicePostPreviewQuery = { invoicePostPreview: { invoiceId: string, number: string, billToName: string, currencyCode: string, totalMinor: number, refusals: Array<string>, alreadyPosted: boolean, shipmentsBilled: Array<string>, queueItemPosted: boolean, journal: { accountingDate: number, entryStatus: string, requiresApproval: boolean, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, description: string, debitMinor: number, creditMinor: number }> } | null, accountingSync: Array<{ integration: string, company: string, awaitsRelease: boolean }>, edi: { partnerName: string, willSend: boolean, blockers: Array<string> } | null } };
+
+export type UpdateInvoiceDraftMutationVariables = Exact<{
+  invoiceId: string | number;
+  input: UpdateInvoiceDraftInput;
+}>;
+
+
+export type UpdateInvoiceDraftMutation = { updateInvoiceDraft: { ' $fragmentRefs'?: { 'InvoiceDetailFieldsFragment': InvoiceDetailFieldsFragment } } };
+
+export type GenerateInvoicePdfMutationVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type GenerateInvoicePdfMutation = { generateInvoicePdf: { invoiceId: string, workflowId: string, workflowRunId: string, status: string } };
+
+export type SendInvoiceMutationVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type SendInvoiceMutation = { sendInvoice: { invoice: { ' $fragmentRefs'?: { 'InvoiceDetailFieldsFragment': InvoiceDetailFieldsFragment } }, plan: { ' $fragmentRefs'?: { 'InvoiceSendPlanFieldsFragment': InvoiceSendPlanFieldsFragment } }, attempts: Array<{ ' $fragmentRefs'?: { 'InvoiceEmailAttemptFieldsFragment': InvoiceEmailAttemptFieldsFragment } }> } };
+
+export type PostInvoiceMutationVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type PostInvoiceMutation = { postInvoice: { ' $fragmentRefs'?: { 'InvoiceDetailFieldsFragment': InvoiceDetailFieldsFragment } } };
 
 export type CreatedInvoiceFieldsFragment = { id: string, number: string, customerId: string, billToName: string, totalAmount: string | null, currencyCode: string, isSplitBill: boolean } & { ' $fragmentName'?: 'CreatedInvoiceFieldsFragment' };
 
@@ -16900,6 +17541,62 @@ export type InvoiceRegisterQueryVariables = Exact<{
 
 
 export type InvoiceRegisterQuery = { invoices: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'InvoiceRegisterRowFieldsFragment': InvoiceRegisterRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type InvoiceShareUserFieldsFragment = { id: string, name: string, username: string, emailAddress: string | null, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'InvoiceShareUserFieldsFragment' };
+
+export type InvoiceShareFieldsFragment = { id: string, organizationId: string, businessUnitId: string, invoiceId: string, sharedWithId: string, sharedById: string, note: string, tab: InvoiceShareTab, shareCount: number, firstSharedAt: number, lastSharedAt: number, createdAt: number, updatedAt: number, sharedWith: { ' $fragmentRefs'?: { 'InvoiceShareUserFieldsFragment': InvoiceShareUserFieldsFragment } } | null, sharedBy: { ' $fragmentRefs'?: { 'InvoiceShareUserFieldsFragment': InvoiceShareUserFieldsFragment } } | null } & { ' $fragmentName'?: 'InvoiceShareFieldsFragment' };
+
+export type InvoiceSharesQueryVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type InvoiceSharesQuery = { invoiceShares: Array<{ ' $fragmentRefs'?: { 'InvoiceShareFieldsFragment': InvoiceShareFieldsFragment } }> };
+
+export type InvoiceShareCandidatesQueryVariables = Exact<{
+  invoiceId: string | number;
+  query?: string | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type InvoiceShareCandidatesQuery = { invoiceShareCandidates: Array<{ id: string, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string }> };
+
+export type ShareInvoiceMutationVariables = Exact<{
+  invoiceId: string | number;
+  input: ShareInvoiceInput;
+}>;
+
+
+export type ShareInvoiceMutation = { shareInvoice: { recipientCount: number, emailsQueued: number, emailStatus: InvoiceShareEmailStatus, shares: Array<{ ' $fragmentRefs'?: { 'InvoiceShareFieldsFragment': InvoiceShareFieldsFragment } }> } };
+
+export type OpenStatementFieldsFragment = { customerId: string, customerName: string, customerCode: string, customerStatus: string, cycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, periodStart: number, periodEnd: number, lastBilledPeriodEnd: number | null, shipmentCount: number, invoiceCount: number, totalAmount: string, currencyCode: string, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, detail: InvoiceDetail, minimumAmount: string | null, autoBill: boolean, belowMinimum: boolean, heldCount: number, heldAmount: string } & { ' $fragmentName'?: 'OpenStatementFieldsFragment' };
+
+export type OpenStatementsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OpenStatementsQuery = { openStatements: Array<(
+    { groups: Array<{ key: string, label: string, shipmentCount: number, totalAmount: string, belowMinimum: boolean }> | null }
+    & { ' $fragmentRefs'?: { 'OpenStatementFieldsFragment': OpenStatementFieldsFragment } }
+  )> };
+
+export type OpenStatementQueryVariables = Exact<{
+  customerId: string | number;
+}>;
+
+
+export type OpenStatementQuery = { openStatement: (
+    { groups: Array<{ key: string, label: string, shipmentCount: number, totalAmount: string, belowMinimum: boolean, shipments: Array<{ billingQueueItemId: string, shipmentId: string, orderId: string | null, proNumber: string, bol: string, poNumber: string, orderNumber: string, serviceDate: number | null, amount: string }> | null }> | null }
+    & { ' $fragmentRefs'?: { 'OpenStatementFieldsFragment': OpenStatementFieldsFragment } }
+  ) };
+
+export type BillStatementNowMutationVariables = Exact<{
+  customerId: string | number;
+  input: BillStatementNowInput;
+}>;
+
+
+export type BillStatementNowMutation = { billStatementNow: { runId: string, runNumber: string, totalCount: number, successCount: number, skippedCount: number, errorCount: number, results: Array<{ groupId: string, groupLabel: string, success: boolean, skipped: boolean, invoiceId: string | null, invoiceNumber: string, error: string }> } };
 
 export type InvoiceTableRowFieldsFragment = { id: string, billingQueueItemId: string, shipmentId: string | null, orderId: string | null, customerId: string, shipperCustomerId: string | null, isSplitBill: boolean, number: string, billType: BillType, scope: InvoiceScope, periodStart: number | null, periodEnd: number | null, shipmentCount: number, status: InvoiceStatus, paymentTerm: InvoicePaymentTerm, currencyCode: string, invoiceDate: number, dueDate: number | null, billToName: string, subtotalAmount: string, otherAmount: string, totalAmount: string | null, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, sendStatus: InvoiceSendStatus, isAdjustmentArtifact: boolean, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'InvoiceTableRowFieldsFragment' };
 
@@ -20759,8 +21456,10 @@ export { AuditLogTableRowFieldsFragmentDoc, AuditLogTableDocument } from "./docu
 export { BenefitPlansDocument, WorkerBenefitEnrollmentsDocument, BenefitEnrollmentsDocument, BenefitCostsDocument, WorkerTotalCompensationDocument, MyTotalCompensationDocument, CreateBenefitPlanDocument, UpdateBenefitPlanDocument, EnrollBenefitDocument, EndBenefitEnrollmentDocument } from "./documents/benefits/operations";
 export { BillingQueueActionFieldsFragmentDoc, UpdateBillingQueueStatusDocument, AssignBillingQueueBillerDocument } from "./documents/billing-queue/mutations";
 export { BillingQueueItemsDocument } from "./documents/billing-queue/queue";
+export { BillingQueueUserFieldsFragmentDoc, ShipmentRouteMoveFieldsFragmentDoc, BillingQueuePayerShareLineFieldsFragmentDoc, BillingQueueReviewFieldsFragmentDoc, BillingQueueItemDetailFieldsFragmentDoc, BillingQueueItemDetailDocument, BillingQueueItemActivityDocument, BillingQueueNeighborsDocument, BillingQueueSummariesDocument, BillingQueueItemsByShipmentDocument, UpdateBillingQueueChargesDocument, UpdateBillingQueueInvoiceDetailsDocument, ReassignBillingQueueChargeDocument, UpdateBillingQueueItemStatusDocument, AssignBillingQueueItemBillerDocument, PostBillingQueueItemDocument, ReleaseBillingQueueItemDocument, ResolveBillingQueueIssueDocument, UndoBillingQueueIssueDocument } from "./documents/billing-queue/review";
 export { BillingQueueShipmentDocument, BillingQueueRateAgreementDocument, BillingQueueFormulaTemplateDocument } from "./documents/billing-queue/shipment";
 export { BillingTransferCandidatesDocument, BillingTransferCandidateIdsDocument, BillingTransferRunDocument, MyActiveBillingTransferRunDocument, BillingTransferRunItemsDocument, StartBillingTransferRunDocument, CancelBillingTransferRunDocument, RetryBillingTransferRunDocument } from "./documents/billing-queue/transfer";
+export { BillingQueueSearchDatesFieldsFragmentDoc, BillingQueueFilterPresetFieldsFragmentDoc, BillingQueueBulkRunFieldsFragmentDoc, BillingQueueStatsDocument, BillingQueueRecommendationsDocument, BillingQueueAssistDocument, BillingQueueBriefDocument, BillingQueueNovaGenerationDocument, BillingQueueSearchIntentDocument, BillingQueueFilterPresetsDocument, CreateBillingQueueFilterPresetDocument, UpdateBillingQueueFilterPresetDocument, DeleteBillingQueueFilterPresetDocument, BillingQueueBulkRunDocument, StartBillingQueueBulkRunDocument, CancelBillingQueueBulkRunDocument, RedetectBillingQueuePodSignaturesDocument } from "./documents/billing-queue/workspace";
 export { BriefingFieldsFragmentDoc, TodaysBriefingDocument, MarkBriefingReadDocument, RegenerateBriefingDocument } from "./documents/briefing/briefing";
 export { BulkEditJobFieldsFragmentDoc, BulkEditFieldsDocument, PreviewBulkEditDocument, MyBulkEditDocument, StartBulkEditDocument, UndoMyBulkEditDocument } from "./documents/bulk-edit/operations";
 export { CaptureSourceInfoFieldsFragmentDoc, CaptureDeviceFieldsFragmentDoc, CaptureDeviceFleetFieldsFragmentDoc, CaptureProfileFieldsFragmentDoc, CaptureRequestFieldsFragmentDoc, CaptureRecordRefFieldsFragmentDoc, CaptureBatchRowFieldsFragmentDoc, CapturePageFieldsFragmentDoc, CaptureItemFieldsFragmentDoc, CaptureBatchDetailFieldsFragmentDoc, MyCaptureAccessDocument, CaptureAgentReleaseDocument, CaptureBatchesDocument, CaptureBatchCountDocument, CaptureBatchDocument, MyCaptureDevicesDocument, CaptureDevicesDocument, AvailableCaptureProfilesDocument, CaptureProfilesDocument, CaptureRequestsForTargetDocument, CaptureDevicePairingDocument, EditCaptureItemsDocument, FileCaptureItemDocument, FileCaptureItemsDocument, DiscardCaptureItemDocument, DiscardCaptureBatchDocument, CreateCaptureRequestDocument, CancelCaptureRequestDocument, CreateCaptureCoverSheetsDocument, ApproveCaptureDevicePairingDocument, DenyCaptureDevicePairingDocument, RevokeMyCaptureDeviceDocument, RevokeCaptureDeviceDocument, CreateCaptureProfileDocument, UpdateCaptureProfileDocument, DeleteCaptureProfileDocument } from "./documents/capture/capture";
@@ -20863,10 +21562,14 @@ export { InboundMailboxFieldsFragmentDoc, InboundMailboxCredentialsFieldsFragmen
 export { InboundSnoozeFieldsFragmentDoc, TriageActionFieldsFragmentDoc, InboundAttachmentDetailFieldsFragmentDoc, TriageFactFieldsFragmentDoc, TriageConflictFieldsFragmentDoc, InboundActivityFieldsFragmentDoc, InboundReplyAttachmentFieldsFragmentDoc, InboundReplyFieldsFragmentDoc, TriageLoadDraftFieldsFragmentDoc, InboundReplyAttachableFieldsFragmentDoc, TriageSampleFieldsFragmentDoc, TriageRuleFieldsFragmentDoc, TriageRulePreviewFieldsFragmentDoc, TriageDeckItemFieldsFragmentDoc, TriageRiverPointFieldsFragmentDoc, TriageViewFieldsFragmentDoc, TriageReplyTemplateFieldsFragmentDoc, TriageShipmentPeekFieldsFragmentDoc, TriageBulkResultFieldsFragmentDoc, InboundThreadDocument, TriageBriefingDocument, MyTriageViewsDocument, TriageResponseTargetsDocument, TriageSettingsDocument, TriageAssigneesDocument, TriageRulesDocument, TriageRulePreviewDocument, TriageRuleMatchesDocument, TriageSenderDomainsDocument, InboundSenderProfileDocument, TriageReplyTemplatesDocument, InboundReplyAttachablesDocument, RenderTriageReplyTemplateDocument, TriageStopTimesDocument, TriageShipmentPeekDocument, TriageCustomerPeekDocument, ReviewInboundMessagesDocument, ReopenInboundMessagesDocument, AssignInboundMessagesDocument, SnoozeInboundMessagesDocument, WakeInboundMessageDocument, WaitForInboundReplyDocument, StopWaitingForInboundReplyDocument, UnlinkInboundMessageDocument, SendInboundMailboxTestDocument, HandOffTriageDocument, ReadUnreadInboundMessagesDocument, CreateMyTriageViewDocument, RenameMyTriageViewDocument, DeleteMyTriageViewDocument, UpdateTriageResponseTargetsDocument, UpdateTriageSettingsDocument, CreateTriageRuleDocument, UpdateTriageRuleDocument, SetTriageRuleEnabledDocument, DeleteTriageRuleDocument, CorrectInboundClassificationDocument, FlagInboundFactDocument, ResolveInboundConflictDocument, ReopenInboundConflictDocument, DraftInboundReplyDocument, SaveInboundReplyDraftDocument, DiscardInboundReplyDraftDocument, SendInboundReplyDocument, DraftInboundManyDocument, CreateTriageReplyTemplateDocument, UpdateTriageReplyTemplateDocument, DeleteTriageReplyTemplateDocument, DraftInboundLoadDocument, DiscardInboundLoadDocument, CreateInboundLoadDocument, FileInboundAttachmentDocument, FileInboundManyDocument, UnfileInboundAttachmentDocument, LogInboundExceptionDocument, BlockInboundSenderDocument, UnblockInboundSenderDocument, DecideInboundStopsDocument } from "./documents/inbox/triage";
 export { InvoiceApprovalQueueItemFieldsFragmentDoc, InvoiceAdjustmentApprovalsDocument, InvoiceAdjustmentApprovalDetailDocument, InvoiceAdjustmentOperationsSummaryDocument, ApproveInvoiceAdjustmentDocument, RejectInvoiceAdjustmentDocument } from "./documents/invoice-adjustment/approvals";
 export { DeskInvoiceAdjustmentCardDocument } from "./documents/invoice-adjustment/desk";
+export { InvoiceAdjustmentDetailFieldsFragmentDoc, InvoiceAdjustmentBatchFieldsFragmentDoc, InvoiceAdjustmentDetailDocument, InvoiceAdjustmentLineageDocument, InvoiceAdjustmentBatchesDocument, InvoiceAdjustmentBatchDocument, InvoiceAdjustmentReconciliationExceptionsDocument, InvoiceAdjustmentWorkloadSummaryDocument, InvoiceAdjustmentDraftPreviewDocument, CreateInvoiceAdjustmentDraftDocument, UpdateInvoiceAdjustmentDraftDocument, SubmitInvoiceAdjustmentDraftDocument, ApproveInvoiceAdjustmentDetailDocument, RejectInvoiceAdjustmentDetailDocument } from "./documents/invoice-adjustment/workflow";
 export { DeskInvoiceNeighborFragmentDoc, DeskInvoiceCardDocument, DeskInvoicesDocument, DeskInvoiceDetailDocument, DeskInvoiceDisputesDocument } from "./documents/invoice/desk";
 export { InvoiceRelatedFieldsFragmentDoc, CreditMemoApplicationFieldsFragmentDoc, InvoiceDisputeFieldsFragmentDoc, InvoiceEdiSendPlanFieldsFragmentDoc, InvoiceArFieldsFragmentDoc, InvoiceArContextDocument, ShipmentInvoicesDocument } from "./documents/invoice/detail";
+export { InvoiceDetailFieldsFragmentDoc, InvoiceEmailAttemptFieldsFragmentDoc, InvoiceSendPlanFieldsFragmentDoc, InvoiceDetailDocument, InvoiceEmailAttemptsDocument, InvoiceSendPlanDocument, InvoicePostPreviewDocument, UpdateInvoiceDraftDocument, GenerateInvoicePdfDocument, SendInvoiceDocument, PostInvoiceDocument } from "./documents/invoice/lifecycle";
 export { CreatedInvoiceFieldsFragmentDoc, CreateInvoicesFromShipmentsDocument, VoidInvoiceDocument, CreateMemoDocument, SendInvoiceEdiDocument, ApplyCreditMemoDocument, UnapplyCreditMemoApplicationDocument, OpenInvoiceDisputeDocument, ResolveInvoiceDisputeDocument, WithdrawInvoiceDisputeDocument } from "./documents/invoice/mutations";
 export { InvoiceRegisterRowFieldsFragmentDoc, InvoiceRegisterDocument } from "./documents/invoice/register";
+export { InvoiceShareUserFieldsFragmentDoc, InvoiceShareFieldsFragmentDoc, InvoiceSharesDocument, InvoiceShareCandidatesDocument, ShareInvoiceDocument } from "./documents/invoice/share";
+export { OpenStatementFieldsFragmentDoc, OpenStatementsDocument, OpenStatementDocument, BillStatementNowDocument } from "./documents/invoice/statement";
 export { InvoiceTableRowFieldsFragmentDoc, InvoiceTableDocument } from "./documents/invoice/table";
 export { DeskJournalCardLineFieldsFragmentDoc, DeskJournalCardPeriodFieldsFragmentDoc, DeskJournalCardPostingFieldsFragmentDoc, DeskJournalCardPersonFieldsFragmentDoc, DeskJournalCardEntryFieldsFragmentDoc, DeskJournalEntryCardDocument, DeskJournalEntriesDocument } from "./documents/journal-entry/desk";
 export { JournalEntryDetailDocument, JournalSourceByObjectDocument, JournalEntriesBySourceDocument } from "./documents/journal-entry/operations";
@@ -20927,7 +21630,7 @@ export { ShipmentBoardCapabilitiesDocument, ShipmentStageSummaryDocument, Shipme
 export { CheckCallFieldsFragmentDoc, CarrierTrackingLinkFieldsFragmentDoc, ShipmentCheckCallsDocument, CarrierTrackingLinkDocument, LogCheckCallDocument, IssueCarrierTrackingLinkDocument, RevokeCarrierTrackingLinkDocument } from "./documents/shipment/check-calls";
 export { CustomerTrackingLinkFieldsFragmentDoc, CustomerStatusNotificationFieldsFragmentDoc, CustomerTrackingLinksDocument, CustomerStatusNotificationsDocument, IssueCustomerTrackingLinkDocument, RevokeCustomerTrackingLinkDocument } from "./documents/shipment/customer-tracking";
 export { DeskRecordShipmentsDocument } from "./documents/shipment/desk-record";
-export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDoc, ShipmentStopFieldsFragmentDoc, ShipmentTractorFieldsFragmentDoc, ShipmentTrailerFieldsFragmentDoc, ShipmentWorkerFieldsFragmentDoc, ShipmentAssignmentFieldsFragmentDoc, ShipmentCarrierAssignmentFieldsFragmentDoc, ShipmentMoveFieldsFragmentDoc, ShipmentAdditionalChargeFieldsFragmentDoc, ShipmentCommodityFieldsFragmentDoc, ChargeAllocationFieldsFragmentDoc, ShipmentUserFieldsFragmentDoc, ShipmentFieldsFragmentDoc, ShipmentPageInfoFieldsFragmentDoc, ShipmentCommentMentionFieldsFragmentDoc, ShipmentCommentAcknowledgmentFieldsFragmentDoc, ShipmentCommentAttachmentFieldsFragmentDoc, ShipmentCommentFieldsFragmentDoc, ShipmentEventFieldsFragmentDoc, ShipmentContractRateFieldsFragmentDoc, ShipmentBoardTableDocument, ShipmentDetailDocument, ShipmentPageAnalyticsDocument, ShipmentTomorrowsPickupsDocument, UnassignedShipmentsDocument, ExceptionShipmentsDocument, MapShipmentsDocument, ShipmentCommentsDocument, ShipmentCommentRepliesDocument, ShipmentCommentCountDocument, ShipmentEventsDocument, ShipmentBillingReadinessDocument, ShipmentUiPolicyDocument, ShipmentPreviousRatesDocument, CreateShipmentDocument, UpdateShipmentDocument, CancelShipmentDocument, UncancelShipmentDocument, ApproveShipmentRatingReviewDocument, DuplicateShipmentDocument, TransferShipmentOwnershipDocument, TransferShipmentToBillingItemsDocument, BulkTransferShipmentsToBillingDocument, CalculateShipmentTotalsDocument, PreviewShipmentContractRateDocument, AutoRateShipmentDocument, CalculateShipmentDistanceDocument, RecalculateShipmentDistanceDocument, CheckShipmentDuplicateBolDocument, CheckShipmentHazmatSegregationDocument, CalculateShipmentLoadingOptimizationDocument, CreateShipmentCommentDocument, UpdateShipmentCommentDocument, DeleteShipmentCommentDocument, PinShipmentCommentDocument, UnpinShipmentCommentDocument, ResolveShipmentCommentDocument, UnresolveShipmentCommentDocument, AcknowledgeShipmentCommentDocument, ShipmentProfitabilityDocument } from "./documents/shipment/page";
+export { ShipmentAdditionalChargeFieldsFragmentDoc, ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDoc, ShipmentStopFieldsFragmentDoc, ShipmentTractorFieldsFragmentDoc, ShipmentTrailerFieldsFragmentDoc, ShipmentWorkerFieldsFragmentDoc, ShipmentAssignmentFieldsFragmentDoc, ShipmentCarrierAssignmentFieldsFragmentDoc, ShipmentMoveFieldsFragmentDoc, ShipmentCommodityFieldsFragmentDoc, ChargeAllocationFieldsFragmentDoc, ShipmentUserFieldsFragmentDoc, ShipmentFieldsFragmentDoc, ShipmentPageInfoFieldsFragmentDoc, ShipmentCommentMentionFieldsFragmentDoc, ShipmentCommentAcknowledgmentFieldsFragmentDoc, ShipmentCommentAttachmentFieldsFragmentDoc, ShipmentCommentFieldsFragmentDoc, ShipmentEventFieldsFragmentDoc, ShipmentContractRateFieldsFragmentDoc, ShipmentBoardTableDocument, ShipmentDetailDocument, ShipmentPageAnalyticsDocument, ShipmentTomorrowsPickupsDocument, UnassignedShipmentsDocument, ExceptionShipmentsDocument, MapShipmentsDocument, ShipmentCommentsDocument, ShipmentCommentRepliesDocument, ShipmentCommentCountDocument, ShipmentEventsDocument, ShipmentBillingReadinessDocument, ShipmentUiPolicyDocument, ShipmentPreviousRatesDocument, CreateShipmentDocument, UpdateShipmentDocument, CancelShipmentDocument, UncancelShipmentDocument, ApproveShipmentRatingReviewDocument, DuplicateShipmentDocument, TransferShipmentOwnershipDocument, TransferShipmentToBillingItemsDocument, BulkTransferShipmentsToBillingDocument, CalculateShipmentTotalsDocument, PreviewShipmentContractRateDocument, AutoRateShipmentDocument, CalculateShipmentDistanceDocument, RecalculateShipmentDistanceDocument, CheckShipmentDuplicateBolDocument, CheckShipmentHazmatSegregationDocument, CalculateShipmentLoadingOptimizationDocument, CreateShipmentCommentDocument, UpdateShipmentCommentDocument, DeleteShipmentCommentDocument, PinShipmentCommentDocument, UnpinShipmentCommentDocument, ResolveShipmentCommentDocument, UnresolveShipmentCommentDocument, AcknowledgeShipmentCommentDocument, ShipmentProfitabilityDocument } from "./documents/shipment/page";
 export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preferences/mutations";
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";

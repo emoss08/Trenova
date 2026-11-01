@@ -1,89 +1,117 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
-import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 import {
-  invoiceEmailAttemptSchema,
+  GenerateInvoicePdfDocument,
+  InvoiceDetailDocument,
+  InvoiceEmailAttemptsDocument,
+  InvoicePostPreviewDocument,
+  InvoiceSendPlanDocument,
+  PostInvoiceDocument,
+  SendInvoiceDocument,
+  UpdateInvoiceDraftDocument,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { safeParse } from "@trenova/shared/lib/parse";
+import {
   generateInvoicePdfResultSchema,
+  invoiceEmailAttemptPageSchema,
   invoicePostPreviewSchema,
   invoiceSchema,
   invoiceSendPlanSchema,
   invoiceSendResultSchema,
   updateInvoiceDraftSchema,
-  type Invoice,
   type UpdateInvoiceDraft,
 } from "@trenova/shared/types/invoice";
 
-const invoiceListSchema = createLimitOffsetResponse(invoiceSchema);
-const invoiceEmailAttemptListSchema = createLimitOffsetResponse(invoiceEmailAttemptSchema);
+type RequestOptions = { signal?: AbortSignal };
 
 export class InvoiceService {
-  public async list(params?: Record<string, string>) {
-    const endpoint = params
-      ? `/billing/invoices/?${new URLSearchParams(params).toString()}`
-      : "/billing/invoices/";
-    const response = await api.get(endpoint);
-    return safeParse(invoiceListSchema, response, "InvoiceList");
-  }
-
-  public async getById(id: string) {
-    const response = await api.get<Invoice>(`/billing/invoices/${id}/`);
-    return safeParse(invoiceSchema, response, "Invoice");
-  }
-
-  public async createFromShipments(shipmentIds: string[]) {
-    const response = await api.post<Invoice>("/billing/invoices/from-shipments/", { shipmentIds });
-    return safeParse(invoiceSchema, response, "Invoice");
+  public async getById(id: string, options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ invoice: unknown }>({
+      document: InvoiceDetailDocument,
+      operationName: "InvoiceDetail",
+      variables: { id },
+      signal: options.signal,
+    });
+    return safeParse(invoiceSchema, data.invoice, "Invoice");
   }
 
   public async updateDraft(id: string, data: UpdateInvoiceDraft) {
-    const payload = updateInvoiceDraftSchema.parse(data);
-    const response = await api.patch<Invoice>(`/billing/invoices/${id}/`, payload);
-    return safeParse(invoiceSchema, response, "Invoice");
+    const input = updateInvoiceDraftSchema.parse(data);
+    const response = await requestGraphQL<{ updateInvoiceDraft: unknown }>({
+      document: UpdateInvoiceDraftDocument,
+      operationName: "UpdateInvoiceDraft",
+      variables: { invoiceId: id, input },
+    });
+    return safeParse(invoiceSchema, response.updateInvoiceDraft, "Invoice");
   }
 
   public async generatePdf(id: string) {
-    const response = await api.post(`/billing/invoices/${id}/generate-pdf/`, {});
-    return safeParse(generateInvoicePdfResultSchema, response, "GenerateInvoicePdfResult");
+    const data = await requestGraphQL<{ generateInvoicePdf: unknown }>({
+      document: GenerateInvoicePdfDocument,
+      operationName: "GenerateInvoicePdf",
+      variables: { invoiceId: id },
+    });
+    return safeParse(
+      generateInvoicePdfResultSchema,
+      data.generateInvoicePdf,
+      "GenerateInvoicePdfResult",
+    );
   }
 
-  public async getSendPlan(id: string) {
-    const response = await api.get(`/billing/invoices/${id}/send-plan/`);
-    return safeParse(invoiceSendPlanSchema, response, "InvoiceSendPlan");
+  public async getSendPlan(id: string, options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ invoiceSendPlan: unknown }>({
+      document: InvoiceSendPlanDocument,
+      operationName: "InvoiceSendPlan",
+      variables: { invoiceId: id },
+      signal: options.signal,
+    });
+    return safeParse(invoiceSendPlanSchema, data.invoiceSendPlan, "InvoiceSendPlan");
   }
 
+  /** Emails the invoice; a later call sends it again after a failed or earlier send. */
   public async send(id: string) {
-    const response = await api.post(`/billing/invoices/${id}/send/`, {});
-    return safeParse(invoiceSendResultSchema, response, "InvoiceSendResult");
+    const data = await requestGraphQL<{ sendInvoice: unknown }>({
+      document: SendInvoiceDocument,
+      operationName: "SendInvoice",
+      variables: { invoiceId: id },
+    });
+    return safeParse(invoiceSendResultSchema, data.sendInvoice, "InvoiceSendResult");
   }
 
-  public async resend(id: string) {
-    const response = await api.post(`/billing/invoices/${id}/resend/`, {});
-    return safeParse(invoiceSendResultSchema, response, "InvoiceSendResult");
-  }
-
-  public async listEmailAttempts(id: string, params?: { limit?: number; offset?: number }) {
-    const search = params ? new URLSearchParams(toStringParams(params)).toString() : "";
-    const query = search ? `?${search}` : "";
-    const response = await api.get(`/billing/invoices/${id}/email-attempts/${query}`);
-    return safeParse(invoiceEmailAttemptListSchema, response, "InvoiceEmailAttempts");
+  public async listEmailAttempts(
+    id: string,
+    params: { limit?: number; offset?: number } = {},
+    options: RequestOptions = {},
+  ) {
+    const data = await requestGraphQL<{ invoiceEmailAttempts: unknown }>({
+      document: InvoiceEmailAttemptsDocument,
+      operationName: "InvoiceEmailAttempts",
+      variables: { invoiceId: id, limit: params.limit, offset: params.offset },
+      signal: options.signal,
+    });
+    return safeParse(
+      invoiceEmailAttemptPageSchema,
+      data.invoiceEmailAttempts,
+      "InvoiceEmailAttempts",
+    );
   }
 
   /** What posting the invoice would book and move, without posting it. */
-  public async getPostPreview(id: string) {
-    const response = await api.get(`/billing/invoices/${id}/post-preview/`);
-    return safeParse(invoicePostPreviewSchema, response, "InvoicePostPreview");
+  public async getPostPreview(id: string, options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ invoicePostPreview: unknown }>({
+      document: InvoicePostPreviewDocument,
+      operationName: "InvoicePostPreview",
+      variables: { invoiceId: id },
+      signal: options.signal,
+    });
+    return safeParse(invoicePostPreviewSchema, data.invoicePostPreview, "InvoicePostPreview");
   }
 
   public async post(id: string) {
-    const response = await api.post<Invoice>(`/billing/invoices/${id}/post/`, {});
-    return safeParse(invoiceSchema, response, "Invoice");
+    const data = await requestGraphQL<{ postInvoice: unknown }>({
+      document: PostInvoiceDocument,
+      operationName: "PostInvoice",
+      variables: { invoiceId: id },
+    });
+    return safeParse(invoiceSchema, data.postInvoice, "Invoice");
   }
-}
-
-function toStringParams(params: { limit?: number; offset?: number }) {
-  return Object.fromEntries(
-    Object.entries(params)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => [key, String(value)]),
-  );
 }

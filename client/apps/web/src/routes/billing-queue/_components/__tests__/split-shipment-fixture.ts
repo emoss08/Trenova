@@ -5,7 +5,7 @@ import {
 } from "@trenova/shared/types/billing-queue";
 
 /**
- * The shipment from the field report, as `GET /billing-queue/:id/` returns it:
+ * The shipment from the field report, as the billingQueueItem query returns it:
  * $2,850 freight split by amount between Peak ($1,500) and Acme ($1,350), and a
  * $1,154.38 detention charge nobody split, so it bills whole to Acme.
  */

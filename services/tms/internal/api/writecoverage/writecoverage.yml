@@ -567,32 +567,29 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
   # billingqueue
-  "DELETE /api/v1/billing-queue/filter-presets/:presetId/":
-    exempt: user-preference
-    reason: "A saved filter on the billing queue screen."
-  "POST /api/v1/billing-queue/:itemID/reassign-charge/":
-    tools: [billing_reassign_charge]
-  "POST /api/v1/billing-queue/bulk/":
-    tools: [billing_approve_queue_item, billing_assign_biller, billing_cancel_queue_item, billing_hold_queue_item, billing_resolve_issue, invoice_post]
-  "POST /api/v1/billing-queue/bulk/:runID/cancel/":
+  "mutation cancelBillingQueueBulkRun":
     exempt: infrastructure
     reason: "Stops a bulk run the queue screen started in the background; the agent's billing tools act on each item within the one proposal a person decides, so an agent has no run to stop."
-  "POST /api/v1/billing-queue/filter-presets/":
+  "mutation createBillingQueueFilterPreset":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
-  "POST /api/v1/billing-queue/pod-signatures/redetect/":
+  "mutation deleteBillingQueueFilterPreset":
+    exempt: user-preference
+    reason: "A saved filter on the billing queue screen."
+  "mutation reassignBillingQueueCharge":
+    tools: [billing_reassign_charge]
+  "mutation redetectBillingQueuePodSignatures":
     exempt: infrastructure
     reason: "A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed."
-  "POST /api/v1/billing-queue/search-intent/":
-    exempt: read-only
-    reason: "Turns a sentence into filters for the queue screen and changes nothing."
-  "PUT /api/v1/billing-queue/:itemID/charges/":
+  "mutation startBillingQueueBulkRun":
+    tools: [billing_approve_queue_item, billing_assign_biller, billing_cancel_queue_item, billing_hold_queue_item, billing_resolve_issue, invoice_post]
+  "mutation updateBillingQueueCharges":
     tools: [billing_correct_charge_codes]
-  "PUT /api/v1/billing-queue/:itemID/invoice-details/":
-    pending: "Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval"
-  "PUT /api/v1/billing-queue/filter-presets/:presetId/":
+  "mutation updateBillingQueueFilterPreset":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
+  "mutation updateBillingQueueInvoiceDetails":
+    pending: "Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval"
   "mutation assignBillingQueueBiller":
     tools: [billing_assign_biller]
   "mutation postBillingQueueItem":
@@ -2050,46 +2047,36 @@ writes:
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
 
   # invoice
-  "PATCH /api/v1/billing/invoices/:invoiceID/":
-    tools: [invoice_update_draft]
-  "POST /api/v1/billing/invoices/:invoiceID/generate-pdf/":
-    tools: [invoice_generate_pdf]
-  "POST /api/v1/billing/invoices/:invoiceID/post/":
-    tools: [invoice_post]
-  "POST /api/v1/billing/invoices/:invoiceID/send/":
-    tools: [invoice_send]
-  "POST /api/v1/billing/invoices/from-shipments/":
-    tools: [invoice_create]
   "mutation createInvoicesFromOrder":
     tools: [invoice_create]
   "mutation createInvoicesFromShipments":
     tools: [invoice_create]
   "mutation createMemo":
     tools: [invoice_create_memo]
+  "mutation generateInvoicePdf":
+    tools: [invoice_generate_pdf]
+  "mutation postInvoice":
+    tools: [invoice_post]
+  "mutation sendInvoice":
+    tools: [invoice_send]
   "mutation sendInvoiceEdi":
     tools: [invoice_send_edi]
+  "mutation updateInvoiceDraft":
+    tools: [invoice_update_draft]
   "mutation voidInvoice":
     tools: [invoice_void]
 
   # invoiceadjustment
-  "PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/":
-    tools: [invoice_save_adjustment_draft]
-  "POST /api/v1/billing/invoice-adjustments/drafts/":
-    tools: [invoice_save_adjustment_draft]
-  "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/":
-    exempt: read-only
-    reason: "Previews an invoice adjustment and saves nothing."
-  "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/":
-    tools: [invoice_submit_adjustment]
-  "POST /api/v1/billing/invoice-adjustments/preview/":
-    exempt: read-only
-    reason: "Previews an invoice adjustment and saves nothing."
-  "POST /api/v1/billing/invoice-adjustments/submit/":
-    tools: [invoice_submit_adjustment]
   "mutation approveInvoiceAdjustment":
     tools: [invoice_approve_adjustment]
+  "mutation createInvoiceAdjustmentDraft":
+    tools: [invoice_save_adjustment_draft]
   "mutation rejectInvoiceAdjustment":
     tools: [invoice_reject_adjustment]
+  "mutation submitInvoiceAdjustmentDraft":
+    tools: [invoice_submit_adjustment]
+  "mutation updateInvoiceAdjustmentDraft":
+    tools: [invoice_save_adjustment_draft]
 
   # invoiceadjustmentcontrol
   "PUT /api/v1/invoice-adjustment-controls/":
@@ -2105,11 +2092,11 @@ writes:
     tools: [invoice_withdraw_dispute]
 
   # invoicerun
-  "POST /api/v1/billing/statements/:customerID/bill/":
+  "mutation billStatementNow":
     tools: [invoice_bill_statement]
 
   # invoiceshare
-  "POST /api/v1/billing/invoices/:invoiceID/shares/":
+  "mutation shareInvoice":
     tools: [invoice_share]
 
   # journalentry

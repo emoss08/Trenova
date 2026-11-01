@@ -82,6 +82,38 @@ type InvoiceAdjustment @kind(resource: "invoice") {
   lines: [InvoiceAdjustmentLine!]!
   "The documents the submitter attached as support for the adjustment."
   supportingDocumentIds: [ID!]!
+  idempotencyKey: String!
+  metadata: JSON!
+  "The shipment documents the submitter picked as evidence, as they were when picked."
+  referencedDocuments: [InvoiceAdjustmentDocumentReference!]!
+  "Documents uploaded onto the adjustment itself. Set on the read through invoiceAdjustment(id)."
+  adjustmentDocuments: [InvoiceAdjustmentDocument!]!
+}
+
+"A document picked as evidence for an adjustment, with its name as it was when picked."
+type InvoiceAdjustmentDocumentReference {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  adjustmentId: ID!
+  documentId: ID!
+  selectedById: ID
+  selectedAt: Timestamp
+  snapshotFileName: String!
+  snapshotOriginalName: String!
+  snapshotFileType: String!
+  snapshotResourceType: String!
+  snapshotResourceId: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A document uploaded onto an adjustment."
+type InvoiceAdjustmentDocument {
+  id: ID!
+  fileName: String!
+  originalName: String!
 }
 
 "How much of one original invoice line an adjustment credits and rebills."
@@ -99,6 +131,8 @@ type InvoiceAdjustmentLine {
   remainingEligibleAmount: Decimal!
   rebillQuantity: Decimal!
   rebillAmount: Decimal!
+  "What the replacement invoice line says, on a rebill the biller wrote by hand."
+  replacementPayload: JSON!
   createdAt: Timestamp!
   updatedAt: Timestamp!
 }
@@ -199,6 +233,206 @@ type InvoiceAdjustmentOperationsSummary {
   repeatedCustomerAdjustments: [InvoiceAdjustmentRepeatedSummary!]!
 }
 
+"Every invoice and adjustment in one correction chain."
+type InvoiceAdjustmentCorrectionGroup {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  rootInvoiceId: ID!
+  "The invoice that stands for the chain now."
+  currentInvoiceId: ID
+  metadata: JSON!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type InvoiceAdjustmentLineage {
+  correctionGroup: InvoiceAdjustmentCorrectionGroup!
+  "The chain's invoices, oldest first."
+  invoices: [Invoice!]!
+  adjustments: [InvoiceAdjustment!]!
+}
+
+enum InvoiceAdjustmentBatchStatus {
+  Pending
+  Running
+  Completed
+  Failed
+  PartialSuccess
+  Submitted
+  Queued
+}
+
+enum InvoiceAdjustmentBatchItemStatus {
+  Pending
+  Previewed
+  Submitted
+  PendingApproval
+  Executing
+  Executed
+  Rejected
+  Failed
+}
+
+enum InvoiceReconciliationExceptionStatus {
+  Open
+  Resolved
+}
+
+"One invoice of a bulk adjustment."
+type InvoiceAdjustmentBatchItem {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  batchId: ID!
+  adjustmentId: ID
+  invoiceId: ID!
+  idempotencyKey: String!
+  status: InvoiceAdjustmentBatchItemStatus!
+  errorMessage: String!
+  requestPayload: JSON!
+  resultPayload: JSON!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Adjustments submitted together, worked through in the background."
+type InvoiceAdjustmentBatch {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  idempotencyKey: String!
+  status: InvoiceAdjustmentBatchStatus!
+  totalCount: Int!
+  processedCount: Int!
+  succeededCount: Int!
+  failedCount: Int!
+  pendingCount: Int!
+  submittedById: ID
+  submittedByName: String!
+  submittedAt: Timestamp
+  "The most common failure among the batch's items, and how many failed that way."
+  lastFailure: String!
+  lastFailureCount: Int!
+  metadata: JSON!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  "The batch's invoices. Set on the read through invoiceAdjustmentBatch(id)."
+  items: [InvoiceAdjustmentBatchItem!]!
+}
+
+type InvoiceAdjustmentBatchPage {
+  items: [InvoiceAdjustmentBatch!]!
+  total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
+}
+
+"A finance exception an adjustment raised, with what it touched resolved for review."
+type InvoiceAdjustmentReconciliationQueueItem {
+  exceptionId: ID!
+  adjustmentId: ID!
+  correctionGroupId: ID!
+  status: InvoiceReconciliationExceptionStatus!
+  reason: String!
+  amount: Decimal!
+  originalInvoiceId: ID!
+  originalInvoiceNumber: String!
+  originalInvoiceStatus: String!
+  creditMemoInvoiceId: ID
+  creditMemoInvoiceNumber: String!
+  replacementInvoiceId: ID
+  replacementInvoiceNumber: String!
+  rebillQueueItemId: ID
+  rebillQueueNumber: String!
+  customerName: String!
+  adjustmentKind: InvoiceAdjustmentKind!
+  adjustmentStatus: InvoiceAdjustmentStatus!
+  policySource: String!
+  submittedById: ID
+  submittedByName: String!
+  submittedAt: Timestamp
+  financeNotes: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type InvoiceAdjustmentReconciliationPage {
+  items: [InvoiceAdjustmentReconciliationQueueItem!]!
+  total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
+}
+
+"""
+A page of an adjustment work queue. query matches the queue's text; status
+narrows it to one status. limit is at most 100.
+"""
+input InvoiceAdjustmentQueueInput {
+  limit: Int = 100
+  offset: Int = 0
+  query: String
+  status: String
+}
+
+"How one original invoice line is credited and rebilled."
+type InvoiceAdjustmentPreviewLine {
+  lineNumber: Int!
+  originalLineId: ID!
+  description: String!
+  eligibleAmount: Decimal!
+  alreadyCreditedAmount: Decimal!
+  requestedCreditAmount: Decimal!
+  requestedRebillAmount: Decimal!
+  remainingEligibleAmount: Decimal!
+  hasEligibilityError: Boolean!
+  eligibilityOverageAmount: Decimal!
+  eligibilityMessage: String!
+}
+
+"What an adjustment would credit, rebill and require, computed without saving anything."
+type InvoiceAdjustmentPreview {
+  invoiceId: ID!
+  invoiceNumber: String!
+  currencyCode: String!
+  correctionGroupId: ID!
+  kind: InvoiceAdjustmentKind!
+  rebillStrategy: InvoiceAdjustmentRebillStrategy
+  accountingDate: Timestamp!
+  creditTotalAmount: Decimal!
+  rebillTotalAmount: Decimal!
+  netDeltaAmount: Decimal!
+  rerateVariancePercent: Decimal!
+  wouldCreateUnappliedCredit: Boolean!
+  requiresApproval: Boolean!
+  requiresReplacementInvoiceReview: Boolean!
+  requiresReconciliationException: Boolean!
+  warnings: [String!]!
+  "Field errors keyed by field path, each with its messages."
+  errors: JSON!
+  lines: [InvoiceAdjustmentPreviewLine!]!
+}
+
+input InvoiceAdjustmentLineInput {
+  originalLineId: ID!
+  creditQuantity: Decimal!
+  creditAmount: Decimal!
+  rebillQuantity: Decimal!
+  rebillAmount: Decimal!
+  description: String
+  replacementPayload: JSON
+}
+
+"A draft adjustment as the biller has it now; it replaces the draft's kind, reason, evidence and lines."
+input InvoiceAdjustmentDraftInput {
+  kind: InvoiceAdjustmentKind!
+  rebillStrategy: InvoiceAdjustmentRebillStrategy
+  reason: String
+  referencedDocumentIds: [ID!]
+  lines: [InvoiceAdjustmentLineInput!]
+}
+
 input RejectInvoiceAdjustmentInput {
   adjustmentId: ID!
   reason: String
@@ -211,6 +445,17 @@ extend type Query {
     input: InvoiceAdjustmentApprovalsInput!
   ): InvoiceAdjustmentApprovalQueueConnection!
   invoiceAdjustmentOperationsSummary: InvoiceAdjustmentOperationsSummary!
+  "Every invoice and adjustment in one correction chain."
+  invoiceAdjustmentLineage(correctionGroupId: ID!): InvoiceAdjustmentLineage!
+  "Bulk adjustments, newest first."
+  invoiceAdjustmentBatches(input: InvoiceAdjustmentQueueInput!): InvoiceAdjustmentBatchPage!
+  invoiceAdjustmentBatch(id: ID!): InvoiceAdjustmentBatch
+  "Finance exceptions adjustments raised, newest first."
+  invoiceAdjustmentReconciliationExceptions(
+    input: InvoiceAdjustmentQueueInput!
+  ): InvoiceAdjustmentReconciliationPage!
+  "What submitting a draft adjustment would credit and rebill. Nothing is saved."
+  invoiceAdjustmentDraftPreview(id: ID!): InvoiceAdjustmentPreview!
 }
 
 extend type Mutation {
@@ -218,4 +463,9 @@ extend type Mutation {
   approveInvoiceAdjustment(adjustmentId: ID!): InvoiceAdjustment!
   "Rejects a pending adjustment; the invoice stays as posted."
   rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
+  "Starts a draft adjustment against a posted invoice."
+  createInvoiceAdjustmentDraft(invoiceId: ID!): InvoiceAdjustment!
+  updateInvoiceAdjustmentDraft(id: ID!, input: InvoiceAdjustmentDraftInput!): InvoiceAdjustment!
+  "Submits a draft adjustment; it executes, or waits for an approver when policy says so."
+  submitInvoiceAdjustmentDraft(id: ID!): InvoiceAdjustment!
 }

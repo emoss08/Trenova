@@ -53,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -64,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -1805,8 +1807,41 @@ type BenefitPlanInput struct {
 	Status            *domaintypes.Status        `json:"status,omitempty"`
 }
 
+type BillStatementNowInput struct {
+	// Required when the period has not closed yet.
+	Reason *string `json:"reason,omitempty"`
+	// Items held back for the next period; they stay approved and uninvoiced.
+	Exclude []*StatementExclusionInput `json:"exclude,omitempty"`
+}
+
+// Where the next page of activity starts: before this entry.
+type BillingQueueActivityCursorInput struct {
+	At int    `json:"at"`
+	ID string `json:"id"`
+}
+
 type BillingQueueAssignInput struct {
 	BillerID string `json:"billerId"`
+}
+
+type BillingQueueBulkRunParamsInput struct {
+	// Approve: make the caller the approver of items with no biller.
+	AssignApprover *bool `json:"assignApprover,omitempty"`
+	// Assign: the biller.
+	BillerID *string `json:"billerId,omitempty"`
+	// Hold: why.
+	HoldReasonCode *billingqueue.HoldReasonCode `json:"holdReasonCode,omitempty"`
+	// Hold or Cancel: the note.
+	Reason *string `json:"reason,omitempty"`
+	// ResolveIssue: the issue and the option that settles it.
+	IssueCode *string `json:"issueCode,omitempty"`
+	OptionKey *string `json:"optionKey,omitempty"`
+}
+
+type BillingQueueFilterPresetInput struct {
+	Name      string         `json:"name"`
+	Filters   map[string]any `json:"filters"`
+	IsDefault *bool          `json:"isDefault,omitempty"`
 }
 
 // The open issue a list row leads with, and how many are open.
@@ -1817,6 +1852,19 @@ type BillingQueueHeadline struct {
 	Open     int    `json:"open"`
 	// The issue waits on someone other than the biller.
 	Waiting bool `json:"waiting"`
+}
+
+// What the invoice will say, set before approval.
+type BillingQueueInvoiceDetailsInput struct {
+	// The item's version as the person read it.
+	Version     int     `json:"version"`
+	PoNumber    *string `json:"poNumber,omitempty"`
+	InvoiceMemo *string `json:"invoiceMemo,omitempty"`
+	// Empty keeps the customer's term.
+	PaymentTerm *string `json:"paymentTerm,omitempty"`
+	// Null keeps today.
+	InvoiceDate       *int     `json:"invoiceDate,omitempty"`
+	PacketDocumentIds []string `json:"packetDocumentIds,omitempty"`
 }
 
 type BillingQueueItem struct {
@@ -1869,6 +1917,35 @@ type BillingQueueItem struct {
 	AgentReviewedAt *int                       `json:"agentReviewedAt,omitempty"`
 	// The open issue a list row leads with. Set on items read through billingQueueItems.
 	Headline *BillingQueueHeadline `json:"headline,omitempty"`
+	HeldAt   *int                  `json:"heldAt,omitempty"`
+	HeldByID *string               `json:"heldById,omitempty"`
+	// The status a hold found the item in, which releasing it returns to.
+	StatusBeforeHold *billingqueue.Status `json:"statusBeforeHold,omitempty"`
+	// When the checks last ran.
+	CheckedAt *int `json:"checkedAt,omitempty"`
+	// The invoice the item became, once approved.
+	InvoiceID *string `json:"invoiceId,omitempty"`
+	// The note printed under the charges on the invoice the item will make.
+	InvoiceMemo string `json:"invoiceMemo"`
+	// The payment term the invoice will carry instead of the customer's; empty keeps the customer's.
+	PaymentTerm string `json:"paymentTerm"`
+	// The invoice date the invoice will carry instead of today.
+	InvoiceDate *int `json:"invoiceDate,omitempty"`
+	// The shipment documents sent with the invoice as one packet.
+	PacketDocumentIds []string `json:"packetDocumentIds"`
+	// What Nova read to review the item.
+	AgentReads []*billingqueue.AgentRead `json:"agentReads"`
+	// This payer's part of the shipment's charges. Set on the item read through billingQueueItem(id).
+	PayerShare *billingqueue.PayerShare `json:"payerShare,omitempty"`
+	// What priced the item's shipment. Set on the item read through billingQueueItem(id).
+	RatedBy *billingqueue.RatedBy `json:"ratedBy,omitempty"`
+	// Detention charges on the shipment still waiting on an approver; while any is
+	// listed the item cannot be approved. Set on the item read through billingQueueItem(id).
+	DetentionHolds []*billingqueue.DetentionHold `json:"detentionHolds"`
+	// The reviews a tariff asked for on the shipment, which hold the item until a person approves the rating.
+	RatingReviewHold *billingqueue.RatingReviewHold `json:"ratingReviewHold,omitempty"`
+	// Everything a biller reads to decide the item. Set when the item was read with its shipment details, as billingQueueItem(id) reads it.
+	Review *billingqueue.Review `json:"review,omitempty"`
 }
 
 type BillingQueueItemConnection struct {
@@ -1905,6 +1982,34 @@ type BillingQueuePostResult struct {
 	// The address the invoice is emailed to, when posting sends it.
 	SentTo     *string  `json:"sentTo,omitempty"`
 	Recipients []string `json:"recipients"`
+}
+
+type BillingQueueReassignChargeInput struct {
+	ChargeKind shipmentvocab.ChargeAllocationKind `json:"chargeKind"`
+	// The accessorial being moved; omit for freight.
+	AdditionalChargeID *string `json:"additionalChargeId,omitempty"`
+	// How the charge is divided among payers; empty gives it back whole to the shipment's payer.
+	Allocations []*ChargeAllocationInput `json:"allocations"`
+}
+
+// The queue after a charge moved between payers.
+type BillingQueueReassignChargeResult struct {
+	// The item the change came from, canceled when its payer no longer pays anything.
+	Item *BillingQueueItem `json:"item"`
+	// Every active item of the shipment.
+	Items           []*BillingQueueItem `json:"items"`
+	CreatedItemIds  []string            `json:"createdItemIds"`
+	CanceledItemIds []string            `json:"canceledItemIds"`
+}
+
+type BillingQueueUpdateChargesInput struct {
+	FormulaTemplateID *string `json:"formulaTemplateId,omitempty"`
+	// The tariff's input values for the shipment, replacing what it carries.
+	TariffInputs map[string]any `json:"tariffInputs,omitempty"`
+	// The shipment's accessorial charges as they should stand; omit to leave them alone.
+	AdditionalCharges []*ShipmentAdditionalChargeInput `json:"additionalCharges,omitempty"`
+	// Retries an edit refused because it left an amount split that no longer adds up.
+	ConvertAmountSplitsToPercent *bool `json:"convertAmountSplitsToPercent,omitempty"`
 }
 
 type BillingQueueUpdateStatusInput struct {
@@ -6894,6 +6999,48 @@ type InvoiceAdjustmentApprovalsInput struct {
 	SubmittedByID *string                 `json:"submittedById,omitempty"`
 }
 
+type InvoiceAdjustmentBatchPage struct {
+	Items []*invoiceadjustment.InvoiceAdjustmentBatch `json:"items"`
+	Total int                                         `json:"total"`
+	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
+	TotalExact bool `json:"totalExact"`
+}
+
+// A draft adjustment as the biller has it now; it replaces the draft's kind, reason, evidence and lines.
+type InvoiceAdjustmentDraftInput struct {
+	Kind                  invoiceadjustment.Kind            `json:"kind"`
+	RebillStrategy        *invoiceadjustment.RebillStrategy `json:"rebillStrategy,omitempty"`
+	Reason                *string                           `json:"reason,omitempty"`
+	ReferencedDocumentIds []string                          `json:"referencedDocumentIds,omitempty"`
+	Lines                 []*InvoiceAdjustmentLineInput     `json:"lines,omitempty"`
+}
+
+type InvoiceAdjustmentLineInput struct {
+	OriginalLineID     string         `json:"originalLineId"`
+	CreditQuantity     string         `json:"creditQuantity"`
+	CreditAmount       string         `json:"creditAmount"`
+	RebillQuantity     string         `json:"rebillQuantity"`
+	RebillAmount       string         `json:"rebillAmount"`
+	Description        *string        `json:"description,omitempty"`
+	ReplacementPayload map[string]any `json:"replacementPayload,omitempty"`
+}
+
+// A page of an adjustment work queue. query matches the queue's text; status
+// narrows it to one status. limit is at most 100.
+type InvoiceAdjustmentQueueInput struct {
+	Limit  *int    `json:"limit,omitempty"`
+	Offset *int    `json:"offset,omitempty"`
+	Query  *string `json:"query,omitempty"`
+	Status *string `json:"status,omitempty"`
+}
+
+type InvoiceAdjustmentReconciliationPage struct {
+	Items []*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem `json:"items"`
+	Total int                                                                `json:"total"`
+	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
+	TotalExact bool `json:"totalExact"`
+}
+
 type InvoiceConnection struct {
 	Edges      []*InvoiceEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -6905,6 +7052,15 @@ type InvoiceConnection struct {
 type InvoiceEdge struct {
 	Node   *invoice.Invoice `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type InvoiceEmailAttemptPage struct {
+	// Newest first.
+	Items []*invoice.EmailAttempt `json:"items"`
+	Total int                     `json:"total"`
+	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
+	TotalExact bool `json:"totalExact"`
+	HasMore    bool `json:"hasMore"`
 }
 
 type IssueCarrierTrackingLinkInput struct {
@@ -9534,6 +9690,14 @@ type SettlementDisputeEdge struct {
 	Cursor string                    `json:"cursor"`
 }
 
+type ShareInvoiceInput struct {
+	// At most 25 teammates.
+	UserIds []string `json:"userIds"`
+	// At most 1,000 characters.
+	Note *string               `json:"note,omitempty"`
+	Tab  invoiceshare.ShareTab `json:"tab"`
+}
+
 type ShiftTemplateInput struct {
 	Code            string              `json:"code"`
 	Name            string              `json:"name"`
@@ -11535,6 +11699,15 @@ type StageFuelPurchaseImportInput struct {
 	Mapping    map[string]any `json:"mapping,omitempty"`
 }
 
+type StartBillingQueueBulkRunInput struct {
+	Action billingapprovalrun.RunAction `json:"action"`
+	// At most 500 items.
+	ItemIds []string `json:"itemIds"`
+	// A retry with the same key returns the run the first request started.
+	IdempotencyKey string                          `json:"idempotencyKey"`
+	Params         *BillingQueueBulkRunParamsInput `json:"params,omitempty"`
+}
+
 type StartBillingTransferRunInput struct {
 	Scope billingtransfer.RunScope `json:"scope"`
 	// Required when scope is Selected.
@@ -11558,6 +11731,11 @@ type StartWorkerChecklistInput struct {
 	WorkerID   string `json:"workerId"`
 	TemplateID string `json:"templateId"`
 	StartedAt  *int   `json:"startedAt,omitempty"`
+}
+
+type StatementExclusionInput struct {
+	BillingQueueItemID string `json:"billingQueueItemId"`
+	Reason             string `json:"reason"`
 }
 
 type StoredMileageConnection struct {
@@ -12390,6 +12568,18 @@ type UpdateHomeLayoutPresetInput struct {
 	IsOrgDefault       bool               `json:"isOrgDefault"`
 	Locked             bool               `json:"locked"`
 	Priority           int                `json:"priority"`
+}
+
+// A draft invoice's printed note and delivery overrides. An absent field is left as it is.
+type UpdateInvoiceDraftInput struct {
+	Memo                   *string  `json:"memo,omitempty"`
+	RemittanceInstructions *string  `json:"remittanceInstructions,omitempty"`
+	EmailSubject           *string  `json:"emailSubject,omitempty"`
+	EmailBody              *string  `json:"emailBody,omitempty"`
+	EmailTo                []string `json:"emailTo,omitempty"`
+	EmailCc                []string `json:"emailCc,omitempty"`
+	EmailBCC               []string `json:"emailBcc,omitempty"`
+	AttachmentIds          []string `json:"attachmentIds,omitempty"`
 }
 
 type UpdateJobPositionInput struct {

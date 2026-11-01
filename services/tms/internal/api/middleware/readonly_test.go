@@ -117,8 +117,8 @@ func TestReadOnlyGuardLetsReadsAndAllowlistedWritesThroughWhileReadOnly(t *testi
 		{method: http.MethodPost, route: "/api/v1/rate-agreements/rate-increase/preview/"},
 		{
 			method: http.MethodPost,
-			route:  "/api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/",
-			path:   "/api/v1/billing/invoice-adjustments/drafts/ia_1/preview/",
+			route:  "/api/v1/realtime/presence/:resource/",
+			path:   "/api/v1/realtime/presence/shipment/",
 		},
 		{method: http.MethodPost, route: "/graphql"},
 	} {

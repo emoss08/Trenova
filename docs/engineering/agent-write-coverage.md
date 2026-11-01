@@ -91,31 +91,31 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 45 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1118 writes: 689 GraphQL mutations and 429 REST writes, after merging 19 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 443 |
-| Exempt | 678 |
+| Covered by a tool | 441 |
+| Exempt | 675 |
 | — Security | 85 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 48 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 45 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1118 |
 
-Of the 445 writes an agent should be able to make, 443 have a tool (99%).
+Of the 443 writes an agent should be able to make, 441 have a tool (99%).
 
 ## Pending
 
@@ -123,7 +123,7 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
-| billingqueue | `PUT /api/v1/billing-queue/:itemID/invoice-details/` | Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval |
+| billingqueue | `mutation updateBillingQueueInvoiceDetails` | Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval |
 | edilading | `POST /api/v1/edi/flows/instances/:instanceID/release/` | Release a held or escalated EDI flow once the planner has dealt with what held it |
 
 ## By domain
@@ -157,7 +157,8 @@ The writes no tool performs yet, and what the tool would do.
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
 | benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
-| billingqueue | 16 | 9 | 6 | 1 |
+| billingqueue | 9 | 8 | 0 | 1 |
+| billingqueueworkspace | 6 | 1 | 5 | 0 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
 | bulkedit | 2 | 0 | 2 | 0 |
@@ -229,12 +230,13 @@ The writes no tool performs yet, and what the tool would do.
 | inboxpresence | 2 | 0 | 2 | 0 |
 | insight | 2 | 2 | 0 | 0 |
 | integration | 5 | 0 | 5 | 0 |
-| invoice | 10 | 10 | 0 | 0 |
-| invoiceadjustment | 8 | 6 | 2 | 0 |
+| invoice | 5 | 5 | 0 | 0 |
+| invoiceadjustment | 5 | 5 | 0 | 0 |
 | invoiceadjustmentcontrol | 1 | 0 | 1 | 0 |
 | invoicedispute | 3 | 3 | 0 | 0 |
-| invoicerun | 1 | 1 | 0 | 0 |
+| invoicelifecycle | 4 | 4 | 0 | 0 |
 | invoiceshare | 1 | 1 | 0 | 0 |
+| invoicestatement | 1 | 1 | 0 | 0 |
 | journalentry | 2 | 0 | 2 | 0 |
 | journalreversal | 5 | 3 | 2 | 0 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
@@ -650,22 +652,26 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `billing_assign_biller` |
-| `mutation postBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/post/` | Tool: `invoice_post`, `invoice_send` |
-| `mutation releaseBillingQueueItem`<br>twin `POST /api/v1/billing-queue/:itemID/release/` | Tool: `billing_release_queue_item` |
-| `mutation resolveBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/resolve/` | Tool: `billing_resolve_issue` |
-| `mutation undoBillingQueueIssue`<br>twin `POST /api/v1/billing-queue/:itemID/issues/:issueID/undo/` | Tool: `billing_undo_issue` |
-| `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `billing_approve_queue_item`, `billing_cancel_queue_item`, `billing_hold_queue_item`, `billing_raise_exception`, `billing_return_to_operations`, `billing_start_review` |
-| `DELETE /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.deleteFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
-| `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `billing_reassign_charge` |
-| `POST /api/v1/billing-queue/bulk/`<br>billingqueuehandler.startBulk | Tool: `billing_approve_queue_item`, `billing_assign_biller`, `billing_cancel_queue_item`, `billing_hold_queue_item`, `billing_resolve_issue`, `invoice_post` |
-| `POST /api/v1/billing-queue/bulk/:runID/cancel/`<br>billingqueuehandler.cancelBulk | Exempt, infrastructure: Stops a bulk run the queue screen started in the background; the agent's billing tools act on each item within the one proposal a person decides, so an agent has no run to stop. |
-| `POST /api/v1/billing-queue/filter-presets/`<br>billingqueuehandler.createFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
-| `POST /api/v1/billing-queue/pod-signatures/redetect/`<br>billingqueuehandler.redetectPODSignatures | Exempt, infrastructure: A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed. |
-| `POST /api/v1/billing-queue/search-intent/`<br>billingqueuehandler.searchIntent | Exempt, read-only: Turns a sentence into filters for the queue screen and changes nothing. |
-| `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `billing_correct_charge_codes` |
-| `PUT /api/v1/billing-queue/:itemID/invoice-details/`<br>billingqueuehandler.updateInvoiceDetails | Pending: Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval |
-| `PUT /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.updateFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
+| `mutation assignBillingQueueBiller` | Tool: `billing_assign_biller` |
+| `mutation postBillingQueueItem` | Tool: `invoice_post`, `invoice_send` |
+| `mutation reassignBillingQueueCharge` | Tool: `billing_reassign_charge` |
+| `mutation releaseBillingQueueItem` | Tool: `billing_release_queue_item` |
+| `mutation resolveBillingQueueIssue` | Tool: `billing_resolve_issue` |
+| `mutation undoBillingQueueIssue` | Tool: `billing_undo_issue` |
+| `mutation updateBillingQueueCharges` | Tool: `billing_correct_charge_codes` |
+| `mutation updateBillingQueueInvoiceDetails` | Pending: Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval |
+| `mutation updateBillingQueueStatus` | Tool: `billing_approve_queue_item`, `billing_cancel_queue_item`, `billing_hold_queue_item`, `billing_raise_exception`, `billing_return_to_operations`, `billing_start_review` |
+
+### billingqueueworkspace
+
+| Write | Decision |
+| --- | --- |
+| `mutation cancelBillingQueueBulkRun` | Exempt, infrastructure: Stops a bulk run the queue screen started in the background; the agent's billing tools act on each item within the one proposal a person decides, so an agent has no run to stop. |
+| `mutation createBillingQueueFilterPreset` | Exempt, user-preference: A saved filter on the billing queue screen. |
+| `mutation deleteBillingQueueFilterPreset` | Exempt, user-preference: A saved filter on the billing queue screen. |
+| `mutation redetectBillingQueuePodSignatures` | Exempt, infrastructure: A repair a person asks for after signature detection arrived: it runs document intelligence again on the queued PODs nobody has read, and the extraction pipeline, not a decision, says whether each is signed. |
+| `mutation startBillingQueueBulkRun` | Tool: `billing_approve_queue_item`, `billing_assign_biller`, `billing_cancel_queue_item`, `billing_hold_queue_item`, `billing_resolve_issue`, `invoice_post` |
+| `mutation updateBillingQueueFilterPreset` | Exempt, user-preference: A saved filter on the billing queue screen. |
 
 ### billingtransfer
 
@@ -1538,24 +1544,16 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createMemo` | Tool: `invoice_create_memo` |
 | `mutation sendInvoiceEdi` | Tool: `invoice_send_edi` |
 | `mutation voidInvoice` | Tool: `invoice_void` |
-| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `invoice_update_draft` |
-| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `invoice_generate_pdf` |
-| `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `invoice_post` |
-| `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `invoice_send` |
-| `POST /api/v1/billing/invoices/from-shipments/`<br>invoicehandler.createFromShipments | Tool: `invoice_create` |
 
 ### invoiceadjustment
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Tool: `invoice_approve_adjustment` |
-| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Tool: `invoice_reject_adjustment` |
-| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Tool: `invoice_save_adjustment_draft` |
-| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Tool: `invoice_save_adjustment_draft` |
-| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/`<br>invoiceadjustmenthandler.previewDraft | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Tool: `invoice_submit_adjustment` |
-| `POST /api/v1/billing/invoice-adjustments/preview/`<br>invoiceadjustmenthandler.preview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Tool: `invoice_submit_adjustment` |
+| `mutation approveInvoiceAdjustment` | Tool: `invoice_approve_adjustment` |
+| `mutation createInvoiceAdjustmentDraft` | Tool: `invoice_save_adjustment_draft` |
+| `mutation rejectInvoiceAdjustment` | Tool: `invoice_reject_adjustment` |
+| `mutation submitInvoiceAdjustmentDraft` | Tool: `invoice_submit_adjustment` |
+| `mutation updateInvoiceAdjustmentDraft` | Tool: `invoice_save_adjustment_draft` |
 
 ### invoiceadjustmentcontrol
 
@@ -1571,17 +1569,26 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation resolveInvoiceDispute` | Tool: `invoice_resolve_dispute` |
 | `mutation withdrawInvoiceDispute` | Tool: `invoice_withdraw_dispute` |
 
-### invoicerun
+### invoicelifecycle
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `invoice_bill_statement` |
+| `mutation generateInvoicePdf` | Tool: `invoice_generate_pdf` |
+| `mutation postInvoice` | Tool: `invoice_post` |
+| `mutation sendInvoice` | Tool: `invoice_send` |
+| `mutation updateInvoiceDraft` | Tool: `invoice_update_draft` |
 
 ### invoiceshare
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Tool: `invoice_share` |
+| `mutation shareInvoice` | Tool: `invoice_share` |
+
+### invoicestatement
+
+| Write | Decision |
+| --- | --- |
+| `mutation billStatementNow` | Tool: `invoice_bill_statement` |
 
 ### journalentry
 

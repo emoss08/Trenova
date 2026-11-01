@@ -2,31 +2,44 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useMapId } from "@/hooks/use-map-id";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { googleMaps } from "@/lib/queries/google-maps";
-import { cn, formatLocation } from "@trenova/shared/lib/utils";
-import type { ShipmentMove, Stop } from "@trenova/shared/types/shipment";
+import { cn, formatLocation, type FormattableLocation } from "@trenova/shared/lib/utils";
+import type { Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
 import { useMemo, useState } from "react";
 import { DirectionsPolyline, FitBounds } from "../map-components";
 
+/** What the map draws of a stop: where it is and what kind it is. */
+type RouteStop = {
+  type: Stop["type"];
+  sequence?: number | null;
+  location?:
+    | (FormattableLocation & {
+        name?: string | null;
+        latitude?: number | string | null;
+        longitude?: number | string | null;
+      })
+    | null;
+};
+
 type Point = {
   lat: number;
   lng: number;
-  stop: Stop;
+  stop: RouteStop;
 };
 
 export function ShipmentRouteMap({
   moves,
   containerClassName,
 }: {
-  moves: ShipmentMove[];
+  moves: readonly { stops?: readonly RouteStop[] | null }[];
   containerClassName?: string;
 }) {
   const { data: apiKeyData } = useQuery({ ...googleMaps.getAPIKey() });
   const stops = useMemo(() => {
     return moves
-      .flatMap((m) => m.stops)
-      .sort((a, b) => a.sequence - b.sequence)
+      .flatMap((m) => m.stops ?? [])
+      .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
       .map((stop) => {
         const lat = Number(stop.location?.latitude);
         const lng = Number(stop.location?.longitude);

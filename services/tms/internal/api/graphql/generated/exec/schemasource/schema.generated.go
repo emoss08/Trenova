@@ -7520,6 +7520,674 @@ extend type Mutation {
   """Takes back how a check was settled, and puts back any charge it changed."""
   undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
 }
+
+"A payer of a shipment's charges."
+type BillingQueuePayerRef {
+  id: ID!
+  name: String!
+  code: String!
+}
+
+"One payer's part of one charge."
+type BillingQueuePayerShareParty {
+  payerId: ID!
+  payerName: String!
+  payerCode: String!
+  amount: Decimal!
+  percent: Decimal
+}
+
+"One charge as a single payer's bill sees it."
+type BillingQueuePayerShareLine {
+  kind: ChargeAllocationKind!
+  "Null for freight."
+  additionalChargeId: ID
+  description: String!
+  chargeTotal: Decimal!
+  amount: Decimal!
+  percent: Decimal
+  "Null for a charge billed whole."
+  method: ChargeAllocationMethod
+  partial: Boolean!
+  payers: [BillingQueuePayerShareParty!]!
+}
+
+"""
+What one item bills, resolved by the same code that builds the invoice lines.
+otherPayerLines are charges this payer owes none of.
+"""
+type BillingQueuePayerShare {
+  payerId: ID!
+  isSplit: Boolean!
+  payers: [BillingQueuePayerRef!]!
+  lines: [BillingQueuePayerShareLine!]!
+  otherPayerLines: [BillingQueuePayerShareLine!]!
+  freightAmount: Decimal!
+  accessorialAmount: Decimal!
+  totalAmount: Decimal!
+  shipmentTotal: Decimal!
+  "Why the split cannot be divided right now; empty when it can."
+  resolutionError: String!
+}
+
+enum BillingQueueRatedByKind {
+  Agreement
+  Template
+}
+
+"What priced an item's shipment: the rate agreement when one did, or the formula template."
+type BillingQueueRatedBy {
+  kind: BillingQueueRatedByKind!
+  id: ID!
+  code: String!
+  name: String!
+}
+
+"A detention charge on the item's shipment still waiting on an approver."
+type BillingQueueDetentionHold {
+  occurrenceId: ID!
+  stopId: ID!
+  stopType: String!
+  locationName: String!
+  clockStartAt: Timestamp!
+  billableAmount: Decimal!
+  currency: String!
+  "OverApprovalThreshold, NoticeNotSent or Escalated."
+  reason: String!
+}
+
+type BillingQueueRatingReviewHold {
+  shipmentId: ID!
+  reasons: [String!]!
+  ratedAt: Timestamp
+  formulaTemplateName: String!
+}
+
+enum BillingQueueAgentReadKind {
+  Invoice
+  Stops
+  Terms
+  BillingNotes
+  Comments
+  PastInvoices
+  ChargeHistory
+  Document
+}
+
+"""
+One thing Nova read to review an item. A document carries how many of its parts
+were read (part of parts); a charge looked up carries how many of the payer's
+invoices billed it (count of of).
+"""
+type BillingQueueAgentRead {
+  kind: BillingQueueAgentReadKind!
+  count: Int!
+  code: String!
+  documentId: ID
+  name: String!
+  fileName: String!
+  part: Int!
+  parts: Int!
+  of: Int!
+}
+
+"One of the five checks a biller confirms before approving."
+enum BillingQueueCheckKey {
+  biller
+  charges
+  pod
+  terms
+  duplicate
+}
+
+enum BillingQueueCheckState {
+  ok
+  warn
+  fail
+}
+
+"One of the five checks, as it stands for the item now."
+type BillingQueueCheck {
+  key: BillingQueueCheckKey!
+  state: BillingQueueCheckState!
+  "What the check found, for the reader to word."
+  code: String!
+  "The finding in a line, in English."
+  detail: String!
+  "The issue the check waits on, or the one that settled it."
+  issueId: ID
+  "What the reader needs to word the finding itself."
+  facts: JSON
+}
+
+enum BillingQueueIssueEffectKind {
+  keep
+  drop
+  set
+  request
+  accept
+  add
+}
+
+"What choosing an issue's option does to the bill."
+type BillingQueueIssueEffect {
+  kind: BillingQueueIssueEffectKind!
+  chargeId: ID
+  accessorialChargeId: ID
+  "The charge an add effect bills."
+  label: String!
+  amount: Decimal
+  basis: String!
+}
+
+type BillingQueueIssueOption {
+  key: String!
+  label: String!
+  amount: Decimal
+  "What the activity says once the option is chosen."
+  done: String!
+  effect: BillingQueueIssueEffect!
+}
+
+"Something a person settles before the item can be approved."
+type BillingQueueIssue {
+  id: ID!
+  itemId: ID!
+  checkKey: BillingQueueCheckKey!
+  code: String!
+  subjectKey: String!
+  summary: String!
+  reasoning: String!
+  "Deterministic or Agent."
+  source: String!
+  flaggedChargeId: ID
+  options: [BillingQueueIssueOption!]!
+  resolutionKey: String
+  resolutionText: String!
+  resolvedById: ID
+  resolvedAt: Timestamp
+  requestedAt: Timestamp
+  "Whether the person can take the settlement back."
+  undoable: Boolean!
+  createdAt: Timestamp!
+}
+
+"One charge in the ledger: how it was priced, what the rate con says, and what the item bills."
+type BillingQueueChargeLine {
+  key: String!
+  additionalChargeId: ID
+  label: String!
+  basis: String!
+  expected: Decimal
+  billed: Decimal!
+  "rating, agreement, fuel, detention, quote or none."
+  source: String!
+  flagged: Boolean!
+  removed: Boolean!
+  adjusted: Boolean!
+  issueId: ID
+}
+
+"The item's charges against the rate con."
+type BillingQueueChargeReview {
+  lines: [BillingQueueChargeLine!]!
+  expectedTotal: Decimal!
+  billedTotal: Decimal!
+  "Billed less expected: above zero is over the rate con."
+  difference: Decimal!
+  hasRateCon: Boolean!
+}
+
+"The invoice the item became, as the item's header shows it."
+type BillingQueueInvoiceRef {
+  id: ID!
+  number: String!
+  draftNumber: String!
+  status: String!
+  invoiceDate: Timestamp!
+  dueDate: Timestamp
+  postedAt: Timestamp
+  posted: Boolean!
+}
+
+"How and when the bill-to pays, and who receives the invoice."
+type BillingQueueTerms {
+  paymentTerm: String!
+  netDays: Int!
+  dueDate: Timestamp
+  recipients: [String!]!
+  creditHold: Boolean!
+}
+
+enum BillingQueueDocumentState {
+  ok
+  missing
+  unsigned
+}
+
+type BillingQueueDocumentTile {
+  code: String!
+  name: String!
+  documentId: ID
+  state: BillingQueueDocumentState!
+  required: Boolean!
+  signed: Boolean!
+  fileName: String!
+}
+
+"Everything a biller reads to decide an item."
+type BillingQueueReview {
+  checks: [BillingQueueCheck!]!
+  needsCount: Int!
+  ready: Boolean!
+  "Why Approve is not available: hold, biller, issue or status; empty when it is."
+  blocker: String!
+  issues: [BillingQueueIssue!]!
+  charges: BillingQueueChargeReview
+  invoice: BillingQueueInvoiceRef
+  terms: BillingQueueTerms
+  documents: [BillingQueueDocumentTile!]!
+  billerName: String!
+}
+
+enum BillingQueueEventActorType {
+  System
+  Agent
+  User
+}
+
+"One line of an item's activity."
+type BillingQueueEvent {
+  id: ID!
+  kind: String!
+  text: String!
+  actorType: BillingQueueEventActorType!
+  actorId: ID
+  actorName: String!
+  at: Timestamp!
+}
+
+type BillingQueueEventPage {
+  "Newest first."
+  items: [BillingQueueEvent!]!
+  hasMore: Boolean!
+  total: Int!
+}
+
+"Where the next page of activity starts: before this entry."
+input BillingQueueActivityCursorInput {
+  at: Timestamp!
+  id: ID!
+}
+
+"An item's place in the queue, under the list's own order."
+type BillingQueueNeighbors {
+  prevId: ID
+  nextId: ID
+  position: Int!
+  total: Int!
+}
+
+"A queue row's live state."
+type BillingQueueItemSummary {
+  id: ID!
+  number: String!
+  status: BillingQueueStatus!
+  holdReasonCode: BillingQueueHoldReasonCode
+  assignedBillerId: ID
+  allocatedTotalAmount: Decimal!
+  needsCount: Int!
+  ready: Boolean!
+}
+
+"The queue after a charge moved between payers."
+type BillingQueueReassignChargeResult {
+  "The item the change came from, canceled when its payer no longer pays anything."
+  item: BillingQueueItem!
+  "Every active item of the shipment."
+  items: [BillingQueueItem!]!
+  createdItemIds: [ID!]!
+  canceledItemIds: [ID!]!
+}
+
+input BillingQueueUpdateChargesInput {
+  formulaTemplateId: ID
+  "The tariff's input values for the shipment, replacing what it carries."
+  tariffInputs: JSON
+  "The shipment's accessorial charges as they should stand; omit to leave them alone."
+  additionalCharges: [ShipmentAdditionalChargeInput!]
+  "Retries an edit refused because it left an amount split that no longer adds up."
+  convertAmountSplitsToPercent: Boolean
+}
+
+input BillingQueueReassignChargeInput {
+  chargeKind: ChargeAllocationKind!
+  "The accessorial being moved; omit for freight."
+  additionalChargeId: ID
+  "How the charge is divided among payers; empty gives it back whole to the shipment's payer."
+  allocations: [ChargeAllocationInput!]!
+}
+
+"What the invoice will say, set before approval."
+input BillingQueueInvoiceDetailsInput {
+  "The item's version as the person read it."
+  version: Int!
+  poNumber: String
+  invoiceMemo: String
+  "Empty keeps the customer's term."
+  paymentTerm: String
+  "Null keeps today."
+  invoiceDate: Timestamp
+  packetDocumentIds: [ID!]
+}
+
+extend type Query {
+  """
+  One queue item with everything a biller reads to decide it: its shipment
+  details, payer share, checks, issues and charges.
+  """
+  billingQueueItem(id: ID!): BillingQueueItem
+  "An item's activity, newest first. limit is at most 100."
+  billingQueueItemActivity(
+    id: ID!
+    limit: Int = 30
+    before: BillingQueueActivityCursorInput
+  ): BillingQueueEventPage!
+  "What comes before and after an item under the list's own search, filters and order."
+  billingQueueNeighbors(
+    id: ID!
+    input: DataTableConnectionInput
+    includePosted: Boolean = false
+  ): BillingQueueNeighbors!
+  "The live state of queue rows a table read earlier. At most 200 ids."
+  billingQueueSummaries(ids: [ID!]!): [BillingQueueItemSummary!]!
+}
+
+extend type Mutation {
+  """
+  Reprices an item's shipment: its tariff, the tariff's inputs and its
+  accessorial charges, while the item is in review.
+  """
+  updateBillingQueueCharges(id: ID!, input: BillingQueueUpdateChargesInput!): BillingQueueItem!
+  """
+  Sets what the invoice will say before it is made: the customer's PO, the note
+  under the charges, a payment term and invoice date overriding the customer's,
+  and the documents sent with it as one packet. Only before approval.
+  """
+  updateBillingQueueInvoiceDetails(
+    id: ID!
+    input: BillingQueueInvoiceDetailsInput!
+  ): BillingQueueItem!
+  """
+  Moves one charge, whole or split, to other payers while the shipment is in
+  review. Payers who gain a share get a queue item; payers left with nothing have
+  theirs canceled.
+  """
+  reassignBillingQueueCharge(
+    id: ID!
+    input: BillingQueueReassignChargeInput!
+  ): BillingQueueReassignChargeResult!
+}
+`, BuiltIn: false},
+	{Name: "../schema/billing_queue_workspace.graphqls", Input: `"How many items one lane holds and what they total."
+type BillingQueueLaneStat {
+  lane: BillingQueueLane!
+  count: Int!
+  total: Decimal!
+}
+
+"The day's figures for the queue, computed against the caller's day."
+type BillingQueuePulse {
+  oldestWaitingAt: Timestamp
+  deliveryToInvoiceDays: Decimal
+  priorDeliveryToInvoiceDays: Decimal
+  approvedTodayCount: Int!
+  approvedTodayTotal: Decimal!
+  medianReviewSecondsToday: Int
+}
+
+type BillingQueueStats {
+  lanes: [BillingQueueLaneStat!]!
+  openCount: Int!
+  openTotal: Decimal!
+  "Set when dayStart is given."
+  pulse: BillingQueuePulse
+}
+
+enum BillingQueueRecommendationKind {
+  ApproveReady
+  AssignToMe
+  PostApproved
+  RequestPaperwork
+  ReviewUnbilled
+  HoldDuplicates
+  ApproveAgentAgreed
+  ReviewAgentConcerns
+}
+
+enum BillingQueueRecommendationSource {
+  Rules
+  Agent
+}
+
+"A batch the queue can clear in one action, naming exactly the items it covers."
+type BillingQueueRecommendation {
+  kind: BillingQueueRecommendationKind!
+  source: BillingQueueRecommendationSource!
+  count: Int!
+  total: Decimal!
+  itemIds: [ID!]!
+}
+
+"What Nova can do on the billing queue for this organization."
+type BillingQueueAssistAvailability {
+  "Nova reviews items before approval."
+  review: Boolean!
+  "Nova writes the queue's brief."
+  brief: Boolean!
+  "Nova reads a search typed as a sentence."
+  search: Boolean!
+}
+
+type BillingQueueBrief {
+  available: Boolean!
+  text: String!
+  generatedAt: Timestamp!
+}
+
+enum BillingQueueNovaPhase {
+  Reviewing
+  Briefing
+  Done
+  "The last generation stopped with items unreviewed; retryAt says when opening the queue tries again."
+  Left
+}
+
+"Nova writing, in bulk, the reviews the queue is missing and then its brief."
+type BillingQueueNovaGeneration {
+  phase: BillingQueueNovaPhase!
+  total: Int!
+  done: Int!
+  retryAt: Timestamp
+}
+
+"A window of days a queue search names: the last N days, or calendar days from and to (YYYY-MM-DD)."
+type BillingQueueSearchDates {
+  lastDays: Int
+  from: String
+  to: String
+}
+
+"The filters Nova read out of a sentence typed into the queue's search."
+type BillingQueueSearchIntent {
+  lanes: [BillingQueueLane!]!
+  search: String!
+  payerId: ID
+  payerName: String!
+  shipmentCustomerId: ID
+  shipmentCustomerName: String!
+  minAmount: Decimal
+  maxAmount: Decimal
+  createdBefore: Timestamp
+  delivered: BillingQueueSearchDates
+  pickedUp: BillingQueueSearchDates
+  queued: BillingQueueSearchDates
+  "The part of the sentence Nova could not turn into a filter."
+  unresolved: String!
+}
+
+"A saved set of queue filters, the caller's own."
+type BillingQueueFilterPreset {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  name: String!
+  filters: JSON!
+  isDefault: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input BillingQueueFilterPresetInput {
+  name: String!
+  filters: JSON!
+  isDefault: Boolean
+}
+
+enum BillingQueueBulkAction {
+  Approve
+  Post
+  Hold
+  Assign
+  Cancel
+  RequestPaperwork
+  ResolveIssue
+}
+
+enum BillingQueueBulkRunStatus {
+  Scheduled
+  Running
+  Completed
+  Undone
+  Failed
+}
+
+enum BillingQueueBulkRunItemStatus {
+  Pending
+  Succeeded
+  Failed
+  Skipped
+}
+
+type BillingQueueBulkRunItem {
+  itemId: ID!
+  status: BillingQueueBulkRunItemStatus!
+  failureCode: String!
+  errorMessage: String!
+  invoiceNumber: String!
+}
+
+"One action over several items, run as a job behind an undo window."
+type BillingQueueBulkRun {
+  id: ID!
+  action: BillingQueueBulkAction!
+  status: BillingQueueBulkRunStatus!
+  totalCount: Int!
+  succeededCount: Int!
+  failedCount: Int!
+  skippedCount: Int!
+  "When the run starts writing; until then the person who started it can undo it."
+  commitAt: Timestamp!
+  cancelRequestedAt: Timestamp
+  failureMessage: String!
+  "Per-item results, on the read through billingQueueBulkRun(id)."
+  items: [BillingQueueBulkRunItem!]!
+}
+
+input BillingQueueBulkRunParamsInput {
+  "Approve: make the caller the approver of items with no biller."
+  assignApprover: Boolean
+  "Assign: the biller."
+  billerId: ID
+  "Hold: why."
+  holdReasonCode: BillingQueueHoldReasonCode
+  "Hold or Cancel: the note."
+  reason: String
+  "ResolveIssue: the issue and the option that settles it."
+  issueCode: String
+  optionKey: String
+}
+
+input StartBillingQueueBulkRunInput {
+  action: BillingQueueBulkAction!
+  "At most 500 items."
+  itemIds: [ID!]!
+  "A retry with the same key returns the run the first request started."
+  idempotencyKey: String!
+  params: BillingQueueBulkRunParamsInput
+}
+
+"What re-reading the queued PODs' signatures did."
+type BillingQueuePodSignatureRedetectResult {
+  shipments: Int!
+  documents: Int!
+  queued: Int!
+  alreadyRead: Int!
+  setByPerson: Int!
+  notReadByMachine: Int!
+  deferred: Int!
+  failed: Int!
+}
+
+extend type Query {
+  "Lane counts and totals, plus the pulse of the caller's day when dayStart is given."
+  billingQueueStats(dayStart: Timestamp): BillingQueueStats!
+  "What a biller can clear in one action now, each naming its items."
+  billingQueueRecommendations: [BillingQueueRecommendation!]!
+  billingQueueAssist: BillingQueueAssistAvailability!
+  "The brief Nova wrote for the queue."
+  billingQueueBrief: BillingQueueBrief!
+  """
+  What Nova is generating for the whole queue, or null when nothing is. Reading
+  it starts a generation when the queue has items Nova has not reviewed or no
+  brief; one runs per organization, so every reader sees the same one.
+  """
+  billingQueueNovaGeneration: BillingQueueNovaGeneration
+  """
+  Reads a search such as "Acme over $5k delivered last week" into queue filters.
+  today is the person's date, YYYY-MM-DD, that "last week" counts from. Nothing
+  is changed.
+  """
+  billingQueueSearchIntent(text: String!, today: String): BillingQueueSearchIntent!
+  "The caller's saved queue filters."
+  billingQueueFilterPresets: [BillingQueueFilterPreset!]!
+  "A bulk action and its per-item results."
+  billingQueueBulkRun(id: ID!): BillingQueueBulkRun
+}
+
+extend type Mutation {
+  createBillingQueueFilterPreset(input: BillingQueueFilterPresetInput!): BillingQueueFilterPreset!
+  updateBillingQueueFilterPreset(
+    id: ID!
+    input: BillingQueueFilterPresetInput!
+  ): BillingQueueFilterPreset!
+  deleteBillingQueueFilterPreset(id: ID!): Boolean!
+  """
+  Applies one action to up to 500 items as one job. Every action but posting
+  waits out a short undo window first. Posting also needs invoice post
+  permission; assigning needs billing queue assign.
+  """
+  startBillingQueueBulkRun(input: StartBillingQueueBulkRunInput!): BillingQueueBulkRun!
+  "Undoes a bulk action inside its window. Only the person who started it can."
+  cancelBillingQueueBulkRun(id: ID!): BillingQueueBulkRun!
+  """
+  Runs document intelligence again on the current PODs of every queued shipment
+  whose signature nobody has read yet. Needs document update as well.
+  """
+  redetectBillingQueuePodSignatures: BillingQueuePodSignatureRedetectResult!
+}
 `, BuiltIn: false},
 	{Name: "../schema/billing_transfer.graphqls", Input: `"One bulk transfer of shipments into the billing queue, run in the background."
 type BillingTransferRun {
@@ -23263,6 +23931,38 @@ type InvoiceAdjustment @kind(resource: "invoice") {
   lines: [InvoiceAdjustmentLine!]!
   "The documents the submitter attached as support for the adjustment."
   supportingDocumentIds: [ID!]!
+  idempotencyKey: String!
+  metadata: JSON!
+  "The shipment documents the submitter picked as evidence, as they were when picked."
+  referencedDocuments: [InvoiceAdjustmentDocumentReference!]!
+  "Documents uploaded onto the adjustment itself. Set on the read through invoiceAdjustment(id)."
+  adjustmentDocuments: [InvoiceAdjustmentDocument!]!
+}
+
+"A document picked as evidence for an adjustment, with its name as it was when picked."
+type InvoiceAdjustmentDocumentReference {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  adjustmentId: ID!
+  documentId: ID!
+  selectedById: ID
+  selectedAt: Timestamp
+  snapshotFileName: String!
+  snapshotOriginalName: String!
+  snapshotFileType: String!
+  snapshotResourceType: String!
+  snapshotResourceId: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A document uploaded onto an adjustment."
+type InvoiceAdjustmentDocument {
+  id: ID!
+  fileName: String!
+  originalName: String!
 }
 
 "How much of one original invoice line an adjustment credits and rebills."
@@ -23280,6 +23980,8 @@ type InvoiceAdjustmentLine {
   remainingEligibleAmount: Decimal!
   rebillQuantity: Decimal!
   rebillAmount: Decimal!
+  "What the replacement invoice line says, on a rebill the biller wrote by hand."
+  replacementPayload: JSON!
   createdAt: Timestamp!
   updatedAt: Timestamp!
 }
@@ -23380,6 +24082,206 @@ type InvoiceAdjustmentOperationsSummary {
   repeatedCustomerAdjustments: [InvoiceAdjustmentRepeatedSummary!]!
 }
 
+"Every invoice and adjustment in one correction chain."
+type InvoiceAdjustmentCorrectionGroup {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  rootInvoiceId: ID!
+  "The invoice that stands for the chain now."
+  currentInvoiceId: ID
+  metadata: JSON!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type InvoiceAdjustmentLineage {
+  correctionGroup: InvoiceAdjustmentCorrectionGroup!
+  "The chain's invoices, oldest first."
+  invoices: [Invoice!]!
+  adjustments: [InvoiceAdjustment!]!
+}
+
+enum InvoiceAdjustmentBatchStatus {
+  Pending
+  Running
+  Completed
+  Failed
+  PartialSuccess
+  Submitted
+  Queued
+}
+
+enum InvoiceAdjustmentBatchItemStatus {
+  Pending
+  Previewed
+  Submitted
+  PendingApproval
+  Executing
+  Executed
+  Rejected
+  Failed
+}
+
+enum InvoiceReconciliationExceptionStatus {
+  Open
+  Resolved
+}
+
+"One invoice of a bulk adjustment."
+type InvoiceAdjustmentBatchItem {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  batchId: ID!
+  adjustmentId: ID
+  invoiceId: ID!
+  idempotencyKey: String!
+  status: InvoiceAdjustmentBatchItemStatus!
+  errorMessage: String!
+  requestPayload: JSON!
+  resultPayload: JSON!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"Adjustments submitted together, worked through in the background."
+type InvoiceAdjustmentBatch {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  idempotencyKey: String!
+  status: InvoiceAdjustmentBatchStatus!
+  totalCount: Int!
+  processedCount: Int!
+  succeededCount: Int!
+  failedCount: Int!
+  pendingCount: Int!
+  submittedById: ID
+  submittedByName: String!
+  submittedAt: Timestamp
+  "The most common failure among the batch's items, and how many failed that way."
+  lastFailure: String!
+  lastFailureCount: Int!
+  metadata: JSON!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  "The batch's invoices. Set on the read through invoiceAdjustmentBatch(id)."
+  items: [InvoiceAdjustmentBatchItem!]!
+}
+
+type InvoiceAdjustmentBatchPage {
+  items: [InvoiceAdjustmentBatch!]!
+  total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
+}
+
+"A finance exception an adjustment raised, with what it touched resolved for review."
+type InvoiceAdjustmentReconciliationQueueItem {
+  exceptionId: ID!
+  adjustmentId: ID!
+  correctionGroupId: ID!
+  status: InvoiceReconciliationExceptionStatus!
+  reason: String!
+  amount: Decimal!
+  originalInvoiceId: ID!
+  originalInvoiceNumber: String!
+  originalInvoiceStatus: String!
+  creditMemoInvoiceId: ID
+  creditMemoInvoiceNumber: String!
+  replacementInvoiceId: ID
+  replacementInvoiceNumber: String!
+  rebillQueueItemId: ID
+  rebillQueueNumber: String!
+  customerName: String!
+  adjustmentKind: InvoiceAdjustmentKind!
+  adjustmentStatus: InvoiceAdjustmentStatus!
+  policySource: String!
+  submittedById: ID
+  submittedByName: String!
+  submittedAt: Timestamp
+  financeNotes: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type InvoiceAdjustmentReconciliationPage {
+  items: [InvoiceAdjustmentReconciliationQueueItem!]!
+  total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
+}
+
+"""
+A page of an adjustment work queue. query matches the queue's text; status
+narrows it to one status. limit is at most 100.
+"""
+input InvoiceAdjustmentQueueInput {
+  limit: Int = 100
+  offset: Int = 0
+  query: String
+  status: String
+}
+
+"How one original invoice line is credited and rebilled."
+type InvoiceAdjustmentPreviewLine {
+  lineNumber: Int!
+  originalLineId: ID!
+  description: String!
+  eligibleAmount: Decimal!
+  alreadyCreditedAmount: Decimal!
+  requestedCreditAmount: Decimal!
+  requestedRebillAmount: Decimal!
+  remainingEligibleAmount: Decimal!
+  hasEligibilityError: Boolean!
+  eligibilityOverageAmount: Decimal!
+  eligibilityMessage: String!
+}
+
+"What an adjustment would credit, rebill and require, computed without saving anything."
+type InvoiceAdjustmentPreview {
+  invoiceId: ID!
+  invoiceNumber: String!
+  currencyCode: String!
+  correctionGroupId: ID!
+  kind: InvoiceAdjustmentKind!
+  rebillStrategy: InvoiceAdjustmentRebillStrategy
+  accountingDate: Timestamp!
+  creditTotalAmount: Decimal!
+  rebillTotalAmount: Decimal!
+  netDeltaAmount: Decimal!
+  rerateVariancePercent: Decimal!
+  wouldCreateUnappliedCredit: Boolean!
+  requiresApproval: Boolean!
+  requiresReplacementInvoiceReview: Boolean!
+  requiresReconciliationException: Boolean!
+  warnings: [String!]!
+  "Field errors keyed by field path, each with its messages."
+  errors: JSON!
+  lines: [InvoiceAdjustmentPreviewLine!]!
+}
+
+input InvoiceAdjustmentLineInput {
+  originalLineId: ID!
+  creditQuantity: Decimal!
+  creditAmount: Decimal!
+  rebillQuantity: Decimal!
+  rebillAmount: Decimal!
+  description: String
+  replacementPayload: JSON
+}
+
+"A draft adjustment as the biller has it now; it replaces the draft's kind, reason, evidence and lines."
+input InvoiceAdjustmentDraftInput {
+  kind: InvoiceAdjustmentKind!
+  rebillStrategy: InvoiceAdjustmentRebillStrategy
+  reason: String
+  referencedDocumentIds: [ID!]
+  lines: [InvoiceAdjustmentLineInput!]
+}
+
 input RejectInvoiceAdjustmentInput {
   adjustmentId: ID!
   reason: String
@@ -23392,6 +24294,17 @@ extend type Query {
     input: InvoiceAdjustmentApprovalsInput!
   ): InvoiceAdjustmentApprovalQueueConnection!
   invoiceAdjustmentOperationsSummary: InvoiceAdjustmentOperationsSummary!
+  "Every invoice and adjustment in one correction chain."
+  invoiceAdjustmentLineage(correctionGroupId: ID!): InvoiceAdjustmentLineage!
+  "Bulk adjustments, newest first."
+  invoiceAdjustmentBatches(input: InvoiceAdjustmentQueueInput!): InvoiceAdjustmentBatchPage!
+  invoiceAdjustmentBatch(id: ID!): InvoiceAdjustmentBatch
+  "Finance exceptions adjustments raised, newest first."
+  invoiceAdjustmentReconciliationExceptions(
+    input: InvoiceAdjustmentQueueInput!
+  ): InvoiceAdjustmentReconciliationPage!
+  "What submitting a draft adjustment would credit and rebill. Nothing is saved."
+  invoiceAdjustmentDraftPreview(id: ID!): InvoiceAdjustmentPreview!
 }
 
 extend type Mutation {
@@ -23399,6 +24312,11 @@ extend type Mutation {
   approveInvoiceAdjustment(adjustmentId: ID!): InvoiceAdjustment!
   "Rejects a pending adjustment; the invoice stays as posted."
   rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
+  "Starts a draft adjustment against a posted invoice."
+  createInvoiceAdjustmentDraft(invoiceId: ID!): InvoiceAdjustment!
+  updateInvoiceAdjustmentDraft(id: ID!, input: InvoiceAdjustmentDraftInput!): InvoiceAdjustment!
+  "Submits a draft adjustment; it executes, or waits for an approver when policy says so."
+  submitInvoiceAdjustmentDraft(id: ID!): InvoiceAdjustment!
 }
 `, BuiltIn: false},
 	{Name: "../schema/invoice_dispute.graphqls", Input: `"Where a dispute case stands. An invoice is Disputed while it has an Open case."
@@ -23505,6 +24423,420 @@ extend type Mutation {
   openInvoiceDispute(input: OpenInvoiceDisputeInput!): InvoiceDispute!
   resolveInvoiceDispute(input: ResolveInvoiceDisputeInput!): InvoiceDispute!
   withdrawInvoiceDispute(input: WithdrawInvoiceDisputeInput!): InvoiceDispute!
+}
+`, BuiltIn: false},
+	{Name: "../schema/invoice_lifecycle.graphqls", Input: `"How one document went out with an invoice email."
+enum InvoiceAttachmentDeliveryMethod {
+  Attached
+  Link
+  Skipped
+  Failed
+}
+
+"One document an email attempt carried, linked or left out."
+type InvoiceEmailAttemptAttachment {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  attemptId: ID!
+  documentId: ID!
+  fileName: String!
+  contentType: String!
+  sizeBytes: Int!
+  encodedBytes: Int!
+  method: InvoiceAttachmentDeliveryMethod!
+  shareTokenId: ID
+  reason: String!
+  createdAt: Timestamp!
+}
+
+"One email that carried, or tried to carry, part of an invoice."
+type InvoiceEmailAttempt {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  invoiceId: ID!
+  emailMessageId: ID
+  attemptNumber: Int!
+  partNumber: Int!
+  totalParts: Int!
+  status: InvoiceSendStatus!
+  provider: String!
+  providerMessageId: String!
+  toRecipients: [String!]!
+  ccRecipients: [String!]!
+  bccRecipients: [String!]!
+  subject: String!
+  body: String!
+  estimatedSize: Int!
+  warnings: [String!]!
+  error: String!
+  sentAt: Timestamp
+  createdById: ID
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  attachments: [InvoiceEmailAttemptAttachment!]!
+}
+
+type InvoiceEmailAttemptPage {
+  "Newest first."
+  items: [InvoiceEmailAttempt!]!
+  total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
+  hasMore: Boolean!
+}
+
+type InvoiceSendRecipients {
+  to: [String!]!
+  cc: [String!]!
+  bcc: [String!]!
+}
+
+"A document attached to one part of an invoice email."
+type InvoiceSendPlanAttachment {
+  documentId: ID!
+  fileName: String!
+  contentType: String!
+  sizeBytes: Int!
+  encodedBytes: Int!
+  "The invoice's own PDF."
+  invoicePdf: Boolean!
+}
+
+"A document too large to attach, sent as a signed link instead."
+type InvoiceSendPlanDocumentLink {
+  documentId: ID!
+  fileName: String!
+  sizeBytes: Int!
+  reason: String!
+  url: String!
+}
+
+"One email of a send that the provider's size limit splits into parts."
+type InvoiceSendPlanPart {
+  partNumber: Int!
+  estimatedSizeBytes: Int!
+  attachments: [InvoiceSendPlanAttachment!]!
+  links: [InvoiceSendPlanDocumentLink!]!
+  warnings: [String!]!
+}
+
+"What sending an invoice would email, and what stops it, without sending it."
+type InvoiceSendPlan {
+  invoiceId: ID!
+  providerLimitBytes: Int!
+  estimatedBodyBytes: Int!
+  parts: [InvoiceSendPlanPart!]!
+  warnings: [String!]!
+  errors: [String!]!
+  recipients: InvoiceSendRecipients!
+  fromEmail: String!
+  headers: JSON!
+  openTracking: Boolean!
+  subject: String!
+  body: String!
+  invoicePdfDocumentId: ID
+}
+
+type InvoiceSendResult {
+  invoice: Invoice!
+  plan: InvoiceSendPlan!
+  attempts: [InvoiceEmailAttempt!]!
+}
+
+"The generation of an invoice's PDF, queued as a workflow."
+type GenerateInvoicePdfResult {
+  invoiceId: ID!
+  workflowId: String!
+  workflowRunId: String!
+  status: String!
+}
+
+type InvoicePostJournalLine {
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  description: String!
+  debitMinor: Int!
+  creditMinor: Int!
+}
+
+"The journal entry posting would book."
+type InvoicePostJournal {
+  accountingDate: Timestamp!
+  entryStatus: String!
+  requiresApproval: Boolean!
+  lines: [InvoicePostJournalLine!]!
+}
+
+"An accounting integration the posted invoice would sync to."
+type InvoicePostSyncDestination {
+  integration: String!
+  company: String!
+  awaitsRelease: Boolean!
+}
+
+type InvoicePostEDI {
+  partnerName: String!
+  willSend: Boolean!
+  blockers: [String!]!
+}
+
+"What posting an invoice would book and move, read before the person posts it."
+type InvoicePostPreview {
+  invoiceId: ID!
+  number: String!
+  billToName: String!
+  currencyCode: String!
+  totalMinor: Int!
+  "Why posting would be refused; empty when it would go through."
+  refusals: [String!]!
+  alreadyPosted: Boolean!
+  journal: InvoicePostJournal
+  shipmentsBilled: [String!]!
+  queueItemPosted: Boolean!
+  accountingSync: [InvoicePostSyncDestination!]!
+  edi: InvoicePostEDI
+}
+
+extend type Invoice {
+  "The customer's PO number printed on the invoice."
+  poNumber: String!
+  "The invoice run that billed a consolidated invoice."
+  invoiceRunId: ID
+  sentById: ID
+  "Why the last email delivery went out with a caveat; empty when it did not."
+  lastSendWarning: String!
+  "The subject the next email will use instead of the template's; empty uses the template."
+  emailSubjectSnapshot: String!
+  emailBodySnapshot: String!
+  emailToSnapshot: [String!]!
+  emailCcSnapshot: [String!]!
+  emailBccSnapshot: [String!]!
+  "The correction chain the invoice belongs to, once it has been adjusted."
+  correctionGroupId: ID
+  "The adjustment that produced this invoice, on a credit memo or rebill."
+  sourceInvoiceAdjustmentId: ID
+  """
+  The shipment the invoice bills, with its route. Set on the invoice read through
+  invoice(id); null on lists and on invoices that bill no single shipment.
+  """
+  shipment: Shipment
+}
+
+"A draft invoice's printed note and delivery overrides. An absent field is left as it is."
+input UpdateInvoiceDraftInput {
+  memo: String
+  remittanceInstructions: String
+  emailSubject: String
+  emailBody: String
+  emailTo: [String!]
+  emailCc: [String!]
+  emailBcc: [String!]
+  attachmentIds: [ID!]
+}
+
+extend type Query {
+  "The emails an invoice went out in, newest first. limit is at most 100."
+  invoiceEmailAttempts(invoiceId: ID!, limit: Int = 20, offset: Int = 0): InvoiceEmailAttemptPage!
+  "What sending the invoice would email, and what stops it. Nothing is sent."
+  invoiceSendPlan(invoiceId: ID!): InvoiceSendPlan!
+  "What posting the invoice would book and move. Nothing is posted."
+  invoicePostPreview(invoiceId: ID!): InvoicePostPreview!
+}
+
+extend type Mutation {
+  "Changes a draft invoice's printed note, remittance text and delivery overrides."
+  updateInvoiceDraft(invoiceId: ID!, input: UpdateInvoiceDraftInput!): Invoice!
+  "Queues the invoice's PDF to be rendered and attached."
+  generateInvoicePdf(invoiceId: ID!): GenerateInvoicePdfResult!
+  "Emails the invoice, or emails it again after a failed or earlier send."
+  sendInvoice(invoiceId: ID!): InvoiceSendResult!
+  "Posts a draft invoice to the ledger."
+  postInvoice(invoiceId: ID!): Invoice!
+}
+`, BuiltIn: false},
+	{Name: "../schema/invoice_share.graphqls", Input: `"The invoice tab a share opens on."
+enum InvoiceShareTab {
+  overview
+  delivery
+  charges
+  documents
+  activity
+}
+
+"How the emails a share sends went."
+enum InvoiceShareEmailStatus {
+  Queued
+  Partial
+  Failed
+  NotConfigured
+}
+
+"""
+One teammate an invoice was shared with. Sharing the same invoice with the same
+person again bumps shareCount and lastSharedAt rather than adding a row.
+"""
+type InvoiceShare {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  invoiceId: ID!
+  sharedWithId: ID!
+  sharedById: ID!
+  note: String!
+  tab: InvoiceShareTab!
+  shareCount: Int!
+  firstSharedAt: Timestamp!
+  lastSharedAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  sharedWith: User
+  sharedBy: User
+}
+
+"A teammate the invoice can be shared with."
+type InvoiceShareCandidate {
+  id: ID!
+  name: String!
+  username: String!
+  emailAddress: String!
+  profilePicUrl: String!
+  thumbnailUrl: String!
+}
+
+type ShareInvoiceResult {
+  "Every share on the invoice after this one, newest first."
+  shares: [InvoiceShare!]!
+  recipientCount: Int!
+  emailsQueued: Int!
+  emailStatus: InvoiceShareEmailStatus!
+}
+
+input ShareInvoiceInput {
+  "At most 25 teammates."
+  userIds: [ID!]!
+  "At most 1,000 characters."
+  note: String
+  tab: InvoiceShareTab!
+}
+
+extend type Query {
+  "Who an invoice was shared with, most recently shared first."
+  invoiceShares(invoiceId: ID!): [InvoiceShare!]!
+  """
+  Teammates the invoice can be shared with, matched on name, username and email.
+  limit is at most 25.
+  """
+  invoiceShareCandidates(invoiceId: ID!, query: String, limit: Int = 10): [InvoiceShareCandidate!]!
+}
+
+extend type Mutation {
+  "Shares an invoice with teammates and emails each a link to the tab it opens on."
+  shareInvoice(invoiceId: ID!, input: ShareInvoiceInput!): ShareInvoiceResult!
+}
+`, BuiltIn: false},
+	{Name: "../schema/invoice_statement.graphqls", Input: `"One shipment billed on an open statement."
+type StatementShipment {
+  billingQueueItemId: ID!
+  shipmentId: ID!
+  orderId: ID
+  proNumber: String!
+  bol: String!
+  poNumber: String!
+  orderNumber: String!
+  serviceDate: Timestamp
+  amount: Decimal!
+}
+
+"One invoice an open statement would cut, by the customer's split key."
+type StatementGroup {
+  key: String!
+  label: String!
+  shipmentCount: Int!
+  totalAmount: Decimal!
+  "The group's total falls short of the customer's statement minimum."
+  belowMinimum: Boolean!
+  "The members, on the single-statement read only."
+  shipments: [StatementShipment!]
+}
+
+"""
+The period a statement customer is accumulating into, derived live from the
+billing queue rather than staged anywhere.
+"""
+type OpenStatement {
+  customerId: ID!
+  customerName: String!
+  customerCode: String!
+  customerStatus: String!
+  cycle: CustomerBillingCycle!
+  billingCycleAnchorDay: Int!
+  billingCycleTimezone: String!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  lastBilledPeriodEnd: Timestamp
+  shipmentCount: Int!
+  invoiceCount: Int!
+  totalAmount: Decimal!
+  currencyCode: String!
+  splitBy: InvoiceSplitKey!
+  sectionBy: InvoiceSectionKey!
+  detail: InvoiceDetail!
+  minimumAmount: Decimal
+  autoBill: Boolean!
+  belowMinimum: Boolean!
+  "Freight in the period still waiting on a biller, which the invoices will not carry."
+  heldCount: Int!
+  heldAmount: Decimal!
+  "The invoices it would cut, on the single-statement read only."
+  groups: [StatementGroup!]
+}
+
+"How one invoice of a committed run went."
+type CommitGroupResult {
+  groupId: ID!
+  groupLabel: String!
+  success: Boolean!
+  skipped: Boolean!
+  invoiceId: ID
+  invoiceNumber: String!
+  error: String!
+}
+
+type CommitInvoiceRunResult {
+  runId: ID!
+  runNumber: String!
+  results: [CommitGroupResult!]!
+  totalCount: Int!
+  successCount: Int!
+  skippedCount: Int!
+  errorCount: Int!
+}
+
+input StatementExclusionInput {
+  billingQueueItemId: ID!
+  reason: String!
+}
+
+input BillStatementNowInput {
+  "Required when the period has not closed yet."
+  reason: String
+  "Items held back for the next period; they stay approved and uninvoiced."
+  exclude: [StatementExclusionInput!]
+}
+
+extend type Query {
+  "Every statement customer's open period."
+  openStatements: [OpenStatement!]!
+  "One customer's open period with the invoices it would cut and their shipments."
+  openStatement(customerId: ID!): OpenStatement!
+}
+
+extend type Mutation {
+  "Bills an open statement now, before or at the close of its cycle."
+  billStatementNow(customerId: ID!, input: BillStatementNowInput!): CommitInvoiceRunResult!
 }
 `, BuiltIn: false},
 	{Name: "../schema/journal_entry.graphqls", Input: `type JournalEntryLineAccount {
@@ -28838,6 +30170,37 @@ type BillingQueueItem {
   agentReviewedAt: Timestamp
   "The open issue a list row leads with. Set on items read through billingQueueItems."
   headline: BillingQueueHeadline
+  heldAt: Timestamp
+  heldById: ID
+  "The status a hold found the item in, which releasing it returns to."
+  statusBeforeHold: BillingQueueStatus
+  "When the checks last ran."
+  checkedAt: Timestamp
+  "The invoice the item became, once approved."
+  invoiceId: ID
+  "The note printed under the charges on the invoice the item will make."
+  invoiceMemo: String!
+  "The payment term the invoice will carry instead of the customer's; empty keeps the customer's."
+  paymentTerm: String!
+  "The invoice date the invoice will carry instead of today."
+  invoiceDate: Timestamp
+  "The shipment documents sent with the invoice as one packet."
+  packetDocumentIds: [ID!]!
+  "What Nova read to review the item."
+  agentReads: [BillingQueueAgentRead!]!
+  "This payer's part of the shipment's charges. Set on the item read through billingQueueItem(id)."
+  payerShare: BillingQueuePayerShare
+  "What priced the item's shipment. Set on the item read through billingQueueItem(id)."
+  ratedBy: BillingQueueRatedBy
+  """
+  Detention charges on the shipment still waiting on an approver; while any is
+  listed the item cannot be approved. Set on the item read through billingQueueItem(id).
+  """
+  detentionHolds: [BillingQueueDetentionHold!]!
+  "The reviews a tariff asked for on the shipment, which hold the item until a person approves the rating."
+  ratingReviewHold: BillingQueueRatingReviewHold
+  "Everything a biller reads to decide the item. Set when the item was read with its shipment details, as billingQueueItem(id) reads it."
+  review: BillingQueueReview
 }
 
 type ShipmentCommentEdge {

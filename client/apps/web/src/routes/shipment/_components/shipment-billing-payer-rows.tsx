@@ -42,7 +42,7 @@ export function ShipmentBillingPayerRows({
     <div className="mt-3 space-y-1" data-testid="billing-payer-rows">
       <p className="text-xs text-muted-foreground font-medium">{t("Payers")}</p>
       {payers.map((payer) => {
-        const queueItem = (queueItems?.results ?? []).find(
+        const queueItem = (queueItems ?? []).find(
           (item) => item.billToCustomerId === payer.payerId,
         );
         const invoice = (invoices ?? []).find((row) => row.customerId === payer.payerId);

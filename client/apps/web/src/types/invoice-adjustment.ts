@@ -125,6 +125,13 @@ export type InvoiceAdjustmentDocumentReference = z.infer<
   typeof invoiceAdjustmentDocumentReferenceSchema
 >;
 
+/** A document uploaded onto an adjustment, named as the person uploaded it. */
+export const invoiceAdjustmentDocumentSchema = z.object({
+  id: z.string(),
+  fileName: z.string().default(""),
+  originalName: z.string().default(""),
+});
+
 export const invoiceAdjustmentSchema = z.object({
   ...tenantInfoSchema.shape,
   id: z.string(),
@@ -164,7 +171,7 @@ export const invoiceAdjustmentSchema = z.object({
   updatedAt: z.number(),
   lines: z.array(invoiceAdjustmentLineSchema).default([]),
   referencedDocuments: z.array(invoiceAdjustmentDocumentReferenceSchema).default([]),
-  adjustmentDocuments: z.array(linkedRecordSchema("document", documentSchema)).default([]),
+  adjustmentDocuments: z.array(invoiceAdjustmentDocumentSchema).default([]),
 });
 export type InvoiceAdjustment = z.infer<typeof invoiceAdjustmentSchema>;
 
@@ -315,6 +322,27 @@ export const invoiceAdjustmentBatchQueueItemSchema = z.object({
   updatedAt: z.number(),
 });
 export type InvoiceAdjustmentBatchQueueItem = z.infer<typeof invoiceAdjustmentBatchQueueItemSchema>;
+
+export const invoiceAdjustmentBatchPageSchema = z.object({
+  items: z.array(invoiceAdjustmentBatchQueueItemSchema).default([]),
+  total: z.number().int().default(0),
+  totalExact: z.boolean().default(true),
+});
+export type InvoiceAdjustmentBatchPage = z.infer<typeof invoiceAdjustmentBatchPageSchema>;
+
+export const invoiceReconciliationPageSchema = z.object({
+  items: z.array(invoiceReconciliationQueueItemSchema).default([]),
+  total: z.number().int().default(0),
+  totalExact: z.boolean().default(true),
+});
+export type InvoiceReconciliationPage = z.infer<typeof invoiceReconciliationPageSchema>;
+
+/** A page of an adjustment work queue: its search and one status. */
+export type InvoiceAdjustmentQueueParams = {
+  limit?: number;
+  query?: string;
+  status?: string | null;
+};
 
 export const invoiceAdjustmentSummaryCountSchema = z.object({
   label: z.string(),

@@ -1,43 +1,55 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
 import {
-  invoiceShareCandidateListSchema,
-  invoiceShareListSchema,
+  InvoiceShareCandidatesDocument,
+  InvoiceSharesDocument,
+  ShareInvoiceDocument,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { safeParse } from "@trenova/shared/lib/parse";
+import { z } from "zod";
+import {
+  invoiceShareSchema,
+  invoiceShareUserSchema,
   shareInvoiceResultSchema,
   type ShareInvoicePayload,
 } from "@trenova/shared/types/invoice-share";
 
+const CANDIDATE_LIMIT = 10;
+
 export class InvoiceShareService {
-  public async list(invoiceId: string) {
-    const response = await api.get(`/billing/invoices/${invoiceId}/shares/`);
-    const parsed = await safeParse(invoiceShareListSchema, response, "InvoiceShareList");
-    return parsed.shares;
+  public async list(invoiceId: string, options: { signal?: AbortSignal } = {}) {
+    const data = await requestGraphQL<{ invoiceShares: unknown }>({
+      document: InvoiceSharesDocument,
+      operationName: "InvoiceShares",
+      variables: { invoiceId },
+      signal: options.signal,
+    });
+    return safeParse(z.array(invoiceShareSchema), data.invoiceShares ?? [], "InvoiceShareList");
   }
 
   public async candidates(invoiceId: string, query: string, signal?: AbortSignal) {
-    const params = new URLSearchParams({ limit: "10", offset: "0" });
     const trimmed = query.trim();
-    if (trimmed) {
-      params.set("query", trimmed);
-    }
-    const response = await api.get(
-      `/billing/invoices/${invoiceId}/shares/candidates/?${params.toString()}`,
-      { signal },
-    );
-    const parsed = await safeParse(
-      invoiceShareCandidateListSchema,
-      response,
+    const data = await requestGraphQL<{ invoiceShareCandidates: unknown }>({
+      document: InvoiceShareCandidatesDocument,
+      operationName: "InvoiceShareCandidates",
+      variables: { invoiceId, query: trimmed || undefined, limit: CANDIDATE_LIMIT },
+      signal,
+    });
+    return safeParse(
+      z.array(invoiceShareUserSchema),
+      data.invoiceShareCandidates ?? [],
       "InvoiceShareCandidateList",
     );
-    return parsed.results;
   }
 
   public async share(invoiceId: string, payload: ShareInvoicePayload) {
-    const response = await api.post(`/billing/invoices/${invoiceId}/shares/`, {
-      userIds: payload.userIds,
-      note: payload.note.trim(),
-      tab: payload.tab,
+    const data = await requestGraphQL<{ shareInvoice: unknown }>({
+      document: ShareInvoiceDocument,
+      operationName: "ShareInvoice",
+      variables: {
+        invoiceId,
+        input: { userIds: payload.userIds, note: payload.note.trim(), tab: payload.tab },
+      },
     });
-    return safeParse(shareInvoiceResultSchema, response, "ShareInvoiceResult");
+    return safeParse(shareInvoiceResultSchema, data.shareInvoice, "ShareInvoiceResult");
   }
 }

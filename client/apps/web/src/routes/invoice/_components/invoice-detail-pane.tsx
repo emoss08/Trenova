@@ -783,22 +783,19 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
 
   const query = useInfiniteQuery({
     queryKey,
-    queryFn: async ({ pageParam }) =>
-      apiService.invoiceService.listEmailAttempts(invoiceId, {
-        limit: INVOICE_SEND_HISTORY_PAGE_SIZE,
-        offset: pageParam,
-      }),
+    queryFn: async ({ pageParam, signal }) =>
+      apiService.invoiceService.listEmailAttempts(
+        invoiceId,
+        { limit: INVOICE_SEND_HISTORY_PAGE_SIZE, offset: pageParam },
+        { signal },
+      ),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === INVOICE_SEND_HISTORY_PAGE_SIZE) {
-        return lastPageParam + INVOICE_SEND_HISTORY_PAGE_SIZE;
-      }
-      return undefined;
-    },
+    getNextPageParam: (lastPage, _, lastPageParam) =>
+      lastPage.hasMore ? lastPageParam + INVOICE_SEND_HISTORY_PAGE_SIZE : undefined,
   });
 
   const attempts = useMemo(
-    () => query.data?.pages.flatMap((page) => page.results) ?? [],
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
     [query.data?.pages],
   );
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;

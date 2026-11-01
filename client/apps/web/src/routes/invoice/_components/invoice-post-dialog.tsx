@@ -52,7 +52,7 @@ export function InvoicePostDialog({
     refetch,
   } = useQuery({
     queryKey: invoicePostPreviewQueryKey(invoiceId),
-    queryFn: () => apiService.invoiceService.getPostPreview(invoiceId),
+    queryFn: ({ signal }) => apiService.invoiceService.getPostPreview(invoiceId, { signal }),
     enabled: open,
     staleTime: 0,
     gcTime: 0,

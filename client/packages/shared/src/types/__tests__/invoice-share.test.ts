@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  invoiceShareListSchema,
+  invoiceShareSchema,
   shareInvoiceFormSchema,
   shareInvoiceResultSchema,
 } from "@trenova/shared/types/invoice-share";
@@ -35,17 +35,12 @@ const share = {
 
 describe("invoice share schemas", () => {
   it("reads the empty strings Go sends for an unset note and pictures as null", () => {
-    const parsed = invoiceShareListSchema.parse({ shares: [share] });
+    const parsed = invoiceShareSchema.parse(share);
 
-    expect(parsed.shares).toHaveLength(1);
-    expect(parsed.shares[0].note).toBeNull();
-    expect(parsed.shares[0].sharedWith?.profilePicUrl).toBeNull();
-    expect(parsed.shares[0].tab).toBe("charges");
-    expect(parsed.shares[0].shareCount).toBe(2);
-  });
-
-  it("treats a null share list as empty", () => {
-    expect(invoiceShareListSchema.parse({ shares: null }).shares).toEqual([]);
+    expect(parsed.note).toBeNull();
+    expect(parsed.sharedWith?.profilePicUrl).toBeNull();
+    expect(parsed.tab).toBe("charges");
+    expect(parsed.shareCount).toBe(2);
   });
 
   it("keeps the email delivery outcome of a share", () => {
@@ -61,9 +56,7 @@ describe("invoice share schemas", () => {
   });
 
   it("rejects a tab or email status the server does not define", () => {
-    expect(() =>
-      invoiceShareListSchema.parse({ shares: [{ ...share, tab: "nope" }] }),
-    ).toThrow();
+    expect(() => invoiceShareSchema.parse({ ...share, tab: "nope" })).toThrow();
     expect(() =>
       shareInvoiceResultSchema.parse({
         shares: [],

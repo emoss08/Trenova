@@ -1,5 +1,40 @@
 import { z } from "zod";
-import { api } from "@trenova/shared/lib/api";
+import {
+  AssignBillingQueueItemBillerDocument,
+  BillingQueueAssistDocument,
+  BillingQueueBriefDocument,
+  BillingQueueBulkRunDocument,
+  BillingQueueFilterPresetsDocument,
+  BillingQueueItemActivityDocument,
+  BillingQueueItemDetailDocument,
+  BillingQueueNeighborsDocument,
+  BillingQueueNovaGenerationDocument,
+  BillingQueueRecommendationsDocument,
+  BillingQueueSearchIntentDocument,
+  BillingQueueStatsDocument,
+  BillingQueueSummariesDocument,
+  CancelBillingQueueBulkRunDocument,
+  CreateBillingQueueFilterPresetDocument,
+  DeleteBillingQueueFilterPresetDocument,
+  PostBillingQueueItemDocument,
+  ReassignBillingQueueChargeDocument,
+  RedetectBillingQueuePodSignaturesDocument,
+  ReleaseBillingQueueItemDocument,
+  ResolveBillingQueueIssueDocument,
+  StartBillingQueueBulkRunDocument,
+  UndoBillingQueueIssueDocument,
+  UpdateBillingQueueChargesDocument,
+  UpdateBillingQueueFilterPresetDocument,
+  UpdateBillingQueueInvoiceDetailsDocument,
+  UpdateBillingQueueItemStatusDocument,
+  type BillingQueueBulkAction,
+  type BillingQueueHoldReasonCode,
+  type BillingQueueStatus,
+  type BillingQueueExceptionReasonCode,
+  type ChargeAllocationKind,
+  type ChargeAllocationMethod,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   billingQueueApprovalRunSchema,
@@ -18,120 +53,164 @@ import {
   podSignatureRedetectResultSchema,
   reassignChargeResultSchema,
   type BillingQueueAssignInput,
-  type BillingQueueAssist,
-  type BillingQueueBrief,
-  type BillingQueueNovaGeneration,
   type BillingQueueInvoiceDetailsInput,
-  type BillingQueueRecommendation,
-  type BillingQueueSearchIntent,
   type BulkRunAction,
   type BulkRunParams,
-  type BillingQueueFilterPreset,
-  type BillingQueueApprovalRun,
-  type BillingQueueEventPage,
   type BillingQueueFilterPresetInput,
-  type BillingQueueItem,
-  type BillingQueueNeighbors,
-  type BillingQueuePostResult,
-  type BillingQueueSummary,
-  type BillingQueueStats,
   type BillingQueueUpdateChargesInput,
   type BillingQueueUpdateStatusInput,
-  type PODSignatureRedetectResult,
   type ReassignChargeInput,
-  type ReassignChargeResult,
 } from "@trenova/shared/types/billing-queue";
+
+type RequestOptions = { signal?: AbortSignal };
 
 export class BillingQueueService {
   /** Lane counts, plus the pulse of the caller's day when `dayStart` is given. */
-  public async getStats(dayStart?: number, options: { signal?: AbortSignal } = {}) {
-    const endpoint = dayStart
-      ? `/billing-queue/stats/?dayStart=${dayStart}`
-      : "/billing-queue/stats/";
-    const response = await api.get<BillingQueueStats>(endpoint, { signal: options.signal });
-    return safeParse(billingQueueStatsSchema, response, "BillingQueueStats");
+  public async getStats(dayStart?: number, options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueStats: unknown }>({
+      document: BillingQueueStatsDocument,
+      operationName: "BillingQueueStats",
+      variables: { dayStart: dayStart || undefined },
+      signal: options.signal,
+    });
+    return safeParse(billingQueueStatsSchema, data.billingQueueStats, "BillingQueueStats");
   }
 
-  public async getRecommendations(options: { signal?: AbortSignal } = {}) {
-    const response = await api.get<BillingQueueRecommendation[]>(
-      "/billing-queue/recommendations/",
-      { signal: options.signal },
-    );
+  public async getRecommendations(options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueRecommendations: unknown }>({
+      document: BillingQueueRecommendationsDocument,
+      operationName: "BillingQueueRecommendations",
+      signal: options.signal,
+    });
     return safeParse(
       z.array(billingQueueRecommendationSchema),
-      response ?? [],
+      data.billingQueueRecommendations ?? [],
       "BillingQueueRecommendations",
     );
   }
 
-  public async getAssist(options: { signal?: AbortSignal } = {}) {
-    const response = await api.get<BillingQueueAssist>("/billing-queue/assist/", {
+  public async getAssist(options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueAssist: unknown }>({
+      document: BillingQueueAssistDocument,
+      operationName: "BillingQueueAssist",
       signal: options.signal,
     });
-    return safeParse(billingQueueAssistSchema, response, "BillingQueueAssist");
+    return safeParse(billingQueueAssistSchema, data.billingQueueAssist, "BillingQueueAssist");
   }
 
-  public async getBrief(options: { signal?: AbortSignal } = {}) {
-    const response = await api.get<BillingQueueBrief>("/billing-queue/brief/", {
+  public async getBrief(options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueBrief: unknown }>({
+      document: BillingQueueBriefDocument,
+      operationName: "BillingQueueBrief",
       signal: options.signal,
     });
-    return safeParse(billingQueueBriefSchema, response, "BillingQueueBrief");
+    return safeParse(billingQueueBriefSchema, data.billingQueueBrief, "BillingQueueBrief");
   }
 
   /**
    * What Nova is generating for the whole queue. Reading it starts a generation
    * when the queue has items Nova has not reviewed or no brief.
    */
-  public async getNovaGeneration(options: { signal?: AbortSignal } = {}) {
-    const response = await api.get<BillingQueueNovaGeneration>("/billing-queue/nova-generation/", {
+  public async getNovaGeneration(options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueNovaGeneration: unknown }>({
+      document: BillingQueueNovaGenerationDocument,
+      operationName: "BillingQueueNovaGeneration",
       signal: options.signal,
     });
-    return safeParse(billingQueueNovaGenerationSchema, response, "BillingQueueNovaGeneration");
+    return safeParse(
+      billingQueueNovaGenerationSchema,
+      data.billingQueueNovaGeneration ?? null,
+      "BillingQueueNovaGeneration",
+    );
   }
 
-  /** Reads the filters out of a sentence typed into the queue's search; changes nothing. */
   /** Turns a sentence into queue filters; `today` (YYYY-MM-DD) is the person's own date. */
   public async composeSearch(text: string, today: string) {
-    const response = await api.post<BillingQueueSearchIntent>("/billing-queue/search-intent/", {
-      text,
-      today,
+    const data = await requestGraphQL<{ billingQueueSearchIntent: unknown }>({
+      document: BillingQueueSearchIntentDocument,
+      operationName: "BillingQueueSearchIntent",
+      variables: { text, today },
     });
-    return safeParse(billingQueueSearchIntentSchema, response, "BillingQueueSearchIntent");
+    return safeParse(
+      billingQueueSearchIntentSchema,
+      data.billingQueueSearchIntent,
+      "BillingQueueSearchIntent",
+    );
   }
 
   public async updateInvoiceDetails(id: string, payload: BillingQueueInvoiceDetailsInput) {
-    const response = await api.put<BillingQueueItem>(
-      `/billing-queue/${id}/invoice-details/`,
-      payload,
+    const data = await requestGraphQL<{ updateBillingQueueInvoiceDetails: unknown }>({
+      document: UpdateBillingQueueInvoiceDetailsDocument,
+      operationName: "UpdateBillingQueueInvoiceDetails",
+      variables: { id, input: payload },
+    });
+    return safeParse(
+      billingQueueItemSchema,
+      data.updateBillingQueueInvoiceDetails,
+      "BillingQueueItem",
     );
-    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
   }
 
-  public async getById(
-    id: string,
-    params?: Record<string, string>,
-    options: { signal?: AbortSignal } = {},
-  ) {
-    const endpoint = params
-      ? `/billing-queue/${id}/?${new URLSearchParams(params).toString()}`
-      : `/billing-queue/${id}/`;
-    const response = await api.get<BillingQueueItem>(endpoint, { signal: options.signal });
-    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+  /** The item with everything a biller reads to decide it. */
+  public async getById(id: string, options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueItem: unknown }>({
+      document: BillingQueueItemDetailDocument,
+      operationName: "BillingQueueItemDetail",
+      variables: { id },
+      signal: options.signal,
+    });
+    return safeParse(billingQueueItemSchema, data.billingQueueItem, "BillingQueueItem");
   }
 
   public async updateStatus(id: string, payload: BillingQueueUpdateStatusInput) {
-    const response = await api.put<BillingQueueItem>(`/billing-queue/${id}/status/`, payload);
-    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+    const data = await requestGraphQL<{ updateBillingQueueStatus: unknown }>({
+      document: UpdateBillingQueueItemStatusDocument,
+      operationName: "UpdateBillingQueueItemStatus",
+      variables: {
+        id,
+        input: {
+          ...payload,
+          status: payload.status as BillingQueueStatus,
+          exceptionReasonCode: payload.exceptionReasonCode as
+            | BillingQueueExceptionReasonCode
+            | undefined,
+          holdReasonCode: payload.holdReasonCode as BillingQueueHoldReasonCode | undefined,
+        },
+      },
+    });
+    return safeParse(billingQueueItemSchema, data.updateBillingQueueStatus, "BillingQueueItem");
   }
 
   public async assign(id: string, payload: BillingQueueAssignInput) {
-    const response = await api.put<BillingQueueItem>(`/billing-queue/${id}/assign/`, payload);
-    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+    const data = await requestGraphQL<{ assignBillingQueueBiller: unknown }>({
+      document: AssignBillingQueueItemBillerDocument,
+      operationName: "AssignBillingQueueItemBiller",
+      variables: { id, input: payload },
+    });
+    return safeParse(billingQueueItemSchema, data.assignBillingQueueBiller, "BillingQueueItem");
   }
 
   public async updateCharges(id: string, payload: BillingQueueUpdateChargesInput) {
-    const response = await api.put<BillingQueueItem>(`/billing-queue/${id}/charges/`, payload);
-    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+    const data = await requestGraphQL<{ updateBillingQueueCharges: unknown }>({
+      document: UpdateBillingQueueChargesDocument,
+      operationName: "UpdateBillingQueueCharges",
+      variables: {
+        id,
+        input: {
+          formulaTemplateId: payload.formulaTemplateId,
+          tariffInputs: payload.tariffInputs,
+          convertAmountSplitsToPercent: payload.convertAmountSplitsToPercent,
+          additionalCharges: payload.additionalCharges?.map((charge) => ({
+            id: charge.id,
+            accessorialChargeId: charge.accessorialChargeId,
+            method: charge.method,
+            amount: String(charge.amount),
+            unit: charge.unit,
+          })),
+        },
+      },
+    });
+    return safeParse(billingQueueItemSchema, data.updateBillingQueueCharges, "BillingQueueItem");
   }
 
   /**
@@ -140,81 +219,132 @@ export class BillingQueueService {
    * lose a share.
    */
   public async reassignCharge(id: string, payload: ReassignChargeInput) {
-    const response = await api.post<ReassignChargeResult>(
-      `/billing-queue/${id}/reassign-charge/`,
-      payload,
+    const data = await requestGraphQL<{ reassignBillingQueueCharge: unknown }>({
+      document: ReassignBillingQueueChargeDocument,
+      operationName: "ReassignBillingQueueCharge",
+      variables: {
+        id,
+        input: {
+          chargeKind: payload.chargeKind as ChargeAllocationKind,
+          additionalChargeId: payload.additionalChargeId,
+          allocations: payload.allocations.map((allocation) => ({
+            id: allocation.id,
+            billToCustomerId: allocation.billToCustomerId,
+            method: allocation.method as ChargeAllocationMethod,
+            percent: allocation.percent,
+            amount: allocation.amount,
+          })),
+        },
+      },
+    });
+    return safeParse(
+      reassignChargeResultSchema,
+      data.reassignBillingQueueCharge,
+      "ReassignChargeResult",
     );
-    return safeParse(reassignChargeResultSchema, response, "ReassignChargeResult");
   }
 
   /** The item's place in the queue: what comes before and after it, and where it sits. */
-  public async getNeighbors(id: string, params?: Record<string, string>) {
-    const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-    const response = await api.get<BillingQueueNeighbors>(
-      `/billing-queue/${id}/neighbors/${query}`,
+  public async getNeighbors(id: string, options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueNeighbors: unknown }>({
+      document: BillingQueueNeighborsDocument,
+      operationName: "BillingQueueNeighbors",
+      variables: { id },
+      signal: options.signal,
+    });
+    return safeParse(
+      billingQueueNeighborsSchema,
+      data.billingQueueNeighbors,
+      "BillingQueueNeighbors",
     );
-    return safeParse(billingQueueNeighborsSchema, response, "BillingQueueNeighbors");
   }
 
   /** The item's activity, newest first, a page at a time. */
-  public async getActivity(id: string, before?: { at: number; id: string }, limit = 30) {
-    const params = new URLSearchParams({ limit: String(limit) });
-    if (before) {
-      params.set("beforeAt", String(before.at));
-      params.set("beforeId", before.id);
-    }
-    const response = await api.get<BillingQueueEventPage>(
-      `/billing-queue/${id}/activity/?${params.toString()}`,
+  public async getActivity(
+    id: string,
+    before?: { at: number; id: string },
+    limit = 30,
+    options: RequestOptions = {},
+  ) {
+    const data = await requestGraphQL<{ billingQueueItemActivity: unknown }>({
+      document: BillingQueueItemActivityDocument,
+      operationName: "BillingQueueItemActivity",
+      variables: { id, limit, before },
+      signal: options.signal,
+    });
+    return safeParse(
+      billingQueueEventPageSchema,
+      data.billingQueueItemActivity,
+      "BillingQueueEventPage",
     );
-    return safeParse(billingQueueEventPageSchema, response, "BillingQueueEventPage");
   }
 
   /** The live state of queue rows, for a table that was read earlier. */
-  public async getSummaries(ids: string[]) {
-    const response = await api.get<{ results: BillingQueueSummary[] }>(
-      `/billing-queue/summaries/?ids=${encodeURIComponent(ids.join(","))}`,
-    );
-    const parsed = await safeParse(
-      z.object({ results: z.array(billingQueueSummarySchema) }),
-      response,
+  public async getSummaries(ids: string[], options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueSummaries: unknown }>({
+      document: BillingQueueSummariesDocument,
+      operationName: "BillingQueueSummaries",
+      variables: { ids },
+      signal: options.signal,
+    });
+    return safeParse(
+      z.array(billingQueueSummarySchema),
+      data.billingQueueSummaries ?? [],
       "BillingQueueSummaries",
     );
-    return parsed.results;
   }
 
   public async resolveIssue(id: string, issueId: string, optionKey: string) {
-    const response = await api.post<BillingQueueItem>(
-      `/billing-queue/${id}/issues/${issueId}/resolve/`,
-      { optionKey },
-    );
-    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+    const data = await requestGraphQL<{ resolveBillingQueueIssue: unknown }>({
+      document: ResolveBillingQueueIssueDocument,
+      operationName: "ResolveBillingQueueIssue",
+      variables: { id, issueId, optionKey },
+    });
+    return safeParse(billingQueueItemSchema, data.resolveBillingQueueIssue, "BillingQueueItem");
   }
 
   public async undoIssue(id: string, issueId: string) {
-    const response = await api.post<BillingQueueItem>(
-      `/billing-queue/${id}/issues/${issueId}/undo/`,
-      {},
-    );
-    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+    const data = await requestGraphQL<{ undoBillingQueueIssue: unknown }>({
+      document: UndoBillingQueueIssueDocument,
+      operationName: "UndoBillingQueueIssue",
+      variables: { id, issueId },
+    });
+    return safeParse(billingQueueItemSchema, data.undoBillingQueueIssue, "BillingQueueItem");
   }
 
   public async release(id: string) {
-    const response = await api.post<BillingQueueItem>(`/billing-queue/${id}/release/`, {});
-    return safeParse(billingQueueItemSchema, response, "BillingQueueItem");
+    const data = await requestGraphQL<{ releaseBillingQueueItem: unknown }>({
+      document: ReleaseBillingQueueItemDocument,
+      operationName: "ReleaseBillingQueueItem",
+      variables: { id },
+    });
+    return safeParse(billingQueueItemSchema, data.releaseBillingQueueItem, "BillingQueueItem");
   }
 
   /** Posts the approved item's invoice, which sends it to the customer. */
   public async post(id: string) {
-    const response = await api.post<BillingQueuePostResult>(`/billing-queue/${id}/post/`, {});
-    return safeParse(billingQueuePostResultSchema, response, "BillingQueuePostResult");
+    const data = await requestGraphQL<{ postBillingQueueItem: unknown }>({
+      document: PostBillingQueueItemDocument,
+      operationName: "PostBillingQueueItem",
+      variables: { id },
+    });
+    return safeParse(
+      billingQueuePostResultSchema,
+      data.postBillingQueueItem,
+      "BillingQueuePostResult",
+    );
   }
 
   public async redetectPODSignatures() {
-    const response = await api.post<PODSignatureRedetectResult>(
-      "/billing-queue/pod-signatures/redetect/",
-      {},
+    const data = await requestGraphQL<{ redetectBillingQueuePodSignatures: unknown }>({
+      document: RedetectBillingQueuePodSignaturesDocument,
+      operationName: "RedetectBillingQueuePodSignatures",
+    });
+    return safeParse(
+      podSignatureRedetectResultSchema,
+      data.redetectBillingQueuePodSignatures,
+      "PODSignatureRedetectResult",
     );
-    return safeParse(podSignatureRedetectResultSchema, response, "PODSignatureRedetectResult");
   }
 
   /**
@@ -227,59 +357,99 @@ export class BillingQueueService {
     idempotencyKey: string,
     params: BulkRunParams = {},
   ) {
-    const response = await api.post<BillingQueueApprovalRun>("/billing-queue/bulk/", {
-      action,
-      itemIds,
-      idempotencyKey,
-      params,
+    const data = await requestGraphQL<{ startBillingQueueBulkRun: unknown }>({
+      document: StartBillingQueueBulkRunDocument,
+      operationName: "StartBillingQueueBulkRun",
+      variables: {
+        input: {
+          action: action as BillingQueueBulkAction,
+          itemIds,
+          idempotencyKey,
+          params: {
+            ...params,
+            holdReasonCode: params.holdReasonCode as BillingQueueHoldReasonCode | undefined,
+          },
+        },
+      },
     });
-    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueBulkRun");
+    return safeParse(
+      billingQueueApprovalRunSchema,
+      data.startBillingQueueBulkRun,
+      "BillingQueueBulkRun",
+    );
   }
 
-  public async getBulk(runId: string, options: { signal?: AbortSignal } = {}) {
-    const response = await api.get<BillingQueueApprovalRun>(`/billing-queue/bulk/${runId}/`, {
+  public async getBulk(runId: string, options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueBulkRun: unknown }>({
+      document: BillingQueueBulkRunDocument,
+      operationName: "BillingQueueBulkRun",
+      variables: { id: runId },
       signal: options.signal,
     });
-    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueBulkRun");
+    return safeParse(
+      billingQueueApprovalRunSchema,
+      data.billingQueueBulkRun,
+      "BillingQueueBulkRun",
+    );
   }
 
   public async undoBulk(runId: string) {
-    const response = await api.post<BillingQueueApprovalRun>(
-      `/billing-queue/bulk/${runId}/cancel/`,
-      {},
+    const data = await requestGraphQL<{ cancelBillingQueueBulkRun: unknown }>({
+      document: CancelBillingQueueBulkRunDocument,
+      operationName: "CancelBillingQueueBulkRun",
+      variables: { id: runId },
+    });
+    return safeParse(
+      billingQueueApprovalRunSchema,
+      data.cancelBillingQueueBulkRun,
+      "BillingQueueBulkRun",
     );
-    return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueBulkRun");
   }
 
-  public async listFilterPresets() {
-    const response = await api.get<{ results: BillingQueueFilterPreset[]; count: number }>(
-      "/billing-queue/filter-presets/",
-    );
-    const parsed = await safeParse(
-      z.object({ results: z.array(billingQueueFilterPresetSchema), count: z.number() }),
-      response,
+  public async listFilterPresets(options: RequestOptions = {}) {
+    const data = await requestGraphQL<{ billingQueueFilterPresets: unknown }>({
+      document: BillingQueueFilterPresetsDocument,
+      operationName: "BillingQueueFilterPresets",
+      signal: options.signal,
+    });
+    return safeParse(
+      z.array(billingQueueFilterPresetSchema),
+      data.billingQueueFilterPresets ?? [],
       "BillingQueueFilterPresets",
     );
-    return parsed.results;
   }
 
   public async createFilterPreset(payload: BillingQueueFilterPresetInput) {
-    const response = await api.post<BillingQueueFilterPreset>(
-      "/billing-queue/filter-presets/",
-      payload,
+    const data = await requestGraphQL<{ createBillingQueueFilterPreset: unknown }>({
+      document: CreateBillingQueueFilterPresetDocument,
+      operationName: "CreateBillingQueueFilterPreset",
+      variables: { input: payload },
+    });
+    return safeParse(
+      billingQueueFilterPresetSchema,
+      data.createBillingQueueFilterPreset,
+      "BillingQueueFilterPreset",
     );
-    return safeParse(billingQueueFilterPresetSchema, response, "BillingQueueFilterPreset");
   }
 
   public async updateFilterPreset(id: string, payload: BillingQueueFilterPresetInput) {
-    const response = await api.put<BillingQueueFilterPreset>(
-      `/billing-queue/filter-presets/${id}/`,
-      payload,
+    const data = await requestGraphQL<{ updateBillingQueueFilterPreset: unknown }>({
+      document: UpdateBillingQueueFilterPresetDocument,
+      operationName: "UpdateBillingQueueFilterPreset",
+      variables: { id, input: payload },
+    });
+    return safeParse(
+      billingQueueFilterPresetSchema,
+      data.updateBillingQueueFilterPreset,
+      "BillingQueueFilterPreset",
     );
-    return safeParse(billingQueueFilterPresetSchema, response, "BillingQueueFilterPreset");
   }
 
   public async deleteFilterPreset(id: string) {
-    await api.delete(`/billing-queue/filter-presets/${id}/`);
+    await requestGraphQL<{ deleteBillingQueueFilterPreset: boolean }>({
+      document: DeleteBillingQueueFilterPresetDocument,
+      operationName: "DeleteBillingQueueFilterPreset",
+      variables: { id },
+    });
   }
 }

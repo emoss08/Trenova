@@ -42,19 +42,10 @@ export function InvoiceAdjustmentBatchPage() {
   const hasActiveFilters = Boolean(query || status);
   const clearFilters = () => void setSearchParams({ query: "", status: null });
 
-  const params = useMemo(() => {
-    const next = new URLSearchParams({ limit: "100" });
-    if (deferredQuery.trim()) {
-      next.set("query", deferredQuery.trim());
-    }
-    if (status) {
-      next.set(
-        "fieldFilters",
-        JSON.stringify([{ field: "status", operator: "eq", value: status }]),
-      );
-    }
-    return Object.fromEntries(next.entries());
-  }, [deferredQuery, status]);
+  const params = useMemo(
+    () => ({ limit: 100, query: deferredQuery.trim(), status: status ?? null }),
+    [deferredQuery, status],
+  );
 
   const listQuery = useQuery({
     ...invoiceAdjustment.batches(params),
@@ -65,8 +56,8 @@ export function InvoiceAdjustmentBatchPage() {
   });
 
   const selectedRow =
-    listQuery.data?.results.find((row) => row.id === selectedBatchId) ??
-    listQuery.data?.results[0] ??
+    listQuery.data?.items.find((row) => row.id === selectedBatchId) ??
+    listQuery.data?.items[0] ??
     null;
 
   const detailQuery = useQuery({
@@ -135,7 +126,7 @@ export function InvoiceAdjustmentBatchPage() {
             <div
               className={cn(
                 "flex flex-col gap-1.5 p-2",
-                !listQuery.isLoading && listQuery.data?.results.length === 0 && "h-full gap-0 p-0",
+                !listQuery.isLoading && listQuery.data?.items.length === 0 && "h-full gap-0 p-0",
               )}
             >
               {listQuery.isLoading
@@ -143,7 +134,7 @@ export function InvoiceAdjustmentBatchPage() {
                     <Skeleton key={index} className="h-24 w-full rounded-xl" />
                   ))
                 : null}
-              {!listQuery.isLoading && listQuery.data?.results.length === 0 ? (
+              {!listQuery.isLoading && listQuery.data?.items.length === 0 ? (
                 <BillingListEmpty
                   title={hasActiveFilters ? "Nothing matches" : "No batches yet"}
                   description={
@@ -154,7 +145,7 @@ export function InvoiceAdjustmentBatchPage() {
                   onClearFilters={hasActiveFilters ? clearFilters : undefined}
                 />
               ) : null}
-              {listQuery.data?.results.map((row) => (
+              {listQuery.data?.items.map((row) => (
                 <button
                   key={row.id}
                   type="button"

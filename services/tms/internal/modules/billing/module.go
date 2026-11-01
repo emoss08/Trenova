@@ -198,6 +198,7 @@ func SharedOptions() fx.Option {
 			invoicedisputeservice.New,
 			latechargeservice.New,
 			func(s *invoicerunservice.Service) invoicerunports.InvoiceRunSweeper { return s },
+			func(s *invoicerunservice.Service) invoicerunports.InvoiceStatementService { return s },
 			billingqueueservice.NewService,
 			func(s *billingqueueservice.Service) billingqueueports.BillingQueueService { return s },
 			billingqueuereviewservice.New,

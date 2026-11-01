@@ -9,12 +9,15 @@ import {
   optionalStringSchema,
 } from "./helpers";
 import { customerReferenceSchema } from "./customer";
+import { shipmentRouteMovesSchema } from "./shipment-route";
 import { tariffFormInputValuesSchema } from "./tariff-form";
 import { billingHoldReasonSchema } from "./detention";
 import {
+  additionalChargeSchema,
   chargeAllocationKindSchema,
+  chargeAllocationSchema,
   chargeAllocationMethodSchema,
-  shipmentSchema,
+  shipmentFreightLineSchema,
   stopTypeSchema,
 } from "./shipment";
 import { userSchema } from "./user";
@@ -343,6 +346,47 @@ export const billingQueueRatedBySchema = z.object({
 });
 export type BillingQueueRatedBy = z.infer<typeof billingQueueRatedBySchema>;
 
+/**
+ * The item's shipment as the queue reads it: what it charges and how it was rated. The
+ * route and stops are read on their own when the Shipment tab opens.
+ */
+export const billingQueueShipmentSchema = z.object({
+  id: z.string(),
+  organizationId: z.string().nullish(),
+  businessUnitId: z.string().nullish(),
+  version: z.number().nullish(),
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
+  customerId: z.string(),
+  billToCustomerId: z.string().nullish(),
+  proNumber: z.string().nullish(),
+  bol: z.string().nullish(),
+  externalReference: z.string().nullish(),
+  status: z.string().nullish(),
+  totalChargeAmount: decimalStringSchema.nullish(),
+  freightChargeAmount: decimalStringSchema.nullish(),
+  otherChargeAmount: decimalStringSchema.nullish(),
+  formulaTemplateId: z.string().nullish(),
+  tariffInputs: tariffFormInputValuesSchema.nullish(),
+  actualDeliveryDate: z.number().nullish(),
+  freightLines: z
+    .array(shipmentFreightLineSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  additionalCharges: z
+    .array(additionalChargeSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  chargeAllocations: z
+    .array(chargeAllocationSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  customer: z.object({ id: z.string(), name: z.string(), code: z.string().nullish() }).nullish(),
+  formulaTemplate: z.object({ id: z.string(), name: z.string() }).nullish(),
+  moves: shipmentRouteMovesSchema,
+});
+export type BillingQueueShipment = z.infer<typeof billingQueueShipmentSchema>;
+
 export const billingQueueItemSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -377,8 +421,20 @@ export const billingQueueItemSchema = z.object({
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  shipment: linkedRecordSchema("shipment", shipmentSchema).optional(),
-  billToCustomer: customerReferenceSchema.optional().nullable(),
+  shipment: billingQueueShipmentSchema.nullish().transform((value) => value ?? undefined),
+  /** The payer, with the billing profile the queue's review reads. */
+  billToCustomer: customerReferenceSchema
+    .extend({
+      billingProfile: z
+        .object({
+          id: z.string().nullish(),
+          billingNotes: z.string().nullish(),
+          paymentTerm: z.string().nullish(),
+        })
+        .nullish(),
+    })
+    .optional()
+    .nullable(),
   assignedBiller: linkedRecordSchema("user", userSchema).optional().nullable(),
   canceledBy: linkedRecordSchema("user", userSchema).optional().nullable(),
   payerShare: payerShareSchema.nullish(),

@@ -1062,6 +1062,37 @@ type BillingQueueItem {
   agentReviewedAt: Timestamp
   "The open issue a list row leads with. Set on items read through billingQueueItems."
   headline: BillingQueueHeadline
+  heldAt: Timestamp
+  heldById: ID
+  "The status a hold found the item in, which releasing it returns to."
+  statusBeforeHold: BillingQueueStatus
+  "When the checks last ran."
+  checkedAt: Timestamp
+  "The invoice the item became, once approved."
+  invoiceId: ID
+  "The note printed under the charges on the invoice the item will make."
+  invoiceMemo: String!
+  "The payment term the invoice will carry instead of the customer's; empty keeps the customer's."
+  paymentTerm: String!
+  "The invoice date the invoice will carry instead of today."
+  invoiceDate: Timestamp
+  "The shipment documents sent with the invoice as one packet."
+  packetDocumentIds: [ID!]!
+  "What Nova read to review the item."
+  agentReads: [BillingQueueAgentRead!]!
+  "This payer's part of the shipment's charges. Set on the item read through billingQueueItem(id)."
+  payerShare: BillingQueuePayerShare
+  "What priced the item's shipment. Set on the item read through billingQueueItem(id)."
+  ratedBy: BillingQueueRatedBy
+  """
+  Detention charges on the shipment still waiting on an approver; while any is
+  listed the item cannot be approved. Set on the item read through billingQueueItem(id).
+  """
+  detentionHolds: [BillingQueueDetentionHold!]!
+  "The reviews a tariff asked for on the shipment, which hold the item until a person approves the rating."
+  ratingReviewHold: BillingQueueRatingReviewHold
+  "Everything a biller reads to decide the item. Set when the item was read with its shipment details, as billingQueueItem(id) reads it."
+  review: BillingQueueReview
 }
 
 type ShipmentCommentEdge {

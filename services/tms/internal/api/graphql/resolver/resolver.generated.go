@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/auditlogresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/benefitsresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingqueueresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingqueueworkspaceresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/billingtransferresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/briefingresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/bulkeditresolver"
@@ -85,7 +86,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/inboundreplyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceadjustmentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoicedisputeresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoicelifecycleresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceshareresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/invoicestatementresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/journalentryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/journalreversalresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/jurisdictionruleresolver"
@@ -145,307 +149,335 @@ import (
 
 type Resolver struct {
 	*Services
-	aIAuditChainStatus                 *aiauditresolver.AIAuditChainStatusResolver
-	aIAuditEvent                       *aiauditresolver.AIAuditEventResolver
-	aIAuditExport                      *aiauditresolver.AIAuditExportResolver
-	aIControlSegment                   *aicontrolresolver.AIControlSegmentResolver
-	aIControlSummary                   *aicontrolresolver.AIControlSummaryResolver
-	aICorrection                       *extractionevalresolver.AICorrectionResolver
-	aIFeedback                         *aifeedbackresolver.AIFeedbackResolver
-	aIProvider                         *aiproviderresolver.AIProviderResolver
-	aIProviderKeyInfo                  *aiproviderresolver.AIProviderKeyInfoResolver
-	aIRouteChoice                      *aiproviderresolver.AIRouteChoiceResolver
-	aITuneUpEvidence                   *aicontrolresolver.AITuneUpEvidenceResolver
-	accessorialCharge                  *accessorialchargeresolver.AccessorialChargeResolver
-	accountingAppCredential            *accountingsyncresolver.AccountingAppCredentialResolver
-	accountingAppSettings              *accountingsyncresolver.AccountingAppSettingsResolver
-	accountingConnection               *accountingsyncresolver.AccountingConnectionResolver
-	accountingDriftFinding             *accountingsyncresolver.AccountingDriftFindingResolver
-	accountingDriftFixPreview          *accountingsyncresolver.AccountingDriftFixPreviewResolver
-	accountingInboundChange            *accountingsyncresolver.AccountingInboundChangeResolver
-	accountingInboundLine              *accountingsyncresolver.AccountingInboundLineResolver
-	accountingMapping                  *accountingsyncresolver.AccountingMappingResolver
-	accountingReferenceObject          *accountingsyncresolver.AccountingReferenceObjectResolver
-	accountingSyncAttempt              *accountingsyncresolver.AccountingSyncAttemptResolver
-	accountingSyncAttentionGroup       *accountingsyncresolver.AccountingSyncAttentionGroupResolver
-	accountingSyncRecord               *accountingsyncresolver.AccountingSyncRecordResolver
-	agentControl                       *agentresolver.AgentControlResolver
-	agentDecision                      *agentDecisionResolver
-	agentDefinition                    *agentdefinitionresolver.AgentDefinitionResolver
-	agentDraft                         *agentdefinitionresolver.AgentDraftResolver
-	agentEvalCase                      *agentqualityresolver.AgentEvalCaseResolver
-	agentEvaluation                    *agentresolver.AgentEvaluationResolver
-	agentInstructionFinding            *agentdefinitionresolver.AgentInstructionFindingResolver
-	agentMemory                        *agentresolver.AgentMemoryResolver
-	agentPlan                          *agentPlanResolver
-	agentPreviewFieldChange            *agentpreviewresolver.AgentPreviewFieldChangeResolver
-	agentPreviewMessage                *agentpreviewresolver.AgentPreviewMessageResolver
-	agentPreviewMoney                  *agentpreviewresolver.AgentPreviewMoneyResolver
-	agentPreviewMoneyLine              *agentpreviewresolver.AgentPreviewMoneyLineResolver
-	agentPreviewRecordChange           *agentpreviewresolver.AgentPreviewRecordChangeResolver
-	agentPreviewRef                    *agentpreviewresolver.AgentPreviewRefResolver
-	agentPreviewWarning                *agentpreviewresolver.AgentPreviewWarningResolver
-	agentProfileGuidance               *agentprofileresolver.AgentProfileGuidanceResolver
-	agentProfileVersion                *agentprofileresolver.AgentProfileVersionResolver
-	agentProposal                      *agentProposalResolver
-	agentProposalField                 *agentresolver.AgentProposalFieldResolver
-	agentQualityAgent                  *agentqualityresolver.AgentQualityAgentResolver
-	agentQualityControl                *agentqualityresolver.AgentQualityControlResolver
-	agentReflection                    *agentresolver.AgentReflectionResolver
-	agentRun                           *agentRunResolver
-	agentRunEvent                      *agentruneventresolver.AgentRunEventResolver
-	agentSafety                        *agentsafetyresolver.AgentSafetyResolver
-	agentSafetySummary                 *agentsafetyresolver.AgentSafetySummaryResolver
-	agentSuiteRun                      *agentqualityresolver.AgentSuiteRunResolver
-	agentToolHolders                   *agentsafetyresolver.AgentToolHoldersResolver
-	agentToolRule                      *agentsafetyresolver.AgentToolRuleResolver
-	agentToolSafety                    *agentsafetyresolver.AgentToolSafetyResolver
-	agentWorstRatedAnswer              *agentqualityresolver.AgentWorstRatedAnswerResolver
-	apiKey                             *apikeyresolver.ApiKeyResolver
-	approvalDelegation                 *orgstructureresolver.ApprovalDelegationResolver
-	auditEntry                         *auditlogresolver.AuditEntryResolver
-	authEvent                          *securityactivityresolver.AuthEventResolver
-	briefingSection                    *briefingresolver.BriefingSectionResolver
-	captureBatch                       *captureresolver.CaptureBatchResolver
-	captureCoverSheet                  *captureresolver.CaptureCoverSheetResolver
-	captureDevice                      *captureresolver.CaptureDeviceResolver
-	captureItem                        *captureresolver.CaptureItemResolver
-	capturePage                        *captureresolver.CapturePageResolver
-	captureRequest                     *captureresolver.CaptureRequestResolver
-	captureSettings                    *captureresolver.CaptureSettingsResolver
-	carrier                            *carrierintelligenceresolver.CarrierResolver
-	carrierAssignment                  *shipmentresolver.CarrierAssignmentResolver
-	carrierAssignmentAccessorial       *shipmentresolver.CarrierAssignmentAccessorialResolver
-	carrierCapacityPosting             *carriercapacityresolver.CarrierCapacityPostingResolver
-	carrierEquipmentVerification       *carrierintelligenceresolver.CarrierEquipmentVerificationResolver
-	carrierInsurancePolicy             *carrierresolver.CarrierInsurancePolicyResolver
-	carrierIntelControl                *carrierintelligenceresolver.CarrierIntelControlResolver
-	carrierIntelEquipment              *carrierintelligenceresolver.CarrierIntelEquipmentResolver
-	carrierIntelEvent                  *carrierintelligenceresolver.CarrierIntelEventResolver
-	carrierIntelFeedState              *carrierintelligenceresolver.CarrierIntelFeedStateResolver
-	carrierIntelFinding                *carrierintelligenceresolver.CarrierIntelFindingResolver
-	carrierIntelInsurance              *carrierintelligenceresolver.CarrierIntelInsuranceResolver
-	carrierIntelInsuranceChange        *carrierintelligenceresolver.CarrierIntelInsuranceChangeResolver
-	carrierIntelInsuranceFiling        *carrierintelligenceresolver.CarrierIntelInsuranceFilingResolver
-	carrierIntelOverride               *carrierintelligenceresolver.CarrierIntelOverrideResolver
-	carrierIntelRuleDefinition         *carrierintelligenceresolver.CarrierIntelRuleDefinitionResolver
-	carrierIntelSafety                 *carrierintelligenceresolver.CarrierIntelSafetyResolver
-	carrierIntelSnapshot               *carrierintelligenceresolver.CarrierIntelSnapshotResolver
-	carrierMonitoringEnrollment        *carrierintelligenceresolver.CarrierMonitoringEnrollmentResolver
-	carrierSettlement                  *carriersettlementresolver.CarrierSettlementResolver
-	carrierSourcingResult              *carrierintelligenceresolver.CarrierSourcingResultResolver
-	chargeAllocation                   *shipmentresolver.ChargeAllocationResolver
-	commodity                          *commodityresolver.CommodityResolver
-	customer                           *carrierintelligenceresolver.CustomerResolver
-	customerBillingProfile             *customerBillingProfileResolver
-	customerPayment                    *customerpaymentresolver.CustomerPaymentResolver
-	customerPaymentApplication         *customerpaymentresolver.CustomerPaymentApplicationResolver
-	customerTrackingProfile            *customertrackingresolver.CustomerTrackingProfileResolver
-	dOTRandomDraw                      *workerdrugalcoholresolver.DOTRandomDrawResolver
-	dOTRandomDrawEntry                 *workerdrugalcoholresolver.DOTRandomDrawEntryResolver
-	dOTRandomPool                      *workerdrugalcoholresolver.DOTRandomPoolResolver
-	dQFFile                            *workerdqfresolver.DQFFileResolver
-	dQFItem                            *workerdqfresolver.DQFItemResolver
-	detentionOccurrence                *detentionresolver.DetentionOccurrenceResolver
-	detentionPreviewResult             *detentionresolver.DetentionPreviewResultResolver
-	disciplinaryLadder                 *workersafetyresolver.DisciplinaryLadderResolver
-	distanceProfile                    *distanceprofileresolver.DistanceProfileResolver
-	documentTemplate                   *documenttemplateresolver.DocumentTemplateResolver
-	documentTemplateAssignment         *documenttemplateresolver.DocumentTemplateAssignmentResolver
-	documentTemplateVersion            *documenttemplateresolver.DocumentTemplateVersionResolver
-	driverPayEvent                     *driversettlementresolver.DriverPayEventResolver
-	driverPayEventComponent            *driversettlementresolver.DriverPayEventComponentResolver
-	driverSettlement                   *driversettlementresolver.DriverSettlementResolver
-	driverSettlementLine               *driversettlementresolver.DriverSettlementLineResolver
-	driverSettlementLineGroup          *driversettlementresolver.DriverSettlementLineGroupResolver
-	drugAlcoholStanding                *workerdrugalcoholresolver.DrugAlcoholStandingResolver
-	ediCarrierInvoice                  *carriersettlementresolver.EdiCarrierInvoiceResolver
-	ediFlowInstance                    *ediresolver.EdiFlowInstanceResolver
-	ediLadingVersion                   *ediresolver.EdiLadingVersionResolver
-	ediMessage                         *ediresolver.EdiMessageResolver
-	ediTransfer                        *ediresolver.EdiTransferResolver
-	equipmentContinuity                *equipmentcontinuityresolver.EquipmentContinuityResolver
-	escrowAccount                      *driversettlementresolver.EscrowAccountResolver
-	externalIdentity                   *securityactivityresolver.ExternalIdentityResolver
-	extractionEvalCase                 *extractionevalresolver.ExtractionEvalCaseResolver
-	extractionEvalResult               *extractionevalresolver.ExtractionEvalResultResolver
-	extractionEvalRun                  *extractionevalresolver.ExtractionEvalRunResolver
-	extractionRollout                  *extractionrolloutresolver.ExtractionRolloutResolver
-	extractionShadowReport             *extractionshadowresolver.ExtractionShadowReportResolver
-	extractionShadowResult             *extractionshadowresolver.ExtractionShadowResultResolver
-	extractionSnapshot                 *extractionevalresolver.ExtractionSnapshotResolver
-	factoringAgreement                 *factoringresolver.FactoringAgreementResolver
-	factoringCheck                     *factoringresolver.FactoringCheckResolver
-	factoringCompany                   *factoringresolver.FactoringCompanyResolver
-	factoringFundingPlan               *factoringresolver.FactoringFundingPlanResolver
-	factoringInvoiceState              *factoringresolver.FactoringInvoiceStateResolver
-	factoringMovement                  *factoringresolver.FactoringMovementResolver
-	factoringNoa                       *factoringresolver.FactoringNoaResolver
-	factoringPlannedLine               *factoringresolver.FactoringPlannedLineResolver
-	factoringPlannedMovement           *factoringresolver.FactoringPlannedMovementResolver
-	factoringRemittance                *factoringresolver.FactoringRemittanceResolver
-	factoringRemittanceLine            *factoringresolver.FactoringRemittanceLineResolver
-	factoringRemittancePlan            *factoringresolver.FactoringRemittancePlanResolver
-	factoringReserveEntry              *factoringresolver.FactoringReserveEntryResolver
-	factoringReserveMovementPlan       *factoringresolver.FactoringReserveMovementPlanResolver
-	factoringSubmission                *factoringresolver.FactoringSubmissionResolver
-	factoringSubmissionItem            *factoringresolver.FactoringSubmissionItemResolver
-	factoringSubmissionPlan            *factoringresolver.FactoringSubmissionPlanResolver
-	factoringTransport                 *factoringresolver.FactoringTransportResolver
-	fiscalYear                         *fiscalyearresolver.FiscalYearResolver
-	fleetSafetyRank                    *fleetsafetyresolver.FleetSafetyRankResolver
-	fleetSafetyTerminal                *fleetsafetyresolver.FleetSafetyTerminalResolver
-	formulaLibraryImport               *formulatemplateresolver.FormulaLibraryImportResolver
-	formulaLibraryVersion              *formulalibraryresolver.FormulaLibraryVersionResolver
-	formulaTemplate                    *formulatemplateresolver.FormulaTemplateResolver
-	formulaTemplateTable               *formulatemplateresolver.FormulaTemplateTableResolver
-	fuelCard                           *fuelpurchaseresolver.FuelCardResolver
-	fuelCardDeskCard                   *fuelpurchaseresolver.FuelCardDeskCardResolver
-	fuelFeedStatus                     *fuelpurchaseresolver.FuelFeedStatusResolver
-	fuelHeldSpend                      *fuelpurchaseresolver.FuelHeldSpendResolver
-	fuelJurisdictionGallons            *fuelpurchaseresolver.FuelJurisdictionGallonsResolver
-	fuelPurchase                       *fuelpurchaseresolver.FuelPurchaseResolver
-	fuelPurchaseIFTA                   *fuelpurchaseresolver.FuelPurchaseIFTAResolver
-	fuelPurchaseImportBatch            *fuelpurchaseresolver.FuelPurchaseImportBatchResolver
-	fuelPurchaseImportRow              *fuelpurchaseresolver.FuelPurchaseImportRowResolver
-	fuelPurchaseImportSummary          *fuelpurchaseresolver.FuelPurchaseImportSummaryResolver
-	fuelSpend                          *fuelpurchaseresolver.FuelSpendResolver
-	iFTAFleetMPG                       *iftaresolver.IFTAFleetMPGResolver
-	iFTAJurisdiction                   *iftaresolver.IFTAJurisdictionResolver
-	iFTAJurisdictionMileageEntry       *iftaresolver.IFTAJurisdictionMileageEntryResolver
-	iFTAPeriod                         *iftaresolver.IFTAPeriodResolver
-	iFTAReturn                         *iftaresolver.IFTAReturnResolver
-	iFTAReturnLine                     *iftaresolver.IFTAReturnLineResolver
-	iFTAReturnProblem                  *iftaresolver.IFTAReturnProblemResolver
-	iFTATaxRate                        *iftaresolver.IFTATaxRateResolver
-	inboundActivity                    *inboundmessageresolver.InboundActivityResolver
-	inboundAttachment                  *inboundAttachmentResolver
-	inboundMailbox                     *inboundmessageresolver.InboundMailboxResolver
-	inboundMailboxCredentials          *inboundmessageresolver.InboundMailboxCredentialsResolver
-	inboundMessage                     *inboundMessageResolver
-	inboundReply                       *inboundreplyresolver.InboundReplyResolver
-	inboundSnooze                      *inboundmessageresolver.InboundSnoozeResolver
-	inboundSplitDocument               *inboundmessageresolver.InboundSplitDocumentResolver
-	invoice                            *invoiceResolver
-	invoiceAdjustment                  *invoiceadjustmentresolver.InvoiceAdjustmentResolver
-	invoiceAdjustmentApprovalQueueItem *invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver
-	invoiceAdjustmentLine              *invoiceadjustmentresolver.InvoiceAdjustmentLineResolver
-	invoiceChargeGroup                 *invoiceresolver.InvoiceChargeGroupResolver
-	invoiceDispute                     *invoicedisputeresolver.InvoiceDisputeResolver
-	invoiceLine                        *invoiceresolver.InvoiceLineResolver
-	jobPosition                        *orgstructureresolver.JobPositionResolver
-	journalCardLine                    *journalentryresolver.JournalCardLineResolver
-	journalCardPosting                 *journalentryresolver.JournalCardPostingResolver
-	journalEntry                       *journalentryresolver.JournalEntryResolver
-	journalEntryLine                   *journalentryresolver.JournalEntryLineResolver
-	journalReviewSummary               *journalentryresolver.JournalReviewSummaryResolver
-	journalSourceInfo                  *journalentryresolver.JournalSourceInfoResolver
-	jurisdictionRule                   *jurisdictionruleresolver.JurisdictionRuleResolver
-	lateChargeAssessment               *latechargeresolver.LateChargeAssessmentResolver
-	lateChargeLine                     *latechargeresolver.LateChargeLineResolver
-	leaveControl                       *workerleaveresolver.LeaveControlResolver
-	leaveEntitlement                   *workerleaveresolver.LeaveEntitlementResolver
-	locationCategory                   *locationcategoryresolver.LocationCategoryResolver
-	mFAAuthenticator                   *securityactivityresolver.MFAAuthenticatorResolver
-	mutation                           *mutationResolver
-	myAgent                            *agentdefinitionresolver.MyAgentResolver
-	myPTOBalance                       *driverportalresolver.MyPTOBalanceResolver
-	oSHAAnnualSummary                  *workerinjuryresolver.OSHAAnnualSummaryResolver
-	order                              *orderresolver.OrderResolver
-	pTOAccrualTier                     *ptopolicyresolver.PTOAccrualTierResolver
-	pTOAvailability                    *ptopolicyresolver.PTOAvailabilityResolver
-	pTOBalanceSummary                  *ptopolicyresolver.PTOBalanceSummaryResolver
-	pTOChartDataPoint                  *workerresolver.PTOChartDataPointResolver
-	pTOLiabilityReport                 *ptopolicyresolver.PTOLiabilityReportResolver
-	pTOLiabilityRow                    *ptopolicyresolver.PTOLiabilityRowResolver
-	pTOPolicy                          *ptopolicyresolver.PTOPolicyResolver
-	pTOPolicyRule                      *ptopolicyresolver.PTOPolicyRuleResolver
-	payCode                            *driversettlementresolver.PayCodeResolver
-	payMileageBand                     *driversettlementresolver.PayMileageBandResolver
-	payProfile                         *driversettlementresolver.PayProfileResolver
-	payProfileComponent                *driversettlementresolver.PayProfileComponentResolver
-	payRateOverride                    *driversettlementresolver.PayRateOverrideResolver
-	pendingDecisionEdge                *decisionsresolver.PendingDecisionEdgeResolver
-	performanceReview                  *performancereviewresolver.PerformanceReviewResolver
-	performanceReviewTemplate          *performancereviewresolver.PerformanceReviewTemplateResolver
-	plannedPTOAccrual                  *ptopolicyresolver.PlannedPTOAccrualResolver
-	portalCredential                   *driverportalresolver.PortalCredentialResolver
-	portalTraining                     *workertrainingresolver.PortalTrainingResolver
-	query                              *queryResolver
-	rateAgreement                      *rateresolver.RateAgreementResolver
-	rateMatrix                         *rateresolver.RateMatrixResolver
-	rateMatrixVersion                  *rateresolver.RateMatrixVersionResolver
-	reportSchedule                     *reportresolver.ReportScheduleResolver
-	reviewRating                       *performancereviewresolver.ReviewRatingResolver
-	riskDecision                       *securityactivityresolver.RiskDecisionResolver
-	role                               *roleresolver.RoleResolver
-	routingGuideEntry                  *routingguideresolver.RoutingGuideEntryResolver
-	safetyScorecard                    *workersafetyresolver.SafetyScorecardResolver
-	serviceFailure                     *servicefailureresolver.ServiceFailureResolver
-	serviceFailureShipment             *servicefailureresolver.ServiceFailureShipmentResolver
-	serviceFailureStop                 *servicefailureresolver.ServiceFailureStopResolver
-	settlementControl                  *driversettlementresolver.SettlementControlResolver
-	settlementException                *driversettlementresolver.SettlementExceptionResolver
-	shiftTemplate                      *schedulingresolver.ShiftTemplateResolver
-	shipment                           *shipmentresolver.ShipmentResolver
-	shipmentCustomer                   *shipmentresolver.ShipmentCustomerResolver
-	shipmentMove                       *shipmentresolver.ShipmentMoveResolver
-	shipmentMoveJurisdictionMile       *shipmentresolver.ShipmentMoveJurisdictionMileResolver
-	shipmentRatingDetail               *shipmentresolver.ShipmentRatingDetailResolver
-	shipmentRatingReviewApproval       *shipmentresolver.ShipmentRatingReviewApprovalResolver
-	tCASubscription                    *tablechangealertresolver.TCASubscriptionResolver
-	tableConfiguration                 *tableconfigurationresolver.TableConfigurationResolver
-	tender                             *tenderresolver.TenderResolver
-	tenderOffer                        *tenderresolver.TenderOfferResolver
-	tractor                            *tractorresolver.TractorResolver
-	trailer                            *trailerresolver.TrailerResolver
-	trainingCourse                     *workertrainingresolver.TrainingCourseResolver
-	triageAction                       *inboundreplyresolver.TriageActionResolver
-	triageAssignee                     *inboundmessageresolver.TriageAssigneeResolver
-	triageBriefing                     *triageresolver.TriageBriefingResolver
-	triageConflict                     *triageresolver.TriageConflictResolver
-	triageDeckItem                     *triageresolver.TriageDeckItemResolver
-	triageHandOff                      *inboundmessageresolver.TriageHandOffResolver
-	triageReplyTemplate                *inboundreplyresolver.TriageReplyTemplateResolver
-	triageRule                         *triageresolver.TriageRuleResolver
-	triageSettings                     *inboundmessageresolver.TriageSettingsResolver
-	triageStopTimes                    *inboundreplyresolver.TriageStopTimesResolver
-	triageView                         *inboundmessageresolver.TriageViewResolver
-	user                               *tenantresolver.UserResolver
-	watchtowerAgentWork                *watchtowerresolver.WatchtowerAgentWorkResolver
-	watchtowerItem                     *watchtowerresolver.WatchtowerItemResolver
-	watchtowerItemEvent                *watchtowerresolver.WatchtowerItemEventResolver
-	watchtowerRecord                   *watchtowerresolver.WatchtowerRecordResolver
-	worker                             *workerresolver.WorkerResolver
-	workerBenefitEnrollment            *benefitsresolver.WorkerBenefitEnrollmentResolver
-	workerChecklist                    *workerchecklistresolver.WorkerChecklistResolver
-	workerChecklistItem                *workerchecklistresolver.WorkerChecklistItemResolver
-	workerChecklistProgress            *workerchecklistresolver.WorkerChecklistProgressResolver
-	workerChecklistTemplate            *workerchecklistresolver.WorkerChecklistTemplateResolver
-	workerChecklistTemplateItem        *workerchecklistresolver.WorkerChecklistTemplateItemResolver
-	workerClearinghouseQuery           *workerdrugalcoholresolver.WorkerClearinghouseQueryResolver
-	workerCredential                   *workercredentialresolver.WorkerCredentialResolver
-	workerCredentialType               *workercredentialresolver.WorkerCredentialTypeResolver
-	workerDOTTest                      *workerdrugalcoholresolver.WorkerDOTTestResolver
-	workerDOTViolation                 *workerdrugalcoholresolver.WorkerDOTViolationResolver
-	workerDisciplinaryAction           *workersafetyresolver.WorkerDisciplinaryActionResolver
-	workerEmploymentCascade            *workeremploymentresolver.WorkerEmploymentCascadeResolver
-	workerEmploymentEvent              *workeremploymentresolver.WorkerEmploymentEventResolver
-	workerEmploymentVerification       *workerdqfresolver.WorkerEmploymentVerificationResolver
-	workerInjury                       *workerinjuryresolver.WorkerInjuryResolver
-	workerLeaveCase                    *workerleaveresolver.WorkerLeaveCaseResolver
-	workerLeaveEntry                   *workerleaveresolver.WorkerLeaveEntryResolver
-	workerPTO                          *workerresolver.WorkerPTOResolver
-	workerPTOBalance                   *ptopolicyresolver.WorkerPTOBalanceResolver
-	workerPTOLedgerEntry               *ptopolicyresolver.WorkerPTOLedgerEntryResolver
-	workerPTOPolicyAssignment          *ptopolicyresolver.WorkerPTOPolicyAssignmentResolver
-	workerPayAssignment                *driversettlementresolver.WorkerPayAssignmentResolver
-	workerProfile                      *workerresolver.WorkerProfileResolver
-	workerProfileChangeRequest         *selfserviceresolver.WorkerProfileChangeRequestResolver
-	workerRecognition                  *workersafetyresolver.WorkerRecognitionResolver
-	workerRosterAttention              *workeroverviewresolver.WorkerRosterAttentionResolver
-	workerSafetyEvent                  *workersafetyresolver.WorkerSafetyEventResolver
-	workerTrainingRecord               *workertrainingresolver.WorkerTrainingRecordResolver
+	aIAuditChainStatus                       *aiauditresolver.AIAuditChainStatusResolver
+	aIAuditEvent                             *aiauditresolver.AIAuditEventResolver
+	aIAuditExport                            *aiauditresolver.AIAuditExportResolver
+	aIControlSegment                         *aicontrolresolver.AIControlSegmentResolver
+	aIControlSummary                         *aicontrolresolver.AIControlSummaryResolver
+	aICorrection                             *extractionevalresolver.AICorrectionResolver
+	aIFeedback                               *aifeedbackresolver.AIFeedbackResolver
+	aIProvider                               *aiproviderresolver.AIProviderResolver
+	aIProviderKeyInfo                        *aiproviderresolver.AIProviderKeyInfoResolver
+	aIRouteChoice                            *aiproviderresolver.AIRouteChoiceResolver
+	aITuneUpEvidence                         *aicontrolresolver.AITuneUpEvidenceResolver
+	accessorialCharge                        *accessorialchargeresolver.AccessorialChargeResolver
+	accountingAppCredential                  *accountingsyncresolver.AccountingAppCredentialResolver
+	accountingAppSettings                    *accountingsyncresolver.AccountingAppSettingsResolver
+	accountingConnection                     *accountingsyncresolver.AccountingConnectionResolver
+	accountingDriftFinding                   *accountingsyncresolver.AccountingDriftFindingResolver
+	accountingDriftFixPreview                *accountingsyncresolver.AccountingDriftFixPreviewResolver
+	accountingInboundChange                  *accountingsyncresolver.AccountingInboundChangeResolver
+	accountingInboundLine                    *accountingsyncresolver.AccountingInboundLineResolver
+	accountingMapping                        *accountingsyncresolver.AccountingMappingResolver
+	accountingReferenceObject                *accountingsyncresolver.AccountingReferenceObjectResolver
+	accountingSyncAttempt                    *accountingsyncresolver.AccountingSyncAttemptResolver
+	accountingSyncAttentionGroup             *accountingsyncresolver.AccountingSyncAttentionGroupResolver
+	accountingSyncRecord                     *accountingsyncresolver.AccountingSyncRecordResolver
+	agentControl                             *agentresolver.AgentControlResolver
+	agentDecision                            *agentDecisionResolver
+	agentDefinition                          *agentdefinitionresolver.AgentDefinitionResolver
+	agentDraft                               *agentdefinitionresolver.AgentDraftResolver
+	agentEvalCase                            *agentqualityresolver.AgentEvalCaseResolver
+	agentEvaluation                          *agentresolver.AgentEvaluationResolver
+	agentInstructionFinding                  *agentdefinitionresolver.AgentInstructionFindingResolver
+	agentMemory                              *agentresolver.AgentMemoryResolver
+	agentPlan                                *agentPlanResolver
+	agentPreviewFieldChange                  *agentpreviewresolver.AgentPreviewFieldChangeResolver
+	agentPreviewMessage                      *agentpreviewresolver.AgentPreviewMessageResolver
+	agentPreviewMoney                        *agentpreviewresolver.AgentPreviewMoneyResolver
+	agentPreviewMoneyLine                    *agentpreviewresolver.AgentPreviewMoneyLineResolver
+	agentPreviewRecordChange                 *agentpreviewresolver.AgentPreviewRecordChangeResolver
+	agentPreviewRef                          *agentpreviewresolver.AgentPreviewRefResolver
+	agentPreviewWarning                      *agentpreviewresolver.AgentPreviewWarningResolver
+	agentProfileGuidance                     *agentprofileresolver.AgentProfileGuidanceResolver
+	agentProfileVersion                      *agentprofileresolver.AgentProfileVersionResolver
+	agentProposal                            *agentProposalResolver
+	agentProposalField                       *agentresolver.AgentProposalFieldResolver
+	agentQualityAgent                        *agentqualityresolver.AgentQualityAgentResolver
+	agentQualityControl                      *agentqualityresolver.AgentQualityControlResolver
+	agentReflection                          *agentresolver.AgentReflectionResolver
+	agentRun                                 *agentRunResolver
+	agentRunEvent                            *agentruneventresolver.AgentRunEventResolver
+	agentSafety                              *agentsafetyresolver.AgentSafetyResolver
+	agentSafetySummary                       *agentsafetyresolver.AgentSafetySummaryResolver
+	agentSuiteRun                            *agentqualityresolver.AgentSuiteRunResolver
+	agentToolHolders                         *agentsafetyresolver.AgentToolHoldersResolver
+	agentToolRule                            *agentsafetyresolver.AgentToolRuleResolver
+	agentToolSafety                          *agentsafetyresolver.AgentToolSafetyResolver
+	agentWorstRatedAnswer                    *agentqualityresolver.AgentWorstRatedAnswerResolver
+	apiKey                                   *apikeyresolver.ApiKeyResolver
+	approvalDelegation                       *orgstructureresolver.ApprovalDelegationResolver
+	auditEntry                               *auditlogresolver.AuditEntryResolver
+	authEvent                                *securityactivityresolver.AuthEventResolver
+	billingQueueBulkRunItem                  *billingqueueworkspaceresolver.BillingQueueBulkRunItemResolver
+	billingQueueChargeLine                   *billingqueueresolver.BillingQueueChargeLineResolver
+	billingQueueChargeReview                 *billingqueueresolver.BillingQueueChargeReviewResolver
+	billingQueueDetentionHold                *billingqueueresolver.BillingQueueDetentionHoldResolver
+	billingQueueEvent                        *billingqueueresolver.BillingQueueEventResolver
+	billingQueueIssue                        *billingqueueresolver.BillingQueueIssueResolver
+	billingQueueIssueEffect                  *billingqueueresolver.BillingQueueIssueEffectResolver
+	billingQueueIssueOption                  *billingqueueresolver.BillingQueueIssueOptionResolver
+	billingQueueItemSummary                  *billingqueueresolver.BillingQueueItemSummaryResolver
+	billingQueueLaneStat                     *billingqueueworkspaceresolver.BillingQueueLaneStatResolver
+	billingQueueNovaGeneration               *billingqueueworkspaceresolver.BillingQueueNovaGenerationResolver
+	billingQueuePayerShare                   *billingqueueresolver.BillingQueuePayerShareResolver
+	billingQueuePayerShareLine               *billingqueueresolver.BillingQueuePayerShareLineResolver
+	billingQueuePayerShareParty              *billingqueueresolver.BillingQueuePayerSharePartyResolver
+	billingQueuePulse                        *billingqueueworkspaceresolver.BillingQueuePulseResolver
+	billingQueueRecommendation               *billingqueueworkspaceresolver.BillingQueueRecommendationResolver
+	billingQueueSearchDates                  *billingqueueworkspaceresolver.BillingQueueSearchDatesResolver
+	billingQueueSearchIntent                 *billingqueueworkspaceresolver.BillingQueueSearchIntentResolver
+	billingQueueStats                        *billingqueueworkspaceresolver.BillingQueueStatsResolver
+	briefingSection                          *briefingresolver.BriefingSectionResolver
+	captureBatch                             *captureresolver.CaptureBatchResolver
+	captureCoverSheet                        *captureresolver.CaptureCoverSheetResolver
+	captureDevice                            *captureresolver.CaptureDeviceResolver
+	captureItem                              *captureresolver.CaptureItemResolver
+	capturePage                              *captureresolver.CapturePageResolver
+	captureRequest                           *captureresolver.CaptureRequestResolver
+	captureSettings                          *captureresolver.CaptureSettingsResolver
+	carrier                                  *carrierintelligenceresolver.CarrierResolver
+	carrierAssignment                        *shipmentresolver.CarrierAssignmentResolver
+	carrierAssignmentAccessorial             *shipmentresolver.CarrierAssignmentAccessorialResolver
+	carrierCapacityPosting                   *carriercapacityresolver.CarrierCapacityPostingResolver
+	carrierEquipmentVerification             *carrierintelligenceresolver.CarrierEquipmentVerificationResolver
+	carrierInsurancePolicy                   *carrierresolver.CarrierInsurancePolicyResolver
+	carrierIntelControl                      *carrierintelligenceresolver.CarrierIntelControlResolver
+	carrierIntelEquipment                    *carrierintelligenceresolver.CarrierIntelEquipmentResolver
+	carrierIntelEvent                        *carrierintelligenceresolver.CarrierIntelEventResolver
+	carrierIntelFeedState                    *carrierintelligenceresolver.CarrierIntelFeedStateResolver
+	carrierIntelFinding                      *carrierintelligenceresolver.CarrierIntelFindingResolver
+	carrierIntelInsurance                    *carrierintelligenceresolver.CarrierIntelInsuranceResolver
+	carrierIntelInsuranceChange              *carrierintelligenceresolver.CarrierIntelInsuranceChangeResolver
+	carrierIntelInsuranceFiling              *carrierintelligenceresolver.CarrierIntelInsuranceFilingResolver
+	carrierIntelOverride                     *carrierintelligenceresolver.CarrierIntelOverrideResolver
+	carrierIntelRuleDefinition               *carrierintelligenceresolver.CarrierIntelRuleDefinitionResolver
+	carrierIntelSafety                       *carrierintelligenceresolver.CarrierIntelSafetyResolver
+	carrierIntelSnapshot                     *carrierintelligenceresolver.CarrierIntelSnapshotResolver
+	carrierMonitoringEnrollment              *carrierintelligenceresolver.CarrierMonitoringEnrollmentResolver
+	carrierSettlement                        *carriersettlementresolver.CarrierSettlementResolver
+	carrierSourcingResult                    *carrierintelligenceresolver.CarrierSourcingResultResolver
+	chargeAllocation                         *shipmentresolver.ChargeAllocationResolver
+	commitInvoiceRunResult                   *invoicestatementresolver.CommitInvoiceRunResultResolver
+	commodity                                *commodityresolver.CommodityResolver
+	customer                                 *carrierintelligenceresolver.CustomerResolver
+	customerBillingProfile                   *customerBillingProfileResolver
+	customerPayment                          *customerpaymentresolver.CustomerPaymentResolver
+	customerPaymentApplication               *customerpaymentresolver.CustomerPaymentApplicationResolver
+	customerTrackingProfile                  *customertrackingresolver.CustomerTrackingProfileResolver
+	dOTRandomDraw                            *workerdrugalcoholresolver.DOTRandomDrawResolver
+	dOTRandomDrawEntry                       *workerdrugalcoholresolver.DOTRandomDrawEntryResolver
+	dOTRandomPool                            *workerdrugalcoholresolver.DOTRandomPoolResolver
+	dQFFile                                  *workerdqfresolver.DQFFileResolver
+	dQFItem                                  *workerdqfresolver.DQFItemResolver
+	detentionOccurrence                      *detentionresolver.DetentionOccurrenceResolver
+	detentionPreviewResult                   *detentionresolver.DetentionPreviewResultResolver
+	disciplinaryLadder                       *workersafetyresolver.DisciplinaryLadderResolver
+	distanceProfile                          *distanceprofileresolver.DistanceProfileResolver
+	documentTemplate                         *documenttemplateresolver.DocumentTemplateResolver
+	documentTemplateAssignment               *documenttemplateresolver.DocumentTemplateAssignmentResolver
+	documentTemplateVersion                  *documenttemplateresolver.DocumentTemplateVersionResolver
+	driverPayEvent                           *driversettlementresolver.DriverPayEventResolver
+	driverPayEventComponent                  *driversettlementresolver.DriverPayEventComponentResolver
+	driverSettlement                         *driversettlementresolver.DriverSettlementResolver
+	driverSettlementLine                     *driversettlementresolver.DriverSettlementLineResolver
+	driverSettlementLineGroup                *driversettlementresolver.DriverSettlementLineGroupResolver
+	drugAlcoholStanding                      *workerdrugalcoholresolver.DrugAlcoholStandingResolver
+	ediCarrierInvoice                        *carriersettlementresolver.EdiCarrierInvoiceResolver
+	ediFlowInstance                          *ediresolver.EdiFlowInstanceResolver
+	ediLadingVersion                         *ediresolver.EdiLadingVersionResolver
+	ediMessage                               *ediresolver.EdiMessageResolver
+	ediTransfer                              *ediresolver.EdiTransferResolver
+	equipmentContinuity                      *equipmentcontinuityresolver.EquipmentContinuityResolver
+	escrowAccount                            *driversettlementresolver.EscrowAccountResolver
+	externalIdentity                         *securityactivityresolver.ExternalIdentityResolver
+	extractionEvalCase                       *extractionevalresolver.ExtractionEvalCaseResolver
+	extractionEvalResult                     *extractionevalresolver.ExtractionEvalResultResolver
+	extractionEvalRun                        *extractionevalresolver.ExtractionEvalRunResolver
+	extractionRollout                        *extractionrolloutresolver.ExtractionRolloutResolver
+	extractionShadowReport                   *extractionshadowresolver.ExtractionShadowReportResolver
+	extractionShadowResult                   *extractionshadowresolver.ExtractionShadowResultResolver
+	extractionSnapshot                       *extractionevalresolver.ExtractionSnapshotResolver
+	factoringAgreement                       *factoringresolver.FactoringAgreementResolver
+	factoringCheck                           *factoringresolver.FactoringCheckResolver
+	factoringCompany                         *factoringresolver.FactoringCompanyResolver
+	factoringFundingPlan                     *factoringresolver.FactoringFundingPlanResolver
+	factoringInvoiceState                    *factoringresolver.FactoringInvoiceStateResolver
+	factoringMovement                        *factoringresolver.FactoringMovementResolver
+	factoringNoa                             *factoringresolver.FactoringNoaResolver
+	factoringPlannedLine                     *factoringresolver.FactoringPlannedLineResolver
+	factoringPlannedMovement                 *factoringresolver.FactoringPlannedMovementResolver
+	factoringRemittance                      *factoringresolver.FactoringRemittanceResolver
+	factoringRemittanceLine                  *factoringresolver.FactoringRemittanceLineResolver
+	factoringRemittancePlan                  *factoringresolver.FactoringRemittancePlanResolver
+	factoringReserveEntry                    *factoringresolver.FactoringReserveEntryResolver
+	factoringReserveMovementPlan             *factoringresolver.FactoringReserveMovementPlanResolver
+	factoringSubmission                      *factoringresolver.FactoringSubmissionResolver
+	factoringSubmissionItem                  *factoringresolver.FactoringSubmissionItemResolver
+	factoringSubmissionPlan                  *factoringresolver.FactoringSubmissionPlanResolver
+	factoringTransport                       *factoringresolver.FactoringTransportResolver
+	fiscalYear                               *fiscalyearresolver.FiscalYearResolver
+	fleetSafetyRank                          *fleetsafetyresolver.FleetSafetyRankResolver
+	fleetSafetyTerminal                      *fleetsafetyresolver.FleetSafetyTerminalResolver
+	formulaLibraryImport                     *formulatemplateresolver.FormulaLibraryImportResolver
+	formulaLibraryVersion                    *formulalibraryresolver.FormulaLibraryVersionResolver
+	formulaTemplate                          *formulatemplateresolver.FormulaTemplateResolver
+	formulaTemplateTable                     *formulatemplateresolver.FormulaTemplateTableResolver
+	fuelCard                                 *fuelpurchaseresolver.FuelCardResolver
+	fuelCardDeskCard                         *fuelpurchaseresolver.FuelCardDeskCardResolver
+	fuelFeedStatus                           *fuelpurchaseresolver.FuelFeedStatusResolver
+	fuelHeldSpend                            *fuelpurchaseresolver.FuelHeldSpendResolver
+	fuelJurisdictionGallons                  *fuelpurchaseresolver.FuelJurisdictionGallonsResolver
+	fuelPurchase                             *fuelpurchaseresolver.FuelPurchaseResolver
+	fuelPurchaseIFTA                         *fuelpurchaseresolver.FuelPurchaseIFTAResolver
+	fuelPurchaseImportBatch                  *fuelpurchaseresolver.FuelPurchaseImportBatchResolver
+	fuelPurchaseImportRow                    *fuelpurchaseresolver.FuelPurchaseImportRowResolver
+	fuelPurchaseImportSummary                *fuelpurchaseresolver.FuelPurchaseImportSummaryResolver
+	fuelSpend                                *fuelpurchaseresolver.FuelSpendResolver
+	iFTAFleetMPG                             *iftaresolver.IFTAFleetMPGResolver
+	iFTAJurisdiction                         *iftaresolver.IFTAJurisdictionResolver
+	iFTAJurisdictionMileageEntry             *iftaresolver.IFTAJurisdictionMileageEntryResolver
+	iFTAPeriod                               *iftaresolver.IFTAPeriodResolver
+	iFTAReturn                               *iftaresolver.IFTAReturnResolver
+	iFTAReturnLine                           *iftaresolver.IFTAReturnLineResolver
+	iFTAReturnProblem                        *iftaresolver.IFTAReturnProblemResolver
+	iFTATaxRate                              *iftaresolver.IFTATaxRateResolver
+	inboundActivity                          *inboundmessageresolver.InboundActivityResolver
+	inboundAttachment                        *inboundAttachmentResolver
+	inboundMailbox                           *inboundmessageresolver.InboundMailboxResolver
+	inboundMailboxCredentials                *inboundmessageresolver.InboundMailboxCredentialsResolver
+	inboundMessage                           *inboundMessageResolver
+	inboundReply                             *inboundreplyresolver.InboundReplyResolver
+	inboundSnooze                            *inboundmessageresolver.InboundSnoozeResolver
+	inboundSplitDocument                     *inboundmessageresolver.InboundSplitDocumentResolver
+	invoice                                  *invoiceResolver
+	invoiceAdjustment                        *invoiceadjustmentresolver.InvoiceAdjustmentResolver
+	invoiceAdjustmentApprovalQueueItem       *invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver
+	invoiceAdjustmentLine                    *invoiceadjustmentresolver.InvoiceAdjustmentLineResolver
+	invoiceAdjustmentPreview                 *invoiceadjustmentresolver.InvoiceAdjustmentPreviewResolver
+	invoiceAdjustmentPreviewLine             *invoiceadjustmentresolver.InvoiceAdjustmentPreviewLineResolver
+	invoiceAdjustmentReconciliationQueueItem *invoiceadjustmentresolver.InvoiceAdjustmentReconciliationQueueItemResolver
+	invoiceChargeGroup                       *invoiceresolver.InvoiceChargeGroupResolver
+	invoiceDispute                           *invoicedisputeresolver.InvoiceDisputeResolver
+	invoiceEmailAttempt                      *invoicelifecycleresolver.InvoiceEmailAttemptResolver
+	invoiceLine                              *invoiceresolver.InvoiceLineResolver
+	invoiceSendPlan                          *invoicelifecycleresolver.InvoiceSendPlanResolver
+	jobPosition                              *orgstructureresolver.JobPositionResolver
+	journalCardLine                          *journalentryresolver.JournalCardLineResolver
+	journalCardPosting                       *journalentryresolver.JournalCardPostingResolver
+	journalEntry                             *journalentryresolver.JournalEntryResolver
+	journalEntryLine                         *journalentryresolver.JournalEntryLineResolver
+	journalReviewSummary                     *journalentryresolver.JournalReviewSummaryResolver
+	journalSourceInfo                        *journalentryresolver.JournalSourceInfoResolver
+	jurisdictionRule                         *jurisdictionruleresolver.JurisdictionRuleResolver
+	lateChargeAssessment                     *latechargeresolver.LateChargeAssessmentResolver
+	lateChargeLine                           *latechargeresolver.LateChargeLineResolver
+	leaveControl                             *workerleaveresolver.LeaveControlResolver
+	leaveEntitlement                         *workerleaveresolver.LeaveEntitlementResolver
+	locationCategory                         *locationcategoryresolver.LocationCategoryResolver
+	mFAAuthenticator                         *securityactivityresolver.MFAAuthenticatorResolver
+	mutation                                 *mutationResolver
+	myAgent                                  *agentdefinitionresolver.MyAgentResolver
+	myPTOBalance                             *driverportalresolver.MyPTOBalanceResolver
+	oSHAAnnualSummary                        *workerinjuryresolver.OSHAAnnualSummaryResolver
+	openStatement                            *invoicestatementresolver.OpenStatementResolver
+	order                                    *orderresolver.OrderResolver
+	pTOAccrualTier                           *ptopolicyresolver.PTOAccrualTierResolver
+	pTOAvailability                          *ptopolicyresolver.PTOAvailabilityResolver
+	pTOBalanceSummary                        *ptopolicyresolver.PTOBalanceSummaryResolver
+	pTOChartDataPoint                        *workerresolver.PTOChartDataPointResolver
+	pTOLiabilityReport                       *ptopolicyresolver.PTOLiabilityReportResolver
+	pTOLiabilityRow                          *ptopolicyresolver.PTOLiabilityRowResolver
+	pTOPolicy                                *ptopolicyresolver.PTOPolicyResolver
+	pTOPolicyRule                            *ptopolicyresolver.PTOPolicyRuleResolver
+	payCode                                  *driversettlementresolver.PayCodeResolver
+	payMileageBand                           *driversettlementresolver.PayMileageBandResolver
+	payProfile                               *driversettlementresolver.PayProfileResolver
+	payProfileComponent                      *driversettlementresolver.PayProfileComponentResolver
+	payRateOverride                          *driversettlementresolver.PayRateOverrideResolver
+	pendingDecisionEdge                      *decisionsresolver.PendingDecisionEdgeResolver
+	performanceReview                        *performancereviewresolver.PerformanceReviewResolver
+	performanceReviewTemplate                *performancereviewresolver.PerformanceReviewTemplateResolver
+	plannedPTOAccrual                        *ptopolicyresolver.PlannedPTOAccrualResolver
+	portalCredential                         *driverportalresolver.PortalCredentialResolver
+	portalTraining                           *workertrainingresolver.PortalTrainingResolver
+	query                                    *queryResolver
+	rateAgreement                            *rateresolver.RateAgreementResolver
+	rateMatrix                               *rateresolver.RateMatrixResolver
+	rateMatrixVersion                        *rateresolver.RateMatrixVersionResolver
+	reportSchedule                           *reportresolver.ReportScheduleResolver
+	reviewRating                             *performancereviewresolver.ReviewRatingResolver
+	riskDecision                             *securityactivityresolver.RiskDecisionResolver
+	role                                     *roleresolver.RoleResolver
+	routingGuideEntry                        *routingguideresolver.RoutingGuideEntryResolver
+	safetyScorecard                          *workersafetyresolver.SafetyScorecardResolver
+	serviceFailure                           *servicefailureresolver.ServiceFailureResolver
+	serviceFailureShipment                   *servicefailureresolver.ServiceFailureShipmentResolver
+	serviceFailureStop                       *servicefailureresolver.ServiceFailureStopResolver
+	settlementControl                        *driversettlementresolver.SettlementControlResolver
+	settlementException                      *driversettlementresolver.SettlementExceptionResolver
+	shiftTemplate                            *schedulingresolver.ShiftTemplateResolver
+	shipment                                 *shipmentresolver.ShipmentResolver
+	shipmentCustomer                         *shipmentresolver.ShipmentCustomerResolver
+	shipmentMove                             *shipmentresolver.ShipmentMoveResolver
+	shipmentMoveJurisdictionMile             *shipmentresolver.ShipmentMoveJurisdictionMileResolver
+	shipmentRatingDetail                     *shipmentresolver.ShipmentRatingDetailResolver
+	shipmentRatingReviewApproval             *shipmentresolver.ShipmentRatingReviewApprovalResolver
+	statementGroup                           *invoicestatementresolver.StatementGroupResolver
+	statementShipment                        *invoicestatementresolver.StatementShipmentResolver
+	tCASubscription                          *tablechangealertresolver.TCASubscriptionResolver
+	tableConfiguration                       *tableconfigurationresolver.TableConfigurationResolver
+	tender                                   *tenderresolver.TenderResolver
+	tenderOffer                              *tenderresolver.TenderOfferResolver
+	tractor                                  *tractorresolver.TractorResolver
+	trailer                                  *trailerresolver.TrailerResolver
+	trainingCourse                           *workertrainingresolver.TrainingCourseResolver
+	triageAction                             *inboundreplyresolver.TriageActionResolver
+	triageAssignee                           *inboundmessageresolver.TriageAssigneeResolver
+	triageBriefing                           *triageresolver.TriageBriefingResolver
+	triageConflict                           *triageresolver.TriageConflictResolver
+	triageDeckItem                           *triageresolver.TriageDeckItemResolver
+	triageHandOff                            *inboundmessageresolver.TriageHandOffResolver
+	triageReplyTemplate                      *inboundreplyresolver.TriageReplyTemplateResolver
+	triageRule                               *triageresolver.TriageRuleResolver
+	triageSettings                           *inboundmessageresolver.TriageSettingsResolver
+	triageStopTimes                          *inboundreplyresolver.TriageStopTimesResolver
+	triageView                               *inboundmessageresolver.TriageViewResolver
+	user                                     *tenantresolver.UserResolver
+	watchtowerAgentWork                      *watchtowerresolver.WatchtowerAgentWorkResolver
+	watchtowerItem                           *watchtowerresolver.WatchtowerItemResolver
+	watchtowerItemEvent                      *watchtowerresolver.WatchtowerItemEventResolver
+	watchtowerRecord                         *watchtowerresolver.WatchtowerRecordResolver
+	worker                                   *workerresolver.WorkerResolver
+	workerBenefitEnrollment                  *benefitsresolver.WorkerBenefitEnrollmentResolver
+	workerChecklist                          *workerchecklistresolver.WorkerChecklistResolver
+	workerChecklistItem                      *workerchecklistresolver.WorkerChecklistItemResolver
+	workerChecklistProgress                  *workerchecklistresolver.WorkerChecklistProgressResolver
+	workerChecklistTemplate                  *workerchecklistresolver.WorkerChecklistTemplateResolver
+	workerChecklistTemplateItem              *workerchecklistresolver.WorkerChecklistTemplateItemResolver
+	workerClearinghouseQuery                 *workerdrugalcoholresolver.WorkerClearinghouseQueryResolver
+	workerCredential                         *workercredentialresolver.WorkerCredentialResolver
+	workerCredentialType                     *workercredentialresolver.WorkerCredentialTypeResolver
+	workerDOTTest                            *workerdrugalcoholresolver.WorkerDOTTestResolver
+	workerDOTViolation                       *workerdrugalcoholresolver.WorkerDOTViolationResolver
+	workerDisciplinaryAction                 *workersafetyresolver.WorkerDisciplinaryActionResolver
+	workerEmploymentCascade                  *workeremploymentresolver.WorkerEmploymentCascadeResolver
+	workerEmploymentEvent                    *workeremploymentresolver.WorkerEmploymentEventResolver
+	workerEmploymentVerification             *workerdqfresolver.WorkerEmploymentVerificationResolver
+	workerInjury                             *workerinjuryresolver.WorkerInjuryResolver
+	workerLeaveCase                          *workerleaveresolver.WorkerLeaveCaseResolver
+	workerLeaveEntry                         *workerleaveresolver.WorkerLeaveEntryResolver
+	workerPTO                                *workerresolver.WorkerPTOResolver
+	workerPTOBalance                         *ptopolicyresolver.WorkerPTOBalanceResolver
+	workerPTOLedgerEntry                     *ptopolicyresolver.WorkerPTOLedgerEntryResolver
+	workerPTOPolicyAssignment                *ptopolicyresolver.WorkerPTOPolicyAssignmentResolver
+	workerPayAssignment                      *driversettlementresolver.WorkerPayAssignmentResolver
+	workerProfile                            *workerresolver.WorkerProfileResolver
+	workerProfileChangeRequest               *selfserviceresolver.WorkerProfileChangeRequestResolver
+	workerRecognition                        *workersafetyresolver.WorkerRecognitionResolver
+	workerRosterAttention                    *workeroverviewresolver.WorkerRosterAttentionResolver
+	workerSafetyEvent                        *workersafetyresolver.WorkerSafetyEventResolver
+	workerTrainingRecord                     *workertrainingresolver.WorkerTrainingRecordResolver
 }
 
 func New(p Params) *Resolver {
@@ -606,6 +638,14 @@ func FromServices(s *Services) *Resolver {
 		Core:                      s.Core,
 		BillingQueueService:       s.BillingQueueService,
 		BillingQueueReviewService: s.BillingQueueReviewService,
+	}
+	billingqueueworkspaceDeps := &billingqueueworkspaceresolver.Deps{
+		Core:                         s.Core,
+		BillingQueueService:          s.BillingQueueService,
+		BillingQueueReviewService:    s.BillingQueueReviewService,
+		BillingQueueApprovalService:  s.BillingQueueApprovalService,
+		BillingQueueAssistService:    s.BillingQueueAssistService,
+		BillingQueueFilterPresetRepo: s.BillingQueueFilterPresetRepo,
 	}
 	billingtransferDeps := &billingtransferresolver.Deps{
 		Core:                   s.Core,
@@ -894,13 +934,30 @@ func FromServices(s *Services) *Resolver {
 		InvoiceEDIService:      s.InvoiceEDIService,
 	}
 	invoiceadjustmentDeps := &invoiceadjustmentresolver.Deps{
-		Core:                     s.Core,
-		InvoiceAdjustmentService: s.InvoiceAdjustmentService,
+		Core:                          s.Core,
+		InvoiceAdjustmentDraftService: s.InvoiceAdjustmentDraftService,
+		InvoiceAdjustmentService:      s.InvoiceAdjustmentService,
 	}
 	invoicedisputeDeps := &invoicedisputeresolver.Deps{
 		Core:                  s.Core,
 		InvoiceDisputeRepo:    s.InvoiceDisputeRepo,
 		InvoiceDisputeService: s.InvoiceDisputeService,
+	}
+	invoicelifecycleDeps := &invoicelifecycleresolver.Deps{
+		Core:                  s.Core,
+		InvoiceQueryService:   s.InvoiceQueryService,
+		InvoicePostingService: s.InvoicePostingService,
+		InvoicePDFService:     s.InvoicePDFService,
+		InvoiceSendService:    s.InvoiceSendService,
+		InvoiceDraftService:   s.InvoiceDraftService,
+	}
+	invoiceshareDeps := &invoiceshareresolver.Deps{
+		Core:                s.Core,
+		InvoiceShareService: s.InvoiceShareService,
+	}
+	invoicestatementDeps := &invoicestatementresolver.Deps{
+		Core:                    s.Core,
+		InvoiceStatementService: s.InvoiceStatementService,
 	}
 	journalentryDeps := &journalentryresolver.Deps{
 		Core:                s.Core,
@@ -1300,6 +1357,25 @@ func FromServices(s *Services) *Resolver {
 		approvalDelegation:           &orgstructureresolver.ApprovalDelegationResolver{Deps: orgstructureDeps},
 		auditEntry:                   &auditlogresolver.AuditEntryResolver{Deps: auditlogDeps},
 		authEvent:                    &securityactivityresolver.AuthEventResolver{Deps: securityactivityDeps},
+		billingQueueBulkRunItem:      &billingqueueworkspaceresolver.BillingQueueBulkRunItemResolver{Deps: billingqueueworkspaceDeps},
+		billingQueueChargeLine:       &billingqueueresolver.BillingQueueChargeLineResolver{Deps: billingqueueDeps},
+		billingQueueChargeReview:     &billingqueueresolver.BillingQueueChargeReviewResolver{Deps: billingqueueDeps},
+		billingQueueDetentionHold:    &billingqueueresolver.BillingQueueDetentionHoldResolver{Deps: billingqueueDeps},
+		billingQueueEvent:            &billingqueueresolver.BillingQueueEventResolver{Deps: billingqueueDeps},
+		billingQueueIssue:            &billingqueueresolver.BillingQueueIssueResolver{Deps: billingqueueDeps},
+		billingQueueIssueEffect:      &billingqueueresolver.BillingQueueIssueEffectResolver{Deps: billingqueueDeps},
+		billingQueueIssueOption:      &billingqueueresolver.BillingQueueIssueOptionResolver{Deps: billingqueueDeps},
+		billingQueueItemSummary:      &billingqueueresolver.BillingQueueItemSummaryResolver{Deps: billingqueueDeps},
+		billingQueueLaneStat:         &billingqueueworkspaceresolver.BillingQueueLaneStatResolver{Deps: billingqueueworkspaceDeps},
+		billingQueueNovaGeneration:   &billingqueueworkspaceresolver.BillingQueueNovaGenerationResolver{Deps: billingqueueworkspaceDeps},
+		billingQueuePayerShare:       &billingqueueresolver.BillingQueuePayerShareResolver{Deps: billingqueueDeps},
+		billingQueuePayerShareLine:   &billingqueueresolver.BillingQueuePayerShareLineResolver{Deps: billingqueueDeps},
+		billingQueuePayerShareParty:  &billingqueueresolver.BillingQueuePayerSharePartyResolver{Deps: billingqueueDeps},
+		billingQueuePulse:            &billingqueueworkspaceresolver.BillingQueuePulseResolver{Deps: billingqueueworkspaceDeps},
+		billingQueueRecommendation:   &billingqueueworkspaceresolver.BillingQueueRecommendationResolver{Deps: billingqueueworkspaceDeps},
+		billingQueueSearchDates:      &billingqueueworkspaceresolver.BillingQueueSearchDatesResolver{Deps: billingqueueworkspaceDeps},
+		billingQueueSearchIntent:     &billingqueueworkspaceresolver.BillingQueueSearchIntentResolver{Deps: billingqueueworkspaceDeps},
+		billingQueueStats:            &billingqueueworkspaceresolver.BillingQueueStatsResolver{Deps: billingqueueworkspaceDeps},
 		briefingSection:              &briefingresolver.BriefingSectionResolver{Deps: briefingDeps},
 		captureBatch:                 &captureresolver.CaptureBatchResolver{Deps: captureDeps},
 		captureCoverSheet:            &captureresolver.CaptureCoverSheetResolver{Deps: captureDeps},
@@ -1330,6 +1406,7 @@ func FromServices(s *Services) *Resolver {
 		carrierSettlement:            &carriersettlementresolver.CarrierSettlementResolver{Deps: carriersettlementDeps},
 		carrierSourcingResult:        &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps},
 		chargeAllocation:             &shipmentresolver.ChargeAllocationResolver{Deps: shipmentDeps},
+		commitInvoiceRunResult:       &invoicestatementresolver.CommitInvoiceRunResultResolver{Deps: invoicestatementDeps},
 		commodity:                    &commodityresolver.CommodityResolver{Deps: commodityDeps},
 		customer:                     &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps},
 		customerBillingProfile: &customerBillingProfileResolver{
@@ -1432,31 +1509,37 @@ func FromServices(s *Services) *Resolver {
 		inboundSnooze:        &inboundmessageresolver.InboundSnoozeResolver{Deps: inboundmessageDeps},
 		inboundSplitDocument: &inboundmessageresolver.InboundSplitDocumentResolver{Deps: inboundmessageDeps},
 		invoice: &invoiceResolver{
-			factoringInvoice:      &factoringInvoice{Deps: factoringDeps},
-			invoiceInvoice:        &invoiceInvoice{Deps: invoiceDeps},
-			invoicedisputeInvoice: &invoicedisputeInvoice{Deps: invoicedisputeDeps},
-			latechargeInvoice:     &latechargeInvoice{Deps: latechargeDeps},
+			factoringInvoice:        &factoringInvoice{Deps: factoringDeps},
+			invoiceInvoice:          &invoiceInvoice{Deps: invoiceDeps},
+			invoicedisputeInvoice:   &invoicedisputeInvoice{Deps: invoicedisputeDeps},
+			invoicelifecycleInvoice: &invoicelifecycleInvoice{Deps: invoicelifecycleDeps},
+			latechargeInvoice:       &latechargeInvoice{Deps: latechargeDeps},
 		},
-		invoiceAdjustment:                  &invoiceadjustmentresolver.InvoiceAdjustmentResolver{Deps: invoiceadjustmentDeps},
-		invoiceAdjustmentApprovalQueueItem: &invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver{Deps: invoiceadjustmentDeps},
-		invoiceAdjustmentLine:              &invoiceadjustmentresolver.InvoiceAdjustmentLineResolver{Deps: invoiceadjustmentDeps},
-		invoiceChargeGroup:                 &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps},
-		invoiceDispute:                     &invoicedisputeresolver.InvoiceDisputeResolver{Deps: invoicedisputeDeps},
-		invoiceLine:                        &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps},
-		jobPosition:                        &orgstructureresolver.JobPositionResolver{Deps: orgstructureDeps},
-		journalCardLine:                    &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps},
-		journalCardPosting:                 &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps},
-		journalEntry:                       &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps},
-		journalEntryLine:                   &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps},
-		journalReviewSummary:               &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps},
-		journalSourceInfo:                  &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps},
-		jurisdictionRule:                   &jurisdictionruleresolver.JurisdictionRuleResolver{Deps: jurisdictionruleDeps},
-		lateChargeAssessment:               &latechargeresolver.LateChargeAssessmentResolver{Deps: latechargeDeps},
-		lateChargeLine:                     &latechargeresolver.LateChargeLineResolver{Deps: latechargeDeps},
-		leaveControl:                       &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps},
-		leaveEntitlement:                   &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps},
-		locationCategory:                   &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps},
-		mFAAuthenticator:                   &securityactivityresolver.MFAAuthenticatorResolver{Deps: securityactivityDeps},
+		invoiceAdjustment:                        &invoiceadjustmentresolver.InvoiceAdjustmentResolver{Deps: invoiceadjustmentDeps},
+		invoiceAdjustmentApprovalQueueItem:       &invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver{Deps: invoiceadjustmentDeps},
+		invoiceAdjustmentLine:                    &invoiceadjustmentresolver.InvoiceAdjustmentLineResolver{Deps: invoiceadjustmentDeps},
+		invoiceAdjustmentPreview:                 &invoiceadjustmentresolver.InvoiceAdjustmentPreviewResolver{Deps: invoiceadjustmentDeps},
+		invoiceAdjustmentPreviewLine:             &invoiceadjustmentresolver.InvoiceAdjustmentPreviewLineResolver{Deps: invoiceadjustmentDeps},
+		invoiceAdjustmentReconciliationQueueItem: &invoiceadjustmentresolver.InvoiceAdjustmentReconciliationQueueItemResolver{Deps: invoiceadjustmentDeps},
+		invoiceChargeGroup:                       &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps},
+		invoiceDispute:                           &invoicedisputeresolver.InvoiceDisputeResolver{Deps: invoicedisputeDeps},
+		invoiceEmailAttempt:                      &invoicelifecycleresolver.InvoiceEmailAttemptResolver{Deps: invoicelifecycleDeps},
+		invoiceLine:                              &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps},
+		invoiceSendPlan:                          &invoicelifecycleresolver.InvoiceSendPlanResolver{Deps: invoicelifecycleDeps},
+		jobPosition:                              &orgstructureresolver.JobPositionResolver{Deps: orgstructureDeps},
+		journalCardLine:                          &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps},
+		journalCardPosting:                       &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps},
+		journalEntry:                             &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps},
+		journalEntryLine:                         &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps},
+		journalReviewSummary:                     &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps},
+		journalSourceInfo:                        &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps},
+		jurisdictionRule:                         &jurisdictionruleresolver.JurisdictionRuleResolver{Deps: jurisdictionruleDeps},
+		lateChargeAssessment:                     &latechargeresolver.LateChargeAssessmentResolver{Deps: latechargeDeps},
+		lateChargeLine:                           &latechargeresolver.LateChargeLineResolver{Deps: latechargeDeps},
+		leaveControl:                             &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps},
+		leaveEntitlement:                         &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps},
+		locationCategory:                         &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps},
+		mFAAuthenticator:                         &securityactivityresolver.MFAAuthenticatorResolver{Deps: securityactivityDeps},
 		mutation: &mutationResolver{
 			accessorialchargeMutation:     &accessorialchargeMutation{Deps: accessorialchargeDeps},
 			accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
@@ -1474,6 +1557,7 @@ func FromServices(s *Services) *Resolver {
 			airetrievalMutation:           &airetrievalMutation{Deps: airetrievalDeps},
 			benefitsMutation:              &benefitsMutation{Deps: benefitsDeps},
 			billingqueueMutation:          &billingqueueMutation{Deps: billingqueueDeps},
+			billingqueueworkspaceMutation: &billingqueueworkspaceMutation{Deps: billingqueueworkspaceDeps},
 			billingtransferMutation:       &billingtransferMutation{Deps: billingtransferDeps},
 			briefingMutation:              &briefingMutation{Deps: briefingDeps},
 			bulkeditMutation:              &bulkeditMutation{Deps: bulkeditDeps},
@@ -1516,6 +1600,9 @@ func FromServices(s *Services) *Resolver {
 			invoiceMutation:               &invoiceMutation{Deps: invoiceDeps},
 			invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
 			invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
+			invoicelifecycleMutation:      &invoicelifecycleMutation{Deps: invoicelifecycleDeps},
+			invoiceshareMutation:          &invoiceshareMutation{Deps: invoiceshareDeps},
+			invoicestatementMutation:      &invoicestatementMutation{Deps: invoicestatementDeps},
 			journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
 			latechargeMutation:            &latechargeMutation{Deps: latechargeDeps},
 			locationcategoryMutation:      &locationcategoryMutation{Deps: locationcategoryDeps},
@@ -1555,6 +1642,7 @@ func FromServices(s *Services) *Resolver {
 		myAgent:                   &agentdefinitionresolver.MyAgentResolver{Deps: agentdefinitionDeps},
 		myPTOBalance:              &driverportalresolver.MyPTOBalanceResolver{Deps: driverportalDeps},
 		oSHAAnnualSummary:         &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps},
+		openStatement:             &invoicestatementresolver.OpenStatementResolver{Deps: invoicestatementDeps},
 		order:                     &orderresolver.OrderResolver{Deps: orderDeps},
 		pTOAccrualTier:            &ptopolicyresolver.PTOAccrualTierResolver{Deps: ptopolicyDeps},
 		pTOAvailability:           &ptopolicyresolver.PTOAvailabilityResolver{Deps: ptopolicyDeps},
@@ -1601,6 +1689,7 @@ func FromServices(s *Services) *Resolver {
 			auditlogQuery:                 &auditlogQuery{Deps: auditlogDeps},
 			benefitsQuery:                 &benefitsQuery{Deps: benefitsDeps},
 			billingqueueQuery:             &billingqueueQuery{Deps: billingqueueDeps},
+			billingqueueworkspaceQuery:    &billingqueueworkspaceQuery{Deps: billingqueueworkspaceDeps},
 			billingtransferQuery:          &billingtransferQuery{Deps: billingtransferDeps},
 			briefingQuery:                 &briefingQuery{Deps: briefingDeps},
 			bulkeditQuery:                 &bulkeditQuery{Deps: bulkeditDeps},
@@ -1656,6 +1745,9 @@ func FromServices(s *Services) *Resolver {
 			invoiceQuery:                  &invoiceQuery{Deps: invoiceDeps},
 			invoiceadjustmentQuery:        &invoiceadjustmentQuery{Deps: invoiceadjustmentDeps},
 			invoicedisputeQuery:           &invoicedisputeQuery{Deps: invoicedisputeDeps},
+			invoicelifecycleQuery:         &invoicelifecycleQuery{Deps: invoicelifecycleDeps},
+			invoiceshareQuery:             &invoiceshareQuery{Deps: invoiceshareDeps},
+			invoicestatementQuery:         &invoicestatementQuery{Deps: invoicestatementDeps},
 			journalentryQuery:             &journalentryQuery{Deps: journalentryDeps},
 			journalreversalQuery:          &journalreversalQuery{Deps: journalreversalDeps},
 			jurisdictionruleQuery:         &jurisdictionruleQuery{Deps: jurisdictionruleDeps},
@@ -1733,6 +1825,8 @@ func FromServices(s *Services) *Resolver {
 		shipmentMoveJurisdictionMile: &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps},
 		shipmentRatingDetail:         &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps},
 		shipmentRatingReviewApproval: &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps},
+		statementGroup:               &invoicestatementresolver.StatementGroupResolver{Deps: invoicestatementDeps},
+		statementShipment:            &invoicestatementresolver.StatementShipmentResolver{Deps: invoicestatementDeps},
 		tCASubscription:              &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps},
 		tableConfiguration:           &tableconfigurationresolver.TableConfigurationResolver{Deps: tableconfigurationDeps},
 		tender:                       &tenderresolver.TenderResolver{Deps: tenderDeps},
@@ -2049,6 +2143,82 @@ func (r *Resolver) AuthEvent() generated.AuthEventResolver {
 	return r.authEvent
 }
 
+func (r *Resolver) BillingQueueBulkRunItem() generated.BillingQueueBulkRunItemResolver {
+	return r.billingQueueBulkRunItem
+}
+
+func (r *Resolver) BillingQueueChargeLine() generated.BillingQueueChargeLineResolver {
+	return r.billingQueueChargeLine
+}
+
+func (r *Resolver) BillingQueueChargeReview() generated.BillingQueueChargeReviewResolver {
+	return r.billingQueueChargeReview
+}
+
+func (r *Resolver) BillingQueueDetentionHold() generated.BillingQueueDetentionHoldResolver {
+	return r.billingQueueDetentionHold
+}
+
+func (r *Resolver) BillingQueueEvent() generated.BillingQueueEventResolver {
+	return r.billingQueueEvent
+}
+
+func (r *Resolver) BillingQueueIssue() generated.BillingQueueIssueResolver {
+	return r.billingQueueIssue
+}
+
+func (r *Resolver) BillingQueueIssueEffect() generated.BillingQueueIssueEffectResolver {
+	return r.billingQueueIssueEffect
+}
+
+func (r *Resolver) BillingQueueIssueOption() generated.BillingQueueIssueOptionResolver {
+	return r.billingQueueIssueOption
+}
+
+func (r *Resolver) BillingQueueItemSummary() generated.BillingQueueItemSummaryResolver {
+	return r.billingQueueItemSummary
+}
+
+func (r *Resolver) BillingQueueLaneStat() generated.BillingQueueLaneStatResolver {
+	return r.billingQueueLaneStat
+}
+
+func (r *Resolver) BillingQueueNovaGeneration() generated.BillingQueueNovaGenerationResolver {
+	return r.billingQueueNovaGeneration
+}
+
+func (r *Resolver) BillingQueuePayerShare() generated.BillingQueuePayerShareResolver {
+	return r.billingQueuePayerShare
+}
+
+func (r *Resolver) BillingQueuePayerShareLine() generated.BillingQueuePayerShareLineResolver {
+	return r.billingQueuePayerShareLine
+}
+
+func (r *Resolver) BillingQueuePayerShareParty() generated.BillingQueuePayerSharePartyResolver {
+	return r.billingQueuePayerShareParty
+}
+
+func (r *Resolver) BillingQueuePulse() generated.BillingQueuePulseResolver {
+	return r.billingQueuePulse
+}
+
+func (r *Resolver) BillingQueueRecommendation() generated.BillingQueueRecommendationResolver {
+	return r.billingQueueRecommendation
+}
+
+func (r *Resolver) BillingQueueSearchDates() generated.BillingQueueSearchDatesResolver {
+	return r.billingQueueSearchDates
+}
+
+func (r *Resolver) BillingQueueSearchIntent() generated.BillingQueueSearchIntentResolver {
+	return r.billingQueueSearchIntent
+}
+
+func (r *Resolver) BillingQueueStats() generated.BillingQueueStatsResolver {
+	return r.billingQueueStats
+}
+
 func (r *Resolver) BriefingSection() generated.BriefingSectionResolver {
 	return r.briefingSection
 }
@@ -2167,6 +2337,10 @@ func (r *Resolver) CarrierSourcingResult() generated.CarrierSourcingResultResolv
 
 func (r *Resolver) ChargeAllocation() generated.ChargeAllocationResolver {
 	return r.chargeAllocation
+}
+
+func (r *Resolver) CommitInvoiceRunResult() generated.CommitInvoiceRunResultResolver {
+	return r.commitInvoiceRunResult
 }
 
 func (r *Resolver) Commodity() generated.CommodityResolver {
@@ -2557,6 +2731,7 @@ type invoiceResolver struct {
 	*factoringInvoice
 	*invoiceInvoice
 	*invoicedisputeInvoice
+	*invoicelifecycleInvoice
 	*latechargeInvoice
 }
 
@@ -2572,6 +2747,18 @@ func (r *Resolver) InvoiceAdjustmentLine() generated.InvoiceAdjustmentLineResolv
 	return r.invoiceAdjustmentLine
 }
 
+func (r *Resolver) InvoiceAdjustmentPreview() generated.InvoiceAdjustmentPreviewResolver {
+	return r.invoiceAdjustmentPreview
+}
+
+func (r *Resolver) InvoiceAdjustmentPreviewLine() generated.InvoiceAdjustmentPreviewLineResolver {
+	return r.invoiceAdjustmentPreviewLine
+}
+
+func (r *Resolver) InvoiceAdjustmentReconciliationQueueItem() generated.InvoiceAdjustmentReconciliationQueueItemResolver {
+	return r.invoiceAdjustmentReconciliationQueueItem
+}
+
 func (r *Resolver) InvoiceChargeGroup() generated.InvoiceChargeGroupResolver {
 	return r.invoiceChargeGroup
 }
@@ -2580,8 +2767,16 @@ func (r *Resolver) InvoiceDispute() generated.InvoiceDisputeResolver {
 	return r.invoiceDispute
 }
 
+func (r *Resolver) InvoiceEmailAttempt() generated.InvoiceEmailAttemptResolver {
+	return r.invoiceEmailAttempt
+}
+
 func (r *Resolver) InvoiceLine() generated.InvoiceLineResolver {
 	return r.invoiceLine
+}
+
+func (r *Resolver) InvoiceSendPlan() generated.InvoiceSendPlanResolver {
+	return r.invoiceSendPlan
 }
 
 func (r *Resolver) JobPosition() generated.JobPositionResolver {
@@ -2661,6 +2856,7 @@ type mutationResolver struct {
 	*airetrievalMutation
 	*benefitsMutation
 	*billingqueueMutation
+	*billingqueueworkspaceMutation
 	*billingtransferMutation
 	*briefingMutation
 	*bulkeditMutation
@@ -2703,6 +2899,9 @@ type mutationResolver struct {
 	*invoiceMutation
 	*invoiceadjustmentMutation
 	*invoicedisputeMutation
+	*invoicelifecycleMutation
+	*invoiceshareMutation
+	*invoicestatementMutation
 	*journalentryMutation
 	*latechargeMutation
 	*locationcategoryMutation
@@ -2750,6 +2949,10 @@ func (r *Resolver) MyPTOBalance() generated.MyPTOBalanceResolver {
 
 func (r *Resolver) OSHAAnnualSummary() generated.OSHAAnnualSummaryResolver {
 	return r.oSHAAnnualSummary
+}
+
+func (r *Resolver) OpenStatement() generated.OpenStatementResolver {
+	return r.openStatement
 }
 
 func (r *Resolver) Order() generated.OrderResolver {
@@ -2862,6 +3065,7 @@ type queryResolver struct {
 	*auditlogQuery
 	*benefitsQuery
 	*billingqueueQuery
+	*billingqueueworkspaceQuery
 	*billingtransferQuery
 	*briefingQuery
 	*bulkeditQuery
@@ -2917,6 +3121,9 @@ type queryResolver struct {
 	*invoiceQuery
 	*invoiceadjustmentQuery
 	*invoicedisputeQuery
+	*invoicelifecycleQuery
+	*invoiceshareQuery
+	*invoicestatementQuery
 	*journalentryQuery
 	*journalreversalQuery
 	*jurisdictionruleQuery
@@ -3056,6 +3263,14 @@ func (r *Resolver) ShipmentRatingDetail() generated.ShipmentRatingDetailResolver
 
 func (r *Resolver) ShipmentRatingReviewApproval() generated.ShipmentRatingReviewApprovalResolver {
 	return r.shipmentRatingReviewApproval
+}
+
+func (r *Resolver) StatementGroup() generated.StatementGroupResolver {
+	return r.statementGroup
+}
+
+func (r *Resolver) StatementShipment() generated.StatementShipmentResolver {
+	return r.statementShipment
 }
 
 func (r *Resolver) TCASubscription() generated.TCASubscriptionResolver {
@@ -3289,6 +3504,7 @@ type (
 	factoringInvoice                = factoringresolver.InvoiceResolver
 	invoiceInvoice                  = invoiceresolver.InvoiceResolver
 	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
+	invoicelifecycleInvoice         = invoicelifecycleresolver.InvoiceResolver
 	latechargeInvoice               = latechargeresolver.InvoiceResolver
 	accessorialchargeMutation       = accessorialchargeresolver.MutationResolver
 	accountingsyncMutation          = accountingsyncresolver.MutationResolver
@@ -3306,6 +3522,7 @@ type (
 	airetrievalMutation             = airetrievalresolver.MutationResolver
 	benefitsMutation                = benefitsresolver.MutationResolver
 	billingqueueMutation            = billingqueueresolver.MutationResolver
+	billingqueueworkspaceMutation   = billingqueueworkspaceresolver.MutationResolver
 	billingtransferMutation         = billingtransferresolver.MutationResolver
 	briefingMutation                = briefingresolver.MutationResolver
 	bulkeditMutation                = bulkeditresolver.MutationResolver
@@ -3348,6 +3565,9 @@ type (
 	invoiceMutation                 = invoiceresolver.MutationResolver
 	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
 	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
+	invoicelifecycleMutation        = invoicelifecycleresolver.MutationResolver
+	invoiceshareMutation            = invoiceshareresolver.MutationResolver
+	invoicestatementMutation        = invoicestatementresolver.MutationResolver
 	journalentryMutation            = journalentryresolver.MutationResolver
 	latechargeMutation              = latechargeresolver.MutationResolver
 	locationcategoryMutation        = locationcategoryresolver.MutationResolver
@@ -3408,6 +3628,7 @@ type (
 	auditlogQuery                   = auditlogresolver.QueryResolver
 	benefitsQuery                   = benefitsresolver.QueryResolver
 	billingqueueQuery               = billingqueueresolver.QueryResolver
+	billingqueueworkspaceQuery      = billingqueueworkspaceresolver.QueryResolver
 	billingtransferQuery            = billingtransferresolver.QueryResolver
 	briefingQuery                   = briefingresolver.QueryResolver
 	bulkeditQuery                   = bulkeditresolver.QueryResolver
@@ -3463,6 +3684,9 @@ type (
 	invoiceQuery                    = invoiceresolver.QueryResolver
 	invoiceadjustmentQuery          = invoiceadjustmentresolver.QueryResolver
 	invoicedisputeQuery             = invoicedisputeresolver.QueryResolver
+	invoicelifecycleQuery           = invoicelifecycleresolver.QueryResolver
+	invoiceshareQuery               = invoiceshareresolver.QueryResolver
+	invoicestatementQuery           = invoicestatementresolver.QueryResolver
 	journalentryQuery               = journalentryresolver.QueryResolver
 	journalreversalQuery            = journalreversalresolver.QueryResolver
 	jurisdictionruleQuery           = jurisdictionruleresolver.QueryResolver

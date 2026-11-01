@@ -62,13 +62,13 @@ export function getDestinationStop<S extends { type: Stop["type"] }>(
   return findLastStop(shipment, stopTypeSchema.enum.Delivery);
 }
 
-export function getOriginLocation<S extends Pick<Stop, "type" | "location">>(
+export function getOriginLocation<S extends { type: Stop["type"]; location?: unknown }>(
   shipment: MovesOfStops<S>,
 ): S["location"] | null {
   return getOriginStop(shipment)?.location ?? null;
 }
 
-export function getDestinationLocation<S extends Pick<Stop, "type" | "location">>(
+export function getDestinationLocation<S extends { type: Stop["type"]; location?: unknown }>(
   shipment: MovesOfStops<S>,
 ): S["location"] | null {
   return getDestinationStop(shipment)?.location ?? null;

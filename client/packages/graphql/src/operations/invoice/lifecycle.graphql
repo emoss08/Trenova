@@ -1,0 +1,306 @@
+# The invoice as the workspace detail draws it.
+fragment InvoiceDetailFields on Invoice {
+  id
+  organizationId
+  businessUnitId
+  billingQueueItemId
+  shipmentId
+  orderId
+  orderNumber
+  customerId
+  scope
+  invoiceRunId
+  periodStart
+  periodEnd
+  shipmentCount
+  detail
+  sectionBy
+  offCycleReason
+  number
+  billType
+  status
+  paymentTerm
+  currencyCode
+  exchangeRate
+  exchangeRateDate
+  invoiceDate
+  dueDate
+  postedAt
+  shipmentProNumber
+  shipmentBol
+  poNumber
+  serviceDate
+  billToName
+  billToCode
+  billToAddressLine1
+  billToAddressLine2
+  billToCity
+  billToState
+  billToPostalCode
+  billToCountry
+  shipperCustomerId
+  factoringCompanyId
+  factoringOverride
+  isSplitBill
+  ratingNotes
+  subtotalAmount
+  otherAmount
+  totalAmount
+  appliedAmount
+  settlementStatus
+  disputeStatus
+  sendStatus
+  sentAt
+  sentById
+  pdfDocumentId
+  lastSendError
+  lastSendWarning
+  memo
+  remittanceInstructions
+  emailSubjectSnapshot
+  emailBodySnapshot
+  emailToSnapshot
+  emailCcSnapshot
+  emailBccSnapshot
+  correctionGroupId
+  supersedesInvoiceId
+  supersededByInvoiceId
+  sourceInvoiceAdjustmentId
+  isAdjustmentArtifact
+  voidedAt
+  voidedById
+  voidReason
+  voidDisposition
+  voidedByAdjustmentId
+  referenceInvoiceId
+  memoReason
+  memoKind
+  balanceDueMinor
+  ediSendStatus
+  lastEdiMessageId
+  ediSentAt
+  lastEdiError
+  version
+  createdAt
+  updatedAt
+  customer {
+    id
+    name
+    code
+  }
+  shipperCustomer {
+    id
+    name
+    code
+  }
+  lines {
+    id
+    organizationId
+    businessUnitId
+    invoiceId
+    shipmentId
+    shipmentProNumber
+    shipmentBol
+    lineNumber
+    type
+    description
+    quantity
+    unitPrice
+    amount
+    accessorialChargeId
+    chargeCode
+    chargeMethod
+    rate
+    rateUnit
+    allocationPercent
+    formulaTemplateId
+    formulaTemplateName
+    chargeAllocationId
+    createdAt
+    updatedAt
+  }
+}
+
+query InvoiceDetail($id: ID!) {
+  invoice(id: $id) {
+    ...InvoiceDetailFields
+    shipment {
+      id
+      proNumber
+      bol
+      customerId
+      moves {
+        ...ShipmentRouteMoveFields
+      }
+    }
+  }
+}
+
+fragment InvoiceEmailAttemptFields on InvoiceEmailAttempt {
+  id
+  organizationId
+  businessUnitId
+  invoiceId
+  emailMessageId
+  attemptNumber
+  partNumber
+  totalParts
+  status
+  provider
+  providerMessageId
+  toRecipients
+  ccRecipients
+  bccRecipients
+  subject
+  body
+  estimatedSize
+  warnings
+  error
+  sentAt
+  createdById
+  createdAt
+  updatedAt
+  attachments {
+    id
+    organizationId
+    businessUnitId
+    attemptId
+    documentId
+    fileName
+    contentType
+    sizeBytes
+    encodedBytes
+    method
+    shareTokenId
+    reason
+    createdAt
+  }
+}
+
+query InvoiceEmailAttempts($invoiceId: ID!, $limit: Int, $offset: Int) {
+  invoiceEmailAttempts(invoiceId: $invoiceId, limit: $limit, offset: $offset) {
+    items {
+      ...InvoiceEmailAttemptFields
+    }
+    total
+    totalExact
+    hasMore
+  }
+}
+
+fragment InvoiceSendPlanFields on InvoiceSendPlan {
+  invoiceId
+  providerLimitBytes
+  estimatedBodyBytes
+  parts {
+    partNumber
+    estimatedSizeBytes
+    attachments {
+      documentId
+      fileName
+      contentType
+      sizeBytes
+      encodedBytes
+      invoicePdf
+    }
+    links {
+      documentId
+      fileName
+      sizeBytes
+      reason
+      url
+    }
+    warnings
+  }
+  warnings
+  errors
+  recipients {
+    to
+    cc
+    bcc
+  }
+  fromEmail
+  headers
+  openTracking
+  subject
+  body
+  invoicePdfDocumentId
+}
+
+query InvoiceSendPlan($invoiceId: ID!) {
+  invoiceSendPlan(invoiceId: $invoiceId) {
+    ...InvoiceSendPlanFields
+  }
+}
+
+query InvoicePostPreview($invoiceId: ID!) {
+  invoicePostPreview(invoiceId: $invoiceId) {
+    invoiceId
+    number
+    billToName
+    currencyCode
+    totalMinor
+    refusals
+    alreadyPosted
+    journal {
+      accountingDate
+      entryStatus
+      requiresApproval
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        description
+        debitMinor
+        creditMinor
+      }
+    }
+    shipmentsBilled
+    queueItemPosted
+    accountingSync {
+      integration
+      company
+      awaitsRelease
+    }
+    edi {
+      partnerName
+      willSend
+      blockers
+    }
+  }
+}
+
+mutation UpdateInvoiceDraft($invoiceId: ID!, $input: UpdateInvoiceDraftInput!) {
+  updateInvoiceDraft(invoiceId: $invoiceId, input: $input) {
+    ...InvoiceDetailFields
+  }
+}
+
+mutation GenerateInvoicePdf($invoiceId: ID!) {
+  generateInvoicePdf(invoiceId: $invoiceId) {
+    invoiceId
+    workflowId
+    workflowRunId
+    status
+  }
+}
+
+mutation SendInvoice($invoiceId: ID!) {
+  sendInvoice(invoiceId: $invoiceId) {
+    invoice {
+      ...InvoiceDetailFields
+    }
+    plan {
+      ...InvoiceSendPlanFields
+    }
+    attempts {
+      ...InvoiceEmailAttemptFields
+    }
+  }
+}
+
+mutation PostInvoice($invoiceId: ID!) {
+  postInvoice(invoiceId: $invoiceId) {
+    ...InvoiceDetailFields
+  }
+}

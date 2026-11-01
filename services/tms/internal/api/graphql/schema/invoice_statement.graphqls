@@ -1,0 +1,101 @@
+"One shipment billed on an open statement."
+type StatementShipment {
+  billingQueueItemId: ID!
+  shipmentId: ID!
+  orderId: ID
+  proNumber: String!
+  bol: String!
+  poNumber: String!
+  orderNumber: String!
+  serviceDate: Timestamp
+  amount: Decimal!
+}
+
+"One invoice an open statement would cut, by the customer's split key."
+type StatementGroup {
+  key: String!
+  label: String!
+  shipmentCount: Int!
+  totalAmount: Decimal!
+  "The group's total falls short of the customer's statement minimum."
+  belowMinimum: Boolean!
+  "The members, on the single-statement read only."
+  shipments: [StatementShipment!]
+}
+
+"""
+The period a statement customer is accumulating into, derived live from the
+billing queue rather than staged anywhere.
+"""
+type OpenStatement {
+  customerId: ID!
+  customerName: String!
+  customerCode: String!
+  customerStatus: String!
+  cycle: CustomerBillingCycle!
+  billingCycleAnchorDay: Int!
+  billingCycleTimezone: String!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  lastBilledPeriodEnd: Timestamp
+  shipmentCount: Int!
+  invoiceCount: Int!
+  totalAmount: Decimal!
+  currencyCode: String!
+  splitBy: InvoiceSplitKey!
+  sectionBy: InvoiceSectionKey!
+  detail: InvoiceDetail!
+  minimumAmount: Decimal
+  autoBill: Boolean!
+  belowMinimum: Boolean!
+  "Freight in the period still waiting on a biller, which the invoices will not carry."
+  heldCount: Int!
+  heldAmount: Decimal!
+  "The invoices it would cut, on the single-statement read only."
+  groups: [StatementGroup!]
+}
+
+"How one invoice of a committed run went."
+type CommitGroupResult {
+  groupId: ID!
+  groupLabel: String!
+  success: Boolean!
+  skipped: Boolean!
+  invoiceId: ID
+  invoiceNumber: String!
+  error: String!
+}
+
+type CommitInvoiceRunResult {
+  runId: ID!
+  runNumber: String!
+  results: [CommitGroupResult!]!
+  totalCount: Int!
+  successCount: Int!
+  skippedCount: Int!
+  errorCount: Int!
+}
+
+input StatementExclusionInput {
+  billingQueueItemId: ID!
+  reason: String!
+}
+
+input BillStatementNowInput {
+  "Required when the period has not closed yet."
+  reason: String
+  "Items held back for the next period; they stay approved and uninvoiced."
+  exclude: [StatementExclusionInput!]
+}
+
+extend type Query {
+  "Every statement customer's open period."
+  openStatements: [OpenStatement!]!
+  "One customer's open period with the invoices it would cut and their shipments."
+  openStatement(customerId: ID!): OpenStatement!
+}
+
+extend type Mutation {
+  "Bills an open statement now, before or at the close of its cycle."
+  billStatementNow(customerId: ID!, input: BillStatementNowInput!): CommitInvoiceRunResult!
+}

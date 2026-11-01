@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/auditlogexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/benefitsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingqueueexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingqueueworkspaceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingtransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/bulkeditexec"
@@ -89,6 +90,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceadjustmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicedisputeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicelifecycleexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceshareexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicestatementexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalentryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalreversalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/jurisdictionruleexec"
@@ -218,6 +222,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuefilterpreset"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
@@ -228,7 +236,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -236,6 +246,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
@@ -461,6 +472,25 @@ type ResolverRoot interface {
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
 	AuthEvent() AuthEventResolver
+	BillingQueueBulkRunItem() BillingQueueBulkRunItemResolver
+	BillingQueueChargeLine() BillingQueueChargeLineResolver
+	BillingQueueChargeReview() BillingQueueChargeReviewResolver
+	BillingQueueDetentionHold() BillingQueueDetentionHoldResolver
+	BillingQueueEvent() BillingQueueEventResolver
+	BillingQueueIssue() BillingQueueIssueResolver
+	BillingQueueIssueEffect() BillingQueueIssueEffectResolver
+	BillingQueueIssueOption() BillingQueueIssueOptionResolver
+	BillingQueueItemSummary() BillingQueueItemSummaryResolver
+	BillingQueueLaneStat() BillingQueueLaneStatResolver
+	BillingQueueNovaGeneration() BillingQueueNovaGenerationResolver
+	BillingQueuePayerShare() BillingQueuePayerShareResolver
+	BillingQueuePayerShareLine() BillingQueuePayerShareLineResolver
+	BillingQueuePayerShareParty() BillingQueuePayerSharePartyResolver
+	BillingQueuePulse() BillingQueuePulseResolver
+	BillingQueueRecommendation() BillingQueueRecommendationResolver
+	BillingQueueSearchDates() BillingQueueSearchDatesResolver
+	BillingQueueSearchIntent() BillingQueueSearchIntentResolver
+	BillingQueueStats() BillingQueueStatsResolver
 	BriefingSection() BriefingSectionResolver
 	CaptureBatch() CaptureBatchResolver
 	CaptureCoverSheet() CaptureCoverSheetResolver
@@ -491,6 +521,7 @@ type ResolverRoot interface {
 	CarrierSettlement() CarrierSettlementResolver
 	CarrierSourcingResult() CarrierSourcingResultResolver
 	ChargeAllocation() ChargeAllocationResolver
+	CommitInvoiceRunResult() CommitInvoiceRunResultResolver
 	Commodity() CommodityResolver
 	Customer() CustomerResolver
 	CustomerBillingProfile() CustomerBillingProfileResolver
@@ -586,9 +617,14 @@ type ResolverRoot interface {
 	InvoiceAdjustment() InvoiceAdjustmentResolver
 	InvoiceAdjustmentApprovalQueueItem() InvoiceAdjustmentApprovalQueueItemResolver
 	InvoiceAdjustmentLine() InvoiceAdjustmentLineResolver
+	InvoiceAdjustmentPreview() InvoiceAdjustmentPreviewResolver
+	InvoiceAdjustmentPreviewLine() InvoiceAdjustmentPreviewLineResolver
+	InvoiceAdjustmentReconciliationQueueItem() InvoiceAdjustmentReconciliationQueueItemResolver
 	InvoiceChargeGroup() InvoiceChargeGroupResolver
 	InvoiceDispute() InvoiceDisputeResolver
+	InvoiceEmailAttempt() InvoiceEmailAttemptResolver
 	InvoiceLine() InvoiceLineResolver
+	InvoiceSendPlan() InvoiceSendPlanResolver
 	JobPosition() JobPositionResolver
 	JournalCardLine() JournalCardLineResolver
 	JournalCardPosting() JournalCardPostingResolver
@@ -607,6 +643,7 @@ type ResolverRoot interface {
 	MyAgent() MyAgentResolver
 	MyPTOBalance() MyPTOBalanceResolver
 	OSHAAnnualSummary() OSHAAnnualSummaryResolver
+	OpenStatement() OpenStatementResolver
 	Order() OrderResolver
 	PTOAccrualTier() PTOAccrualTierResolver
 	PTOAvailability() PTOAvailabilityResolver
@@ -649,6 +686,8 @@ type ResolverRoot interface {
 	ShipmentMoveJurisdictionMile() ShipmentMoveJurisdictionMileResolver
 	ShipmentRatingDetail() ShipmentRatingDetailResolver
 	ShipmentRatingReviewApproval() ShipmentRatingReviewApprovalResolver
+	StatementGroup() StatementGroupResolver
+	StatementShipment() StatementShipmentResolver
 	TCASubscription() TCASubscriptionResolver
 	TableConfiguration() TableConfigurationResolver
 	Tender() TenderResolver
@@ -1076,6 +1115,100 @@ type AuthEventResolver interface {
 	User(ctx context.Context, obj *iam.AuthEvent) (*tenant.User, error)
 }
 
+type BillingQueueBulkRunItemResolver interface {
+	FailureCode(ctx context.Context, obj *billingapprovalrun.ApprovalRunItem) (string, error)
+}
+
+type BillingQueueChargeLineResolver interface {
+	Expected(ctx context.Context, obj *billingqueue.ChargeLine) (*string, error)
+	Billed(ctx context.Context, obj *billingqueue.ChargeLine) (string, error)
+	Source(ctx context.Context, obj *billingqueue.ChargeLine) (string, error)
+}
+
+type BillingQueueChargeReviewResolver interface {
+	ExpectedTotal(ctx context.Context, obj *billingqueue.ChargeReview) (string, error)
+	BilledTotal(ctx context.Context, obj *billingqueue.ChargeReview) (string, error)
+	Difference(ctx context.Context, obj *billingqueue.ChargeReview) (string, error)
+}
+
+type BillingQueueDetentionHoldResolver interface {
+	StopType(ctx context.Context, obj *billingqueue.DetentionHold) (string, error)
+	BillableAmount(ctx context.Context, obj *billingqueue.DetentionHold) (string, error)
+	Reason(ctx context.Context, obj *billingqueue.DetentionHold) (string, error)
+}
+
+type BillingQueueEventResolver interface {
+	Kind(ctx context.Context, obj *billingqueueevent.ItemEvent) (string, error)
+}
+
+type BillingQueueIssueResolver interface {
+	Code(ctx context.Context, obj *billingqueue.Issue) (string, error)
+	Source(ctx context.Context, obj *billingqueue.Issue) (string, error)
+}
+
+type BillingQueueIssueEffectResolver interface {
+	Amount(ctx context.Context, obj *billingqueue.IssueEffect) (*string, error)
+}
+
+type BillingQueueIssueOptionResolver interface {
+	Amount(ctx context.Context, obj *billingqueue.IssueOption) (*string, error)
+}
+
+type BillingQueueItemSummaryResolver interface {
+	AllocatedTotalAmount(ctx context.Context, obj *billingqueueports.BillingQueueItemSummary) (string, error)
+}
+
+type BillingQueueLaneStatResolver interface {
+	Total(ctx context.Context, obj *billingqueueports.BillingQueueLaneStat) (string, error)
+}
+
+type BillingQueueNovaGenerationResolver interface {
+	RetryAt(ctx context.Context, obj *billingqueueports.NovaGeneration) (*int, error)
+}
+
+type BillingQueuePayerShareResolver interface {
+	FreightAmount(ctx context.Context, obj *billingqueue.PayerShare) (string, error)
+	AccessorialAmount(ctx context.Context, obj *billingqueue.PayerShare) (string, error)
+	TotalAmount(ctx context.Context, obj *billingqueue.PayerShare) (string, error)
+	ShipmentTotal(ctx context.Context, obj *billingqueue.PayerShare) (string, error)
+}
+
+type BillingQueuePayerShareLineResolver interface {
+	ChargeTotal(ctx context.Context, obj *billingqueue.PayerShareLine) (string, error)
+	Amount(ctx context.Context, obj *billingqueue.PayerShareLine) (string, error)
+	Percent(ctx context.Context, obj *billingqueue.PayerShareLine) (*string, error)
+}
+
+type BillingQueuePayerSharePartyResolver interface {
+	Amount(ctx context.Context, obj *billingqueue.PayerShareParty) (string, error)
+	Percent(ctx context.Context, obj *billingqueue.PayerShareParty) (*string, error)
+}
+
+type BillingQueuePulseResolver interface {
+	DeliveryToInvoiceDays(ctx context.Context, obj *billingqueueports.BillingQueuePulse) (*string, error)
+	PriorDeliveryToInvoiceDays(ctx context.Context, obj *billingqueueports.BillingQueuePulse) (*string, error)
+	ApprovedTodayTotal(ctx context.Context, obj *billingqueueports.BillingQueuePulse) (string, error)
+}
+
+type BillingQueueRecommendationResolver interface {
+	Total(ctx context.Context, obj *billingqueueports.Recommendation) (string, error)
+}
+
+type BillingQueueSearchDatesResolver interface {
+	LastDays(ctx context.Context, obj *billingqueueports.SearchDates) (*int, error)
+	From(ctx context.Context, obj *billingqueueports.SearchDates) (*string, error)
+	To(ctx context.Context, obj *billingqueueports.SearchDates) (*string, error)
+}
+
+type BillingQueueSearchIntentResolver interface {
+	MinAmount(ctx context.Context, obj *billingqueueports.SearchIntent) (*string, error)
+	MaxAmount(ctx context.Context, obj *billingqueueports.SearchIntent) (*string, error)
+}
+
+type BillingQueueStatsResolver interface {
+	OpenTotal(ctx context.Context, obj *billingqueueports.BillingQueueStats) (string, error)
+}
+
 type BriefingSectionResolver interface {
 	Read(ctx context.Context, obj *briefing.Section) (string, error)
 }
@@ -1265,6 +1398,11 @@ type CarrierSourcingResultResolver interface {
 type ChargeAllocationResolver interface {
 	Percent(ctx context.Context, obj *shipment.ChargeAllocation) (*string, error)
 	Amount(ctx context.Context, obj *shipment.ChargeAllocation) (*string, error)
+}
+
+type CommitInvoiceRunResultResolver interface {
+	RunID(ctx context.Context, obj *invoicerunports.CommitInvoiceRunResult) (string, error)
+	RunNumber(ctx context.Context, obj *invoicerunports.CommitInvoiceRunResult) (string, error)
 }
 
 type CommodityResolver interface {
@@ -1907,6 +2045,7 @@ type InvoiceResolver interface {
 	FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoringreadiness.InvoiceState, error)
 	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoicedispute.InvoiceDispute, error)
 	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoicedispute.InvoiceDispute, error)
+	Shipment(ctx context.Context, obj *invoice.Invoice) (*gqlmodel.Shipment, error)
 	LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error)
 }
 
@@ -1917,6 +2056,7 @@ type InvoiceAdjustmentResolver interface {
 	NetDeltaAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	RerateVariancePercent(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	SupportingDocumentIds(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]string, error)
+	ReferencedDocuments(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, error)
 }
 
 type InvoiceAdjustmentApprovalQueueItemResolver interface {
@@ -1933,6 +2073,27 @@ type InvoiceAdjustmentLineResolver interface {
 	RemainingEligibleAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
 	RebillQuantity(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
 	RebillAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustmentLine) (string, error)
+}
+
+type InvoiceAdjustmentPreviewResolver interface {
+	CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error)
+	RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error)
+	NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error)
+	RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (string, error)
+	Errors(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreview) (map[string]any, error)
+}
+
+type InvoiceAdjustmentPreviewLineResolver interface {
+	EligibleAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	AlreadyCreditedAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	RequestedCreditAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	RequestedRebillAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	RemainingEligibleAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+	EligibilityOverageAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentPreviewLine) (string, error)
+}
+
+type InvoiceAdjustmentReconciliationQueueItemResolver interface {
+	Amount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem) (string, error)
 }
 
 type InvoiceChargeGroupResolver interface {
@@ -1954,6 +2115,10 @@ type InvoiceDisputeResolver interface {
 	ResolvedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error)
 }
 
+type InvoiceEmailAttemptResolver interface {
+	Provider(ctx context.Context, obj *invoice.EmailAttempt) (string, error)
+}
+
 type InvoiceLineResolver interface {
 	Quantity(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
 	UnitPrice(ctx context.Context, obj *invoice.InvoiceLine) (string, error)
@@ -1961,6 +2126,10 @@ type InvoiceLineResolver interface {
 	ChargeMethod(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
 	Rate(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
 	AllocationPercent(ctx context.Context, obj *invoice.InvoiceLine) (*string, error)
+}
+
+type InvoiceSendPlanResolver interface {
+	Headers(ctx context.Context, obj *invoiceports.InvoiceSendPlan) (map[string]any, error)
 }
 
 type JobPositionResolver interface {
@@ -2142,6 +2311,15 @@ type MutationResolver interface {
 	ReleaseBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueueItem, error)
 	ResolveBillingQueueIssue(ctx context.Context, id string, issueID string, optionKey string) (*gqlmodel.BillingQueueItem, error)
 	UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error)
+	UpdateBillingQueueCharges(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateChargesInput) (*gqlmodel.BillingQueueItem, error)
+	UpdateBillingQueueInvoiceDetails(ctx context.Context, id string, input gqlmodel.BillingQueueInvoiceDetailsInput) (*gqlmodel.BillingQueueItem, error)
+	ReassignBillingQueueCharge(ctx context.Context, id string, input gqlmodel.BillingQueueReassignChargeInput) (*gqlmodel.BillingQueueReassignChargeResult, error)
+	CreateBillingQueueFilterPreset(ctx context.Context, input gqlmodel.BillingQueueFilterPresetInput) (*billingqueuefilterpreset.BillingQueueFilterPreset, error)
+	UpdateBillingQueueFilterPreset(ctx context.Context, id string, input gqlmodel.BillingQueueFilterPresetInput) (*billingqueuefilterpreset.BillingQueueFilterPreset, error)
+	DeleteBillingQueueFilterPreset(ctx context.Context, id string) (bool, error)
+	StartBillingQueueBulkRun(ctx context.Context, input gqlmodel.StartBillingQueueBulkRunInput) (*billingapprovalrun.ApprovalRun, error)
+	CancelBillingQueueBulkRun(ctx context.Context, id string) (*billingapprovalrun.ApprovalRun, error)
+	RedetectBillingQueuePodSignatures(ctx context.Context) (*billingqueueports.RedetectPODSignaturesResult, error)
 	StartBillingTransferRun(ctx context.Context, input gqlmodel.StartBillingTransferRunInput) (*gqlmodel.BillingTransferRun, error)
 	CancelBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	RetryBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
@@ -2460,9 +2638,18 @@ type MutationResolver interface {
 	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error)
 	ApproveInvoiceAdjustment(ctx context.Context, adjustmentID string) (*invoiceadjustment.InvoiceAdjustment, error)
 	RejectInvoiceAdjustment(ctx context.Context, input gqlmodel.RejectInvoiceAdjustmentInput) (*invoiceadjustment.InvoiceAdjustment, error)
+	CreateInvoiceAdjustmentDraft(ctx context.Context, invoiceID string) (*invoiceadjustment.InvoiceAdjustment, error)
+	UpdateInvoiceAdjustmentDraft(ctx context.Context, id string, input gqlmodel.InvoiceAdjustmentDraftInput) (*invoiceadjustment.InvoiceAdjustment, error)
+	SubmitInvoiceAdjustmentDraft(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
+	UpdateInvoiceDraft(ctx context.Context, invoiceID string, input gqlmodel.UpdateInvoiceDraftInput) (*invoice.Invoice, error)
+	GenerateInvoicePDF(ctx context.Context, invoiceID string) (*invoiceports.GenerateInvoicePDFResult, error)
+	SendInvoice(ctx context.Context, invoiceID string) (*invoiceports.InvoiceSendResult, error)
+	PostInvoice(ctx context.Context, invoiceID string) (*invoice.Invoice, error)
+	ShareInvoice(ctx context.Context, invoiceID string, input gqlmodel.ShareInvoiceInput) (*invoiceports.ShareInvoiceResult, error)
+	BillStatementNow(ctx context.Context, customerID string, input gqlmodel.BillStatementNowInput) (*invoicerunports.CommitInvoiceRunResult, error)
 	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
@@ -2726,6 +2913,12 @@ type OSHAAnnualSummaryResolver interface {
 	SubmittedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
 }
 
+type OpenStatementResolver interface {
+	TotalAmount(ctx context.Context, obj *invoicerunports.OpenStatement) (string, error)
+	MinimumAmount(ctx context.Context, obj *invoicerunports.OpenStatement) (*string, error)
+	HeldAmount(ctx context.Context, obj *invoicerunports.OpenStatement) (string, error)
+}
+
 type OrderResolver interface {
 	QuotedAmount(ctx context.Context, obj *order.Order) (*string, error)
 	BaseAmount(ctx context.Context, obj *order.Order) (*string, error)
@@ -2968,6 +3161,18 @@ type QueryResolver interface {
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
 	BillingQueueItems(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingQueueItemsFilterInput) (*gqlmodel.BillingQueueItemConnection, error)
+	BillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueueItem, error)
+	BillingQueueItemActivity(ctx context.Context, id string, limit *int, before *gqlmodel.BillingQueueActivityCursorInput) (*billingqueueports.BillingQueueEventPage, error)
+	BillingQueueNeighbors(ctx context.Context, id string, input *gqlmodel.DataTableConnectionInput, includePosted *bool) (*billingqueueports.BillingQueueNeighbors, error)
+	BillingQueueSummaries(ctx context.Context, ids []string) ([]*billingqueueports.BillingQueueItemSummary, error)
+	BillingQueueStats(ctx context.Context, dayStart *int) (*billingqueueports.BillingQueueStats, error)
+	BillingQueueRecommendations(ctx context.Context) ([]*billingqueueports.Recommendation, error)
+	BillingQueueAssist(ctx context.Context) (*billingqueueports.AssistAvailability, error)
+	BillingQueueBrief(ctx context.Context) (*billingqueueports.QueueBriefView, error)
+	BillingQueueNovaGeneration(ctx context.Context) (*billingqueueports.NovaGeneration, error)
+	BillingQueueSearchIntent(ctx context.Context, text string, today *string) (*billingqueueports.SearchIntent, error)
+	BillingQueueFilterPresets(ctx context.Context) ([]*billingqueuefilterpreset.BillingQueueFilterPreset, error)
+	BillingQueueBulkRun(ctx context.Context, id string) (*billingapprovalrun.ApprovalRun, error)
 	BillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	MyActiveBillingTransferRun(ctx context.Context) (*gqlmodel.BillingTransferRun, error)
 	BillingTransferRunItems(ctx context.Context, runID string, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.BillingTransferRunItemsFilterInput) (*gqlmodel.BillingTransferRunItemConnection, error)
@@ -3289,7 +3494,19 @@ type QueryResolver interface {
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
 	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
+	InvoiceAdjustmentLineage(ctx context.Context, correctionGroupID string) (*invoiceadjustmentports.InvoiceAdjustmentLineage, error)
+	InvoiceAdjustmentBatches(ctx context.Context, input gqlmodel.InvoiceAdjustmentQueueInput) (*gqlmodel.InvoiceAdjustmentBatchPage, error)
+	InvoiceAdjustmentBatch(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustmentBatch, error)
+	InvoiceAdjustmentReconciliationExceptions(ctx context.Context, input gqlmodel.InvoiceAdjustmentQueueInput) (*gqlmodel.InvoiceAdjustmentReconciliationPage, error)
+	InvoiceAdjustmentDraftPreview(ctx context.Context, id string) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error)
 	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoicedispute.InvoiceDispute, error)
+	InvoiceEmailAttempts(ctx context.Context, invoiceID string, limit *int, offset *int) (*gqlmodel.InvoiceEmailAttemptPage, error)
+	InvoiceSendPlan(ctx context.Context, invoiceID string) (*invoiceports.InvoiceSendPlan, error)
+	InvoicePostPreview(ctx context.Context, invoiceID string) (*invoiceports.InvoicePostPreview, error)
+	InvoiceShares(ctx context.Context, invoiceID string) ([]*invoiceshare.InvoiceShare, error)
+	InvoiceShareCandidates(ctx context.Context, invoiceID string, query *string, limit *int) ([]*invoiceports.ShareCandidate, error)
+	OpenStatements(ctx context.Context) ([]*invoicerunports.OpenStatement, error)
+	OpenStatement(ctx context.Context, customerID string) (*invoicerunports.OpenStatement, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
@@ -3642,6 +3859,14 @@ type ShipmentRatingDetailResolver interface {
 
 type ShipmentRatingReviewApprovalResolver interface {
 	ApprovedBy(ctx context.Context, obj *gqlmodel.ShipmentRatingReviewApproval) (*tenant.User, error)
+}
+
+type StatementGroupResolver interface {
+	TotalAmount(ctx context.Context, obj *invoicerunports.StatementGroup) (string, error)
+}
+
+type StatementShipmentResolver interface {
+	Amount(ctx context.Context, obj *invoicerunports.StatementShipment) (string, error)
 }
 
 type TCASubscriptionResolver interface {
@@ -4061,6 +4286,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		auditlogexec.Shard,
 		benefitsexec.Shard,
 		billingqueueexec.Shard,
+		billingqueueworkspaceexec.Shard,
 		billingtransferexec.Shard,
 		briefingexec.Shard,
 		bulkeditexec.Shard,
@@ -4117,6 +4343,9 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		invoiceexec.Shard,
 		invoiceadjustmentexec.Shard,
 		invoicedisputeexec.Shard,
+		invoicelifecycleexec.Shard,
+		invoiceshareexec.Shard,
+		invoicestatementexec.Shard,
 		journalentryexec.Shard,
 		journalreversalexec.Shard,
 		jurisdictionruleexec.Shard,
@@ -4187,307 +4416,335 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 	var resolvers map[string]func() any
 	if r := cfg.Resolvers; r != nil {
 		resolvers = map[string]func() any{
-			"AIAuditChainStatus":                 func() any { return r.AIAuditChainStatus() },
-			"AIAuditEvent":                       func() any { return r.AIAuditEvent() },
-			"AIAuditExport":                      func() any { return r.AIAuditExport() },
-			"AIControlSegment":                   func() any { return r.AIControlSegment() },
-			"AIControlSummary":                   func() any { return r.AIControlSummary() },
-			"AICorrection":                       func() any { return r.AICorrection() },
-			"AIFeedback":                         func() any { return r.AIFeedback() },
-			"AIProvider":                         func() any { return r.AIProvider() },
-			"AIProviderKeyInfo":                  func() any { return r.AIProviderKeyInfo() },
-			"AIRouteChoice":                      func() any { return r.AIRouteChoice() },
-			"AITuneUpEvidence":                   func() any { return r.AITuneUpEvidence() },
-			"AccessorialCharge":                  func() any { return r.AccessorialCharge() },
-			"AccountingAppCredential":            func() any { return r.AccountingAppCredential() },
-			"AccountingAppSettings":              func() any { return r.AccountingAppSettings() },
-			"AccountingConnection":               func() any { return r.AccountingConnection() },
-			"AccountingDriftFinding":             func() any { return r.AccountingDriftFinding() },
-			"AccountingDriftFixPreview":          func() any { return r.AccountingDriftFixPreview() },
-			"AccountingInboundChange":            func() any { return r.AccountingInboundChange() },
-			"AccountingInboundLine":              func() any { return r.AccountingInboundLine() },
-			"AccountingMapping":                  func() any { return r.AccountingMapping() },
-			"AccountingReferenceObject":          func() any { return r.AccountingReferenceObject() },
-			"AccountingSyncAttempt":              func() any { return r.AccountingSyncAttempt() },
-			"AccountingSyncAttentionGroup":       func() any { return r.AccountingSyncAttentionGroup() },
-			"AccountingSyncRecord":               func() any { return r.AccountingSyncRecord() },
-			"AgentControl":                       func() any { return r.AgentControl() },
-			"AgentDecision":                      func() any { return r.AgentDecision() },
-			"AgentDefinition":                    func() any { return r.AgentDefinition() },
-			"AgentDraft":                         func() any { return r.AgentDraft() },
-			"AgentEvalCase":                      func() any { return r.AgentEvalCase() },
-			"AgentEvaluation":                    func() any { return r.AgentEvaluation() },
-			"AgentInstructionFinding":            func() any { return r.AgentInstructionFinding() },
-			"AgentMemory":                        func() any { return r.AgentMemory() },
-			"AgentPlan":                          func() any { return r.AgentPlan() },
-			"AgentPreviewFieldChange":            func() any { return r.AgentPreviewFieldChange() },
-			"AgentPreviewMessage":                func() any { return r.AgentPreviewMessage() },
-			"AgentPreviewMoney":                  func() any { return r.AgentPreviewMoney() },
-			"AgentPreviewMoneyLine":              func() any { return r.AgentPreviewMoneyLine() },
-			"AgentPreviewRecordChange":           func() any { return r.AgentPreviewRecordChange() },
-			"AgentPreviewRef":                    func() any { return r.AgentPreviewRef() },
-			"AgentPreviewWarning":                func() any { return r.AgentPreviewWarning() },
-			"AgentProfileGuidance":               func() any { return r.AgentProfileGuidance() },
-			"AgentProfileVersion":                func() any { return r.AgentProfileVersion() },
-			"AgentProposal":                      func() any { return r.AgentProposal() },
-			"AgentProposalField":                 func() any { return r.AgentProposalField() },
-			"AgentQualityAgent":                  func() any { return r.AgentQualityAgent() },
-			"AgentQualityControl":                func() any { return r.AgentQualityControl() },
-			"AgentReflection":                    func() any { return r.AgentReflection() },
-			"AgentRun":                           func() any { return r.AgentRun() },
-			"AgentRunEvent":                      func() any { return r.AgentRunEvent() },
-			"AgentSafety":                        func() any { return r.AgentSafety() },
-			"AgentSafetySummary":                 func() any { return r.AgentSafetySummary() },
-			"AgentSuiteRun":                      func() any { return r.AgentSuiteRun() },
-			"AgentToolHolders":                   func() any { return r.AgentToolHolders() },
-			"AgentToolRule":                      func() any { return r.AgentToolRule() },
-			"AgentToolSafety":                    func() any { return r.AgentToolSafety() },
-			"AgentWorstRatedAnswer":              func() any { return r.AgentWorstRatedAnswer() },
-			"ApiKey":                             func() any { return r.ApiKey() },
-			"ApprovalDelegation":                 func() any { return r.ApprovalDelegation() },
-			"AuditEntry":                         func() any { return r.AuditEntry() },
-			"AuthEvent":                          func() any { return r.AuthEvent() },
-			"BriefingSection":                    func() any { return r.BriefingSection() },
-			"CaptureBatch":                       func() any { return r.CaptureBatch() },
-			"CaptureCoverSheet":                  func() any { return r.CaptureCoverSheet() },
-			"CaptureDevice":                      func() any { return r.CaptureDevice() },
-			"CaptureItem":                        func() any { return r.CaptureItem() },
-			"CapturePage":                        func() any { return r.CapturePage() },
-			"CaptureRequest":                     func() any { return r.CaptureRequest() },
-			"CaptureSettings":                    func() any { return r.CaptureSettings() },
-			"Carrier":                            func() any { return r.Carrier() },
-			"CarrierAssignment":                  func() any { return r.CarrierAssignment() },
-			"CarrierAssignmentAccessorial":       func() any { return r.CarrierAssignmentAccessorial() },
-			"CarrierCapacityPosting":             func() any { return r.CarrierCapacityPosting() },
-			"CarrierEquipmentVerification":       func() any { return r.CarrierEquipmentVerification() },
-			"CarrierInsurancePolicy":             func() any { return r.CarrierInsurancePolicy() },
-			"CarrierIntelControl":                func() any { return r.CarrierIntelControl() },
-			"CarrierIntelEquipment":              func() any { return r.CarrierIntelEquipment() },
-			"CarrierIntelEvent":                  func() any { return r.CarrierIntelEvent() },
-			"CarrierIntelFeedState":              func() any { return r.CarrierIntelFeedState() },
-			"CarrierIntelFinding":                func() any { return r.CarrierIntelFinding() },
-			"CarrierIntelInsurance":              func() any { return r.CarrierIntelInsurance() },
-			"CarrierIntelInsuranceChange":        func() any { return r.CarrierIntelInsuranceChange() },
-			"CarrierIntelInsuranceFiling":        func() any { return r.CarrierIntelInsuranceFiling() },
-			"CarrierIntelOverride":               func() any { return r.CarrierIntelOverride() },
-			"CarrierIntelRuleDefinition":         func() any { return r.CarrierIntelRuleDefinition() },
-			"CarrierIntelSafety":                 func() any { return r.CarrierIntelSafety() },
-			"CarrierIntelSnapshot":               func() any { return r.CarrierIntelSnapshot() },
-			"CarrierMonitoringEnrollment":        func() any { return r.CarrierMonitoringEnrollment() },
-			"CarrierSettlement":                  func() any { return r.CarrierSettlement() },
-			"CarrierSourcingResult":              func() any { return r.CarrierSourcingResult() },
-			"ChargeAllocation":                   func() any { return r.ChargeAllocation() },
-			"Commodity":                          func() any { return r.Commodity() },
-			"Customer":                           func() any { return r.Customer() },
-			"CustomerBillingProfile":             func() any { return r.CustomerBillingProfile() },
-			"CustomerPayment":                    func() any { return r.CustomerPayment() },
-			"CustomerPaymentApplication":         func() any { return r.CustomerPaymentApplication() },
-			"CustomerTrackingProfile":            func() any { return r.CustomerTrackingProfile() },
-			"DOTRandomDraw":                      func() any { return r.DOTRandomDraw() },
-			"DOTRandomDrawEntry":                 func() any { return r.DOTRandomDrawEntry() },
-			"DOTRandomPool":                      func() any { return r.DOTRandomPool() },
-			"DQFFile":                            func() any { return r.DQFFile() },
-			"DQFItem":                            func() any { return r.DQFItem() },
-			"DetentionOccurrence":                func() any { return r.DetentionOccurrence() },
-			"DetentionPreviewResult":             func() any { return r.DetentionPreviewResult() },
-			"DisciplinaryLadder":                 func() any { return r.DisciplinaryLadder() },
-			"DistanceProfile":                    func() any { return r.DistanceProfile() },
-			"DocumentTemplate":                   func() any { return r.DocumentTemplate() },
-			"DocumentTemplateAssignment":         func() any { return r.DocumentTemplateAssignment() },
-			"DocumentTemplateVersion":            func() any { return r.DocumentTemplateVersion() },
-			"DriverPayEvent":                     func() any { return r.DriverPayEvent() },
-			"DriverPayEventComponent":            func() any { return r.DriverPayEventComponent() },
-			"DriverSettlement":                   func() any { return r.DriverSettlement() },
-			"DriverSettlementLine":               func() any { return r.DriverSettlementLine() },
-			"DriverSettlementLineGroup":          func() any { return r.DriverSettlementLineGroup() },
-			"DrugAlcoholStanding":                func() any { return r.DrugAlcoholStanding() },
-			"EdiCarrierInvoice":                  func() any { return r.EdiCarrierInvoice() },
-			"EdiFlowInstance":                    func() any { return r.EdiFlowInstance() },
-			"EdiLadingVersion":                   func() any { return r.EdiLadingVersion() },
-			"EdiMessage":                         func() any { return r.EdiMessage() },
-			"EdiTransfer":                        func() any { return r.EdiTransfer() },
-			"EquipmentContinuity":                func() any { return r.EquipmentContinuity() },
-			"EscrowAccount":                      func() any { return r.EscrowAccount() },
-			"ExternalIdentity":                   func() any { return r.ExternalIdentity() },
-			"ExtractionEvalCase":                 func() any { return r.ExtractionEvalCase() },
-			"ExtractionEvalResult":               func() any { return r.ExtractionEvalResult() },
-			"ExtractionEvalRun":                  func() any { return r.ExtractionEvalRun() },
-			"ExtractionRollout":                  func() any { return r.ExtractionRollout() },
-			"ExtractionShadowReport":             func() any { return r.ExtractionShadowReport() },
-			"ExtractionShadowResult":             func() any { return r.ExtractionShadowResult() },
-			"ExtractionSnapshot":                 func() any { return r.ExtractionSnapshot() },
-			"FactoringAgreement":                 func() any { return r.FactoringAgreement() },
-			"FactoringCheck":                     func() any { return r.FactoringCheck() },
-			"FactoringCompany":                   func() any { return r.FactoringCompany() },
-			"FactoringFundingPlan":               func() any { return r.FactoringFundingPlan() },
-			"FactoringInvoiceState":              func() any { return r.FactoringInvoiceState() },
-			"FactoringMovement":                  func() any { return r.FactoringMovement() },
-			"FactoringNoa":                       func() any { return r.FactoringNoa() },
-			"FactoringPlannedLine":               func() any { return r.FactoringPlannedLine() },
-			"FactoringPlannedMovement":           func() any { return r.FactoringPlannedMovement() },
-			"FactoringRemittance":                func() any { return r.FactoringRemittance() },
-			"FactoringRemittanceLine":            func() any { return r.FactoringRemittanceLine() },
-			"FactoringRemittancePlan":            func() any { return r.FactoringRemittancePlan() },
-			"FactoringReserveEntry":              func() any { return r.FactoringReserveEntry() },
-			"FactoringReserveMovementPlan":       func() any { return r.FactoringReserveMovementPlan() },
-			"FactoringSubmission":                func() any { return r.FactoringSubmission() },
-			"FactoringSubmissionItem":            func() any { return r.FactoringSubmissionItem() },
-			"FactoringSubmissionPlan":            func() any { return r.FactoringSubmissionPlan() },
-			"FactoringTransport":                 func() any { return r.FactoringTransport() },
-			"FiscalYear":                         func() any { return r.FiscalYear() },
-			"FleetSafetyRank":                    func() any { return r.FleetSafetyRank() },
-			"FleetSafetyTerminal":                func() any { return r.FleetSafetyTerminal() },
-			"FormulaLibraryImport":               func() any { return r.FormulaLibraryImport() },
-			"FormulaLibraryVersion":              func() any { return r.FormulaLibraryVersion() },
-			"FormulaTemplate":                    func() any { return r.FormulaTemplate() },
-			"FormulaTemplateTable":               func() any { return r.FormulaTemplateTable() },
-			"FuelCard":                           func() any { return r.FuelCard() },
-			"FuelCardDeskCard":                   func() any { return r.FuelCardDeskCard() },
-			"FuelFeedStatus":                     func() any { return r.FuelFeedStatus() },
-			"FuelHeldSpend":                      func() any { return r.FuelHeldSpend() },
-			"FuelJurisdictionGallons":            func() any { return r.FuelJurisdictionGallons() },
-			"FuelPurchase":                       func() any { return r.FuelPurchase() },
-			"FuelPurchaseIFTA":                   func() any { return r.FuelPurchaseIFTA() },
-			"FuelPurchaseImportBatch":            func() any { return r.FuelPurchaseImportBatch() },
-			"FuelPurchaseImportRow":              func() any { return r.FuelPurchaseImportRow() },
-			"FuelPurchaseImportSummary":          func() any { return r.FuelPurchaseImportSummary() },
-			"FuelSpend":                          func() any { return r.FuelSpend() },
-			"IFTAFleetMPG":                       func() any { return r.IFTAFleetMPG() },
-			"IFTAJurisdiction":                   func() any { return r.IFTAJurisdiction() },
-			"IFTAJurisdictionMileageEntry":       func() any { return r.IFTAJurisdictionMileageEntry() },
-			"IFTAPeriod":                         func() any { return r.IFTAPeriod() },
-			"IFTAReturn":                         func() any { return r.IFTAReturn() },
-			"IFTAReturnLine":                     func() any { return r.IFTAReturnLine() },
-			"IFTAReturnProblem":                  func() any { return r.IFTAReturnProblem() },
-			"IFTATaxRate":                        func() any { return r.IFTATaxRate() },
-			"InboundActivity":                    func() any { return r.InboundActivity() },
-			"InboundAttachment":                  func() any { return r.InboundAttachment() },
-			"InboundMailbox":                     func() any { return r.InboundMailbox() },
-			"InboundMailboxCredentials":          func() any { return r.InboundMailboxCredentials() },
-			"InboundMessage":                     func() any { return r.InboundMessage() },
-			"InboundReply":                       func() any { return r.InboundReply() },
-			"InboundSnooze":                      func() any { return r.InboundSnooze() },
-			"InboundSplitDocument":               func() any { return r.InboundSplitDocument() },
-			"Invoice":                            func() any { return r.Invoice() },
-			"InvoiceAdjustment":                  func() any { return r.InvoiceAdjustment() },
-			"InvoiceAdjustmentApprovalQueueItem": func() any { return r.InvoiceAdjustmentApprovalQueueItem() },
-			"InvoiceAdjustmentLine":              func() any { return r.InvoiceAdjustmentLine() },
-			"InvoiceChargeGroup":                 func() any { return r.InvoiceChargeGroup() },
-			"InvoiceDispute":                     func() any { return r.InvoiceDispute() },
-			"InvoiceLine":                        func() any { return r.InvoiceLine() },
-			"JobPosition":                        func() any { return r.JobPosition() },
-			"JournalCardLine":                    func() any { return r.JournalCardLine() },
-			"JournalCardPosting":                 func() any { return r.JournalCardPosting() },
-			"JournalEntry":                       func() any { return r.JournalEntry() },
-			"JournalEntryLine":                   func() any { return r.JournalEntryLine() },
-			"JournalReviewSummary":               func() any { return r.JournalReviewSummary() },
-			"JournalSourceInfo":                  func() any { return r.JournalSourceInfo() },
-			"JurisdictionRule":                   func() any { return r.JurisdictionRule() },
-			"LateChargeAssessment":               func() any { return r.LateChargeAssessment() },
-			"LateChargeLine":                     func() any { return r.LateChargeLine() },
-			"LeaveControl":                       func() any { return r.LeaveControl() },
-			"LeaveEntitlement":                   func() any { return r.LeaveEntitlement() },
-			"LocationCategory":                   func() any { return r.LocationCategory() },
-			"MFAAuthenticator":                   func() any { return r.MFAAuthenticator() },
-			"Mutation":                           func() any { return r.Mutation() },
-			"MyAgent":                            func() any { return r.MyAgent() },
-			"MyPTOBalance":                       func() any { return r.MyPTOBalance() },
-			"OSHAAnnualSummary":                  func() any { return r.OSHAAnnualSummary() },
-			"Order":                              func() any { return r.Order() },
-			"PTOAccrualTier":                     func() any { return r.PTOAccrualTier() },
-			"PTOAvailability":                    func() any { return r.PTOAvailability() },
-			"PTOBalanceSummary":                  func() any { return r.PTOBalanceSummary() },
-			"PTOChartDataPoint":                  func() any { return r.PTOChartDataPoint() },
-			"PTOLiabilityReport":                 func() any { return r.PTOLiabilityReport() },
-			"PTOLiabilityRow":                    func() any { return r.PTOLiabilityRow() },
-			"PTOPolicy":                          func() any { return r.PTOPolicy() },
-			"PTOPolicyRule":                      func() any { return r.PTOPolicyRule() },
-			"PayCode":                            func() any { return r.PayCode() },
-			"PayMileageBand":                     func() any { return r.PayMileageBand() },
-			"PayProfile":                         func() any { return r.PayProfile() },
-			"PayProfileComponent":                func() any { return r.PayProfileComponent() },
-			"PayRateOverride":                    func() any { return r.PayRateOverride() },
-			"PendingDecisionEdge":                func() any { return r.PendingDecisionEdge() },
-			"PerformanceReview":                  func() any { return r.PerformanceReview() },
-			"PerformanceReviewTemplate":          func() any { return r.PerformanceReviewTemplate() },
-			"PlannedPTOAccrual":                  func() any { return r.PlannedPTOAccrual() },
-			"PortalCredential":                   func() any { return r.PortalCredential() },
-			"PortalTraining":                     func() any { return r.PortalTraining() },
-			"Query":                              func() any { return r.Query() },
-			"RateAgreement":                      func() any { return r.RateAgreement() },
-			"RateMatrix":                         func() any { return r.RateMatrix() },
-			"RateMatrixVersion":                  func() any { return r.RateMatrixVersion() },
-			"ReportSchedule":                     func() any { return r.ReportSchedule() },
-			"ReviewRating":                       func() any { return r.ReviewRating() },
-			"RiskDecision":                       func() any { return r.RiskDecision() },
-			"Role":                               func() any { return r.Role() },
-			"RoutingGuideEntry":                  func() any { return r.RoutingGuideEntry() },
-			"SafetyScorecard":                    func() any { return r.SafetyScorecard() },
-			"ServiceFailure":                     func() any { return r.ServiceFailure() },
-			"ServiceFailureShipment":             func() any { return r.ServiceFailureShipment() },
-			"ServiceFailureStop":                 func() any { return r.ServiceFailureStop() },
-			"SettlementControl":                  func() any { return r.SettlementControl() },
-			"SettlementException":                func() any { return r.SettlementException() },
-			"ShiftTemplate":                      func() any { return r.ShiftTemplate() },
-			"Shipment":                           func() any { return r.Shipment() },
-			"ShipmentCustomer":                   func() any { return r.ShipmentCustomer() },
-			"ShipmentMove":                       func() any { return r.ShipmentMove() },
-			"ShipmentMoveJurisdictionMile":       func() any { return r.ShipmentMoveJurisdictionMile() },
-			"ShipmentRatingDetail":               func() any { return r.ShipmentRatingDetail() },
-			"ShipmentRatingReviewApproval":       func() any { return r.ShipmentRatingReviewApproval() },
-			"TCASubscription":                    func() any { return r.TCASubscription() },
-			"TableConfiguration":                 func() any { return r.TableConfiguration() },
-			"Tender":                             func() any { return r.Tender() },
-			"TenderOffer":                        func() any { return r.TenderOffer() },
-			"Tractor":                            func() any { return r.Tractor() },
-			"Trailer":                            func() any { return r.Trailer() },
-			"TrainingCourse":                     func() any { return r.TrainingCourse() },
-			"TriageAction":                       func() any { return r.TriageAction() },
-			"TriageAssignee":                     func() any { return r.TriageAssignee() },
-			"TriageBriefing":                     func() any { return r.TriageBriefing() },
-			"TriageConflict":                     func() any { return r.TriageConflict() },
-			"TriageDeckItem":                     func() any { return r.TriageDeckItem() },
-			"TriageHandOff":                      func() any { return r.TriageHandOff() },
-			"TriageReplyTemplate":                func() any { return r.TriageReplyTemplate() },
-			"TriageRule":                         func() any { return r.TriageRule() },
-			"TriageSettings":                     func() any { return r.TriageSettings() },
-			"TriageStopTimes":                    func() any { return r.TriageStopTimes() },
-			"TriageView":                         func() any { return r.TriageView() },
-			"User":                               func() any { return r.User() },
-			"WatchtowerAgentWork":                func() any { return r.WatchtowerAgentWork() },
-			"WatchtowerItem":                     func() any { return r.WatchtowerItem() },
-			"WatchtowerItemEvent":                func() any { return r.WatchtowerItemEvent() },
-			"WatchtowerRecord":                   func() any { return r.WatchtowerRecord() },
-			"Worker":                             func() any { return r.Worker() },
-			"WorkerBenefitEnrollment":            func() any { return r.WorkerBenefitEnrollment() },
-			"WorkerChecklist":                    func() any { return r.WorkerChecklist() },
-			"WorkerChecklistItem":                func() any { return r.WorkerChecklistItem() },
-			"WorkerChecklistProgress":            func() any { return r.WorkerChecklistProgress() },
-			"WorkerChecklistTemplate":            func() any { return r.WorkerChecklistTemplate() },
-			"WorkerChecklistTemplateItem":        func() any { return r.WorkerChecklistTemplateItem() },
-			"WorkerClearinghouseQuery":           func() any { return r.WorkerClearinghouseQuery() },
-			"WorkerCredential":                   func() any { return r.WorkerCredential() },
-			"WorkerCredentialType":               func() any { return r.WorkerCredentialType() },
-			"WorkerDOTTest":                      func() any { return r.WorkerDOTTest() },
-			"WorkerDOTViolation":                 func() any { return r.WorkerDOTViolation() },
-			"WorkerDisciplinaryAction":           func() any { return r.WorkerDisciplinaryAction() },
-			"WorkerEmploymentCascade":            func() any { return r.WorkerEmploymentCascade() },
-			"WorkerEmploymentEvent":              func() any { return r.WorkerEmploymentEvent() },
-			"WorkerEmploymentVerification":       func() any { return r.WorkerEmploymentVerification() },
-			"WorkerInjury":                       func() any { return r.WorkerInjury() },
-			"WorkerLeaveCase":                    func() any { return r.WorkerLeaveCase() },
-			"WorkerLeaveEntry":                   func() any { return r.WorkerLeaveEntry() },
-			"WorkerPTO":                          func() any { return r.WorkerPTO() },
-			"WorkerPTOBalance":                   func() any { return r.WorkerPTOBalance() },
-			"WorkerPTOLedgerEntry":               func() any { return r.WorkerPTOLedgerEntry() },
-			"WorkerPTOPolicyAssignment":          func() any { return r.WorkerPTOPolicyAssignment() },
-			"WorkerPayAssignment":                func() any { return r.WorkerPayAssignment() },
-			"WorkerProfile":                      func() any { return r.WorkerProfile() },
-			"WorkerProfileChangeRequest":         func() any { return r.WorkerProfileChangeRequest() },
-			"WorkerRecognition":                  func() any { return r.WorkerRecognition() },
-			"WorkerRosterAttention":              func() any { return r.WorkerRosterAttention() },
-			"WorkerSafetyEvent":                  func() any { return r.WorkerSafetyEvent() },
-			"WorkerTrainingRecord":               func() any { return r.WorkerTrainingRecord() },
+			"AIAuditChainStatus":                       func() any { return r.AIAuditChainStatus() },
+			"AIAuditEvent":                             func() any { return r.AIAuditEvent() },
+			"AIAuditExport":                            func() any { return r.AIAuditExport() },
+			"AIControlSegment":                         func() any { return r.AIControlSegment() },
+			"AIControlSummary":                         func() any { return r.AIControlSummary() },
+			"AICorrection":                             func() any { return r.AICorrection() },
+			"AIFeedback":                               func() any { return r.AIFeedback() },
+			"AIProvider":                               func() any { return r.AIProvider() },
+			"AIProviderKeyInfo":                        func() any { return r.AIProviderKeyInfo() },
+			"AIRouteChoice":                            func() any { return r.AIRouteChoice() },
+			"AITuneUpEvidence":                         func() any { return r.AITuneUpEvidence() },
+			"AccessorialCharge":                        func() any { return r.AccessorialCharge() },
+			"AccountingAppCredential":                  func() any { return r.AccountingAppCredential() },
+			"AccountingAppSettings":                    func() any { return r.AccountingAppSettings() },
+			"AccountingConnection":                     func() any { return r.AccountingConnection() },
+			"AccountingDriftFinding":                   func() any { return r.AccountingDriftFinding() },
+			"AccountingDriftFixPreview":                func() any { return r.AccountingDriftFixPreview() },
+			"AccountingInboundChange":                  func() any { return r.AccountingInboundChange() },
+			"AccountingInboundLine":                    func() any { return r.AccountingInboundLine() },
+			"AccountingMapping":                        func() any { return r.AccountingMapping() },
+			"AccountingReferenceObject":                func() any { return r.AccountingReferenceObject() },
+			"AccountingSyncAttempt":                    func() any { return r.AccountingSyncAttempt() },
+			"AccountingSyncAttentionGroup":             func() any { return r.AccountingSyncAttentionGroup() },
+			"AccountingSyncRecord":                     func() any { return r.AccountingSyncRecord() },
+			"AgentControl":                             func() any { return r.AgentControl() },
+			"AgentDecision":                            func() any { return r.AgentDecision() },
+			"AgentDefinition":                          func() any { return r.AgentDefinition() },
+			"AgentDraft":                               func() any { return r.AgentDraft() },
+			"AgentEvalCase":                            func() any { return r.AgentEvalCase() },
+			"AgentEvaluation":                          func() any { return r.AgentEvaluation() },
+			"AgentInstructionFinding":                  func() any { return r.AgentInstructionFinding() },
+			"AgentMemory":                              func() any { return r.AgentMemory() },
+			"AgentPlan":                                func() any { return r.AgentPlan() },
+			"AgentPreviewFieldChange":                  func() any { return r.AgentPreviewFieldChange() },
+			"AgentPreviewMessage":                      func() any { return r.AgentPreviewMessage() },
+			"AgentPreviewMoney":                        func() any { return r.AgentPreviewMoney() },
+			"AgentPreviewMoneyLine":                    func() any { return r.AgentPreviewMoneyLine() },
+			"AgentPreviewRecordChange":                 func() any { return r.AgentPreviewRecordChange() },
+			"AgentPreviewRef":                          func() any { return r.AgentPreviewRef() },
+			"AgentPreviewWarning":                      func() any { return r.AgentPreviewWarning() },
+			"AgentProfileGuidance":                     func() any { return r.AgentProfileGuidance() },
+			"AgentProfileVersion":                      func() any { return r.AgentProfileVersion() },
+			"AgentProposal":                            func() any { return r.AgentProposal() },
+			"AgentProposalField":                       func() any { return r.AgentProposalField() },
+			"AgentQualityAgent":                        func() any { return r.AgentQualityAgent() },
+			"AgentQualityControl":                      func() any { return r.AgentQualityControl() },
+			"AgentReflection":                          func() any { return r.AgentReflection() },
+			"AgentRun":                                 func() any { return r.AgentRun() },
+			"AgentRunEvent":                            func() any { return r.AgentRunEvent() },
+			"AgentSafety":                              func() any { return r.AgentSafety() },
+			"AgentSafetySummary":                       func() any { return r.AgentSafetySummary() },
+			"AgentSuiteRun":                            func() any { return r.AgentSuiteRun() },
+			"AgentToolHolders":                         func() any { return r.AgentToolHolders() },
+			"AgentToolRule":                            func() any { return r.AgentToolRule() },
+			"AgentToolSafety":                          func() any { return r.AgentToolSafety() },
+			"AgentWorstRatedAnswer":                    func() any { return r.AgentWorstRatedAnswer() },
+			"ApiKey":                                   func() any { return r.ApiKey() },
+			"ApprovalDelegation":                       func() any { return r.ApprovalDelegation() },
+			"AuditEntry":                               func() any { return r.AuditEntry() },
+			"AuthEvent":                                func() any { return r.AuthEvent() },
+			"BillingQueueBulkRunItem":                  func() any { return r.BillingQueueBulkRunItem() },
+			"BillingQueueChargeLine":                   func() any { return r.BillingQueueChargeLine() },
+			"BillingQueueChargeReview":                 func() any { return r.BillingQueueChargeReview() },
+			"BillingQueueDetentionHold":                func() any { return r.BillingQueueDetentionHold() },
+			"BillingQueueEvent":                        func() any { return r.BillingQueueEvent() },
+			"BillingQueueIssue":                        func() any { return r.BillingQueueIssue() },
+			"BillingQueueIssueEffect":                  func() any { return r.BillingQueueIssueEffect() },
+			"BillingQueueIssueOption":                  func() any { return r.BillingQueueIssueOption() },
+			"BillingQueueItemSummary":                  func() any { return r.BillingQueueItemSummary() },
+			"BillingQueueLaneStat":                     func() any { return r.BillingQueueLaneStat() },
+			"BillingQueueNovaGeneration":               func() any { return r.BillingQueueNovaGeneration() },
+			"BillingQueuePayerShare":                   func() any { return r.BillingQueuePayerShare() },
+			"BillingQueuePayerShareLine":               func() any { return r.BillingQueuePayerShareLine() },
+			"BillingQueuePayerShareParty":              func() any { return r.BillingQueuePayerShareParty() },
+			"BillingQueuePulse":                        func() any { return r.BillingQueuePulse() },
+			"BillingQueueRecommendation":               func() any { return r.BillingQueueRecommendation() },
+			"BillingQueueSearchDates":                  func() any { return r.BillingQueueSearchDates() },
+			"BillingQueueSearchIntent":                 func() any { return r.BillingQueueSearchIntent() },
+			"BillingQueueStats":                        func() any { return r.BillingQueueStats() },
+			"BriefingSection":                          func() any { return r.BriefingSection() },
+			"CaptureBatch":                             func() any { return r.CaptureBatch() },
+			"CaptureCoverSheet":                        func() any { return r.CaptureCoverSheet() },
+			"CaptureDevice":                            func() any { return r.CaptureDevice() },
+			"CaptureItem":                              func() any { return r.CaptureItem() },
+			"CapturePage":                              func() any { return r.CapturePage() },
+			"CaptureRequest":                           func() any { return r.CaptureRequest() },
+			"CaptureSettings":                          func() any { return r.CaptureSettings() },
+			"Carrier":                                  func() any { return r.Carrier() },
+			"CarrierAssignment":                        func() any { return r.CarrierAssignment() },
+			"CarrierAssignmentAccessorial":             func() any { return r.CarrierAssignmentAccessorial() },
+			"CarrierCapacityPosting":                   func() any { return r.CarrierCapacityPosting() },
+			"CarrierEquipmentVerification":             func() any { return r.CarrierEquipmentVerification() },
+			"CarrierInsurancePolicy":                   func() any { return r.CarrierInsurancePolicy() },
+			"CarrierIntelControl":                      func() any { return r.CarrierIntelControl() },
+			"CarrierIntelEquipment":                    func() any { return r.CarrierIntelEquipment() },
+			"CarrierIntelEvent":                        func() any { return r.CarrierIntelEvent() },
+			"CarrierIntelFeedState":                    func() any { return r.CarrierIntelFeedState() },
+			"CarrierIntelFinding":                      func() any { return r.CarrierIntelFinding() },
+			"CarrierIntelInsurance":                    func() any { return r.CarrierIntelInsurance() },
+			"CarrierIntelInsuranceChange":              func() any { return r.CarrierIntelInsuranceChange() },
+			"CarrierIntelInsuranceFiling":              func() any { return r.CarrierIntelInsuranceFiling() },
+			"CarrierIntelOverride":                     func() any { return r.CarrierIntelOverride() },
+			"CarrierIntelRuleDefinition":               func() any { return r.CarrierIntelRuleDefinition() },
+			"CarrierIntelSafety":                       func() any { return r.CarrierIntelSafety() },
+			"CarrierIntelSnapshot":                     func() any { return r.CarrierIntelSnapshot() },
+			"CarrierMonitoringEnrollment":              func() any { return r.CarrierMonitoringEnrollment() },
+			"CarrierSettlement":                        func() any { return r.CarrierSettlement() },
+			"CarrierSourcingResult":                    func() any { return r.CarrierSourcingResult() },
+			"ChargeAllocation":                         func() any { return r.ChargeAllocation() },
+			"CommitInvoiceRunResult":                   func() any { return r.CommitInvoiceRunResult() },
+			"Commodity":                                func() any { return r.Commodity() },
+			"Customer":                                 func() any { return r.Customer() },
+			"CustomerBillingProfile":                   func() any { return r.CustomerBillingProfile() },
+			"CustomerPayment":                          func() any { return r.CustomerPayment() },
+			"CustomerPaymentApplication":               func() any { return r.CustomerPaymentApplication() },
+			"CustomerTrackingProfile":                  func() any { return r.CustomerTrackingProfile() },
+			"DOTRandomDraw":                            func() any { return r.DOTRandomDraw() },
+			"DOTRandomDrawEntry":                       func() any { return r.DOTRandomDrawEntry() },
+			"DOTRandomPool":                            func() any { return r.DOTRandomPool() },
+			"DQFFile":                                  func() any { return r.DQFFile() },
+			"DQFItem":                                  func() any { return r.DQFItem() },
+			"DetentionOccurrence":                      func() any { return r.DetentionOccurrence() },
+			"DetentionPreviewResult":                   func() any { return r.DetentionPreviewResult() },
+			"DisciplinaryLadder":                       func() any { return r.DisciplinaryLadder() },
+			"DistanceProfile":                          func() any { return r.DistanceProfile() },
+			"DocumentTemplate":                         func() any { return r.DocumentTemplate() },
+			"DocumentTemplateAssignment":               func() any { return r.DocumentTemplateAssignment() },
+			"DocumentTemplateVersion":                  func() any { return r.DocumentTemplateVersion() },
+			"DriverPayEvent":                           func() any { return r.DriverPayEvent() },
+			"DriverPayEventComponent":                  func() any { return r.DriverPayEventComponent() },
+			"DriverSettlement":                         func() any { return r.DriverSettlement() },
+			"DriverSettlementLine":                     func() any { return r.DriverSettlementLine() },
+			"DriverSettlementLineGroup":                func() any { return r.DriverSettlementLineGroup() },
+			"DrugAlcoholStanding":                      func() any { return r.DrugAlcoholStanding() },
+			"EdiCarrierInvoice":                        func() any { return r.EdiCarrierInvoice() },
+			"EdiFlowInstance":                          func() any { return r.EdiFlowInstance() },
+			"EdiLadingVersion":                         func() any { return r.EdiLadingVersion() },
+			"EdiMessage":                               func() any { return r.EdiMessage() },
+			"EdiTransfer":                              func() any { return r.EdiTransfer() },
+			"EquipmentContinuity":                      func() any { return r.EquipmentContinuity() },
+			"EscrowAccount":                            func() any { return r.EscrowAccount() },
+			"ExternalIdentity":                         func() any { return r.ExternalIdentity() },
+			"ExtractionEvalCase":                       func() any { return r.ExtractionEvalCase() },
+			"ExtractionEvalResult":                     func() any { return r.ExtractionEvalResult() },
+			"ExtractionEvalRun":                        func() any { return r.ExtractionEvalRun() },
+			"ExtractionRollout":                        func() any { return r.ExtractionRollout() },
+			"ExtractionShadowReport":                   func() any { return r.ExtractionShadowReport() },
+			"ExtractionShadowResult":                   func() any { return r.ExtractionShadowResult() },
+			"ExtractionSnapshot":                       func() any { return r.ExtractionSnapshot() },
+			"FactoringAgreement":                       func() any { return r.FactoringAgreement() },
+			"FactoringCheck":                           func() any { return r.FactoringCheck() },
+			"FactoringCompany":                         func() any { return r.FactoringCompany() },
+			"FactoringFundingPlan":                     func() any { return r.FactoringFundingPlan() },
+			"FactoringInvoiceState":                    func() any { return r.FactoringInvoiceState() },
+			"FactoringMovement":                        func() any { return r.FactoringMovement() },
+			"FactoringNoa":                             func() any { return r.FactoringNoa() },
+			"FactoringPlannedLine":                     func() any { return r.FactoringPlannedLine() },
+			"FactoringPlannedMovement":                 func() any { return r.FactoringPlannedMovement() },
+			"FactoringRemittance":                      func() any { return r.FactoringRemittance() },
+			"FactoringRemittanceLine":                  func() any { return r.FactoringRemittanceLine() },
+			"FactoringRemittancePlan":                  func() any { return r.FactoringRemittancePlan() },
+			"FactoringReserveEntry":                    func() any { return r.FactoringReserveEntry() },
+			"FactoringReserveMovementPlan":             func() any { return r.FactoringReserveMovementPlan() },
+			"FactoringSubmission":                      func() any { return r.FactoringSubmission() },
+			"FactoringSubmissionItem":                  func() any { return r.FactoringSubmissionItem() },
+			"FactoringSubmissionPlan":                  func() any { return r.FactoringSubmissionPlan() },
+			"FactoringTransport":                       func() any { return r.FactoringTransport() },
+			"FiscalYear":                               func() any { return r.FiscalYear() },
+			"FleetSafetyRank":                          func() any { return r.FleetSafetyRank() },
+			"FleetSafetyTerminal":                      func() any { return r.FleetSafetyTerminal() },
+			"FormulaLibraryImport":                     func() any { return r.FormulaLibraryImport() },
+			"FormulaLibraryVersion":                    func() any { return r.FormulaLibraryVersion() },
+			"FormulaTemplate":                          func() any { return r.FormulaTemplate() },
+			"FormulaTemplateTable":                     func() any { return r.FormulaTemplateTable() },
+			"FuelCard":                                 func() any { return r.FuelCard() },
+			"FuelCardDeskCard":                         func() any { return r.FuelCardDeskCard() },
+			"FuelFeedStatus":                           func() any { return r.FuelFeedStatus() },
+			"FuelHeldSpend":                            func() any { return r.FuelHeldSpend() },
+			"FuelJurisdictionGallons":                  func() any { return r.FuelJurisdictionGallons() },
+			"FuelPurchase":                             func() any { return r.FuelPurchase() },
+			"FuelPurchaseIFTA":                         func() any { return r.FuelPurchaseIFTA() },
+			"FuelPurchaseImportBatch":                  func() any { return r.FuelPurchaseImportBatch() },
+			"FuelPurchaseImportRow":                    func() any { return r.FuelPurchaseImportRow() },
+			"FuelPurchaseImportSummary":                func() any { return r.FuelPurchaseImportSummary() },
+			"FuelSpend":                                func() any { return r.FuelSpend() },
+			"IFTAFleetMPG":                             func() any { return r.IFTAFleetMPG() },
+			"IFTAJurisdiction":                         func() any { return r.IFTAJurisdiction() },
+			"IFTAJurisdictionMileageEntry":             func() any { return r.IFTAJurisdictionMileageEntry() },
+			"IFTAPeriod":                               func() any { return r.IFTAPeriod() },
+			"IFTAReturn":                               func() any { return r.IFTAReturn() },
+			"IFTAReturnLine":                           func() any { return r.IFTAReturnLine() },
+			"IFTAReturnProblem":                        func() any { return r.IFTAReturnProblem() },
+			"IFTATaxRate":                              func() any { return r.IFTATaxRate() },
+			"InboundActivity":                          func() any { return r.InboundActivity() },
+			"InboundAttachment":                        func() any { return r.InboundAttachment() },
+			"InboundMailbox":                           func() any { return r.InboundMailbox() },
+			"InboundMailboxCredentials":                func() any { return r.InboundMailboxCredentials() },
+			"InboundMessage":                           func() any { return r.InboundMessage() },
+			"InboundReply":                             func() any { return r.InboundReply() },
+			"InboundSnooze":                            func() any { return r.InboundSnooze() },
+			"InboundSplitDocument":                     func() any { return r.InboundSplitDocument() },
+			"Invoice":                                  func() any { return r.Invoice() },
+			"InvoiceAdjustment":                        func() any { return r.InvoiceAdjustment() },
+			"InvoiceAdjustmentApprovalQueueItem":       func() any { return r.InvoiceAdjustmentApprovalQueueItem() },
+			"InvoiceAdjustmentLine":                    func() any { return r.InvoiceAdjustmentLine() },
+			"InvoiceAdjustmentPreview":                 func() any { return r.InvoiceAdjustmentPreview() },
+			"InvoiceAdjustmentPreviewLine":             func() any { return r.InvoiceAdjustmentPreviewLine() },
+			"InvoiceAdjustmentReconciliationQueueItem": func() any { return r.InvoiceAdjustmentReconciliationQueueItem() },
+			"InvoiceChargeGroup":                       func() any { return r.InvoiceChargeGroup() },
+			"InvoiceDispute":                           func() any { return r.InvoiceDispute() },
+			"InvoiceEmailAttempt":                      func() any { return r.InvoiceEmailAttempt() },
+			"InvoiceLine":                              func() any { return r.InvoiceLine() },
+			"InvoiceSendPlan":                          func() any { return r.InvoiceSendPlan() },
+			"JobPosition":                              func() any { return r.JobPosition() },
+			"JournalCardLine":                          func() any { return r.JournalCardLine() },
+			"JournalCardPosting":                       func() any { return r.JournalCardPosting() },
+			"JournalEntry":                             func() any { return r.JournalEntry() },
+			"JournalEntryLine":                         func() any { return r.JournalEntryLine() },
+			"JournalReviewSummary":                     func() any { return r.JournalReviewSummary() },
+			"JournalSourceInfo":                        func() any { return r.JournalSourceInfo() },
+			"JurisdictionRule":                         func() any { return r.JurisdictionRule() },
+			"LateChargeAssessment":                     func() any { return r.LateChargeAssessment() },
+			"LateChargeLine":                           func() any { return r.LateChargeLine() },
+			"LeaveControl":                             func() any { return r.LeaveControl() },
+			"LeaveEntitlement":                         func() any { return r.LeaveEntitlement() },
+			"LocationCategory":                         func() any { return r.LocationCategory() },
+			"MFAAuthenticator":                         func() any { return r.MFAAuthenticator() },
+			"Mutation":                                 func() any { return r.Mutation() },
+			"MyAgent":                                  func() any { return r.MyAgent() },
+			"MyPTOBalance":                             func() any { return r.MyPTOBalance() },
+			"OSHAAnnualSummary":                        func() any { return r.OSHAAnnualSummary() },
+			"OpenStatement":                            func() any { return r.OpenStatement() },
+			"Order":                                    func() any { return r.Order() },
+			"PTOAccrualTier":                           func() any { return r.PTOAccrualTier() },
+			"PTOAvailability":                          func() any { return r.PTOAvailability() },
+			"PTOBalanceSummary":                        func() any { return r.PTOBalanceSummary() },
+			"PTOChartDataPoint":                        func() any { return r.PTOChartDataPoint() },
+			"PTOLiabilityReport":                       func() any { return r.PTOLiabilityReport() },
+			"PTOLiabilityRow":                          func() any { return r.PTOLiabilityRow() },
+			"PTOPolicy":                                func() any { return r.PTOPolicy() },
+			"PTOPolicyRule":                            func() any { return r.PTOPolicyRule() },
+			"PayCode":                                  func() any { return r.PayCode() },
+			"PayMileageBand":                           func() any { return r.PayMileageBand() },
+			"PayProfile":                               func() any { return r.PayProfile() },
+			"PayProfileComponent":                      func() any { return r.PayProfileComponent() },
+			"PayRateOverride":                          func() any { return r.PayRateOverride() },
+			"PendingDecisionEdge":                      func() any { return r.PendingDecisionEdge() },
+			"PerformanceReview":                        func() any { return r.PerformanceReview() },
+			"PerformanceReviewTemplate":                func() any { return r.PerformanceReviewTemplate() },
+			"PlannedPTOAccrual":                        func() any { return r.PlannedPTOAccrual() },
+			"PortalCredential":                         func() any { return r.PortalCredential() },
+			"PortalTraining":                           func() any { return r.PortalTraining() },
+			"Query":                                    func() any { return r.Query() },
+			"RateAgreement":                            func() any { return r.RateAgreement() },
+			"RateMatrix":                               func() any { return r.RateMatrix() },
+			"RateMatrixVersion":                        func() any { return r.RateMatrixVersion() },
+			"ReportSchedule":                           func() any { return r.ReportSchedule() },
+			"ReviewRating":                             func() any { return r.ReviewRating() },
+			"RiskDecision":                             func() any { return r.RiskDecision() },
+			"Role":                                     func() any { return r.Role() },
+			"RoutingGuideEntry":                        func() any { return r.RoutingGuideEntry() },
+			"SafetyScorecard":                          func() any { return r.SafetyScorecard() },
+			"ServiceFailure":                           func() any { return r.ServiceFailure() },
+			"ServiceFailureShipment":                   func() any { return r.ServiceFailureShipment() },
+			"ServiceFailureStop":                       func() any { return r.ServiceFailureStop() },
+			"SettlementControl":                        func() any { return r.SettlementControl() },
+			"SettlementException":                      func() any { return r.SettlementException() },
+			"ShiftTemplate":                            func() any { return r.ShiftTemplate() },
+			"Shipment":                                 func() any { return r.Shipment() },
+			"ShipmentCustomer":                         func() any { return r.ShipmentCustomer() },
+			"ShipmentMove":                             func() any { return r.ShipmentMove() },
+			"ShipmentMoveJurisdictionMile":             func() any { return r.ShipmentMoveJurisdictionMile() },
+			"ShipmentRatingDetail":                     func() any { return r.ShipmentRatingDetail() },
+			"ShipmentRatingReviewApproval":             func() any { return r.ShipmentRatingReviewApproval() },
+			"StatementGroup":                           func() any { return r.StatementGroup() },
+			"StatementShipment":                        func() any { return r.StatementShipment() },
+			"TCASubscription":                          func() any { return r.TCASubscription() },
+			"TableConfiguration":                       func() any { return r.TableConfiguration() },
+			"Tender":                                   func() any { return r.Tender() },
+			"TenderOffer":                              func() any { return r.TenderOffer() },
+			"Tractor":                                  func() any { return r.Tractor() },
+			"Trailer":                                  func() any { return r.Trailer() },
+			"TrainingCourse":                           func() any { return r.TrainingCourse() },
+			"TriageAction":                             func() any { return r.TriageAction() },
+			"TriageAssignee":                           func() any { return r.TriageAssignee() },
+			"TriageBriefing":                           func() any { return r.TriageBriefing() },
+			"TriageConflict":                           func() any { return r.TriageConflict() },
+			"TriageDeckItem":                           func() any { return r.TriageDeckItem() },
+			"TriageHandOff":                            func() any { return r.TriageHandOff() },
+			"TriageReplyTemplate":                      func() any { return r.TriageReplyTemplate() },
+			"TriageRule":                               func() any { return r.TriageRule() },
+			"TriageSettings":                           func() any { return r.TriageSettings() },
+			"TriageStopTimes":                          func() any { return r.TriageStopTimes() },
+			"TriageView":                               func() any { return r.TriageView() },
+			"User":                                     func() any { return r.User() },
+			"WatchtowerAgentWork":                      func() any { return r.WatchtowerAgentWork() },
+			"WatchtowerItem":                           func() any { return r.WatchtowerItem() },
+			"WatchtowerItemEvent":                      func() any { return r.WatchtowerItemEvent() },
+			"WatchtowerRecord":                         func() any { return r.WatchtowerRecord() },
+			"Worker":                                   func() any { return r.Worker() },
+			"WorkerBenefitEnrollment":                  func() any { return r.WorkerBenefitEnrollment() },
+			"WorkerChecklist":                          func() any { return r.WorkerChecklist() },
+			"WorkerChecklistItem":                      func() any { return r.WorkerChecklistItem() },
+			"WorkerChecklistProgress":                  func() any { return r.WorkerChecklistProgress() },
+			"WorkerChecklistTemplate":                  func() any { return r.WorkerChecklistTemplate() },
+			"WorkerChecklistTemplateItem":              func() any { return r.WorkerChecklistTemplateItem() },
+			"WorkerClearinghouseQuery":                 func() any { return r.WorkerClearinghouseQuery() },
+			"WorkerCredential":                         func() any { return r.WorkerCredential() },
+			"WorkerCredentialType":                     func() any { return r.WorkerCredentialType() },
+			"WorkerDOTTest":                            func() any { return r.WorkerDOTTest() },
+			"WorkerDOTViolation":                       func() any { return r.WorkerDOTViolation() },
+			"WorkerDisciplinaryAction":                 func() any { return r.WorkerDisciplinaryAction() },
+			"WorkerEmploymentCascade":                  func() any { return r.WorkerEmploymentCascade() },
+			"WorkerEmploymentEvent":                    func() any { return r.WorkerEmploymentEvent() },
+			"WorkerEmploymentVerification":             func() any { return r.WorkerEmploymentVerification() },
+			"WorkerInjury":                             func() any { return r.WorkerInjury() },
+			"WorkerLeaveCase":                          func() any { return r.WorkerLeaveCase() },
+			"WorkerLeaveEntry":                         func() any { return r.WorkerLeaveEntry() },
+			"WorkerPTO":                                func() any { return r.WorkerPTO() },
+			"WorkerPTOBalance":                         func() any { return r.WorkerPTOBalance() },
+			"WorkerPTOLedgerEntry":                     func() any { return r.WorkerPTOLedgerEntry() },
+			"WorkerPTOPolicyAssignment":                func() any { return r.WorkerPTOPolicyAssignment() },
+			"WorkerPayAssignment":                      func() any { return r.WorkerPayAssignment() },
+			"WorkerProfile":                            func() any { return r.WorkerProfile() },
+			"WorkerProfileChangeRequest":               func() any { return r.WorkerProfileChangeRequest() },
+			"WorkerRecognition":                        func() any { return r.WorkerRecognition() },
+			"WorkerRosterAttention":                    func() any { return r.WorkerRosterAttention() },
+			"WorkerSafetyEvent":                        func() any { return r.WorkerSafetyEvent() },
+			"WorkerTrainingRecord":                     func() any { return r.WorkerTrainingRecord() },
 		}
 	}
 

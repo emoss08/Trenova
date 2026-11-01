@@ -14,14 +14,16 @@ export const STATEMENT_DETAIL_KEY = "statement-detail";
 export function statementListQuery() {
   return {
     queryKey: [STATEMENT_LIST_KEY] as const,
-    queryFn: () => apiService.invoiceRunService.listStatements(),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.invoiceRunService.listStatements({ signal }),
   };
 }
 
 export function statementDetailQuery(customerId: string | null) {
   return {
     queryKey: [STATEMENT_DETAIL_KEY, customerId] as const,
-    queryFn: () => apiService.invoiceRunService.getStatement(customerId as string),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.invoiceRunService.getStatement(customerId as string, { signal }),
     enabled: !!customerId,
   };
 }

@@ -108,3 +108,411 @@ extend type Mutation {
   """Takes back how a check was settled, and puts back any charge it changed."""
   undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
 }
+
+"A payer of a shipment's charges."
+type BillingQueuePayerRef {
+  id: ID!
+  name: String!
+  code: String!
+}
+
+"One payer's part of one charge."
+type BillingQueuePayerShareParty {
+  payerId: ID!
+  payerName: String!
+  payerCode: String!
+  amount: Decimal!
+  percent: Decimal
+}
+
+"One charge as a single payer's bill sees it."
+type BillingQueuePayerShareLine {
+  kind: ChargeAllocationKind!
+  "Null for freight."
+  additionalChargeId: ID
+  description: String!
+  chargeTotal: Decimal!
+  amount: Decimal!
+  percent: Decimal
+  "Null for a charge billed whole."
+  method: ChargeAllocationMethod
+  partial: Boolean!
+  payers: [BillingQueuePayerShareParty!]!
+}
+
+"""
+What one item bills, resolved by the same code that builds the invoice lines.
+otherPayerLines are charges this payer owes none of.
+"""
+type BillingQueuePayerShare {
+  payerId: ID!
+  isSplit: Boolean!
+  payers: [BillingQueuePayerRef!]!
+  lines: [BillingQueuePayerShareLine!]!
+  otherPayerLines: [BillingQueuePayerShareLine!]!
+  freightAmount: Decimal!
+  accessorialAmount: Decimal!
+  totalAmount: Decimal!
+  shipmentTotal: Decimal!
+  "Why the split cannot be divided right now; empty when it can."
+  resolutionError: String!
+}
+
+enum BillingQueueRatedByKind {
+  Agreement
+  Template
+}
+
+"What priced an item's shipment: the rate agreement when one did, or the formula template."
+type BillingQueueRatedBy {
+  kind: BillingQueueRatedByKind!
+  id: ID!
+  code: String!
+  name: String!
+}
+
+"A detention charge on the item's shipment still waiting on an approver."
+type BillingQueueDetentionHold {
+  occurrenceId: ID!
+  stopId: ID!
+  stopType: String!
+  locationName: String!
+  clockStartAt: Timestamp!
+  billableAmount: Decimal!
+  currency: String!
+  "OverApprovalThreshold, NoticeNotSent or Escalated."
+  reason: String!
+}
+
+type BillingQueueRatingReviewHold {
+  shipmentId: ID!
+  reasons: [String!]!
+  ratedAt: Timestamp
+  formulaTemplateName: String!
+}
+
+enum BillingQueueAgentReadKind {
+  Invoice
+  Stops
+  Terms
+  BillingNotes
+  Comments
+  PastInvoices
+  ChargeHistory
+  Document
+}
+
+"""
+One thing Nova read to review an item. A document carries how many of its parts
+were read (part of parts); a charge looked up carries how many of the payer's
+invoices billed it (count of of).
+"""
+type BillingQueueAgentRead {
+  kind: BillingQueueAgentReadKind!
+  count: Int!
+  code: String!
+  documentId: ID
+  name: String!
+  fileName: String!
+  part: Int!
+  parts: Int!
+  of: Int!
+}
+
+"One of the five checks a biller confirms before approving."
+enum BillingQueueCheckKey {
+  biller
+  charges
+  pod
+  terms
+  duplicate
+}
+
+enum BillingQueueCheckState {
+  ok
+  warn
+  fail
+}
+
+"One of the five checks, as it stands for the item now."
+type BillingQueueCheck {
+  key: BillingQueueCheckKey!
+  state: BillingQueueCheckState!
+  "What the check found, for the reader to word."
+  code: String!
+  "The finding in a line, in English."
+  detail: String!
+  "The issue the check waits on, or the one that settled it."
+  issueId: ID
+  "What the reader needs to word the finding itself."
+  facts: JSON
+}
+
+enum BillingQueueIssueEffectKind {
+  keep
+  drop
+  set
+  request
+  accept
+  add
+}
+
+"What choosing an issue's option does to the bill."
+type BillingQueueIssueEffect {
+  kind: BillingQueueIssueEffectKind!
+  chargeId: ID
+  accessorialChargeId: ID
+  "The charge an add effect bills."
+  label: String!
+  amount: Decimal
+  basis: String!
+}
+
+type BillingQueueIssueOption {
+  key: String!
+  label: String!
+  amount: Decimal
+  "What the activity says once the option is chosen."
+  done: String!
+  effect: BillingQueueIssueEffect!
+}
+
+"Something a person settles before the item can be approved."
+type BillingQueueIssue {
+  id: ID!
+  itemId: ID!
+  checkKey: BillingQueueCheckKey!
+  code: String!
+  subjectKey: String!
+  summary: String!
+  reasoning: String!
+  "Deterministic or Agent."
+  source: String!
+  flaggedChargeId: ID
+  options: [BillingQueueIssueOption!]!
+  resolutionKey: String
+  resolutionText: String!
+  resolvedById: ID
+  resolvedAt: Timestamp
+  requestedAt: Timestamp
+  "Whether the person can take the settlement back."
+  undoable: Boolean!
+  createdAt: Timestamp!
+}
+
+"One charge in the ledger: how it was priced, what the rate con says, and what the item bills."
+type BillingQueueChargeLine {
+  key: String!
+  additionalChargeId: ID
+  label: String!
+  basis: String!
+  expected: Decimal
+  billed: Decimal!
+  "rating, agreement, fuel, detention, quote or none."
+  source: String!
+  flagged: Boolean!
+  removed: Boolean!
+  adjusted: Boolean!
+  issueId: ID
+}
+
+"The item's charges against the rate con."
+type BillingQueueChargeReview {
+  lines: [BillingQueueChargeLine!]!
+  expectedTotal: Decimal!
+  billedTotal: Decimal!
+  "Billed less expected: above zero is over the rate con."
+  difference: Decimal!
+  hasRateCon: Boolean!
+}
+
+"The invoice the item became, as the item's header shows it."
+type BillingQueueInvoiceRef {
+  id: ID!
+  number: String!
+  draftNumber: String!
+  status: String!
+  invoiceDate: Timestamp!
+  dueDate: Timestamp
+  postedAt: Timestamp
+  posted: Boolean!
+}
+
+"How and when the bill-to pays, and who receives the invoice."
+type BillingQueueTerms {
+  paymentTerm: String!
+  netDays: Int!
+  dueDate: Timestamp
+  recipients: [String!]!
+  creditHold: Boolean!
+}
+
+enum BillingQueueDocumentState {
+  ok
+  missing
+  unsigned
+}
+
+type BillingQueueDocumentTile {
+  code: String!
+  name: String!
+  documentId: ID
+  state: BillingQueueDocumentState!
+  required: Boolean!
+  signed: Boolean!
+  fileName: String!
+}
+
+"Everything a biller reads to decide an item."
+type BillingQueueReview {
+  checks: [BillingQueueCheck!]!
+  needsCount: Int!
+  ready: Boolean!
+  "Why Approve is not available: hold, biller, issue or status; empty when it is."
+  blocker: String!
+  issues: [BillingQueueIssue!]!
+  charges: BillingQueueChargeReview
+  invoice: BillingQueueInvoiceRef
+  terms: BillingQueueTerms
+  documents: [BillingQueueDocumentTile!]!
+  billerName: String!
+}
+
+enum BillingQueueEventActorType {
+  System
+  Agent
+  User
+}
+
+"One line of an item's activity."
+type BillingQueueEvent {
+  id: ID!
+  kind: String!
+  text: String!
+  actorType: BillingQueueEventActorType!
+  actorId: ID
+  actorName: String!
+  at: Timestamp!
+}
+
+type BillingQueueEventPage {
+  "Newest first."
+  items: [BillingQueueEvent!]!
+  hasMore: Boolean!
+  total: Int!
+}
+
+"Where the next page of activity starts: before this entry."
+input BillingQueueActivityCursorInput {
+  at: Timestamp!
+  id: ID!
+}
+
+"An item's place in the queue, under the list's own order."
+type BillingQueueNeighbors {
+  prevId: ID
+  nextId: ID
+  position: Int!
+  total: Int!
+}
+
+"A queue row's live state."
+type BillingQueueItemSummary {
+  id: ID!
+  number: String!
+  status: BillingQueueStatus!
+  holdReasonCode: BillingQueueHoldReasonCode
+  assignedBillerId: ID
+  allocatedTotalAmount: Decimal!
+  needsCount: Int!
+  ready: Boolean!
+}
+
+"The queue after a charge moved between payers."
+type BillingQueueReassignChargeResult {
+  "The item the change came from, canceled when its payer no longer pays anything."
+  item: BillingQueueItem!
+  "Every active item of the shipment."
+  items: [BillingQueueItem!]!
+  createdItemIds: [ID!]!
+  canceledItemIds: [ID!]!
+}
+
+input BillingQueueUpdateChargesInput {
+  formulaTemplateId: ID
+  "The tariff's input values for the shipment, replacing what it carries."
+  tariffInputs: JSON
+  "The shipment's accessorial charges as they should stand; omit to leave them alone."
+  additionalCharges: [ShipmentAdditionalChargeInput!]
+  "Retries an edit refused because it left an amount split that no longer adds up."
+  convertAmountSplitsToPercent: Boolean
+}
+
+input BillingQueueReassignChargeInput {
+  chargeKind: ChargeAllocationKind!
+  "The accessorial being moved; omit for freight."
+  additionalChargeId: ID
+  "How the charge is divided among payers; empty gives it back whole to the shipment's payer."
+  allocations: [ChargeAllocationInput!]!
+}
+
+"What the invoice will say, set before approval."
+input BillingQueueInvoiceDetailsInput {
+  "The item's version as the person read it."
+  version: Int!
+  poNumber: String
+  invoiceMemo: String
+  "Empty keeps the customer's term."
+  paymentTerm: String
+  "Null keeps today."
+  invoiceDate: Timestamp
+  packetDocumentIds: [ID!]
+}
+
+extend type Query {
+  """
+  One queue item with everything a biller reads to decide it: its shipment
+  details, payer share, checks, issues and charges.
+  """
+  billingQueueItem(id: ID!): BillingQueueItem
+  "An item's activity, newest first. limit is at most 100."
+  billingQueueItemActivity(
+    id: ID!
+    limit: Int = 30
+    before: BillingQueueActivityCursorInput
+  ): BillingQueueEventPage!
+  "What comes before and after an item under the list's own search, filters and order."
+  billingQueueNeighbors(
+    id: ID!
+    input: DataTableConnectionInput
+    includePosted: Boolean = false
+  ): BillingQueueNeighbors!
+  "The live state of queue rows a table read earlier. At most 200 ids."
+  billingQueueSummaries(ids: [ID!]!): [BillingQueueItemSummary!]!
+}
+
+extend type Mutation {
+  """
+  Reprices an item's shipment: its tariff, the tariff's inputs and its
+  accessorial charges, while the item is in review.
+  """
+  updateBillingQueueCharges(id: ID!, input: BillingQueueUpdateChargesInput!): BillingQueueItem!
+  """
+  Sets what the invoice will say before it is made: the customer's PO, the note
+  under the charges, a payment term and invoice date overriding the customer's,
+  and the documents sent with it as one packet. Only before approval.
+  """
+  updateBillingQueueInvoiceDetails(
+    id: ID!
+    input: BillingQueueInvoiceDetailsInput!
+  ): BillingQueueItem!
+  """
+  Moves one charge, whole or split, to other payers while the shipment is in
+  review. Payers who gain a share get a queue item; payers left with nothing have
+  theirs canceled.
+  """
+  reassignBillingQueueCharge(
+    id: ID!
+    input: BillingQueueReassignChargeInput!
+  ): BillingQueueReassignChargeResult!
+}

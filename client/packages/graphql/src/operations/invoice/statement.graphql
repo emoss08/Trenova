@@ -1,0 +1,81 @@
+fragment OpenStatementFields on OpenStatement {
+  customerId
+  customerName
+  customerCode
+  customerStatus
+  cycle
+  billingCycleAnchorDay
+  billingCycleTimezone
+  periodStart
+  periodEnd
+  lastBilledPeriodEnd
+  shipmentCount
+  invoiceCount
+  totalAmount
+  currencyCode
+  splitBy
+  sectionBy
+  detail
+  minimumAmount
+  autoBill
+  belowMinimum
+  heldCount
+  heldAmount
+}
+
+query OpenStatements {
+  openStatements {
+    ...OpenStatementFields
+    groups {
+      key
+      label
+      shipmentCount
+      totalAmount
+      belowMinimum
+    }
+  }
+}
+
+query OpenStatement($customerId: ID!) {
+  openStatement(customerId: $customerId) {
+    ...OpenStatementFields
+    groups {
+      key
+      label
+      shipmentCount
+      totalAmount
+      belowMinimum
+      shipments {
+        billingQueueItemId
+        shipmentId
+        orderId
+        proNumber
+        bol
+        poNumber
+        orderNumber
+        serviceDate
+        amount
+      }
+    }
+  }
+}
+
+mutation BillStatementNow($customerId: ID!, $input: BillStatementNowInput!) {
+  billStatementNow(customerId: $customerId, input: $input) {
+    runId
+    runNumber
+    results {
+      groupId
+      groupLabel
+      success
+      skipped
+      invoiceId
+      invoiceNumber
+      error
+    }
+    totalCount
+    successCount
+    skippedCount
+    errorCount
+  }
+}

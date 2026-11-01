@@ -1,0 +1,476 @@
+# A shipment's moves as a record that bills it draws the route.
+fragment ShipmentRouteMoveFields on ShipmentMove {
+  id
+  sequence
+  loaded
+  distance
+  assignment {
+    id
+    primaryWorker {
+      id
+      wholeName
+    }
+  }
+  stops {
+    id
+    type
+    sequence
+    actualArrival
+    location {
+      id
+      name
+      addressLine1
+      addressLine2
+      city
+      postalCode
+      latitude
+      longitude
+      state {
+        id
+        abbreviation
+      }
+    }
+  }
+}
+
+fragment BillingQueueUserFields on User {
+  id
+  businessUnitId
+  name
+  username
+  profilePicUrl
+  thumbnailUrl
+  version
+  createdAt
+  updatedAt
+}
+
+fragment BillingQueueReviewFields on BillingQueueReview {
+  checks {
+    key
+    state
+    code
+    detail
+    issueId
+    facts
+  }
+  needsCount
+  ready
+  blocker
+  issues {
+    id
+    itemId
+    checkKey
+    code
+    subjectKey
+    summary
+    reasoning
+    source
+    flaggedChargeId
+    options {
+      key
+      label
+      amount
+      done
+      effect {
+        kind
+        chargeId
+        accessorialChargeId
+        label
+        amount
+        basis
+      }
+    }
+    resolutionKey
+    resolutionText
+    resolvedById
+    resolvedAt
+    requestedAt
+    undoable
+    createdAt
+  }
+  charges {
+    lines {
+      key
+      additionalChargeId
+      label
+      basis
+      expected
+      billed
+      source
+      flagged
+      removed
+      adjusted
+      issueId
+    }
+    expectedTotal
+    billedTotal
+    difference
+    hasRateCon
+  }
+  invoice {
+    id
+    number
+    draftNumber
+    status
+    invoiceDate
+    dueDate
+    postedAt
+    posted
+  }
+  terms {
+    paymentTerm
+    netDays
+    dueDate
+    recipients
+    creditHold
+  }
+  documents {
+    code
+    name
+    documentId
+    state
+    required
+    signed
+    fileName
+  }
+  billerName
+}
+
+fragment BillingQueuePayerShareLineFields on BillingQueuePayerShareLine {
+  kind
+  additionalChargeId
+  description
+  chargeTotal
+  amount
+  percent
+  method
+  partial
+  payers {
+    payerId
+    payerName
+    payerCode
+    amount
+    percent
+  }
+}
+
+# The item as a biller reviews it: what it bills, its shipment's charges, its checks and issues.
+fragment BillingQueueItemDetailFields on BillingQueueItem {
+  id
+  organizationId
+  businessUnitId
+  shipmentId
+  billToCustomerId
+  allocatedTotalAmount
+  assignedBillerId
+  number
+  status
+  billType
+  exceptionReasonCode
+  reviewNotes
+  exceptionNotes
+  reviewStartedAt
+  reviewCompletedAt
+  canceledById
+  canceledAt
+  cancelReason
+  isAdjustmentOrigin
+  sourceInvoiceId
+  sourceInvoiceAdjustmentId
+  sourceCreditMemoInvoiceId
+  correctionGroupId
+  rebillStrategy
+  requiresReplacementReview
+  rerateVariancePercent
+  adjustmentContext
+  version
+  createdAt
+  updatedAt
+  lane
+  holdReasonCode
+  heldAt
+  heldById
+  statusBeforeHold
+  checkedAt
+  poNumber
+  invoiceMemo
+  paymentTerm
+  invoiceDate
+  packetDocumentIds
+  agentVerdict
+  agentSummary
+  agentReviewedAt
+  agentReads {
+    kind
+    count
+    code
+    documentId
+    name
+    fileName
+    part
+    parts
+    of
+  }
+  headline {
+    code
+    checkKey
+    summary
+    open
+    waiting
+  }
+  billToCustomer {
+    id
+    name
+    code
+    billingProfile {
+      id
+      billingNotes
+      paymentTerm
+    }
+  }
+  assignedBiller {
+    ...BillingQueueUserFields
+  }
+  canceledBy {
+    ...BillingQueueUserFields
+  }
+  shipment {
+    id
+    organizationId
+    businessUnitId
+    version
+    createdAt
+    updatedAt
+    customerId
+    billToCustomerId
+    proNumber
+    bol
+    externalReference
+    status
+    totalChargeAmount
+    freightChargeAmount
+    otherChargeAmount
+    formulaTemplateId
+    tariffInputs
+    actualDeliveryDate
+    freightLines {
+      label
+      quantity
+      quantityUnit
+      rate
+      rateUnit
+      amount
+    }
+    additionalCharges {
+      ...ShipmentAdditionalChargeFields
+    }
+    chargeAllocations {
+      id
+      shipmentId
+      additionalChargeId
+      orderChargeId
+      chargeKind
+      billToCustomerId
+      method
+      percent
+      amount
+      sequence
+      invoiceId
+      invoicedAt
+      version
+      billToCustomer {
+        id
+        name
+        code
+      }
+    }
+    customer {
+      id
+      name
+      code
+    }
+    formulaTemplate {
+      id
+      name
+    }
+    moves {
+      ...ShipmentRouteMoveFields
+    }
+  }
+  payerShare {
+    payerId
+    isSplit
+    payers {
+      id
+      name
+      code
+    }
+    lines {
+      ...BillingQueuePayerShareLineFields
+    }
+    otherPayerLines {
+      ...BillingQueuePayerShareLineFields
+    }
+    freightAmount
+    accessorialAmount
+    totalAmount
+    shipmentTotal
+    resolutionError
+  }
+  ratedBy {
+    kind
+    id
+    code
+    name
+  }
+  detentionHolds {
+    occurrenceId
+    stopId
+    stopType
+    locationName
+    clockStartAt
+    billableAmount
+    currency
+    reason
+  }
+  ratingReviewHold {
+    shipmentId
+    reasons
+    ratedAt
+    formulaTemplateName
+  }
+  review {
+    ...BillingQueueReviewFields
+  }
+}
+
+query BillingQueueItemDetail($id: ID!) {
+  billingQueueItem(id: $id) {
+    ...BillingQueueItemDetailFields
+  }
+}
+
+query BillingQueueItemActivity($id: ID!, $limit: Int, $before: BillingQueueActivityCursorInput) {
+  billingQueueItemActivity(id: $id, limit: $limit, before: $before) {
+    items {
+      id
+      kind
+      text
+      actorType
+      actorId
+      actorName
+      at
+    }
+    hasMore
+    total
+  }
+}
+
+query BillingQueueNeighbors(
+  $id: ID!
+  $input: DataTableConnectionInput
+  $includePosted: Boolean
+) {
+  billingQueueNeighbors(id: $id, input: $input, includePosted: $includePosted) {
+    prevId
+    nextId
+    position
+    total
+  }
+}
+
+query BillingQueueSummaries($ids: [ID!]!) {
+  billingQueueSummaries(ids: $ids) {
+    id
+    number
+    status
+    holdReasonCode
+    assignedBillerId
+    allocatedTotalAmount
+    needsCount
+    ready
+  }
+}
+
+# Every queue item a shipment produced, posted ones included.
+query BillingQueueItemsByShipment($input: DataTableConnectionInput!) {
+  billingQueueItems(input: $input, filter: { includePosted: true }) {
+    edges {
+      node {
+        id
+        number
+        status
+        billToCustomerId
+        allocatedTotalAmount
+      }
+    }
+  }
+}
+
+mutation UpdateBillingQueueCharges($id: ID!, $input: BillingQueueUpdateChargesInput!) {
+  updateBillingQueueCharges(id: $id, input: $input) {
+    ...BillingQueueItemDetailFields
+  }
+}
+
+mutation UpdateBillingQueueInvoiceDetails($id: ID!, $input: BillingQueueInvoiceDetailsInput!) {
+  updateBillingQueueInvoiceDetails(id: $id, input: $input) {
+    ...BillingQueueItemDetailFields
+  }
+}
+
+mutation ReassignBillingQueueCharge($id: ID!, $input: BillingQueueReassignChargeInput!) {
+  reassignBillingQueueCharge(id: $id, input: $input) {
+    item {
+      ...BillingQueueItemDetailFields
+    }
+    items {
+      ...BillingQueueItemDetailFields
+    }
+    createdItemIds
+    canceledItemIds
+  }
+}
+
+mutation UpdateBillingQueueItemStatus($id: ID!, $input: BillingQueueUpdateStatusInput!) {
+  updateBillingQueueStatus(id: $id, input: $input) {
+    ...BillingQueueItemDetailFields
+  }
+}
+
+mutation AssignBillingQueueItemBiller($id: ID!, $input: BillingQueueAssignInput!) {
+  assignBillingQueueBiller(id: $id, input: $input) {
+    ...BillingQueueItemDetailFields
+  }
+}
+
+mutation PostBillingQueueItem($id: ID!) {
+  postBillingQueueItem(id: $id) {
+    item {
+      ...BillingQueueItemDetailFields
+    }
+    invoiceId
+    invoiceNumber
+    sentTo
+    recipients
+  }
+}
+
+mutation ReleaseBillingQueueItem($id: ID!) {
+  releaseBillingQueueItem(id: $id) {
+    ...BillingQueueItemDetailFields
+  }
+}
+
+mutation ResolveBillingQueueIssue($id: ID!, $issueId: ID!, $optionKey: String!) {
+  resolveBillingQueueIssue(id: $id, issueId: $issueId, optionKey: $optionKey) {
+    ...BillingQueueItemDetailFields
+  }
+}
+
+mutation UndoBillingQueueIssue($id: ID!, $issueId: ID!) {
+  undoBillingQueueIssue(id: $id, issueId: $issueId) {
+    ...BillingQueueItemDetailFields
+  }
+}

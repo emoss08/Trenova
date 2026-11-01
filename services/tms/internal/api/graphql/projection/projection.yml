@@ -391,6 +391,11 @@ virtuals:
   BillingQueueItem:
     - billToCustomer
     - headline
+    - payerShare
+    - ratedBy
+    - detentionHolds
+    - ratingReviewHold
+    - review
   FuelPurchaseImportBatch:
     - rows
   FuelPurchaseImportRow:
@@ -582,6 +587,9 @@ virtuals:
     - blame
   InvoiceAdjustment:
     - supportingDocumentIds
+    - adjustmentDocuments
+  BillingQueueIssue:
+    - undoable
   CarrierInvoiceMatchList:
     - totalCountExact
   EdiCarrierInvoiceList:

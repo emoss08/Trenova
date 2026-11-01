@@ -28,13 +28,10 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-  mocks.queueItems.mockResolvedValue({
-    results: [
-      { id: "bqi_intel", billToCustomerId: "cus_intel", status: "Approved" },
-      { id: "bqi_amd", billToCustomerId: "cus_amd", status: "OnHold" },
-    ],
-    count: 2,
-  });
+  mocks.queueItems.mockResolvedValue([
+    { id: "bqi_intel", billToCustomerId: "cus_intel", status: "Approved" },
+    { id: "bqi_amd", billToCustomerId: "cus_amd", status: "OnHold" },
+  ]);
   mocks.invoices.mockResolvedValue([
     {
       id: "inv_1",

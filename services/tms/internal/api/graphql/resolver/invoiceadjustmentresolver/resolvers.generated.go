@@ -9,12 +9,19 @@ import (
 
 type Deps struct {
 	*resolvercore.Core
-	InvoiceAdjustmentService invoiceadjustmentports.InvoiceAdjustmentService
+	InvoiceAdjustmentDraftService invoiceadjustmentports.InvoiceAdjustmentDraftService
+	InvoiceAdjustmentService      invoiceadjustmentports.InvoiceAdjustmentService
 }
 
 type InvoiceAdjustmentApprovalQueueItemResolver struct{ *Deps }
 
 type InvoiceAdjustmentLineResolver struct{ *Deps }
+
+type InvoiceAdjustmentPreviewLineResolver struct{ *Deps }
+
+type InvoiceAdjustmentPreviewResolver struct{ *Deps }
+
+type InvoiceAdjustmentReconciliationQueueItemResolver struct{ *Deps }
 
 type InvoiceAdjustmentResolver struct{ *Deps }
 

@@ -1,0 +1,231 @@
+"How one document went out with an invoice email."
+enum InvoiceAttachmentDeliveryMethod {
+  Attached
+  Link
+  Skipped
+  Failed
+}
+
+"One document an email attempt carried, linked or left out."
+type InvoiceEmailAttemptAttachment {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  attemptId: ID!
+  documentId: ID!
+  fileName: String!
+  contentType: String!
+  sizeBytes: Int!
+  encodedBytes: Int!
+  method: InvoiceAttachmentDeliveryMethod!
+  shareTokenId: ID
+  reason: String!
+  createdAt: Timestamp!
+}
+
+"One email that carried, or tried to carry, part of an invoice."
+type InvoiceEmailAttempt {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  invoiceId: ID!
+  emailMessageId: ID
+  attemptNumber: Int!
+  partNumber: Int!
+  totalParts: Int!
+  status: InvoiceSendStatus!
+  provider: String!
+  providerMessageId: String!
+  toRecipients: [String!]!
+  ccRecipients: [String!]!
+  bccRecipients: [String!]!
+  subject: String!
+  body: String!
+  estimatedSize: Int!
+  warnings: [String!]!
+  error: String!
+  sentAt: Timestamp
+  createdById: ID
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  attachments: [InvoiceEmailAttemptAttachment!]!
+}
+
+type InvoiceEmailAttemptPage {
+  "Newest first."
+  items: [InvoiceEmailAttempt!]!
+  total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
+  hasMore: Boolean!
+}
+
+type InvoiceSendRecipients {
+  to: [String!]!
+  cc: [String!]!
+  bcc: [String!]!
+}
+
+"A document attached to one part of an invoice email."
+type InvoiceSendPlanAttachment {
+  documentId: ID!
+  fileName: String!
+  contentType: String!
+  sizeBytes: Int!
+  encodedBytes: Int!
+  "The invoice's own PDF."
+  invoicePdf: Boolean!
+}
+
+"A document too large to attach, sent as a signed link instead."
+type InvoiceSendPlanDocumentLink {
+  documentId: ID!
+  fileName: String!
+  sizeBytes: Int!
+  reason: String!
+  url: String!
+}
+
+"One email of a send that the provider's size limit splits into parts."
+type InvoiceSendPlanPart {
+  partNumber: Int!
+  estimatedSizeBytes: Int!
+  attachments: [InvoiceSendPlanAttachment!]!
+  links: [InvoiceSendPlanDocumentLink!]!
+  warnings: [String!]!
+}
+
+"What sending an invoice would email, and what stops it, without sending it."
+type InvoiceSendPlan {
+  invoiceId: ID!
+  providerLimitBytes: Int!
+  estimatedBodyBytes: Int!
+  parts: [InvoiceSendPlanPart!]!
+  warnings: [String!]!
+  errors: [String!]!
+  recipients: InvoiceSendRecipients!
+  fromEmail: String!
+  headers: JSON!
+  openTracking: Boolean!
+  subject: String!
+  body: String!
+  invoicePdfDocumentId: ID
+}
+
+type InvoiceSendResult {
+  invoice: Invoice!
+  plan: InvoiceSendPlan!
+  attempts: [InvoiceEmailAttempt!]!
+}
+
+"The generation of an invoice's PDF, queued as a workflow."
+type GenerateInvoicePdfResult {
+  invoiceId: ID!
+  workflowId: String!
+  workflowRunId: String!
+  status: String!
+}
+
+type InvoicePostJournalLine {
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  description: String!
+  debitMinor: Int!
+  creditMinor: Int!
+}
+
+"The journal entry posting would book."
+type InvoicePostJournal {
+  accountingDate: Timestamp!
+  entryStatus: String!
+  requiresApproval: Boolean!
+  lines: [InvoicePostJournalLine!]!
+}
+
+"An accounting integration the posted invoice would sync to."
+type InvoicePostSyncDestination {
+  integration: String!
+  company: String!
+  awaitsRelease: Boolean!
+}
+
+type InvoicePostEDI {
+  partnerName: String!
+  willSend: Boolean!
+  blockers: [String!]!
+}
+
+"What posting an invoice would book and move, read before the person posts it."
+type InvoicePostPreview {
+  invoiceId: ID!
+  number: String!
+  billToName: String!
+  currencyCode: String!
+  totalMinor: Int!
+  "Why posting would be refused; empty when it would go through."
+  refusals: [String!]!
+  alreadyPosted: Boolean!
+  journal: InvoicePostJournal
+  shipmentsBilled: [String!]!
+  queueItemPosted: Boolean!
+  accountingSync: [InvoicePostSyncDestination!]!
+  edi: InvoicePostEDI
+}
+
+extend type Invoice {
+  "The customer's PO number printed on the invoice."
+  poNumber: String!
+  "The invoice run that billed a consolidated invoice."
+  invoiceRunId: ID
+  sentById: ID
+  "Why the last email delivery went out with a caveat; empty when it did not."
+  lastSendWarning: String!
+  "The subject the next email will use instead of the template's; empty uses the template."
+  emailSubjectSnapshot: String!
+  emailBodySnapshot: String!
+  emailToSnapshot: [String!]!
+  emailCcSnapshot: [String!]!
+  emailBccSnapshot: [String!]!
+  "The correction chain the invoice belongs to, once it has been adjusted."
+  correctionGroupId: ID
+  "The adjustment that produced this invoice, on a credit memo or rebill."
+  sourceInvoiceAdjustmentId: ID
+  """
+  The shipment the invoice bills, with its route. Set on the invoice read through
+  invoice(id); null on lists and on invoices that bill no single shipment.
+  """
+  shipment: Shipment
+}
+
+"A draft invoice's printed note and delivery overrides. An absent field is left as it is."
+input UpdateInvoiceDraftInput {
+  memo: String
+  remittanceInstructions: String
+  emailSubject: String
+  emailBody: String
+  emailTo: [String!]
+  emailCc: [String!]
+  emailBcc: [String!]
+  attachmentIds: [ID!]
+}
+
+extend type Query {
+  "The emails an invoice went out in, newest first. limit is at most 100."
+  invoiceEmailAttempts(invoiceId: ID!, limit: Int = 20, offset: Int = 0): InvoiceEmailAttemptPage!
+  "What sending the invoice would email, and what stops it. Nothing is sent."
+  invoiceSendPlan(invoiceId: ID!): InvoiceSendPlan!
+  "What posting the invoice would book and move. Nothing is posted."
+  invoicePostPreview(invoiceId: ID!): InvoicePostPreview!
+}
+
+extend type Mutation {
+  "Changes a draft invoice's printed note, remittance text and delivery overrides."
+  updateInvoiceDraft(invoiceId: ID!, input: UpdateInvoiceDraftInput!): Invoice!
+  "Queues the invoice's PDF to be rendered and attached."
+  generateInvoicePdf(invoiceId: ID!): GenerateInvoicePdfResult!
+  "Emails the invoice, or emails it again after a failed or earlier send."
+  sendInvoice(invoiceId: ID!): InvoiceSendResult!
+  "Posts a draft invoice to the ledger."
+  postInvoice(invoiceId: ID!): Invoice!
+}

@@ -232,6 +232,19 @@ type StatementExclusion struct {
 }
 
 // InvoiceRunSweepResult is what one pass of the scheduled sweep did.
+type InvoiceStatementService interface {
+	ListOpenStatements(
+		ctx context.Context,
+		req *ListOpenStatementsRequest,
+	) ([]*OpenStatement, error)
+	GetOpenStatement(ctx context.Context, req *ListOpenStatementsRequest) (*OpenStatement, error)
+	BillStatementNow(
+		ctx context.Context,
+		req *BillStatementNowRequest,
+		actor *permissionports.RequestActor,
+	) (*CommitInvoiceRunResult, error)
+}
+
 type InvoiceRunSweepResult struct {
 	SchedulesDue    int `json:"schedulesDue"`
 	RunsBuilt       int `json:"runsBuilt"`

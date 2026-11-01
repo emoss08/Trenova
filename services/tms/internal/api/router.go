@@ -61,10 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/insighthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/invoicerunhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/invoicesharehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
@@ -237,9 +234,6 @@ type RouterParams struct {
 	DetentionHandler                *detentionhandler.Handler
 	IntegrationHandler              *integrationhandler.Handler
 	InvoiceHandler                  *invoicehandler.Handler
-	InvoiceRunHandler               *invoicerunhandler.Handler
-	InvoiceShareHandler             *invoicesharehandler.Handler
-	InvoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
 	JournalReversalHandler          *journalreversalhandler.Handler
 	ManualJournalHandler            *manualjournalhandler.Handler
 	BillingControlHandler           *billingcontrolhandler.Handler
@@ -366,9 +360,6 @@ type Router struct {
 	detentionHandler                *detentionhandler.Handler
 	integrationHandler              *integrationhandler.Handler
 	invoiceHandler                  *invoicehandler.Handler
-	invoiceRunHandler               *invoicerunhandler.Handler
-	invoiceShareHandler             *invoicesharehandler.Handler
-	invoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
 	journalReversalHandler          *journalreversalhandler.Handler
 	manualJournalHandler            *manualjournalhandler.Handler
 	billingControlHandler           *billingcontrolhandler.Handler
@@ -497,9 +488,6 @@ func NewRouter(p RouterParams) *Router {
 		detentionHandler:                p.DetentionHandler,
 		integrationHandler:              p.IntegrationHandler,
 		invoiceHandler:                  p.InvoiceHandler,
-		invoiceRunHandler:               p.InvoiceRunHandler,
-		invoiceShareHandler:             p.InvoiceShareHandler,
-		invoiceAdjustmentHandler:        p.InvoiceAdjustmentHandler,
 		journalReversalHandler:          p.JournalReversalHandler,
 		manualJournalHandler:            p.ManualJournalHandler,
 		billingControlHandler:           p.BillingControlHandler,
@@ -687,10 +675,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.rateQuoteHandler.RegisterRoutes(protected)
 	r.detentionHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)
-	r.invoiceHandler.RegisterRoutes(protected)
-	r.invoiceRunHandler.RegisterRoutes(protected)
-	r.invoiceShareHandler.RegisterRoutes(protected)
-	r.invoiceAdjustmentHandler.RegisterRoutes(protected)
 	r.journalReversalHandler.RegisterRoutes(protected)
 	r.manualJournalHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)

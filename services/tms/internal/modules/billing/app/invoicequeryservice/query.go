@@ -15,13 +15,6 @@ func (s *Service) ListEmailAttempts(
 	return s.repo.ListEmailAttempts(ctx, req)
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *invoiceports.ListInvoicesRequest,
-) (*pagination.ListResult[*invoice.Invoice], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *invoiceports.ListInvoiceConnectionRequest,

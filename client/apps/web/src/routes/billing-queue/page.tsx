@@ -172,7 +172,7 @@ export function BillingQueuePage() {
     activeQueueFilterCount(sidebarParams) > 0 || sidebarParams.query.trim() !== "";
   const caughtUp = !queueFiltered && isCaughtUp(queueStats);
   const { data: statementData, isLoading: statementsLoading } = useQuery(statementListQuery());
-  const statements = statementData?.results ?? EMPTY_STATEMENTS;
+  const statements = statementData ?? EMPTY_STATEMENTS;
 
   const headerActions = (
     <div className="flex items-center gap-2">

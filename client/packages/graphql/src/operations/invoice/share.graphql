@@ -1,0 +1,58 @@
+fragment InvoiceShareUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+}
+
+fragment InvoiceShareFields on InvoiceShare {
+  id
+  organizationId
+  businessUnitId
+  invoiceId
+  sharedWithId
+  sharedById
+  note
+  tab
+  shareCount
+  firstSharedAt
+  lastSharedAt
+  createdAt
+  updatedAt
+  sharedWith {
+    ...InvoiceShareUserFields
+  }
+  sharedBy {
+    ...InvoiceShareUserFields
+  }
+}
+
+query InvoiceShares($invoiceId: ID!) {
+  invoiceShares(invoiceId: $invoiceId) {
+    ...InvoiceShareFields
+  }
+}
+
+query InvoiceShareCandidates($invoiceId: ID!, $query: String, $limit: Int) {
+  invoiceShareCandidates(invoiceId: $invoiceId, query: $query, limit: $limit) {
+    id
+    name
+    username
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+  }
+}
+
+mutation ShareInvoice($invoiceId: ID!, $input: ShareInvoiceInput!) {
+  shareInvoice(invoiceId: $invoiceId, input: $input) {
+    shares {
+      ...InvoiceShareFields
+    }
+    recipientCount
+    emailsQueued
+    emailStatus
+  }
+}

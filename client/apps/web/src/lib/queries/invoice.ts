@@ -8,7 +8,8 @@ import { ar } from "./ar";
 export const invoice = createQueryKeys("invoice", {
   get: (invoiceId: string) => ({
     queryKey: ["get", invoiceId],
-    queryFn: async () => apiService.invoiceService.getById(invoiceId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.invoiceService.getById(invoiceId, { signal }),
   }),
   arContext: (invoiceId: string) => ({
     queryKey: ["ar-context", invoiceId],
@@ -22,11 +23,13 @@ export const invoice = createQueryKeys("invoice", {
   }),
   sendPlan: (invoiceId: string) => ({
     queryKey: ["send-plan", invoiceId],
-    queryFn: async () => apiService.invoiceService.getSendPlan(invoiceId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.invoiceService.getSendPlan(invoiceId, { signal }),
   }),
   emailAttempts: (invoiceId: string) => ({
     queryKey: ["email-attempts", invoiceId],
-    queryFn: async () => apiService.invoiceService.listEmailAttempts(invoiceId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.invoiceService.listEmailAttempts(invoiceId, {}, { signal }),
   }),
   card: (invoiceId: string) => ({
     queryKey: ["card", invoiceId],
@@ -35,9 +38,13 @@ export const invoice = createQueryKeys("invoice", {
   }),
   lastEmailAttempt: (invoiceId: string) => ({
     queryKey: ["last-email-attempt", invoiceId],
-    queryFn: async () => {
-      const page = await apiService.invoiceService.listEmailAttempts(invoiceId, { limit: 1 });
-      return page.results[0] ?? null;
+    queryFn: async ({ signal }: { signal?: AbortSignal }) => {
+      const page = await apiService.invoiceService.listEmailAttempts(
+        invoiceId,
+        { limit: 1 },
+        { signal },
+      );
+      return page.items[0] ?? null;
     },
   }),
 });

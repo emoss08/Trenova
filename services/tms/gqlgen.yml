@@ -5967,3 +5967,268 @@ models:
   StopEtaDriveMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod
+  InvoiceShareTab:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare.ShareTab
+  InvoiceShareEmailStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceShareEmailStatus
+  InvoiceShare:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare.InvoiceShare
+  InvoiceShareCandidate:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.ShareCandidate
+  ShareInvoiceResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.ShareInvoiceResult
+  StatementShipment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports.StatementShipment
+  StatementGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports.StatementGroup
+  OpenStatement:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports.OpenStatement
+  CommitGroupResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports.CommitGroupResult
+  CommitInvoiceRunResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports.CommitInvoiceRunResult
+  InvoiceAttachmentDeliveryMethod:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.AttachmentDeliveryMethod
+  InvoiceEmailAttemptAttachment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.EmailAttemptAttachment
+  InvoiceEmailAttempt:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.EmailAttempt
+  InvoiceSendRecipients:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceSendRecipients
+  InvoiceSendPlanAttachment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceSendPlanAttachment
+  InvoiceSendPlanDocumentLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceSendPlanDocumentLink
+  InvoiceSendPlanPart:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceSendPlanPart
+  InvoiceSendPlan:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceSendPlan
+  InvoiceSendResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceSendResult
+  GenerateInvoicePdfResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.GenerateInvoicePDFResult
+  InvoicePostJournalLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoicePostJournalLine
+  InvoicePostJournal:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoicePostJournal
+  InvoicePostSyncDestination:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoicePostSyncDestination
+  InvoicePostEDI:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoicePostEDI
+  InvoicePostPreview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoicePostPreview
+  InvoiceAdjustmentDocumentReference:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentDocumentReference
+  InvoiceAdjustmentDocument:
+    model:
+      - github.com/emoss08/trenova/internal/modules/documents/domain/document.Document
+  InvoiceAdjustmentCorrectionGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentCorrectionGroup
+  InvoiceAdjustmentLineage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentLineage
+  InvoiceAdjustmentBatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.BatchStatus
+  InvoiceAdjustmentBatchItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.BatchItemStatus
+  InvoiceReconciliationExceptionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.ExceptionStatus
+  InvoiceAdjustmentBatchItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatchItem
+  InvoiceAdjustmentBatch:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatch
+  InvoiceAdjustmentReconciliationQueueItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem
+  InvoiceAdjustmentPreviewLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentPreviewLine
+  InvoiceAdjustmentPreview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentPreview
+  BillingQueuePayerRef:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.PayerRef
+  BillingQueuePayerShareParty:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.PayerShareParty
+  BillingQueuePayerShareLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.PayerShareLine
+  BillingQueuePayerShare:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.PayerShare
+  BillingQueueRatedByKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.RatedByKind
+  BillingQueueRatedBy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.RatedBy
+  BillingQueueDetentionHold:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.DetentionHold
+  BillingQueueRatingReviewHold:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.RatingReviewHold
+  BillingQueueAgentReadKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.AgentReadKind
+  BillingQueueAgentRead:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.AgentRead
+  BillingQueueCheckKey:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.CheckKey
+  BillingQueueCheckState:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.CheckState
+  BillingQueueCheck:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.Check
+  BillingQueueIssueEffectKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.EffectKind
+  BillingQueueIssueEffect:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.IssueEffect
+  BillingQueueIssueOption:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.IssueOption
+  BillingQueueIssue:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.Issue
+  BillingQueueChargeLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.ChargeLine
+  BillingQueueChargeReview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.ChargeReview
+  BillingQueueInvoiceRef:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.InvoiceRef
+  BillingQueueTerms:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.BillingTerms
+  BillingQueueDocumentState:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.DocumentState
+  BillingQueueDocumentTile:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.DocumentTile
+  BillingQueueReview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.Review
+  BillingQueueEventActorType:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent.EventActorType
+  BillingQueueEvent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent.ItemEvent
+  BillingQueueEventPage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.BillingQueueEventPage
+  BillingQueueNeighbors:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.BillingQueueNeighbors
+  BillingQueueItemSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.BillingQueueItemSummary
+  BillingQueueLaneStat:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.BillingQueueLaneStat
+  BillingQueuePulse:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.BillingQueuePulse
+  BillingQueueStats:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.BillingQueueStats
+  BillingQueueRecommendationKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.RecommendationKind
+  BillingQueueRecommendationSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.RecommendationSource
+  BillingQueueRecommendation:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.Recommendation
+  BillingQueueAssistAvailability:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.AssistAvailability
+  BillingQueueBrief:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.QueueBriefView
+  BillingQueueNovaPhase:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.NovaPhase
+  BillingQueueNovaGeneration:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.NovaGeneration
+    fields:
+      retryAt:
+        resolver: true
+  BillingQueueSearchDates:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.SearchDates
+    fields:
+      lastDays:
+        resolver: true
+      from:
+        resolver: true
+      to:
+        resolver: true
+  BillingQueueSearchIntent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.SearchIntent
+  BillingQueueFilterPreset:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuefilterpreset.BillingQueueFilterPreset
+  BillingQueueBulkAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun.RunAction
+  BillingQueueBulkRunStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun.ApprovalRunStatus
+  BillingQueueBulkRunItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun.ApprovalItemStatus
+  BillingQueueBulkRunItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun.ApprovalRunItem
+  BillingQueueBulkRun:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun.ApprovalRun
+  BillingQueuePodSignatureRedetectResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports.RedetectPODSignaturesResult

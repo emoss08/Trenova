@@ -321,10 +321,6 @@ type CreateInvoicesResult struct {
 
 // InvoiceQueryService reads invoices and their email attempts.
 type InvoiceQueryService interface {
-	List(
-		ctx context.Context,
-		req *ListInvoicesRequest,
-	) (*pagination.ListResult[*invoice.Invoice], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListInvoiceConnectionRequest,
@@ -350,11 +346,6 @@ type InvoiceCreationService interface {
 		req *CreateInvoiceFromBillingQueueRequest,
 		actor *permissionports.RequestActor,
 	) (*CreateInvoiceFromBillingQueueResult, error)
-	CreateFromShipments(
-		ctx context.Context,
-		req *CreateInvoiceFromShipmentsRequest,
-		actor *permissionports.RequestActor,
-	) (*invoice.Invoice, error)
 	CreateInvoicesFromShipments(
 		ctx context.Context,
 		req *CreateInvoiceFromShipmentsRequest,

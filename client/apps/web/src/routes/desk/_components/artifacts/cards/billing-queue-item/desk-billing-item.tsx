@@ -21,7 +21,6 @@ import type {
   BillingQueuePostResult,
 } from "@trenova/shared/types/billing-queue";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { Shipment } from "@trenova/shared/types/shipment";
 import { Fragment, useCallback, useState, type ReactNode } from "react";
 import { deskPopoverClass } from "@/components/desk-chat/desk-popover";
 import {
@@ -64,13 +63,16 @@ const STAGE_TONE: Record<ItemStage, CardTone> = {
   other: "progress",
 };
 
-type Stop = NonNullable<Shipment["moves"]>[number]["stops"][number];
+type RouteStop = NonNullable<
+  NonNullable<NonNullable<BillingQueueItem["shipment"]>["moves"]>[number]["stops"]
+>[number];
 
-function placeOf(stop: Stop | undefined): string {
+function placeOf(stop: RouteStop | undefined): string {
   const location = stop?.location;
   if (!location) return "";
-  const state = (location as { state?: { abbreviation?: string } | null }).state?.abbreviation;
-  return [location.city, state].filter(Boolean).join(", ") || location.name;
+  return (
+    [location.city, location.state?.abbreviation].filter(Boolean).join(", ") || location.name || ""
+  );
 }
 
 /** The lane as the design draws it: from and to, then delivered · driver · miles. */

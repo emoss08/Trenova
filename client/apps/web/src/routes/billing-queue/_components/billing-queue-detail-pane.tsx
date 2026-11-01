@@ -262,7 +262,7 @@ function ShipmentMargin({ shipmentId }: { shipmentId: string }) {
 /** What the biller must know before reading the charges: notes, exceptions and holds. */
 function ItemNotices({ item }: { item: BillingQueueItem }) {
   const t = useT();
-  const billingNotes = item.shipment?.customer?.billingProfile?.billingNotes;
+  const billingNotes = item.billToCustomer?.billingProfile?.billingNotes;
 
   if (
     !billingNotes &&

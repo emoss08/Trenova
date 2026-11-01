@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { invoiceAdjustmentBatchQueueItemSchema } from "@/types/invoice-adjustment";
 
 /**
- * GET /billing/invoice-adjustments/batches/ lists invoiceadjustment.InvoiceAdjustmentBatch
+ * The invoiceAdjustmentBatches query lists invoiceadjustment.InvoiceAdjustmentBatch
  * rows: the batch's own `id` plus the scan-only queue projections (pendingCount,
  * submittedByName, lastFailure, lastFailureCount). The fixture follows those
  * json tags, including the nullzero submitter a system-submitted batch has.
