@@ -15083,7 +15083,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "api/graphql"
     ]
   },
   "API keys cannot bulk update customer status": {
@@ -15092,7 +15092,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "api/graphql"
     ]
   },
   "API keys cannot bulk update equipment manufacturers": {
@@ -15101,16 +15101,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
-    ]
-  },
-  "API keys cannot bulk update equipment types": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
+      "api/graphql"
     ]
   },
   "API keys cannot bulk update hazardous materials": {
@@ -15119,7 +15110,7 @@
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "api/graphql"
     ]
   },
   "API keys cannot bulk update locations": {
@@ -129997,15 +129988,6 @@
       "go/other"
     ]
   },
-  "Invalid part number": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "Invalid password. Please try again": {
     "sites": 1,
     "scope": [
@@ -130106,7 +130088,7 @@
     ]
   },
   "Invalid request body": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -148605,15 +148587,6 @@
       "apps/web/lib"
     ]
   },
-  "Manual service failure creation is disabled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Manual service failure request is required": {
     "sites": 1,
     "scope": [
@@ -154044,15 +154017,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Modifications must be a JSON object of the parameters changed": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
     ]
   },
   "Modify PTO policies": {
@@ -201197,13 +201161,12 @@
     ]
   },
   "Previews of proposed changes are not available": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql",
-      "api/handlers"
+      "api/graphql"
     ]
   },
   "Previous": {
@@ -221133,7 +221096,7 @@
     ]
   },
   "Request is required": {
-    "sites": 55,
+    "sites": 54,
     "scope": [
       "go"
     ],
@@ -234643,7 +234606,7 @@
     ]
   },
   "Scope is required": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -245266,15 +245229,6 @@
       "routes/billing-queue",
       "routes/formula-template",
       "routes/shipment"
-    ]
-  },
-  "Shipment ID is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
     ]
   },
   "Shipment ID is required": {
@@ -260518,15 +260472,6 @@
     ],
     "areas": [
       "routes/invoice"
-    ]
-  },
-  "Teammate not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Teammates get an in-app notification with the download when it completes.": {
