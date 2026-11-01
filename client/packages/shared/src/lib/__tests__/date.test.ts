@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   formatCountdownClock,
   partOfDay,
@@ -124,12 +124,25 @@ describe("toUserWallClock / fromUserWallClock", () => {
 });
 
 describe("daysUntil", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("counts calendar days in the user's zone", () => {
+    vi.useFakeTimers({ now: new Date("2026-06-15T18:00:00Z") });
     setUserDatePreferences({ timezone: "America/Denver" });
     const now = Math.floor(Date.now() / 1000);
     expect(daysUntil(now)).toBe(0);
     expect(daysUntil(now + 86400)).toBe(1);
     expect(daysUntil(now - 86400)).toBe(-1);
+  });
+
+  it("counts calendar days, not 24-hour spans, across a daylight saving change", () => {
+    vi.useFakeTimers({ now: new Date("2026-11-01T06:40:00Z") });
+    setUserDatePreferences({ timezone: "America/Denver" });
+    const now = Math.floor(Date.now() / 1000);
+    expect(daysUntil(now + 86400)).toBe(0);
+    expect(daysUntil(now + 2 * 86400)).toBe(1);
   });
 });
 
