@@ -52,6 +52,7 @@ func rateAgreementToModel(
 		ReviewComment:        entity.ReviewComment,
 		CurrentVersionNumber: int(entity.CurrentVersionNumber),
 		BillToCustomerID:     gqlid.IDPtrFromPulidPtr(entity.BillToCustomerID),
+		DocumentID:           gqlid.IDPtrFromPulidPtr(entity.DocumentID),
 		Version:              int(entity.Version),
 		CreatedAt:            int(entity.CreatedAt),
 		UpdatedAt:            int(entity.UpdatedAt),
@@ -209,46 +210,77 @@ func rateMatrixConnectionToModel(
 	}, nil
 }
 
-func rateQuoteToModel(entity *ratequote.RateQuote) *gqlmodel.RateQuote {
+func rateQuoteToModel(entity *ratequote.RateQuote) (*gqlmodel.RateQuote, error) {
 	if entity == nil {
-		return nil
+		return nil, nil //nolint:nilnil // a missing quote maps to a null GraphQL field
+	}
+	var trace map[string]any
+	if entity.Trace != nil {
+		converted, err := gqlscalar.OptionalJSON(entity.Trace)
+		if err != nil {
+			return nil, err
+		}
+		trace = converted
 	}
 
 	return &gqlmodel.RateQuote{
-		ID:                  entity.ID.String(),
-		BusinessUnitID:      entity.BusinessUnitID.String(),
-		OrganizationID:      entity.OrganizationID.String(),
-		ShipmentID:          gqlid.IDPtrFromPulidPtr(entity.ShipmentID),
-		PartyType:           gqlmodel.RateAgreementPartyType(entity.PartyType),
-		PartyID:             entity.PartyID.String(),
-		Purpose:             gqlmodel.RateQuotePurpose(entity.Purpose),
-		Outcome:             gqlmodel.RateQuoteOutcome(entity.Outcome),
-		RateAgreementID:     gqlid.IDPtrFromPulidPtr(entity.RateAgreementID),
-		RateAgreementRuleID: gqlid.IDPtrFromPulidPtr(entity.RateAgreementRuleID),
-		FormulaTemplateID:   gqlid.IDPtrFromPulidPtr(entity.FormulaTemplateID),
-		SpecificityScore:    int(entity.SpecificityScore),
-		Currency:            entity.Currency,
-		BillingCurrency:     entity.BillingCurrency,
-		LinehaulAmount:      entity.LinehaulAmount.String(),
-		TotalAmount:         entity.TotalAmount.String(),
-		BillingAmount:       entity.BillingAmount.String(),
-		ForegoneAmount:      gqldecimal.NullDecimalToStringPtr(entity.ForegoneAmount),
-		OverrideReason:      entity.OverrideReason,
-		AsOf:                int(entity.AsOf),
-		RatedAt:             int(entity.RatedAt),
-		RatedByID:           gqlid.IDPtrFromPulidPtr(entity.RatedByID),
-		EngineVersion:       entity.EngineVersion,
-		CreatedAt:           int(entity.CreatedAt),
-	}
+		ID:                     entity.ID.String(),
+		BusinessUnitID:         entity.BusinessUnitID.String(),
+		OrganizationID:         entity.OrganizationID.String(),
+		ShipmentID:             gqlid.IDPtrFromPulidPtr(entity.ShipmentID),
+		ShipmentMoveID:         gqlid.IDPtrFromPulidPtr(entity.ShipmentMoveID),
+		PartyType:              gqlmodel.RateAgreementPartyType(entity.PartyType),
+		PartyID:                entity.PartyID.String(),
+		Purpose:                gqlmodel.RateQuotePurpose(entity.Purpose),
+		Outcome:                gqlmodel.RateQuoteOutcome(entity.Outcome),
+		Status:                 string(entity.Status),
+		RateAgreementID:        gqlid.IDPtrFromPulidPtr(entity.RateAgreementID),
+		RateAgreementRuleID:    gqlid.IDPtrFromPulidPtr(entity.RateAgreementRuleID),
+		AgreementVersionNumber: gqlscalar.Int64PtrToIntPtr(entity.AgreementVersionNumber),
+		FormulaTemplateID:      gqlid.IDPtrFromPulidPtr(entity.FormulaTemplateID),
+		FormulaTemplateVersionNumber: gqlscalar.Int64PtrToIntPtr(
+			entity.FormulaTemplateVersionNumber,
+		),
+		SpecificityScore:  int(entity.SpecificityScore),
+		Currency:          entity.Currency,
+		BillingCurrency:   entity.BillingCurrency,
+		LinehaulAmount:    entity.LinehaulAmount.String(),
+		FuelAmount:        entity.FuelAmount.String(),
+		AccessorialAmount: entity.AccessorialAmount.String(),
+		TotalAmount:       entity.TotalAmount.String(),
+		CostAmount:        gqldecimal.NullDecimalToStringPtr(entity.CostAmount),
+		MarginAmount:      gqldecimal.NullDecimalToStringPtr(entity.MarginAmount),
+		MarginPercent:     gqldecimal.NullDecimalToStringPtr(entity.MarginPercent),
+		BillingAmount:     entity.BillingAmount.String(),
+		FxRate:            gqldecimal.NullDecimalToStringPtr(entity.FxRate),
+		ExchangeRateID:    gqlid.IDPtrFromPulidPtr(entity.ExchangeRateID),
+		ForegoneAmount:    gqldecimal.NullDecimalToStringPtr(entity.ForegoneAmount),
+		OverrideReason:    entity.OverrideReason,
+		AsOf:              int(entity.AsOf),
+		RatedAt:           int(entity.RatedAt),
+		RatedByID:         gqlid.IDPtrFromPulidPtr(entity.RatedByID),
+		EngineVersion:     entity.EngineVersion,
+		ContextHash:       entity.ContextHash,
+		Trace:             trace,
+		CreatedAt:         int(entity.CreatedAt),
+	}, nil
 }
 
 func rateQuoteConnectionToModel(
 	result *pagination.CursorListResult[*ratequote.RateQuote],
 ) (*gqlmodel.RateQuoteConnection, error) {
+	models := make(map[*ratequote.RateQuote]*gqlmodel.RateQuote, len(result.Items))
+	for _, item := range result.Items {
+		model, err := rateQuoteToModel(item)
+		if err != nil {
+			return nil, err
+		}
+		models[item] = model
+	}
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *ratequote.RateQuote, cursor string) *gqlmodel.RateQuoteEdge {
-			return &gqlmodel.RateQuoteEdge{Node: rateQuoteToModel(node), Cursor: cursor}
+			return &gqlmodel.RateQuoteEdge{Node: models[node], Cursor: cursor}
 		},
 		func(edge *gqlmodel.RateQuoteEdge) string { return edge.Cursor },
 	)
@@ -264,12 +296,10 @@ func rateQuoteConnectionToModel(
 	}, nil
 }
 
-// rateAgreementCardToModel is one agreement as rateAgreement reads it: the
-// header with its accessorial schedule, its fuel binding and the version of
-// its terms in force. Its lanes are read a page at a time by their own field.
 func rateAgreementCardToModel(
 	entity *rateagreement.RateAgreement,
 	current *rateagreement.RateAgreementVersion,
+	withRules bool,
 ) (*gqlmodel.RateAgreement, error) {
 	inputs, err := tariffmapping.TariffInputsToModel(entity.Inputs)
 	if err != nil {
@@ -289,21 +319,32 @@ func rateAgreementCardToModel(
 	if binding := entity.FuelBinding; binding != nil {
 		model.FuelBinding = &gqlmodel.RateAgreementFuelBinding{
 			ID:                     binding.ID.String(),
+			RateAgreementID:        binding.RateAgreementID.String(),
 			FuelSurchargeProgramID: binding.FuelSurchargeProgramID.String(),
 			Waived:                 binding.Waived,
+			PegPriceOverride:       gqldecimal.NullDecimalToStringPtr(binding.PegPriceOverride),
+			IncrementRateOverride: gqldecimal.NullDecimalToStringPtr(
+				binding.IncrementRateOverride,
+			),
+			CapAmount: gqldecimal.NullDecimalToStringPtr(binding.CapAmount),
 		}
 		if binding.Program != nil {
 			model.FuelBinding.ProgramName = binding.Program.Name
 		}
 	}
 	if current != nil {
-		model.CurrentVersion = &gqlmodel.RateAgreementVersion{
-			ID:            current.ID.String(),
-			VersionNumber: int(current.VersionNumber),
-			EffectiveFrom: int(current.EffectiveFrom),
-			EffectiveTo:   gqlscalar.Int64PtrToIntPtr(current.EffectiveTo),
-			ChangeMessage: current.ChangeMessage,
+		version, versionErr := rateAgreementVersionToModel(current)
+		if versionErr != nil {
+			return nil, versionErr
 		}
+		model.CurrentVersion = version
+	}
+	if withRules {
+		rules, rulesErr := rateAgreementRulesToModel(entity.Rules)
+		if rulesErr != nil {
+			return nil, rulesErr
+		}
+		model.Rules = rules
 	}
 
 	return model, nil
@@ -314,7 +355,10 @@ func rateAgreementAccessorialToModel(
 ) *gqlmodel.RateAgreementAccessorial {
 	model := &gqlmodel.RateAgreementAccessorial{
 		ID:                  entity.ID.String(),
+		RateAgreementID:     entity.RateAgreementID.String(),
 		AccessorialChargeID: entity.AccessorialChargeID.String(),
+		ServiceTypeIds:      gqlid.PulidsToStrings(entity.ServiceTypeIDs),
+		ShipmentTypeIds:     gqlid.PulidsToStrings(entity.ShipmentTypeIDs),
 		Method:              string(entity.Method),
 		RateUnit:            string(entity.RateUnit),
 		Waived:              entity.Waived,

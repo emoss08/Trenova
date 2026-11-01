@@ -580,6 +580,85 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createJurisdictionRule",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JurisdictionRule",
+				Args:       field_Mutation_createJurisdictionRule_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateJurisdictionRule(ctx, fc.Args["input"].(gqlmodel.JurisdictionRuleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐJurisdictionRule),
+			},
+			{
+				Name:       "updateJurisdictionRule",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JurisdictionRule",
+				Args:       field_Mutation_updateJurisdictionRule_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateJurisdictionRule(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.JurisdictionRuleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐJurisdictionRule),
+			},
+			{
+				Name:       "verifyJurisdictionRule",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JurisdictionRule",
+				Args:       field_Mutation_verifyJurisdictionRule_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VerifyJurisdictionRule(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.VerifyJurisdictionRuleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐJurisdictionRule),
+			},
+			{
+				Name:       "createJurisdictionRuleOverride",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JurisdictionRuleOverride",
+				Args:       field_Mutation_createJurisdictionRuleOverride_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateJurisdictionRuleOverride(ctx, fc.Args["input"].(gqlmodel.JurisdictionRuleOverrideInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNJurisdictionRuleOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐOverride),
+			},
+			{
+				Name:       "updateJurisdictionRuleOverride",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JurisdictionRuleOverride",
+				Args:       field_Mutation_updateJurisdictionRuleOverride_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateJurisdictionRuleOverride(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.JurisdictionRuleOverrideInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNJurisdictionRuleOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐOverride),
+			},
+			{
+				Name:       "deleteJurisdictionRuleOverride",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild4,
+				Args:       field_Mutation_deleteJurisdictionRuleOverride_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteJurisdictionRuleOverride(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "jurisdictionRules",
@@ -624,8 +703,14 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "JurisdictionRuleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputJurisdictionRuleInput)},
+		{Name: "JurisdictionRuleOverrideInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputJurisdictionRuleOverrideInput)},
+		{Name: "VerifyJurisdictionRuleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputVerifyJurisdictionRuleInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "JurisdictionRule", Check: func(r any) bool { _, ok := r.(resolverJurisdictionRule); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -633,6 +718,15 @@ var Shard = &gqlexec.Shard{
 type resolverJurisdictionRule interface {
 	PermitBaseFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error)
 	PermitPerMileFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error)
+}
+
+type resolverMutation interface {
+	CreateJurisdictionRule(ctx context.Context, input gqlmodel.JurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error)
+	UpdateJurisdictionRule(ctx context.Context, id string, input gqlmodel.JurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error)
+	VerifyJurisdictionRule(ctx context.Context, id string, input gqlmodel.VerifyJurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error)
+	CreateJurisdictionRuleOverride(ctx context.Context, input gqlmodel.JurisdictionRuleOverrideInput) (*jurisdictionrule.Override, error)
+	UpdateJurisdictionRuleOverride(ctx context.Context, id string, input gqlmodel.JurisdictionRuleOverrideInput) (*jurisdictionrule.Override, error)
+	DeleteJurisdictionRuleOverride(ctx context.Context, id string) (bool, error)
 }
 
 type resolverQuery interface {
@@ -652,6 +746,108 @@ var (
 	errNoChild7 = errors.New("field of type JurisdictionVerificationState does not have child fields")
 	errNoChild8 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_createJurisdictionRule_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.JurisdictionRuleInput, error) {
+			return unmarshalNJurisdictionRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateJurisdictionRule_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.JurisdictionRuleInput, error) {
+			return unmarshalNJurisdictionRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_verifyJurisdictionRule_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.VerifyJurisdictionRuleInput, error) {
+			return unmarshalNVerifyJurisdictionRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVerifyJurisdictionRuleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_createJurisdictionRuleOverride_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.JurisdictionRuleOverrideInput, error) {
+			return unmarshalNJurisdictionRuleOverrideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateJurisdictionRuleOverride_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.JurisdictionRuleOverrideInput, error) {
+			return unmarshalNJurisdictionRuleOverrideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteJurisdictionRuleOverride_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_jurisdictionRules_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -692,8 +888,320 @@ func field_Query_jurisdictionRuleOverrides_args(ctx context.Context, ec *gqlexec
 	return args, nil
 }
 
+func unmarshalInputJurisdictionRuleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.JurisdictionRuleInput, error) {
+	var it gqlmodel.JurisdictionRuleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stateId", "status", "maxWidthFeet", "maxHeightFeet", "maxLengthFeet", "maxWeightPounds", "superloadWidthFeet", "superloadWeightPounds", "daylightOnly", "rushHourRestricted", "weekendRestricted", "holidayRestricted", "permitLeadTimeDays", "permitValidityDays", "permitBaseFee", "permitPerMileFee", "sourceNote", "sourceUrl", "effectiveStartDate", "effectiveEndDate", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateID = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "maxWidthFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxWidthFeet"))
+			data, err := unmarshalNFloat2float64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxWidthFeet = data
+		case "maxHeightFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxHeightFeet"))
+			data, err := unmarshalNFloat2float64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxHeightFeet = data
+		case "maxLengthFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxLengthFeet"))
+			data, err := unmarshalNFloat2float64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxLengthFeet = data
+		case "maxWeightPounds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxWeightPounds"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxWeightPounds = data
+		case "superloadWidthFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("superloadWidthFeet"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SuperloadWidthFeet = data
+		case "superloadWeightPounds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("superloadWeightPounds"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SuperloadWeightPounds = data
+		case "daylightOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("daylightOnly"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DaylightOnly = data
+		case "rushHourRestricted":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rushHourRestricted"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RushHourRestricted = data
+		case "weekendRestricted":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weekendRestricted"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.WeekendRestricted = data
+		case "holidayRestricted":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("holidayRestricted"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HolidayRestricted = data
+		case "permitLeadTimeDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permitLeadTimeDays"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PermitLeadTimeDays = data
+		case "permitValidityDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permitValidityDays"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PermitValidityDays = data
+		case "permitBaseFee":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permitBaseFee"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PermitBaseFee = data
+		case "permitPerMileFee":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permitPerMileFee"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PermitPerMileFee = data
+		case "sourceNote":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceNote"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceNote = data
+		case "sourceUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceUrl"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceURL = data
+		case "effectiveStartDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveStartDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveStartDate = data
+		case "effectiveEndDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveEndDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveEndDate = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputJurisdictionRuleOverrideInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.JurisdictionRuleOverrideInput, error) {
+	var it gqlmodel.JurisdictionRuleOverrideInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stateId", "maxWidthFeet", "maxHeightFeet", "maxLengthFeet", "maxWeightPounds", "permitLeadTimeDays", "daylightOnly", "holidayRestricted", "reason", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateID = data
+		case "maxWidthFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxWidthFeet"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxWidthFeet = data
+		case "maxHeightFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxHeightFeet"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxHeightFeet = data
+		case "maxLengthFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxLengthFeet"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxLengthFeet = data
+		case "maxWeightPounds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxWeightPounds"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxWeightPounds = data
+		case "permitLeadTimeDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permitLeadTimeDays"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PermitLeadTimeDays = data
+		case "daylightOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("daylightOnly"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DaylightOnly = data
+		case "holidayRestricted":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("holidayRestricted"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HolidayRestricted = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputVerifyJurisdictionRuleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.VerifyJurisdictionRuleInput, error) {
+	var it gqlmodel.VerifyJurisdictionRuleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"verificationState", "sourceNote", "sourceUrl"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "verificationState":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("verificationState"))
+			data, err := unmarshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐVerificationState(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.VerificationState = data
+		case "sourceNote":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceNote"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceNote = data
+		case "sourceUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceUrl"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceURL = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -701,9 +1209,99 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, v any) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNJurisdictionRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.JurisdictionRuleInput, error) {
+	res, err := unmarshalInputJurisdictionRuleInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNJurisdictionRuleOverrideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.JurisdictionRuleOverrideInput, error) {
+	res, err := unmarshalInputJurisdictionRuleOverrideInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (jurisdictionrule.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := jurisdictionrule.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐVerificationState(ctx context.Context, ec *gqlexec.Exec, v any) (jurisdictionrule.VerificationState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := jurisdictionrule.VerificationState(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNVerifyJurisdictionRuleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVerifyJurisdictionRuleInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.VerifyJurisdictionRuleInput, error) {
+	res, err := unmarshalInputVerifyJurisdictionRuleInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, v any) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

@@ -21859,6 +21859,36 @@ type JurisdictionRuleEdge {
 }
 
 """
+A jurisdiction's statutory oversize and overweight limits. The row is global: every organization reads it.
+"""
+input JurisdictionRuleInput {
+  daylightOnly: Boolean!
+  effectiveEndDate: Timestamp
+  effectiveStartDate: Timestamp
+  holidayRestricted: Boolean!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  maxWidthFeet: Float!
+  permitBaseFee: Decimal
+  permitLeadTimeDays: Int!
+  permitPerMileFee: Decimal
+  permitValidityDays: Int!
+  rushHourRestricted: Boolean!
+  sourceNote: String
+  sourceUrl: String
+  stateId: ID!
+  status: JurisdictionRuleStatus!
+  superloadWeightPounds: Int
+  superloadWidthFeet: Float
+  """
+  The version read before editing; a save against an older one is refused.
+  """
+  version: Int
+  weekendRestricted: Boolean!
+}
+
+"""
 One organization's stricter posture on a jurisdiction.
 
 Unlike JurisdictionRule these rows are tenant data. Every field is optional —
@@ -21901,6 +21931,28 @@ type JurisdictionRuleOverrideConnection {
 type JurisdictionRuleOverrideEdge {
   cursor: String!
   node: JurisdictionRuleOverride!
+}
+
+"""
+An organization's stricter posture on a jurisdiction; every limit left out defers to the statute.
+"""
+input JurisdictionRuleOverrideInput {
+  daylightOnly: Boolean
+  holidayRestricted: Boolean
+  maxHeightFeet: Float
+  maxLengthFeet: Float
+  maxWeightPounds: Int
+  maxWidthFeet: Float
+  permitLeadTimeDays: Int
+  """
+  Why this organization runs tighter than the statute. Required, minimum ten characters.
+  """
+  reason: String!
+  stateId: ID!
+  """
+  The version read before editing; a save against an older one is refused.
+  """
+  version: Int
 }
 
 enum JurisdictionRuleStatus {
@@ -22486,6 +22538,11 @@ type Mutation {
   Books every matched line through the factoring ledger in one transaction.
   """
   applyFactoringRemittance(input: FactoringRemittanceVersionInput!): FactoringRemittance!
+  """
+  Closes out every affected rule and inserts its successor at the new rate from
+  the effective date. The old rates stay in history.
+  """
+  applyRateIncrease(input: RateIncreaseInput!): RateIncreasePlan!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   """
   Makes a suggested memory Active, with the text as the administrator edited it. A tainted suggestion approved is reviewed.
@@ -22510,6 +22567,9 @@ type Mutation {
   Approve journal entries awaiting approval. Each entry is decided on its own.
   """
   approveJournalEntries(input: JournalReviewInput!): JournalReviewResult!
+  approveRateAgreement(comment: String, id: ID!): RateAgreement!
+  """Publishes the submitted draft as the next version."""
+  approveRateMatrix(comment: String, id: ID!): RateMatrix!
   """
   Approves the reviews the tariff asked for on the shipment's rating, which releases the
   shipment to be billed. A person's decision: an agent cannot make it.
@@ -22519,6 +22579,11 @@ type Mutation {
   archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
   archivePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
   archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
+  archiveRateAgreement(comment: String, id: ID!): RateAgreement!
+  """
+  Takes the matrix out of new template versions; one that versions pin needs confirmInUse.
+  """
+  archiveRateMatrix(confirmInUse: Boolean = false, id: ID!): RateMatrix!
   archiveTrainingCourse(id: ID!, version: Int): TrainingCourse!
   archiveWorkerChecklistTemplate(id: ID!, version: Int): WorkerChecklistTemplate!
   archiveWorkerCredential(input: ArchiveWorkerCredentialInput!): WorkerCredential!
@@ -22657,6 +22722,10 @@ type Mutation {
   """
   commitMyDecisionNow(planId: ID, proposalId: ID): Boolean!
   """
+  Amends the agreement with the sheet's lanes, closing out the ones it replaces.
+  """
+  commitRateImport(id: ID!): RateImportBatch!
+  """
   Moves setup to the start date step once every required mapping is confirmed.
   """
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
@@ -22734,6 +22803,8 @@ type Mutation {
   """
   createInvoicesFromShipments(offCycleReason: String, shipmentIds: [ID!]!): CreateInvoicesResult!
   createJobPosition(input: JobPositionInput!): JobPosition!
+  createJurisdictionRule(input: JurisdictionRuleInput!): JurisdictionRule!
+  createJurisdictionRuleOverride(input: JurisdictionRuleOverrideInput!): JurisdictionRuleOverride!
   createLocationCategory(input: LocationCategoryInput!): LocationCategory!
   """Raises a standalone credit or debit memo against a customer."""
   createMemo(input: CreateMemoInput!): Invoice!
@@ -22750,12 +22821,17 @@ type Mutation {
   createPerformanceReview(input: CreatePerformanceReviewInput!): PerformanceReview!
   createPerformanceReviewTemplate(input: PerformanceReviewTemplateInput!): PerformanceReviewTemplate!
   createPtoPolicy(input: PTOPolicyInput!): PTOPolicy!
+  createRateAgreement(input: RateAgreementInput!): RateAgreement!
+  createRateMatrix(input: RateMatrixInput!): RateMatrix!
+  """Records a simulation and starts its replay in the background."""
+  createRateSimulation(input: RateSimulationInput!): RateSimulation!
   createRecurringDeduction(input: CreateRecurringDeductionInput!): RecurringDeduction!
   createRecurringEarning(input: CreateRecurringEarningInput!): RecurringEarning!
   createReportDashboard(input: SaveReportDashboardInput!): ReportDashboard!
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
   createReportSchedule(input: CreateReportScheduleInput!): ReportSchedule!
   createReportView(input: CreateReportViewInput!): ReportView!
+  createRoutingGuide(input: RoutingGuideInput!): RoutingGuide!
   """
   Files a dispute against one of the signed-in driver's issued settlements.
   """
@@ -22853,6 +22929,7 @@ type Mutation {
   deleteIftaMileageEntry(id: ID!, version: Int!): Boolean!
   deleteIftaReturn(id: ID!, version: Int!): Boolean!
   deleteIftaTaxRate(id: ID!, version: Int!): Boolean!
+  deleteJurisdictionRuleOverride(id: ID!): Boolean!
   deleteLeaveDay(id: ID!): Boolean!
   deleteMyTriageView(id: ID!): Boolean!
   deleteOrgHoliday(id: ID!): Boolean!
@@ -22861,6 +22938,7 @@ type Mutation {
   deleteReportDefinition(id: ID!): Boolean!
   deleteReportSchedule(id: ID!): Boolean!
   deleteReportView(id: ID!): Boolean!
+  deleteRoutingGuide(id: ID!): Boolean!
   deleteSafetyViolation(id: ID!): Boolean!
   deleteShipmentComment(commentId: ID!, shipmentId: ID!): Boolean!
   deleteTableConfiguration(id: ID!): Boolean!
@@ -22889,6 +22967,8 @@ type Mutation {
   discardFuelPurchaseImport(id: ID!, reason: String, version: Int!): FuelPurchaseImportBatch!
   discardInboundLoad(messageId: ID!): InboundMessage!
   discardInboundReplyDraft(messageId: ID!): InboundMessage!
+  """Closes a sheet somebody read and said no to."""
+  discardRateImport(id: ID!): RateImportBatch!
   """Disconnects the accounting system and revokes Trenova's access to it."""
   disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
   """
@@ -22935,6 +23015,10 @@ type Mutation {
   draftInboundMany(messageIds: [ID!]!): Int!
   """Has Nova draft a reply. It is stored as the message's draft."""
   draftInboundReply(messageId: ID!): InboundReply!
+  """
+  Copies the whole contract as a fresh draft with none of the original's history or approvals.
+  """
+  duplicateRateAgreement(code: String, id: ID!, name: String): RateAgreement!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   """
   Changes how a stack's open pages divide into documents: split, merge, reorder, drop, rotate.
@@ -23188,6 +23272,8 @@ type Mutation {
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """Rejects a pending adjustment; the invoice stays as posted."""
   rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
+  rejectRateAgreement(comment: String, id: ID!): RateAgreement!
+  rejectRateMatrix(comment: String, id: ID!): RateMatrix!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Lets records waiting for approval be sent."""
   releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
@@ -23233,6 +23319,8 @@ type Mutation {
   Sets the routing order: the first ID takes work first. Every provider must be listed once.
   """
   reorderAIProviders(ids: [ID!]!): [AIProvider!]!
+  """Replaces the draft's whole grid with these cells."""
+  replaceRateMatrixCells(cells: [RateMatrixCellInput!]!, id: ID!): Boolean!
   """
   Replays a case against its agent as it is now, writes simulated, and scores it.
   """
@@ -23249,6 +23337,7 @@ type Mutation {
   requestLeaveCertification(caseId: ID!, dueAt: Timestamp): WorkerLeaveCase!
   requestMissingFactoringDocuments(input: RequestMissingFactoringDocumentsInput!): FactoringDocumentRequestResult!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
+  requestRateMatrixChanges(comment: String, id: ID!): RateMatrix!
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
   resetCannedFork(id: ID!): ReportDefinition!
   resetHomeLayout: HomeLayout!
@@ -23296,11 +23385,14 @@ type Mutation {
   restoreNotifications(ids: [ID!]!): Boolean!
   restorePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
   restorePtoPolicy(id: ID!, version: Int): PTOPolicy!
+  """Replaces the draft's axes and cells with a published version's."""
+  restoreRateMatrixVersion(id: ID!, versionNumber: Int!): RateMatrix!
   restoreTrainingCourse(id: ID!, version: Int): TrainingCourse!
   restoreWorkerChecklistTemplate(id: ID!, version: Int): WorkerChecklistTemplate!
   restoreWorkerCredentialType(id: ID!, version: Int): WorkerCredentialType!
   resumeAccountingSync(integrationType: AccountingSystem!): AccountingConnection!
   resumeCarrierIntelMonitoring: Boolean!
+  resumeRateAgreement(comment: String, id: ID!): RateAgreement!
   """
   Retire a line of guidance from the organization's profile; it is written again without it. Needs agent memory manage.
   """
@@ -23510,6 +23602,9 @@ type Mutation {
   submitInvoicesToFactor(input: FactoringSubmissionPlanInput!): FactoringSubmission!
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
   submitPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
+  submitRateAgreement(comment: String, id: ID!): RateAgreement!
+  submitRateMatrix(id: ID!, input: SubmitRateMatrixInput): RateMatrix!
+  suspendRateAgreement(comment: String, id: ID!): RateAgreement!
   switchCarrierIntelProvider(provider: String!): CarrierIntelControl!
   """
   Reads a connected card feed now instead of waiting for the schedule. Rows that
@@ -23631,6 +23726,8 @@ type Mutation {
   """
   updateInboundMailbox(id: ID!, input: InboundMailboxInput!, version: Int!): InboundMailbox!
   updateJobPosition(input: UpdateJobPositionInput!): JobPosition!
+  updateJurisdictionRule(id: ID!, input: JurisdictionRuleInput!): JurisdictionRule!
+  updateJurisdictionRuleOverride(id: ID!, input: JurisdictionRuleOverrideInput!): JurisdictionRuleOverride!
   updateLeaveCase(input: UpdateLeaveCaseInput!): WorkerLeaveCase!
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
   updateLeaveDay(input: UpdateLeaveDayInput!): WorkerLeaveEntry!
@@ -23649,12 +23746,15 @@ type Mutation {
   updatePerformanceReview(input: UpdatePerformanceReviewInput!): PerformanceReview!
   updatePerformanceReviewTemplate(id: ID!, input: PerformanceReviewTemplateInput!): PerformanceReviewTemplate!
   updatePtoPolicy(id: ID!, input: PTOPolicyInput!): PTOPolicy!
+  updateRateAgreement(id: ID!, input: RateAgreementInput!): RateAgreement!
+  updateRateMatrix(id: ID!, input: RateMatrixInput!): RateMatrix!
   updateRecurringDeduction(input: UpdateRecurringDeductionInput!): RecurringDeduction!
   updateRecurringEarning(input: UpdateRecurringEarningInput!): RecurringEarning!
   updateReportDashboard(input: UpdateReportDashboardInput!): ReportDashboard!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   updateReportSchedule(input: UpdateReportScheduleInput!): ReportSchedule!
   updateReportView(input: UpdateReportViewInput!): ReportView!
+  updateRoutingGuide(id: ID!, input: RoutingGuideInput!): RoutingGuide!
   updateSafetyViolation(input: UpdateSafetyViolationInput!): WorkerSafetyViolation!
   updateSettlementControl(input: UpdateSettlementControlInput!): SettlementControl!
   updateShiftTemplate(id: ID!, input: ShiftTemplateInput!): ShiftTemplate!
@@ -23684,6 +23784,10 @@ type Mutation {
   upsertIftaTaxRates(input: [IFTATaxRateInput!]!): [IFTATaxRate!]!
   verifyAIAuditChain: AIAuditChainStatus!
   verifyCarrierEquipment(input: VerifyCarrierEquipmentInput!): CarrierEquipmentVerification!
+  """
+  Records whether a jurisdiction rule was confirmed against the issuing state.
+  """
+  verifyJurisdictionRule(id: ID!, input: VerifyJurisdictionRuleInput!): JurisdictionRule!
   verifyWorkerCredential(id: ID!, version: Int): WorkerCredential!
   vetCarrier(carrierId: ID!, depth: CarrierIntelDepth, force: Boolean): CarrierIntelFetchResult!
   vetCustomerBroker(customerId: ID!, force: Boolean): CarrierIntelFetchResult!
@@ -25980,6 +26084,10 @@ type Query {
   apiKey(id: ID!): ApiKey
   apiKeys(input: DataTableConnectionInput!): ApiKeyConnection!
   """
+  The quote a shipment is billed from on one side, with its trace; null for a shipment never rated.
+  """
+  appliedShipmentRateQuote(partyType: RateAgreementPartyType = Customer, shipmentId: ID!): RateQuote
+  """
   Delegations. Left unfiltered it is what the signed-in user has been handed;
   naming a delegator reads what they have handed out.
   """
@@ -26680,6 +26788,10 @@ type Query {
   performanceReviewTemplates(input: PerformanceReviewTemplatesInput!): PerformanceReviewTemplateConnection!
   previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
   previewDriverSettlement(periodEnd: Timestamp, periodStart: Timestamp, workerId: ID!): DriverSettlement!
+  """
+  What a general rate increase would do to every lane it reaches, without doing any of it.
+  """
+  previewRateIncrease(input: RateIncreaseInput!): RateIncreasePlan!
   previewReport(
     """The cursor of the page to read, from the previous page's cursor."""
     cursor: String
@@ -26701,12 +26813,31 @@ type Query {
   its lanes are read a page at a time.
   """
   rateAgreement(id: ID!): RateAgreement
+  """
+  Every rule that has priced one lane of an agreement, newest first, closed-out windows included.
+  """
+  rateAgreementLaneHistory(laneKey: String!, rateAgreementId: ID!): [RateAgreementRule!]!
+  """
+  One page of a rate agreement's live lanes, most specific first, with the
+  counts. limit takes at most 100.
+  """
+  rateAgreementLanePage(limit: Int = 8, offset: Int = 0, rateAgreementId: ID!): RateAgreementLanePage!
+  """
+  A rate agreement's live lanes grouped by the tariff that prices them, with each group's rate range.
+  """
+  rateAgreementLaneSummary(rateAgreementId: ID!): RateAgreementLaneSummary!
+  """A rate agreement's versions, newest first. first takes at most 100."""
+  rateAgreementVersions(first: Int = 20, rateAgreementId: ID!): [RateAgreementVersion!]!
   rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
+  """A rate import's rows in sheet order. first takes at most 100."""
+  rateImportRows(failedOnly: Boolean = false, first: Int = 100, rateImportId: ID!): [RateImportRow!]!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
   """
   One rate matrix with its draft's axes; its cells are read a page at a time.
   """
   rateMatrix(id: ID!): RateMatrix
+  """The people who may publish the organization's rate matrices."""
+  rateMatrixReviewers(rateMatrixId: ID!): [RateMatrixReviewer!]!
   """A rate matrix draft's review history, newest first."""
   rateMatrixReviews(rateMatrixId: ID!): [RateMatrixReview!]!
   """
@@ -26720,6 +26851,15 @@ type Query {
   """A rate matrix's published versions, newest first."""
   rateMatrixVersions(first: Int, rateMatrixId: ID!): [RateMatrixVersion!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
+  rateSimulation(id: ID!): RateSimulation
+  """
+  A simulation's shipments, largest increases first. first takes at most 100.
+  """
+  rateSimulationResults(changedOnly: Boolean = false, first: Int = 50, rateSimulationId: ID!): [RateSimulationResult!]!
+  """
+  The simulations run against an agreement, or every agreement, newest first. first takes at most 100.
+  """
+  rateSimulations(first: Int = 20, rateAgreementId: ID): [RateSimulation!]!
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   """
   What was decided since a moment, newest first: proposals that stood on their own.
@@ -26856,6 +26996,10 @@ type Query {
   shipmentUIPolicy: ShipmentUIPolicy!
   shipmentWatchlist(timezone: String!): ShipmentWatchlist!
   shipments(input: ShipmentsInput!): ShipmentConnection!
+  """
+  Prices a shipment against the carriers that could haul it and ranks them. Saves nothing.
+  """
+  shopShipmentCarriers(input: ShopShipmentCarriersInput, shipmentId: ID!): RateShopResult!
   sidebarCustomizationOptions: SidebarCustomizationOptions!
   sidebarPreferences: SidebarPreferences!
   storedMileage(id: ID!): StoredMileage
@@ -27214,6 +27358,8 @@ type RateAgreement {
   currentVersionNumber: Int!
   customerId: ID
   description: String!
+  """The signed contract document, when one is attached."""
+  documentId: ID
   effectiveFrom: Timestamp!
   effectiveTo: Timestamp
   """
@@ -27244,6 +27390,11 @@ type RateAgreement {
   priority: Int!
   renewalNoticeDays: Int!
   reviewComment: String!
+  """
+  Every rule that has not been closed out, current and future, as the editor
+  saves them back. Read by rateAgreement only, and only when selected.
+  """
+  rules: [RateAgreementRule!]
   status: RateAgreementStatus!
   submittedAt: Timestamp
   submittedById: ID
@@ -27270,8 +27421,33 @@ type RateAgreementAccessorial {
   id: ID!
   maxAmount: Decimal
   method: String!
+  rateAgreementId: ID!
   rateUnit: String!
+  """Only shipments of these service types; empty applies to all."""
+  serviceTypeIds: [ID!]!
+  """Only shipments of these shipment types; empty applies to all."""
+  shipmentTypeIds: [ID!]!
   waived: Boolean!
+}
+
+"""
+One accessorial an agreement prices. The schedule is replaced whole on every save.
+"""
+input RateAgreementAccessorialInput {
+  accessorialChargeId: ID!
+  amount: Decimal!
+  autoApply: Boolean
+  """A Tariff condition; empty applies the charge to every shipment."""
+  condition: String
+  effectiveFrom: Timestamp
+  effectiveTo: Timestamp
+  freeUnits: Int
+  maxAmount: Decimal
+  method: String!
+  rateUnit: String
+  serviceTypeIds: [ID!]
+  shipmentTypeIds: [ID!]
+  waived: Boolean
 }
 
 type RateAgreementConnection {
@@ -27291,11 +27467,71 @@ type RateAgreementEdge {
 
 """How an agreement prices fuel: the program it binds, or a waiver."""
 type RateAgreementFuelBinding {
+  """The most the fuel surcharge may come to."""
+  capAmount: Decimal
   fuelSurchargeProgramId: ID!
   id: ID!
+  """The increment rate the program charges instead of its own."""
+  incrementRateOverride: Decimal
+  """The peg price the program is read against instead of its own."""
+  pegPriceOverride: Decimal
   """The fuel surcharge program's name."""
   programName: String!
+  rateAgreementId: ID!
   waived: Boolean!
+}
+
+"""
+How an agreement prices fuel: a program, with optional overrides, or a waiver.
+"""
+input RateAgreementFuelBindingInput {
+  capAmount: Decimal
+  fuelSurchargeProgramId: ID!
+  incrementRateOverride: Decimal
+  pegPriceOverride: Decimal
+  waived: Boolean
+}
+
+"""
+A rate agreement as the editor saves it: the header terms with the full rule
+set, accessorial schedule and fuel binding. A new agreement always starts in
+Draft; status and review moves go through their own mutations.
+"""
+input RateAgreementInput {
+  """The whole accessorial schedule, which replaces the saved one."""
+  accessorials: [RateAgreementAccessorialInput!]!
+  agreementType: RateAgreementType!
+  autoRenew: Boolean
+  billToCustomerId: ID
+  carrierId: ID
+  code: String!
+  contractRef: String
+  currency: String!
+  customerId: ID
+  description: String
+  documentId: ID
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  """The fuel terms; null leaves the agreement without a fuel binding."""
+  fuelBinding: RateAgreementFuelBindingInput
+  """
+  Values every rule's tariff reads when the rule sets none, by input name, in the Tariff wire form.
+  """
+  inputs: JSON
+  """Left as stored for a caller without the margins group."""
+  marginFloorPercent: Decimal
+  """Left as stored for a caller without the margins group."""
+  maxPayPercentOfSell: Decimal
+  name: String!
+  partyType: RateAgreementPartyType!
+  priority: Int
+  renewalNoticeDays: Int
+  """The whole rule set: a held rule left out is closed out."""
+  rules: [RateAgreementRuleInput!]!
+  """
+  The version read before editing; a save against an older one is refused.
+  """
+  version: Int
 }
 
 """
@@ -27326,9 +27562,152 @@ type RateAgreementLane {
   tempControlOnly: Boolean!
 }
 
+"""
+One page of an agreement's live lanes, most specific first, with how many it
+prices in all and how many it has retired.
+"""
+type RateAgreementLanePage {
+  count: Int!
+  """Whether count was counted; false when it is the planner's estimate."""
+  countExact: Boolean!
+  limit: Int!
+  offset: Int!
+  results: [RateAgreementRule!]!
+  retired: Int!
+  """Whether retired was counted; false when it is the planner's estimate."""
+  retiredExact: Boolean!
+}
+
+"""The live lanes one tariff prices, in one currency."""
+type RateAgreementLanePricingGroup {
+  currency: String!
+  formulaTemplateId: ID
+  formulaTemplateName: String!
+  lanes: Int!
+  maxRate: Decimal
+  minRate: Decimal
+}
+
+"""An agreement's live lanes grouped by the tariff that prices them."""
+type RateAgreementLaneSummary {
+  count: Int!
+  groups: [RateAgreementLanePricingGroup!]!
+}
+
 enum RateAgreementPartyType {
   Carrier
   Customer
+}
+
+"""
+One rule of a rate agreement: where and when it applies, what freight it
+covers, and the tariff and input values it prices with. laneKey and
+specificityScore are derived on every write.
+"""
+type RateAgreementRule {
+  businessUnitId: ID!
+  commodityIds: [ID!]!
+  createdAt: Timestamp!
+  currency: String!
+  """
+  The days of the week the rule applies on, as a bit set; 0 is every day.
+  """
+  daysOfWeek: Int!
+  destinationCity: String!
+  destinationLatitude: Float
+  destinationLongitude: Float
+  destinationRadiusMeters: Float
+  destinationScopeType: String!
+  destinationScopeValue: String!
+  direction: String!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  equipmentClasses: [String!]!
+  formulaTemplateId: ID!
+  freightClasses: [String!]!
+  hazmatOnly: Boolean!
+  id: ID!
+  """
+  The values the rule's tariff prices with, by input name. Each value is a Tariff wire value.
+  """
+  inputs: JSON!
+  label: String!
+  laneKey: String!
+  maxDistance: Decimal
+  maxStops: Int
+  maxWeight: Decimal
+  minDistance: Decimal
+  minStops: Int
+  minWeight: Decimal
+  organizationId: ID!
+  originCity: String!
+  originLatitude: Float
+  originLongitude: Float
+  originRadiusMeters: Float
+  originScopeType: String!
+  originScopeValue: String!
+  priority: Int!
+  rateAgreementId: ID!
+  serviceModels: [String!]!
+  serviceTypeIds: [ID!]!
+  shipmentTypeIds: [ID!]!
+  specificityScore: Int!
+  status: String!
+  """The rule this one replaced when an amendment closed it out."""
+  supersedesRuleId: ID
+  tempControlOnly: Boolean!
+  tractorTypeIds: [ID!]!
+  trailerTypeIds: [ID!]!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""
+One rule of an agreement as the editor saves it. A rule with the ID of one the agreement holds keeps it when its terms are unchanged and supersedes it when they changed; a rule without an ID is a new lane, and a held rule left out is closed out.
+"""
+input RateAgreementRuleInput {
+  commodityIds: [ID!]
+  currency: String
+  daysOfWeek: Int
+  destinationCity: String
+  destinationLatitude: Float
+  destinationLongitude: Float
+  destinationRadiusMeters: Float
+  destinationScopeType: String!
+  destinationScopeValue: String
+  direction: String
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  equipmentClasses: [String!]
+  formulaTemplateId: ID!
+  freightClasses: [String!]
+  hazmatOnly: Boolean
+  id: ID
+  """
+  The values the rule's tariff prices with, by input name, in the Tariff wire form.
+  """
+  inputs: JSON
+  label: String
+  maxDistance: Decimal
+  maxStops: Int
+  maxWeight: Decimal
+  minDistance: Decimal
+  minStops: Int
+  minWeight: Decimal
+  originCity: String
+  originLatitude: Float
+  originLongitude: Float
+  originRadiusMeters: Float
+  originScopeType: String!
+  originScopeValue: String
+  priority: Int
+  serviceModels: [String!]
+  serviceTypeIds: [ID!]
+  shipmentTypeIds: [ID!]
+  status: String
+  tempControlOnly: Boolean
+  tractorTypeIds: [ID!]
+  trailerTypeIds: [ID!]
 }
 
 enum RateAgreementStatus {
@@ -27350,11 +27729,189 @@ enum RateAgreementType {
 
 """The header terms of an agreement as they stood for a window."""
 type RateAgreementVersion {
+  """Each accessorial charge ID in accessorialTerms with the charge's code."""
+  accessorialNames: JSON
+  """
+  The accessorial schedule's terms as the version recorded them, by accessorial charge ID.
+  """
+  accessorialTerms: JSON
+  agreementEffectiveFrom: Timestamp!
+  agreementEffectiveTo: Timestamp
+  autoRenew: Boolean!
+  billToCustomerId: ID
   changeMessage: String!
+  """
+  Each term the version changed, by field, with its value before and after.
+  """
+  changeSummary: JSON
+  code: String!
+  createdAt: Timestamp!
+  createdById: ID
   effectiveFrom: Timestamp!
   effectiveTo: Timestamp
+  """The fuel binding's terms as the version recorded them."""
+  fuelTerms: JSON
   id: ID!
+  name: String!
+  priority: Int!
+  rateAgreementId: ID!
+  renewalNoticeDays: Int!
   versionNumber: Int!
+}
+
+"""
+A rate sheet uploaded against an agreement and the dry run of what committing
+it would do. Nothing about the agreement changes until it is committed.
+"""
+type RateImportBatch {
+  businessUnitId: ID!
+  changes: [RateImportChange!]!
+  committedAt: Timestamp
+  committedBy: ID
+  createdAt: Timestamp!
+  effectiveFrom: Timestamp!
+  error: String!
+  errorCount: Int!
+  fileName: String!
+  id: ID!
+  """Each recognised field with the sheet column it was read from."""
+  mapping: JSON
+  organizationId: ID!
+  rateAgreementId: ID!
+  rowCount: Int!
+  sourceFormat: RateImportFormat!
+  status: RateImportStatus!
+  summary: RateImportSummary
+  unmappedHeaders: [String!]!
+  updatedAt: Timestamp!
+  uploadedById: ID
+  version: Int!
+}
+
+"""What committing a sheet would do to one lane."""
+type RateImportChange {
+  """The live rule the change replaces or retires."""
+  existingId: ID
+  fields: [RateImportFieldChange!]!
+  kind: RateImportChangeKind!
+  label: String!
+  laneKey: String!
+}
+
+"""What committing a sheet would do to one lane."""
+enum RateImportChangeKind {
+  Added
+  Changed
+  Duplicate
+  Removed
+  Unchanged
+}
+
+"""One term a sheet moves on a lane, before and after."""
+type RateImportFieldChange {
+  after: String!
+  before: String!
+  field: String!
+}
+
+enum RateImportFormat {
+  CSV
+  XLSX
+}
+
+"""One row of an uploaded sheet, as it was read."""
+type RateImportRow {
+  cells: [String!]!
+  createdAt: Timestamp!
+  """Why the row could not be read; empty when it was."""
+  error: String!
+  id: ID!
+  laneKey: String!
+  rateImportBatchId: ID!
+  rowNumber: Int!
+}
+
+enum RateImportStatus {
+  Committed
+  Discarded
+  Failed
+  Parsed
+  Pending
+}
+
+"""
+How many lanes a sheet adds, changes, retires, repeats and leaves alone.
+"""
+type RateImportSummary {
+  added: Int!
+  changed: Int!
+  duplicate: Int!
+  removed: Int!
+  unchanged: Int!
+}
+
+"""How much a general rate increase moves every money input it scales."""
+input RateIncreaseAdjustmentInput {
+  """The percent change, such as 4.5 for a 4.5% increase."""
+  percentChange: Decimal
+}
+
+"""
+The scope, size and start of a general rate increase: the named agreements,
+or every agreement of a party or a side.
+"""
+input RateIncreaseInput {
+  adjustment: RateIncreaseAdjustmentInput!
+  agreementIds: [ID!]
+  carrierId: ID
+  customerId: ID
+  effectiveFrom: Timestamp!
+  partyType: RateAgreementPartyType
+}
+
+"""One lane's before and after under a general rate increase."""
+type RateIncreaseLine {
+  """The lane's input values as the increase leaves them."""
+  after: JSON!
+  agreementCode: String!
+  agreementName: String!
+  """
+  The lane's input values as they are, by input name, in the Tariff wire form.
+  """
+  before: JSON!
+  """The inputs the increase moves."""
+  changed: [String!]!
+  label: String!
+  laneKey: String!
+  rateAgreementId: ID!
+  ruleId: ID!
+}
+
+"""Everything a general rate increase would do, stated before it does it."""
+type RateIncreasePlan {
+  agreementCount: Int!
+  effectiveFrom: Timestamp!
+  lines: [RateIncreaseLine!]!
+  """
+  Lanes whose tariff sets no money input of its own, so the increase leaves them alone.
+  """
+  skippedNoMoney: Int!
+}
+
+"""
+What a shipment's two sides came to, and whether that is allowed by the
+agreements' margin floor and pay ceiling.
+"""
+type RateMarginVerdict {
+  abovePayCeiling: Boolean!
+  amount: Decimal!
+  belowFloor: Boolean!
+  ceilingApplies: Boolean!
+  explanation: String!
+  floorApplies: Boolean!
+  """The buy price as a share of the sell price."""
+  payPercent: Decimal!
+  percent: Decimal!
 }
 
 """
@@ -27438,6 +27995,29 @@ type RateMatrixCell {
   value: Decimal!
 }
 
+"""One cell of a rate matrix draft. Keys and bands left out are empty."""
+input RateMatrixCellInput {
+  d0Key: String
+  d0KeyTo: String
+  d0Max: Decimal
+  d0Min: Decimal
+  d1Key: String
+  d1KeyTo: String
+  d1Max: Decimal
+  d1Min: Decimal
+  d2Key: String
+  d2KeyTo: String
+  d2Max: Decimal
+  d2Min: Decimal
+  d3Key: String
+  d3KeyTo: String
+  d3Max: Decimal
+  d3Min: Decimal
+  deficitEligible: Boolean
+  minCharge: Decimal
+  value: Decimal!
+}
+
 type RateMatrixConnection {
   edges: [RateMatrixEdge!]!
   pageInfo: PageInfo!
@@ -27459,9 +28039,35 @@ type RateMatrixDimension {
   rangeOverflow: String!
 }
 
+"""One axis of a rate matrix draft."""
+input RateMatrixDimensionInput {
+  keyNormalization: String
+  kind: String!
+  label: String
+  matchMode: String!
+  position: Int!
+  rangeOverflow: String
+}
+
 type RateMatrixEdge {
   cursor: String!
   node: RateMatrix!
+}
+
+"""A rate matrix draft's header and axes."""
+input RateMatrixInput {
+  code: String!
+  description: String
+  dimensions: [RateMatrixDimensionInput!]!
+  name: String!
+  """
+  What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int.
+  """
+  valueType: String!
+  """
+  The version read before editing; a save against an older one is refused.
+  """
+  version: Int
 }
 
 """
@@ -27480,6 +28086,14 @@ type RateMatrixReview {
   requestedReviewerId: ID
   reviewerNote: String!
   round: Int!
+}
+
+"""A person who may publish the organization's rate matrices."""
+type RateMatrixReviewer {
+  id: ID!
+  name: String!
+  profilePicUrl: String
+  username: String!
 }
 
 """A formula template version that pins a version of a rate matrix."""
@@ -27525,17 +28139,28 @@ each term contributed, and what it came to. Quotes are never edited — correcti
 one means re-rating, which writes a new quote and supersedes the old.
 """
 type RateQuote {
+  accessorialAmount: Decimal!
+  agreementVersionNumber: Int
   asOf: Timestamp!
   billingAmount: Decimal!
   billingCurrency: String!
   businessUnitId: ID!
+  contextHash: String!
+  costAmount: Decimal @protected(group: Margins)
   createdAt: Timestamp!
   currency: String!
   engineVersion: String!
+  exchangeRateId: ID
   foregoneAmount: Decimal
   formulaTemplateId: ID
+  """The approved snapshot of the formula that priced the linehaul."""
+  formulaTemplateVersionNumber: Int
+  fuelAmount: Decimal!
+  fxRate: Decimal
   id: ID!
   linehaulAmount: Decimal!
+  marginAmount: Decimal @protected(group: Margins)
+  marginPercent: Decimal @protected(group: Margins)
   organizationId: ID!
   outcome: RateQuoteOutcome!
   overrideReason: String!
@@ -27547,8 +28172,17 @@ type RateQuote {
   ratedAt: Timestamp!
   ratedById: ID
   shipmentId: ID
+  shipmentMoveId: ID
   specificityScore: Int!
+  """Applied, Superseded or Quoted."""
+  status: String!
   totalAmount: Decimal!
+  """
+  How the quote was reached: every candidate rule, why each lost, the winning
+  tariff's bill and the totals, in the engine's trace form. The cost and margin
+  totals are null to a reader without the margins group.
+  """
+  trace: JSON
 }
 
 type RateQuoteConnection {
@@ -27580,6 +28214,158 @@ enum RateQuotePurpose {
   Shopping
   Simulation
   WhatIf
+}
+
+"""One carrier's answer to what it would charge to haul a shipment."""
+type RateShopOption {
+  agreementId: ID
+  carrierId: ID!
+  carrierName: String!
+  cost: Decimal!
+  currency: String!
+  """The routing guide's own rank; 0 when the carrier came from no guide."""
+  guideRank: Int!
+  """
+  What the option leaves against the sell side, and whether that is allowed.
+  """
+  margin: RateMarginVerdict @protected(group: Margins)
+  """Why the option ranked where it did, or why it could not be priced."""
+  note: String!
+  offerTtlSeconds: Int!
+  outcome: RateQuoteOutcome!
+  """
+  The quote the option was priced from. Never saved: a shop leaves no quote behind.
+  """
+  quote: RateQuote
+  rank: Int!
+  ruleId: ID
+}
+
+"""The carriers that could haul a shipment, priced and ranked."""
+type RateShopResult {
+  options: [RateShopOption!]!
+  routingGuideId: ID
+  """The sell total the options were measured against."""
+  sellTotal: Decimal @protected(group: Margins)
+  strategy: RateShopStrategy!
+  warnings: [String!]!
+}
+
+"""What best means for one shopping run."""
+enum RateShopStrategy {
+  """Refused to a reader without the margins group."""
+  BestMargin
+  FastestAccept
+  GuideRank
+  LeastCost
+}
+
+"""
+A replay of a window of past shipments against an agreement, to see what its
+terms would have charged before they price anything. The run happens in the
+background; read the simulation again for its status.
+"""
+type RateSimulation {
+  businessUnitId: ID!
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  description: String!
+  error: String!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  partyType: RateAgreementPartyType!
+  rateAgreementId: ID!
+  requestedBy: ID
+  ruleCoverage: [RateSimulationRuleCoverage!]!
+  sampleFrom: Timestamp!
+  """At most this many shipments; 0 replays the whole window."""
+  sampleLimit: Int!
+  sampleTo: Timestamp!
+  startedAt: Timestamp
+  status: RateSimulationStatus!
+  summary: RateSimulationSummary
+  updatedAt: Timestamp!
+  version: Int!
+  workflowId: String!
+}
+
+"""A simulation to record and replay."""
+input RateSimulationInput {
+  description: String
+  name: String!
+  partyType: RateAgreementPartyType = Customer
+  rateAgreementId: ID!
+  sampleFrom: Timestamp!
+  """At most this many shipments; 0 replays the whole window."""
+  sampleLimit: Int = 0
+  sampleTo: Timestamp!
+}
+
+"""
+One shipment of a simulation, priced as it was and as the agreement would price it.
+"""
+type RateSimulationResult {
+  afterAmount: Decimal!
+  afterRuleId: ID
+  beforeAmount: Decimal!
+  beforeRuleId: ID
+  createdAt: Timestamp!
+  customerId: ID
+  delta: Decimal!
+  deltaPercent: Decimal!
+  equipmentTypeId: ID
+  error: String!
+  id: ID!
+  laneKey: String!
+  outcome: RateQuoteOutcome!
+  proNumber: String!
+  rateSimulationId: ID!
+  shipmentId: ID!
+}
+
+"""One rule of the simulated agreement and how it fared across the run."""
+type RateSimulationRuleCoverage {
+  label: String!
+  laneKey: String!
+  lostCount: Int!
+  """The rule that beat this one most often."""
+  lostTo: ID
+  lostToLabel: String!
+  outcome: RateSimulationRuleOutcome!
+  ruleId: ID!
+  wonCount: Int!
+}
+
+"""What happened to one of the simulated agreement's rules across a run."""
+enum RateSimulationRuleOutcome {
+  Lost
+  NeverFired
+  Won
+}
+
+enum RateSimulationStatus {
+  Canceled
+  Completed
+  Failed
+  Pending
+  Running
+}
+
+"""What a whole simulation came to."""
+type RateSimulationSummary {
+  afterTotal: Decimal!
+  beforeTotal: Decimal!
+  changedCount: Int!
+  decreasedCount: Int!
+  errorCount: Int!
+  evaluatedCount: Int!
+  increasedCount: Int!
+  maxDecrease: Decimal!
+  maxIncrease: Decimal!
+  shipmentCount: Int!
+  totalDelta: Decimal!
+  totalDeltaPct: Decimal!
 }
 
 enum RateUnit {
@@ -29074,6 +29860,44 @@ type RoutingGuideEntry {
   """
   useContractRate: Boolean!
   version: Int!
+}
+
+"""One carrier in a routing guide's waterfall."""
+input RoutingGuideEntryInput {
+  carrierId: ID!
+  channel: TenderChannel!
+  """The entry's ID when it is one the guide already holds."""
+  id: ID
+  offerTtlSeconds: Int!
+  rank: Int!
+  rate: Decimal!
+  rateMethod: CarrierRateMethod!
+  """
+  Offer what the carrier's contract says today instead of the entry's fixed rate.
+  """
+  useContractRate: Boolean
+  version: Int
+}
+
+"""
+A routing guide and its whole waterfall. Origin and destination are each a
+location, a city and state, or a state, at the same level on both ends.
+"""
+input RoutingGuideInput {
+  description: String
+  destinationCity: String
+  destinationLocationId: ID
+  destinationState: String
+  entries: [RoutingGuideEntryInput!]!
+  name: String!
+  originCity: String
+  originLocationId: ID
+  originState: String
+  status: EntityStatus!
+  """
+  The version read before editing; a save against an older one is refused.
+  """
+  version: Int
 }
 
 input RunDOTRandomDrawInput {
@@ -32181,6 +33005,22 @@ input ShipmentsInput {
   workerIds: [ID!]
 }
 
+"""How to shop a shipment's carriers. Shopping never saves a quote."""
+input ShopShipmentCarriersInput {
+  """
+  Price against the terms effective at this moment; the shipment's own rating date when left out.
+  """
+  asOf: Timestamp
+  """
+  An explicit shortlist; the shipment's routing guide supplies the carriers when left out.
+  """
+  carrierIds: [ID!]
+  """At most this many options."""
+  limit: Int
+  """What best means for this run; LeastCost when left out."""
+  strategy: RateShopStrategy
+}
+
 type SidebarActivityPreference {
   defaultOpen: Boolean!
   pageSize: Int!
@@ -32473,6 +33313,18 @@ input SubmitMyExpenseInput {
   incurredDate: Timestamp
   payCodeId: ID
   shipmentId: ID
+}
+
+"""
+Sending a rate matrix draft to review: who should review it and a note for them.
+"""
+input SubmitRateMatrixInput {
+  comment: String
+  """
+  The reviewer asked to publish it: active, someone other than the submitter, who may approve rate matrices.
+  """
+  reviewerId: ID
+  reviewerNote: String
 }
 
 type TCASubscription @kind(resource: "table_change_alert") {
@@ -34830,6 +35682,13 @@ input VerifyCarrierEquipmentInput {
   unitNumber: String
   unitType: CarrierIntelUnitType!
   vin: String
+}
+
+"""What a jurisdiction rule was confirmed against, and the verdict."""
+input VerifyJurisdictionRuleInput {
+  sourceNote: String
+  sourceUrl: String
+  verificationState: JurisdictionVerificationState!
 }
 
 input VoidInvoiceInput {

@@ -66,3 +66,43 @@ extend type Query {
   routingGuide(id: ID!): RoutingGuide
   matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
 }
+
+"One carrier in a routing guide's waterfall."
+input RoutingGuideEntryInput {
+  "The entry's ID when it is one the guide already holds."
+  id: ID
+  version: Int
+  carrierId: ID!
+  rank: Int!
+  rateMethod: CarrierRateMethod!
+  rate: Decimal!
+  "Offer what the carrier's contract says today instead of the entry's fixed rate."
+  useContractRate: Boolean
+  offerTtlSeconds: Int!
+  channel: TenderChannel!
+}
+
+"""
+A routing guide and its whole waterfall. Origin and destination are each a
+location, a city and state, or a state, at the same level on both ends.
+"""
+input RoutingGuideInput {
+  name: String!
+  description: String
+  status: EntityStatus!
+  originLocationId: ID
+  destinationLocationId: ID
+  originCity: String
+  originState: String
+  destinationCity: String
+  destinationState: String
+  "The version read before editing; a save against an older one is refused."
+  version: Int
+  entries: [RoutingGuideEntryInput!]!
+}
+
+extend type Mutation {
+  createRoutingGuide(input: RoutingGuideInput!): RoutingGuide!
+  updateRoutingGuide(id: ID!, input: RoutingGuideInput!): RoutingGuide!
+  deleteRoutingGuide(id: ID!): Boolean!
+}

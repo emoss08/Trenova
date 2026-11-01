@@ -690,4 +690,8 @@ var Unbound = map[string]string{
 	"equipment_set_trailer_status":          pendingBinding,
 	"carrier_verify_equipment":              pendingBinding,
 	"detention_waive":                       pendingBinding,
+	"rate_create_agreement":                 pendingBinding,
+	"rate_update_agreement_draft":           pendingBinding,
+	"rate_apply_increase":                   pendingBinding,
+	"rate_run_simulation":                   pendingBinding,
 }

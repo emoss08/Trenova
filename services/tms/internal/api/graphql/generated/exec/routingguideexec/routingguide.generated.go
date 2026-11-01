@@ -26,6 +26,46 @@ var Shard = &gqlexec.Shard{
 		{Name: "RoutingGuideEntry", Implementors: []string{"RoutingGuideEntry"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createRoutingGuide",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RoutingGuide",
+				Args:       field_Mutation_createRoutingGuide_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateRoutingGuide(ctx, fc.Args["input"].(gqlmodel.RoutingGuideInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
+			},
+			{
+				Name:       "updateRoutingGuide",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RoutingGuide",
+				Args:       field_Mutation_updateRoutingGuide_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateRoutingGuide(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.RoutingGuideInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
+			},
+			{
+				Name:       "deleteRoutingGuide",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_deleteRoutingGuide_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DeleteRoutingGuide(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "routingGuides",
@@ -72,7 +112,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.ID, nil
@@ -82,7 +122,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.BusinessUnitID, nil
@@ -92,7 +132,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.OrganizationID, nil
@@ -102,7 +142,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.Name, nil
@@ -112,7 +152,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.Description, nil
@@ -122,7 +162,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.Status, nil
@@ -131,7 +171,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "originLocationId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.OriginLocationID, nil
@@ -140,7 +180,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "destinationLocationId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.DestinationLocationID, nil
@@ -150,7 +190,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "originCity",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.OriginCity, nil
@@ -160,7 +200,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "originState",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.OriginState, nil
@@ -170,7 +210,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "destinationCity",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.DestinationCity, nil
@@ -180,7 +220,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "destinationState",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.DestinationState, nil
@@ -190,7 +230,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "specificity",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.Specificity, nil
@@ -200,7 +240,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.Version, nil
@@ -210,7 +250,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.CreatedAt, nil
@@ -220,7 +260,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuide)
 					return obj.UpdatedAt, nil
@@ -263,7 +303,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RoutingGuideConnection)
 					return obj.TotalCount, nil
@@ -273,7 +313,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RoutingGuideConnection)
 					return obj.TotalCountExact, nil
@@ -296,7 +336,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RoutingGuideEdge)
 					return obj.Cursor, nil
@@ -308,7 +348,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.ID, nil
@@ -318,7 +358,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.BusinessUnitID, nil
@@ -328,7 +368,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.OrganizationID, nil
@@ -338,7 +378,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "routingGuideId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.RoutingGuideID, nil
@@ -348,7 +388,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "carrierId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.CarrierID, nil
@@ -358,7 +398,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rank",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.Rank, nil
@@ -390,7 +430,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "useContractRate",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.UseContractRate, nil
@@ -400,7 +440,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "offerTtlSeconds",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.OfferTTLSeconds, nil
@@ -420,7 +460,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.Version, nil
@@ -430,7 +470,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.CreatedAt, nil
@@ -440,7 +480,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.UpdatedAt, nil
@@ -461,11 +501,20 @@ var Shard = &gqlexec.Shard{
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "MatchRoutingGuideInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMatchRoutingGuideInput)},
+		{Name: "RoutingGuideEntryInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRoutingGuideEntryInput)},
+		{Name: "RoutingGuideInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRoutingGuideInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 		{Root: "RoutingGuideEntry", Check: func(r any) bool { _, ok := r.(resolverRoutingGuideEntry); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateRoutingGuide(ctx context.Context, input gqlmodel.RoutingGuideInput) (*tender.RoutingGuide, error)
+	UpdateRoutingGuide(ctx context.Context, id string, input gqlmodel.RoutingGuideInput) (*tender.RoutingGuide, error)
+	DeleteRoutingGuide(ctx context.Context, id string) (bool, error)
 }
 
 type resolverQuery interface {
@@ -479,16 +528,63 @@ type resolverRoutingGuideEntry interface {
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type EntityStatus does not have child fields")
-	errNoChild3 = errors.New("field of type Int does not have child fields")
-	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5 = errors.New("field of type Boolean does not have child fields")
+	errNoChild0 = errors.New("field of type Boolean does not have child fields")
+	errNoChild1 = errors.New("field of type ID does not have child fields")
+	errNoChild2 = errors.New("field of type String does not have child fields")
+	errNoChild3 = errors.New("field of type EntityStatus does not have child fields")
+	errNoChild4 = errors.New("field of type Int does not have child fields")
+	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild6 = errors.New("field of type CarrierRateMethod does not have child fields")
 	errNoChild7 = errors.New("field of type Decimal does not have child fields")
 	errNoChild8 = errors.New("field of type TenderChannel does not have child fields")
 )
+
+func field_Mutation_createRoutingGuide_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RoutingGuideInput, error) {
+			return unmarshalNRoutingGuideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateRoutingGuide_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RoutingGuideInput, error) {
+			return unmarshalNRoutingGuideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_deleteRoutingGuide_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
 
 func field_Query_routingGuides_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -594,12 +690,215 @@ func unmarshalInputMatchRoutingGuideInput(ctx context.Context, ec *gqlexec.Exec,
 	return it, nil
 }
 
+func unmarshalInputRoutingGuideEntryInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RoutingGuideEntryInput, error) {
+	var it gqlmodel.RoutingGuideEntryInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "version", "carrierId", "rank", "rateMethod", "rate", "useContractRate", "offerTtlSeconds", "channel"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "carrierId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("carrierId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CarrierID = data
+		case "rank":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rank"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rank = data
+		case "rateMethod":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateMethod"))
+			data, err := unmarshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RateMethod = data
+		case "rate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rate"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rate = data
+		case "useContractRate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("useContractRate"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.UseContractRate = data
+		case "offerTtlSeconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offerTtlSeconds"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OfferTTLSeconds = data
+		case "channel":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("channel"))
+			data, err := unmarshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐChannel(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Channel = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRoutingGuideInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RoutingGuideInput, error) {
+	var it gqlmodel.RoutingGuideInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "status", "originLocationId", "destinationLocationId", "originCity", "originState", "destinationCity", "destinationState", "version", "entries"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "originLocationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originLocationId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginLocationID = data
+		case "destinationLocationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationLocationId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationLocationID = data
+		case "originCity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originCity"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginCity = data
+		case "originState":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originState"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginState = data
+		case "destinationCity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationCity"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationCity = data
+		case "destinationState":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationState"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationState = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "entries":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entries"))
+			data, err := unmarshalNRoutingGuideEntryInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideEntryInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Entries = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, v any) (shipmentvocab.CarrierRateMethod, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := shipmentvocab.CarrierRateMethod(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (domaintypes.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domaintypes.Status(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -608,9 +907,47 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNMatchRoutingGuideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMatchRoutingGuideInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.MatchRoutingGuideInput, error) {
 	res, err := unmarshalInputMatchRoutingGuideInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRoutingGuideEntryInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideEntryInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.RoutingGuideEntryInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNRoutingGuideEntryInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideEntryInput)
+}
+
+func unmarshalNRoutingGuideEntryInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideEntryInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.RoutingGuideEntryInput, error) {
+	res, err := unmarshalInputRoutingGuideEntryInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRoutingGuideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RoutingGuideInput, error) {
+	res, err := unmarshalInputRoutingGuideInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐChannel(ctx context.Context, ec *gqlexec.Exec, v any) (tender.Channel, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.Channel(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -618,6 +955,14 @@ func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*stri
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

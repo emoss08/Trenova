@@ -1,0 +1,82 @@
+fragment RateQuoteDetailFields on RateQuote {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  shipmentMoveId
+  partyType
+  partyId
+  purpose
+  outcome
+  status
+  rateAgreementId
+  rateAgreementRuleId
+  agreementVersionNumber
+  formulaTemplateId
+  formulaTemplateVersionNumber
+  specificityScore
+  currency
+  linehaulAmount
+  fuelAmount
+  accessorialAmount
+  totalAmount
+  costAmount
+  marginAmount
+  marginPercent
+  billingCurrency
+  billingAmount
+  fxRate
+  exchangeRateId
+  foregoneAmount
+  overrideReason
+  asOf
+  ratedAt
+  ratedById
+  engineVersion
+  contextHash
+  trace
+  createdAt
+}
+
+# The quote a shipment is billed from, with its full trace.
+query AppliedShipmentRateQuote($shipmentId: ID!) {
+  appliedShipmentRateQuote(shipmentId: $shipmentId) {
+    ...RateQuoteDetailFields
+  }
+}
+
+# The carriers that could haul a shipment, priced and ranked. Saves nothing.
+query ShopShipmentCarriers($shipmentId: ID!, $input: ShopShipmentCarriersInput) {
+  shopShipmentCarriers(shipmentId: $shipmentId, input: $input) {
+    strategy
+    routingGuideId
+    sellTotal
+    warnings
+    options {
+      carrierId
+      carrierName
+      rank
+      guideRank
+      offerTtlSeconds
+      outcome
+      cost
+      currency
+      agreementId
+      ruleId
+      note
+      margin {
+        amount
+        percent
+        payPercent
+        floorApplies
+        belowFloor
+        ceilingApplies
+        abovePayCeiling
+        explanation
+      }
+      quote {
+        ...RateQuoteDetailFields
+      }
+    }
+  }
+}

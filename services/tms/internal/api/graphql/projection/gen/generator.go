@@ -45,6 +45,16 @@ const (
 
 var nonProjectionObjects = map[string]string{
 	"CarrierIntelRuleSetting":         "GraphQL DTO built by its resolver",
+	"RateAgreementLanePage":           "GraphQL page DTO over an agreement's live lanes and their counts",
+	"RateAgreementLanePricingGroup":   "GraphQL lane summary DTO grouped by the tariff that prices the lanes",
+	"RateIncreaseLine":                "GraphQL general rate increase plan DTO, computed per request",
+	"RateIncreasePlan":                "GraphQL general rate increase plan DTO, computed per request",
+	"RateImportChange":                "GraphQL DTO over a rate import batch's changes JSON",
+	"RateImportFieldChange":           "GraphQL DTO over a rate import change's field diffs",
+	"RateMarginVerdict":               "GraphQL DTO over the rate engine's margin verdict for a shop option",
+	"RateMatrixReviewer":              "GraphQL DTO over the people the role service says may publish matrices",
+	"RateShopOption":                  "GraphQL DTO over one carrier the rate engine priced while shopping",
+	"RateSimulationRuleCoverage":      "GraphQL DTO over a rate simulation's rule coverage JSON",
 	"BillingQueueHeadline":            "GraphQL billing queue item headline built from its review issues",
 	"CustomFieldFormField":            "GraphQL form DTO over the active definitions a form draws, read whole",
 	"ShipmentCustomerBillingRules":    "GraphQL shipment form DTO built from a picked billing profile read",

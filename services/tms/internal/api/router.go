@@ -33,7 +33,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
@@ -66,7 +65,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoicerunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicesharehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
@@ -78,19 +76,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/rateagreementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateimporthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
@@ -197,7 +190,6 @@ type RouterParams struct {
 	ShipmentMoveHandler             *shipmentmovehandler.Handler
 	ShipmentHandler                 *shipmenthandler.Handler
 	PermitHandler                   *permithandler.Handler
-	JurisdictionRuleHandler         *jurisdictionrulehandler.Handler
 	ShipmentTypeHandler             *shipmenttypehandler.Handler
 	EDIHandler                      *edihandler.Handler
 	EDISetupHandler                 *edisetuphandler.Handler
@@ -211,7 +203,6 @@ type RouterParams struct {
 	CarrierAssignmentHandler        *carrierassignmenthandler.Handler
 	TenderPublicHandler             *tenderpublichandler.Handler
 	TenderHandler                   *tenderhandler.Handler
-	RoutingGuideHandler             *routingguidehandler.Handler
 	CarrierHandler                  *carrierhandler.Handler
 	RateConfirmationHandler         *rateconfirmationhandler.Handler
 	RateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
@@ -228,13 +219,8 @@ type RouterParams struct {
 	FiscalPeriodHandler             *fiscalperiodhandler.Handler
 	LocationHandler                 *locationhandler.Handler
 	RecurringShipmentHandler        *recurringshipmenthandler.Handler
-	RateAgreementHandler            *rateagreementhandler.Handler
 	RateZoneHandler                 *ratezonehandler.Handler
-	RateMatrixHandler               *ratematrixhandler.Handler
-	RateSimulationHandler           *ratesimulationhandler.Handler
 	RateImportHandler               *rateimporthandler.Handler
-	RateQuoteHandler                *ratequotehandler.Handler
-	DetentionHandler                *detentionhandler.Handler
 	IntegrationHandler              *integrationhandler.Handler
 	InvoiceHandler                  *invoicehandler.Handler
 	InvoiceRunHandler               *invoicerunhandler.Handler
@@ -304,7 +290,6 @@ type Router struct {
 	shipmentMoveHandler             *shipmentmovehandler.Handler
 	shipmentHandler                 *shipmenthandler.Handler
 	permitHandler                   *permithandler.Handler
-	jurisdictionRuleHandler         *jurisdictionrulehandler.Handler
 	tractorHandler                  *tractorhandler.Handler
 	trailerHandler                  *trailerhandler.Handler
 	graphQLHandler                  *graphqlapi.Handler
@@ -340,7 +325,6 @@ type Router struct {
 	carrierAssignmentHandler        *carrierassignmenthandler.Handler
 	tenderPublicHandler             *tenderpublichandler.Handler
 	tenderHandler                   *tenderhandler.Handler
-	routingGuideHandler             *routingguidehandler.Handler
 	carrierHandler                  *carrierhandler.Handler
 	rateConfirmationHandler         *rateconfirmationhandler.Handler
 	rateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
@@ -357,13 +341,8 @@ type Router struct {
 	fiscalPeriodHandler             *fiscalperiodhandler.Handler
 	locationHandler                 *locationhandler.Handler
 	recurringShipmentHandler        *recurringshipmenthandler.Handler
-	rateAgreementHandler            *rateagreementhandler.Handler
 	rateZoneHandler                 *ratezonehandler.Handler
-	rateMatrixHandler               *ratematrixhandler.Handler
-	rateSimulationHandler           *ratesimulationhandler.Handler
 	rateImportHandler               *rateimporthandler.Handler
-	rateQuoteHandler                *ratequotehandler.Handler
-	detentionHandler                *detentionhandler.Handler
 	integrationHandler              *integrationhandler.Handler
 	invoiceHandler                  *invoicehandler.Handler
 	invoiceRunHandler               *invoicerunhandler.Handler
@@ -435,7 +414,6 @@ func NewRouter(p RouterParams) *Router {
 		shipmentMoveHandler:             p.ShipmentMoveHandler,
 		shipmentHandler:                 p.ShipmentHandler,
 		permitHandler:                   p.PermitHandler,
-		jurisdictionRuleHandler:         p.JurisdictionRuleHandler,
 		tractorHandler:                  p.TractorHandler,
 		trailerHandler:                  p.TrailerHandler,
 		graphQLHandler:                  p.GraphQLHandler,
@@ -471,7 +449,6 @@ func NewRouter(p RouterParams) *Router {
 		carrierAssignmentHandler:        p.CarrierAssignmentHandler,
 		tenderPublicHandler:             p.TenderPublicHandler,
 		tenderHandler:                   p.TenderHandler,
-		routingGuideHandler:             p.RoutingGuideHandler,
 		carrierHandler:                  p.CarrierHandler,
 		rateConfirmationHandler:         p.RateConfirmationHandler,
 		rateConfirmationPublicHandler:   p.RateConfirmationPublicHandler,
@@ -488,13 +465,8 @@ func NewRouter(p RouterParams) *Router {
 		fiscalPeriodHandler:             p.FiscalPeriodHandler,
 		locationHandler:                 p.LocationHandler,
 		recurringShipmentHandler:        p.RecurringShipmentHandler,
-		rateAgreementHandler:            p.RateAgreementHandler,
 		rateZoneHandler:                 p.RateZoneHandler,
-		rateMatrixHandler:               p.RateMatrixHandler,
-		rateSimulationHandler:           p.RateSimulationHandler,
 		rateImportHandler:               p.RateImportHandler,
-		rateQuoteHandler:                p.RateQuoteHandler,
-		detentionHandler:                p.DetentionHandler,
 		integrationHandler:              p.IntegrationHandler,
 		invoiceHandler:                  p.InvoiceHandler,
 		invoiceRunHandler:               p.InvoiceRunHandler,
@@ -655,7 +627,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.shipmentMoveHandler.RegisterRoutes(protected)
 	r.shipmentHandler.RegisterRoutes(protected)
 	r.permitHandler.RegisterRoutes(protected)
-	r.jurisdictionRuleHandler.RegisterRoutes(protected)
 	r.shipmentTypeHandler.RegisterRoutes(protected)
 	r.ediHandler.RegisterRoutes(protected)
 	r.ediSetupHandler.RegisterRoutes(protected)
@@ -664,7 +635,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.emailHandler.RegisterRoutes(protected)
 	r.carrierAssignmentHandler.RegisterRoutes(protected)
 	r.tenderHandler.RegisterRoutes(protected)
-	r.routingGuideHandler.RegisterRoutes(protected)
 	r.carrierHandler.RegisterRoutes(protected)
 	r.rateConfirmationHandler.RegisterRoutes(protected)
 	r.googleMapsHandler.RegisterRoutes(protected)
@@ -679,13 +649,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.fiscalPeriodHandler.RegisterRoutes(protected)
 	r.locationHandler.RegisterRoutes(protected)
 	r.recurringShipmentHandler.RegisterRoutes(protected)
-	r.rateAgreementHandler.RegisterRoutes(protected)
 	r.rateZoneHandler.RegisterRoutes(protected)
-	r.rateMatrixHandler.RegisterRoutes(protected)
-	r.rateSimulationHandler.RegisterRoutes(protected)
 	r.rateImportHandler.RegisterRoutes(protected)
-	r.rateQuoteHandler.RegisterRoutes(protected)
-	r.detentionHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)
 	r.invoiceHandler.RegisterRoutes(protected)
 	r.invoiceRunHandler.RegisterRoutes(protected)

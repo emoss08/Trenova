@@ -744,10 +744,10 @@ The steps below are the rules it follows.
    only its own record readable (`seedPermissions` from `src/test/permissions.ts`).
    Never read a list that can grow without bound along with the record: read its
    count and its first page, and the next page on request (the rate agreement card
-   reads its lanes from `GET /rate-agreements/:id/lanes/` with `useInfiniteQuery`,
-   and the agreement itself with `includeRules=false`). When the card needs the shape of
+   reads its lanes from the `rateAgreementLanePage` query with `useInfiniteQuery`,
+   and the agreement itself without selecting `rules`). When the card needs the shape of
    the whole list rather than its rows, ask the server for the aggregate: the rate
-   agreement's rate structure reads `GET /rate-agreements/:id/lanes/summary/`, its live
+   agreement's rate structure reads the `rateAgreementLaneSummary` query, its live
    lanes grouped by formula template or rate table with each group's count and rate
    range, and draws each group as a `CardMeter` of its share, folding the groups past
    the first few into one.

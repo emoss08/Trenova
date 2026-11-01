@@ -151,13 +151,13 @@ func TestClosureHandlersAreListedSeparately(t *testing.T) {
 
 	report := loadReport(t)
 
-	approve := writeByKey(t, report.Writes,
-		"POST /api/v1/rate-agreements/:rateAgreementID/approve/")
-	reject := writeByKey(t, report.Writes,
-		"POST /api/v1/rate-agreements/:rateAgreementID/reject/")
-	assert.Equal(t, "rateagreementhandler.review", approve.Handler)
-	assert.Len(t, approve.Routes, 1)
-	assert.Len(t, reject.Routes, 1)
+	samsara := writeByKey(t, report.Writes,
+		"POST /api/v1/webhooks/samsara/:webhookToken/")
+	generic := writeByKey(t, report.Writes,
+		"POST /api/v1/webhooks/telematics/:provider/:webhookToken/")
+	assert.Equal(t, "telematicshandler.handleProviderWebhook", samsara.Handler)
+	assert.Len(t, samsara.Routes, 1)
+	assert.Len(t, generic.Routes, 1)
 }
 
 func sampleWrites() []writecoverage.Write {

@@ -40,8 +40,10 @@ export function LaneHistoryPopover({
 
   const { data: history, isLoading } = useQuery({
     queryKey: ["rate-agreement-rule-history", rateAgreementId, laneKey],
-    queryFn: () =>
-      apiService.rateAgreementService.listRuleHistory(rateAgreementId as string, laneKey),
+    queryFn: ({ signal }) =>
+      apiService.rateAgreementService.listRuleHistory(rateAgreementId as string, laneKey, {
+        signal,
+      }),
     enabled: open && Boolean(rateAgreementId) && Boolean(laneKey),
   });
 

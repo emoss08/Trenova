@@ -457,6 +457,8 @@ virtuals:
   RateMatrixVersion:
     - dimensions
     - cells
+  RateAgreementVersion:
+    - accessorialNames
   RateAgreement:
     - lanes
     - laneCount

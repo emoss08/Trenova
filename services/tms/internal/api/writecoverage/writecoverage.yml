@@ -2135,22 +2135,22 @@ writes:
     reason: "Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it."
 
   # jurisdictionrule
-  "DELETE /api/v1/jurisdiction-rule-overrides/:overrideID/":
+  "mutation deleteJurisdictionRuleOverride":
     exempt: configuration
     reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
-  "POST /api/v1/jurisdiction-rule-overrides/":
+  "mutation createJurisdictionRuleOverride":
     exempt: configuration
     reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
-  "POST /api/v1/jurisdiction-rules/":
+  "mutation createJurisdictionRule":
     exempt: configuration
     reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
-  "POST /api/v1/jurisdiction-rules/:ruleID/verify/":
+  "mutation verifyJurisdictionRule":
     exempt: configuration
     reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
-  "PUT /api/v1/jurisdiction-rule-overrides/:overrideID/":
+  "mutation updateJurisdictionRuleOverride":
     exempt: configuration
     reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
-  "PUT /api/v1/jurisdiction-rules/:ruleID/":
+  "mutation updateJurisdictionRule":
     exempt: configuration
     reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
 
@@ -2366,28 +2366,25 @@ writes:
     reason: "Registers or removes a browser push subscription for the device the person is using."
 
   # rateagreement
-  "POST /api/v1/rate-agreements/":
+  "mutation createRateAgreement":
     tools: [rate_create_agreement]
-  "POST /api/v1/rate-agreements/:rateAgreementID/approve/":
+  "mutation approveRateAgreement":
     tools: [rate_approve_agreement]
-  "POST /api/v1/rate-agreements/:rateAgreementID/archive/":
+  "mutation archiveRateAgreement":
     tools: [rate_archive_agreement]
-  "POST /api/v1/rate-agreements/:rateAgreementID/duplicate/":
+  "mutation duplicateRateAgreement":
     tools: [rate_duplicate_agreement]
-  "POST /api/v1/rate-agreements/:rateAgreementID/reject/":
+  "mutation rejectRateAgreement":
     tools: [rate_reject_agreement]
-  "POST /api/v1/rate-agreements/:rateAgreementID/resume/":
+  "mutation resumeRateAgreement":
     tools: [rate_resume_agreement]
-  "POST /api/v1/rate-agreements/:rateAgreementID/submit/":
+  "mutation submitRateAgreement":
     tools: [rate_submit_agreement]
-  "POST /api/v1/rate-agreements/:rateAgreementID/suspend/":
+  "mutation suspendRateAgreement":
     tools: [rate_suspend_agreement]
-  "POST /api/v1/rate-agreements/rate-increase/apply/":
+  "mutation applyRateIncrease":
     tools: [rate_apply_increase]
-  "POST /api/v1/rate-agreements/rate-increase/preview/":
-    exempt: read-only
-    reason: "Plans a general rate increase for review and saves nothing."
-  "PUT /api/v1/rate-agreements/:rateAgreementID/":
+  "mutation updateRateAgreement":
     tools: [rate_update_agreement_draft]
 
   # rateconfirmation
@@ -2409,50 +2406,42 @@ writes:
   "POST /api/v1/rate-imports/":
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
-  "POST /api/v1/rate-imports/:rateImportID/commit/":
+  "mutation commitRateImport":
     tools: [rate_commit_import]
-  "POST /api/v1/rate-imports/:rateImportID/discard/":
+  "mutation discardRateImport":
     tools: [rate_discard_import]
 
   # ratematrix
-  "POST /api/v1/rate-matrices/":
+  "mutation createRateMatrix":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
-  "POST /api/v1/rate-matrices/:rateMatrixID/approve/":
+  "mutation approveRateMatrix":
     exempt: configuration
     reason: "Publishing a rate matrix version is a reviewer's decision on pricing every tariff can pin; it waits for a person who did not write the draft."
-  "POST /api/v1/rate-matrices/:rateMatrixID/archive/":
+  "mutation archiveRateMatrix":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
-  "POST /api/v1/rate-matrices/:rateMatrixID/reject/":
+  "mutation rejectRateMatrix":
     exempt: configuration
     reason: "Rejecting a rate matrix draft is a reviewer's decision on pricing; it waits for a person who did not write the draft."
-  "POST /api/v1/rate-matrices/:rateMatrixID/request-changes/":
+  "mutation requestRateMatrixChanges":
     exempt: configuration
     reason: "Returning a rate matrix draft for changes is a reviewer's decision on pricing; it waits for a person who did not write the draft."
-  "POST /api/v1/rate-matrices/:rateMatrixID/restore/":
+  "mutation restoreRateMatrixVersion":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
-  "POST /api/v1/rate-matrices/:rateMatrixID/submit/":
+  "mutation submitRateMatrix":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
-  "PUT /api/v1/rate-matrices/:rateMatrixID/":
+  "mutation updateRateMatrix":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
-  "PUT /api/v1/rate-matrices/:rateMatrixID/cells/":
+  "mutation replaceRateMatrixCells":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
-
-  # ratequote
-  "POST /api/v1/rate-quotes/shipment/:shipmentID/explain/":
-    exempt: read-only
-    reason: "Explains how a shipment was rated and saves nothing."
-  "POST /api/v1/rate-quotes/shipment/:shipmentID/shop/":
-    exempt: read-only
-    reason: "Compares the rates every agreement would give a shipment and saves nothing."
 
   # ratesimulation
-  "POST /api/v1/rate-simulations/":
+  "mutation createRateSimulation":
     tools: [rate_run_simulation]
 
   # ratezone
@@ -2566,13 +2555,13 @@ writes:
     reason: "Grants or removes access. An agent that could change access could widen its own."
 
   # routingguide
-  "DELETE /api/v1/routing-guides/:guideID/":
+  "mutation deleteRoutingGuide":
     exempt: configuration
     reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it."
-  "POST /api/v1/routing-guides/":
+  "mutation createRoutingGuide":
     exempt: configuration
     reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it."
-  "PUT /api/v1/routing-guides/:guideID/":
+  "mutation updateRoutingGuide":
     exempt: configuration
     reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it."
 

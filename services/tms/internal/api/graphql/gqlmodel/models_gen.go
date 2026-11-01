@@ -135,6 +135,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -184,6 +187,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	rateimport1 "github.com/emoss08/trenova/pkg/rateimport"
 )
 
 // One thing waiting on a person: a proposal that stands on its own, or a plan
@@ -7031,6 +7035,32 @@ type JurisdictionRuleEdge struct {
 	Cursor string                             `json:"cursor"`
 }
 
+// A jurisdiction's statutory oversize and overweight limits. The row is global: every organization reads it.
+type JurisdictionRuleInput struct {
+	StateID               string                  `json:"stateId"`
+	Status                jurisdictionrule.Status `json:"status"`
+	MaxWidthFeet          float64                 `json:"maxWidthFeet"`
+	MaxHeightFeet         float64                 `json:"maxHeightFeet"`
+	MaxLengthFeet         float64                 `json:"maxLengthFeet"`
+	MaxWeightPounds       int                     `json:"maxWeightPounds"`
+	SuperloadWidthFeet    *float64                `json:"superloadWidthFeet,omitempty"`
+	SuperloadWeightPounds *int                    `json:"superloadWeightPounds,omitempty"`
+	DaylightOnly          bool                    `json:"daylightOnly"`
+	RushHourRestricted    bool                    `json:"rushHourRestricted"`
+	WeekendRestricted     bool                    `json:"weekendRestricted"`
+	HolidayRestricted     bool                    `json:"holidayRestricted"`
+	PermitLeadTimeDays    int                     `json:"permitLeadTimeDays"`
+	PermitValidityDays    int                     `json:"permitValidityDays"`
+	PermitBaseFee         *string                 `json:"permitBaseFee,omitempty"`
+	PermitPerMileFee      *string                 `json:"permitPerMileFee,omitempty"`
+	SourceNote            *string                 `json:"sourceNote,omitempty"`
+	SourceURL             *string                 `json:"sourceUrl,omitempty"`
+	EffectiveStartDate    *int                    `json:"effectiveStartDate,omitempty"`
+	EffectiveEndDate      *int                    `json:"effectiveEndDate,omitempty"`
+	// The version read before editing; a save against an older one is refused.
+	Version *int `json:"version,omitempty"`
+}
+
 type JurisdictionRuleOverrideConnection struct {
 	Edges      []*JurisdictionRuleOverrideEdge `json:"edges"`
 	PageInfo   *PageInfo                       `json:"pageInfo"`
@@ -7042,6 +7072,22 @@ type JurisdictionRuleOverrideConnection struct {
 type JurisdictionRuleOverrideEdge struct {
 	Node   *jurisdictionrule.Override `json:"node"`
 	Cursor string                     `json:"cursor"`
+}
+
+// An organization's stricter posture on a jurisdiction; every limit left out defers to the statute.
+type JurisdictionRuleOverrideInput struct {
+	StateID            string   `json:"stateId"`
+	MaxWidthFeet       *float64 `json:"maxWidthFeet,omitempty"`
+	MaxHeightFeet      *float64 `json:"maxHeightFeet,omitempty"`
+	MaxLengthFeet      *float64 `json:"maxLengthFeet,omitempty"`
+	MaxWeightPounds    *int     `json:"maxWeightPounds,omitempty"`
+	PermitLeadTimeDays *int     `json:"permitLeadTimeDays,omitempty"`
+	DaylightOnly       *bool    `json:"daylightOnly,omitempty"`
+	HolidayRestricted  *bool    `json:"holidayRestricted,omitempty"`
+	// Why this organization runs tighter than the statute. Required, minimum ten characters.
+	Reason string `json:"reason"`
+	// The version read before editing; a save against an older one is refused.
+	Version *int `json:"version,omitempty"`
 }
 
 type LateChargeAssessmentInput struct {
@@ -7892,6 +7938,8 @@ type RateAgreement struct {
 	CurrentVersionNumber int            `json:"currentVersionNumber"`
 	// The customer invoices for this agreement's freight go to, when not the party itself.
 	BillToCustomerID *string `json:"billToCustomerId,omitempty"`
+	// The signed contract document, when one is attached.
+	DocumentID *string `json:"documentId,omitempty"`
 	// The live lanes: active rules in force now or starting later, most specific
 	// first. first takes at most 100.
 	Lanes []*RateAgreementLane `json:"lanes"`
@@ -7905,14 +7953,18 @@ type RateAgreement struct {
 	FuelBinding *RateAgreementFuelBinding `json:"fuelBinding,omitempty"`
 	// The version of the header terms in force now. Read by rateAgreement only.
 	CurrentVersion *RateAgreementVersion `json:"currentVersion,omitempty"`
-	Version        int                   `json:"version"`
-	CreatedAt      int                   `json:"createdAt"`
-	UpdatedAt      int                   `json:"updatedAt"`
+	// Every rule that has not been closed out, current and future, as the editor
+	// saves them back. Read by rateAgreement only, and only when selected.
+	Rules     []*RateAgreementRule `json:"rules,omitempty"`
+	Version   int                  `json:"version"`
+	CreatedAt int                  `json:"createdAt"`
+	UpdatedAt int                  `json:"updatedAt"`
 }
 
 // An accessorial an agreement prices, and on what terms.
 type RateAgreementAccessorial struct {
 	ID                  string  `json:"id"`
+	RateAgreementID     string  `json:"rateAgreementId"`
 	AccessorialChargeID string  `json:"accessorialChargeId"`
 	Method              string  `json:"method"`
 	RateUnit            string  `json:"rateUnit"`
@@ -7925,10 +7977,32 @@ type RateAgreementAccessorial struct {
 	MaxAmount           *string `json:"maxAmount,omitempty"`
 	// The Tariff condition a shipment meets for the charge to apply; empty applies always.
 	Condition string `json:"condition"`
+	// Only shipments of these service types; empty applies to all.
+	ServiceTypeIds []string `json:"serviceTypeIds"`
+	// Only shipments of these shipment types; empty applies to all.
+	ShipmentTypeIds []string `json:"shipmentTypeIds"`
 	// The accessorial charge's code, such as DET.
 	ChargeCode string `json:"chargeCode"`
 	// The accessorial charge's description, such as Detention.
 	ChargeDescription string `json:"chargeDescription"`
+}
+
+// One accessorial an agreement prices. The schedule is replaced whole on every save.
+type RateAgreementAccessorialInput struct {
+	AccessorialChargeID string  `json:"accessorialChargeId"`
+	Method              string  `json:"method"`
+	RateUnit            *string `json:"rateUnit,omitempty"`
+	Amount              string  `json:"amount"`
+	Waived              *bool   `json:"waived,omitempty"`
+	AutoApply           *bool   `json:"autoApply,omitempty"`
+	// A Tariff condition; empty applies the charge to every shipment.
+	Condition       *string  `json:"condition,omitempty"`
+	FreeUnits       *int     `json:"freeUnits,omitempty"`
+	MaxAmount       *string  `json:"maxAmount,omitempty"`
+	ServiceTypeIds  []string `json:"serviceTypeIds,omitempty"`
+	ShipmentTypeIds []string `json:"shipmentTypeIds,omitempty"`
+	EffectiveFrom   *int     `json:"effectiveFrom,omitempty"`
+	EffectiveTo     *int     `json:"effectiveTo,omitempty"`
 }
 
 type RateAgreementConnection struct {
@@ -7947,10 +8021,62 @@ type RateAgreementEdge struct {
 // How an agreement prices fuel: the program it binds, or a waiver.
 type RateAgreementFuelBinding struct {
 	ID                     string `json:"id"`
+	RateAgreementID        string `json:"rateAgreementId"`
 	FuelSurchargeProgramID string `json:"fuelSurchargeProgramId"`
 	Waived                 bool   `json:"waived"`
+	// The peg price the program is read against instead of its own.
+	PegPriceOverride *string `json:"pegPriceOverride,omitempty"`
+	// The increment rate the program charges instead of its own.
+	IncrementRateOverride *string `json:"incrementRateOverride,omitempty"`
+	// The most the fuel surcharge may come to.
+	CapAmount *string `json:"capAmount,omitempty"`
 	// The fuel surcharge program's name.
 	ProgramName string `json:"programName"`
+}
+
+// How an agreement prices fuel: a program, with optional overrides, or a waiver.
+type RateAgreementFuelBindingInput struct {
+	FuelSurchargeProgramID string  `json:"fuelSurchargeProgramId"`
+	Waived                 *bool   `json:"waived,omitempty"`
+	PegPriceOverride       *string `json:"pegPriceOverride,omitempty"`
+	IncrementRateOverride  *string `json:"incrementRateOverride,omitempty"`
+	CapAmount              *string `json:"capAmount,omitempty"`
+}
+
+// A rate agreement as the editor saves it: the header terms with the full rule
+// set, accessorial schedule and fuel binding. A new agreement always starts in
+// Draft; status and review moves go through their own mutations.
+type RateAgreementInput struct {
+	PartyType         RateAgreementPartyType `json:"partyType"`
+	CustomerID        *string                `json:"customerId,omitempty"`
+	CarrierID         *string                `json:"carrierId,omitempty"`
+	Code              string                 `json:"code"`
+	Name              string                 `json:"name"`
+	Description       *string                `json:"description,omitempty"`
+	AgreementType     RateAgreementType      `json:"agreementType"`
+	ContractRef       *string                `json:"contractRef,omitempty"`
+	DocumentID        *string                `json:"documentId,omitempty"`
+	Priority          *int                   `json:"priority,omitempty"`
+	EffectiveFrom     int                    `json:"effectiveFrom"`
+	EffectiveTo       *int                   `json:"effectiveTo,omitempty"`
+	AutoRenew         *bool                  `json:"autoRenew,omitempty"`
+	RenewalNoticeDays *int                   `json:"renewalNoticeDays,omitempty"`
+	Currency          string                 `json:"currency"`
+	// Values every rule's tariff reads when the rule sets none, by input name, in the Tariff wire form.
+	Inputs           map[string]any `json:"inputs,omitempty"`
+	BillToCustomerID *string        `json:"billToCustomerId,omitempty"`
+	// Left as stored for a caller without the margins group.
+	MarginFloorPercent *string `json:"marginFloorPercent,omitempty"`
+	// Left as stored for a caller without the margins group.
+	MaxPayPercentOfSell *string `json:"maxPayPercentOfSell,omitempty"`
+	// The version read before editing; a save against an older one is refused.
+	Version *int `json:"version,omitempty"`
+	// The whole rule set: a held rule left out is closed out.
+	Rules []*RateAgreementRuleInput `json:"rules"`
+	// The whole accessorial schedule, which replaces the saved one.
+	Accessorials []*RateAgreementAccessorialInput `json:"accessorials"`
+	// The fuel terms; null leaves the agreement without a fuel binding.
+	FuelBinding *RateAgreementFuelBindingInput `json:"fuelBinding,omitempty"`
 }
 
 // One priced lane of a rate agreement: where it applies, when, and the tariff
@@ -7977,13 +8103,284 @@ type RateAgreementLane struct {
 	Inputs map[string]any `json:"inputs"`
 }
 
+// One page of an agreement's live lanes, most specific first, with how many it
+// prices in all and how many it has retired.
+type RateAgreementLanePage struct {
+	Results []*RateAgreementRule `json:"results"`
+	Count   int                  `json:"count"`
+	// Whether count was counted; false when it is the planner's estimate.
+	CountExact bool `json:"countExact"`
+	Retired    int  `json:"retired"`
+	// Whether retired was counted; false when it is the planner's estimate.
+	RetiredExact bool `json:"retiredExact"`
+	Limit        int  `json:"limit"`
+	Offset       int  `json:"offset"`
+}
+
+// The live lanes one tariff prices, in one currency.
+type RateAgreementLanePricingGroup struct {
+	FormulaTemplateID   *string `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName string  `json:"formulaTemplateName"`
+	Currency            string  `json:"currency"`
+	Lanes               int     `json:"lanes"`
+	MinRate             *string `json:"minRate,omitempty"`
+	MaxRate             *string `json:"maxRate,omitempty"`
+}
+
+// An agreement's live lanes grouped by the tariff that prices them.
+type RateAgreementLaneSummary struct {
+	Groups []*RateAgreementLanePricingGroup `json:"groups"`
+	Count  int                              `json:"count"`
+}
+
+// One rule of a rate agreement: where and when it applies, what freight it
+// covers, and the tariff and input values it prices with. laneKey and
+// specificityScore are derived on every write.
+type RateAgreementRule struct {
+	ID                      string   `json:"id"`
+	BusinessUnitID          string   `json:"businessUnitId"`
+	OrganizationID          string   `json:"organizationId"`
+	RateAgreementID         string   `json:"rateAgreementId"`
+	Label                   string   `json:"label"`
+	Status                  string   `json:"status"`
+	OriginScopeType         string   `json:"originScopeType"`
+	OriginScopeValue        string   `json:"originScopeValue"`
+	OriginCity              string   `json:"originCity"`
+	DestinationScopeType    string   `json:"destinationScopeType"`
+	DestinationScopeValue   string   `json:"destinationScopeValue"`
+	DestinationCity         string   `json:"destinationCity"`
+	Direction               string   `json:"direction"`
+	LaneKey                 string   `json:"laneKey"`
+	SpecificityScore        int      `json:"specificityScore"`
+	OriginRadiusMeters      *float64 `json:"originRadiusMeters,omitempty"`
+	DestinationRadiusMeters *float64 `json:"destinationRadiusMeters,omitempty"`
+	OriginLatitude          *float64 `json:"originLatitude,omitempty"`
+	OriginLongitude         *float64 `json:"originLongitude,omitempty"`
+	DestinationLatitude     *float64 `json:"destinationLatitude,omitempty"`
+	DestinationLongitude    *float64 `json:"destinationLongitude,omitempty"`
+	ServiceTypeIds          []string `json:"serviceTypeIds"`
+	ShipmentTypeIds         []string `json:"shipmentTypeIds"`
+	TractorTypeIds          []string `json:"tractorTypeIds"`
+	TrailerTypeIds          []string `json:"trailerTypeIds"`
+	CommodityIds            []string `json:"commodityIds"`
+	FreightClasses          []string `json:"freightClasses"`
+	ServiceModels           []string `json:"serviceModels"`
+	EquipmentClasses        []string `json:"equipmentClasses"`
+	MinWeight               *string  `json:"minWeight,omitempty"`
+	MaxWeight               *string  `json:"maxWeight,omitempty"`
+	MinDistance             *string  `json:"minDistance,omitempty"`
+	MaxDistance             *string  `json:"maxDistance,omitempty"`
+	MinStops                *int     `json:"minStops,omitempty"`
+	MaxStops                *int     `json:"maxStops,omitempty"`
+	// The days of the week the rule applies on, as a bit set; 0 is every day.
+	DaysOfWeek        int    `json:"daysOfWeek"`
+	HazmatOnly        bool   `json:"hazmatOnly"`
+	TempControlOnly   bool   `json:"tempControlOnly"`
+	FormulaTemplateID string `json:"formulaTemplateId"`
+	// The values the rule's tariff prices with, by input name. Each value is a Tariff wire value.
+	Inputs        map[string]any `json:"inputs"`
+	Currency      string         `json:"currency"`
+	Priority      int            `json:"priority"`
+	EffectiveFrom int            `json:"effectiveFrom"`
+	EffectiveTo   *int           `json:"effectiveTo,omitempty"`
+	// The rule this one replaced when an amendment closed it out.
+	SupersedesRuleID *string `json:"supersedesRuleId,omitempty"`
+	Version          int     `json:"version"`
+	CreatedAt        int     `json:"createdAt"`
+	UpdatedAt        int     `json:"updatedAt"`
+}
+
+// One rule of an agreement as the editor saves it. A rule with the ID of one the agreement holds keeps it when its terms are unchanged and supersedes it when they changed; a rule without an ID is a new lane, and a held rule left out is closed out.
+type RateAgreementRuleInput struct {
+	ID                      *string  `json:"id,omitempty"`
+	Label                   *string  `json:"label,omitempty"`
+	Status                  *string  `json:"status,omitempty"`
+	OriginScopeType         string   `json:"originScopeType"`
+	OriginScopeValue        *string  `json:"originScopeValue,omitempty"`
+	OriginCity              *string  `json:"originCity,omitempty"`
+	DestinationScopeType    string   `json:"destinationScopeType"`
+	DestinationScopeValue   *string  `json:"destinationScopeValue,omitempty"`
+	DestinationCity         *string  `json:"destinationCity,omitempty"`
+	Direction               *string  `json:"direction,omitempty"`
+	OriginRadiusMeters      *float64 `json:"originRadiusMeters,omitempty"`
+	DestinationRadiusMeters *float64 `json:"destinationRadiusMeters,omitempty"`
+	OriginLatitude          *float64 `json:"originLatitude,omitempty"`
+	OriginLongitude         *float64 `json:"originLongitude,omitempty"`
+	DestinationLatitude     *float64 `json:"destinationLatitude,omitempty"`
+	DestinationLongitude    *float64 `json:"destinationLongitude,omitempty"`
+	ServiceTypeIds          []string `json:"serviceTypeIds,omitempty"`
+	ShipmentTypeIds         []string `json:"shipmentTypeIds,omitempty"`
+	TractorTypeIds          []string `json:"tractorTypeIds,omitempty"`
+	TrailerTypeIds          []string `json:"trailerTypeIds,omitempty"`
+	CommodityIds            []string `json:"commodityIds,omitempty"`
+	FreightClasses          []string `json:"freightClasses,omitempty"`
+	ServiceModels           []string `json:"serviceModels,omitempty"`
+	EquipmentClasses        []string `json:"equipmentClasses,omitempty"`
+	MinWeight               *string  `json:"minWeight,omitempty"`
+	MaxWeight               *string  `json:"maxWeight,omitempty"`
+	MinDistance             *string  `json:"minDistance,omitempty"`
+	MaxDistance             *string  `json:"maxDistance,omitempty"`
+	MinStops                *int     `json:"minStops,omitempty"`
+	MaxStops                *int     `json:"maxStops,omitempty"`
+	DaysOfWeek              *int     `json:"daysOfWeek,omitempty"`
+	HazmatOnly              *bool    `json:"hazmatOnly,omitempty"`
+	TempControlOnly         *bool    `json:"tempControlOnly,omitempty"`
+	FormulaTemplateID       string   `json:"formulaTemplateId"`
+	// The values the rule's tariff prices with, by input name, in the Tariff wire form.
+	Inputs        map[string]any `json:"inputs,omitempty"`
+	Currency      *string        `json:"currency,omitempty"`
+	Priority      *int           `json:"priority,omitempty"`
+	EffectiveFrom int            `json:"effectiveFrom"`
+	EffectiveTo   *int           `json:"effectiveTo,omitempty"`
+}
+
 // The header terms of an agreement as they stood for a window.
 type RateAgreementVersion struct {
-	ID            string `json:"id"`
-	VersionNumber int    `json:"versionNumber"`
-	EffectiveFrom int    `json:"effectiveFrom"`
-	EffectiveTo   *int   `json:"effectiveTo,omitempty"`
-	ChangeMessage string `json:"changeMessage"`
+	ID                     string  `json:"id"`
+	RateAgreementID        string  `json:"rateAgreementId"`
+	VersionNumber          int     `json:"versionNumber"`
+	EffectiveFrom          int     `json:"effectiveFrom"`
+	EffectiveTo            *int    `json:"effectiveTo,omitempty"`
+	Code                   string  `json:"code"`
+	Name                   string  `json:"name"`
+	Priority               int     `json:"priority"`
+	AgreementEffectiveFrom int     `json:"agreementEffectiveFrom"`
+	AgreementEffectiveTo   *int    `json:"agreementEffectiveTo,omitempty"`
+	AutoRenew              bool    `json:"autoRenew"`
+	RenewalNoticeDays      int     `json:"renewalNoticeDays"`
+	BillToCustomerID       *string `json:"billToCustomerId,omitempty"`
+	// The accessorial schedule's terms as the version recorded them, by accessorial charge ID.
+	AccessorialTerms map[string]any `json:"accessorialTerms,omitempty"`
+	// The fuel binding's terms as the version recorded them.
+	FuelTerms map[string]any `json:"fuelTerms,omitempty"`
+	// Each accessorial charge ID in accessorialTerms with the charge's code.
+	AccessorialNames map[string]any `json:"accessorialNames,omitempty"`
+	ChangeMessage    string         `json:"changeMessage"`
+	// Each term the version changed, by field, with its value before and after.
+	ChangeSummary map[string]any `json:"changeSummary,omitempty"`
+	CreatedByID   *string        `json:"createdById,omitempty"`
+	CreatedAt     int            `json:"createdAt"`
+}
+
+// A rate sheet uploaded against an agreement and the dry run of what committing
+// it would do. Nothing about the agreement changes until it is committed.
+type RateImportBatch struct {
+	ID              string                  `json:"id"`
+	BusinessUnitID  string                  `json:"businessUnitId"`
+	OrganizationID  string                  `json:"organizationId"`
+	RateAgreementID string                  `json:"rateAgreementId"`
+	FileName        string                  `json:"fileName"`
+	SourceFormat    rateimport.SourceFormat `json:"sourceFormat"`
+	Status          rateimport.Status       `json:"status"`
+	EffectiveFrom   int                     `json:"effectiveFrom"`
+	// Each recognised field with the sheet column it was read from.
+	Mapping         map[string]any      `json:"mapping,omitempty"`
+	UnmappedHeaders []string            `json:"unmappedHeaders"`
+	Changes         []*RateImportChange `json:"changes"`
+	Summary         *RateImportSummary  `json:"summary,omitempty"`
+	RowCount        int                 `json:"rowCount"`
+	ErrorCount      int                 `json:"errorCount"`
+	Error           string              `json:"error"`
+	UploadedByID    *string             `json:"uploadedById,omitempty"`
+	CommittedAt     *int                `json:"committedAt,omitempty"`
+	CommittedBy     *string             `json:"committedBy,omitempty"`
+	Version         int                 `json:"version"`
+	CreatedAt       int                 `json:"createdAt"`
+	UpdatedAt       int                 `json:"updatedAt"`
+}
+
+// What committing a sheet would do to one lane.
+type RateImportChange struct {
+	Kind    rateimport1.ChangeKind `json:"kind"`
+	LaneKey string                 `json:"laneKey"`
+	Label   string                 `json:"label"`
+	// The live rule the change replaces or retires.
+	ExistingID *string                  `json:"existingId,omitempty"`
+	Fields     []*RateImportFieldChange `json:"fields"`
+}
+
+// One term a sheet moves on a lane, before and after.
+type RateImportFieldChange struct {
+	Field  string `json:"field"`
+	Before string `json:"before"`
+	After  string `json:"after"`
+}
+
+// One row of an uploaded sheet, as it was read.
+type RateImportRow struct {
+	ID                string   `json:"id"`
+	RateImportBatchID string   `json:"rateImportBatchId"`
+	RowNumber         int      `json:"rowNumber"`
+	Cells             []string `json:"cells"`
+	LaneKey           string   `json:"laneKey"`
+	// Why the row could not be read; empty when it was.
+	Error     string `json:"error"`
+	CreatedAt int    `json:"createdAt"`
+}
+
+// How many lanes a sheet adds, changes, retires, repeats and leaves alone.
+type RateImportSummary struct {
+	Added     int `json:"added"`
+	Changed   int `json:"changed"`
+	Removed   int `json:"removed"`
+	Duplicate int `json:"duplicate"`
+	Unchanged int `json:"unchanged"`
+}
+
+// How much a general rate increase moves every money input it scales.
+type RateIncreaseAdjustmentInput struct {
+	// The percent change, such as 4.5 for a 4.5% increase.
+	PercentChange *string `json:"percentChange,omitempty"`
+}
+
+// The scope, size and start of a general rate increase: the named agreements,
+// or every agreement of a party or a side.
+type RateIncreaseInput struct {
+	AgreementIds  []string                     `json:"agreementIds,omitempty"`
+	CustomerID    *string                      `json:"customerId,omitempty"`
+	CarrierID     *string                      `json:"carrierId,omitempty"`
+	PartyType     *RateAgreementPartyType      `json:"partyType,omitempty"`
+	Adjustment    *RateIncreaseAdjustmentInput `json:"adjustment"`
+	EffectiveFrom int                          `json:"effectiveFrom"`
+}
+
+// One lane's before and after under a general rate increase.
+type RateIncreaseLine struct {
+	RateAgreementID string `json:"rateAgreementId"`
+	AgreementCode   string `json:"agreementCode"`
+	AgreementName   string `json:"agreementName"`
+	RuleID          string `json:"ruleId"`
+	LaneKey         string `json:"laneKey"`
+	Label           string `json:"label"`
+	// The lane's input values as they are, by input name, in the Tariff wire form.
+	Before map[string]any `json:"before"`
+	// The lane's input values as the increase leaves them.
+	After map[string]any `json:"after"`
+	// The inputs the increase moves.
+	Changed []string `json:"changed"`
+}
+
+// Everything a general rate increase would do, stated before it does it.
+type RateIncreasePlan struct {
+	EffectiveFrom  int                 `json:"effectiveFrom"`
+	AgreementCount int                 `json:"agreementCount"`
+	Lines          []*RateIncreaseLine `json:"lines"`
+	// Lanes whose tariff sets no money input of its own, so the increase leaves them alone.
+	SkippedNoMoney int `json:"skippedNoMoney"`
+}
+
+// What a shipment's two sides came to, and whether that is allowed by the
+// agreements' margin floor and pay ceiling.
+type RateMarginVerdict struct {
+	Amount  string `json:"amount"`
+	Percent string `json:"percent"`
+	// The buy price as a share of the sell price.
+	PayPercent      string `json:"payPercent"`
+	FloorApplies    bool   `json:"floorApplies"`
+	BelowFloor      bool   `json:"belowFloor"`
+	CeilingApplies  bool   `json:"ceilingApplies"`
+	AbovePayCeiling bool   `json:"abovePayCeiling"`
+	Explanation     string `json:"explanation"`
 }
 
 // A rate table a tariff looks values up in: one to four axes, such as origin zone
@@ -8050,6 +8447,29 @@ type RateMatrixCell struct {
 	MinCharge       *string `json:"minCharge,omitempty"`
 }
 
+// One cell of a rate matrix draft. Keys and bands left out are empty.
+type RateMatrixCellInput struct {
+	D0Key           *string `json:"d0Key,omitempty"`
+	D1Key           *string `json:"d1Key,omitempty"`
+	D2Key           *string `json:"d2Key,omitempty"`
+	D3Key           *string `json:"d3Key,omitempty"`
+	D0KeyTo         *string `json:"d0KeyTo,omitempty"`
+	D1KeyTo         *string `json:"d1KeyTo,omitempty"`
+	D2KeyTo         *string `json:"d2KeyTo,omitempty"`
+	D3KeyTo         *string `json:"d3KeyTo,omitempty"`
+	D0Min           *string `json:"d0Min,omitempty"`
+	D0Max           *string `json:"d0Max,omitempty"`
+	D1Min           *string `json:"d1Min,omitempty"`
+	D1Max           *string `json:"d1Max,omitempty"`
+	D2Min           *string `json:"d2Min,omitempty"`
+	D2Max           *string `json:"d2Max,omitempty"`
+	D3Min           *string `json:"d3Min,omitempty"`
+	D3Max           *string `json:"d3Max,omitempty"`
+	Value           string  `json:"value"`
+	MinCharge       *string `json:"minCharge,omitempty"`
+	DeficitEligible *bool   `json:"deficitEligible,omitempty"`
+}
+
 type RateMatrixConnection struct {
 	Edges      []*RateMatrixEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
@@ -8069,39 +8489,87 @@ type RateMatrixDimension struct {
 	RangeOverflow    string `json:"rangeOverflow"`
 }
 
+// One axis of a rate matrix draft.
+type RateMatrixDimensionInput struct {
+	Position         int     `json:"position"`
+	Kind             string  `json:"kind"`
+	MatchMode        string  `json:"matchMode"`
+	Label            *string `json:"label,omitempty"`
+	KeyNormalization *string `json:"keyNormalization,omitempty"`
+	RangeOverflow    *string `json:"rangeOverflow,omitempty"`
+}
+
 type RateMatrixEdge struct {
 	Node   *RateMatrix `json:"node"`
 	Cursor string      `json:"cursor"`
+}
+
+// A rate matrix draft's header and axes.
+type RateMatrixInput struct {
+	Code        string  `json:"code"`
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	// What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int.
+	ValueType string `json:"valueType"`
+	// The version read before editing; a save against an older one is refused.
+	Version    *int                        `json:"version,omitempty"`
+	Dimensions []*RateMatrixDimensionInput `json:"dimensions"`
+}
+
+// A person who may publish the organization's rate matrices.
+type RateMatrixReviewer struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	Username      string  `json:"username"`
+	ProfilePicURL *string `json:"profilePicUrl,omitempty"`
 }
 
 // The record of how one shipment was priced: which agreement and rule won, what
 // each term contributed, and what it came to. Quotes are never edited — correcting
 // one means re-rating, which writes a new quote and supersedes the old.
 type RateQuote struct {
-	ID                  string                 `json:"id"`
-	BusinessUnitID      string                 `json:"businessUnitId"`
-	OrganizationID      string                 `json:"organizationId"`
-	ShipmentID          *string                `json:"shipmentId,omitempty"`
-	PartyType           RateAgreementPartyType `json:"partyType"`
-	PartyID             string                 `json:"partyId"`
-	Purpose             RateQuotePurpose       `json:"purpose"`
-	Outcome             RateQuoteOutcome       `json:"outcome"`
-	RateAgreementID     *string                `json:"rateAgreementId,omitempty"`
-	RateAgreementRuleID *string                `json:"rateAgreementRuleId,omitempty"`
-	FormulaTemplateID   *string                `json:"formulaTemplateId,omitempty"`
-	SpecificityScore    int                    `json:"specificityScore"`
-	Currency            string                 `json:"currency"`
-	BillingCurrency     string                 `json:"billingCurrency"`
-	LinehaulAmount      string                 `json:"linehaulAmount"`
-	TotalAmount         string                 `json:"totalAmount"`
-	BillingAmount       string                 `json:"billingAmount"`
-	ForegoneAmount      *string                `json:"foregoneAmount,omitempty"`
-	OverrideReason      string                 `json:"overrideReason"`
-	AsOf                int                    `json:"asOf"`
-	RatedAt             int                    `json:"ratedAt"`
-	RatedByID           *string                `json:"ratedById,omitempty"`
-	EngineVersion       string                 `json:"engineVersion"`
-	CreatedAt           int                    `json:"createdAt"`
+	ID             string                 `json:"id"`
+	BusinessUnitID string                 `json:"businessUnitId"`
+	OrganizationID string                 `json:"organizationId"`
+	ShipmentID     *string                `json:"shipmentId,omitempty"`
+	ShipmentMoveID *string                `json:"shipmentMoveId,omitempty"`
+	PartyType      RateAgreementPartyType `json:"partyType"`
+	PartyID        string                 `json:"partyId"`
+	Purpose        RateQuotePurpose       `json:"purpose"`
+	Outcome        RateQuoteOutcome       `json:"outcome"`
+	// Applied, Superseded or Quoted.
+	Status                 string  `json:"status"`
+	RateAgreementID        *string `json:"rateAgreementId,omitempty"`
+	RateAgreementRuleID    *string `json:"rateAgreementRuleId,omitempty"`
+	AgreementVersionNumber *int    `json:"agreementVersionNumber,omitempty"`
+	FormulaTemplateID      *string `json:"formulaTemplateId,omitempty"`
+	// The approved snapshot of the formula that priced the linehaul.
+	FormulaTemplateVersionNumber *int    `json:"formulaTemplateVersionNumber,omitempty"`
+	SpecificityScore             int     `json:"specificityScore"`
+	Currency                     string  `json:"currency"`
+	BillingCurrency              string  `json:"billingCurrency"`
+	LinehaulAmount               string  `json:"linehaulAmount"`
+	FuelAmount                   string  `json:"fuelAmount"`
+	AccessorialAmount            string  `json:"accessorialAmount"`
+	TotalAmount                  string  `json:"totalAmount"`
+	CostAmount                   *string `json:"costAmount,omitempty"`
+	MarginAmount                 *string `json:"marginAmount,omitempty"`
+	MarginPercent                *string `json:"marginPercent,omitempty"`
+	BillingAmount                string  `json:"billingAmount"`
+	FxRate                       *string `json:"fxRate,omitempty"`
+	ExchangeRateID               *string `json:"exchangeRateId,omitempty"`
+	ForegoneAmount               *string `json:"foregoneAmount,omitempty"`
+	OverrideReason               string  `json:"overrideReason"`
+	AsOf                         int     `json:"asOf"`
+	RatedAt                      int     `json:"ratedAt"`
+	RatedByID                    *string `json:"ratedById,omitempty"`
+	EngineVersion                string  `json:"engineVersion"`
+	ContextHash                  string  `json:"contextHash"`
+	// How the quote was reached: every candidate rule, why each lost, the winning
+	// tariff's bill and the totals, in the engine's trace form. The cost and margin
+	// totals are null to a reader without the margins group.
+	Trace     map[string]any `json:"trace,omitempty"`
+	CreatedAt int            `json:"createdAt"`
 }
 
 type RateQuoteConnection struct {
@@ -8115,6 +8583,126 @@ type RateQuoteConnection struct {
 type RateQuoteEdge struct {
 	Node   *RateQuote `json:"node"`
 	Cursor string     `json:"cursor"`
+}
+
+// One carrier's answer to what it would charge to haul a shipment.
+type RateShopOption struct {
+	CarrierID   string `json:"carrierId"`
+	CarrierName string `json:"carrierName"`
+	Rank        int    `json:"rank"`
+	// The routing guide's own rank; 0 when the carrier came from no guide.
+	GuideRank       int              `json:"guideRank"`
+	OfferTTLSeconds int              `json:"offerTtlSeconds"`
+	Outcome         RateQuoteOutcome `json:"outcome"`
+	Cost            string           `json:"cost"`
+	Currency        string           `json:"currency"`
+	// What the option leaves against the sell side, and whether that is allowed.
+	Margin *RateMarginVerdict `json:"margin,omitempty"`
+	// The quote the option was priced from. Never saved: a shop leaves no quote behind.
+	Quote       *RateQuote `json:"quote,omitempty"`
+	AgreementID *string    `json:"agreementId,omitempty"`
+	RuleID      *string    `json:"ruleId,omitempty"`
+	// Why the option ranked where it did, or why it could not be priced.
+	Note string `json:"note"`
+}
+
+// The carriers that could haul a shipment, priced and ranked.
+type RateShopResult struct {
+	Strategy       ratequoteports.ShopStrategy `json:"strategy"`
+	Options        []*RateShopOption           `json:"options"`
+	RoutingGuideID *string                     `json:"routingGuideId,omitempty"`
+	// The sell total the options were measured against.
+	SellTotal *string  `json:"sellTotal,omitempty"`
+	Warnings  []string `json:"warnings"`
+}
+
+// A replay of a window of past shipments against an agreement, to see what its
+// terms would have charged before they price anything. The run happens in the
+// background; read the simulation again for its status.
+type RateSimulation struct {
+	ID              string                 `json:"id"`
+	BusinessUnitID  string                 `json:"businessUnitId"`
+	OrganizationID  string                 `json:"organizationId"`
+	RateAgreementID string                 `json:"rateAgreementId"`
+	Name            string                 `json:"name"`
+	Description     string                 `json:"description"`
+	Status          ratesimulation.Status  `json:"status"`
+	PartyType       RateAgreementPartyType `json:"partyType"`
+	SampleFrom      int                    `json:"sampleFrom"`
+	SampleTo        int                    `json:"sampleTo"`
+	// At most this many shipments; 0 replays the whole window.
+	SampleLimit  int                           `json:"sampleLimit"`
+	Summary      *RateSimulationSummary        `json:"summary,omitempty"`
+	RuleCoverage []*RateSimulationRuleCoverage `json:"ruleCoverage"`
+	Error        string                        `json:"error"`
+	StartedAt    *int                          `json:"startedAt,omitempty"`
+	CompletedAt  *int                          `json:"completedAt,omitempty"`
+	RequestedBy  *string                       `json:"requestedBy,omitempty"`
+	WorkflowID   string                        `json:"workflowId"`
+	Version      int                           `json:"version"`
+	CreatedAt    int                           `json:"createdAt"`
+	UpdatedAt    int                           `json:"updatedAt"`
+}
+
+// A simulation to record and replay.
+type RateSimulationInput struct {
+	RateAgreementID string                  `json:"rateAgreementId"`
+	Name            string                  `json:"name"`
+	Description     *string                 `json:"description,omitempty"`
+	PartyType       *RateAgreementPartyType `json:"partyType,omitempty"`
+	SampleFrom      int                     `json:"sampleFrom"`
+	SampleTo        int                     `json:"sampleTo"`
+	// At most this many shipments; 0 replays the whole window.
+	SampleLimit *int `json:"sampleLimit,omitempty"`
+}
+
+// One shipment of a simulation, priced as it was and as the agreement would price it.
+type RateSimulationResult struct {
+	ID               string           `json:"id"`
+	RateSimulationID string           `json:"rateSimulationId"`
+	ShipmentID       string           `json:"shipmentId"`
+	ProNumber        string           `json:"proNumber"`
+	CustomerID       *string          `json:"customerId,omitempty"`
+	LaneKey          string           `json:"laneKey"`
+	EquipmentTypeID  *string          `json:"equipmentTypeId,omitempty"`
+	BeforeAmount     string           `json:"beforeAmount"`
+	AfterAmount      string           `json:"afterAmount"`
+	Delta            string           `json:"delta"`
+	DeltaPercent     string           `json:"deltaPercent"`
+	Outcome          RateQuoteOutcome `json:"outcome"`
+	BeforeRuleID     *string          `json:"beforeRuleId,omitempty"`
+	AfterRuleID      *string          `json:"afterRuleId,omitempty"`
+	Error            string           `json:"error"`
+	CreatedAt        int              `json:"createdAt"`
+}
+
+// One rule of the simulated agreement and how it fared across the run.
+type RateSimulationRuleCoverage struct {
+	RuleID    string                     `json:"ruleId"`
+	Label     string                     `json:"label"`
+	LaneKey   string                     `json:"laneKey"`
+	Outcome   ratesimulation.RuleOutcome `json:"outcome"`
+	WonCount  int                        `json:"wonCount"`
+	LostCount int                        `json:"lostCount"`
+	// The rule that beat this one most often.
+	LostTo      *string `json:"lostTo,omitempty"`
+	LostToLabel string  `json:"lostToLabel"`
+}
+
+// What a whole simulation came to.
+type RateSimulationSummary struct {
+	ShipmentCount  int    `json:"shipmentCount"`
+	EvaluatedCount int    `json:"evaluatedCount"`
+	ChangedCount   int    `json:"changedCount"`
+	IncreasedCount int    `json:"increasedCount"`
+	DecreasedCount int    `json:"decreasedCount"`
+	ErrorCount     int    `json:"errorCount"`
+	BeforeTotal    string `json:"beforeTotal"`
+	AfterTotal     string `json:"afterTotal"`
+	TotalDelta     string `json:"totalDelta"`
+	TotalDeltaPct  string `json:"totalDeltaPct"`
+	MaxIncrease    string `json:"maxIncrease"`
+	MaxDecrease    string `json:"maxDecrease"`
 }
 
 // A named grouping of geography that lane rules and rate matrices are written
@@ -9191,6 +9779,38 @@ type RoutingGuideConnection struct {
 type RoutingGuideEdge struct {
 	Node   *tender.RoutingGuide `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+// One carrier in a routing guide's waterfall.
+type RoutingGuideEntryInput struct {
+	// The entry's ID when it is one the guide already holds.
+	ID         *string                         `json:"id,omitempty"`
+	Version    *int                            `json:"version,omitempty"`
+	CarrierID  string                          `json:"carrierId"`
+	Rank       int                             `json:"rank"`
+	RateMethod shipmentvocab.CarrierRateMethod `json:"rateMethod"`
+	Rate       string                          `json:"rate"`
+	// Offer what the carrier's contract says today instead of the entry's fixed rate.
+	UseContractRate *bool          `json:"useContractRate,omitempty"`
+	OfferTTLSeconds int            `json:"offerTtlSeconds"`
+	Channel         tender.Channel `json:"channel"`
+}
+
+// A routing guide and its whole waterfall. Origin and destination are each a
+// location, a city and state, or a state, at the same level on both ends.
+type RoutingGuideInput struct {
+	Name                  string             `json:"name"`
+	Description           *string            `json:"description,omitempty"`
+	Status                domaintypes.Status `json:"status"`
+	OriginLocationID      *string            `json:"originLocationId,omitempty"`
+	DestinationLocationID *string            `json:"destinationLocationId,omitempty"`
+	OriginCity            *string            `json:"originCity,omitempty"`
+	OriginState           *string            `json:"originState,omitempty"`
+	DestinationCity       *string            `json:"destinationCity,omitempty"`
+	DestinationState      *string            `json:"destinationState,omitempty"`
+	// The version read before editing; a save against an older one is refused.
+	Version *int                      `json:"version,omitempty"`
+	Entries []*RoutingGuideEntryInput `json:"entries"`
 }
 
 type RunDOTRandomDrawInput struct {
@@ -11430,6 +12050,18 @@ type ShipmentsInput struct {
 	CarrierSettlementIds []string `json:"carrierSettlementIds,omitempty"`
 }
 
+// How to shop a shipment's carriers. Shopping never saves a quote.
+type ShopShipmentCarriersInput struct {
+	// What best means for this run; LeastCost when left out.
+	Strategy *ratequoteports.ShopStrategy `json:"strategy,omitempty"`
+	// An explicit shortlist; the shipment's routing guide supplies the carriers when left out.
+	CarrierIds []string `json:"carrierIds,omitempty"`
+	// Price against the terms effective at this moment; the shipment's own rating date when left out.
+	AsOf *int `json:"asOf,omitempty"`
+	// At most this many options.
+	Limit *int `json:"limit,omitempty"`
+}
+
 type SidebarActivityPreference struct {
 	PageSize    int  `json:"pageSize"`
 	DefaultOpen bool `json:"defaultOpen"`
@@ -11579,6 +12211,14 @@ type SubmitMyExpenseInput struct {
 	AmountMinor  int     `json:"amountMinor"`
 	Description  string  `json:"description"`
 	IncurredDate *int    `json:"incurredDate,omitempty"`
+}
+
+// Sending a rate matrix draft to review: who should review it and a note for them.
+type SubmitRateMatrixInput struct {
+	Comment *string `json:"comment,omitempty"`
+	// The reviewer asked to publish it: active, someone other than the submitter, who may approve rate matrices.
+	ReviewerID   *string `json:"reviewerId,omitempty"`
+	ReviewerNote *string `json:"reviewerNote,omitempty"`
 }
 
 type TCASubscriptionConnection struct {
@@ -12753,6 +13393,13 @@ type VerifyCarrierEquipmentInput struct {
 	PlateNumber         *string               `json:"plateNumber,omitempty"`
 	PlateState          *string               `json:"plateState,omitempty"`
 	UnitNumber          *string               `json:"unitNumber,omitempty"`
+}
+
+// What a jurisdiction rule was confirmed against, and the verdict.
+type VerifyJurisdictionRuleInput struct {
+	VerificationState jurisdictionrule.VerificationState `json:"verificationState"`
+	SourceNote        *string                            `json:"sourceNote,omitempty"`
+	SourceURL         *string                            `json:"sourceUrl,omitempty"`
 }
 
 type VoidInvoiceInput struct {

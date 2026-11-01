@@ -249,7 +249,7 @@ describe("ShipmentBillingDetails on a tariff", () => {
 
     await openSection(/^Why this contract/);
 
-    await waitFor(() => expect(getAppliedQuote).toHaveBeenCalledWith("shp_1"));
+    await waitFor(() => expect(getAppliedQuote).toHaveBeenCalledWith("shp_1", expect.anything()));
   });
 
   it("asks for no contract reasoning for a rating no contract priced", async () => {

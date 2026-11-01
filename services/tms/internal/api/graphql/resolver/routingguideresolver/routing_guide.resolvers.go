@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -98,4 +99,59 @@ func (r *QueryResolver) MatchRoutingGuide(ctx context.Context, input gqlmodel.Ma
 
 func (r *RoutingGuideEntryResolver) Rate(ctx context.Context, obj *tender.RoutingGuideEntry) (string, error) {
 	return obj.Rate.String(), nil
+}
+
+func (r *MutationResolver) CreateRoutingGuide(ctx context.Context, input gqlmodel.RoutingGuideInput) (*tender.RoutingGuide, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRoutingGuide, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := routingGuideFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.RoutingGuideService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateRoutingGuide(ctx context.Context, id string, input gqlmodel.RoutingGuideInput) (*tender.RoutingGuide, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRoutingGuide, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	guideID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := routingGuideFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	entity.ID = guideID
+
+	return r.RoutingGuideService.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) DeleteRoutingGuide(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRoutingGuide, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	guideID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.RoutingGuideService.Delete(ctx, tenderports.DeleteRoutingGuideRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ID:         guideID,
+	}, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

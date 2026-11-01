@@ -30,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
@@ -63,7 +62,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoicerunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicesharehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
@@ -75,19 +73,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/rateagreementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateimporthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
@@ -170,7 +163,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	shipmentmovehandler.New,
 	shipmenthandler.New,
 	permithandler.New,
-	jurisdictionrulehandler.New,
 	shipmenttypehandler.New,
 	edihandler.New,
 	edisetuphandler.New,
@@ -184,7 +176,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	carrierassignmenthandler.New,
 	tenderpublichandler.New,
 	tenderhandler.New,
-	routingguidehandler.New,
 	carrierhandler.New,
 	rateconfirmationhandler.New,
 	rateconfirmationpublichandler.New,
@@ -198,13 +189,8 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	fiscalperiodhandler.New,
 	locationhandler.New,
 	recurringshipmenthandler.New,
-	rateagreementhandler.New,
 	ratezonehandler.New,
-	ratematrixhandler.New,
-	ratesimulationhandler.New,
 	rateimporthandler.New,
-	ratequotehandler.New,
-	detentionhandler.New,
 	invoiceadjustmenthandler.New,
 	invoiceadjustmentcontrolhandler.New,
 	journalreversalhandler.New,

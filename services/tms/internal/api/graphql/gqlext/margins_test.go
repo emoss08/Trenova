@@ -41,6 +41,8 @@ var marginEnumValues = map[string]string{
 	"ProtectedFieldGroup.Margins": "the group itself, which grants nothing on its own",
 	"ShipmentQuickFilter.LowMargin": "quickfilter.AuthorizeQuickFilters refuses the filter " +
 		"and the board does not count it for a reader without the margins group",
+	"RateShopStrategy.BestMargin": "ratequoteports.AuthorizeShopStrategy refuses it in " +
+		"shopShipmentCarriers for a reader without the margins group",
 }
 
 func TestEveryMarginFieldIsProtectedByTheMarginsGroup(t *testing.T) {

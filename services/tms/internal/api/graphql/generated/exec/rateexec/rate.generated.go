@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -27,23 +28,281 @@ var Shard = &gqlexec.Shard{
 		{Name: "RateAgreementEdge", Implementors: []string{"RateAgreementEdge"}},
 		{Name: "RateAgreementFuelBinding", Implementors: []string{"RateAgreementFuelBinding"}},
 		{Name: "RateAgreementLane", Implementors: []string{"RateAgreementLane"}},
+		{Name: "RateAgreementLanePage", Implementors: []string{"RateAgreementLanePage"}},
+		{Name: "RateAgreementLanePricingGroup", Implementors: []string{"RateAgreementLanePricingGroup"}},
+		{Name: "RateAgreementLaneSummary", Implementors: []string{"RateAgreementLaneSummary"}},
+		{Name: "RateAgreementRule", Implementors: []string{"RateAgreementRule"}},
 		{Name: "RateAgreementVersion", Implementors: []string{"RateAgreementVersion"}},
+		{Name: "RateIncreaseLine", Implementors: []string{"RateIncreaseLine"}},
+		{Name: "RateIncreasePlan", Implementors: []string{"RateIncreasePlan"}},
+		{Name: "RateMarginVerdict", Implementors: []string{"RateMarginVerdict"}},
 		{Name: "RateMatrix", Implementors: []string{"RateMatrix"}},
 		{Name: "RateMatrixCell", Implementors: []string{"RateMatrixCell"}},
 		{Name: "RateMatrixConnection", Implementors: []string{"RateMatrixConnection"}},
 		{Name: "RateMatrixDimension", Implementors: []string{"RateMatrixDimension"}},
 		{Name: "RateMatrixEdge", Implementors: []string{"RateMatrixEdge"}},
 		{Name: "RateMatrixReview", Implementors: []string{"RateMatrixReview"}},
+		{Name: "RateMatrixReviewer", Implementors: []string{"RateMatrixReviewer"}},
 		{Name: "RateMatrixUsage", Implementors: []string{"RateMatrixUsage"}},
 		{Name: "RateMatrixVersion", Implementors: []string{"RateMatrixVersion"}},
 		{Name: "RateQuote", Implementors: []string{"RateQuote"}},
 		{Name: "RateQuoteConnection", Implementors: []string{"RateQuoteConnection"}},
 		{Name: "RateQuoteEdge", Implementors: []string{"RateQuoteEdge"}},
+		{Name: "RateShopOption", Implementors: []string{"RateShopOption"}},
+		{Name: "RateShopResult", Implementors: []string{"RateShopResult"}},
 		{Name: "RateZone", Implementors: []string{"RateZone"}},
 		{Name: "RateZoneConnection", Implementors: []string{"RateZoneConnection"}},
 		{Name: "RateZoneEdge", Implementors: []string{"RateZoneEdge"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_createRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateRateAgreement(ctx, fc.Args["input"].(gqlmodel.RateAgreementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "updateRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_updateRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateRateAgreement(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.RateAgreementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "duplicateRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_duplicateRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DuplicateRateAgreement(ctx, fc.Args["id"].(string), fc.Args["code"].(*string), fc.Args["name"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "submitRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_submitRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitRateAgreement(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "approveRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_approveRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveRateAgreement(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "rejectRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_rejectRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectRateAgreement(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "suspendRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_suspendRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SuspendRateAgreement(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "resumeRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_resumeRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResumeRateAgreement(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "archiveRateAgreement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateAgreement",
+				Args:       field_Mutation_archiveRateAgreement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveRateAgreement(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement),
+			},
+			{
+				Name:       "applyRateIncrease",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateIncreasePlan",
+				Args:       field_Mutation_applyRateIncrease_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyRateIncrease(ctx, fc.Args["input"].(gqlmodel.RateIncreaseInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateIncreasePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreasePlan),
+			},
+			{
+				Name:       "createRateMatrix",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateMatrix",
+				Args:       field_Mutation_createRateMatrix_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateRateMatrix(ctx, fc.Args["input"].(gqlmodel.RateMatrixInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
+			},
+			{
+				Name:       "updateRateMatrix",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateMatrix",
+				Args:       field_Mutation_updateRateMatrix_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateRateMatrix(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.RateMatrixInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
+			},
+			{
+				Name:       "replaceRateMatrixCells",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_replaceRateMatrixCells_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReplaceRateMatrixCells(ctx, fc.Args["id"].(string), fc.Args["cells"].([]*gqlmodel.RateMatrixCellInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "submitRateMatrix",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateMatrix",
+				Args:       field_Mutation_submitRateMatrix_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitRateMatrix(ctx, fc.Args["id"].(string), fc.Args["input"].(*gqlmodel.SubmitRateMatrixInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
+			},
+			{
+				Name:       "approveRateMatrix",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateMatrix",
+				Args:       field_Mutation_approveRateMatrix_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveRateMatrix(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
+			},
+			{
+				Name:       "rejectRateMatrix",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateMatrix",
+				Args:       field_Mutation_rejectRateMatrix_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectRateMatrix(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
+			},
+			{
+				Name:       "requestRateMatrixChanges",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateMatrix",
+				Args:       field_Mutation_requestRateMatrixChanges_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RequestRateMatrixChanges(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
+			},
+			{
+				Name:       "archiveRateMatrix",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateMatrix",
+				Args:       field_Mutation_archiveRateMatrix_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveRateMatrix(ctx, fc.Args["id"].(string), fc.Args["confirmInUse"].(*bool))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
+			},
+			{
+				Name:       "restoreRateMatrixVersion",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RateMatrix",
+				Args:       field_Mutation_restoreRateMatrixVersion_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestoreRateMatrixVersion(ctx, fc.Args["id"].(string), fc.Args["versionNumber"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "rateAgreements",
@@ -182,12 +441,123 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNRateQuoteConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteConnection),
 			},
+			{
+				Name:       "rateAgreementLanePage",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RateAgreementLanePage",
+				Args:       field_Query_rateAgreementLanePage_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RateAgreementLanePage(ctx, fc.Args["rateAgreementId"].(string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreementLanePage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLanePage),
+			},
+			{
+				Name:       "rateAgreementLaneSummary",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RateAgreementLaneSummary",
+				Args:       field_Query_rateAgreementLaneSummary_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RateAgreementLaneSummary(ctx, fc.Args["rateAgreementId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreementLaneSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLaneSummary),
+			},
+			{
+				Name:       "rateAgreementVersions",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RateAgreementVersion",
+				Args:       field_Query_rateAgreementVersions_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RateAgreementVersions(ctx, fc.Args["rateAgreementId"].(string), fc.Args["first"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreementVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementVersionᚄ),
+			},
+			{
+				Name:       "rateAgreementLaneHistory",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RateAgreementRule",
+				Args:       field_Query_rateAgreementLaneHistory_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RateAgreementLaneHistory(ctx, fc.Args["rateAgreementId"].(string), fc.Args["laneKey"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreementRule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleᚄ),
+			},
+			{
+				Name:       "previewRateIncrease",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RateIncreasePlan",
+				Args:       field_Query_previewRateIncrease_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").PreviewRateIncrease(ctx, fc.Args["input"].(gqlmodel.RateIncreaseInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateIncreasePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreasePlan),
+			},
+			{
+				Name:       "rateMatrixReviewers",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RateMatrixReviewer",
+				Args:       field_Query_rateMatrixReviewers_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RateMatrixReviewers(ctx, fc.Args["rateMatrixId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateMatrixReviewer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixReviewerᚄ),
+			},
+			{
+				Name:       "appliedShipmentRateQuote",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RateQuote",
+				Args:       field_Query_appliedShipmentRateQuote_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AppliedShipmentRateQuote(ctx, fc.Args["shipmentId"].(string), fc.Args["partyType"].(*gqlmodel.RateAgreementPartyType))
+				},
+				Marshal: gqlexec.Marshal(marshalORateQuote2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuote),
+			},
+			{
+				Name:       "shopShipmentCarriers",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RateShopResult",
+				Args:       field_Query_shopShipmentCarriers_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ShopShipmentCarriers(ctx, fc.Args["shipmentId"].(string), fc.Args["input"].(*gqlmodel.ShopShipmentCarriersInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRateShopResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateShopResult),
+			},
 		}},
 		{Object: "RateAgreement", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.ID, nil
@@ -197,7 +567,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.BusinessUnitID, nil
@@ -207,7 +577,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.OrganizationID, nil
@@ -217,7 +587,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "partyType",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.PartyType, nil
@@ -226,7 +596,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.CustomerID, nil
@@ -235,7 +605,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "carrierId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.CarrierID, nil
@@ -245,7 +615,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.Code, nil
@@ -255,7 +625,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.Name, nil
@@ -265,7 +635,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.Description, nil
@@ -275,7 +645,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agreementType",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.AgreementType, nil
@@ -285,7 +655,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.Status, nil
@@ -295,7 +665,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "contractRef",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.ContractRef, nil
@@ -305,7 +675,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "priority",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.Priority, nil
@@ -315,7 +685,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "effectiveFrom",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.EffectiveFrom, nil
@@ -324,7 +694,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "effectiveTo",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.EffectiveTo, nil
@@ -334,7 +704,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoRenew",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.AutoRenew, nil
@@ -344,7 +714,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "renewalNoticeDays",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.RenewalNoticeDays, nil
@@ -354,7 +724,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currency",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.Currency, nil
@@ -391,7 +761,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "submittedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.SubmittedByID, nil
@@ -400,7 +770,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "submittedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.SubmittedAt, nil
@@ -409,7 +779,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.ApprovedByID, nil
@@ -418,7 +788,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.ApprovedAt, nil
@@ -428,7 +798,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reviewComment",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.ReviewComment, nil
@@ -438,7 +808,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currentVersionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.CurrentVersionNumber, nil
@@ -447,10 +817,19 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "billToCustomerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.BillToCustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "documentId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreement)
+					return obj.DocumentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
@@ -474,7 +853,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return gqlexec.Resolver[resolverRateAgreement](ec, "RateAgreement").LaneCount(ctx, obj)
@@ -486,7 +865,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return gqlexec.Resolver[resolverRateAgreement](ec, "RateAgreement").LaneCountExact(ctx, obj)
@@ -524,9 +903,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalORateAgreementVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementVersion),
 			},
 			{
+				Name:      "rules",
+				HasChild:  true,
+				ChildType: "RateAgreementRule",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreement)
+					return obj.Rules, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORateAgreementRule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleᚄ),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.Version, nil
@@ -536,7 +925,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.CreatedAt, nil
@@ -546,7 +935,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.UpdatedAt, nil
@@ -558,7 +947,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.ID, nil
@@ -566,9 +955,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNID2string),
 			},
 			{
+				Name:     "rateAgreementId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementAccessorial)
+					return obj.RateAgreementID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
 				Name:     "accessorialChargeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.AccessorialChargeID, nil
@@ -578,7 +977,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "method",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.Method, nil
@@ -588,7 +987,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateUnit",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.RateUnit, nil
@@ -598,7 +997,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "waived",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.Waived, nil
@@ -608,7 +1007,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoApply",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.AutoApply, nil
@@ -617,7 +1016,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "freeUnits",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.FreeUnits, nil
@@ -626,7 +1025,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "effectiveFrom",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.EffectiveFrom, nil
@@ -635,7 +1034,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "effectiveTo",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.EffectiveTo, nil
@@ -664,7 +1063,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "condition",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.Condition, nil
@@ -672,9 +1071,29 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "serviceTypeIds",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementAccessorial)
+					return obj.ServiceTypeIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
+				Name:     "shipmentTypeIds",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementAccessorial)
+					return obj.ShipmentTypeIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
 				Name:     "chargeCode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.ChargeCode, nil
@@ -684,7 +1103,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "chargeDescription",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementAccessorial)
 					return obj.ChargeDescription, nil
@@ -717,7 +1136,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementConnection)
 					return obj.TotalCount, nil
@@ -727,7 +1146,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementConnection)
 					return obj.TotalCountExact, nil
@@ -750,7 +1169,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementEdge)
 					return obj.Cursor, nil
@@ -762,7 +1181,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementFuelBinding)
 					return obj.ID, nil
@@ -770,9 +1189,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNID2string),
 			},
 			{
+				Name:     "rateAgreementId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementFuelBinding)
+					return obj.RateAgreementID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
 				Name:     "fuelSurchargeProgramId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementFuelBinding)
 					return obj.FuelSurchargeProgramID, nil
@@ -782,7 +1211,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "waived",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementFuelBinding)
 					return obj.Waived, nil
@@ -790,9 +1219,36 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "pegPriceOverride",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementFuelBinding)
+					return obj.PegPriceOverride, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "incrementRateOverride",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementFuelBinding)
+					return obj.IncrementRateOverride, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "capAmount",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementFuelBinding)
+					return obj.CapAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
 				Name:     "programName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementFuelBinding)
 					return obj.ProgramName, nil
@@ -804,7 +1260,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.ID, nil
@@ -814,7 +1270,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.Label, nil
@@ -824,7 +1280,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "originScopeType",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.OriginScopeType, nil
@@ -834,7 +1290,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "originScopeValue",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.OriginScopeValue, nil
@@ -844,7 +1300,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "originCity",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.OriginCity, nil
@@ -854,7 +1310,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "destinationScopeType",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.DestinationScopeType, nil
@@ -864,7 +1320,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "destinationScopeValue",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.DestinationScopeValue, nil
@@ -874,7 +1330,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "destinationCity",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.DestinationCity, nil
@@ -884,7 +1340,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "direction",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.Direction, nil
@@ -894,7 +1350,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "priority",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.Priority, nil
@@ -904,7 +1360,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "effectiveFrom",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.EffectiveFrom, nil
@@ -913,7 +1369,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "effectiveTo",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.EffectiveTo, nil
@@ -923,7 +1379,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hazmatOnly",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.HazmatOnly, nil
@@ -933,7 +1389,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "tempControlOnly",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.TempControlOnly, nil
@@ -943,7 +1399,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "formulaTemplateId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.FormulaTemplateID, nil
@@ -953,7 +1409,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currency",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementLane)
 					return obj.Currency, nil
@@ -971,11 +1427,634 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
 			},
 		}},
+		{Object: "RateAgreementLanePage", Fields: []*gqlexec.Field{
+			{
+				Name:      "results",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "RateAgreementRule",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePage)
+					return obj.Results, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreementRule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleᚄ),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePage)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "countExact",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePage)
+					return obj.CountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "retired",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePage)
+					return obj.Retired, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "retiredExact",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePage)
+					return obj.RetiredExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "limit",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePage)
+					return obj.Limit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "offset",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePage)
+					return obj.Offset, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "RateAgreementLanePricingGroup", Fields: []*gqlexec.Field{
+			{
+				Name:     "formulaTemplateId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePricingGroup)
+					return obj.FormulaTemplateID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "formulaTemplateName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePricingGroup)
+					return obj.FormulaTemplateName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "currency",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePricingGroup)
+					return obj.Currency, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lanes",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePricingGroup)
+					return obj.Lanes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "minRate",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePricingGroup)
+					return obj.MinRate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "maxRate",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLanePricingGroup)
+					return obj.MaxRate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+		}},
+		{Object: "RateAgreementLaneSummary", Fields: []*gqlexec.Field{
+			{
+				Name:      "groups",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "RateAgreementLanePricingGroup",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLaneSummary)
+					return obj.Groups, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRateAgreementLanePricingGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLanePricingGroupᚄ),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementLaneSummary)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "RateAgreementRule", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "rateAgreementId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.RateAgreementID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "originScopeType",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.OriginScopeType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "originScopeValue",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.OriginScopeValue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "originCity",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.OriginCity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "destinationScopeType",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.DestinationScopeType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "destinationScopeValue",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.DestinationScopeValue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "destinationCity",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.DestinationCity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "direction",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.Direction, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "laneKey",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.LaneKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "specificityScore",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.SpecificityScore, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "originRadiusMeters",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.OriginRadiusMeters, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "destinationRadiusMeters",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.DestinationRadiusMeters, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "originLatitude",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.OriginLatitude, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "originLongitude",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.OriginLongitude, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "destinationLatitude",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.DestinationLatitude, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "destinationLongitude",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.DestinationLongitude, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "serviceTypeIds",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.ServiceTypeIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
+				Name:     "shipmentTypeIds",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.ShipmentTypeIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
+				Name:     "tractorTypeIds",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.TractorTypeIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
+				Name:     "trailerTypeIds",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.TrailerTypeIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
+				Name:     "commodityIds",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.CommodityIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
+			{
+				Name:     "freightClasses",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.FreightClasses, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "serviceModels",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.ServiceModels, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "equipmentClasses",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.EquipmentClasses, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "minWeight",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.MinWeight, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "maxWeight",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.MaxWeight, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "minDistance",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.MinDistance, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "maxDistance",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.MaxDistance, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "minStops",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.MinStops, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "maxStops",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.MaxStops, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "daysOfWeek",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.DaysOfWeek, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "hazmatOnly",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.HazmatOnly, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "tempControlOnly",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.TempControlOnly, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "formulaTemplateId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.FormulaTemplateID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "inputs",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.Inputs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "currency",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.Currency, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "priority",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.Priority, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "effectiveFrom",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.EffectiveFrom, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "effectiveTo",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.EffectiveTo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "supersedesRuleId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.SupersedesRuleID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "version",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.Version, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementRule)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+		}},
 		{Object: "RateAgreementVersion", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementVersion)
 					return obj.ID, nil
@@ -983,9 +2062,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNID2string),
 			},
 			{
+				Name:     "rateAgreementId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.RateAgreementID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
 				Name:     "versionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementVersion)
 					return obj.VersionNumber, nil
@@ -995,7 +2084,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "effectiveFrom",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementVersion)
 					return obj.EffectiveFrom, nil
@@ -1004,7 +2093,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "effectiveTo",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementVersion)
 					return obj.EffectiveTo, nil
@@ -1012,12 +2101,362 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
 			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "priority",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.Priority, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "agreementEffectiveFrom",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.AgreementEffectiveFrom, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "agreementEffectiveTo",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.AgreementEffectiveTo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "autoRenew",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.AutoRenew, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "renewalNoticeDays",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.RenewalNoticeDays, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "billToCustomerId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.BillToCustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "accessorialTerms",
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.AccessorialTerms, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
+			},
+			{
+				Name:     "fuelTerms",
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.FuelTerms, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
+			},
+			{
+				Name:     "accessorialNames",
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.AccessorialNames, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
+			},
+			{
 				Name:     "changeMessage",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreementVersion)
 					return obj.ChangeMessage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "changeSummary",
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.ChangeSummary, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
+			},
+			{
+				Name:     "createdById",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.CreatedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateAgreementVersion)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+		}},
+		{Object: "RateIncreaseLine", Fields: []*gqlexec.Field{
+			{
+				Name:     "rateAgreementId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.RateAgreementID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "agreementCode",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.AgreementCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "agreementName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.AgreementName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "ruleId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.RuleID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "laneKey",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.LaneKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "before",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.Before, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "after",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.After, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "changed",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreaseLine)
+					return obj.Changed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
+		{Object: "RateIncreasePlan", Fields: []*gqlexec.Field{
+			{
+				Name:     "effectiveFrom",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreasePlan)
+					return obj.EffectiveFrom, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "agreementCount",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreasePlan)
+					return obj.AgreementCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "lines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "RateIncreaseLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreasePlan)
+					return obj.Lines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRateIncreaseLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseLineᚄ),
+			},
+			{
+				Name:     "skippedNoMoney",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateIncreasePlan)
+					return obj.SkippedNoMoney, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "RateMarginVerdict", Fields: []*gqlexec.Field{
+			{
+				Name:     "amount",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMarginVerdict)
+					return obj.Amount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "percent",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMarginVerdict)
+					return obj.Percent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "payPercent",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMarginVerdict)
+					return obj.PayPercent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "floorApplies",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMarginVerdict)
+					return obj.FloorApplies, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "belowFloor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMarginVerdict)
+					return obj.BelowFloor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "ceilingApplies",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMarginVerdict)
+					return obj.CeilingApplies, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "abovePayCeiling",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMarginVerdict)
+					return obj.AbovePayCeiling, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "explanation",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMarginVerdict)
+					return obj.Explanation, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -1026,7 +2465,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.ID, nil
@@ -1036,7 +2475,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.BusinessUnitID, nil
@@ -1046,7 +2485,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.OrganizationID, nil
@@ -1056,7 +2495,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.Code, nil
@@ -1066,7 +2505,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.Name, nil
@@ -1076,7 +2515,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.Description, nil
@@ -1086,7 +2525,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.Status, nil
@@ -1096,7 +2535,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "valueType",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.ValueType, nil
@@ -1116,7 +2555,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cellCount",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.CellCount, nil
@@ -1141,7 +2580,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "publishedVersionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.PublishedVersionNumber, nil
@@ -1150,7 +2589,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "publishedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.PublishedAt, nil
@@ -1160,7 +2599,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hasDraftChanges",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.HasDraftChanges, nil
@@ -1169,7 +2608,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "submittedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.SubmittedByID, nil
@@ -1178,7 +2617,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "submittedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.SubmittedAt, nil
@@ -1187,7 +2626,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.ApprovedByID, nil
@@ -1196,7 +2635,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.ApprovedAt, nil
@@ -1206,7 +2645,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reviewComment",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.ReviewComment, nil
@@ -1216,7 +2655,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.Version, nil
@@ -1226,7 +2665,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.CreatedAt, nil
@@ -1236,7 +2675,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
 					return obj.UpdatedAt, nil
@@ -1248,7 +2687,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.ID, nil
@@ -1258,7 +2697,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "d0Key",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.D0Key, nil
@@ -1268,7 +2707,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "d1Key",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.D1Key, nil
@@ -1278,7 +2717,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "d2Key",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.D2Key, nil
@@ -1288,7 +2727,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "d3Key",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.D3Key, nil
@@ -1298,7 +2737,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "d0KeyTo",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.D0KeyTo, nil
@@ -1308,7 +2747,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "d1KeyTo",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.D1KeyTo, nil
@@ -1318,7 +2757,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "d2KeyTo",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.D2KeyTo, nil
@@ -1328,7 +2767,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "d3KeyTo",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.D3KeyTo, nil
@@ -1410,7 +2849,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "deficitEligible",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixCell)
 					return obj.DeficitEligible, nil
@@ -1462,7 +2901,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixConnection)
 					return obj.TotalCount, nil
@@ -1472,7 +2911,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixConnection)
 					return obj.TotalCountExact, nil
@@ -1484,7 +2923,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixDimension)
 					return obj.ID, nil
@@ -1494,7 +2933,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "position",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixDimension)
 					return obj.Position, nil
@@ -1504,7 +2943,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixDimension)
 					return obj.Kind, nil
@@ -1514,7 +2953,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "matchMode",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixDimension)
 					return obj.MatchMode, nil
@@ -1524,7 +2963,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixDimension)
 					return obj.Label, nil
@@ -1534,7 +2973,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "keyNormalization",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixDimension)
 					return obj.KeyNormalization, nil
@@ -1544,7 +2983,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rangeOverflow",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixDimension)
 					return obj.RangeOverflow, nil
@@ -1567,7 +3006,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrixEdge)
 					return obj.Cursor, nil
@@ -1579,7 +3018,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.ID, nil
@@ -1589,7 +3028,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateMatrixId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.RateMatrixID, nil
@@ -1599,7 +3038,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "round",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.Round, nil
@@ -1609,7 +3048,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "decision",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.Decision, nil
@@ -1618,7 +3057,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.ActorID, nil
@@ -1638,7 +3077,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "comment",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.Comment, nil
@@ -1648,7 +3087,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "baseVersionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.BaseVersionNumber, nil
@@ -1657,7 +3096,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "requestedReviewerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.RequestedReviewerID, nil
@@ -1677,7 +3116,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reviewerNote",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.ReviewerNote, nil
@@ -1687,7 +3126,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixreview.RateMatrixReview)
 					return obj.CreatedAt, nil
@@ -1695,11 +3134,52 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "RateMatrixReviewer", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMatrixReviewer)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMatrixReviewer)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "username",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMatrixReviewer)
+					return obj.Username, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "profilePicUrl",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateMatrixReviewer)
+					return obj.ProfilePicURL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
 		{Object: "RateMatrixUsage", Fields: []*gqlexec.Field{
 			{
 				Name:     "templateId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplateports.MatrixUsage)
 					return obj.TemplateID, nil
@@ -1709,7 +3189,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "templateName",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplateports.MatrixUsage)
 					return obj.TemplateName, nil
@@ -1719,7 +3199,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "templateStatus",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplateports.MatrixUsage)
 					return obj.TemplateStatus, nil
@@ -1729,7 +3209,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "templateVersion",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplateports.MatrixUsage)
 					return obj.TemplateVersion, nil
@@ -1739,7 +3219,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "versionStatus",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplateports.MatrixUsage)
 					return obj.VersionStatus, nil
@@ -1749,7 +3229,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "matrixVersionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplateports.MatrixUsage)
 					return obj.MatrixVersionNumber, nil
@@ -1761,7 +3241,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.ID, nil
@@ -1771,7 +3251,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateMatrixId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.RateMatrixID, nil
@@ -1781,7 +3261,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "versionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.VersionNumber, nil
@@ -1791,7 +3271,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.Code, nil
@@ -1801,7 +3281,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.Name, nil
@@ -1811,7 +3291,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.Description, nil
@@ -1821,7 +3301,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "valueType",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.ValueType, nil
@@ -1844,7 +3324,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cellCount",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.CellCount, nil
@@ -1869,7 +3349,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "changeMessage",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.ChangeMessage, nil
@@ -1878,7 +3358,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "submittedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.SubmittedByID, nil
@@ -1887,7 +3367,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "publishedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.PublishedByID, nil
@@ -1907,7 +3387,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*ratematrixversion.RateMatrixVersion)
 					return obj.CreatedAt, nil
@@ -1919,7 +3399,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.ID, nil
@@ -1929,7 +3409,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.BusinessUnitID, nil
@@ -1939,7 +3419,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.OrganizationID, nil
@@ -1948,7 +3428,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "shipmentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.ShipmentID, nil
@@ -1956,9 +3436,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
+				Name:     "shipmentMoveId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.ShipmentMoveID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
 				Name:     "partyType",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.PartyType, nil
@@ -1968,7 +3457,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "partyId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.PartyID, nil
@@ -1978,7 +3467,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "purpose",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.Purpose, nil
@@ -1988,7 +3477,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.Outcome, nil
@@ -1996,8 +3485,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNRateQuoteOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteOutcome),
 			},
 			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "rateAgreementId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.RateAgreementID, nil
@@ -2006,7 +3505,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "rateAgreementRuleId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.RateAgreementRuleID, nil
@@ -2014,8 +3513,17 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
+				Name:     "agreementVersionNumber",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.AgreementVersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
 				Name:     "formulaTemplateId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.FormulaTemplateID, nil
@@ -2023,9 +3531,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
+				Name:     "formulaTemplateVersionNumber",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.FormulaTemplateVersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
 				Name:     "specificityScore",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.SpecificityScore, nil
@@ -2035,7 +3552,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currency",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.Currency, nil
@@ -2045,7 +3562,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billingCurrency",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.BillingCurrency, nil
@@ -2063,6 +3580,26 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
+				Name:     "fuelAmount",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.FuelAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "accessorialAmount",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.AccessorialAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
 				Name:     "totalAmount",
 				NonNull:  true,
 				ChildErr: errNoChild9,
@@ -2073,6 +3610,33 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
+				Name:     "costAmount",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.CostAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "marginAmount",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.MarginAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "marginPercent",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.MarginPercent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
 				Name:     "billingAmount",
 				NonNull:  true,
 				ChildErr: errNoChild9,
@@ -2081,6 +3645,24 @@ var Shard = &gqlexec.Shard{
 					return obj.BillingAmount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "fxRate",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.FxRate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "exchangeRateId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.ExchangeRateID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
 				Name:     "foregoneAmount",
@@ -2094,7 +3676,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "overrideReason",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.OverrideReason, nil
@@ -2104,7 +3686,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "asOf",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.AsOf, nil
@@ -2114,7 +3696,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ratedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.RatedAt, nil
@@ -2123,7 +3705,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "ratedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.RatedByID, nil
@@ -2133,7 +3715,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "engineVersion",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.EngineVersion, nil
@@ -2141,9 +3723,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "contextHash",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.ContextHash, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "trace",
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateQuote)
+					return obj.Trace, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
+			},
+			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.CreatedAt, nil
@@ -2176,7 +3777,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuoteConnection)
 					return obj.TotalCount, nil
@@ -2186,7 +3787,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuoteConnection)
 					return obj.TotalCountExact, nil
@@ -2209,7 +3810,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuoteEdge)
 					return obj.Cursor, nil
@@ -2217,11 +3818,192 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "RateShopOption", Fields: []*gqlexec.Field{
+			{
+				Name:     "carrierId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.CarrierID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "carrierName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.CarrierName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "rank",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.Rank, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "guideRank",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.GuideRank, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "offerTtlSeconds",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.OfferTTLSeconds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "outcome",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.Outcome, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRateQuoteOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteOutcome),
+			},
+			{
+				Name:     "cost",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.Cost, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "currency",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.Currency, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "margin",
+				HasChild:  true,
+				ChildType: "RateMarginVerdict",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.Margin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORateMarginVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMarginVerdict),
+			},
+			{
+				Name:      "quote",
+				HasChild:  true,
+				ChildType: "RateQuote",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.Quote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORateQuote2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuote),
+			},
+			{
+				Name:     "agreementId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.AgreementID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "ruleId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.RuleID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "note",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopOption)
+					return obj.Note, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "RateShopResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "strategy",
+				NonNull:  true,
+				ChildErr: errNoChild15,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopResult)
+					return obj.Strategy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRateShopStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋratequoteportsᚐShopStrategy),
+			},
+			{
+				Name:      "options",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "RateShopOption",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopResult)
+					return obj.Options, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRateShopOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateShopOptionᚄ),
+			},
+			{
+				Name:     "routingGuideId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopResult)
+					return obj.RoutingGuideID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "sellTotal",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopResult)
+					return obj.SellTotal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "warnings",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.RateShopResult)
+					return obj.Warnings, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
 		{Object: "RateZone", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.ID, nil
@@ -2231,7 +4013,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.BusinessUnitID, nil
@@ -2241,7 +4023,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.OrganizationID, nil
@@ -2251,7 +4033,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.Code, nil
@@ -2261,7 +4043,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.Name, nil
@@ -2271,7 +4053,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.Description, nil
@@ -2281,7 +4063,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.Status, nil
@@ -2291,7 +4073,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.Version, nil
@@ -2301,7 +4083,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.CreatedAt, nil
@@ -2311,7 +4093,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZone)
 					return obj.UpdatedAt, nil
@@ -2344,7 +4126,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZoneConnection)
 					return obj.TotalCount, nil
@@ -2354,7 +4136,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZoneConnection)
 					return obj.TotalCountExact, nil
@@ -2377,7 +4159,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateZoneEdge)
 					return obj.Cursor, nil
@@ -2386,12 +4168,48 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "RateAgreementAccessorialInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateAgreementAccessorialInput)},
+		{Name: "RateAgreementFuelBindingInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateAgreementFuelBindingInput)},
+		{Name: "RateAgreementInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateAgreementInput)},
+		{Name: "RateAgreementRuleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateAgreementRuleInput)},
+		{Name: "RateIncreaseAdjustmentInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateIncreaseAdjustmentInput)},
+		{Name: "RateIncreaseInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateIncreaseInput)},
+		{Name: "RateMatrixCellInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateMatrixCellInput)},
+		{Name: "RateMatrixDimensionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateMatrixDimensionInput)},
+		{Name: "RateMatrixInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRateMatrixInput)},
+		{Name: "ShopShipmentCarriersInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputShopShipmentCarriersInput)},
+		{Name: "SubmitRateMatrixInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSubmitRateMatrixInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 		{Root: "RateAgreement", Check: func(r any) bool { _, ok := r.(resolverRateAgreement); return ok }},
 		{Root: "RateMatrix", Check: func(r any) bool { _, ok := r.(resolverRateMatrix); return ok }},
 		{Root: "RateMatrixVersion", Check: func(r any) bool { _, ok := r.(resolverRateMatrixVersion); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateRateAgreement(ctx context.Context, input gqlmodel.RateAgreementInput) (*gqlmodel.RateAgreement, error)
+	UpdateRateAgreement(ctx context.Context, id string, input gqlmodel.RateAgreementInput) (*gqlmodel.RateAgreement, error)
+	DuplicateRateAgreement(ctx context.Context, id string, code *string, name *string) (*gqlmodel.RateAgreement, error)
+	SubmitRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	ApproveRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	RejectRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	SuspendRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	ResumeRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	ArchiveRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	ApplyRateIncrease(ctx context.Context, input gqlmodel.RateIncreaseInput) (*gqlmodel.RateIncreasePlan, error)
+	CreateRateMatrix(ctx context.Context, input gqlmodel.RateMatrixInput) (*gqlmodel.RateMatrix, error)
+	UpdateRateMatrix(ctx context.Context, id string, input gqlmodel.RateMatrixInput) (*gqlmodel.RateMatrix, error)
+	ReplaceRateMatrixCells(ctx context.Context, id string, cells []*gqlmodel.RateMatrixCellInput) (bool, error)
+	SubmitRateMatrix(ctx context.Context, id string, input *gqlmodel.SubmitRateMatrixInput) (*gqlmodel.RateMatrix, error)
+	ApproveRateMatrix(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error)
+	RejectRateMatrix(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error)
+	RequestRateMatrixChanges(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error)
+	ArchiveRateMatrix(ctx context.Context, id string, confirmInUse *bool) (*gqlmodel.RateMatrix, error)
+	RestoreRateMatrixVersion(ctx context.Context, id string, versionNumber int) (*gqlmodel.RateMatrix, error)
 }
 
 type resolverQuery interface {
@@ -2405,6 +4223,14 @@ type resolverQuery interface {
 	RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrixreview.RateMatrixReview, error)
 	RateMatrixUsages(ctx context.Context, rateMatrixID string, versionNumber *int) ([]*formulatemplateports.MatrixUsage, error)
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
+	RateAgreementLanePage(ctx context.Context, rateAgreementID string, limit *int, offset *int) (*gqlmodel.RateAgreementLanePage, error)
+	RateAgreementLaneSummary(ctx context.Context, rateAgreementID string) (*gqlmodel.RateAgreementLaneSummary, error)
+	RateAgreementVersions(ctx context.Context, rateAgreementID string, first *int) ([]*gqlmodel.RateAgreementVersion, error)
+	RateAgreementLaneHistory(ctx context.Context, rateAgreementID string, laneKey string) ([]*gqlmodel.RateAgreementRule, error)
+	PreviewRateIncrease(ctx context.Context, input gqlmodel.RateIncreaseInput) (*gqlmodel.RateIncreasePlan, error)
+	RateMatrixReviewers(ctx context.Context, rateMatrixID string) ([]*gqlmodel.RateMatrixReviewer, error)
+	AppliedShipmentRateQuote(ctx context.Context, shipmentID string, partyType *gqlmodel.RateAgreementPartyType) (*gqlmodel.RateQuote, error)
+	ShopShipmentCarriers(ctx context.Context, shipmentID string, input *gqlmodel.ShopShipmentCarriersInput) (*gqlmodel.RateShopResult, error)
 }
 
 type resolverRateAgreement interface {
@@ -2423,21 +4249,406 @@ type resolverRateMatrixVersion interface {
 }
 
 var (
-	errNoChild0  = errors.New("field of type ID does not have child fields")
-	errNoChild1  = errors.New("field of type RateAgreementPartyType does not have child fields")
-	errNoChild2  = errors.New("field of type String does not have child fields")
-	errNoChild3  = errors.New("field of type RateAgreementType does not have child fields")
-	errNoChild4  = errors.New("field of type RateAgreementStatus does not have child fields")
-	errNoChild5  = errors.New("field of type Int does not have child fields")
-	errNoChild6  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild7  = errors.New("field of type Boolean does not have child fields")
+	errNoChild0  = errors.New("field of type Boolean does not have child fields")
+	errNoChild1  = errors.New("field of type ID does not have child fields")
+	errNoChild2  = errors.New("field of type RateAgreementPartyType does not have child fields")
+	errNoChild3  = errors.New("field of type String does not have child fields")
+	errNoChild4  = errors.New("field of type RateAgreementType does not have child fields")
+	errNoChild5  = errors.New("field of type RateAgreementStatus does not have child fields")
+	errNoChild6  = errors.New("field of type Int does not have child fields")
+	errNoChild7  = errors.New("field of type Timestamp does not have child fields")
 	errNoChild8  = errors.New("field of type JSON does not have child fields")
 	errNoChild9  = errors.New("field of type Decimal does not have child fields")
-	errNoChild10 = errors.New("field of type FormulaTemplateStatus does not have child fields")
-	errNoChild11 = errors.New("field of type FormulaReviewDecision does not have child fields")
-	errNoChild12 = errors.New("field of type RateQuotePurpose does not have child fields")
-	errNoChild13 = errors.New("field of type RateQuoteOutcome does not have child fields")
+	errNoChild10 = errors.New("field of type Float does not have child fields")
+	errNoChild11 = errors.New("field of type FormulaTemplateStatus does not have child fields")
+	errNoChild12 = errors.New("field of type FormulaReviewDecision does not have child fields")
+	errNoChild13 = errors.New("field of type RateQuotePurpose does not have child fields")
+	errNoChild14 = errors.New("field of type RateQuoteOutcome does not have child fields")
+	errNoChild15 = errors.New("field of type RateShopStrategy does not have child fields")
 )
+
+func field_Mutation_createRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RateAgreementInput, error) {
+			return unmarshalNRateAgreementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RateAgreementInput, error) {
+			return unmarshalNRateAgreementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_duplicateRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "code",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["code"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "name",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg2
+	return args, nil
+}
+
+func field_Mutation_submitRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_approveRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_rejectRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_suspendRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_resumeRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_archiveRateAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_applyRateIncrease_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RateIncreaseInput, error) {
+			return unmarshalNRateIncreaseInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_createRateMatrix_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RateMatrixInput, error) {
+			return unmarshalNRateMatrixInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateRateMatrix_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RateMatrixInput, error) {
+			return unmarshalNRateMatrixInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_replaceRateMatrixCells_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "cells",
+		func(ctx context.Context, v any) ([]*gqlmodel.RateMatrixCellInput, error) {
+			return unmarshalNRateMatrixCellInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixCellInputᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["cells"] = arg1
+	return args, nil
+}
+
+func field_Mutation_submitRateMatrix_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (*gqlmodel.SubmitRateMatrixInput, error) {
+			return unmarshalOSubmitRateMatrixInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSubmitRateMatrixInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_approveRateMatrix_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_rejectRateMatrix_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_requestRateMatrixChanges_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_archiveRateMatrix_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "confirmInUse",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["confirmInUse"] = arg1
+	return args, nil
+}
+
+func field_Mutation_restoreRateMatrixVersion_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "versionNumber",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["versionNumber"] = arg1
+	return args, nil
+}
 
 func field_Query_rateAgreements_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -2593,6 +4804,158 @@ func field_Query_rateQuotes_args(ctx context.Context, ec *gqlexec.Exec, rawArgs 
 	return args, nil
 }
 
+func field_Query_rateAgreementLanePage_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "rateAgreementId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["rateAgreementId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "offset",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg2
+	return args, nil
+}
+
+func field_Query_rateAgreementLaneSummary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "rateAgreementId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["rateAgreementId"] = arg0
+	return args, nil
+}
+
+func field_Query_rateAgreementVersions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "rateAgreementId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["rateAgreementId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	return args, nil
+}
+
+func field_Query_rateAgreementLaneHistory_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "rateAgreementId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["rateAgreementId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "laneKey",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["laneKey"] = arg1
+	return args, nil
+}
+
+func field_Query_previewRateIncrease_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RateIncreaseInput, error) {
+			return unmarshalNRateIncreaseInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_rateMatrixReviewers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "rateMatrixId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["rateMatrixId"] = arg0
+	return args, nil
+}
+
+func field_Query_appliedShipmentRateQuote_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "partyType",
+		func(ctx context.Context, v any) (*gqlmodel.RateAgreementPartyType, error) {
+			return unmarshalORateAgreementPartyType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["partyType"] = arg1
+	return args, nil
+}
+
+func field_Query_shopShipmentCarriers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (*gqlmodel.ShopShipmentCarriersInput, error) {
+			return unmarshalOShopShipmentCarriersInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShopShipmentCarriersInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func field_RateAgreement_lanes_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first",
@@ -2648,12 +5011,1145 @@ func field_RateMatrixVersion_cells_args(ctx context.Context, ec *gqlexec.Exec, r
 	return args, nil
 }
 
+func unmarshalInputRateAgreementAccessorialInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateAgreementAccessorialInput, error) {
+	var it gqlmodel.RateAgreementAccessorialInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessorialChargeId", "method", "rateUnit", "amount", "waived", "autoApply", "condition", "freeUnits", "maxAmount", "serviceTypeIds", "shipmentTypeIds", "effectiveFrom", "effectiveTo"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessorialChargeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessorialChargeId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessorialChargeID = data
+		case "method":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("method"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Method = data
+		case "rateUnit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateUnit"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RateUnit = data
+		case "amount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Amount = data
+		case "waived":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("waived"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Waived = data
+		case "autoApply":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoApply"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoApply = data
+		case "condition":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("condition"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Condition = data
+		case "freeUnits":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freeUnits"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FreeUnits = data
+		case "maxAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxAmount"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxAmount = data
+		case "serviceTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceTypeIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceTypeIds = data
+		case "shipmentTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shipmentTypeIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShipmentTypeIds = data
+		case "effectiveFrom":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveFrom"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveFrom = data
+		case "effectiveTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveTo"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveTo = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRateAgreementFuelBindingInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateAgreementFuelBindingInput, error) {
+	var it gqlmodel.RateAgreementFuelBindingInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fuelSurchargeProgramId", "waived", "pegPriceOverride", "incrementRateOverride", "capAmount"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fuelSurchargeProgramId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fuelSurchargeProgramId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FuelSurchargeProgramID = data
+		case "waived":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("waived"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Waived = data
+		case "pegPriceOverride":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pegPriceOverride"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PegPriceOverride = data
+		case "incrementRateOverride":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("incrementRateOverride"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncrementRateOverride = data
+		case "capAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capAmount"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CapAmount = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRateAgreementInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateAgreementInput, error) {
+	var it gqlmodel.RateAgreementInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"partyType", "customerId", "carrierId", "code", "name", "description", "agreementType", "contractRef", "documentId", "priority", "effectiveFrom", "effectiveTo", "autoRenew", "renewalNoticeDays", "currency", "inputs", "billToCustomerId", "marginFloorPercent", "maxPayPercentOfSell", "version", "rules", "accessorials", "fuelBinding"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "partyType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partyType"))
+			data, err := unmarshalNRateAgreementPartyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PartyType = data
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
+		case "carrierId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("carrierId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CarrierID = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "agreementType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agreementType"))
+			data, err := unmarshalNRateAgreementType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AgreementType = data
+		case "contractRef":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contractRef"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContractRef = data
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentID = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "effectiveFrom":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveFrom"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveFrom = data
+		case "effectiveTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveTo"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveTo = data
+		case "autoRenew":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoRenew"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoRenew = data
+		case "renewalNoticeDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("renewalNoticeDays"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RenewalNoticeDays = data
+		case "currency":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currency"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Currency = data
+		case "inputs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inputs"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Inputs = data
+		case "billToCustomerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billToCustomerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BillToCustomerID = data
+		case "marginFloorPercent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marginFloorPercent"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarginFloorPercent = data
+		case "maxPayPercentOfSell":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxPayPercentOfSell"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxPayPercentOfSell = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "rules":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rules"))
+			data, err := unmarshalNRateAgreementRuleInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rules = data
+		case "accessorials":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessorials"))
+			data, err := unmarshalNRateAgreementAccessorialInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementAccessorialInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Accessorials = data
+		case "fuelBinding":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fuelBinding"))
+			data, err := unmarshalORateAgreementFuelBindingInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementFuelBindingInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FuelBinding = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRateAgreementRuleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateAgreementRuleInput, error) {
+	var it gqlmodel.RateAgreementRuleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "label", "status", "originScopeType", "originScopeValue", "originCity", "destinationScopeType", "destinationScopeValue", "destinationCity", "direction", "originRadiusMeters", "destinationRadiusMeters", "originLatitude", "originLongitude", "destinationLatitude", "destinationLongitude", "serviceTypeIds", "shipmentTypeIds", "tractorTypeIds", "trailerTypeIds", "commodityIds", "freightClasses", "serviceModels", "equipmentClasses", "minWeight", "maxWeight", "minDistance", "maxDistance", "minStops", "maxStops", "daysOfWeek", "hazmatOnly", "tempControlOnly", "formulaTemplateId", "inputs", "currency", "priority", "effectiveFrom", "effectiveTo"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "originScopeType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originScopeType"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginScopeType = data
+		case "originScopeValue":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originScopeValue"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginScopeValue = data
+		case "originCity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originCity"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginCity = data
+		case "destinationScopeType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationScopeType"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationScopeType = data
+		case "destinationScopeValue":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationScopeValue"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationScopeValue = data
+		case "destinationCity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationCity"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationCity = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "originRadiusMeters":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originRadiusMeters"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginRadiusMeters = data
+		case "destinationRadiusMeters":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationRadiusMeters"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationRadiusMeters = data
+		case "originLatitude":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originLatitude"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginLatitude = data
+		case "originLongitude":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originLongitude"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginLongitude = data
+		case "destinationLatitude":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationLatitude"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationLatitude = data
+		case "destinationLongitude":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationLongitude"))
+			data, err := unmarshalOFloat2ᚖfloat64(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationLongitude = data
+		case "serviceTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceTypeIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceTypeIds = data
+		case "shipmentTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shipmentTypeIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShipmentTypeIds = data
+		case "tractorTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tractorTypeIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TractorTypeIds = data
+		case "trailerTypeIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trailerTypeIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrailerTypeIds = data
+		case "commodityIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commodityIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CommodityIds = data
+		case "freightClasses":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("freightClasses"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FreightClasses = data
+		case "serviceModels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceModels"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ServiceModels = data
+		case "equipmentClasses":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("equipmentClasses"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EquipmentClasses = data
+		case "minWeight":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minWeight"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinWeight = data
+		case "maxWeight":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxWeight"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxWeight = data
+		case "minDistance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minDistance"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinDistance = data
+		case "maxDistance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxDistance"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxDistance = data
+		case "minStops":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minStops"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinStops = data
+		case "maxStops":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxStops"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxStops = data
+		case "daysOfWeek":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("daysOfWeek"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DaysOfWeek = data
+		case "hazmatOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hazmatOnly"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HazmatOnly = data
+		case "tempControlOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tempControlOnly"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TempControlOnly = data
+		case "formulaTemplateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("formulaTemplateId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FormulaTemplateID = data
+		case "inputs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inputs"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Inputs = data
+		case "currency":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currency"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Currency = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "effectiveFrom":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveFrom"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveFrom = data
+		case "effectiveTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveTo"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveTo = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRateIncreaseAdjustmentInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateIncreaseAdjustmentInput, error) {
+	var it gqlmodel.RateIncreaseAdjustmentInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"percentChange"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "percentChange":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("percentChange"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PercentChange = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRateIncreaseInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateIncreaseInput, error) {
+	var it gqlmodel.RateIncreaseInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"agreementIds", "customerId", "carrierId", "partyType", "adjustment", "effectiveFrom"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "agreementIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agreementIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AgreementIds = data
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
+		case "carrierId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("carrierId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CarrierID = data
+		case "partyType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partyType"))
+			data, err := unmarshalORateAgreementPartyType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.PartyType = data
+		case "adjustment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("adjustment"))
+			data, err := unmarshalNRateIncreaseAdjustmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseAdjustmentInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Adjustment = data
+		case "effectiveFrom":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveFrom"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveFrom = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRateMatrixCellInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateMatrixCellInput, error) {
+	var it gqlmodel.RateMatrixCellInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"d0Key", "d1Key", "d2Key", "d3Key", "d0KeyTo", "d1KeyTo", "d2KeyTo", "d3KeyTo", "d0Min", "d0Max", "d1Min", "d1Max", "d2Min", "d2Max", "d3Min", "d3Max", "value", "minCharge", "deficitEligible"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "d0Key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d0Key"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D0Key = data
+		case "d1Key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d1Key"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D1Key = data
+		case "d2Key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d2Key"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D2Key = data
+		case "d3Key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d3Key"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D3Key = data
+		case "d0KeyTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d0KeyTo"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D0KeyTo = data
+		case "d1KeyTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d1KeyTo"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D1KeyTo = data
+		case "d2KeyTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d2KeyTo"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D2KeyTo = data
+		case "d3KeyTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d3KeyTo"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D3KeyTo = data
+		case "d0Min":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d0Min"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D0Min = data
+		case "d0Max":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d0Max"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D0Max = data
+		case "d1Min":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d1Min"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D1Min = data
+		case "d1Max":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d1Max"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D1Max = data
+		case "d2Min":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d2Min"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D2Min = data
+		case "d2Max":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d2Max"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D2Max = data
+		case "d3Min":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d3Min"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D3Min = data
+		case "d3Max":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("d3Max"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.D3Max = data
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		case "minCharge":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minCharge"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinCharge = data
+		case "deficitEligible":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deficitEligible"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DeficitEligible = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRateMatrixDimensionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateMatrixDimensionInput, error) {
+	var it gqlmodel.RateMatrixDimensionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"position", "kind", "matchMode", "label", "keyNormalization", "rangeOverflow"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "position":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Position = data
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "matchMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchMode"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MatchMode = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "keyNormalization":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyNormalization"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.KeyNormalization = data
+		case "rangeOverflow":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rangeOverflow"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RangeOverflow = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRateMatrixInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RateMatrixInput, error) {
+	var it gqlmodel.RateMatrixInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"code", "name", "description", "valueType", "version", "dimensions"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "valueType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("valueType"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ValueType = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "dimensions":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dimensions"))
+			data, err := unmarshalNRateMatrixDimensionInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixDimensionInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Dimensions = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputShopShipmentCarriersInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ShopShipmentCarriersInput, error) {
+	var it gqlmodel.ShopShipmentCarriersInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"strategy", "carrierIds", "asOf", "limit"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "strategy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("strategy"))
+			data, err := unmarshalORateShopStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋratequoteportsᚐShopStrategy(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Strategy = data
+		case "carrierIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("carrierIds"))
+			data, err := unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CarrierIds = data
+		case "asOf":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("asOf"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AsOf = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputSubmitRateMatrixInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SubmitRateMatrixInput, error) {
+	var it gqlmodel.SubmitRateMatrixInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"comment", "reviewerId", "reviewerNote"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "comment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Comment = data
+		case "reviewerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReviewerID = data
+		case "reviewerNote":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewerNote"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReviewerNote = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2667,7 +6163,197 @@ func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNRateAgreementAccessorialInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementAccessorialInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.RateAgreementAccessorialInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNRateAgreementAccessorialInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementAccessorialInput)
+}
+
+func unmarshalNRateAgreementAccessorialInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementAccessorialInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.RateAgreementAccessorialInput, error) {
+	res, err := unmarshalInputRateAgreementAccessorialInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateAgreementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RateAgreementInput, error) {
+	res, err := unmarshalInputRateAgreementInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateAgreementPartyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RateAgreementPartyType, error) {
+	var res gqlmodel.RateAgreementPartyType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateAgreementRuleInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.RateAgreementRuleInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNRateAgreementRuleInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleInput)
+}
+
+func unmarshalNRateAgreementRuleInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.RateAgreementRuleInput, error) {
+	res, err := unmarshalInputRateAgreementRuleInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateAgreementType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementType(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RateAgreementType, error) {
+	var res gqlmodel.RateAgreementType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateIncreaseAdjustmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseAdjustmentInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.RateIncreaseAdjustmentInput, error) {
+	res, err := unmarshalInputRateIncreaseAdjustmentInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateIncreaseInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RateIncreaseInput, error) {
+	res, err := unmarshalInputRateIncreaseInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateMatrixCellInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixCellInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.RateMatrixCellInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNRateMatrixCellInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixCellInput)
+}
+
+func unmarshalNRateMatrixCellInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixCellInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.RateMatrixCellInput, error) {
+	res, err := unmarshalInputRateMatrixCellInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateMatrixDimensionInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixDimensionInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.RateMatrixDimensionInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNRateMatrixDimensionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixDimensionInput)
+}
+
+func unmarshalNRateMatrixDimensionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixDimensionInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.RateMatrixDimensionInput, error) {
+	res, err := unmarshalInputRateMatrixDimensionInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRateMatrixInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RateMatrixInput, error) {
+	res, err := unmarshalInputRateMatrixInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, v any) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalORateAgreementFuelBindingInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementFuelBindingInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.RateAgreementFuelBindingInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputRateAgreementFuelBindingInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalORateAgreementPartyType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.RateAgreementPartyType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(gqlmodel.RateAgreementPartyType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalORateShopStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋratequoteportsᚐShopStrategy(ctx context.Context, ec *gqlexec.Exec, v any) (*ratequoteports.ShopStrategy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := ratequoteports.ShopStrategy(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOShopShipmentCarriersInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShopShipmentCarriersInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ShopShipmentCarriersInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputShopShipmentCarriersInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOSubmitRateMatrixInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSubmitRateMatrixInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.SubmitRateMatrixInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputSubmitRateMatrixInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2721,6 +6407,15 @@ func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNID2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
@@ -2823,8 +6518,56 @@ func marshalNRateAgreementLane2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "RateAgreementLane", v)
 }
 
+func marshalNRateAgreementLanePage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLanePage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateAgreementLanePage) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateAgreementLanePage", v)
+}
+
+func marshalNRateAgreementLanePricingGroup2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLanePricingGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.RateAgreementLanePricingGroup) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.RateAgreementLanePricingGroup]{
+		Elem:        marshalNRateAgreementLanePricingGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLanePricingGroup,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRateAgreementLanePricingGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLanePricingGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateAgreementLanePricingGroup) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateAgreementLanePricingGroup", v)
+}
+
+func marshalNRateAgreementLaneSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementLaneSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateAgreementLaneSummary) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateAgreementLaneSummary", v)
+}
+
 func marshalNRateAgreementPartyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.RateAgreementPartyType) graphql.Marshaler {
 	return v
+}
+
+func marshalNRateAgreementRule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.RateAgreementRule) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.RateAgreementRule]{
+		Elem:        marshalNRateAgreementRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRule,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRateAgreementRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateAgreementRule) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateAgreementRule", v)
 }
 
 func marshalNRateAgreementStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.RateAgreementStatus) graphql.Marshaler {
@@ -2833,6 +6576,46 @@ func marshalNRateAgreementStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 
 func marshalNRateAgreementType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.RateAgreementType) graphql.Marshaler {
 	return v
+}
+
+func marshalNRateAgreementVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.RateAgreementVersion) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.RateAgreementVersion]{
+		Elem:        marshalNRateAgreementVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementVersion,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRateAgreementVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateAgreementVersion) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateAgreementVersion", v)
+}
+
+func marshalNRateIncreaseLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.RateIncreaseLine) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.RateIncreaseLine]{
+		Elem:        marshalNRateIncreaseLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseLine,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRateIncreaseLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreaseLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateIncreaseLine) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateIncreaseLine", v)
+}
+
+func marshalNRateIncreasePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateIncreasePlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateIncreasePlan) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateIncreasePlan", v)
 }
 
 func marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateMatrix) graphql.Marshaler {
@@ -2915,6 +6698,22 @@ func marshalNRateMatrixReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "RateMatrixReview", v)
 }
 
+func marshalNRateMatrixReviewer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixReviewerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.RateMatrixReviewer) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.RateMatrixReviewer]{
+		Elem:        marshalNRateMatrixReviewer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixReviewer,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRateMatrixReviewer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixReviewer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateMatrixReviewer) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateMatrixReviewer", v)
+}
+
 func marshalNRateMatrixUsage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐMatrixUsageᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*formulatemplateports.MatrixUsage) graphql.Marshaler {
 	return gqlexec.List[*formulatemplateports.MatrixUsage]{
 		Elem:        marshalNRateMatrixUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐMatrixUsage,
@@ -2987,6 +6786,38 @@ func marshalNRateQuotePurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return v
 }
 
+func marshalNRateShopOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateShopOptionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.RateShopOption) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.RateShopOption]{
+		Elem:        marshalNRateShopOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateShopOption,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRateShopOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateShopOption(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateShopOption) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateShopOption", v)
+}
+
+func marshalNRateShopResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateShopResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateShopResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateShopResult", v)
+}
+
+func marshalNRateShopStrategy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋratequoteportsᚐShopStrategy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ratequoteports.ShopStrategy) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNRateZone2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZone(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateZone) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -3027,6 +6858,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
@@ -3049,6 +6889,14 @@ func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Se
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
@@ -3075,6 +6923,14 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
+func marshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
+	return res
+}
+
 func marshalORateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateAgreement) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -3096,11 +6952,25 @@ func marshalORateAgreementFuelBinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "RateAgreementFuelBinding", v)
 }
 
+func marshalORateAgreementRule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRuleᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.RateAgreementRule) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.RateAgreementRule]{
+		Elem:        marshalNRateAgreementRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementRule,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalORateAgreementVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateAgreementVersion) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "RateAgreementVersion", v)
+}
+
+func marshalORateMarginVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMarginVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateMarginVerdict) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateMarginVerdict", v)
 }
 
 func marshalORateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateMatrix) graphql.Marshaler {
@@ -3122,6 +6992,21 @@ func marshalORateMatrixVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "RateMatrixVersion", v)
+}
+
+func marshalORateQuote2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuote(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.RateQuote) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RateQuote", v)
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
 }
 
 func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {

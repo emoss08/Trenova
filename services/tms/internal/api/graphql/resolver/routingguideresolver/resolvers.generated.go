@@ -12,6 +12,8 @@ type Deps struct {
 	RoutingGuideService *routingguideservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }
 
 type RoutingGuideEntryResolver struct{ *Deps }

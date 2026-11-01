@@ -1,0 +1,283 @@
+fragment RateAgreementRuleFields on RateAgreementRule {
+  id
+  businessUnitId
+  organizationId
+  rateAgreementId
+  label
+  status
+  originScopeType
+  originScopeValue
+  originCity
+  destinationScopeType
+  destinationScopeValue
+  destinationCity
+  direction
+  laneKey
+  specificityScore
+  originRadiusMeters
+  destinationRadiusMeters
+  originLatitude
+  originLongitude
+  destinationLatitude
+  destinationLongitude
+  serviceTypeIds
+  shipmentTypeIds
+  tractorTypeIds
+  trailerTypeIds
+  commodityIds
+  freightClasses
+  serviceModels
+  equipmentClasses
+  minWeight
+  maxWeight
+  minDistance
+  maxDistance
+  minStops
+  maxStops
+  daysOfWeek
+  hazmatOnly
+  tempControlOnly
+  formulaTemplateId
+  inputs
+  currency
+  priority
+  effectiveFrom
+  effectiveTo
+  supersedesRuleId
+  version
+  createdAt
+  updatedAt
+}
+
+fragment RateAgreementVersionFields on RateAgreementVersion {
+  id
+  rateAgreementId
+  versionNumber
+  effectiveFrom
+  effectiveTo
+  code
+  name
+  priority
+  agreementEffectiveFrom
+  agreementEffectiveTo
+  autoRenew
+  renewalNoticeDays
+  billToCustomerId
+  accessorialTerms
+  fuelTerms
+  accessorialNames
+  changeMessage
+  changeSummary
+  createdById
+  createdAt
+}
+
+fragment RateIncreasePlanFields on RateIncreasePlan {
+  effectiveFrom
+  agreementCount
+  skippedNoMoney
+  lines {
+    rateAgreementId
+    agreementCode
+    agreementName
+    ruleId
+    laneKey
+    label
+    before
+    after
+    changed
+  }
+}
+
+# One rate agreement with its accessorial schedule and fuel binding, and every rule
+# that has not been closed out when the editor asks for them.
+query RateAgreementDetail($id: ID!, $withRules: Boolean!) {
+  rateAgreement(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    partyType
+    customerId
+    carrierId
+    code
+    name
+    description
+    agreementType
+    status
+    contractRef
+    documentId
+    priority
+    effectiveFrom
+    effectiveTo
+    autoRenew
+    renewalNoticeDays
+    currency
+    inputs
+    billToCustomerId
+    marginFloorPercent
+    maxPayPercentOfSell
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    reviewComment
+    currentVersionNumber
+    version
+    createdAt
+    updatedAt
+    accessorials {
+      id
+      rateAgreementId
+      accessorialChargeId
+      method
+      rateUnit
+      amount
+      waived
+      autoApply
+      condition
+      freeUnits
+      maxAmount
+      serviceTypeIds
+      shipmentTypeIds
+      effectiveFrom
+      effectiveTo
+    }
+    fuelBinding {
+      id
+      rateAgreementId
+      fuelSurchargeProgramId
+      waived
+      pegPriceOverride
+      incrementRateOverride
+      capAmount
+    }
+    rules @include(if: $withRules) {
+      ...RateAgreementRuleFields
+    }
+  }
+}
+
+# One page of an agreement's live lanes, most specific first, with the counts.
+query RateAgreementLanePage($rateAgreementId: ID!, $limit: Int!, $offset: Int!) {
+  rateAgreementLanePage(rateAgreementId: $rateAgreementId, limit: $limit, offset: $offset) {
+    results {
+      ...RateAgreementRuleFields
+    }
+    count
+    countExact
+    retired
+    retiredExact
+    limit
+    offset
+  }
+}
+
+query RateAgreementLaneSummary($rateAgreementId: ID!) {
+  rateAgreementLaneSummary(rateAgreementId: $rateAgreementId) {
+    count
+    groups {
+      formulaTemplateId
+      formulaTemplateName
+      currency
+      lanes
+      minRate
+      maxRate
+    }
+  }
+}
+
+query RateAgreementVersions($rateAgreementId: ID!) {
+  rateAgreementVersions(rateAgreementId: $rateAgreementId) {
+    ...RateAgreementVersionFields
+  }
+}
+
+query RateAgreementLaneHistory($rateAgreementId: ID!, $laneKey: String!) {
+  rateAgreementLaneHistory(rateAgreementId: $rateAgreementId, laneKey: $laneKey) {
+    ...RateAgreementRuleFields
+  }
+}
+
+query PreviewRateIncrease($input: RateIncreaseInput!) {
+  previewRateIncrease(input: $input) {
+    ...RateIncreasePlanFields
+  }
+}
+
+mutation ApplyRateIncrease($input: RateIncreaseInput!) {
+  applyRateIncrease(input: $input) {
+    ...RateIncreasePlanFields
+  }
+}
+
+mutation CreateRateAgreement($input: RateAgreementInput!) {
+  createRateAgreement(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateRateAgreement($id: ID!, $input: RateAgreementInput!) {
+  updateRateAgreement(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation DuplicateRateAgreement($id: ID!, $code: String, $name: String) {
+  duplicateRateAgreement(id: $id, code: $code, name: $name) {
+    id
+    code
+    name
+    status
+    version
+  }
+}
+
+mutation SubmitRateAgreement($id: ID!, $comment: String) {
+  submitRateAgreement(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}
+
+mutation ApproveRateAgreement($id: ID!, $comment: String) {
+  approveRateAgreement(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}
+
+mutation RejectRateAgreement($id: ID!, $comment: String) {
+  rejectRateAgreement(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}
+
+mutation SuspendRateAgreement($id: ID!, $comment: String) {
+  suspendRateAgreement(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}
+
+mutation ResumeRateAgreement($id: ID!, $comment: String) {
+  resumeRateAgreement(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}
+
+mutation ArchiveRateAgreement($id: ID!, $comment: String) {
+  archiveRateAgreement(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}

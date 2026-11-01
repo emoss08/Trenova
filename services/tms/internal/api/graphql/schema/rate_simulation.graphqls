@@ -1,0 +1,118 @@
+enum RateSimulationStatus {
+  Pending
+  Running
+  Completed
+  Failed
+  Canceled
+}
+
+"What happened to one of the simulated agreement's rules across a run."
+enum RateSimulationRuleOutcome {
+  Won
+  Lost
+  NeverFired
+}
+
+"One rule of the simulated agreement and how it fared across the run."
+type RateSimulationRuleCoverage {
+  ruleId: ID!
+  label: String!
+  laneKey: String!
+  outcome: RateSimulationRuleOutcome!
+  wonCount: Int!
+  lostCount: Int!
+  "The rule that beat this one most often."
+  lostTo: ID
+  lostToLabel: String!
+}
+
+"What a whole simulation came to."
+type RateSimulationSummary {
+  shipmentCount: Int!
+  evaluatedCount: Int!
+  changedCount: Int!
+  increasedCount: Int!
+  decreasedCount: Int!
+  errorCount: Int!
+  beforeTotal: Decimal!
+  afterTotal: Decimal!
+  totalDelta: Decimal!
+  totalDeltaPct: Decimal!
+  maxIncrease: Decimal!
+  maxDecrease: Decimal!
+}
+
+"""
+A replay of a window of past shipments against an agreement, to see what its
+terms would have charged before they price anything. The run happens in the
+background; read the simulation again for its status.
+"""
+type RateSimulation {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  rateAgreementId: ID!
+  name: String!
+  description: String!
+  status: RateSimulationStatus!
+  partyType: RateAgreementPartyType!
+  sampleFrom: Timestamp!
+  sampleTo: Timestamp!
+  "At most this many shipments; 0 replays the whole window."
+  sampleLimit: Int!
+  summary: RateSimulationSummary
+  ruleCoverage: [RateSimulationRuleCoverage!]!
+  error: String!
+  startedAt: Timestamp
+  completedAt: Timestamp
+  requestedBy: ID
+  workflowId: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"One shipment of a simulation, priced as it was and as the agreement would price it."
+type RateSimulationResult {
+  id: ID!
+  rateSimulationId: ID!
+  shipmentId: ID!
+  proNumber: String!
+  customerId: ID
+  laneKey: String!
+  equipmentTypeId: ID
+  beforeAmount: Decimal!
+  afterAmount: Decimal!
+  delta: Decimal!
+  deltaPercent: Decimal!
+  outcome: RateQuoteOutcome!
+  beforeRuleId: ID
+  afterRuleId: ID
+  error: String!
+  createdAt: Timestamp!
+}
+
+"A simulation to record and replay."
+input RateSimulationInput {
+  rateAgreementId: ID!
+  name: String!
+  description: String
+  partyType: RateAgreementPartyType = Customer
+  sampleFrom: Timestamp!
+  sampleTo: Timestamp!
+  "At most this many shipments; 0 replays the whole window."
+  sampleLimit: Int = 0
+}
+
+extend type Query {
+  "The simulations run against an agreement, or every agreement, newest first. first takes at most 100."
+  rateSimulations(rateAgreementId: ID, first: Int = 20): [RateSimulation!]!
+  rateSimulation(id: ID!): RateSimulation
+  "A simulation's shipments, largest increases first. first takes at most 100."
+  rateSimulationResults(rateSimulationId: ID!, changedOnly: Boolean = false, first: Int = 50): [RateSimulationResult!]!
+}
+
+extend type Mutation {
+  "Records a simulation and starts its replay in the background."
+  createRateSimulation(input: RateSimulationInput!): RateSimulation!
+}

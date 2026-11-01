@@ -8,11 +8,14 @@ package rateresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -23,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func (r *QueryResolver) RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error) {
@@ -121,6 +125,10 @@ func (r *QueryResolver) RateQuotes(ctx context.Context, input gqlmodel.DataTable
 	if err != nil {
 		return nil, err
 	}
+	visible := r.VisibleFieldGroups(ctx, authCtx)
+	for _, quote := range result.Items {
+		quote.WithholdFields(visible)
+	}
 
 	return rateQuoteConnectionToModel(result)
 }
@@ -137,11 +145,12 @@ func (r *QueryResolver) RateAgreement(ctx context.Context, id string) (*gqlmodel
 	}
 
 	tenant := resolvercore.TenantInfo(authCtx)
+	withRules := fieldRequested(ctx, "rules")
 	entity, err := r.RateAgreementService.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: agreementID,
 		TenantInfo:      tenant,
 		IncludeChildren: true,
-		OmitRules:       true,
+		OmitRules:       !withRules,
 	})
 	if err != nil {
 		return nil, err
@@ -164,7 +173,11 @@ func (r *QueryResolver) RateAgreement(ctx context.Context, id string) (*gqlmodel
 		current = versions.Items[0]
 	}
 
-	return rateAgreementCardToModel(entity, current)
+	if current != nil {
+		current.WithholdFields(r.VisibleFieldGroups(ctx, authCtx))
+	}
+
+	return rateAgreementCardToModel(entity, current, withRules)
 }
 
 func (r *QueryResolver) RateMatrix(ctx context.Context, id string) (*gqlmodel.RateMatrix, error) {
@@ -339,4 +352,528 @@ func (r *RateMatrixVersionResolver) Cells(ctx context.Context, obj *ratematrixve
 		offset: offset,
 		limit:  limit,
 	})
+}
+
+func (r *QueryResolver) RateAgreementLanePage(ctx context.Context, rateAgreementID string, limit *int, offset *int) (*gqlmodel.RateAgreementLanePage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	agreementID, err := gqlid.ParseIDField("rateAgreementId", rateAgreementID)
+	if err != nil {
+		return nil, err
+	}
+
+	page, err := r.RateAgreementService.ListLanes(ctx, &rateagreementports.ListRateAgreementLanesRequest{
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
+		RateAgreementID: agreementID,
+		Limit:           gqlscalar.IntValue(limit),
+		Offset:          gqlscalar.IntValue(offset),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return rateAgreementLanePageToModel(page)
+}
+
+func (r *QueryResolver) RateAgreementLaneSummary(ctx context.Context, rateAgreementID string) (*gqlmodel.RateAgreementLaneSummary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	agreementID, err := gqlid.ParseIDField("rateAgreementId", rateAgreementID)
+	if err != nil {
+		return nil, err
+	}
+
+	summary, err := r.RateAgreementService.SummarizeLanes(ctx, &rateagreementports.ListRateAgreementLanesRequest{
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
+		RateAgreementID: agreementID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return rateAgreementLaneSummaryToModel(summary), nil
+}
+
+func (r *QueryResolver) RateAgreementVersions(ctx context.Context, rateAgreementID string, first *int) ([]*gqlmodel.RateAgreementVersion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	agreementID, err := gqlid.ParseIDField("rateAgreementId", rateAgreementID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.RateAgreementService.ListVersions(ctx, &rateagreementports.ListRateAgreementVersionsRequest{
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
+		RateAgreementID: agreementID,
+		Limit:           boundedFirst(first, defaultVersionPage),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	visible := r.VisibleFieldGroups(ctx, authCtx)
+	versions := make([]*gqlmodel.RateAgreementVersion, 0, len(result.Items))
+	for _, item := range result.Items {
+		if item == nil {
+			continue
+		}
+		item.WithholdFields(visible)
+		model, mapErr := rateAgreementVersionToModel(item)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+		versions = append(versions, model)
+	}
+
+	return versions, nil
+}
+
+func (r *QueryResolver) RateAgreementLaneHistory(ctx context.Context, rateAgreementID string, laneKey string) ([]*gqlmodel.RateAgreementRule, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	agreementID, err := gqlid.ParseIDField("rateAgreementId", rateAgreementID)
+	if err != nil {
+		return nil, err
+	}
+	if laneKey == "" {
+		return nil, errortypes.NewValidationError("laneKey", errortypes.ErrRequired, "A lane is required")
+	}
+
+	rules, err := r.RateAgreementService.ListRules(ctx, &rateagreementports.ListRateAgreementRulesRequest{
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
+		RateAgreementID:   agreementID,
+		LaneKey:           laneKey,
+		IncludeSuperseded: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return rateAgreementRulesToModel(rules)
+}
+
+func (r *QueryResolver) PreviewRateIncrease(ctx context.Context, input gqlmodel.RateIncreaseInput) (*gqlmodel.RateIncreasePlan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := rateIncreaseRequestFromInput(&input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	plan, err := r.RateAgreementService.PlanRateIncrease(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateIncreasePlanToModel(plan)
+}
+
+func (r *QueryResolver) RateMatrixReviewers(ctx context.Context, rateMatrixID string) ([]*gqlmodel.RateMatrixReviewer, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = gqlid.ParseIDField("rateMatrixId", rateMatrixID); err != nil {
+		return nil, err
+	}
+
+	reviewers, err := r.RateMatrixService.ListReviewers(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return rateMatrixReviewersToModel(reviewers), nil
+}
+
+func (r *QueryResolver) AppliedShipmentRateQuote(ctx context.Context, shipmentID string, partyType *gqlmodel.RateAgreementPartyType) (*gqlmodel.RateQuote, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateQuote, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := gqlid.ParseIDField("shipmentId", shipmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	side := rateagreement.PartyTypeCustomer
+	if partyType != nil {
+		side = rateagreement.PartyType(*partyType)
+	}
+
+	quote, err := r.RateQuoteService.GetAppliedForShipment(ctx, &ratequoteports.GetShipmentRateQuoteRequest{
+		ShipmentID: id,
+		PartyType:  side,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil || quote == nil {
+		return nil, err
+	}
+	quote.WithholdFields(r.VisibleFieldGroups(ctx, authCtx))
+
+	return rateQuoteToModel(quote)
+}
+
+func (r *QueryResolver) ShopShipmentCarriers(ctx context.Context, shipmentID string, input *gqlmodel.ShopShipmentCarriersInput) (*gqlmodel.RateShopResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateQuote, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := shopRequestFromInput(shipmentID, input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	visible := r.VisibleFieldGroups(ctx, authCtx)
+	if err = ratequoteports.AuthorizeShopStrategy(req.Strategy, visible); err != nil {
+		return nil, err
+	}
+
+	result, err := r.RateQuoteService.Shop(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	withholdShopResult(result, visible)
+
+	return rateShopResultToModel(result)
+}
+
+func (r *MutationResolver) CreateRateAgreement(ctx context.Context, input gqlmodel.RateAgreementInput) (*gqlmodel.RateAgreement, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := rateAgreementFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := r.RateAgreementService.Create(ctx, entity, authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateAgreementCardToModel(created, nil, true)
+}
+
+func (r *MutationResolver) UpdateRateAgreement(ctx context.Context, id string, input gqlmodel.RateAgreementInput) (*gqlmodel.RateAgreement, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	agreementID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.RateAgreementService.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
+		RateAgreementID: agreementID,
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = applyRateAgreementInput(existing, &input); err != nil {
+		return nil, err
+	}
+
+	updated, err := r.RateAgreementService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return rateAgreementCardToModel(updated, nil, true)
+}
+
+func (r *MutationResolver) DuplicateRateAgreement(ctx context.Context, id string, code *string, name *string) (*gqlmodel.RateAgreement, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpDuplicate)
+	if err != nil {
+		return nil, err
+	}
+
+	agreementID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := r.RateAgreementService.Duplicate(ctx, &rateagreementservice.DuplicateRateAgreementRequest{
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
+		RateAgreementID: agreementID,
+		Code:            gqlscalar.StringValue(code),
+		Name:            gqlscalar.StringValue(name),
+	}, authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateAgreementCardToModel(created, nil, true)
+}
+
+func (r *MutationResolver) SubmitRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error) {
+	return r.reviewRateAgreement(ctx, &agreementReview{
+		operation: permission.OpSubmit,
+		action:    r.RateAgreementService.Submit,
+		id:        id,
+		comment:   comment,
+	})
+}
+
+func (r *MutationResolver) ApproveRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error) {
+	return r.reviewRateAgreement(ctx, &agreementReview{
+		operation: permission.OpApprove,
+		action:    r.RateAgreementService.Approve,
+		id:        id,
+		comment:   comment,
+	})
+}
+
+func (r *MutationResolver) RejectRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error) {
+	return r.reviewRateAgreement(ctx, &agreementReview{
+		operation: permission.OpReject,
+		action:    r.RateAgreementService.Reject,
+		id:        id,
+		comment:   comment,
+	})
+}
+
+func (r *MutationResolver) SuspendRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error) {
+	return r.reviewRateAgreement(ctx, &agreementReview{
+		operation: permission.OpUpdate,
+		action:    r.RateAgreementService.Suspend,
+		id:        id,
+		comment:   comment,
+	})
+}
+
+func (r *MutationResolver) ResumeRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error) {
+	return r.reviewRateAgreement(ctx, &agreementReview{
+		operation: permission.OpUpdate,
+		action:    r.RateAgreementService.Resume,
+		id:        id,
+		comment:   comment,
+	})
+}
+
+func (r *MutationResolver) ArchiveRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error) {
+	return r.reviewRateAgreement(ctx, &agreementReview{
+		operation: permission.OpArchive,
+		action:    r.RateAgreementService.Archive,
+		id:        id,
+		comment:   comment,
+	})
+}
+
+func (r *MutationResolver) ApplyRateIncrease(ctx context.Context, input gqlmodel.RateIncreaseInput) (*gqlmodel.RateIncreasePlan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := rateIncreaseRequestFromInput(&input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	plan, err := r.RateAgreementService.ApplyRateIncrease(ctx, req, authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateIncreasePlanToModel(plan)
+}
+
+func (r *MutationResolver) CreateRateMatrix(ctx context.Context, input gqlmodel.RateMatrixInput) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := r.RateMatrixService.Create(ctx, rateMatrixFromInput(&input, authCtx), authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateMatrixCardToModel(created), nil
+}
+
+func (r *MutationResolver) UpdateRateMatrix(ctx context.Context, id string, input gqlmodel.RateMatrixInput) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := rateMatrixFromInput(&input, authCtx)
+	entity.ID = matrixID
+
+	updated, err := r.RateMatrixService.Update(ctx, entity, authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateMatrixCardToModel(updated), nil
+}
+
+func (r *MutationResolver) ReplaceRateMatrixCells(ctx context.Context, id string, cells []*gqlmodel.RateMatrixCellInput) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpUpdate)
+	if err != nil {
+		return false, err
+	}
+
+	matrixID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	parsed, err := rateMatrixCellsFromInput(cells)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.RateMatrixService.ReplaceCells(ctx, &ratematrixports.ReplaceRateMatrixCellsRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		RateMatrixID: matrixID,
+		Cells:        parsed,
+	}, authCtx.UserID); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) SubmitRateMatrix(ctx context.Context, id string, input *gqlmodel.SubmitRateMatrixInput) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpSubmit)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := submitRateMatrixRequest(matrixID, input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	submitted, err := r.RateMatrixService.Submit(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return rateMatrixCardToModel(submitted), nil
+}
+
+func (r *MutationResolver) ApproveRateMatrix(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.decideRateMatrix(ctx, &matrixDecision{
+		authCtx:       authCtx,
+		action:        r.RateMatrixService.Approve,
+		id:            id,
+		comment:       comment,
+		mayApproveOwn: r.HasPermission(ctx, authCtx, permission.ResourceRateMatrix, permission.OpApproveOwn),
+	})
+}
+
+func (r *MutationResolver) RejectRateMatrix(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpReject)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.decideRateMatrix(ctx, &matrixDecision{
+		authCtx: authCtx,
+		action:  r.RateMatrixService.Reject,
+		id:      id,
+		comment: comment,
+	})
+}
+
+func (r *MutationResolver) RequestRateMatrixChanges(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpReject)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.decideRateMatrix(ctx, &matrixDecision{
+		authCtx: authCtx,
+		action:  r.RateMatrixService.RequestChanges,
+		id:      id,
+		comment: comment,
+	})
+}
+
+func (r *MutationResolver) ArchiveRateMatrix(ctx context.Context, id string, confirmInUse *bool) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpArchive)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	archived, err := r.RateMatrixService.Archive(ctx, &ratematrixservice.ArchiveRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		RateMatrixID: matrixID,
+		ConfirmInUse: gqlscalar.BoolValue(confirmInUse),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return rateMatrixCardToModel(archived), nil
+}
+
+func (r *MutationResolver) RestoreRateMatrixVersion(ctx context.Context, id string, versionNumber int) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	restored, err := r.RateMatrixService.RestoreVersion(ctx, &ratematrixservice.RestoreVersionRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		RateMatrixID:  matrixID,
+		VersionNumber: int64(versionNumber),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return rateMatrixCardToModel(restored), nil
 }

@@ -7,7 +7,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { api } from "@trenova/shared/lib/api";
+import { createJurisdictionRule, updateJurisdictionRule } from "@/lib/graphql/jurisdiction-rule";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { JurisdictionRuleRow } from "@/lib/graphql/jurisdiction-rule-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -90,7 +90,10 @@ export function JurisdictionRulePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/jurisdiction-rules/"
+      mutationFn={async (values: JurisdictionRule) => {
+        await createJurisdictionRule(values);
+        return values;
+      }}
       queryKey={QUERY_KEY}
       title={t("Jurisdiction rule")}
       formComponent={<JurisdictionRuleForm />}
@@ -124,13 +127,12 @@ function JurisdictionRuleEditPanel({
   }, [open, row, reset]);
 
   const { mutateAsync } = useApiMutation<
-    JurisdictionRule,
+    Awaited<ReturnType<typeof updateJurisdictionRule>>,
     JurisdictionRule,
     unknown,
     JurisdictionRule
   >({
-    mutationFn: async (values) =>
-      api.put<JurisdictionRule>(`/jurisdiction-rules/${row?.id}/`, values),
+    mutationFn: async (values) => updateJurisdictionRule(row?.id ?? "", values),
     onSuccess: (updated) => {
       // The server clears verification whenever a limit changes, so say so
       // rather than letting the badge quietly flip in the table behind them.

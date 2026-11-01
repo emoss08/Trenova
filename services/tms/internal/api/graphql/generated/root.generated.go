@@ -105,6 +105,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateimportexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ratesimulationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/recurringshipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/reportexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/roleexec"
@@ -2465,6 +2467,12 @@ type MutationResolver interface {
 	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
+	CreateJurisdictionRule(ctx context.Context, input gqlmodel.JurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error)
+	UpdateJurisdictionRule(ctx context.Context, id string, input gqlmodel.JurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error)
+	VerifyJurisdictionRule(ctx context.Context, id string, input gqlmodel.VerifyJurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error)
+	CreateJurisdictionRuleOverride(ctx context.Context, input gqlmodel.JurisdictionRuleOverrideInput) (*jurisdictionrule.Override, error)
+	UpdateJurisdictionRuleOverride(ctx context.Context, id string, input gqlmodel.JurisdictionRuleOverrideInput) (*jurisdictionrule.Override, error)
+	DeleteJurisdictionRuleOverride(ctx context.Context, id string) (bool, error)
 	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
 	CreateLocationCategory(ctx context.Context, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error)
 	UpdateLocationCategory(ctx context.Context, id string, input gqlmodel.LocationCategoryInput) (*locationcategory.LocationCategory, error)
@@ -2511,6 +2519,28 @@ type MutationResolver interface {
 	EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*pto.WorkerPTOPolicyAssignment, error)
 	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*pto.WorkerPTOLedgerEntry, error)
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
+	CreateRateAgreement(ctx context.Context, input gqlmodel.RateAgreementInput) (*gqlmodel.RateAgreement, error)
+	UpdateRateAgreement(ctx context.Context, id string, input gqlmodel.RateAgreementInput) (*gqlmodel.RateAgreement, error)
+	DuplicateRateAgreement(ctx context.Context, id string, code *string, name *string) (*gqlmodel.RateAgreement, error)
+	SubmitRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	ApproveRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	RejectRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	SuspendRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	ResumeRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	ArchiveRateAgreement(ctx context.Context, id string, comment *string) (*gqlmodel.RateAgreement, error)
+	ApplyRateIncrease(ctx context.Context, input gqlmodel.RateIncreaseInput) (*gqlmodel.RateIncreasePlan, error)
+	CreateRateMatrix(ctx context.Context, input gqlmodel.RateMatrixInput) (*gqlmodel.RateMatrix, error)
+	UpdateRateMatrix(ctx context.Context, id string, input gqlmodel.RateMatrixInput) (*gqlmodel.RateMatrix, error)
+	ReplaceRateMatrixCells(ctx context.Context, id string, cells []*gqlmodel.RateMatrixCellInput) (bool, error)
+	SubmitRateMatrix(ctx context.Context, id string, input *gqlmodel.SubmitRateMatrixInput) (*gqlmodel.RateMatrix, error)
+	ApproveRateMatrix(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error)
+	RejectRateMatrix(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error)
+	RequestRateMatrixChanges(ctx context.Context, id string, comment *string) (*gqlmodel.RateMatrix, error)
+	ArchiveRateMatrix(ctx context.Context, id string, confirmInUse *bool) (*gqlmodel.RateMatrix, error)
+	RestoreRateMatrixVersion(ctx context.Context, id string, versionNumber int) (*gqlmodel.RateMatrix, error)
+	CommitRateImport(ctx context.Context, id string) (*gqlmodel.RateImportBatch, error)
+	DiscardRateImport(ctx context.Context, id string) (*gqlmodel.RateImportBatch, error)
+	CreateRateSimulation(ctx context.Context, input gqlmodel.RateSimulationInput) (*gqlmodel.RateSimulation, error)
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
 	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
@@ -2529,6 +2559,9 @@ type MutationResolver interface {
 	CreateReportDashboard(ctx context.Context, input gqlmodel.SaveReportDashboardInput) (*gqlmodel.ReportDashboard, error)
 	UpdateReportDashboard(ctx context.Context, input gqlmodel.UpdateReportDashboardInput) (*gqlmodel.ReportDashboard, error)
 	DeleteReportDashboard(ctx context.Context, id string) (bool, error)
+	CreateRoutingGuide(ctx context.Context, input gqlmodel.RoutingGuideInput) (*tender.RoutingGuide, error)
+	UpdateRoutingGuide(ctx context.Context, id string, input gqlmodel.RoutingGuideInput) (*tender.RoutingGuide, error)
+	DeleteRoutingGuide(ctx context.Context, id string) (bool, error)
 	CreateShiftTemplate(ctx context.Context, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error)
 	UpdateShiftTemplate(ctx context.Context, id string, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error)
 	AssignWorkerShift(ctx context.Context, input gqlmodel.AssignShiftInput) (*workerschedule.WorkerShiftAssignment, error)
@@ -3350,6 +3383,18 @@ type QueryResolver interface {
 	RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrixreview.RateMatrixReview, error)
 	RateMatrixUsages(ctx context.Context, rateMatrixID string, versionNumber *int) ([]*formulatemplateports.MatrixUsage, error)
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
+	RateAgreementLanePage(ctx context.Context, rateAgreementID string, limit *int, offset *int) (*gqlmodel.RateAgreementLanePage, error)
+	RateAgreementLaneSummary(ctx context.Context, rateAgreementID string) (*gqlmodel.RateAgreementLaneSummary, error)
+	RateAgreementVersions(ctx context.Context, rateAgreementID string, first *int) ([]*gqlmodel.RateAgreementVersion, error)
+	RateAgreementLaneHistory(ctx context.Context, rateAgreementID string, laneKey string) ([]*gqlmodel.RateAgreementRule, error)
+	PreviewRateIncrease(ctx context.Context, input gqlmodel.RateIncreaseInput) (*gqlmodel.RateIncreasePlan, error)
+	RateMatrixReviewers(ctx context.Context, rateMatrixID string) ([]*gqlmodel.RateMatrixReviewer, error)
+	AppliedShipmentRateQuote(ctx context.Context, shipmentID string, partyType *gqlmodel.RateAgreementPartyType) (*gqlmodel.RateQuote, error)
+	ShopShipmentCarriers(ctx context.Context, shipmentID string, input *gqlmodel.ShopShipmentCarriersInput) (*gqlmodel.RateShopResult, error)
+	RateImportRows(ctx context.Context, rateImportID string, failedOnly *bool, first *int) ([]*gqlmodel.RateImportRow, error)
+	RateSimulations(ctx context.Context, rateAgreementID *string, first *int) ([]*gqlmodel.RateSimulation, error)
+	RateSimulation(ctx context.Context, id string) (*gqlmodel.RateSimulation, error)
+	RateSimulationResults(ctx context.Context, rateSimulationID string, changedOnly *bool, first *int) ([]*gqlmodel.RateSimulationResult, error)
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
 	RecurringShipment(ctx context.Context, id string) (*recurringshipment.RecurringShipment, error)
 	ReportCatalog(ctx context.Context) (*gqlmodel.ReportCatalog, error)
@@ -4133,6 +4178,8 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		preludeexec.Shard,
 		ptopolicyexec.Shard,
 		rateexec.Shard,
+		rateimportexec.Shard,
+		ratesimulationexec.Shard,
 		recurringshipmentexec.Shard,
 		reportexec.Shard,
 		roleexec.Shard,

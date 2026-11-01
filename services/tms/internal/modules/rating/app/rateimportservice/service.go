@@ -76,20 +76,6 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) GetByID(
-	ctx context.Context,
-	req *rateimportports.GetRateImportBatchByIDRequest,
-) (*rateimport.RateImportBatch, error) {
-	return s.repo.GetByID(ctx, req)
-}
-
-func (s *Service) List(
-	ctx context.Context,
-	req *rateimportports.ListRateImportBatchesRequest,
-) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListRows(
 	ctx context.Context,
 	req *rateimportports.ListRateImportRowsRequest,

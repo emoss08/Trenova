@@ -114,7 +114,7 @@ func TestReadOnlyGuardLetsReadsAndAllowlistedWritesThroughWhileReadOnly(t *testi
 	for _, tc := range []guardCase{
 		{method: http.MethodGet, route: "/api/v1/shipments/"},
 		{method: http.MethodPost, route: "/api/v1/users/me/change-password/"},
-		{method: http.MethodPost, route: "/api/v1/rate-agreements/rate-increase/preview/"},
+		{method: http.MethodPost, route: "/api/v1/recurring-shipments/match/"},
 		{
 			method: http.MethodPost,
 			route:  "/api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/",
@@ -199,14 +199,14 @@ func TestReadOnlyWriteAllowedMatchesExactRoutesOnly(t *testing.T) {
 	t.Parallel()
 
 	assert.True(t, ReadOnlyWriteAllowed("/api/v1/users/me/settings/"))
-	assert.True(t, ReadOnlyWriteAllowed("/api/v1/rate-quotes/shipment/:shipmentID/explain/"))
+	assert.True(t, ReadOnlyWriteAllowed("/api/v1/formula-templates/:templateID/backtest/"))
 	assert.True(t, ReadOnlyWriteAllowed("/graphql"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/shipments/"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/users/me/profile-picture/"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/shipments/:id/duplicate/"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/bank-receipts/:receiptID/match/"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/billing/invoice-runs/preview/"))
-	assert.False(t, ReadOnlyWriteAllowed("/api/v1/rate-quotes/shipment/:shipmentID/shop/"))
+	assert.False(t, ReadOnlyWriteAllowed("/api/v1/recurring-shipments/:recurringID/match/"))
 	assert.False(t, ReadOnlyWriteAllowed("/api/v1/anything/validate/"))
 }
 
@@ -225,8 +225,8 @@ func TestReadOnlyGuardRefusesWritesThatOnlyLookLikeReads(t *testing.T) {
 		{method: http.MethodPost, route: "/api/v1/billing/invoice-runs/preview/"},
 		{
 			method: http.MethodPost,
-			route:  "/api/v1/rate-quotes/shipment/:shipmentID/shop/",
-			path:   "/api/v1/rate-quotes/shipment/shp_1/shop/",
+			route:  "/api/v1/recurring-shipments/:recurringID/match/",
+			path:   "/api/v1/recurring-shipments/rsh_1/match/",
 		},
 	} {
 		tc.plans = plans

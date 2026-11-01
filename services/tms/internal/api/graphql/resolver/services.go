@@ -167,8 +167,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
@@ -373,6 +375,8 @@ type Params struct {
 	RateZoneService                   *ratezoneservice.Service
 	RateMatrixService                 *ratematrixservice.Service
 	RateQuoteService                  *ratequoteservice.Service
+	RateImportService                 *rateimportservice.Service
+	RateSimulationService             *ratesimulationservice.Service
 	FuelIndexRepo                     fuelsurchargeports.FuelIndexRepository
 	FuelIndexPriceRepo                fuelsurchargeports.FuelIndexPriceRepository
 	FuelSurchargeProgramRepo          fuelsurchargeports.FuelSurchargeProgramRepository
@@ -662,6 +666,8 @@ type Services struct {
 	RateZoneService                   *ratezoneservice.Service
 	RateMatrixService                 *ratematrixservice.Service
 	RateQuoteService                  *ratequoteservice.Service
+	RateImportService                 *rateimportservice.Service
+	RateSimulationService             *ratesimulationservice.Service
 	FuelIndexRepo                     fuelsurchargeports.FuelIndexRepository
 	FuelIndexPriceRepo                fuelsurchargeports.FuelIndexPriceRepository
 	FuelSurchargeProgramRepo          fuelsurchargeports.FuelSurchargeProgramRepository
@@ -957,6 +963,8 @@ func newServices(p *Params) *Services {
 		RateZoneService:                   p.RateZoneService,
 		RateMatrixService:                 p.RateMatrixService,
 		RateQuoteService:                  p.RateQuoteService,
+		RateImportService:                 p.RateImportService,
+		RateSimulationService:             p.RateSimulationService,
 		FuelIndexRepo:                     p.FuelIndexRepo,
 		FuelIndexPriceRepo:                p.FuelIndexPriceRepo,
 		FuelSurchargeProgramRepo:          p.FuelSurchargeProgramRepo,

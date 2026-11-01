@@ -45,34 +45,6 @@ func draftDimensions() keel.Loader {
 	return d.Where(d.VersionNumber.Eq(ratematrix.DraftVersion)).Order(d.Position.Asc())
 }
 
-func (r *repository) List(
-	ctx context.Context,
-	req *ratematrixports.ListRateMatrixRequest,
-) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-			rm := ratematrixdb.RateMatrixes
-			result, err := listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				rm.Query(),
-				&listquery.Request[ratematrix.RateMatrix]{
-					Filter: req.Filter,
-					Then:   []keel.Order{rm.CreatedAt.Desc()},
-				},
-			)
-			if err != nil {
-				r.l.Error("failed to list rate matrices", zap.Error(err))
-				return nil, err
-			}
-
-			return result, nil
-		},
-	)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixConnectionRequest,

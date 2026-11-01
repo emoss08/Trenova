@@ -78,13 +78,6 @@ func matrixTenant(matrix *ratematrix.RateMatrix) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: matrix.OrganizationID, BuID: matrix.BusinessUnitID}
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *ratematrixports.ListRateMatrixRequest,
-) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixConnectionRequest,

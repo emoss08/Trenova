@@ -76,7 +76,8 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
   const { data: history } = useQuery({
     queryKey: ["rate-simulations", rateAgreementId],
-    queryFn: () => apiService.rateSimulationService.listForAgreement(rateAgreementId as string),
+    queryFn: ({ signal }) =>
+      apiService.rateSimulationService.listForAgreement(rateAgreementId as string, { signal }),
     enabled: Boolean(rateAgreementId),
   });
 
@@ -84,7 +85,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
   const { data: simulation } = useQuery({
     queryKey: ["rate-simulation", active],
-    queryFn: () => apiService.rateSimulationService.getById(active as string),
+    queryFn: ({ signal }) => apiService.rateSimulationService.getById(active as string, { signal }),
     enabled: Boolean(active),
     refetchInterval: (query) =>
       shouldPoll(query.state.data as RateSimulation | undefined) ? POLL_INTERVAL_MS : false,
@@ -113,8 +114,12 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
   const { data: results } = useQuery({
     queryKey: ["rate-simulation-results", active],
-    queryFn: () =>
-      apiService.rateSimulationService.listResults(active as string, { changedOnly: true }),
+    queryFn: ({ signal }) =>
+      apiService.rateSimulationService.listResults(
+        active as string,
+        { changedOnly: true },
+        { signal },
+      ),
     enabled: Boolean(active) && isTerminal(simulation),
   });
 

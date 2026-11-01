@@ -1,0 +1,17 @@
+mutation CreateRoutingGuide($input: RoutingGuideInput!) {
+  createRoutingGuide(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateRoutingGuide($id: ID!, $input: RoutingGuideInput!) {
+  updateRoutingGuide(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation DeleteRoutingGuide($id: ID!) {
+  deleteRoutingGuide(id: $id)
+}

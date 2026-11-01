@@ -18,6 +18,8 @@ type Deps struct {
 	RateQuoteService     *ratequoteservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }
 
 type RateAgreementResolver struct{ *Deps }

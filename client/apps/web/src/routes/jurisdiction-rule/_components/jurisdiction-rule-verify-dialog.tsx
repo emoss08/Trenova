@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { api } from "@trenova/shared/lib/api";
+import { verifyJurisdictionRule } from "@/lib/graphql/jurisdiction-rule";
 import type { JurisdictionRuleRow } from "@/lib/graphql/jurisdiction-rule-table";
 import {
   verifyJurisdictionRuleSchema,
@@ -64,7 +64,7 @@ export function JurisdictionRuleVerifyDialog({
 
   const mutation = useApiMutation({
     mutationFn: async (values: VerifyJurisdictionRuleInput) =>
-      api.post(`/jurisdiction-rules/${rule?.id}/verify/`, values),
+      verifyJurisdictionRule(rule?.id ?? "", values),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["jurisdiction-rule-list"] });
       onOpenChange(false);

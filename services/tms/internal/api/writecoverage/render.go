@@ -145,7 +145,7 @@ commit this page; `+"`task generate-write-coverage-check`"+` runs the CI check.
   resolver with go/ast through their helper methods. When several mutations
   match, the one named for the handler method wins (`+"`patch`"+` to
   `+"`patchTractor`"+`); when that still leaves several, both are listed.
-- **Blind spots.** A handler registered as a closure (`+"`h.review(h.service.Approve)`"+`)
+- **Blind spots.** A handler registered as a closure (`+"`h.handleProviderWebhook(provider)`"+`)
   or one that passes a service method as a value is not merged with its twin;
   a route whose registration depends on configuration would be missed if the
   zero-valued configuration turns it off; a write reached only by a background

@@ -16,12 +16,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// defaultHistoryLimit caps how much of a shipment's rating history one request
-// returns. Shipments are re-rated on every move edit, assignment and fuel price
-// job, so the history can run long and a caller almost always wants the recent
-// end of it.
-const defaultHistoryLimit = 50
-
 const busyMessage = "Rating is busy. Retry the request."
 
 var rateQuoteErrors = dberror.Mapping{Entity: "RateQuote"}
@@ -145,33 +139,6 @@ func (r *repository) GetAppliedForShipment(
 		}
 
 		return entity, nil
-	})
-}
-
-func (r *repository) ListForShipment(
-	ctx context.Context,
-	req *ratequoteports.ListShipmentRateQuotesRequest,
-) ([]*ratequote.RateQuote, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratequote.RateQuote, error) {
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultHistoryLimit
-		}
-
-		rq := ratequotedb.RateQuotes
-		entities, err := rq.Where(rq.ShipmentID.Eq(req.ShipmentID)).
-			Order(rq.RatedAt.Desc(), rq.ID.Desc()).
-			Limit(limit).
-			List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list shipment rate quotes",
-				zap.String("shipmentId", req.ShipmentID.String()),
-				zap.Error(err),
-			)
-			return nil, err
-		}
-
-		return entities, nil
 	})
 }
 

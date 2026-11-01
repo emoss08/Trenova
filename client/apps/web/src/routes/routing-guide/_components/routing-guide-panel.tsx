@@ -20,7 +20,6 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   emptyRoutingGuidePayload,
   routingGuidePayloadSchema,
-  type RoutingGuide,
   type RoutingGuidePayload,
   type RoutingGuidePayloadInput,
 } from "@trenova/shared/types/routing-guide";
@@ -103,7 +102,12 @@ export function RoutingGuidePanel({
 
   if (mode === "edit") {
     return (
-      <FormEditPanel<RoutingGuidePayloadInput, RoutingGuideRow, RoutingGuidePayload, RoutingGuide>
+      <FormEditPanel<
+        RoutingGuidePayloadInput,
+        RoutingGuideRow,
+        RoutingGuidePayload,
+        RoutingGuidePayload
+      >
         open={open}
         onOpenChange={onOpenChange}
         row={row}
@@ -127,7 +131,12 @@ export function RoutingGuidePanel({
   }
 
   return (
-    <FormCreatePanel<RoutingGuidePayloadInput, RoutingGuide, RoutingGuidePayload, RoutingGuide>
+    <FormCreatePanel<
+      RoutingGuidePayloadInput,
+      RoutingGuidePayload,
+      RoutingGuidePayload,
+      RoutingGuidePayload
+    >
       open={open}
       onOpenChange={onOpenChange}
       form={form}

@@ -5,7 +5,11 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { api } from "@trenova/shared/lib/api";
+import {
+  createJurisdictionRuleOverride,
+  deleteJurisdictionRuleOverride,
+  updateJurisdictionRuleOverride,
+} from "@/lib/graphql/jurisdiction-rule";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   jurisdictionRuleOverrideSchema,
@@ -55,7 +59,10 @@ export function JurisdictionRuleOverridePanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/jurisdiction-rule-overrides/"
+      mutationFn={async (values: JurisdictionRuleOverride) => {
+        await createJurisdictionRuleOverride(values);
+        return values;
+      }}
       queryKey={QUERY_KEY}
       title={t("Carrier override")}
       formComponent={<JurisdictionRuleOverrideForm />}
@@ -87,13 +94,12 @@ function OverrideEditPanel({
   }, [open, row, reset]);
 
   const { mutateAsync } = useApiMutation<
-    JurisdictionRuleOverride,
+    Awaited<ReturnType<typeof updateJurisdictionRuleOverride>>,
     JurisdictionRuleOverride,
     unknown,
     JurisdictionRuleOverride
   >({
-    mutationFn: async (values) =>
-      api.put<JurisdictionRuleOverride>(`/jurisdiction-rule-overrides/${row?.id}/`, values),
+    mutationFn: async (values) => updateJurisdictionRuleOverride(row?.id ?? "", values),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
@@ -102,7 +108,7 @@ function OverrideEditPanel({
   });
 
   const removeMutation = useApiMutation({
-    mutationFn: async () => api.delete(`/jurisdiction-rule-overrides/${row?.id}/`),
+    mutationFn: async () => deleteJurisdictionRuleOverride(row?.id ?? ""),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       onOpenChange(false);

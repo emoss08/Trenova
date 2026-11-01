@@ -1,0 +1,41 @@
+mutation CreateJurisdictionRule($input: JurisdictionRuleInput!) {
+  createJurisdictionRule(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateJurisdictionRule($id: ID!, $input: JurisdictionRuleInput!) {
+  updateJurisdictionRule(id: $id, input: $input) {
+    id
+    verificationState
+    version
+  }
+}
+
+mutation VerifyJurisdictionRule($id: ID!, $input: VerifyJurisdictionRuleInput!) {
+  verifyJurisdictionRule(id: $id, input: $input) {
+    id
+    verificationState
+    verifiedAt
+    version
+  }
+}
+
+mutation CreateJurisdictionRuleOverride($input: JurisdictionRuleOverrideInput!) {
+  createJurisdictionRuleOverride(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateJurisdictionRuleOverride($id: ID!, $input: JurisdictionRuleOverrideInput!) {
+  updateJurisdictionRuleOverride(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation DeleteJurisdictionRuleOverride($id: ID!) {
+  deleteJurisdictionRuleOverride(id: $id)
+}

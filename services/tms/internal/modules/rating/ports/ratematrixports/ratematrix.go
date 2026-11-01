@@ -11,10 +11,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ListRateMatrixRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type ListRateMatrixConnectionRequest struct {
 	Filter            *pagination.QueryOptions `json:"filter"`
 	Cursor            pagination.CursorInfo    `json:"-"`
@@ -54,10 +50,6 @@ type CopyVersionRequest struct {
 }
 
 type RateMatrixRepository interface {
-	List(
-		ctx context.Context,
-		req *ListRateMatrixRequest,
-	) (*pagination.ListResult[*ratematrix.RateMatrix], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListRateMatrixConnectionRequest,

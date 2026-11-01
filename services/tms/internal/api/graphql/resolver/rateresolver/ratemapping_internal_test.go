@@ -36,7 +36,7 @@ func TestRateAgreementCard_NamesEachAccessorialAndTheFuelProgram(t *testing.T) {
 		},
 	}
 
-	model, err := rateAgreementCardToModel(agreement, nil)
+	model, err := rateAgreementCardToModel(agreement, nil, false)
 
 	require.NoError(t, err)
 	require.Len(t, model.Accessorials, 2)

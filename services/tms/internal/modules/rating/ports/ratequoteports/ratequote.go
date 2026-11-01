@@ -30,12 +30,6 @@ type GetShipmentRateQuoteRequest struct {
 	TenantInfo pagination.TenantInfo   `json:"-"`
 }
 
-type ListShipmentRateQuotesRequest struct {
-	ShipmentID pulid.ID              `json:"shipmentId"`
-	TenantInfo pagination.TenantInfo `json:"-"`
-	Limit      int                   `json:"limit"`
-}
-
 type RateQuoteRepository interface {
 	GetByID(ctx context.Context, req *GetRateQuoteByIDRequest) (*ratequote.RateQuote, error)
 	List(
@@ -52,11 +46,6 @@ type RateQuoteRepository interface {
 		ctx context.Context,
 		req *GetShipmentRateQuoteRequest,
 	) (*ratequote.RateQuote, error)
-	// ListForShipment returns a shipment's rating history, newest first.
-	ListForShipment(
-		ctx context.Context,
-		req *ListShipmentRateQuotesRequest,
-	) ([]*ratequote.RateQuote, error)
 
 	// Record writes a quote and, when it governs a shipment, supersedes the one
 	// it replaces. The two happen together so a shipment is never left with two

@@ -130,7 +130,8 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
 
   const { data: failedRows } = useQuery({
     queryKey: ["rate-import-failed-rows", batch?.id],
-    queryFn: () => apiService.rateImportService.listFailedRows(batch?.id as string),
+    queryFn: ({ signal }) =>
+      apiService.rateImportService.listFailedRows(batch?.id as string, { signal }),
     enabled: Boolean(batch?.id) && (batch?.errorCount ?? 0) > 0,
   });
 

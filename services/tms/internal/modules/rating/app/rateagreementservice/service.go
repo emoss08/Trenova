@@ -44,13 +44,6 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *rateagreementports.ListRateAgreementRequest,
-) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *rateagreementports.ListRateAgreementConnectionRequest,

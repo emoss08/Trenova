@@ -1,0 +1,152 @@
+fragment RateMatrixCellFields on RateMatrixCell {
+  id
+  d0Key
+  d1Key
+  d2Key
+  d3Key
+  d0KeyTo
+  d1KeyTo
+  d2KeyTo
+  d3KeyTo
+  d0Min
+  d0Max
+  d1Min
+  d1Max
+  d2Min
+  d2Max
+  d3Min
+  d3Max
+  deficitEligible
+  value
+  minCharge
+}
+
+# One rate matrix draft with its axes, for the matrix editor.
+query RateMatrixDetail($id: ID!) {
+  rateMatrix(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    code
+    name
+    description
+    status
+    valueType
+    publishedVersionNumber
+    publishedAt
+    hasDraftChanges
+    cellCount
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    reviewComment
+    version
+    createdAt
+    updatedAt
+    dimensions {
+      id
+      position
+      kind
+      matchMode
+      label
+      keyNormalization
+      rangeOverflow
+    }
+  }
+}
+
+# One page of a rate matrix draft's cells, in the matrix's order.
+query RateMatrixDraftCells($id: ID!, $offset: Int!, $limit: Int!) {
+  rateMatrix(id: $id) {
+    id
+    cells(offset: $offset, limit: $limit) {
+      ...RateMatrixCellFields
+    }
+  }
+}
+
+# One page of a published rate matrix version's cells, in the matrix's order.
+query RateMatrixVersionCells($id: ID!, $versionNumber: Int!, $offset: Int!, $limit: Int!) {
+  rateMatrixVersion(rateMatrixId: $id, versionNumber: $versionNumber) {
+    id
+    cells(offset: $offset, limit: $limit) {
+      ...RateMatrixCellFields
+    }
+  }
+}
+
+query RateMatrixReviewers($rateMatrixId: ID!) {
+  rateMatrixReviewers(rateMatrixId: $rateMatrixId) {
+    id
+    name
+    username
+    profilePicUrl
+  }
+}
+
+mutation CreateRateMatrix($input: RateMatrixInput!) {
+  createRateMatrix(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateRateMatrix($id: ID!, $input: RateMatrixInput!) {
+  updateRateMatrix(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation ReplaceRateMatrixCells($id: ID!, $cells: [RateMatrixCellInput!]!) {
+  replaceRateMatrixCells(id: $id, cells: $cells)
+}
+
+mutation SubmitRateMatrix($id: ID!, $input: SubmitRateMatrixInput) {
+  submitRateMatrix(id: $id, input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation ApproveRateMatrix($id: ID!, $comment: String) {
+  approveRateMatrix(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}
+
+mutation RejectRateMatrix($id: ID!, $comment: String) {
+  rejectRateMatrix(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}
+
+mutation RequestRateMatrixChanges($id: ID!, $comment: String) {
+  requestRateMatrixChanges(id: $id, comment: $comment) {
+    id
+    status
+    version
+  }
+}
+
+mutation ArchiveRateMatrix($id: ID!, $confirmInUse: Boolean) {
+  archiveRateMatrix(id: $id, confirmInUse: $confirmInUse) {
+    id
+    status
+    version
+  }
+}
+
+mutation RestoreRateMatrixVersion($id: ID!, $versionNumber: Int!) {
+  restoreRateMatrixVersion(id: $id, versionNumber: $versionNumber) {
+    id
+    status
+    version
+  }
+}

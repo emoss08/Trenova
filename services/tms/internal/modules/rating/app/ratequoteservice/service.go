@@ -74,17 +74,6 @@ func (s *Service) GetByID(
 	return s.repo.GetByID(ctx, req)
 }
 
-// ListForShipment returns a shipment's rating history, newest first.
-//
-// A shipment is re-rated whenever a stop time, an assignment or a fuel price
-// changes, so the history is how somebody sees that the rate moved and when.
-func (s *Service) ListForShipment(
-	ctx context.Context,
-	req *ratequoteports.ListShipmentRateQuotesRequest,
-) ([]*ratequote.RateQuote, error) {
-	return s.repo.ListForShipment(ctx, req)
-}
-
 // GetAppliedForShipment returns the quote currently governing a shipment, which
 // is what the "why this rate" panel reads.
 func (s *Service) GetAppliedForShipment(
@@ -103,37 +92,6 @@ type ExplainRequest struct {
 	// AsOf re-resolves against the terms effective on that date. Zero uses the
 	// shipment's own rating date, which reproduces its current rate.
 	AsOf int64
-}
-
-// Explain re-rates a saved shipment and returns the full trace without touching
-// what it is currently billed at.
-//
-// This is the answer to "what would this have cost under next month's tariff",
-// and to "show me why", and the two are the same question asked on different
-// dates. The quote it produces is a what-if: it is recorded so the comparison
-// can be cited later, but it never supersedes the shipment's applied rate.
-func (s *Service) Explain(
-	ctx context.Context,
-	req *ExplainRequest,
-) (*ratequoteports.RatedShipment, error) {
-	log := s.l.With(
-		zap.String("operation", "Explain"),
-		zap.String("shipmentId", req.ShipmentID.String()),
-	)
-
-	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
-		ID:         req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: shipmentports.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		log.Error("failed to load shipment for explanation", zap.Error(err))
-		return nil, err
-	}
-
-	return s.rate(ctx, entity, req, ratequote.PurposeWhatIf, true)
 }
 
 // QuoteRequest prices a shipment that has not been saved, which is what a

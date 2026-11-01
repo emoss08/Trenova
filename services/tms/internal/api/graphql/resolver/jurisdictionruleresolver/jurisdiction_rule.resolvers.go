@@ -8,12 +8,16 @@ package jurisdictionruleresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -98,4 +102,115 @@ func (r *QueryResolver) JurisdictionRuleOverrides(ctx context.Context, input gql
 	}
 
 	return jurisdictionOverrideConnectionToModel(result)
+}
+
+func (r *MutationResolver) CreateJurisdictionRule(ctx context.Context, input gqlmodel.JurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJurisdictionRule, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := jurisdictionRuleFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.JurisdictionRuleService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateJurisdictionRule(ctx context.Context, id string, input gqlmodel.JurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJurisdictionRule, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	ruleID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := jurisdictionRuleFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+	entity.ID = ruleID
+
+	return r.JurisdictionRuleService.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) VerifyJurisdictionRule(ctx context.Context, id string, input gqlmodel.VerifyJurisdictionRuleInput) (*jurisdictionrule.JurisdictionRule, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJurisdictionRule, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	ruleID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.JurisdictionRuleService.Verify(ctx, &jurisdictionruleports.VerifyJurisdictionRuleRequest{
+		RuleID:     ruleID,
+		State:      input.VerificationState,
+		SourceNote: gqlscalar.StringValue(input.SourceNote),
+		SourceURL:  gqlscalar.StringValue(input.SourceURL),
+		Actor:      actorutil.FromAuthContext(authCtx),
+	})
+}
+
+func (r *MutationResolver) CreateJurisdictionRuleOverride(ctx context.Context, input gqlmodel.JurisdictionRuleOverrideInput) (*jurisdictionrule.Override, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJurisdictionRuleOverride, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := jurisdictionRuleOverrideFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.JurisdictionRuleService.CreateOverride(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateJurisdictionRuleOverride(ctx context.Context, id string, input gqlmodel.JurisdictionRuleOverrideInput) (*jurisdictionrule.Override, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJurisdictionRuleOverride, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	overrideID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := jurisdictionRuleOverrideFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	entity.ID = overrideID
+
+	return r.JurisdictionRuleService.UpdateOverride(ctx, entity, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) DeleteJurisdictionRuleOverride(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJurisdictionRuleOverride, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	overrideID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.JurisdictionRuleService.DeleteOverride(
+		ctx,
+		overrideID,
+		actorutil.TenantInfoFrom(authCtx),
+		actorutil.FromAuthContext(authCtx),
+	); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

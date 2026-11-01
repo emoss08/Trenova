@@ -1,56 +1,36 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
+import {
+  CreateRoutingGuideDocument,
+  DeleteRoutingGuideDocument,
+  UpdateRoutingGuideDocument,
+  type RoutingGuideInput,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import {
   routingGuidePayloadSchema,
-  routingGuideSchema,
-  type RoutingGuide,
   type RoutingGuidePayload,
 } from "@trenova/shared/types/routing-guide";
 
-type RoutingGuideEntryRequestBody = {
-  id?: string;
-  version?: number;
-  carrierId: string;
-  rank: number;
-  rateMethod: RoutingGuidePayload["entries"][number]["rateMethod"];
-  rate: string;
-  offerTtlSeconds: number;
-  channel: RoutingGuidePayload["entries"][number]["channel"];
-};
-
-type RoutingGuideRequestBody = {
-  version?: number;
-  name: string;
-  description: string;
-  status: RoutingGuidePayload["status"];
-  originLocationId?: string;
-  destinationLocationId?: string;
-  originCity: string;
-  originState: string;
-  destinationCity: string;
-  destinationState: string;
-  entries: RoutingGuideEntryRequestBody[];
-};
-
-export function toRoutingGuideRequestBody(payload: RoutingGuidePayload): RoutingGuideRequestBody {
+/** The guide and its whole waterfall, as the API takes them. */
+export function toRoutingGuideInput(payload: RoutingGuidePayload): RoutingGuideInput {
   return {
-    version: payload.version,
+    version: payload.version ?? null,
     name: payload.name,
     description: payload.description ?? "",
     status: payload.status,
-    originLocationId: payload.originLocationId ?? undefined,
-    destinationLocationId: payload.destinationLocationId ?? undefined,
+    originLocationId: payload.originLocationId || null,
+    destinationLocationId: payload.destinationLocationId || null,
     originCity: payload.originCity ?? "",
     originState: payload.originState ?? "",
     destinationCity: payload.destinationCity ?? "",
     destinationState: payload.destinationState ?? "",
     entries: payload.entries.map((entry) => ({
-      id: entry.id || undefined,
-      version: entry.version,
+      id: entry.id || null,
+      version: entry.version ?? null,
       carrierId: entry.carrierId,
       rank: entry.rank,
       rateMethod: entry.rateMethod,
       rate: entry.rate.toString(),
+      useContractRate: entry.useContractRate,
       offerTtlSeconds: entry.offerTtlSeconds,
       channel: entry.channel,
     })),
@@ -58,23 +38,31 @@ export function toRoutingGuideRequestBody(payload: RoutingGuidePayload): Routing
 }
 
 export class RoutingGuideService {
-  public async create(payload: RoutingGuidePayload): Promise<RoutingGuide> {
-    const response = await api.post<RoutingGuide>(
-      "/routing-guides/",
-      toRoutingGuideRequestBody(routingGuidePayloadSchema.parse(payload)),
-    );
-    return safeParse(routingGuideSchema, response, "RoutingGuide");
+  public async create(payload: RoutingGuidePayload): Promise<RoutingGuidePayload> {
+    const parsed = routingGuidePayloadSchema.parse(payload);
+    const response = await requestGraphQL({
+      document: CreateRoutingGuideDocument,
+      operationName: "CreateRoutingGuide",
+      variables: { input: toRoutingGuideInput(parsed) },
+    });
+    return { ...parsed, ...response.createRoutingGuide };
   }
 
-  public async update(guideId: string, payload: RoutingGuidePayload): Promise<RoutingGuide> {
-    const response = await api.put<RoutingGuide>(
-      `/routing-guides/${guideId}/`,
-      toRoutingGuideRequestBody(routingGuidePayloadSchema.parse(payload)),
-    );
-    return safeParse(routingGuideSchema, response, "RoutingGuide");
+  public async update(guideId: string, payload: RoutingGuidePayload): Promise<RoutingGuidePayload> {
+    const parsed = routingGuidePayloadSchema.parse(payload);
+    const response = await requestGraphQL({
+      document: UpdateRoutingGuideDocument,
+      operationName: "UpdateRoutingGuide",
+      variables: { id: guideId, input: toRoutingGuideInput(parsed) },
+    });
+    return { ...parsed, ...response.updateRoutingGuide };
   }
 
   public async delete(guideId: string): Promise<void> {
-    await api.delete(`/routing-guides/${guideId}/`);
+    await requestGraphQL({
+      document: DeleteRoutingGuideDocument,
+      operationName: "DeleteRoutingGuide",
+      variables: { id: guideId },
+    });
   }
 }

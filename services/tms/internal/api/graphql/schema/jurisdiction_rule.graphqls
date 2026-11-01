@@ -135,3 +135,62 @@ extend type Query {
     input: DataTableConnectionInput!
   ): JurisdictionRuleOverrideConnection!
 }
+
+"A jurisdiction's statutory oversize and overweight limits. The row is global: every organization reads it."
+input JurisdictionRuleInput {
+  stateId: ID!
+  status: JurisdictionRuleStatus!
+  maxWidthFeet: Float!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  superloadWidthFeet: Float
+  superloadWeightPounds: Int
+  daylightOnly: Boolean!
+  rushHourRestricted: Boolean!
+  weekendRestricted: Boolean!
+  holidayRestricted: Boolean!
+  permitLeadTimeDays: Int!
+  permitValidityDays: Int!
+  permitBaseFee: Decimal
+  permitPerMileFee: Decimal
+  sourceNote: String
+  sourceUrl: String
+  effectiveStartDate: Timestamp
+  effectiveEndDate: Timestamp
+  "The version read before editing; a save against an older one is refused."
+  version: Int
+}
+
+"What a jurisdiction rule was confirmed against, and the verdict."
+input VerifyJurisdictionRuleInput {
+  verificationState: JurisdictionVerificationState!
+  sourceNote: String
+  sourceUrl: String
+}
+
+"An organization's stricter posture on a jurisdiction; every limit left out defers to the statute."
+input JurisdictionRuleOverrideInput {
+  stateId: ID!
+  maxWidthFeet: Float
+  maxHeightFeet: Float
+  maxLengthFeet: Float
+  maxWeightPounds: Int
+  permitLeadTimeDays: Int
+  daylightOnly: Boolean
+  holidayRestricted: Boolean
+  "Why this organization runs tighter than the statute. Required, minimum ten characters."
+  reason: String!
+  "The version read before editing; a save against an older one is refused."
+  version: Int
+}
+
+extend type Mutation {
+  createJurisdictionRule(input: JurisdictionRuleInput!): JurisdictionRule!
+  updateJurisdictionRule(id: ID!, input: JurisdictionRuleInput!): JurisdictionRule!
+  "Records whether a jurisdiction rule was confirmed against the issuing state."
+  verifyJurisdictionRule(id: ID!, input: VerifyJurisdictionRuleInput!): JurisdictionRule!
+  createJurisdictionRuleOverride(input: JurisdictionRuleOverrideInput!): JurisdictionRuleOverride!
+  updateJurisdictionRuleOverride(id: ID!, input: JurisdictionRuleOverrideInput!): JurisdictionRuleOverride!
+  deleteJurisdictionRuleOverride(id: ID!): Boolean!
+}

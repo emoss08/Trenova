@@ -1,0 +1,90 @@
+fragment RateSimulationFields on RateSimulation {
+  id
+  businessUnitId
+  organizationId
+  rateAgreementId
+  name
+  description
+  status
+  partyType
+  sampleFrom
+  sampleTo
+  sampleLimit
+  error
+  startedAt
+  completedAt
+  requestedBy
+  workflowId
+  version
+  createdAt
+  updatedAt
+  summary {
+    shipmentCount
+    evaluatedCount
+    changedCount
+    increasedCount
+    decreasedCount
+    errorCount
+    beforeTotal
+    afterTotal
+    totalDelta
+    totalDeltaPct
+    maxIncrease
+    maxDecrease
+  }
+  ruleCoverage {
+    ruleId
+    label
+    laneKey
+    outcome
+    wonCount
+    lostCount
+    lostTo
+    lostToLabel
+  }
+}
+
+# The simulations run against one agreement, newest first.
+query RateAgreementSimulations($rateAgreementId: ID!) {
+  rateSimulations(rateAgreementId: $rateAgreementId, first: 20) {
+    ...RateSimulationFields
+  }
+}
+
+query RateSimulationDetail($id: ID!) {
+  rateSimulation(id: $id) {
+    ...RateSimulationFields
+  }
+}
+
+# A simulation's shipments, largest increases first.
+query RateSimulationResults($rateSimulationId: ID!, $changedOnly: Boolean!, $first: Int!) {
+  rateSimulationResults(
+    rateSimulationId: $rateSimulationId
+    changedOnly: $changedOnly
+    first: $first
+  ) {
+    id
+    rateSimulationId
+    shipmentId
+    proNumber
+    customerId
+    laneKey
+    equipmentTypeId
+    beforeAmount
+    afterAmount
+    delta
+    deltaPercent
+    outcome
+    beforeRuleId
+    afterRuleId
+    error
+    createdAt
+  }
+}
+
+mutation CreateRateSimulation($input: RateSimulationInput!) {
+  createRateSimulation(input: $input) {
+    ...RateSimulationFields
+  }
+}

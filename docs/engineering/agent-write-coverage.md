@@ -50,7 +50,7 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
   resolver with go/ast through their helper methods. When several mutations
   match, the one named for the handler method wins (`patch` to
   `patchTractor`); when that still leaves several, both are listed.
-- **Blind spots.** A handler registered as a closure (`h.review(h.service.Approve)`)
+- **Blind spots.** A handler registered as a closure (`h.handleProviderWebhook(provider)`)
   or one that passes a service method as a value is not merged with its twin;
   a route whose registration depends on configuration would be missed if the
   zero-valued configuration turns it off; a write reached only by a background
@@ -91,29 +91,29 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 45 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1120 writes: 702 GraphQL mutations and 418 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 678 |
+| Exempt | 675 |
 | — Security | 85 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 48 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 45 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1120 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -256,12 +256,10 @@ The writes no tool performs yet, and what the tool would do.
 | permit | 3 | 2 | 1 | 0 |
 | ptopolicy | 8 | 1 | 7 | 0 |
 | push | 2 | 0 | 2 | 0 |
-| rateagreement | 11 | 10 | 1 | 0 |
+| rate | 19 | 10 | 9 | 0 |
 | rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
 | rateimport | 3 | 2 | 1 | 0 |
-| ratematrix | 9 | 0 | 9 | 0 |
-| ratequote | 2 | 0 | 2 | 0 |
 | ratesimulation | 1 | 1 | 0 | 0 |
 | ratezone | 2 | 0 | 2 | 0 |
 | realtime | 4 | 0 | 4 | 0 |
@@ -1604,12 +1602,12 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/jurisdiction-rule-overrides/:overrideID/`<br>jurisdictionrulehandler.deleteOverride | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
-| `POST /api/v1/jurisdiction-rule-overrides/`<br>jurisdictionrulehandler.createOverride | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
-| `POST /api/v1/jurisdiction-rules/`<br>jurisdictionrulehandler.create | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
-| `POST /api/v1/jurisdiction-rules/:ruleID/verify/`<br>jurisdictionrulehandler.verify | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
-| `PUT /api/v1/jurisdiction-rule-overrides/:overrideID/`<br>jurisdictionrulehandler.updateOverride | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
-| `PUT /api/v1/jurisdiction-rules/:ruleID/`<br>jurisdictionrulehandler.update | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
+| `mutation createJurisdictionRule` | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
+| `mutation createJurisdictionRuleOverride` | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
+| `mutation deleteJurisdictionRuleOverride` | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
+| `mutation updateJurisdictionRule` | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
+| `mutation updateJurisdictionRuleOverride` | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
+| `mutation verifyJurisdictionRule` | Exempt, configuration: Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them. |
 
 ### latecharge
 
@@ -1773,21 +1771,29 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/push/subscriptions/`<br>pushhandler.unsubscribe | Exempt, infrastructure: Registers or removes a browser push subscription for the device the person is using. |
 | `POST /api/v1/push/subscriptions/`<br>pushhandler.subscribe | Exempt, infrastructure: Registers or removes a browser push subscription for the device the person is using. |
 
-### rateagreement
+### rate
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-agreements/`<br>rateagreementhandler.create | Tool: `rate_create_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/approve/`<br>rateagreementhandler.review | Tool: `rate_approve_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/archive/`<br>rateagreementhandler.review | Tool: `rate_archive_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/`<br>rateagreementhandler.duplicate | Tool: `rate_duplicate_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/reject/`<br>rateagreementhandler.review | Tool: `rate_reject_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/resume/`<br>rateagreementhandler.review | Tool: `rate_resume_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/submit/`<br>rateagreementhandler.review | Tool: `rate_submit_agreement` |
-| `POST /api/v1/rate-agreements/:rateAgreementID/suspend/`<br>rateagreementhandler.review | Tool: `rate_suspend_agreement` |
-| `POST /api/v1/rate-agreements/rate-increase/apply/`<br>rateagreementhandler.applyRateIncrease | Tool: `rate_apply_increase` |
-| `POST /api/v1/rate-agreements/rate-increase/preview/`<br>rateagreementhandler.previewRateIncrease | Exempt, read-only: Plans a general rate increase for review and saves nothing. |
-| `PUT /api/v1/rate-agreements/:rateAgreementID/`<br>rateagreementhandler.update | Tool: `rate_update_agreement_draft` |
+| `mutation applyRateIncrease` | Tool: `rate_apply_increase` |
+| `mutation approveRateAgreement` | Tool: `rate_approve_agreement` |
+| `mutation approveRateMatrix` | Exempt, configuration: Publishing a rate matrix version is a reviewer's decision on pricing every tariff can pin; it waits for a person who did not write the draft. |
+| `mutation archiveRateAgreement` | Tool: `rate_archive_agreement` |
+| `mutation archiveRateMatrix` | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `mutation createRateAgreement` | Tool: `rate_create_agreement` |
+| `mutation createRateMatrix` | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `mutation duplicateRateAgreement` | Tool: `rate_duplicate_agreement` |
+| `mutation rejectRateAgreement` | Tool: `rate_reject_agreement` |
+| `mutation rejectRateMatrix` | Exempt, configuration: Rejecting a rate matrix draft is a reviewer's decision on pricing; it waits for a person who did not write the draft. |
+| `mutation replaceRateMatrixCells` | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `mutation requestRateMatrixChanges` | Exempt, configuration: Returning a rate matrix draft for changes is a reviewer's decision on pricing; it waits for a person who did not write the draft. |
+| `mutation restoreRateMatrixVersion` | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `mutation resumeRateAgreement` | Tool: `rate_resume_agreement` |
+| `mutation submitRateAgreement` | Tool: `rate_submit_agreement` |
+| `mutation submitRateMatrix` | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `mutation suspendRateAgreement` | Tool: `rate_suspend_agreement` |
+| `mutation updateRateAgreement` | Tool: `rate_update_agreement_draft` |
+| `mutation updateRateMatrix` | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 
 ### rateconfirmation
 
@@ -1808,36 +1814,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation commitRateImport` | Tool: `rate_commit_import` |
+| `mutation discardRateImport` | Tool: `rate_discard_import` |
 | `POST /api/v1/rate-imports/`<br>rateimporthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
-| `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Tool: `rate_commit_import` |
-| `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Tool: `rate_discard_import` |
-
-### ratematrix
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/rate-matrices/`<br>ratematrixhandler.create | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
-| `POST /api/v1/rate-matrices/:rateMatrixID/approve/`<br>ratematrixhandler.approve | Exempt, configuration: Publishing a rate matrix version is a reviewer's decision on pricing every tariff can pin; it waits for a person who did not write the draft. |
-| `POST /api/v1/rate-matrices/:rateMatrixID/archive/`<br>ratematrixhandler.archive | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
-| `POST /api/v1/rate-matrices/:rateMatrixID/reject/`<br>ratematrixhandler.reject | Exempt, configuration: Rejecting a rate matrix draft is a reviewer's decision on pricing; it waits for a person who did not write the draft. |
-| `POST /api/v1/rate-matrices/:rateMatrixID/request-changes/`<br>ratematrixhandler.requestChanges | Exempt, configuration: Returning a rate matrix draft for changes is a reviewer's decision on pricing; it waits for a person who did not write the draft. |
-| `POST /api/v1/rate-matrices/:rateMatrixID/restore/`<br>ratematrixhandler.restore | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
-| `POST /api/v1/rate-matrices/:rateMatrixID/submit/`<br>ratematrixhandler.submit | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
-| `PUT /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.update | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
-| `PUT /api/v1/rate-matrices/:rateMatrixID/cells/`<br>ratematrixhandler.replaceCells | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
-
-### ratequote
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/rate-quotes/shipment/:shipmentID/explain/`<br>ratequotehandler.explain | Exempt, read-only: Explains how a shipment was rated and saves nothing. |
-| `POST /api/v1/rate-quotes/shipment/:shipmentID/shop/`<br>ratequotehandler.shop | Exempt, read-only: Compares the rates every agreement would give a shipment and saves nothing. |
 
 ### ratesimulation
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-simulations/`<br>ratesimulationhandler.create | Tool: `rate_run_simulation` |
+| `mutation createRateSimulation` | Tool: `rate_run_simulation` |
 
 ### ratezone
 
@@ -1909,9 +1894,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/routing-guides/:guideID/`<br>routingguidehandler.delete | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
-| `POST /api/v1/routing-guides/`<br>routingguidehandler.create | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
-| `PUT /api/v1/routing-guides/:guideID/`<br>routingguidehandler.update | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
+| `mutation createRoutingGuide` | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
+| `mutation deleteRoutingGuide` | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
+| `mutation updateRoutingGuide` | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; dispatch_create_tender_from_routing_guide uses it. |
 
 ### scheduling
 

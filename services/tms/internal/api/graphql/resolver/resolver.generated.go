@@ -100,7 +100,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/pageaccessresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateimportresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/ratesimulationresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/recurringshipmentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/reportresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/roleresolver"
@@ -972,6 +974,14 @@ func FromServices(s *Services) *Resolver {
 		RateMatrixService:    s.RateMatrixService,
 		RateQuoteService:     s.RateQuoteService,
 	}
+	rateimportDeps := &rateimportresolver.Deps{
+		Core:              s.Core,
+		RateImportService: s.RateImportService,
+	}
+	ratesimulationDeps := &ratesimulationresolver.Deps{
+		Core:                  s.Core,
+		RateSimulationService: s.RateSimulationService,
+	}
 	recurringshipmentDeps := &recurringshipmentresolver.Deps{
 		Core:                     s.Core,
 		RecurringShipmentService: s.RecurringShipmentService,
@@ -1517,6 +1527,7 @@ func FromServices(s *Services) *Resolver {
 			invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
 			invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
 			journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
+			jurisdictionruleMutation:      &jurisdictionruleMutation{Deps: jurisdictionruleDeps},
 			latechargeMutation:            &latechargeMutation{Deps: latechargeDeps},
 			locationcategoryMutation:      &locationcategoryMutation{Deps: locationcategoryDeps},
 			notificationMutation:          &notificationMutation{Deps: notificationDeps},
@@ -1525,7 +1536,11 @@ func FromServices(s *Services) *Resolver {
 			orgstructureMutation:          &orgstructureMutation{Deps: orgstructureDeps},
 			performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
 			ptopolicyMutation:             &ptopolicyMutation{Deps: ptopolicyDeps},
+			rateMutation:                  &rateMutation{Deps: rateDeps},
+			rateimportMutation:            &rateimportMutation{Deps: rateimportDeps},
+			ratesimulationMutation:        &ratesimulationMutation{Deps: ratesimulationDeps},
 			reportMutation:                &reportMutation{Deps: reportDeps},
+			routingguideMutation:          &routingguideMutation{Deps: routingguideDeps},
 			schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
 			selfserviceMutation:           &selfserviceMutation{Deps: selfserviceDeps},
 			shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
@@ -1671,6 +1686,8 @@ func FromServices(s *Services) *Resolver {
 			performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
 			ptopolicyQuery:                &ptopolicyQuery{Deps: ptopolicyDeps},
 			rateQuery:                     &rateQuery{Deps: rateDeps},
+			rateimportQuery:               &rateimportQuery{Deps: rateimportDeps},
+			ratesimulationQuery:           &ratesimulationQuery{Deps: ratesimulationDeps},
 			recurringshipmentQuery:        &recurringshipmentQuery{Deps: recurringshipmentDeps},
 			reportQuery:                   &reportQuery{Deps: reportDeps},
 			roleQuery:                     &roleQuery{Deps: roleDeps},
@@ -2704,6 +2721,7 @@ type mutationResolver struct {
 	*invoiceadjustmentMutation
 	*invoicedisputeMutation
 	*journalentryMutation
+	*jurisdictionruleMutation
 	*latechargeMutation
 	*locationcategoryMutation
 	*notificationMutation
@@ -2712,7 +2730,11 @@ type mutationResolver struct {
 	*orgstructureMutation
 	*performancereviewMutation
 	*ptopolicyMutation
+	*rateMutation
+	*rateimportMutation
+	*ratesimulationMutation
 	*reportMutation
+	*routingguideMutation
 	*schedulingMutation
 	*selfserviceMutation
 	*shipmentMutation
@@ -2932,6 +2954,8 @@ type queryResolver struct {
 	*performancereviewQuery
 	*ptopolicyQuery
 	*rateQuery
+	*rateimportQuery
+	*ratesimulationQuery
 	*recurringshipmentQuery
 	*reportQuery
 	*roleQuery
@@ -3349,6 +3373,7 @@ type (
 	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
 	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
 	journalentryMutation            = journalentryresolver.MutationResolver
+	jurisdictionruleMutation        = jurisdictionruleresolver.MutationResolver
 	latechargeMutation              = latechargeresolver.MutationResolver
 	locationcategoryMutation        = locationcategoryresolver.MutationResolver
 	notificationMutation            = notificationresolver.MutationResolver
@@ -3357,7 +3382,11 @@ type (
 	orgstructureMutation            = orgstructureresolver.MutationResolver
 	performancereviewMutation       = performancereviewresolver.MutationResolver
 	ptopolicyMutation               = ptopolicyresolver.MutationResolver
+	rateMutation                    = rateresolver.MutationResolver
+	rateimportMutation              = rateimportresolver.MutationResolver
+	ratesimulationMutation          = ratesimulationresolver.MutationResolver
 	reportMutation                  = reportresolver.MutationResolver
+	routingguideMutation            = routingguideresolver.MutationResolver
 	schedulingMutation              = schedulingresolver.MutationResolver
 	selfserviceMutation             = selfserviceresolver.MutationResolver
 	shipmentMutation                = shipmentresolver.MutationResolver
@@ -3478,6 +3507,8 @@ type (
 	performancereviewQuery          = performancereviewresolver.QueryResolver
 	ptopolicyQuery                  = ptopolicyresolver.QueryResolver
 	rateQuery                       = rateresolver.QueryResolver
+	rateimportQuery                 = rateimportresolver.QueryResolver
+	ratesimulationQuery             = ratesimulationresolver.QueryResolver
 	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver
 	reportQuery                     = reportresolver.QueryResolver
 	roleQuery                       = roleresolver.QueryResolver

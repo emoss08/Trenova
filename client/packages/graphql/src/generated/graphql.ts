@@ -5933,6 +5933,48 @@ export type JournalReviewInput = {
   entryIds: Array<string | number>;
 };
 
+/** A jurisdiction's statutory oversize and overweight limits. The row is global: every organization reads it. */
+export type JurisdictionRuleInput = {
+  daylightOnly: boolean;
+  effectiveEndDate?: number | null | undefined;
+  effectiveStartDate?: number | null | undefined;
+  holidayRestricted: boolean;
+  maxHeightFeet: number;
+  maxLengthFeet: number;
+  maxWeightPounds: number;
+  maxWidthFeet: number;
+  permitBaseFee?: string | null | undefined;
+  permitLeadTimeDays: number;
+  permitPerMileFee?: string | null | undefined;
+  permitValidityDays: number;
+  rushHourRestricted: boolean;
+  sourceNote?: string | null | undefined;
+  sourceUrl?: string | null | undefined;
+  stateId: string | number;
+  status: JurisdictionRuleStatus;
+  superloadWeightPounds?: number | null | undefined;
+  superloadWidthFeet?: number | null | undefined;
+  /** The version read before editing; a save against an older one is refused. */
+  version?: number | null | undefined;
+  weekendRestricted: boolean;
+};
+
+/** An organization's stricter posture on a jurisdiction; every limit left out defers to the statute. */
+export type JurisdictionRuleOverrideInput = {
+  daylightOnly?: boolean | null | undefined;
+  holidayRestricted?: boolean | null | undefined;
+  maxHeightFeet?: number | null | undefined;
+  maxLengthFeet?: number | null | undefined;
+  maxWeightPounds?: number | null | undefined;
+  maxWidthFeet?: number | null | undefined;
+  permitLeadTimeDays?: number | null | undefined;
+  /** Why this organization runs tighter than the statute. Required, minimum ten characters. */
+  reason: string;
+  stateId: string | number;
+  /** The version read before editing; a save against an older one is refused. */
+  version?: number | null | undefined;
+};
+
 export type JurisdictionRuleStatus =
   | 'Active'
   | 'Draft'
@@ -6730,9 +6772,118 @@ export type RandomPeriod =
   | 'Quarterly'
   | 'SemiAnnual';
 
+/** One accessorial an agreement prices. The schedule is replaced whole on every save. */
+export type RateAgreementAccessorialInput = {
+  accessorialChargeId: string | number;
+  amount: string;
+  autoApply?: boolean | null | undefined;
+  /** A Tariff condition; empty applies the charge to every shipment. */
+  condition?: string | null | undefined;
+  effectiveFrom?: number | null | undefined;
+  effectiveTo?: number | null | undefined;
+  freeUnits?: number | null | undefined;
+  maxAmount?: string | null | undefined;
+  method: string;
+  rateUnit?: string | null | undefined;
+  serviceTypeIds?: Array<string | number> | null | undefined;
+  shipmentTypeIds?: Array<string | number> | null | undefined;
+  waived?: boolean | null | undefined;
+};
+
+/** How an agreement prices fuel: a program, with optional overrides, or a waiver. */
+export type RateAgreementFuelBindingInput = {
+  capAmount?: string | null | undefined;
+  fuelSurchargeProgramId: string | number;
+  incrementRateOverride?: string | null | undefined;
+  pegPriceOverride?: string | null | undefined;
+  waived?: boolean | null | undefined;
+};
+
+/**
+ * A rate agreement as the editor saves it: the header terms with the full rule
+ * set, accessorial schedule and fuel binding. A new agreement always starts in
+ * Draft; status and review moves go through their own mutations.
+ */
+export type RateAgreementInput = {
+  /** The whole accessorial schedule, which replaces the saved one. */
+  accessorials: Array<RateAgreementAccessorialInput>;
+  agreementType: RateAgreementType;
+  autoRenew?: boolean | null | undefined;
+  billToCustomerId?: string | number | null | undefined;
+  carrierId?: string | number | null | undefined;
+  code: string;
+  contractRef?: string | null | undefined;
+  currency: string;
+  customerId?: string | number | null | undefined;
+  description?: string | null | undefined;
+  documentId?: string | number | null | undefined;
+  effectiveFrom: number;
+  effectiveTo?: number | null | undefined;
+  /** The fuel terms; null leaves the agreement without a fuel binding. */
+  fuelBinding?: RateAgreementFuelBindingInput | null | undefined;
+  /** Values every rule's tariff reads when the rule sets none, by input name, in the Tariff wire form. */
+  inputs?: unknown;
+  /** Left as stored for a caller without the margins group. */
+  marginFloorPercent?: string | null | undefined;
+  /** Left as stored for a caller without the margins group. */
+  maxPayPercentOfSell?: string | null | undefined;
+  name: string;
+  partyType: RateAgreementPartyType;
+  priority?: number | null | undefined;
+  renewalNoticeDays?: number | null | undefined;
+  /** The whole rule set: a held rule left out is closed out. */
+  rules: Array<RateAgreementRuleInput>;
+  /** The version read before editing; a save against an older one is refused. */
+  version?: number | null | undefined;
+};
+
 export type RateAgreementPartyType =
   | 'Carrier'
   | 'Customer';
+
+/** One rule of an agreement as the editor saves it. A rule with the ID of one the agreement holds keeps it when its terms are unchanged and supersedes it when they changed; a rule without an ID is a new lane, and a held rule left out is closed out. */
+export type RateAgreementRuleInput = {
+  commodityIds?: Array<string | number> | null | undefined;
+  currency?: string | null | undefined;
+  daysOfWeek?: number | null | undefined;
+  destinationCity?: string | null | undefined;
+  destinationLatitude?: number | null | undefined;
+  destinationLongitude?: number | null | undefined;
+  destinationRadiusMeters?: number | null | undefined;
+  destinationScopeType: string;
+  destinationScopeValue?: string | null | undefined;
+  direction?: string | null | undefined;
+  effectiveFrom: number;
+  effectiveTo?: number | null | undefined;
+  equipmentClasses?: Array<string> | null | undefined;
+  formulaTemplateId: string | number;
+  freightClasses?: Array<string> | null | undefined;
+  hazmatOnly?: boolean | null | undefined;
+  id?: string | number | null | undefined;
+  /** The values the rule's tariff prices with, by input name, in the Tariff wire form. */
+  inputs?: unknown;
+  label?: string | null | undefined;
+  maxDistance?: string | null | undefined;
+  maxStops?: number | null | undefined;
+  maxWeight?: string | null | undefined;
+  minDistance?: string | null | undefined;
+  minStops?: number | null | undefined;
+  minWeight?: string | null | undefined;
+  originCity?: string | null | undefined;
+  originLatitude?: number | null | undefined;
+  originLongitude?: number | null | undefined;
+  originRadiusMeters?: number | null | undefined;
+  originScopeType: string;
+  originScopeValue?: string | null | undefined;
+  priority?: number | null | undefined;
+  serviceModels?: Array<string> | null | undefined;
+  serviceTypeIds?: Array<string | number> | null | undefined;
+  shipmentTypeIds?: Array<string | number> | null | undefined;
+  status?: string | null | undefined;
+  tempControlOnly?: boolean | null | undefined;
+  tractorTypeIds?: Array<string | number> | null | undefined;
+  trailerTypeIds?: Array<string | number> | null | undefined;
+};
 
 export type RateAgreementStatus =
   | 'Active'
@@ -6749,6 +6900,89 @@ export type RateAgreementType =
   | 'Spot'
   | 'Tariff';
 
+/** What committing a sheet would do to one lane. */
+export type RateImportChangeKind =
+  | 'Added'
+  | 'Changed'
+  | 'Duplicate'
+  | 'Removed'
+  | 'Unchanged';
+
+export type RateImportFormat =
+  | 'CSV'
+  | 'XLSX';
+
+export type RateImportStatus =
+  | 'Committed'
+  | 'Discarded'
+  | 'Failed'
+  | 'Parsed'
+  | 'Pending';
+
+/** How much a general rate increase moves every money input it scales. */
+export type RateIncreaseAdjustmentInput = {
+  /** The percent change, such as 4.5 for a 4.5% increase. */
+  percentChange?: string | null | undefined;
+};
+
+/**
+ * The scope, size and start of a general rate increase: the named agreements,
+ * or every agreement of a party or a side.
+ */
+export type RateIncreaseInput = {
+  adjustment: RateIncreaseAdjustmentInput;
+  agreementIds?: Array<string | number> | null | undefined;
+  carrierId?: string | number | null | undefined;
+  customerId?: string | number | null | undefined;
+  effectiveFrom: number;
+  partyType?: RateAgreementPartyType | null | undefined;
+};
+
+/** One cell of a rate matrix draft. Keys and bands left out are empty. */
+export type RateMatrixCellInput = {
+  d0Key?: string | null | undefined;
+  d0KeyTo?: string | null | undefined;
+  d0Max?: string | null | undefined;
+  d0Min?: string | null | undefined;
+  d1Key?: string | null | undefined;
+  d1KeyTo?: string | null | undefined;
+  d1Max?: string | null | undefined;
+  d1Min?: string | null | undefined;
+  d2Key?: string | null | undefined;
+  d2KeyTo?: string | null | undefined;
+  d2Max?: string | null | undefined;
+  d2Min?: string | null | undefined;
+  d3Key?: string | null | undefined;
+  d3KeyTo?: string | null | undefined;
+  d3Max?: string | null | undefined;
+  d3Min?: string | null | undefined;
+  deficitEligible?: boolean | null | undefined;
+  minCharge?: string | null | undefined;
+  value: string;
+};
+
+/** One axis of a rate matrix draft. */
+export type RateMatrixDimensionInput = {
+  keyNormalization?: string | null | undefined;
+  kind: string;
+  label?: string | null | undefined;
+  matchMode: string;
+  position: number;
+  rangeOverflow?: string | null | undefined;
+};
+
+/** A rate matrix draft's header and axes. */
+export type RateMatrixInput = {
+  code: string;
+  description?: string | null | undefined;
+  dimensions: Array<RateMatrixDimensionInput>;
+  name: string;
+  /** What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int. */
+  valueType: string;
+  /** The version read before editing; a save against an older one is refused. */
+  version?: number | null | undefined;
+};
+
 export type RateQuoteOutcome =
   | 'Error'
   | 'FormulaFallback'
@@ -6762,6 +6996,39 @@ export type RateQuotePurpose =
   | 'Shopping'
   | 'Simulation'
   | 'WhatIf';
+
+/** What best means for one shopping run. */
+export type RateShopStrategy =
+  /** Refused to a reader without the margins group. */
+  | 'BestMargin'
+  | 'FastestAccept'
+  | 'GuideRank'
+  | 'LeastCost';
+
+/** A simulation to record and replay. */
+export type RateSimulationInput = {
+  description?: string | null | undefined;
+  name: string;
+  partyType?: RateAgreementPartyType | null | undefined;
+  rateAgreementId: string | number;
+  sampleFrom: number;
+  /** At most this many shipments; 0 replays the whole window. */
+  sampleLimit?: number | null | undefined;
+  sampleTo: number;
+};
+
+/** What happened to one of the simulated agreement's rules across a run. */
+export type RateSimulationRuleOutcome =
+  | 'Lost'
+  | 'NeverFired'
+  | 'Won';
+
+export type RateSimulationStatus =
+  | 'Canceled'
+  | 'Completed'
+  | 'Failed'
+  | 'Pending'
+  | 'Running';
 
 export type RateUnit =
   | 'Day'
@@ -7331,6 +7598,40 @@ export type RotaFilterInput = {
   teamOnly?: boolean | null | undefined;
   weeks?: number | null | undefined;
   workerIds?: Array<string | number> | null | undefined;
+};
+
+/** One carrier in a routing guide's waterfall. */
+export type RoutingGuideEntryInput = {
+  carrierId: string | number;
+  channel: TenderChannel;
+  /** The entry's ID when it is one the guide already holds. */
+  id?: string | number | null | undefined;
+  offerTtlSeconds: number;
+  rank: number;
+  rate: string;
+  rateMethod: CarrierRateMethod;
+  /** Offer what the carrier's contract says today instead of the entry's fixed rate. */
+  useContractRate?: boolean | null | undefined;
+  version?: number | null | undefined;
+};
+
+/**
+ * A routing guide and its whole waterfall. Origin and destination are each a
+ * location, a city and state, or a state, at the same level on both ends.
+ */
+export type RoutingGuideInput = {
+  description?: string | null | undefined;
+  destinationCity?: string | null | undefined;
+  destinationLocationId?: string | number | null | undefined;
+  destinationState?: string | null | undefined;
+  entries: Array<RoutingGuideEntryInput>;
+  name: string;
+  originCity?: string | null | undefined;
+  originLocationId?: string | number | null | undefined;
+  originState?: string | null | undefined;
+  status: EntityStatus;
+  /** The version read before editing; a save against an older one is refused. */
+  version?: number | null | undefined;
 };
 
 export type RunDotRandomDrawInput = {
@@ -8247,6 +8548,18 @@ export type ShipmentsInput = {
   workerIds?: Array<string | number> | null | undefined;
 };
 
+/** How to shop a shipment's carriers. Shopping never saves a quote. */
+export type ShopShipmentCarriersInput = {
+  /** Price against the terms effective at this moment; the shipment's own rating date when left out. */
+  asOf?: number | null | undefined;
+  /** An explicit shortlist; the shipment's routing guide supplies the carriers when left out. */
+  carrierIds?: Array<string | number> | null | undefined;
+  /** At most this many options. */
+  limit?: number | null | undefined;
+  /** What best means for this run; LeastCost when left out. */
+  strategy?: RateShopStrategy | null | undefined;
+};
+
 export type SidebarActivityPreferenceInput = {
   defaultOpen: boolean;
   pageSize: number;
@@ -8358,6 +8671,14 @@ export type SubmitMyExpenseInput = {
   incurredDate?: number | null | undefined;
   payCodeId?: string | number | null | undefined;
   shipmentId?: string | number | null | undefined;
+};
+
+/** Sending a rate matrix draft to review: who should review it and a note for them. */
+export type SubmitRateMatrixInput = {
+  comment?: string | null | undefined;
+  /** The reviewer asked to publish it: active, someone other than the submitter, who may approve rate matrices. */
+  reviewerId?: string | number | null | undefined;
+  reviewerNote?: string | null | undefined;
 };
 
 export type TableConfigurationInput = {
@@ -9302,6 +9623,13 @@ export type VerifyCarrierEquipmentInput = {
   unitNumber?: string | null | undefined;
   unitType: CarrierIntelUnitType;
   vin?: string | null | undefined;
+};
+
+/** What a jurisdiction rule was confirmed against, and the verdict. */
+export type VerifyJurisdictionRuleInput = {
+  sourceNote?: string | null | undefined;
+  sourceUrl?: string | null | undefined;
+  verificationState: JurisdictionVerificationState;
 };
 
 export type VoidInvoiceInput = {
@@ -17012,6 +17340,51 @@ export type JournalReversalTableQueryVariables = Exact<{
 
 export type JournalReversalTableQuery = { journalReversals: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'JournalReversalTableRowFieldsFragment': JournalReversalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CreateJurisdictionRuleMutationVariables = Exact<{
+  input: JurisdictionRuleInput;
+}>;
+
+
+export type CreateJurisdictionRuleMutation = { createJurisdictionRule: { id: string, version: number } };
+
+export type UpdateJurisdictionRuleMutationVariables = Exact<{
+  id: string | number;
+  input: JurisdictionRuleInput;
+}>;
+
+
+export type UpdateJurisdictionRuleMutation = { updateJurisdictionRule: { id: string, verificationState: JurisdictionVerificationState, version: number } };
+
+export type VerifyJurisdictionRuleMutationVariables = Exact<{
+  id: string | number;
+  input: VerifyJurisdictionRuleInput;
+}>;
+
+
+export type VerifyJurisdictionRuleMutation = { verifyJurisdictionRule: { id: string, verificationState: JurisdictionVerificationState, verifiedAt: number | null, version: number } };
+
+export type CreateJurisdictionRuleOverrideMutationVariables = Exact<{
+  input: JurisdictionRuleOverrideInput;
+}>;
+
+
+export type CreateJurisdictionRuleOverrideMutation = { createJurisdictionRuleOverride: { id: string, version: number } };
+
+export type UpdateJurisdictionRuleOverrideMutationVariables = Exact<{
+  id: string | number;
+  input: JurisdictionRuleOverrideInput;
+}>;
+
+
+export type UpdateJurisdictionRuleOverrideMutation = { updateJurisdictionRuleOverride: { id: string, version: number } };
+
+export type DeleteJurisdictionRuleOverrideMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteJurisdictionRuleOverrideMutation = { deleteJurisdictionRuleOverride: boolean };
+
 export type JurisdictionRuleOverrideTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, maxWidthFeet: number | null, maxHeightFeet: number | null, maxLengthFeet: number | null, maxWeightPounds: number | null, permitLeadTimeDays: number | null, daylightOnly: boolean | null, holidayRestricted: boolean | null, reason: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null } & { ' $fragmentName'?: 'JurisdictionRuleOverrideTableRowFieldsFragment' };
 
 export type JurisdictionRuleOverrideTableQueryVariables = Exact<{
@@ -17728,6 +18101,137 @@ export type RunPtoAccrualMutationVariables = Exact<{
 
 export type RunPtoAccrualMutation = { runPtoAccrual: { queued: boolean, workflowId: string | null, workersProcessed: number, workersSkipped: number, entriesPosted: number, entriesCapped: number, entriesSkipped: number } };
 
+export type RateAgreementRuleFieldsFragment = { id: string, businessUnitId: string, organizationId: string, rateAgreementId: string, label: string, status: string, originScopeType: string, originScopeValue: string, originCity: string, destinationScopeType: string, destinationScopeValue: string, destinationCity: string, direction: string, laneKey: string, specificityScore: number, originRadiusMeters: number | null, destinationRadiusMeters: number | null, originLatitude: number | null, originLongitude: number | null, destinationLatitude: number | null, destinationLongitude: number | null, serviceTypeIds: Array<string>, shipmentTypeIds: Array<string>, tractorTypeIds: Array<string>, trailerTypeIds: Array<string>, commodityIds: Array<string>, freightClasses: Array<string>, serviceModels: Array<string>, equipmentClasses: Array<string>, minWeight: string | null, maxWeight: string | null, minDistance: string | null, maxDistance: string | null, minStops: number | null, maxStops: number | null, daysOfWeek: number, hazmatOnly: boolean, tempControlOnly: boolean, formulaTemplateId: string, inputs: unknown, currency: string, priority: number, effectiveFrom: number, effectiveTo: number | null, supersedesRuleId: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateAgreementRuleFieldsFragment' };
+
+export type RateAgreementVersionFieldsFragment = { id: string, rateAgreementId: string, versionNumber: number, effectiveFrom: number, effectiveTo: number | null, code: string, name: string, priority: number, agreementEffectiveFrom: number, agreementEffectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, billToCustomerId: string | null, accessorialTerms: unknown, fuelTerms: unknown, accessorialNames: unknown, changeMessage: string, changeSummary: unknown, createdById: string | null, createdAt: number } & { ' $fragmentName'?: 'RateAgreementVersionFieldsFragment' };
+
+export type RateIncreasePlanFieldsFragment = { effectiveFrom: number, agreementCount: number, skippedNoMoney: number, lines: Array<{ rateAgreementId: string, agreementCode: string, agreementName: string, ruleId: string, laneKey: string, label: string, before: unknown, after: unknown, changed: Array<string> }> } & { ' $fragmentName'?: 'RateIncreasePlanFieldsFragment' };
+
+export type RateAgreementDetailQueryVariables = Exact<{
+  id: string | number;
+  withRules: boolean;
+}>;
+
+
+export type RateAgreementDetailQuery = { rateAgreement: { id: string, businessUnitId: string, organizationId: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, code: string, name: string, description: string, agreementType: RateAgreementType, status: RateAgreementStatus, contractRef: string, documentId: string | null, priority: number, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, inputs: unknown, billToCustomerId: string | null, marginFloorPercent: string | null, maxPayPercentOfSell: string | null, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, currentVersionNumber: number, version: number, createdAt: number, updatedAt: number, accessorials: Array<{ id: string, rateAgreementId: string, accessorialChargeId: string, method: string, rateUnit: string, amount: string, waived: boolean, autoApply: boolean, condition: string, freeUnits: number | null, maxAmount: string | null, serviceTypeIds: Array<string>, shipmentTypeIds: Array<string>, effectiveFrom: number | null, effectiveTo: number | null }> | null, fuelBinding: { id: string, rateAgreementId: string, fuelSurchargeProgramId: string, waived: boolean, pegPriceOverride: string | null, incrementRateOverride: string | null, capAmount: string | null } | null, rules?: Array<{ ' $fragmentRefs'?: { 'RateAgreementRuleFieldsFragment': RateAgreementRuleFieldsFragment } }> | null } | null };
+
+export type RateAgreementLanePageQueryVariables = Exact<{
+  rateAgreementId: string | number;
+  limit: number;
+  offset: number;
+}>;
+
+
+export type RateAgreementLanePageQuery = { rateAgreementLanePage: { count: number, countExact: boolean, retired: number, retiredExact: boolean, limit: number, offset: number, results: Array<{ ' $fragmentRefs'?: { 'RateAgreementRuleFieldsFragment': RateAgreementRuleFieldsFragment } }> } };
+
+export type RateAgreementLaneSummaryQueryVariables = Exact<{
+  rateAgreementId: string | number;
+}>;
+
+
+export type RateAgreementLaneSummaryQuery = { rateAgreementLaneSummary: { count: number, groups: Array<{ formulaTemplateId: string | null, formulaTemplateName: string, currency: string, lanes: number, minRate: string | null, maxRate: string | null }> } };
+
+export type RateAgreementVersionsQueryVariables = Exact<{
+  rateAgreementId: string | number;
+}>;
+
+
+export type RateAgreementVersionsQuery = { rateAgreementVersions: Array<{ ' $fragmentRefs'?: { 'RateAgreementVersionFieldsFragment': RateAgreementVersionFieldsFragment } }> };
+
+export type RateAgreementLaneHistoryQueryVariables = Exact<{
+  rateAgreementId: string | number;
+  laneKey: string;
+}>;
+
+
+export type RateAgreementLaneHistoryQuery = { rateAgreementLaneHistory: Array<{ ' $fragmentRefs'?: { 'RateAgreementRuleFieldsFragment': RateAgreementRuleFieldsFragment } }> };
+
+export type PreviewRateIncreaseQueryVariables = Exact<{
+  input: RateIncreaseInput;
+}>;
+
+
+export type PreviewRateIncreaseQuery = { previewRateIncrease: { ' $fragmentRefs'?: { 'RateIncreasePlanFieldsFragment': RateIncreasePlanFieldsFragment } } };
+
+export type ApplyRateIncreaseMutationVariables = Exact<{
+  input: RateIncreaseInput;
+}>;
+
+
+export type ApplyRateIncreaseMutation = { applyRateIncrease: { ' $fragmentRefs'?: { 'RateIncreasePlanFieldsFragment': RateIncreasePlanFieldsFragment } } };
+
+export type CreateRateAgreementMutationVariables = Exact<{
+  input: RateAgreementInput;
+}>;
+
+
+export type CreateRateAgreementMutation = { createRateAgreement: { id: string, version: number } };
+
+export type UpdateRateAgreementMutationVariables = Exact<{
+  id: string | number;
+  input: RateAgreementInput;
+}>;
+
+
+export type UpdateRateAgreementMutation = { updateRateAgreement: { id: string, version: number } };
+
+export type DuplicateRateAgreementMutationVariables = Exact<{
+  id: string | number;
+  code?: string | null | undefined;
+  name?: string | null | undefined;
+}>;
+
+
+export type DuplicateRateAgreementMutation = { duplicateRateAgreement: { id: string, code: string, name: string, status: RateAgreementStatus, version: number } };
+
+export type SubmitRateAgreementMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type SubmitRateAgreementMutation = { submitRateAgreement: { id: string, status: RateAgreementStatus, version: number } };
+
+export type ApproveRateAgreementMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type ApproveRateAgreementMutation = { approveRateAgreement: { id: string, status: RateAgreementStatus, version: number } };
+
+export type RejectRateAgreementMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type RejectRateAgreementMutation = { rejectRateAgreement: { id: string, status: RateAgreementStatus, version: number } };
+
+export type SuspendRateAgreementMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type SuspendRateAgreementMutation = { suspendRateAgreement: { id: string, status: RateAgreementStatus, version: number } };
+
+export type ResumeRateAgreementMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type ResumeRateAgreementMutation = { resumeRateAgreement: { id: string, status: RateAgreementStatus, version: number } };
+
+export type ArchiveRateAgreementMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type ArchiveRateAgreementMutation = { archiveRateAgreement: { id: string, status: RateAgreementStatus, version: number } };
+
 export type DeskRateAgreementPricingQueryVariables = Exact<{
   input: DataTableConnectionInput;
 }>;
@@ -17758,6 +18262,29 @@ export type DeskRateMatrixCardQueryVariables = Exact<{
 
 export type DeskRateMatrixCardQuery = { rateMatrix: { id: string, code: string, name: string, description: string, status: FormulaTemplateStatus, publishedVersionNumber: number, hasDraftChanges: boolean, valueType: string, cellCount: number, dimensions: Array<{ id: string, position: number, kind: string, matchMode: string, label: string, keyNormalization: string, rangeOverflow: string }> | null, cells: Array<{ id: string, d0Key: string, d1Key: string, d2Key: string, d3Key: string, d0KeyTo: string, d1KeyTo: string, d2KeyTo: string, d3KeyTo: string, d0Min: string | null, d0Max: string | null, d1Min: string | null, d1Max: string | null, d2Min: string | null, d2Max: string | null, d3Min: string | null, d3Max: string | null, deficitEligible: boolean, value: string, minCharge: string | null }> } | null };
 
+export type RateImportBatchFieldsFragment = { id: string, businessUnitId: string, organizationId: string, rateAgreementId: string, fileName: string, sourceFormat: RateImportFormat, status: RateImportStatus, effectiveFrom: number, mapping: unknown, unmappedHeaders: Array<string>, rowCount: number, errorCount: number, error: string, uploadedById: string | null, committedAt: number | null, committedBy: string | null, version: number, createdAt: number, updatedAt: number, summary: { added: number, changed: number, removed: number, duplicate: number, unchanged: number } | null, changes: Array<{ kind: RateImportChangeKind, laneKey: string, label: string, existingId: string | null, fields: Array<{ field: string, before: string, after: string }> }> } & { ' $fragmentName'?: 'RateImportBatchFieldsFragment' };
+
+export type RateImportFailedRowsQueryVariables = Exact<{
+  rateImportId: string | number;
+}>;
+
+
+export type RateImportFailedRowsQuery = { rateImportRows: Array<{ id: string, rateImportBatchId: string, rowNumber: number, cells: Array<string>, laneKey: string, error: string }> };
+
+export type CommitRateImportMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CommitRateImportMutation = { commitRateImport: { ' $fragmentRefs'?: { 'RateImportBatchFieldsFragment': RateImportBatchFieldsFragment } } };
+
+export type DiscardRateImportMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DiscardRateImportMutation = { discardRateImport: { ' $fragmentRefs'?: { 'RateImportBatchFieldsFragment': RateImportBatchFieldsFragment } } };
+
 export type RateMatrixRecordQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -17772,6 +18299,161 @@ export type RateMatrixVersionAxesQueryVariables = Exact<{
 
 
 export type RateMatrixVersionAxesQuery = { rateMatrixVersion: { id: string, rateMatrixId: string, versionNumber: number, valueType: string, cellCount: number, dimensions: Array<{ id: string, position: number, kind: string, matchMode: string, label: string, keyNormalization: string, rangeOverflow: string }> } | null };
+
+export type RateMatrixCellFieldsFragment = { id: string, d0Key: string, d1Key: string, d2Key: string, d3Key: string, d0KeyTo: string, d1KeyTo: string, d2KeyTo: string, d3KeyTo: string, d0Min: string | null, d0Max: string | null, d1Min: string | null, d1Max: string | null, d2Min: string | null, d2Max: string | null, d3Min: string | null, d3Max: string | null, deficitEligible: boolean, value: string, minCharge: string | null } & { ' $fragmentName'?: 'RateMatrixCellFieldsFragment' };
+
+export type RateMatrixDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RateMatrixDetailQuery = { rateMatrix: { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: FormulaTemplateStatus, valueType: string, publishedVersionNumber: number, publishedAt: number | null, hasDraftChanges: boolean, cellCount: number, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, version: number, createdAt: number, updatedAt: number, dimensions: Array<{ id: string, position: number, kind: string, matchMode: string, label: string, keyNormalization: string, rangeOverflow: string }> | null } | null };
+
+export type RateMatrixDraftCellsQueryVariables = Exact<{
+  id: string | number;
+  offset: number;
+  limit: number;
+}>;
+
+
+export type RateMatrixDraftCellsQuery = { rateMatrix: { id: string, cells: Array<{ ' $fragmentRefs'?: { 'RateMatrixCellFieldsFragment': RateMatrixCellFieldsFragment } }> } | null };
+
+export type RateMatrixVersionCellsQueryVariables = Exact<{
+  id: string | number;
+  versionNumber: number;
+  offset: number;
+  limit: number;
+}>;
+
+
+export type RateMatrixVersionCellsQuery = { rateMatrixVersion: { id: string, cells: Array<{ ' $fragmentRefs'?: { 'RateMatrixCellFieldsFragment': RateMatrixCellFieldsFragment } }> } | null };
+
+export type RateMatrixReviewersQueryVariables = Exact<{
+  rateMatrixId: string | number;
+}>;
+
+
+export type RateMatrixReviewersQuery = { rateMatrixReviewers: Array<{ id: string, name: string, username: string, profilePicUrl: string | null }> };
+
+export type CreateRateMatrixMutationVariables = Exact<{
+  input: RateMatrixInput;
+}>;
+
+
+export type CreateRateMatrixMutation = { createRateMatrix: { id: string, version: number } };
+
+export type UpdateRateMatrixMutationVariables = Exact<{
+  id: string | number;
+  input: RateMatrixInput;
+}>;
+
+
+export type UpdateRateMatrixMutation = { updateRateMatrix: { id: string, version: number } };
+
+export type ReplaceRateMatrixCellsMutationVariables = Exact<{
+  id: string | number;
+  cells: Array<RateMatrixCellInput> | RateMatrixCellInput;
+}>;
+
+
+export type ReplaceRateMatrixCellsMutation = { replaceRateMatrixCells: boolean };
+
+export type SubmitRateMatrixMutationVariables = Exact<{
+  id: string | number;
+  input?: SubmitRateMatrixInput | null | undefined;
+}>;
+
+
+export type SubmitRateMatrixMutation = { submitRateMatrix: { id: string, status: FormulaTemplateStatus, version: number } };
+
+export type ApproveRateMatrixMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type ApproveRateMatrixMutation = { approveRateMatrix: { id: string, status: FormulaTemplateStatus, version: number } };
+
+export type RejectRateMatrixMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type RejectRateMatrixMutation = { rejectRateMatrix: { id: string, status: FormulaTemplateStatus, version: number } };
+
+export type RequestRateMatrixChangesMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type RequestRateMatrixChangesMutation = { requestRateMatrixChanges: { id: string, status: FormulaTemplateStatus, version: number } };
+
+export type ArchiveRateMatrixMutationVariables = Exact<{
+  id: string | number;
+  confirmInUse?: boolean | null | undefined;
+}>;
+
+
+export type ArchiveRateMatrixMutation = { archiveRateMatrix: { id: string, status: FormulaTemplateStatus, version: number } };
+
+export type RestoreRateMatrixVersionMutationVariables = Exact<{
+  id: string | number;
+  versionNumber: number;
+}>;
+
+
+export type RestoreRateMatrixVersionMutation = { restoreRateMatrixVersion: { id: string, status: FormulaTemplateStatus, version: number } };
+
+export type RateQuoteDetailFieldsFragment = { id: string, businessUnitId: string, organizationId: string, shipmentId: string | null, shipmentMoveId: string | null, partyType: RateAgreementPartyType, partyId: string, purpose: RateQuotePurpose, outcome: RateQuoteOutcome, status: string, rateAgreementId: string | null, rateAgreementRuleId: string | null, agreementVersionNumber: number | null, formulaTemplateId: string | null, formulaTemplateVersionNumber: number | null, specificityScore: number, currency: string, linehaulAmount: string, fuelAmount: string, accessorialAmount: string, totalAmount: string, costAmount: string | null, marginAmount: string | null, marginPercent: string | null, billingCurrency: string, billingAmount: string, fxRate: string | null, exchangeRateId: string | null, foregoneAmount: string | null, overrideReason: string, asOf: number, ratedAt: number, ratedById: string | null, engineVersion: string, contextHash: string, trace: unknown, createdAt: number } & { ' $fragmentName'?: 'RateQuoteDetailFieldsFragment' };
+
+export type AppliedShipmentRateQuoteQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type AppliedShipmentRateQuoteQuery = { appliedShipmentRateQuote: { ' $fragmentRefs'?: { 'RateQuoteDetailFieldsFragment': RateQuoteDetailFieldsFragment } } | null };
+
+export type ShopShipmentCarriersQueryVariables = Exact<{
+  shipmentId: string | number;
+  input?: ShopShipmentCarriersInput | null | undefined;
+}>;
+
+
+export type ShopShipmentCarriersQuery = { shopShipmentCarriers: { strategy: RateShopStrategy, routingGuideId: string | null, sellTotal: string | null, warnings: Array<string>, options: Array<{ carrierId: string, carrierName: string, rank: number, guideRank: number, offerTtlSeconds: number, outcome: RateQuoteOutcome, cost: string, currency: string, agreementId: string | null, ruleId: string | null, note: string, margin: { amount: string, percent: string, payPercent: string, floorApplies: boolean, belowFloor: boolean, ceilingApplies: boolean, abovePayCeiling: boolean, explanation: string } | null, quote: { ' $fragmentRefs'?: { 'RateQuoteDetailFieldsFragment': RateQuoteDetailFieldsFragment } } | null }> } };
+
+export type RateSimulationFieldsFragment = { id: string, businessUnitId: string, organizationId: string, rateAgreementId: string, name: string, description: string, status: RateSimulationStatus, partyType: RateAgreementPartyType, sampleFrom: number, sampleTo: number, sampleLimit: number, error: string, startedAt: number | null, completedAt: number | null, requestedBy: string | null, workflowId: string, version: number, createdAt: number, updatedAt: number, summary: { shipmentCount: number, evaluatedCount: number, changedCount: number, increasedCount: number, decreasedCount: number, errorCount: number, beforeTotal: string, afterTotal: string, totalDelta: string, totalDeltaPct: string, maxIncrease: string, maxDecrease: string } | null, ruleCoverage: Array<{ ruleId: string, label: string, laneKey: string, outcome: RateSimulationRuleOutcome, wonCount: number, lostCount: number, lostTo: string | null, lostToLabel: string }> } & { ' $fragmentName'?: 'RateSimulationFieldsFragment' };
+
+export type RateAgreementSimulationsQueryVariables = Exact<{
+  rateAgreementId: string | number;
+}>;
+
+
+export type RateAgreementSimulationsQuery = { rateSimulations: Array<{ ' $fragmentRefs'?: { 'RateSimulationFieldsFragment': RateSimulationFieldsFragment } }> };
+
+export type RateSimulationDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RateSimulationDetailQuery = { rateSimulation: { ' $fragmentRefs'?: { 'RateSimulationFieldsFragment': RateSimulationFieldsFragment } } | null };
+
+export type RateSimulationResultsQueryVariables = Exact<{
+  rateSimulationId: string | number;
+  changedOnly: boolean;
+  first: number;
+}>;
+
+
+export type RateSimulationResultsQuery = { rateSimulationResults: Array<{ id: string, rateSimulationId: string, shipmentId: string, proNumber: string, customerId: string | null, laneKey: string, equipmentTypeId: string | null, beforeAmount: string, afterAmount: string, delta: string, deltaPercent: string, outcome: RateQuoteOutcome, beforeRuleId: string | null, afterRuleId: string | null, error: string, createdAt: number }> };
+
+export type CreateRateSimulationMutationVariables = Exact<{
+  input: RateSimulationInput;
+}>;
+
+
+export type CreateRateSimulationMutation = { createRateSimulation: { ' $fragmentRefs'?: { 'RateSimulationFieldsFragment': RateSimulationFieldsFragment } } };
 
 export type RateAgreementRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, code: string, name: string, description: string, agreementType: RateAgreementType, status: RateAgreementStatus, contractRef: string, priority: number, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, inputs: unknown, marginFloorPercent: string | null, maxPayPercentOfSell: string | null, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, currentVersionNumber: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateAgreementRowFieldsFragment' };
 
@@ -18283,6 +18965,28 @@ export type RoleTableQueryVariables = Exact<{
 
 
 export type RoleTableQuery = { roles: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoleTableRowFieldsFragment': RoleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CreateRoutingGuideMutationVariables = Exact<{
+  input: RoutingGuideInput;
+}>;
+
+
+export type CreateRoutingGuideMutation = { createRoutingGuide: { id: string, version: number } };
+
+export type UpdateRoutingGuideMutationVariables = Exact<{
+  id: string | number;
+  input: RoutingGuideInput;
+}>;
+
+
+export type UpdateRoutingGuideMutation = { updateRoutingGuide: { id: string, version: number } };
+
+export type DeleteRoutingGuideMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteRoutingGuideMutation = { deleteRoutingGuide: boolean };
 
 export type RoutingGuideEntryFieldsFragment = { id: string, routingGuideId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, useContractRate: boolean, offerTtlSeconds: number, channel: TenderChannel, version: number, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null } & { ' $fragmentName'?: 'RoutingGuideEntryFieldsFragment' };
 
@@ -20873,6 +21577,7 @@ export { JournalEntryDetailDocument, JournalSourceByObjectDocument, JournalEntri
 export { JournalReviewResultFieldsFragmentDoc, JournalReviewSummaryDocument, JournalReviewTableDocument, ApproveJournalEntriesDocument, PostJournalEntriesDocument } from "./documents/journal-entry/review";
 export { DeskJournalReversalsDocument } from "./documents/journal-reversal/desk";
 export { JournalReversalTableRowFieldsFragmentDoc, JournalReversalTableDocument } from "./documents/journal-reversal/table";
+export { CreateJurisdictionRuleDocument, UpdateJurisdictionRuleDocument, VerifyJurisdictionRuleDocument, CreateJurisdictionRuleOverrideDocument, UpdateJurisdictionRuleOverrideDocument, DeleteJurisdictionRuleOverrideDocument } from "./documents/jurisdiction-rule/mutations";
 export { JurisdictionRuleOverrideTableRowFieldsFragmentDoc, JurisdictionRuleOverrideTableDocument } from "./documents/jurisdiction-rule/overrides";
 export { JurisdictionRuleTableRowFieldsFragmentDoc, JurisdictionRuleTableDocument } from "./documents/jurisdiction-rule/table";
 export { CreateLocationCategoryDocument, UpdateLocationCategoryDocument } from "./documents/location-category/mutations";
@@ -20893,8 +21598,13 @@ export { PageAccessRequirementFieldsFragmentDoc, PageAccessFieldsFragmentDoc, Pa
 export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDocument } from "./documents/performance-review/desk";
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";
+export { RateAgreementRuleFieldsFragmentDoc, RateAgreementVersionFieldsFragmentDoc, RateIncreasePlanFieldsFragmentDoc, RateAgreementDetailDocument, RateAgreementLanePageDocument, RateAgreementLaneSummaryDocument, RateAgreementVersionsDocument, RateAgreementLaneHistoryDocument, PreviewRateIncreaseDocument, ApplyRateIncreaseDocument, CreateRateAgreementDocument, UpdateRateAgreementDocument, DuplicateRateAgreementDocument, SubmitRateAgreementDocument, ApproveRateAgreementDocument, RejectRateAgreementDocument, SuspendRateAgreementDocument, ResumeRateAgreementDocument, ArchiveRateAgreementDocument } from "./documents/rate/agreement";
 export { DeskRateAgreementPricingDocument, DeskRateAgreementsDocument, DeskRateAgreementCardDocument, DeskRateMatrixCardDocument } from "./documents/rate/desk";
+export { RateImportBatchFieldsFragmentDoc, RateImportFailedRowsDocument, CommitRateImportDocument, DiscardRateImportDocument } from "./documents/rate/import";
+export { RateMatrixCellFieldsFragmentDoc, RateMatrixDetailDocument, RateMatrixDraftCellsDocument, RateMatrixVersionCellsDocument, RateMatrixReviewersDocument, CreateRateMatrixDocument, UpdateRateMatrixDocument, ReplaceRateMatrixCellsDocument, SubmitRateMatrixDocument, ApproveRateMatrixDocument, RejectRateMatrixDocument, RequestRateMatrixChangesDocument, ArchiveRateMatrixDocument, RestoreRateMatrixVersionDocument } from "./documents/rate/matrix";
 export { RateMatrixRecordDocument, RateMatrixVersionAxesDocument } from "./documents/rate/matrix-record";
+export { RateQuoteDetailFieldsFragmentDoc, AppliedShipmentRateQuoteDocument, ShopShipmentCarriersDocument } from "./documents/rate/quote";
+export { RateSimulationFieldsFragmentDoc, RateAgreementSimulationsDocument, RateSimulationDetailDocument, RateSimulationResultsDocument, CreateRateSimulationDocument } from "./documents/rate/simulation";
 export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
 export { DeskRecurringShipmentsDocument } from "./documents/recurring-shipment/desk";
@@ -20911,6 +21621,7 @@ export { ReportScheduleFieldsFragmentDoc, ReportSchedulesDocument, CreateReportS
 export { ExportTableViewDocument, ScheduleTableViewDocument } from "./documents/reports/table-export";
 export { ReportViewFieldsFragmentDoc, ReportViewsDocument, CreateReportViewDocument, UpdateReportViewDocument, DeleteReportViewDocument } from "./documents/reports/views";
 export { RoleTableRowFieldsFragmentDoc, RoleTableDocument } from "./documents/role/table";
+export { CreateRoutingGuideDocument, UpdateRoutingGuideDocument, DeleteRoutingGuideDocument } from "./documents/routing-guide/mutations";
 export { RoutingGuideEntryFieldsFragmentDoc, RoutingGuideRowFieldsFragmentDoc, RoutingGuideTableDocument, RoutingGuideOptionsDocument, MatchRoutingGuideDocument } from "./documents/routing-guide/table";
 export { ShiftTemplatesDocument, RotaDocument, WorkerShiftAssignmentsDocument, WorkerAvailabilityPreferencesDocument, ShiftSwapRequestsDocument, CreateShiftTemplateDocument, UpdateShiftTemplateDocument, AssignWorkerShiftDocument, EndWorkerShiftAssignmentDocument, SetWorkerAvailabilityPreferenceDocument, ProposeShiftSwapDocument, TransitionShiftSwapDocument } from "./documents/scheduling/operations";
 export { ScimGroupRoleMappingTableRowFieldsFragmentDoc, ScimGroupRoleMappingsTableDocument } from "./documents/scim-group-role-mapping/table";

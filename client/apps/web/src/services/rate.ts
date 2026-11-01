@@ -1,20 +1,73 @@
+import {
+  ApplyRateIncreaseDocument,
+  AppliedShipmentRateQuoteDocument,
+  ApproveRateAgreementDocument,
+  ApproveRateMatrixDocument,
+  ArchiveRateAgreementDocument,
+  ArchiveRateMatrixDocument,
+  CommitRateImportDocument,
+  CreateRateAgreementDocument,
+  CreateRateMatrixDocument,
+  CreateRateSimulationDocument,
+  DiscardRateImportDocument,
+  DuplicateRateAgreementDocument,
+  PreviewRateIncreaseDocument,
+  RateAgreementDetailDocument,
+  RateAgreementLaneHistoryDocument,
+  RateAgreementLanePageDocument,
+  RateAgreementLaneSummaryDocument,
+  RateAgreementSimulationsDocument,
+  RateAgreementVersionsDocument,
+  RateImportFailedRowsDocument,
+  RateMatrixDetailDocument,
+  RateMatrixDraftCellsDocument,
+  RateMatrixReviewersDocument,
+  RateMatrixVersionCellsDocument,
+  RateSimulationDetailDocument,
+  RateSimulationResultsDocument,
+  RejectRateAgreementDocument,
+  RejectRateMatrixDocument,
+  ReplaceRateMatrixCellsDocument,
+  RequestRateMatrixChangesDocument,
+  RestoreRateMatrixVersionDocument,
+  ResumeRateAgreementDocument,
+  ShopShipmentCarriersDocument,
+  SubmitRateAgreementDocument,
+  SubmitRateMatrixDocument,
+  SuspendRateAgreementDocument,
+  UpdateRateAgreementDocument,
+  UpdateRateMatrixDocument,
+  type RateAgreementAccessorialInput,
+  type RateAgreementFuelBindingInput,
+  type RateAgreementInput,
+  type RateAgreementRuleInput,
+  type RateMatrixCellInput,
+  type RateMatrixInput,
+  type RateIncreaseInput,
+} from "@trenova/graphql/generated/graphql";
 import { z } from "zod";
 import { api } from "@trenova/shared/lib/api";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   rateAgreementLanePageSchema,
   rateAgreementLaneSummarySchema,
+  rateAgreementRuleSchema,
   rateAgreementSchema,
+  rateAgreementVersionSchema,
   rateMatrixCellSchema,
   rateMatrixSchema,
   rateQuoteSchema,
-  ratedShipmentSchema,
   rateImportBatchSchema,
+  rateImportRowSchema,
   rateIncreasePlanSchema,
+  rateSimulationResultSchema,
   rateSimulationSchema,
   shopResultSchema,
   rateZoneSchema,
   type RateAgreement,
+  type RateAgreementAccessorial,
+  type RateAgreementFuelBinding,
   type RateAgreementLanePage,
   type RateAgreementLaneSummary,
   type RateAgreementRule,
@@ -24,7 +77,6 @@ import {
   type RatePartyType,
   type RateMatrixCell,
   type RateQuote,
-  type RatedShipment,
   type RateZone,
   type RateImportBatch,
   type RateImportRow,
@@ -66,79 +118,249 @@ export type RateAgreementReviewAction =
   | "resume"
   | "archive";
 
-export class RateAgreementService {
-  public async getById(id: string): Promise<RateAgreement> {
-    const response = await api.get<RateAgreement>(`/rate-agreements/${id}/?includeChildren=true`);
+/** A decimal as the API takes it: a string, or null when it is not set. */
+function decimalInput(value: number | string | null | undefined): string | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  return String(value);
+}
 
-    return safeParse(rateAgreementSchema, response, "Rate Agreement");
+function idsInput(values: string[] | null | undefined): string[] | null {
+  return values && values.length > 0 ? values : null;
+}
+
+function toRuleInput(rule: RateAgreementRule): RateAgreementRuleInput {
+  return {
+    id: rule.id || null,
+    label: rule.label,
+    status: rule.status,
+    originScopeType: rule.originScopeType,
+    originScopeValue: rule.originScopeValue,
+    originCity: rule.originCity,
+    destinationScopeType: rule.destinationScopeType,
+    destinationScopeValue: rule.destinationScopeValue,
+    destinationCity: rule.destinationCity,
+    direction: rule.direction,
+    originRadiusMeters: rule.originRadiusMeters ?? null,
+    destinationRadiusMeters: rule.destinationRadiusMeters ?? null,
+    originLatitude: rule.originLatitude ?? null,
+    originLongitude: rule.originLongitude ?? null,
+    destinationLatitude: rule.destinationLatitude ?? null,
+    destinationLongitude: rule.destinationLongitude ?? null,
+    serviceTypeIds: idsInput(rule.serviceTypeIds),
+    shipmentTypeIds: idsInput(rule.shipmentTypeIds),
+    tractorTypeIds: idsInput(rule.tractorTypeIds),
+    trailerTypeIds: idsInput(rule.trailerTypeIds),
+    commodityIds: idsInput(rule.commodityIds),
+    freightClasses: idsInput(rule.freightClasses),
+    serviceModels: idsInput(rule.serviceModels),
+    equipmentClasses: idsInput(rule.equipmentClasses),
+    minWeight: decimalInput(rule.minWeight),
+    maxWeight: decimalInput(rule.maxWeight),
+    minDistance: decimalInput(rule.minDistance),
+    maxDistance: decimalInput(rule.maxDistance),
+    minStops: rule.minStops ?? null,
+    maxStops: rule.maxStops ?? null,
+    daysOfWeek: rule.daysOfWeek,
+    hazmatOnly: rule.hazmatOnly,
+    tempControlOnly: rule.tempControlOnly,
+    formulaTemplateId: rule.formulaTemplateId,
+    inputs: rule.inputs,
+    currency: rule.currency ?? null,
+    priority: rule.priority,
+    effectiveFrom: rule.effectiveFrom,
+    effectiveTo: rule.effectiveTo ?? null,
+  };
+}
+
+function toAccessorialInput(accessorial: RateAgreementAccessorial): RateAgreementAccessorialInput {
+  return {
+    accessorialChargeId: accessorial.accessorialChargeId,
+    method: accessorial.method,
+    rateUnit: accessorial.rateUnit ?? null,
+    amount: decimalInput(accessorial.amount) ?? "",
+    waived: accessorial.waived,
+    autoApply: accessorial.autoApply,
+    condition: accessorial.condition ?? null,
+    freeUnits: accessorial.freeUnits ?? null,
+    maxAmount: decimalInput(accessorial.maxAmount),
+    serviceTypeIds: idsInput(accessorial.serviceTypeIds),
+    shipmentTypeIds: idsInput(accessorial.shipmentTypeIds),
+    effectiveFrom: accessorial.effectiveFrom ?? null,
+    effectiveTo: accessorial.effectiveTo ?? null,
+  };
+}
+
+function toFuelBindingInput(
+  binding: RateAgreementFuelBinding | null | undefined,
+): RateAgreementFuelBindingInput | null {
+  if (!binding) {
+    return null;
+  }
+  return {
+    fuelSurchargeProgramId: binding.fuelSurchargeProgramId,
+    waived: binding.waived,
+    pegPriceOverride: decimalInput(binding.pegPriceOverride),
+    incrementRateOverride: decimalInput(binding.incrementRateOverride),
+    capAmount: decimalInput(binding.capAmount),
+  };
+}
+
+/** The agreement as the editor saves it: header terms, every rule, the schedule and fuel. */
+export function toRateAgreementInput(data: RateAgreement): RateAgreementInput {
+  return {
+    partyType: data.partyType,
+    customerId: data.customerId ?? null,
+    carrierId: data.carrierId ?? null,
+    code: data.code,
+    name: data.name,
+    description: data.description,
+    agreementType: data.agreementType,
+    contractRef: data.contractRef,
+    documentId: data.documentId ?? null,
+    priority: data.priority,
+    effectiveFrom: data.effectiveFrom,
+    effectiveTo: data.effectiveTo ?? null,
+    autoRenew: data.autoRenew,
+    renewalNoticeDays: data.renewalNoticeDays,
+    currency: data.currency,
+    inputs: data.inputs,
+    billToCustomerId: data.billToCustomerId ?? null,
+    marginFloorPercent: decimalInput(data.marginFloorPercent),
+    maxPayPercentOfSell: decimalInput(data.maxPayPercentOfSell),
+    version: data.version ?? null,
+    rules: data.rules.map(toRuleInput),
+    accessorials: data.accessorials.map(toAccessorialInput),
+    fuelBinding: toFuelBindingInput(data.fuelBinding),
+  };
+}
+
+function toRateIncreaseInput(payload: RateIncreaseRequestPayload): RateIncreaseInput {
+  return {
+    agreementIds: idsInput(payload.agreementIds),
+    customerId: payload.customerId ?? null,
+    carrierId: payload.carrierId ?? null,
+    partyType: payload.partyType ?? null,
+    adjustment: { percentChange: decimalInput(payload.adjustment.percentChange) },
+    effectiveFrom: payload.effectiveFrom,
+  };
+}
+
+const reviewDocuments = {
+  submit: { document: SubmitRateAgreementDocument, operationName: "SubmitRateAgreement" },
+  approve: { document: ApproveRateAgreementDocument, operationName: "ApproveRateAgreement" },
+  reject: { document: RejectRateAgreementDocument, operationName: "RejectRateAgreement" },
+  suspend: { document: SuspendRateAgreementDocument, operationName: "SuspendRateAgreement" },
+  resume: { document: ResumeRateAgreementDocument, operationName: "ResumeRateAgreement" },
+  archive: { document: ArchiveRateAgreementDocument, operationName: "ArchiveRateAgreement" },
+} as const;
+
+/** The agreement after a write: the editor's values with the identity the server gave them. */
+type SavedRecord = { id: string; version: number };
+
+export class RateAgreementService {
+  /** The agreement with every rule that has not been closed out, as the editor edits it. */
+  public async getById(id: string, options?: RequestOptions): Promise<RateAgreement> {
+    return this.read(id, true, options);
   }
 
   /**
    * The agreement with its accessorials and fuel binding but none of its lanes,
    * which a reader takes a page at a time with `listLanes`.
    */
-  public async getWithoutLanes(
-    id: string,
-    options?: { signal?: AbortSignal },
-  ): Promise<RateAgreement> {
-    const response = await api.get<RateAgreement>(
-      `/rate-agreements/${encodeURIComponent(id)}/?includeChildren=true&includeRules=false`,
-      { signal: options?.signal },
-    );
+  public async getWithoutLanes(id: string, options?: RequestOptions): Promise<RateAgreement> {
+    return this.read(id, false, options);
+  }
 
-    return safeParse(rateAgreementSchema, response, "Rate Agreement");
+  private async read(
+    id: string,
+    withRules: boolean,
+    options?: RequestOptions,
+  ): Promise<RateAgreement> {
+    const data = await requestGraphQL({
+      document: RateAgreementDetailDocument,
+      operationName: "RateAgreementDetail",
+      variables: { id, withRules },
+      signal: options?.signal,
+    });
+
+    return safeParse(rateAgreementSchema, data.rateAgreement, "Rate Agreement");
   }
 
   /** One page of the agreement's live lanes, most specific first, with the counts. */
   public async listLanes(
     id: string,
     page: { limit: number; offset: number },
-    options?: { signal?: AbortSignal },
+    options?: RequestOptions,
   ): Promise<RateAgreementLanePage> {
-    const params = new URLSearchParams({
-      limit: String(page.limit),
-      offset: String(page.offset),
+    const data = await requestGraphQL({
+      document: RateAgreementLanePageDocument,
+      operationName: "RateAgreementLanePage",
+      variables: { rateAgreementId: id, limit: page.limit, offset: page.offset },
+      signal: options?.signal,
     });
-    const response = await api.get<RateAgreementLanePage>(
-      `/rate-agreements/${encodeURIComponent(id)}/lanes/?${params.toString()}`,
-      { signal: options?.signal },
-    );
 
-    return safeParse(rateAgreementLanePageSchema, response, "Rate Agreement Lanes");
+    return safeParse(
+      rateAgreementLanePageSchema,
+      data.rateAgreementLanePage,
+      "Rate Agreement Lanes",
+    );
   }
 
   /** The agreement's live lanes grouped by what prices them, with each group's rate range. */
   public async laneSummary(
     id: string,
-    options?: { signal?: AbortSignal },
+    options?: RequestOptions,
   ): Promise<RateAgreementLaneSummary> {
-    const response = await api.get<RateAgreementLaneSummary>(
-      `/rate-agreements/${encodeURIComponent(id)}/lanes/summary/`,
-      { signal: options?.signal },
-    );
+    const data = await requestGraphQL({
+      document: RateAgreementLaneSummaryDocument,
+      operationName: "RateAgreementLaneSummary",
+      variables: { rateAgreementId: id },
+      signal: options?.signal,
+    });
 
-    return safeParse(rateAgreementLaneSummarySchema, response, "Rate Agreement Lane Summary");
+    return safeParse(
+      rateAgreementLaneSummarySchema,
+      data.rateAgreementLaneSummary,
+      "Rate Agreement Lane Summary",
+    );
   }
 
   public async create(data: RateAgreement): Promise<RateAgreement> {
-    const response = await api.post<RateAgreement>("/rate-agreements/", data);
+    const response = await requestGraphQL({
+      document: CreateRateAgreementDocument,
+      operationName: "CreateRateAgreement",
+      variables: { input: toRateAgreementInput(data) },
+    });
 
-    return safeParse(rateAgreementSchema, response, "Rate Agreement");
+    return withSaved(data, response.createRateAgreement);
   }
 
   public async update(id: string, data: RateAgreement): Promise<RateAgreement> {
-    const response = await api.put<RateAgreement>(`/rate-agreements/${id}/`, data);
+    const response = await requestGraphQL({
+      document: UpdateRateAgreementDocument,
+      operationName: "UpdateRateAgreement",
+      variables: { id, input: toRateAgreementInput(data) },
+    });
 
-    return safeParse(rateAgreementSchema, response, "Rate Agreement");
+    return withSaved(data, response.updateRateAgreement);
   }
 
   /** The header terms as they stood at each renegotiation, newest first. */
-  public async listVersions(id: string): Promise<RateAgreementVersion[]> {
-    const response = await api.get<{ results?: RateAgreementVersion[] }>(
-      `/rate-agreements/${id}/versions/`,
-    );
+  public async listVersions(id: string, options?: RequestOptions): Promise<RateAgreementVersion[]> {
+    const data = await requestGraphQL({
+      document: RateAgreementVersionsDocument,
+      operationName: "RateAgreementVersions",
+      variables: { rateAgreementId: id },
+      signal: options?.signal,
+    });
 
-    return response?.results ?? [];
+    return safeParse(
+      z.array(rateAgreementVersionSchema),
+      data.rateAgreementVersions,
+      "Rate Agreement Versions",
+    );
   }
 
   /**
@@ -146,36 +368,48 @@ export class RateAgreementService {
    * first, closed-out windows included. This is the answer to "what did this
    * lane cost in March".
    */
-  public async listRuleHistory(id: string, laneKey: string): Promise<RateAgreementRule[]> {
-    const query = new URLSearchParams({ laneKey, includeSuperseded: "true" });
-    const response = await api.get<RateAgreementRule[]>(
-      `/rate-agreements/${id}/rules/?${query.toString()}`,
-    );
+  public async listRuleHistory(
+    id: string,
+    laneKey: string,
+    options?: RequestOptions,
+  ): Promise<RateAgreementRule[]> {
+    const data = await requestGraphQL({
+      document: RateAgreementLaneHistoryDocument,
+      operationName: "RateAgreementLaneHistory",
+      variables: { rateAgreementId: id, laneKey },
+      signal: options?.signal,
+    });
 
-    return response ?? [];
+    return safeParse(
+      z.array(rateAgreementRuleSchema),
+      data.rateAgreementLaneHistory,
+      "Rate Agreement Lane History",
+    );
   }
 
   /**
    * Copies the whole contract — lanes, breaks, accessorials, fuel terms — as a
    * fresh draft. The renewal workflow starts here.
    */
-  public async duplicate(
-    id: string,
-    payload: { code?: string; name?: string } = {},
-  ): Promise<RateAgreement> {
-    const response = await api.post<RateAgreement>(`/rate-agreements/${id}/duplicate/`, payload);
+  public async duplicate(id: string, payload: { code?: string; name?: string } = {}) {
+    const response = await requestGraphQL({
+      document: DuplicateRateAgreementDocument,
+      operationName: "DuplicateRateAgreement",
+      variables: { id, code: payload.code ?? null, name: payload.name ?? null },
+    });
 
-    return safeParse(rateAgreementSchema, response, "Rate Agreement");
+    return response.duplicateRateAgreement;
   }
 
   /** What a bulk rate change would do — before it does any of it. */
   public async previewRateIncrease(payload: RateIncreaseRequestPayload): Promise<RateIncreasePlan> {
-    const response = await api.post<RateIncreasePlan>(
-      "/rate-agreements/rate-increase/preview/",
-      payload,
-    );
+    const data = await requestGraphQL({
+      document: PreviewRateIncreaseDocument,
+      operationName: "PreviewRateIncrease",
+      variables: { input: toRateIncreaseInput(payload) },
+    });
 
-    return safeParse(rateIncreasePlanSchema, response, "Rate Increase Plan");
+    return safeParse(rateIncreasePlanSchema, data.previewRateIncrease, "Rate Increase Plan");
   }
 
   /**
@@ -183,31 +417,35 @@ export class RateAgreementService {
    * the new rate from the effective date. The old rates stay in history.
    */
   public async applyRateIncrease(payload: RateIncreaseRequestPayload): Promise<RateIncreasePlan> {
-    const response = await api.post<RateIncreasePlan>(
-      "/rate-agreements/rate-increase/apply/",
-      payload,
-    );
+    const data = await requestGraphQL({
+      document: ApplyRateIncreaseDocument,
+      operationName: "ApplyRateIncrease",
+      variables: { input: toRateIncreaseInput(payload) },
+    });
 
-    return safeParse(rateIncreasePlanSchema, response, "Rate Increase Plan");
+    return safeParse(rateIncreasePlanSchema, data.applyRateIncrease, "Rate Increase Plan");
   }
 
   /**
-   * Moves an agreement to its next state.
-   *
-   * Every step takes the same request and returns the same thing, so they share
-   * one method rather than six that differ only in the path.
+   * Moves an agreement to its next state. Every step takes the same arguments, so they
+   * share one method rather than six that differ only in the mutation they send.
    */
   public async review(
     id: string,
     action: RateAgreementReviewAction,
     comment: string,
-  ): Promise<RateAgreement> {
-    const response = await api.post<RateAgreement>(`/rate-agreements/${id}/${action}/`, {
-      comment,
+  ): Promise<void> {
+    const { document, operationName } = reviewDocuments[action];
+    await requestGraphQL({
+      document: document as typeof SubmitRateAgreementDocument,
+      operationName,
+      variables: { id, comment },
     });
-
-    return safeParse(rateAgreementSchema, response, "Rate Agreement");
   }
+}
+
+function withSaved<T extends { id?: string; version?: number }>(data: T, saved: SavedRecord): T {
+  return { ...data, id: saved.id, version: saved.version };
 }
 
 export class RateZoneService {
@@ -231,22 +469,40 @@ export class RateZoneService {
 }
 
 export class RateMatrixService {
-  public async getById(id: string): Promise<RateMatrix> {
-    const response = await api.get<RateMatrix>(`/rate-matrices/${id}/`);
+  public async getById(id: string, options?: RequestOptions): Promise<RateMatrix> {
+    const data = await requestGraphQL({
+      document: RateMatrixDetailDocument,
+      operationName: "RateMatrixDetail",
+      variables: { id },
+      signal: options?.signal,
+    });
+    const matrix = data.rateMatrix;
 
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+    return safeParse(
+      rateMatrixSchema,
+      matrix ? { ...matrix, draftCellCount: matrix.cellCount } : matrix,
+      "Rate Matrix",
+    );
   }
 
   public async create(data: RateMatrix): Promise<RateMatrix> {
-    const response = await api.post<RateMatrix>("/rate-matrices/", data);
+    const response = await requestGraphQL({
+      document: CreateRateMatrixDocument,
+      operationName: "CreateRateMatrix",
+      variables: { input: toRateMatrixInput(data) },
+    });
 
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+    return withSaved(data, response.createRateMatrix);
   }
 
   public async update(id: string, data: RateMatrix): Promise<RateMatrix> {
-    const response = await api.put<RateMatrix>(`/rate-matrices/${id}/`, data);
+    const response = await requestGraphQL({
+      document: UpdateRateMatrixDocument,
+      operationName: "UpdateRateMatrix",
+      variables: { id, input: toRateMatrixInput(data) },
+    });
 
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+    return withSaved(data, response.updateRateMatrix);
   }
 
   /**
@@ -254,33 +510,51 @@ export class RateMatrixService {
    *
    * A sheet has to be read as a sheet — a hole in it is only visible against
    * the rows and columns around it — so the editor holds every cell rather
-   * than a page of them. The API caps a page at 100 and a twenty-by-twenty
-   * zone tariff is four hundred cells, so this walks the pages.
+   * than a page of them. A page holds at most 100 cells and a twenty-by-twenty
+   * zone tariff is four hundred, so this walks the pages.
    */
   public async listCells(
     id: string,
     versionNumber: number | null = null,
     options?: RequestOptions,
   ): Promise<RateMatrixCell[]> {
-    const pageSize = 100;
     const cells: RateMatrixCell[] = [];
-    const version = versionNumber === null ? "" : `&versionNumber=${versionNumber}`;
 
-    for (let offset = 0; ; offset += pageSize) {
-      const page = await api.get<{ results?: RateMatrixCell[]; count?: number }>(
-        `/rate-matrices/${id}/cells/?limit=${pageSize}&offset=${offset}${version}`,
-        { signal: options?.signal },
-      );
-
-      const results = page?.results ?? [];
-      for (const cell of results) {
+    for (let offset = 0; ; offset += CELL_PAGE_SIZE) {
+      const page = await this.cellPage(id, versionNumber, offset, options);
+      for (const cell of page) {
         cells.push(await safeParse(rateMatrixCellSchema, cell, "Rate Matrix Cell"));
       }
 
-      if (results.length < pageSize) break;
+      if (page.length < CELL_PAGE_SIZE) break;
     }
 
     return cells;
+  }
+
+  private async cellPage(
+    id: string,
+    versionNumber: number | null,
+    offset: number,
+    options?: RequestOptions,
+  ): Promise<unknown[]> {
+    if (versionNumber === null) {
+      const data = await requestGraphQL({
+        document: RateMatrixDraftCellsDocument,
+        operationName: "RateMatrixDraftCells",
+        variables: { id, offset, limit: CELL_PAGE_SIZE },
+        signal: options?.signal,
+      });
+      return data.rateMatrix?.cells ?? [];
+    }
+
+    const data = await requestGraphQL({
+      document: RateMatrixVersionCellsDocument,
+      operationName: "RateMatrixVersionCells",
+      variables: { id, versionNumber, offset, limit: CELL_PAGE_SIZE },
+      signal: options?.signal,
+    });
+    return data.rateMatrixVersion?.cells ?? [];
   }
 
   /**
@@ -291,54 +565,152 @@ export class RateMatrixService {
    * believed they had removed.
    */
   public async replaceCells(id: string, cells: RateMatrixCell[]): Promise<void> {
-    await api.put(`/rate-matrices/${id}/cells/`, { cells });
+    await requestGraphQL({
+      document: ReplaceRateMatrixCellsDocument,
+      operationName: "ReplaceRateMatrixCells",
+      variables: { id, cells: cells.map(toRateMatrixCellInput) },
+    });
   }
 
   /** Sends the draft to review; a reviewer publishing it makes it the next version. */
-  public async submit(id: string, request: RateMatrixSubmitRequest): Promise<RateMatrix> {
-    const response = await api.post<unknown>(`/rate-matrices/${id}/submit/`, request);
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  public async submit(id: string, request: RateMatrixSubmitRequest) {
+    const data = await requestGraphQL({
+      document: SubmitRateMatrixDocument,
+      operationName: "SubmitRateMatrix",
+      variables: {
+        id,
+        input: {
+          comment: request.comment ?? null,
+          reviewerId: request.reviewerId || null,
+          reviewerNote: request.reviewerNote ?? null,
+        },
+      },
+    });
+    return data.submitRateMatrix;
   }
 
   /** Publishes the submitted draft as the next version. */
-  public async approve(id: string, comment: string): Promise<RateMatrix> {
-    const response = await api.post<unknown>(`/rate-matrices/${id}/approve/`, { comment });
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
-  }
-
-  public async reject(id: string, comment: string): Promise<RateMatrix> {
-    const response = await api.post<unknown>(`/rate-matrices/${id}/reject/`, { comment });
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
-  }
-
-  public async requestChanges(id: string, comment: string): Promise<RateMatrix> {
-    const response = await api.post<unknown>(`/rate-matrices/${id}/request-changes/`, {
-      comment,
+  public async approve(id: string, comment: string) {
+    const data = await requestGraphQL({
+      document: ApproveRateMatrixDocument,
+      operationName: "ApproveRateMatrix",
+      variables: { id, comment },
     });
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+    return data.approveRateMatrix;
+  }
+
+  public async reject(id: string, comment: string) {
+    const data = await requestGraphQL({
+      document: RejectRateMatrixDocument,
+      operationName: "RejectRateMatrix",
+      variables: { id, comment },
+    });
+    return data.rejectRateMatrix;
+  }
+
+  public async requestChanges(id: string, comment: string) {
+    const data = await requestGraphQL({
+      document: RequestRateMatrixChangesDocument,
+      operationName: "RequestRateMatrixChanges",
+      variables: { id, comment },
+    });
+    return data.requestRateMatrixChanges;
   }
 
   /**
    * Takes the matrix out of new template versions. One that template versions pin needs
    * `confirmInUse`; they keep reading the version they pinned.
    */
-  public async archive(id: string, confirmInUse: boolean): Promise<RateMatrix> {
-    const response = await api.post<unknown>(`/rate-matrices/${id}/archive/`, { confirmInUse });
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  public async archive(id: string, confirmInUse: boolean) {
+    const data = await requestGraphQL({
+      document: ArchiveRateMatrixDocument,
+      operationName: "ArchiveRateMatrix",
+      variables: { id, confirmInUse },
+    });
+    return data.archiveRateMatrix;
   }
 
   /** Replaces the draft's axes and cells with a published version's. */
-  public async restore(id: string, versionNumber: number): Promise<RateMatrix> {
-    const response = await api.post<unknown>(`/rate-matrices/${id}/restore/`, { versionNumber });
-    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  public async restore(id: string, versionNumber: number) {
+    const data = await requestGraphQL({
+      document: RestoreRateMatrixVersionDocument,
+      operationName: "RestoreRateMatrixVersion",
+      variables: { id, versionNumber },
+    });
+    return data.restoreRateMatrixVersion;
   }
 
   public async listReviewers(id: string, options?: RequestOptions): Promise<FormulaReviewer[]> {
-    const response = await api.get<unknown>(`/rate-matrices/${id}/reviewers/`, {
+    const data = await requestGraphQL({
+      document: RateMatrixReviewersDocument,
+      operationName: "RateMatrixReviewers",
+      variables: { rateMatrixId: id },
       signal: options?.signal,
     });
-    return safeParse(listFormulaReviewersResponseSchema, response, "Rate Matrix Reviewers");
+    return safeParse(
+      listFormulaReviewersResponseSchema,
+      data.rateMatrixReviewers,
+      "Rate Matrix Reviewers",
+    );
   }
+}
+
+const CELL_PAGE_SIZE = 100;
+
+function toRateMatrixInput(data: RateMatrix): RateMatrixInput {
+  return {
+    code: data.code,
+    name: data.name,
+    description: data.description,
+    valueType: data.valueType,
+    version: data.version ?? null,
+    dimensions: data.dimensions.map((dimension) => ({
+      position: dimension.position,
+      kind: dimension.kind,
+      matchMode: dimension.matchMode,
+      label: dimension.label,
+      keyNormalization: dimension.keyNormalization,
+      rangeOverflow: dimension.rangeOverflow,
+    })),
+  };
+}
+
+/**
+ * One cell as the replace takes it, sending only what the cell sets: a large grid stays
+ * well inside the request size limit when empty keys and bands are left out.
+ */
+export function toRateMatrixCellInput(cell: RateMatrixCell): RateMatrixCellInput {
+  const input: RateMatrixCellInput = { value: decimalInput(cell.value) ?? "" };
+  const keys = [
+    "d0Key",
+    "d1Key",
+    "d2Key",
+    "d3Key",
+    "d0KeyTo",
+    "d1KeyTo",
+    "d2KeyTo",
+    "d3KeyTo",
+  ] as const;
+  for (const key of keys) {
+    if (cell[key]) input[key] = cell[key];
+  }
+  const bands = [
+    "d0Min",
+    "d0Max",
+    "d1Min",
+    "d1Max",
+    "d2Min",
+    "d2Max",
+    "d3Min",
+    "d3Max",
+    "minCharge",
+  ] as const;
+  for (const band of bands) {
+    const value = decimalInput(cell[band]);
+    if (value !== null) input[band] = value;
+  }
+  if (!cell.deficitEligible) input.deficitEligible = false;
+  return input;
 }
 
 export class RateQuoteService {
@@ -346,40 +718,24 @@ export class RateQuoteService {
    * The quote a shipment is currently billed from, with its full trace, or null
    * for a shipment that has never been rated.
    */
-  public async getAppliedForShipment(shipmentId: string): Promise<RateQuote | null> {
-    const response = await api.get<RateQuote | null>(
-      `/rate-quotes/shipment/${shipmentId}/applied/`,
-    );
-
-    return safeParse(rateQuoteSchema.nullable(), response, "Rate Quote");
-  }
-
-  /** A shipment's rating history, newest first. */
-  public async listForShipment(shipmentId: string): Promise<RateQuote[]> {
-    const response = await api.get<RateQuote[]>(`/rate-quotes/shipment/${shipmentId}/`);
-
-    return safeParse(z.array(rateQuoteSchema), response, "Rate Quote History");
-  }
-
-  /**
-   * Re-resolves a shipment against the contracts effective on a date, without
-   * changing what it is billed. Omit `asOf` to reproduce its current rate.
-   */
-  public async explain(shipmentId: string, asOf?: number): Promise<RatedShipment> {
-    const response = await api.post<RatedShipment>(`/rate-quotes/shipment/${shipmentId}/explain/`, {
-      asOf: asOf ?? 0,
+  public async getAppliedForShipment(
+    shipmentId: string,
+    options?: RequestOptions,
+  ): Promise<RateQuote | null> {
+    const data = await requestGraphQL({
+      document: AppliedShipmentRateQuoteDocument,
+      operationName: "AppliedShipmentRateQuote",
+      variables: { shipmentId },
+      signal: options?.signal,
     });
 
-    return safeParse(ratedShipmentSchema, response, "Rated Shipment");
+    return safeParse(rateQuoteSchema.nullable(), data.appliedShipmentRateQuote, "Rate Quote");
   }
 
   /**
    * Prices this shipment against the carriers that could haul it and ranks
-   * them.
-   *
-   * Persisting is off by default: a screen browsing options should not leave a
-   * quote behind for every carrier somebody glanced at. The caller turns it on
-   * when the shopping is the record of a decision.
+   * them. Shopping never saves a quote: a screen browsing options should not
+   * leave one behind for every carrier somebody glanced at.
    */
   public async shop(
     shipmentId: string,
@@ -388,35 +744,53 @@ export class RateQuoteService {
       carrierIds?: string[];
       asOf?: number;
       limit?: number;
-      persist?: boolean;
     } = {},
+    request?: RequestOptions,
   ): Promise<ShopResult> {
-    const response = await api.post<ShopResult>(`/rate-quotes/shipment/${shipmentId}/shop/`, {
-      strategy: options.strategy ?? "LeastCost",
-      carrierIds: options.carrierIds ?? [],
-      asOf: options.asOf ?? 0,
-      limit: options.limit ?? 0,
-      persist: options.persist ?? false,
+    const data = await requestGraphQL({
+      document: ShopShipmentCarriersDocument,
+      operationName: "ShopShipmentCarriers",
+      variables: {
+        shipmentId,
+        input: {
+          strategy: options.strategy ?? "LeastCost",
+          carrierIds: idsInput(options.carrierIds),
+          asOf: options.asOf ?? null,
+          limit: options.limit ?? null,
+        },
+      },
+      signal: request?.signal,
     });
 
-    return safeParse(shopResultSchema, response, "Shop Result");
+    return safeParse(shopResultSchema, data.shopShipmentCarriers, "Shop Result");
   }
 }
 
 export class RateSimulationService {
-  public async getById(id: string): Promise<RateSimulation> {
-    const response = await api.get<RateSimulation>(`/rate-simulations/${id}/`);
+  public async getById(id: string, options?: RequestOptions): Promise<RateSimulation> {
+    const data = await requestGraphQL({
+      document: RateSimulationDetailDocument,
+      operationName: "RateSimulationDetail",
+      variables: { id },
+      signal: options?.signal,
+    });
 
-    return safeParse(rateSimulationSchema, response, "Rate Simulation");
+    return safeParse(rateSimulationSchema, data.rateSimulation, "Rate Simulation");
   }
 
   /** The simulations run against one agreement, newest first. */
-  public async listForAgreement(rateAgreementId: string): Promise<RateSimulation[]> {
-    const response = await api.get<{ results?: RateSimulation[] }>(
-      `/rate-simulations/?rateAgreementId=${encodeURIComponent(rateAgreementId)}&limit=20`,
-    );
+  public async listForAgreement(
+    rateAgreementId: string,
+    options?: RequestOptions,
+  ): Promise<RateSimulation[]> {
+    const data = await requestGraphQL({
+      document: RateAgreementSimulationsDocument,
+      operationName: "RateAgreementSimulations",
+      variables: { rateAgreementId },
+      signal: options?.signal,
+    });
 
-    return response?.results ?? [];
+    return safeParse(z.array(rateSimulationSchema), data.rateSimulations, "Rate Simulations");
   }
 
   /**
@@ -435,14 +809,23 @@ export class RateSimulationService {
     sampleTo: number;
     sampleLimit?: number;
   }): Promise<RateSimulation> {
-    const response = await api.post<RateSimulation>("/rate-simulations/", {
-      ...payload,
-      description: payload.description ?? "",
-      partyType: payload.partyType ?? "Customer",
-      sampleLimit: payload.sampleLimit ?? 0,
+    const data = await requestGraphQL({
+      document: CreateRateSimulationDocument,
+      operationName: "CreateRateSimulation",
+      variables: {
+        input: {
+          rateAgreementId: payload.rateAgreementId,
+          name: payload.name,
+          description: payload.description ?? "",
+          partyType: payload.partyType ?? "Customer",
+          sampleFrom: payload.sampleFrom,
+          sampleTo: payload.sampleTo,
+          sampleLimit: payload.sampleLimit ?? 0,
+        },
+      },
     });
 
-    return safeParse(rateSimulationSchema, response, "Rate Simulation");
+    return safeParse(rateSimulationSchema, data.createRateSimulation, "Rate Simulation");
   }
 
   /**
@@ -452,39 +835,31 @@ export class RateSimulationService {
   public async listResults(
     id: string,
     options: { changedOnly?: boolean; limit?: number } = {},
+    request?: RequestOptions,
   ): Promise<RateSimulationResult[]> {
-    const query = new URLSearchParams({
-      changedOnly: String(options.changedOnly ?? false),
-      limit: String(options.limit ?? 50),
+    const data = await requestGraphQL({
+      document: RateSimulationResultsDocument,
+      operationName: "RateSimulationResults",
+      variables: {
+        rateSimulationId: id,
+        changedOnly: options.changedOnly ?? false,
+        first: options.limit ?? 50,
+      },
+      signal: request?.signal,
     });
 
-    const response = await api.get<{ results?: RateSimulationResult[] }>(
-      `/rate-simulations/${id}/results/?${query.toString()}`,
+    return safeParse(
+      z.array(rateSimulationResultSchema),
+      data.rateSimulationResults,
+      "Rate Simulation Results",
     );
-
-    return response?.results ?? [];
   }
 }
 
 export class RateImportService {
-  public async getById(id: string): Promise<RateImportBatch> {
-    const response = await api.get<RateImportBatch>(`/rate-imports/${id}/`);
-
-    return safeParse(rateImportBatchSchema, response, "Rate Import");
-  }
-
   /** The starter sheet a person fills in instead of guessing at column names. */
   public async template(): Promise<{ fileName: string; content: string }> {
     return api.get<{ fileName: string; content: string }>("/rate-imports/template/");
-  }
-
-  /** The sheets uploaded against one agreement, newest first. */
-  public async listForAgreement(rateAgreementId: string): Promise<RateImportBatch[]> {
-    const response = await api.get<{ results?: RateImportBatch[] }>(
-      `/rate-imports/?rateAgreementId=${encodeURIComponent(rateAgreementId)}&limit=20`,
-    );
-
-    return response?.results ?? [];
   }
 
   /**
@@ -510,24 +885,35 @@ export class RateImportService {
 
   /** Applies a reviewed sheet to its agreement. */
   public async commit(id: string): Promise<RateImportBatch> {
-    const response = await api.post<RateImportBatch>(`/rate-imports/${id}/commit/`, {});
+    const data = await requestGraphQL({
+      document: CommitRateImportDocument,
+      operationName: "CommitRateImport",
+      variables: { id },
+    });
 
-    return safeParse(rateImportBatchSchema, response, "Rate Import");
+    return safeParse(rateImportBatchSchema, data.commitRateImport, "Rate Import");
   }
 
   /** Closes a sheet somebody read and said no to. */
   public async discard(id: string): Promise<RateImportBatch> {
-    const response = await api.post<RateImportBatch>(`/rate-imports/${id}/discard/`, {});
+    const data = await requestGraphQL({
+      document: DiscardRateImportDocument,
+      operationName: "DiscardRateImport",
+      variables: { id },
+    });
 
-    return safeParse(rateImportBatchSchema, response, "Rate Import");
+    return safeParse(rateImportBatchSchema, data.discardRateImport, "Rate Import");
   }
 
   /** The rows that would not read, which is what somebody opens an import to fix. */
-  public async listFailedRows(id: string): Promise<RateImportRow[]> {
-    const response = await api.get<{ results?: RateImportRow[] }>(
-      `/rate-imports/${id}/rows/?failedOnly=true&limit=100`,
-    );
+  public async listFailedRows(id: string, options?: RequestOptions): Promise<RateImportRow[]> {
+    const data = await requestGraphQL({
+      document: RateImportFailedRowsDocument,
+      operationName: "RateImportFailedRows",
+      variables: { rateImportId: id },
+      signal: options?.signal,
+    });
 
-    return response?.results ?? [];
+    return safeParse(z.array(rateImportRowSchema), data.rateImportRows, "Rate Import Rows");
   }
 }

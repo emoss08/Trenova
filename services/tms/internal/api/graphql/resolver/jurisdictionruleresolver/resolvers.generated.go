@@ -16,4 +16,6 @@ type Deps struct {
 
 type JurisdictionRuleResolver struct{ *Deps }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

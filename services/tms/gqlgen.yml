@@ -3976,6 +3976,24 @@ models:
         resolver: true
       archived:
         resolver: true
+  RateShopStrategy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports.ShopStrategy
+  RateImportStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/rateimport.Status
+  RateImportFormat:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/rateimport.SourceFormat
+  RateImportChangeKind:
+    model:
+      - github.com/emoss08/trenova/pkg/rateimport.ChangeKind
+  RateSimulationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation.Status
+  RateSimulationRuleOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation.RuleOutcome
   RateMatrixVersion:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion.RateMatrixVersion

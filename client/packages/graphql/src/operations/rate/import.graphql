@@ -1,0 +1,63 @@
+fragment RateImportBatchFields on RateImportBatch {
+  id
+  businessUnitId
+  organizationId
+  rateAgreementId
+  fileName
+  sourceFormat
+  status
+  effectiveFrom
+  mapping
+  unmappedHeaders
+  rowCount
+  errorCount
+  error
+  uploadedById
+  committedAt
+  committedBy
+  version
+  createdAt
+  updatedAt
+  summary {
+    added
+    changed
+    removed
+    duplicate
+    unchanged
+  }
+  changes {
+    kind
+    laneKey
+    label
+    existingId
+    fields {
+      field
+      before
+      after
+    }
+  }
+}
+
+# The rows of an uploaded rate sheet that could not be read.
+query RateImportFailedRows($rateImportId: ID!) {
+  rateImportRows(rateImportId: $rateImportId, failedOnly: true, first: 100) {
+    id
+    rateImportBatchId
+    rowNumber
+    cells
+    laneKey
+    error
+  }
+}
+
+mutation CommitRateImport($id: ID!) {
+  commitRateImport(id: $id) {
+    ...RateImportBatchFields
+  }
+}
+
+mutation DiscardRateImport($id: ID!) {
+  discardRateImport(id: $id) {
+    ...RateImportBatchFields
+  }
+}

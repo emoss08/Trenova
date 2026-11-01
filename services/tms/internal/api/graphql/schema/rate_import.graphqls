@@ -1,0 +1,100 @@
+enum RateImportStatus {
+  Pending
+  Parsed
+  Committed
+  Failed
+  Discarded
+}
+
+enum RateImportFormat {
+  CSV
+  XLSX
+}
+
+"What committing a sheet would do to one lane."
+enum RateImportChangeKind {
+  Removed
+  Added
+  Changed
+  Duplicate
+  Unchanged
+}
+
+"One term a sheet moves on a lane, before and after."
+type RateImportFieldChange {
+  field: String!
+  before: String!
+  after: String!
+}
+
+"What committing a sheet would do to one lane."
+type RateImportChange {
+  kind: RateImportChangeKind!
+  laneKey: String!
+  label: String!
+  "The live rule the change replaces or retires."
+  existingId: ID
+  fields: [RateImportFieldChange!]!
+}
+
+"How many lanes a sheet adds, changes, retires, repeats and leaves alone."
+type RateImportSummary {
+  added: Int!
+  changed: Int!
+  removed: Int!
+  duplicate: Int!
+  unchanged: Int!
+}
+
+"""
+A rate sheet uploaded against an agreement and the dry run of what committing
+it would do. Nothing about the agreement changes until it is committed.
+"""
+type RateImportBatch {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  rateAgreementId: ID!
+  fileName: String!
+  sourceFormat: RateImportFormat!
+  status: RateImportStatus!
+  effectiveFrom: Timestamp!
+  "Each recognised field with the sheet column it was read from."
+  mapping: JSON
+  unmappedHeaders: [String!]!
+  changes: [RateImportChange!]!
+  summary: RateImportSummary
+  rowCount: Int!
+  errorCount: Int!
+  error: String!
+  uploadedById: ID
+  committedAt: Timestamp
+  committedBy: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"One row of an uploaded sheet, as it was read."
+type RateImportRow {
+  id: ID!
+  rateImportBatchId: ID!
+  rowNumber: Int!
+  cells: [String!]!
+  laneKey: String!
+  "Why the row could not be read; empty when it was."
+  error: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  "A rate import's rows in sheet order. first takes at most 100."
+  rateImportRows(rateImportId: ID!, failedOnly: Boolean = false, first: Int = 100): [RateImportRow!]!
+}
+
+extend type Mutation {
+  "Amends the agreement with the sheet's lanes, closing out the ones it replaces."
+  commitRateImport(id: ID!): RateImportBatch!
+  "Closes a sheet somebody read and said no to."
+  discardRateImport(id: ID!): RateImportBatch!
+}
