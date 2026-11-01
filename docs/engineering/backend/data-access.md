@@ -426,7 +426,16 @@ volume generator, not the query: give the table the rows and status mix producti
   documented since a time) finds its candidates with a `UNION` of branches, one index range per
   condition, then sorts the union under the `LIMIT`. The guard judges that sort by the rows the
   union's dedup step (`Unique`, `HashAggregate`, `SetOp`) returns, which the ranges bound
-  (`customertrackingrepository.candidateShipmentsQuery`).
+  (`customertrackingrepository.candidateShipmentsQuery`). A dedup the planner does by sorting
+  (`Sort` then `Unique`) is a sort under the `LIMIT` and fails: when each branch is already a
+  page in id order, make the branches disjoint (a later one drops, with `NOT EXISTS` of the
+  earlier one's predicate, the rows the earlier one returns) and `UNION ALL` them, so the pages
+  merge in index order (`Merge Append`) and nothing is sorted
+  (`factoringrepository.candidateInvoices`).
+- **A connection filtered by one enum value** (settlements with status `Voided`) renders the
+  value as a constant, and a rare one is fetched and sorted when the only order an index gives
+  is the unfiltered keyset. Index (tenant, the enum column, the keyset columns in its direction)
+  so one value walks in page order (`idx_driver_settlements_status_created`).
 - **A window open above** (`updated_at >= $1`) reads as a third of the table to a generic plan,
   which then scans the heap rather than the index. Close it at `math.MaxInt64` (`<= $2`): a
   generic plan reads a range closed on both sides as 0.5% of the table, and a custom plan reads
@@ -459,6 +468,12 @@ volume generator, not the query: give the table the rows and status mix producti
   parent, which the planner turns into a semi-join it may hash over every child row: each parent
   walks an index on (tenant, parent key, order) and stops at its first match
   (`accountingledgerrepository.ListActiveAccounts`).
+  An aggregate over that bounded set (the board summary's counts) has no `LIMIT` to favour the
+  index, and the guard caught the planner reading its parents with a sequential scan. Bind the
+  set as `id = ANY(ARRAY(<the partial index's read>))`, which a generic plan prices at a few
+  keys fetched by primary key, and only while the statuses asked for lie inside the partial
+  index's, since an array of every closed move would grow with history
+  (`dispatchconsolerepository.openBoardMoveIDs`).
 - **A page of a small table that loads to-one relations from a large one** sorts the joined rows
   when the small table's few rows make a sort cheaper than its index, so the sort reads the large
   table. Page without the loads and read the related rows by the page's keys in a second statement
@@ -479,6 +494,13 @@ volume generator, not the query: give the table the rows and status mix producti
   (`20261231023061_service_failure_location.sql`). A one-row copy has no set to recompute, and the
   trigger covers every writer, seeds and fixtures included; derivations over many child rows stay
   in the repository refresh above.
+- **A list filter on a large to-one parent** (queue items by their shipment's customer or
+  delivery date) is a join the planner drives from the parent, fetching every matching parent
+  and sorting the joined page. Move the filters into one scalar subquery per row,
+  `(SELECT TRUE FROM parent WHERE parent.id = child.ref AND <filters>) IS TRUE`, which is never
+  flattened into a join, so the page walks the child's own ordered partial index and checks each
+  row's parent by key until the page fills; `listquery.Filter` renders the caller's filters on
+  the parent (`billingqueuerepository.shipmentFilters`).
 - **A page whose filter needs a large parent** (unarrived ETAs on live shipments, exhausted tenders
   on uncovered moves) sorts above the join whenever the planner hashes the parent, and no index
   orders a join. Read the page from the child's own ordered partial index, check the parents of

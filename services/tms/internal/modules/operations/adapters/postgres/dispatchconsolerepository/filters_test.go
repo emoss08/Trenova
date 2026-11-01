@@ -82,3 +82,40 @@ func TestMoveFiltersHonorExplicitStatuses(t *testing.T) {
 	require.Contains(t, sql, ") >= $")
 	require.Equal(t, fmt.Sprint([]any{"bu_1", "org_1", testWindowStart}), args)
 }
+
+func TestMoveSummaryReadsOpenMovesByID(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, moveSummaryQuery(&dispatchboardports.DispatchBoardFilter{}, 0, 0))
+
+	require.Contains(
+		t,
+		sql,
+		`sm."id" = ANY(ARRAY(SELECT open_sm."id" FROM "shipment_moves" open_sm`,
+	)
+	require.Contains(t, sql, `open_sm."status" IN ('New', 'Assigned', 'InTransit')`)
+}
+
+func TestMoveSummaryReadsOneOpenStatusByID(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, moveSummaryQuery(&dispatchboardports.DispatchBoardFilter{
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
+	}, 0, 0))
+
+	require.Contains(t, sql, `open_sm."status" IN ('New')`)
+}
+
+func TestMoveSummaryLeavesClosedStatusesUnbounded(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, moveSummaryQuery(&dispatchboardports.DispatchBoardFilter{
+		MoveStatuses: []shipmentvocab.MoveStatus{
+			shipmentvocab.MoveStatusNew,
+			shipmentvocab.MoveStatusCompleted,
+		},
+	}, 0, 0))
+
+	require.NotContains(t, sql, "open_sm")
+	require.Contains(t, sql, `sm."status" IN ('New', 'Completed')`)
+}

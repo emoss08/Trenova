@@ -1,6 +1,8 @@
 package dispatchconsolerepository
 
 import (
+	"slices"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
@@ -30,6 +32,8 @@ var openMoveStatuses = []shipmentvocab.MoveStatus{
 	shipmentvocab.MoveStatusAssigned,
 	shipmentvocab.MoveStatusInTransit,
 }
+
+const openBoardMoveAlias = "open_sm"
 
 type moveQuery = keel.Query[*shipment.ShipmentMove]
 
@@ -136,17 +140,35 @@ func boardMoves() *moveQuery {
 	return joinEdge(q, destination, sm.ID)
 }
 
+func boardStatuses(filter *dispatchboardports.DispatchBoardFilter) []shipmentvocab.MoveStatus {
+	if len(filter.MoveStatuses) > 0 {
+		return filter.MoveStatuses
+	}
+
+	return openBoardStatuses
+}
+
+func openBoardMoveIDs(filter *dispatchboardports.DispatchBoardFilter) keel.Pred {
+	statuses := boardStatuses(filter)
+	for _, status := range statuses {
+		if !slices.Contains(openBoardStatuses, status) {
+			return nil
+		}
+	}
+
+	open := shipmentdb.ShipmentMoves.As(openBoardMoveAlias)
+
+	return shipmentdb.ShipmentMoves.ID.InArray(keel.StringArrayOf(keel.ArrayOf(
+		open.Pick(open.ID).Where(open.Status.In(statuses...)),
+	)))
+}
+
 func moveFilters(filter *dispatchboardports.DispatchBoardFilter) []keel.Pred {
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
 
-	statuses := openBoardStatuses
-	if len(filter.MoveStatuses) > 0 {
-		statuses = filter.MoveStatuses
-	}
-
 	preds := []keel.Pred{
-		sm.Status.In(statuses...),
+		sm.Status.In(boardStatuses(filter)...),
 		keel.When(len(filter.MoveIDs) > 0, sm.ID.In(filter.MoveIDs...)),
 		keel.When(len(filter.CustomerIDs) > 0, sp.CustomerID.In(filter.CustomerIDs...)),
 		keel.When(len(filter.ServiceTypeIDs) > 0, sp.ServiceTypeID.In(filter.ServiceTypeIDs...)),
