@@ -186,4 +186,45 @@ describe("create and edit panels sharing one form", () => {
 
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith({ id: "acc_9" }));
   });
+
+  // Each save bumps the record's version and refuses a stale one. A panel left open
+  // after Save must edit the saved version, or its next save is refused as out of date.
+  it("sends the version the last save returned when saved again without closing", async () => {
+    window.localStorage.setItem("panel-edit-default-action", JSON.stringify("save"));
+    type VersionedForm = ChargeForm & { version: number };
+    const row = { ...ROW, version: 3 };
+    const sent: number[] = [];
+    let form!: UseFormReturn<VersionedForm>;
+    function Panel() {
+      form = useForm<VersionedForm>({ defaultValues: { ...PRISTINE, version: 0 } });
+      return (
+        <FormEditPanel<VersionedForm, typeof row & Record<string, unknown>>
+          open
+          onOpenChange={() => undefined}
+          row={row as typeof row & Record<string, unknown>}
+          form={form}
+          mutationFn={async (values) => {
+            sent.push(values.version);
+            return { ...values, version: values.version + 1 };
+          }}
+          queryKey="accessorial-charge-list"
+          title="Accessorial charge"
+          formComponent={null}
+        />
+      );
+    }
+    try {
+      render(<Panel />, { wrapper: wrapper(queryClient) });
+      await waitFor(() => expect(form.getValues().version).toBe(3));
+
+      fireEvent.submit(document.getElementById("panel-edit-form")!);
+      await waitFor(() => expect(form.getValues().version).toBe(4));
+      expect(form.formState.isDirty).toBe(false);
+
+      fireEvent.submit(document.getElementById("panel-edit-form")!);
+      await waitFor(() => expect(sent).toEqual([3, 4]));
+    } finally {
+      window.localStorage.removeItem("panel-edit-default-action");
+    }
+  });
 });
