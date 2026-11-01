@@ -1,0 +1,52 @@
+enum RateConfirmationStatus {
+  Generated
+  Sent
+  Confirmed
+  Voided
+}
+
+"""
+One revision of the rate confirmation sent to a carrier for a move. Generating a new one
+supersedes the last; the frozen render payload stays on the server.
+"""
+type RateConfirmation {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierAssignmentId: ID!
+  carrierId: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  revision: Int!
+  status: RateConfirmationStatus!
+  documentId: ID
+  sentAt: Timestamp
+  sentToEmails: String!
+  confirmedAt: Timestamp
+  confirmedByName: String!
+  voidedAt: Timestamp
+  voidReason: String!
+  generatedById: ID
+  "Dispatcher, TenderAcceptance or PublicSignature."
+  generatedVia: String!
+  sourceTenderOfferId: ID
+  "Empty until confirmed: Dispatcher, TenderAcceptance or PublicSignature."
+  confirmedVia: String!
+  confirmedByTitle: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+extend type Query {
+  "Every rate confirmation revision for a move."
+  rateConfirmationsByMove(moveId: ID!): [RateConfirmation!]!
+}
+
+extend type Mutation {
+  generateRateConfirmation(moveId: ID!): RateConfirmation!
+  sendRateConfirmation(id: ID!): RateConfirmation!
+  "Records that the carrier confirmed the rate outside Trenova, under the name given."
+  confirmRateConfirmation(id: ID!, confirmedByName: String!): RateConfirmation!
+  voidRateConfirmation(id: ID!, reason: String!): RateConfirmation!
+}

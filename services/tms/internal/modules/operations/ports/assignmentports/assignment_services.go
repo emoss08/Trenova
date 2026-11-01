@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -26,10 +25,6 @@ type EquipmentInUse struct {
 }
 
 type AssignmentService interface {
-	List(
-		ctx context.Context,
-		req *ListAssignmentsRequest,
-	) (*pagination.ListResult[*shipment.Assignment], error)
 	Get(
 		ctx context.Context,
 		req *GetAssignmentByIDRequest,

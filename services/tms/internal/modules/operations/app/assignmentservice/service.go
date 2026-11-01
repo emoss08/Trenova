@@ -244,13 +244,6 @@ func driverDisplayName(assignment *shipment.Assignment) string {
 	}
 }
 
-func (s *service) List(
-	ctx context.Context,
-	req *assignmentports.ListAssignmentsRequest,
-) (*pagination.ListResult[*shipment.Assignment], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *service) Get(
 	ctx context.Context,
 	req *assignmentports.GetAssignmentByIDRequest,

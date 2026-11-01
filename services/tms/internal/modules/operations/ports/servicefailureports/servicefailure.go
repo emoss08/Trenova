@@ -342,10 +342,6 @@ type ServiceFailureLifecyclePreview struct {
 
 type ServiceFailureService interface {
 	ServiceFailureEvaluator
-	List(
-		ctx context.Context,
-		req *ListServiceFailuresRequest,
-	) (*pagination.ListResult[*servicefailure.ServiceFailure], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListServiceFailureConnectionRequest,

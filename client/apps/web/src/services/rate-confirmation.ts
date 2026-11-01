@@ -1,3 +1,10 @@
+import {
+  confirmRateConfirmationGraphQL,
+  generateRateConfirmationGraphQL,
+  listRateConfirmationsByMoveGraphQL,
+  sendRateConfirmationGraphQL,
+  voidRateConfirmationGraphQL,
+} from "@/lib/graphql/rate-confirmation";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
@@ -14,26 +21,23 @@ export type ConfirmPublicRateConfirmationPayload = {
 };
 
 export class RateConfirmationService {
-  public async listByMove(moveId: string): Promise<RateConfirmation[]> {
-    const response = await api.get<RateConfirmation[]>(
-      `/shipment-moves/${moveId}/rate-confirmations/`,
-    );
+  public async listByMove(
+    moveId: string,
+    { signal }: { signal?: AbortSignal } = {},
+  ): Promise<RateConfirmation[]> {
+    const response = await listRateConfirmationsByMoveGraphQL(moveId, { signal });
 
-    return safeParse(rateConfirmationListSchema, response ?? [], "RateConfirmationList");
+    return safeParse(rateConfirmationListSchema, response, "RateConfirmationList");
   }
 
   public async generate(moveId: string): Promise<RateConfirmation> {
-    const response = await api.post<RateConfirmation>(
-      `/shipment-moves/${moveId}/rate-confirmations/`,
-    );
+    const response = await generateRateConfirmationGraphQL(moveId);
 
     return safeParse(rateConfirmationSchema, response, "RateConfirmation");
   }
 
   public async send(rateConfirmationId: string): Promise<RateConfirmation> {
-    const response = await api.post<RateConfirmation>(
-      `/rate-confirmations/${rateConfirmationId}/send/`,
-    );
+    const response = await sendRateConfirmationGraphQL(rateConfirmationId);
 
     return safeParse(rateConfirmationSchema, response, "RateConfirmation");
   }
@@ -42,19 +46,13 @@ export class RateConfirmationService {
     rateConfirmationId: string,
     confirmedByName: string,
   ): Promise<RateConfirmation> {
-    const response = await api.post<RateConfirmation>(
-      `/rate-confirmations/${rateConfirmationId}/confirm/`,
-      { confirmedByName },
-    );
+    const response = await confirmRateConfirmationGraphQL(rateConfirmationId, confirmedByName);
 
     return safeParse(rateConfirmationSchema, response, "RateConfirmation");
   }
 
   public async void(rateConfirmationId: string, reason: string): Promise<RateConfirmation> {
-    const response = await api.post<RateConfirmation>(
-      `/rate-confirmations/${rateConfirmationId}/void/`,
-      { reason },
-    );
+    const response = await voidRateConfirmationGraphQL(rateConfirmationId, reason);
 
     return safeParse(rateConfirmationSchema, response, "RateConfirmation");
   }

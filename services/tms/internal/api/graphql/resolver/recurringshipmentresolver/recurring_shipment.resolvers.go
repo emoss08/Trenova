@@ -10,10 +10,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -57,4 +60,140 @@ func (r *QueryResolver) RecurringShipment(ctx context.Context, id string) (*recu
 		ID:         recurringShipmentID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *QueryResolver) RecurringShipmentRuns(ctx context.Context, recurringShipmentID string, first *int) ([]*recurringshipment.RecurringShipmentRun, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	seriesID, err := gqlid.ParseIDField("recurringShipmentId", recurringShipmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	tenantInfo := resolvercore.TenantInfo(authCtx)
+	result, err := r.RecurringShipmentService.ListRuns(
+		ctx,
+		&recurringshipmentports.ListRecurringShipmentRunsRequest{
+			TenantInfo:          tenantInfo,
+			RecurringShipmentID: seriesID,
+			Filter: &pagination.QueryOptions{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: runsLimit(first)},
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Items, nil
+}
+
+func (r *QueryResolver) MatchRecurringShipments(ctx context.Context, input gqlmodel.MatchRecurringShipmentsInput) (*recurringshipmentports.MatchRecurringShipmentsResponse, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := matchRequestFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+	req.TenantInfo = resolvercore.TenantInfo(authCtx)
+
+	return r.RecurringShipmentService.Match(ctx, req)
+}
+
+func (r *MutationResolver) CreateRecurringShipment(ctx context.Context, input gqlmodel.RecurringShipmentInput) (*recurringshipment.RecurringShipment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringShipment, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := &recurringshipment.RecurringShipment{
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+	}
+	if err = applyRecurringShipmentInput(entity, &input); err != nil {
+		return nil, err
+	}
+
+	return r.RecurringShipmentService.Create(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateRecurringShipment(ctx context.Context, id string, input gqlmodel.RecurringShipmentInput) (*recurringshipment.RecurringShipment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringShipment, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	seriesID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := r.RecurringShipmentService.Get(
+		ctx,
+		&recurringshipmentports.GetRecurringShipmentByIDRequest{
+			ID:         seriesID,
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err = applyRecurringShipmentInput(entity, &input); err != nil {
+		return nil, err
+	}
+
+	return r.RecurringShipmentService.Update(ctx, entity, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateRecurringShipmentStatus(ctx context.Context, id string, status recurringshipment.Status, version int) (*recurringshipment.RecurringShipment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringShipment, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	seriesID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.RecurringShipmentService.UpdateStatus(
+		ctx,
+		&recurringshipmentports.UpdateRecurringShipmentStatusRequest{
+			TenantInfo:          resolvercore.TenantInfo(authCtx),
+			RecurringShipmentID: seriesID,
+			Status:              status,
+			Version:             int64(version),
+		},
+		authCtx.UserID,
+	)
+}
+
+func (r *MutationResolver) GenerateRecurringShipment(ctx context.Context, id string, occurrenceAt *int) (*recurringshipmentports.GenerateRecurringShipmentResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRecurringShipment, permission.OpDuplicate)
+	if err != nil {
+		return nil, err
+	}
+
+	seriesID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.RecurringShipmentService.Generate(
+		ctx,
+		&recurringshipmentports.GenerateRecurringShipmentRequest{
+			TenantInfo:          resolvercore.TenantInfo(authCtx),
+			RecurringShipmentID: seriesID,
+			OccurrenceAt:        gqlscalar.Int64Ptr(occurrenceAt),
+			Trigger:             recurringshipment.RunTriggerManual,
+			RequestedBy:         authCtx.UserID,
+		},
+	)
 }

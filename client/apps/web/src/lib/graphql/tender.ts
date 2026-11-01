@@ -1,7 +1,15 @@
 import {
+  BounceTenderDocument,
+  CancelTenderDocument,
+  CreateSpotTenderDocument,
+  CreateWaterfallTenderDocument,
   LiveTenderByMoveDocument,
+  RespondToTenderOfferDocument,
   TendersByShipmentDocument,
+  type CreateSpotTenderInput,
+  type CreateWaterfallTenderInput,
   type LiveTenderByMoveQuery,
+  type RespondToTenderOfferInput,
   type TendersByShipmentQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -34,4 +42,52 @@ export async function getLiveTenderByMoveGraphQL(
     signal: options?.signal,
   });
   return data.liveTenderByMove ?? null;
+}
+
+export async function createWaterfallTenderGraphQL(input: CreateWaterfallTenderInput) {
+  const data = await requestGraphQL({
+    document: CreateWaterfallTenderDocument,
+    operationName: "CreateWaterfallTender",
+    variables: { input },
+  });
+  return data.createWaterfallTender;
+}
+
+export async function createSpotTenderGraphQL(input: CreateSpotTenderInput) {
+  const data = await requestGraphQL({
+    document: CreateSpotTenderDocument,
+    operationName: "CreateSpotTender",
+    variables: { input },
+  });
+  return data.createSpotTender;
+}
+
+export async function cancelTenderGraphQL(id: string, reason: string) {
+  const data = await requestGraphQL({
+    document: CancelTenderDocument,
+    operationName: "CancelTender",
+    variables: { id, reason },
+  });
+  return data.cancelTender;
+}
+
+export async function respondToTenderOfferGraphQL(
+  offerId: string,
+  input: RespondToTenderOfferInput,
+) {
+  const data = await requestGraphQL({
+    document: RespondToTenderOfferDocument,
+    operationName: "RespondToTenderOffer",
+    variables: { offerId, input },
+  });
+  return data.respondToTenderOffer;
+}
+
+export async function bounceTenderGraphQL(id: string, reason: string) {
+  const data = await requestGraphQL({
+    document: BounceTenderDocument,
+    operationName: "BounceTender",
+    variables: { id, reason },
+  });
+  return data.bounceTender;
 }

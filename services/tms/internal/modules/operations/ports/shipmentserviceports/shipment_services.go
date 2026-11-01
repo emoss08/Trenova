@@ -248,15 +248,6 @@ type ShipmentLifecycleService interface {
 		req *shipmentports.TransferOwnershipRequest,
 		actor *permissionports.RequestActor,
 	) (*ShipmentChangePreview, error)
-	GetDelayedShipments(
-		ctx context.Context,
-		req *shipmentports.GetDelayedShipmentsRequest,
-	) ([]*shipment.Shipment, error)
-	DelayShipments(
-		ctx context.Context,
-		req *shipmentports.DelayShipmentsRequest,
-		actor *permissionports.RequestActor,
-	) ([]*shipment.Shipment, error)
 	GetAutoCancelableShipments(
 		ctx context.Context,
 		req *shipmentports.GetAutoCancelableShipmentsRequest,

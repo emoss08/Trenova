@@ -194,6 +194,7 @@ import (
 	edioverview "github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
 	editransferservice "github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
+	ediports "github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -212,6 +213,10 @@ import (
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
+	tenderbounce "github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	tendercancel "github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	tendercreate "github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	tenderresponse "github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	ratingreviewports "github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -440,6 +445,8 @@ type ResolverParams struct {
 	ReportingService                  *reportingservice.Service
 	RoutingGuideService               *routingguideservice.Service
 	SchedulingService                 *schedulingservice.Service
+	ServiceFailureEDI214              ediports.ServiceFailure214Service
+	ServiceFailureEDIPayloads         ediports.ServiceFailurePayloadBuilder
 	ServiceFailureReasonCodeSvc       servicefailureports.ServiceFailureReasonCodeService
 	ServiceFailureSvc                 servicefailureports.ServiceFailureService
 	ServiceTypeService                *servicetypeservice.Service
@@ -460,7 +467,11 @@ type ResolverParams struct {
 	TableChangeAlertService           *tablechangealertservice.Service
 	TableExportService                *tableexportservice.Service
 	TelematicsService                 *telematicsservice.Service
+	TenderBouncer                     *tenderbounce.Service
+	TenderCanceler                    *tendercancel.Service
+	TenderCreator                     *tendercreate.Service
 	TenderRepo                        tenderports.TenderRepository
+	TenderResponder                   *tenderresponse.Service
 	TrackingEventService              trackingeventports.TrackingEventService
 	TractorService                    *tractorservice.Service
 	TrailerService                    *trailerservice.Service
@@ -663,8 +674,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CustomerTable",
-		Hash:     "sha256:77fc50a2943abe8cc016f3b69f09896edacab646e68166b8cc4d87a08bd86e99",
-		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:974b5806f950d3ca2b8665065d7df4b1801814d8717b546c29b5317d3131d091",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } brokerVettingEnabled businessUnitId checkCallIntervalHours city code consolidationPriority createdAt dotNumber emailProfile { ...CustomerEmailProfileFields } etaRiskThresholdMinutes exclusiveConsolidation externalId id isGeocoded latitude longitude mcNumber name organizationId placeId postalCode stateId status statusUpdatePreference statusUpdateRecipients updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskDetentionCard",
@@ -1003,8 +1014,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CommodityTable",
-		Hash:     "sha256:563bed9f11970bc10ed428708f0673b049b3695462590cf2681fc74729a9593f",
-		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:20cdf710d66aeebbbbba36e2128af8c748fa48044d3bb6360b7077b70e892efc",
+		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId heightPerUnit id lengthPerUnit linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit widthPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "FleetCodeTable",
@@ -1018,8 +1029,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "HoldReasonTable",
-		Hash:     "sha256:a90ea543247ade1f06a13a861011a27d0e03255bc5f1d0673d628b66f547893c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:6f82d9070c470b39add2c4acea54155f342a1d4b1ea43b16dbb22f1bdfd5fd0b",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description externalMap id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ServiceTypeTable",
@@ -1599,8 +1610,10 @@ func NewSchema(p ResolverParams) Schema {
 		SchedulingService: p.SchedulingService,
 	}
 	servicefailureDeps := &servicefailureresolver.Deps{
-		Core:              core,
-		ServiceFailureSvc: p.ServiceFailureSvc,
+		Core:                      core,
+		ServiceFailureEdiPayloads: p.ServiceFailureEDIPayloads,
+		ServiceFailureEdi214:      p.ServiceFailureEDI214,
+		ServiceFailureSvc:         p.ServiceFailureSvc,
 	}
 	servicefailurereasoncodeDeps := &servicefailurereasoncoderesolver.Deps{
 		Core:                        core,
@@ -1650,6 +1663,10 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		RoutingGuideService: p.RoutingGuideService,
 		TenderRepo:          p.TenderRepo,
+		TenderCreator:       p.TenderCreator,
+		TenderCanceler:      p.TenderCanceler,
+		TenderResponder:     p.TenderResponder,
+		TenderBouncer:       p.TenderBouncer,
 	}
 	tractorDeps := &tractorresolver.Deps{
 		Core:           core,
@@ -1759,11 +1776,14 @@ func NewSchema(p ResolverParams) Schema {
 		locationcategoryMutation:      &locationcategoryMutation{Deps: locationcategoryDeps},
 		orderMutation:                 &orderMutation{Deps: orderDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
+		recurringshipmentMutation:     &recurringshipmentMutation{Deps: recurringshipmentDeps},
 		reportMutation:                &reportMutation{Deps: reportDeps},
 		schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
+		servicefailureMutation:        &servicefailureMutation{Deps: servicefailureDeps},
 		shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
 		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
+		tenderMutation:                &tenderMutation{Deps: tenderDeps},
 		tractorMutation:               &tractorMutation{Deps: tractorDeps},
 		trailerMutation:               &trailerMutation{Deps: trailerDeps},
 		triageMutation:                &triageMutation{Deps: triageDeps},
@@ -2043,15 +2063,30 @@ func NewSchema(p ResolverParams) Schema {
 		"PerformanceReviewTemplate": func() any {
 			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 		},
-		"PortalCredential":             func() any { return &driverportalresolver.PortalCredentialResolver{Deps: driverportalDeps} },
-		"PortalTraining":               func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
-		"RateAgreement":                func() any { return &rateresolver.RateAgreementResolver{Deps: rateDeps} },
-		"RateMatrix":                   func() any { return &rateresolver.RateMatrixResolver{Deps: rateDeps} },
-		"RateMatrixVersion":            func() any { return &rateresolver.RateMatrixVersionResolver{Deps: rateDeps} },
-		"ReportSchedule":               func() any { return &reportresolver.ReportScheduleResolver{Deps: reportDeps} },
-		"ReviewRating":                 func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
-		"SafetyScorecard":              func() any { return &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps} },
-		"ServiceFailure":               func() any { return &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps} },
+		"PortalCredential":  func() any { return &driverportalresolver.PortalCredentialResolver{Deps: driverportalDeps} },
+		"PortalTraining":    func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
+		"RateAgreement":     func() any { return &rateresolver.RateAgreementResolver{Deps: rateDeps} },
+		"RateMatrix":        func() any { return &rateresolver.RateMatrixResolver{Deps: rateDeps} },
+		"RateMatrixVersion": func() any { return &rateresolver.RateMatrixVersionResolver{Deps: rateDeps} },
+		"ReportSchedule":    func() any { return &reportresolver.ReportScheduleResolver{Deps: reportDeps} },
+		"ReviewRating":      func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
+		"SafetyScorecard":   func() any { return &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps} },
+		"ServiceFailure":    func() any { return &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps} },
+		"ServiceFailureEdi214Lifecycle": func() any {
+			return &servicefailureresolver.ServiceFailureEdi214LifecycleResolver{Deps: servicefailureDeps}
+		},
+		"ServiceFailureEdi214Payload": func() any {
+			return &servicefailureresolver.ServiceFailureEdi214PayloadResolver{Deps: servicefailureDeps}
+		},
+		"ServiceFailureEdi214Status": func() any {
+			return &servicefailureresolver.ServiceFailureEdi214StatusResolver{Deps: servicefailureDeps}
+		},
+		"ServiceFailureEdiDiagnostic": func() any {
+			return &servicefailureresolver.ServiceFailureEdiDiagnosticResolver{Deps: servicefailureDeps}
+		},
+		"ServiceFailureEvaluatedStop": func() any {
+			return &servicefailureresolver.ServiceFailureEvaluatedStopResolver{Deps: servicefailureDeps}
+		},
 		"ServiceFailureShipment":       func() any { return &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps} },
 		"ServiceFailureStop":           func() any { return &servicefailureresolver.ServiceFailureStopResolver{Deps: servicefailureDeps} },
 		"SettlementControl":            func() any { return &driversettlementresolver.SettlementControlResolver{Deps: driversettlementDeps} },
@@ -2173,11 +2208,14 @@ type mutationResolver struct {
 	*locationcategoryMutation
 	*orderMutation
 	*performancereviewMutation
+	*recurringshipmentMutation
 	*reportMutation
 	*schedulingMutation
+	*servicefailureMutation
 	*shipmentMutation
 	*telematicsMutation
 	*tenantMutation
+	*tenderMutation
 	*tractorMutation
 	*trailerMutation
 	*triageMutation
@@ -2312,11 +2350,14 @@ type (
 	locationcategoryMutation        = locationcategoryresolver.MutationResolver
 	orderMutation                   = orderresolver.MutationResolver
 	performancereviewMutation       = performancereviewresolver.MutationResolver
+	recurringshipmentMutation       = recurringshipmentresolver.MutationResolver
 	reportMutation                  = reportresolver.MutationResolver
 	schedulingMutation              = schedulingresolver.MutationResolver
+	servicefailureMutation          = servicefailureresolver.MutationResolver
 	shipmentMutation                = shipmentresolver.MutationResolver
 	telematicsMutation              = telematicsresolver.MutationResolver
 	tenantMutation                  = tenantresolver.MutationResolver
+	tenderMutation                  = tenderresolver.MutationResolver
 	tractorMutation                 = tractorresolver.MutationResolver
 	trailerMutation                 = trailerresolver.MutationResolver
 	triageMutation                  = triageresolver.MutationResolver

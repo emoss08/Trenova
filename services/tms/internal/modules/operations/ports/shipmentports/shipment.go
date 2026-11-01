@@ -319,33 +319,6 @@ type ShipmentDuplicatePlan struct {
 	Copies []*shipment.Shipment
 }
 
-type GetDelayedShipmentsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	Limit      int                   `json:"limit"`
-}
-
-func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-
-	multiErr.AddOzzoError(validation.ValidateStruct(
-		r,
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
-	))
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
-}
-
 type DelayShipmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	Limit      int                   `json:"limit"`
@@ -688,11 +661,6 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *BulkDuplicateShipmentRequest,
 	) (*ShipmentDuplicatePlan, error)
-	GetDelayedShipments(
-		ctx context.Context,
-		req *GetDelayedShipmentsRequest,
-		thresholdMinutes int16,
-	) ([]*shipment.Shipment, error)
 	DelayShipments(
 		ctx context.Context,
 		req *DelayShipmentsRequest,

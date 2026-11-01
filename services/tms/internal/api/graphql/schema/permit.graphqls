@@ -1,0 +1,194 @@
+enum PermitStatus {
+  Pending
+  Active
+  Expired
+  Void
+}
+
+enum PermitRequirementStatus {
+  Open
+  Satisfied
+  Superseded
+  Waived
+}
+
+"Which dimension of a load a state's limit or escort rule is about."
+enum PermitTrigger {
+  Width
+  Height
+  Length
+  Weight
+  Superload
+}
+
+enum PermitEscortRole {
+  Front
+  Rear
+  Police
+  RouteSurvey
+}
+
+"A time a state forbids oversize moves."
+enum PermitRestriction {
+  DaylightOnly
+  RushHour
+  Weekend
+  Holiday
+  NightOnly
+}
+
+"An oversize or overweight permit recorded against a shipment for one state."
+type Permit {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID!
+  stateId: ID!
+  permitNumber: String!
+  status: PermitStatus!
+  issuedAt: Timestamp
+  expiresAt: Timestamp
+  cost: Decimal
+  notes: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  state: UsState
+}
+
+"One way a load exceeds a state's legal envelope."
+type PermitExceedance {
+  trigger: PermitTrigger!
+  limit: Float!
+  actual: Float!
+  overBy: Float!
+  superload: Boolean!
+}
+
+type PermitEscortRequirement {
+  role: PermitEscortRole!
+  trigger: PermitTrigger!
+  threshold: Float!
+  actual: Float!
+  note: String!
+}
+
+"The jurisdiction rule a requirement was derived from, as it read at derivation."
+type PermitRuleProvenance {
+  ruleId: ID!
+  stateCode: String!
+  stateName: String!
+  verificationState: JurisdictionVerificationState!
+  verifiedAt: Timestamp
+  sourceNote: String!
+  sourceUrl: String!
+  maxWidthFeet: Float!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  overriddenFields: [String!]
+  overrideReason: String!
+}
+
+"""
+A permit one state on the route requires. A requirement inside an assessment is freshly
+derived and not yet saved, so its id and shipmentId are empty; the persisted rows from
+shipmentPermitRequirements carry them.
+"""
+type PermitRequirement {
+  id: ID
+  businessUnitId: ID
+  organizationId: ID
+  shipmentId: ID
+  stateId: ID!
+  status: PermitRequirementStatus!
+  routeSequence: Int!
+  exceedances: [PermitExceedance!]
+  escorts: [PermitEscortRequirement!]
+  restrictions: [PermitRestriction!]
+  leadTimeDays: Int!
+  validityDays: Int!
+  estimatedFee: Decimal
+  isSuperload: Boolean!
+  satisfiedByPermitId: ID
+  waivedById: ID
+  waiverReason: String!
+  provenance: PermitRuleProvenance
+  derivedAt: Timestamp!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"The load as every jurisdiction on the route measured it."
+type PermitAssessedMeasurements {
+  widthFeet: Float!
+  heightFeet: Float!
+  lengthFeet: Float!
+  weightPounds: Int!
+}
+
+"""
+One state on the route with its limits and the load's headroom against them. A negative
+headroom is an exceedance.
+"""
+type PermitAssessedJurisdiction {
+  stateId: ID!
+  stateCode: String!
+  stateName: String!
+  sequence: Int!
+  verificationState: JurisdictionVerificationState!
+  sourceNote: String!
+  sourceUrl: String!
+  maxWidthFeet: Float!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  widthHeadroomFeet: Float!
+  heightHeadroomFeet: Float!
+  lengthHeadroomFeet: Float!
+  weightHeadroomPounds: Int!
+  requiresPermit: Boolean!
+  restrictions: [PermitRestriction!]
+}
+
+"What a shipment's load needs, where, and by when. Derived on read; nothing is saved."
+type PermitAssessment {
+  measurements: PermitAssessedMeasurements!
+  jurisdictions: [PermitAssessedJurisdiction!]
+  requirements: [PermitRequirement!]
+  open: [PermitRequirement!]
+  expiringBeforeDelivery: [PermitRequirement!]
+  totalEscorts: Int!
+  totalEstimatedFee: Decimal!
+  maxLeadTimeDays: Int!
+  earliestPickup: Timestamp!
+  "False when the route's states could not be told, so an empty list is not a clean route."
+  routeResolved: Boolean!
+  "True when per-mile fees were left out because the route has no per-state mileage."
+  feeIsBaseOnly: Boolean!
+}
+
+input PermitInput {
+  stateId: ID!
+  permitNumber: String!
+  status: PermitStatus!
+  issuedAt: Timestamp
+  expiresAt: Timestamp
+  cost: Decimal
+  notes: String
+  version: Int
+}
+
+extend type Query {
+  shipmentPermitAssessment(shipmentId: ID!): PermitAssessment!
+  shipmentPermits(shipmentId: ID!): [Permit!]!
+  shipmentPermitRequirements(shipmentId: ID!): [PermitRequirement!]!
+}
+
+extend type Mutation {
+  createShipmentPermit(shipmentId: ID!, input: PermitInput!): Permit!
+  updateShipmentPermit(shipmentId: ID!, id: ID!, input: PermitInput!): Permit!
+  "Records the signed-in person accepting the risk of moving the load without this permit."
+  waiveShipmentPermitRequirement(requirementId: ID!, reason: String!): PermitRequirement!
+}

@@ -102,8 +102,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgstructureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pageaccessexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/permitexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateconfirmationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/recurringshipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/reportexec"
@@ -121,6 +123,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentmoveexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sidebarpreferenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/storedmileageexec"
@@ -267,6 +270,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
@@ -293,6 +297,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -318,6 +325,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -367,6 +375,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
@@ -384,6 +393,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
@@ -497,6 +507,7 @@ type ResolverRoot interface {
 	CustomerPayment() CustomerPaymentResolver
 	CustomerPaymentApplication() CustomerPaymentApplicationResolver
 	CustomerTrackingProfile() CustomerTrackingProfileResolver
+	CustomerTrackingView() CustomerTrackingViewResolver
 	DOTRandomDraw() DOTRandomDrawResolver
 	DOTRandomDrawEntry() DOTRandomDrawEntryResolver
 	DOTRandomPool() DOTRandomPoolResolver
@@ -624,11 +635,15 @@ type ResolverRoot interface {
 	PendingDecisionEdge() PendingDecisionEdgeResolver
 	PerformanceReview() PerformanceReviewResolver
 	PerformanceReviewTemplate() PerformanceReviewTemplateResolver
+	Permit() PermitResolver
+	PermitAssessment() PermitAssessmentResolver
+	PermitRequirement() PermitRequirementResolver
 	PlannedPTOAccrual() PlannedPTOAccrualResolver
 	PortalCredential() PortalCredentialResolver
 	PortalTraining() PortalTrainingResolver
 	Query() QueryResolver
 	RateAgreement() RateAgreementResolver
+	RateConfirmation() RateConfirmationResolver
 	RateMatrix() RateMatrixResolver
 	RateMatrixVersion() RateMatrixVersionResolver
 	ReportSchedule() ReportScheduleResolver
@@ -638,6 +653,11 @@ type ResolverRoot interface {
 	RoutingGuideEntry() RoutingGuideEntryResolver
 	SafetyScorecard() SafetyScorecardResolver
 	ServiceFailure() ServiceFailureResolver
+	ServiceFailureEdi214Lifecycle() ServiceFailureEdi214LifecycleResolver
+	ServiceFailureEdi214Payload() ServiceFailureEdi214PayloadResolver
+	ServiceFailureEdi214Status() ServiceFailureEdi214StatusResolver
+	ServiceFailureEdiDiagnostic() ServiceFailureEdiDiagnosticResolver
+	ServiceFailureEvaluatedStop() ServiceFailureEvaluatedStopResolver
 	ServiceFailureShipment() ServiceFailureShipmentResolver
 	ServiceFailureStop() ServiceFailureStopResolver
 	SettlementControl() SettlementControlResolver
@@ -1294,6 +1314,10 @@ type CustomerPaymentApplicationResolver interface {
 
 type CustomerTrackingProfileResolver interface {
 	ID(ctx context.Context, obj *customertracking.Profile) (*string, error)
+}
+
+type CustomerTrackingViewResolver interface {
+	Status(ctx context.Context, obj *customertrackingports.PublicTrackingView) (*customertrackingports.PublicStatus, error)
 }
 
 type DOTRandomDrawResolver interface {
@@ -2503,6 +2527,9 @@ type MutationResolver interface {
 	ClosePerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*workerreview.PerformanceReview, error)
 	DeletePerformanceReview(ctx context.Context, id string) (bool, error)
 	AcknowledgeMyReview(ctx context.Context, id string, comment *string) (*workerreview.PerformanceReview, error)
+	CreateShipmentPermit(ctx context.Context, shipmentID string, input gqlmodel.PermitInput) (*permit.Permit, error)
+	UpdateShipmentPermit(ctx context.Context, shipmentID string, id string, input gqlmodel.PermitInput) (*permit.Permit, error)
+	WaiveShipmentPermitRequirement(ctx context.Context, requirementID string, reason string) (*permit.Requirement, error)
 	CreatePTOPolicy(ctx context.Context, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error)
 	UpdatePTOPolicy(ctx context.Context, id string, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error)
 	ArchivePTOPolicy(ctx context.Context, id string, version *int) (*pto.PTOPolicy, error)
@@ -2511,6 +2538,14 @@ type MutationResolver interface {
 	EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*pto.WorkerPTOPolicyAssignment, error)
 	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*pto.WorkerPTOLedgerEntry, error)
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
+	GenerateRateConfirmation(ctx context.Context, moveID string) (*rateconfirmation.RateConfirmation, error)
+	SendRateConfirmation(ctx context.Context, id string) (*rateconfirmation.RateConfirmation, error)
+	ConfirmRateConfirmation(ctx context.Context, id string, confirmedByName string) (*rateconfirmation.RateConfirmation, error)
+	VoidRateConfirmation(ctx context.Context, id string, reason string) (*rateconfirmation.RateConfirmation, error)
+	CreateRecurringShipment(ctx context.Context, input gqlmodel.RecurringShipmentInput) (*recurringshipment.RecurringShipment, error)
+	UpdateRecurringShipment(ctx context.Context, id string, input gqlmodel.RecurringShipmentInput) (*recurringshipment.RecurringShipment, error)
+	UpdateRecurringShipmentStatus(ctx context.Context, id string, status recurringshipment.Status, version int) (*recurringshipment.RecurringShipment, error)
+	GenerateRecurringShipment(ctx context.Context, id string, occurrenceAt *int) (*recurringshipmentports.GenerateRecurringShipmentResult, error)
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
 	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
@@ -2539,6 +2574,11 @@ type MutationResolver interface {
 	CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
 	UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
 	DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error)
+	UpdateServiceFailure(ctx context.Context, id string, input gqlmodel.UpdateServiceFailureInput) (*servicefailure.ServiceFailure, error)
+	ReviewServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error)
+	ResolveServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error)
+	VoidServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error)
+	EvaluateShipmentServiceFailures(ctx context.Context, shipmentID string, force *bool) (*servicefailureports.ServiceFailureEvaluationResult, error)
 	CreateShipment(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	UpdateShipment(ctx context.Context, id string, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	CancelShipment(ctx context.Context, id string, input *gqlmodel.ShipmentCancelInput) (*gqlmodel.Shipment, error)
@@ -2568,6 +2608,11 @@ type MutationResolver interface {
 	DecideShipmentSuggestion(ctx context.Context, input gqlmodel.DecideShipmentSuggestionInput) (bool, error)
 	UndoShipmentSuggestionDecision(ctx context.Context, key string) (bool, error)
 	NotifyShipmentDelay(ctx context.Context, input gqlmodel.NotifyShipmentDelayInput) (bool, error)
+	AssignShipmentMove(ctx context.Context, moveID string, input gqlmodel.ShipmentMoveAssignmentInput) (*gqlmodel.ShipmentAssignment, error)
+	ReassignShipmentMove(ctx context.Context, moveID string, input gqlmodel.ShipmentMoveAssignmentInput) (*gqlmodel.ShipmentAssignment, error)
+	UnassignShipmentMove(ctx context.Context, moveID string) (bool, error)
+	SplitShipmentMove(ctx context.Context, moveID string, input gqlmodel.SplitShipmentMoveInput) (*gqlmodel.SplitShipmentMoveResult, error)
+	RecordShipmentStopActual(ctx context.Context, moveID string, stopID string, input gqlmodel.RecordShipmentStopActualInput) (*gqlmodel.ShipmentMove, error)
 	UpdateSidebarPreferences(ctx context.Context, input gqlmodel.SidebarPreferencesInput) (*gqlmodel.SidebarPreferences, error)
 	CreateTableConfiguration(ctx context.Context, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
 	UpdateTableConfiguration(ctx context.Context, id string, input gqlmodel.TableConfigurationInput) (*tableconfiguration.TableConfiguration, error)
@@ -2580,6 +2625,11 @@ type MutationResolver interface {
 	SaveTelematicsFormMapping(ctx context.Context, input gqlmodel.SaveTelematicsFormMappingInput) (*gqlmodel.TelematicsFormMapping, error)
 	DeleteTelematicsFormMapping(ctx context.Context, id string) (bool, error)
 	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
+	CreateWaterfallTender(ctx context.Context, input gqlmodel.CreateWaterfallTenderInput) (*gqlmodel.CreateWaterfallTenderResult, error)
+	CreateSpotTender(ctx context.Context, input gqlmodel.CreateSpotTenderInput) (*tender.Tender, error)
+	CancelTender(ctx context.Context, id string, reason string) (bool, error)
+	RespondToTenderOffer(ctx context.Context, offerID string, input gqlmodel.RespondToTenderOfferInput) (bool, error)
+	BounceTender(ctx context.Context, id string, reason string) (*tender.Tender, error)
 	ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
 	ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
 	RecordTimeEntry(ctx context.Context, input gqlmodel.RecordTimeEntryInput) (*timesheet.TimeClockEntry, error)
@@ -2820,6 +2870,18 @@ type PerformanceReviewTemplateResolver interface {
 	OpenReviewCount(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (int, error)
 }
 
+type PermitResolver interface {
+	Cost(ctx context.Context, obj *permit.Permit) (*string, error)
+}
+
+type PermitAssessmentResolver interface {
+	TotalEstimatedFee(ctx context.Context, obj *permitports.PermitAssessment) (string, error)
+}
+
+type PermitRequirementResolver interface {
+	EstimatedFee(ctx context.Context, obj *permit.Requirement) (*string, error)
+}
+
 type PlannedPTOAccrualResolver interface {
 	NominalDays(ctx context.Context, obj *ptoledgerservice.PlannedEntry) (string, error)
 }
@@ -3045,6 +3107,7 @@ type QueryResolver interface {
 	CustomerTrackingProfile(ctx context.Context, customerID string) (*customertracking.Profile, error)
 	CustomerTrackingLinks(ctx context.Context, shipmentID string) ([]*customertracking.Link, error)
 	CustomerStatusNotifications(ctx context.Context, shipmentID string) ([]*customertracking.Notification, error)
+	ShipmentCustomerTrackingPreview(ctx context.Context, shipmentID string) (*customertrackingports.PublicTrackingView, error)
 	DataTableFacets(ctx context.Context, input gqlmodel.DataTableFacetInput) (*gqlmodel.DataTableFacets, error)
 	DataTableAggregates(ctx context.Context, input gqlmodel.DataTableAggregateInput) (*gqlmodel.DataTableAggregates, error)
 	DataTableSeries(ctx context.Context, input gqlmodel.DataTableSeriesInput) (*gqlmodel.DataTableSeries, error)
@@ -3331,6 +3394,9 @@ type QueryResolver interface {
 	WorkerPerformanceReviews(ctx context.Context, workerID string) ([]*workerreview.PerformanceReview, error)
 	PerformanceReview(ctx context.Context, id string) (*workerreview.PerformanceReview, error)
 	MyReviews(ctx context.Context) ([]*workerreview.PerformanceReview, error)
+	ShipmentPermitAssessment(ctx context.Context, shipmentID string) (*permitports.PermitAssessment, error)
+	ShipmentPermits(ctx context.Context, shipmentID string) ([]*permit.Permit, error)
+	ShipmentPermitRequirements(ctx context.Context, shipmentID string) ([]*permit.Requirement, error)
 	PTOPolicies(ctx context.Context, input gqlmodel.PTOPoliciesInput) (*gqlmodel.PTOPolicyConnection, error)
 	PTOPolicy(ctx context.Context, id string) (*pto.PTOPolicy, error)
 	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error)
@@ -3350,8 +3416,11 @@ type QueryResolver interface {
 	RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrixreview.RateMatrixReview, error)
 	RateMatrixUsages(ctx context.Context, rateMatrixID string, versionNumber *int) ([]*formulatemplateports.MatrixUsage, error)
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
+	RateConfirmationsByMove(ctx context.Context, moveID string) ([]*rateconfirmation.RateConfirmation, error)
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
 	RecurringShipment(ctx context.Context, id string) (*recurringshipment.RecurringShipment, error)
+	RecurringShipmentRuns(ctx context.Context, recurringShipmentID string, first *int) ([]*recurringshipment.RecurringShipmentRun, error)
+	MatchRecurringShipments(ctx context.Context, input gqlmodel.MatchRecurringShipmentsInput) (*recurringshipmentports.MatchRecurringShipmentsResponse, error)
 	ReportCatalog(ctx context.Context) (*gqlmodel.ReportCatalog, error)
 	CannedReports(ctx context.Context) ([]*gqlmodel.CannedReport, error)
 	ReportDefinition(ctx context.Context, id string) (*gqlmodel.ReportDefinition, error)
@@ -3393,6 +3462,9 @@ type QueryResolver interface {
 	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*profilechange.WorkerProfileChangeRequest, error)
 	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
+	ServiceFailureEDI214Payload(ctx context.Context, id string) (*servicefailureports.ServiceFailureEDIPayloadResult, error)
+	ServiceFailureEDI214Readiness(ctx context.Context, id string, trigger *servicefailureports.ServiceFailureEDITrigger) (*servicefailureports.ServiceFailure214LifecycleResult, error)
+	ServiceFailureEDI214Status(ctx context.Context, id string) (*edimessageports.ServiceFailure214StatusRow, error)
 	ServiceFailureReasonCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceFailureReasonCodeConnection, error)
 	ServiceFailureReasonCode(ctx context.Context, id string) (*servicefailure.ReasonCode, error)
 	ServiceTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceTypeConnection, error)
@@ -3420,6 +3492,8 @@ type QueryResolver interface {
 	ShipmentCoverageSuggestions(ctx context.Context, shipmentID string) (*gqlmodel.ShipmentCoverageSuggestions, error)
 	ShipmentSuggestions(ctx context.Context, timezone string) (*gqlmodel.ShipmentSuggestionQueue, error)
 	ShipmentWatchlist(ctx context.Context, timezone string) (*gqlmodel.ShipmentWatchlist, error)
+	ShipmentAssignment(ctx context.Context, id string) (*gqlmodel.ShipmentAssignment, error)
+	CheckWorkerCompliance(ctx context.Context, input gqlmodel.CheckWorkerComplianceInput) (bool, error)
 	ShipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ShipmentTypeConnection, error)
 	ShipmentType(ctx context.Context, id string) (*shipmenttype.ShipmentType, error)
 	SidebarPreferences(ctx context.Context) (*gqlmodel.SidebarPreferences, error)
@@ -3546,6 +3620,11 @@ type RateAgreementResolver interface {
 	LaneCountExact(ctx context.Context, obj *gqlmodel.RateAgreement) (bool, error)
 }
 
+type RateConfirmationResolver interface {
+	GeneratedVia(ctx context.Context, obj *rateconfirmation.RateConfirmation) (string, error)
+	ConfirmedVia(ctx context.Context, obj *rateconfirmation.RateConfirmation) (string, error)
+}
+
 type RateMatrixResolver interface {
 	Cells(ctx context.Context, obj *gqlmodel.RateMatrix, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
 }
@@ -3590,6 +3669,28 @@ type ServiceFailureResolver interface {
 	ReviewedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
 	ResolvedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
 	VoidedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+}
+
+type ServiceFailureEdi214LifecycleResolver interface {
+	Action(ctx context.Context, obj *servicefailureports.ServiceFailure214LifecycleResult) (string, error)
+}
+
+type ServiceFailureEdi214PayloadResolver interface {
+	Payload(ctx context.Context, obj *servicefailureports.ServiceFailureEDIPayloadResult) (any, error)
+}
+
+type ServiceFailureEdi214StatusResolver interface {
+	GeneratedStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error)
+	DeliveryStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error)
+	AckStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error)
+}
+
+type ServiceFailureEdiDiagnosticResolver interface {
+	Severity(ctx context.Context, obj *edidocument.Diagnostic) (string, error)
+}
+
+type ServiceFailureEvaluatedStopResolver interface {
+	StopType(ctx context.Context, obj *servicefailureports.ServiceFailureEvaluatedStopSummary) (string, error)
 }
 
 type ServiceFailureShipmentResolver interface {
@@ -4130,9 +4231,11 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		orgstructureexec.Shard,
 		pageaccessexec.Shard,
 		performancereviewexec.Shard,
+		permitexec.Shard,
 		preludeexec.Shard,
 		ptopolicyexec.Shard,
 		rateexec.Shard,
+		rateconfirmationexec.Shard,
 		recurringshipmentexec.Shard,
 		reportexec.Shard,
 		roleexec.Shard,
@@ -4148,6 +4251,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		sharedexec.Shard,
 		shipmentexec.Shard,
 		shipmentboardexec.Shard,
+		shipmentmoveexec.Shard,
 		shipmenttypeexec.Shard,
 		sidebarpreferenceexec.Shard,
 		storedmileageexec.Shard,
@@ -4283,6 +4387,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"CustomerPayment":                    func() any { return r.CustomerPayment() },
 			"CustomerPaymentApplication":         func() any { return r.CustomerPaymentApplication() },
 			"CustomerTrackingProfile":            func() any { return r.CustomerTrackingProfile() },
+			"CustomerTrackingView":               func() any { return r.CustomerTrackingView() },
 			"DOTRandomDraw":                      func() any { return r.DOTRandomDraw() },
 			"DOTRandomDrawEntry":                 func() any { return r.DOTRandomDrawEntry() },
 			"DOTRandomPool":                      func() any { return r.DOTRandomPool() },
@@ -4410,11 +4515,15 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"PendingDecisionEdge":                func() any { return r.PendingDecisionEdge() },
 			"PerformanceReview":                  func() any { return r.PerformanceReview() },
 			"PerformanceReviewTemplate":          func() any { return r.PerformanceReviewTemplate() },
+			"Permit":                             func() any { return r.Permit() },
+			"PermitAssessment":                   func() any { return r.PermitAssessment() },
+			"PermitRequirement":                  func() any { return r.PermitRequirement() },
 			"PlannedPTOAccrual":                  func() any { return r.PlannedPTOAccrual() },
 			"PortalCredential":                   func() any { return r.PortalCredential() },
 			"PortalTraining":                     func() any { return r.PortalTraining() },
 			"Query":                              func() any { return r.Query() },
 			"RateAgreement":                      func() any { return r.RateAgreement() },
+			"RateConfirmation":                   func() any { return r.RateConfirmation() },
 			"RateMatrix":                         func() any { return r.RateMatrix() },
 			"RateMatrixVersion":                  func() any { return r.RateMatrixVersion() },
 			"ReportSchedule":                     func() any { return r.ReportSchedule() },
@@ -4424,6 +4533,11 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"RoutingGuideEntry":                  func() any { return r.RoutingGuideEntry() },
 			"SafetyScorecard":                    func() any { return r.SafetyScorecard() },
 			"ServiceFailure":                     func() any { return r.ServiceFailure() },
+			"ServiceFailureEdi214Lifecycle":      func() any { return r.ServiceFailureEdi214Lifecycle() },
+			"ServiceFailureEdi214Payload":        func() any { return r.ServiceFailureEdi214Payload() },
+			"ServiceFailureEdi214Status":         func() any { return r.ServiceFailureEdi214Status() },
+			"ServiceFailureEdiDiagnostic":        func() any { return r.ServiceFailureEdiDiagnostic() },
+			"ServiceFailureEvaluatedStop":        func() any { return r.ServiceFailureEvaluatedStop() },
 			"ServiceFailureShipment":             func() any { return r.ServiceFailureShipment() },
 			"ServiceFailureStop":                 func() any { return r.ServiceFailureStop() },
 			"SettlementControl":                  func() any { return r.SettlementControl() },

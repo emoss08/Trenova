@@ -12,4 +12,6 @@ type Deps struct {
 	RecurringShipmentService *recurringshipmentservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

@@ -12,11 +12,7 @@ import {
 import type { ServiceFailureRow } from "@/lib/graphql/service-failure-table";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import {
-  serviceFailureUpdateSchema,
-  type ServiceFailure,
-  type ServiceFailureUpdate,
-} from "@/types/service-failure";
+import { serviceFailureUpdateSchema, type ServiceFailureUpdate } from "@/types/service-failure";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -123,7 +119,7 @@ export function ServiceFailurePanel({
   }, [open, row, reset]);
 
   const { mutateAsync } = useApiMutation<
-    ServiceFailure,
+    ServiceFailureRow,
     { action: EditPanelSaveAction; values: ServiceFailureUpdate },
     unknown,
     ServiceFailureUpdate

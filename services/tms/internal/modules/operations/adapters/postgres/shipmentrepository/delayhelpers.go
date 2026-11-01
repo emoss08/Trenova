@@ -19,17 +19,6 @@ import (
 
 const defaultSweepLimit = 100
 
-func (r *repository) GetDelayedShipments(
-	ctx context.Context,
-	req *shipmentports.GetDelayedShipmentsRequest,
-	thresholdMinutes int16,
-) ([]*shipment.Shipment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
-		return delayedShipments(thresholdMinutes, timeutils.NowUnix(), req.Limit).
-			List(ctx, r.db.Keel(ctx))
-	})
-}
-
 func (r *repository) DelayShipments(
 	ctx context.Context,
 	req *shipmentports.DelayShipmentsRequest,

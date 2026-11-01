@@ -36,15 +36,18 @@ export const shipment = createQueryKeys("shipment", {
   // looking authoritative.
   permitAssessment: (shipmentId: NonNullable<Shipment["id"]>, version?: number) => ({
     queryKey: ["permit-assessment", shipmentId, version],
-    queryFn: async () => apiService.shipmentService.getPermitAssessment(shipmentId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.shipmentService.getPermitAssessment(shipmentId, { signal }),
   }),
   permits: (shipmentId: NonNullable<Shipment["id"]>) => ({
     queryKey: ["permits", shipmentId],
-    queryFn: async () => apiService.shipmentService.listPermits(shipmentId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.shipmentService.listPermits(shipmentId, { signal }),
   }),
   permitRequirements: (shipmentId: NonNullable<Shipment["id"]>) => ({
     queryKey: ["permit-requirements", shipmentId],
-    queryFn: async () => apiService.shipmentService.listPermitRequirements(shipmentId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.shipmentService.listPermitRequirements(shipmentId, { signal }),
   }),
   profitability: (shipmentId: Shipment["id"]) => ({
     queryKey: ["profitability", shipmentId],

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -20,6 +21,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "CustomerStatusNotification", Implementors: []string{"CustomerStatusNotification"}},
 		{Name: "CustomerTrackingLink", Implementors: []string{"CustomerTrackingLink"}},
 		{Name: "CustomerTrackingProfile", Implementors: []string{"CustomerTrackingProfile"}},
+		{Name: "CustomerTrackingView", Implementors: []string{"CustomerTrackingView"}},
+		{Name: "CustomerTrackingViewHold", Implementors: []string{"CustomerTrackingViewHold"}},
+		{Name: "CustomerTrackingViewLocation", Implementors: []string{"CustomerTrackingViewLocation"}},
+		{Name: "CustomerTrackingViewNote", Implementors: []string{"CustomerTrackingViewNote"}},
+		{Name: "CustomerTrackingViewProofOfDelivery", Implementors: []string{"CustomerTrackingViewProofOfDelivery"}},
+		{Name: "CustomerTrackingViewStop", Implementors: []string{"CustomerTrackingViewStop"}},
 		{Name: "IssueCustomerTrackingLinkPayload", Implementors: []string{"IssueCustomerTrackingLinkPayload"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -399,6 +406,415 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "CustomerTrackingView", Fields: []*gqlexec.Field{
+			{
+				Name:     "companyName",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.CompanyName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "shipmentProNumber",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.ShipmentProNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "fields",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.Fields, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomerTrackingField2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐFieldᚄ),
+			},
+			{
+				Name:     "expiresAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.ExpiresAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "closed",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.Closed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "status",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return gqlexec.Resolver[resolverCustomerTrackingView](ec, "CustomerTrackingView").Status(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOCustomerTrackingPublicStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicStatus),
+			},
+			{
+				Name:     "bol",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.BOL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "customerReference",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.CustomerReference, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "carrierName",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.CarrierName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "equipment",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.Equipment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "pieces",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.Pieces, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:     "weight",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.Weight, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:      "lastLocation",
+				HasChild:  true,
+				ChildType: "CustomerTrackingViewLocation",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.LastLocation, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOCustomerTrackingViewLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicLocation),
+			},
+			{
+				Name:      "stops",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "CustomerTrackingViewStop",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.Stops, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomerTrackingViewStop2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicStopᚄ),
+			},
+			{
+				Name:      "holds",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "CustomerTrackingViewHold",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.Holds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomerTrackingViewHold2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicHoldᚄ),
+			},
+			{
+				Name:      "notes",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "CustomerTrackingViewNote",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.Notes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomerTrackingViewNote2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicNoteᚄ),
+			},
+			{
+				Name:      "proofOfDelivery",
+				HasChild:  true,
+				ChildType: "CustomerTrackingViewProofOfDelivery",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicTrackingView)
+					return obj.ProofOfDelivery, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOCustomerTrackingViewProofOfDelivery2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicPod),
+			},
+		}},
+		{Object: "CustomerTrackingViewHold", Fields: []*gqlexec.Field{
+			{
+				Name:     "type",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicHold)
+					return obj.Type, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicHold)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "startedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicHold)
+					return obj.StartedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "CustomerTrackingViewLocation", Fields: []*gqlexec.Field{
+			{
+				Name:     "city",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicLocation)
+					return obj.City, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "stateCode",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicLocation)
+					return obj.StateCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "reportedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicLocation)
+					return obj.ReportedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "CustomerTrackingViewNote", Fields: []*gqlexec.Field{
+			{
+				Name:     "text",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicNote)
+					return obj.Text, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "postedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicNote)
+					return obj.PostedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "CustomerTrackingViewProofOfDelivery", Fields: []*gqlexec.Field{
+			{
+				Name:     "documentId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicPod)
+					return obj.DocumentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "fileName",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicPod)
+					return obj.FileName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "filedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicPod)
+					return obj.FiledAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "CustomerTrackingViewStop", Fields: []*gqlexec.Field{
+			{
+				Name:     "sequence",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.Sequence, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "type",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.Type, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "city",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.City, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "stateCode",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.StateCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "locationName",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.LocationName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "addressLine",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.AddressLine, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "windowStart",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.WindowStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "windowEnd",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.WindowEnd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "arrivedAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.ArrivedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "departedAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.DepartedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "estimatedArrival",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.EstimatedArrival, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "running",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customertrackingports.PublicStop)
+					return obj.Running, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "IssueCustomerTrackingLinkPayload", Fields: []*gqlexec.Field{
 			{
 				Name:      "link",
@@ -524,6 +940,20 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNCustomerStatusNotification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋcustomertrackingᚐNotificationᚄ),
 			},
+			{
+				Name:       "shipmentCustomerTrackingPreview",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "CustomerTrackingView",
+				Args:       field_Query_shipmentCustomerTrackingPreview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ShipmentCustomerTrackingPreview(ctx, fc.Args["shipmentId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomerTrackingView2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicTrackingView),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
@@ -532,6 +962,7 @@ var Shard = &gqlexec.Shard{
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "CustomerTrackingProfile", Check: func(r any) bool { _, ok := r.(resolverCustomerTrackingProfile); return ok }},
+		{Root: "CustomerTrackingView", Check: func(r any) bool { _, ok := r.(resolverCustomerTrackingView); return ok }},
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
@@ -539,6 +970,10 @@ var Shard = &gqlexec.Shard{
 
 type resolverCustomerTrackingProfile interface {
 	ID(ctx context.Context, obj *customertracking.Profile) (*string, error)
+}
+
+type resolverCustomerTrackingView interface {
+	Status(ctx context.Context, obj *customertrackingports.PublicTrackingView) (*customertrackingports.PublicStatus, error)
 }
 
 type resolverMutation interface {
@@ -551,19 +986,21 @@ type resolverQuery interface {
 	CustomerTrackingProfile(ctx context.Context, customerID string) (*customertracking.Profile, error)
 	CustomerTrackingLinks(ctx context.Context, shipmentID string) ([]*customertracking.Link, error)
 	CustomerStatusNotifications(ctx context.Context, shipmentID string) ([]*customertracking.Notification, error)
+	ShipmentCustomerTrackingPreview(ctx context.Context, shipmentID string) (*customertrackingports.PublicTrackingView, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type CustomerStatusEvent does not have child fields")
-	errNoChild2 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild3 = errors.New("field of type CustomerStatusNotificationStatus does not have child fields")
-	errNoChild4 = errors.New("field of type CustomerStatusSkipReason does not have child fields")
-	errNoChild5 = errors.New("field of type String does not have child fields")
-	errNoChild6 = errors.New("field of type Int does not have child fields")
-	errNoChild7 = errors.New("field of type CustomerTrackingLinkPurpose does not have child fields")
-	errNoChild8 = errors.New("field of type Boolean does not have child fields")
-	errNoChild9 = errors.New("field of type CustomerTrackingField does not have child fields")
+	errNoChild0  = errors.New("field of type ID does not have child fields")
+	errNoChild1  = errors.New("field of type CustomerStatusEvent does not have child fields")
+	errNoChild2  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild3  = errors.New("field of type CustomerStatusNotificationStatus does not have child fields")
+	errNoChild4  = errors.New("field of type CustomerStatusSkipReason does not have child fields")
+	errNoChild5  = errors.New("field of type String does not have child fields")
+	errNoChild6  = errors.New("field of type Int does not have child fields")
+	errNoChild7  = errors.New("field of type CustomerTrackingLinkPurpose does not have child fields")
+	errNoChild8  = errors.New("field of type Boolean does not have child fields")
+	errNoChild9  = errors.New("field of type CustomerTrackingField does not have child fields")
+	errNoChild10 = errors.New("field of type CustomerTrackingPublicStatus does not have child fields")
 )
 
 func field_Mutation_updateCustomerTrackingProfile_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -640,6 +1077,19 @@ func field_Query_customerTrackingLinks_args(ctx context.Context, ec *gqlexec.Exe
 }
 
 func field_Query_customerStatusNotifications_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	return args, nil
+}
+
+func field_Query_shipmentCustomerTrackingPreview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
 		func(ctx context.Context, v any) (string, error) {
@@ -936,6 +1386,50 @@ func marshalNCustomerTrackingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "CustomerTrackingProfile", v)
 }
 
+func marshalNCustomerTrackingView2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicTrackingView(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customertrackingports.PublicTrackingView) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CustomerTrackingView", v)
+}
+
+func marshalNCustomerTrackingViewHold2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicHold(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customertrackingports.PublicHold) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "CustomerTrackingViewHold", &v)
+}
+
+func marshalNCustomerTrackingViewHold2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicHoldᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []customertrackingports.PublicHold) graphql.Marshaler {
+	return gqlexec.List[customertrackingports.PublicHold]{
+		Elem:        marshalNCustomerTrackingViewHold2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicHold,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNCustomerTrackingViewNote2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicNote(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customertrackingports.PublicNote) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "CustomerTrackingViewNote", &v)
+}
+
+func marshalNCustomerTrackingViewNote2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicNoteᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []customertrackingports.PublicNote) graphql.Marshaler {
+	return gqlexec.List[customertrackingports.PublicNote]{
+		Elem:        marshalNCustomerTrackingViewNote2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicNote,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNCustomerTrackingViewStop2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicStop(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customertrackingports.PublicStop) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "CustomerTrackingViewStop", &v)
+}
+
+func marshalNCustomerTrackingViewStop2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicStopᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []customertrackingports.PublicStop) graphql.Marshaler {
+	return gqlexec.List[customertrackingports.PublicStop]{
+		Elem:        marshalNCustomerTrackingViewStop2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicStop,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -1006,6 +1500,28 @@ func marshalOCustomerStatusSkipReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
+func marshalOCustomerTrackingPublicStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customertrackingports.PublicStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOCustomerTrackingViewLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customertrackingports.PublicLocation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CustomerTrackingViewLocation", v)
+}
+
+func marshalOCustomerTrackingViewProofOfDelivery2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋcustomertrackingportsᚐPublicPod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customertrackingports.PublicPod) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CustomerTrackingViewProofOfDelivery", v)
+}
+
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
@@ -1016,6 +1532,14 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 		return graphql.Null
 	}
 	res := graphql.MarshalID(*v)
+	return res
+}
+
+func marshalOInt2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
 	return res
 }
 

@@ -1,0 +1,35 @@
+query ShipmentEta($id: ID!) {
+  shipment(id: $id) {
+    id
+    eta {
+      stopId
+      estimatedArrival
+      slackMinutes
+      verdict
+      basis
+      inputStale
+      computedAt
+      reason
+      stops {
+        stopId
+        shipmentMoveId
+        arrived
+        estimatedArrival
+        estimatedDeparture
+        windowEnd
+        slackMinutes
+        verdict
+        basis
+        driveMethod
+        milesRemaining
+        driveMinutes
+        restMinutes
+        inputAt
+        inputStale
+        thresholdMinutes
+        reason
+        computedAt
+      }
+    }
+  }
+}

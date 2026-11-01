@@ -11659,6 +11659,79 @@ type IssueCustomerTrackingLinkPayload {
   emailError: String
 }
 
+"How a customer tracking page describes where its shipment is."
+enum CustomerTrackingPublicStatus {
+  Planned
+  InTransit
+  Delayed
+  Delivered
+  Canceled
+}
+
+"One stop as a customer tracking page shows it. A part the customer's settings hide is empty."
+type CustomerTrackingViewStop {
+  sequence: Int!
+  type: String!
+  city: String!
+  stateCode: String!
+  locationName: String!
+  addressLine: String!
+  windowStart: Timestamp
+  windowEnd: Timestamp
+  arrivedAt: Timestamp
+  departedAt: Timestamp
+  estimatedArrival: Timestamp
+  "How the stop is running against its window, when the page shows ETAs."
+  running: String!
+}
+
+type CustomerTrackingViewHold {
+  type: String!
+  label: String!
+  startedAt: Timestamp!
+}
+
+type CustomerTrackingViewNote {
+  text: String!
+  postedAt: Timestamp!
+}
+
+type CustomerTrackingViewLocation {
+  city: String!
+  stateCode: String!
+  reportedAt: Timestamp!
+}
+
+type CustomerTrackingViewProofOfDelivery {
+  documentId: ID!
+  fileName: String!
+  filedAt: Timestamp!
+}
+
+"""
+What a shipment's customer sees through a tracking link: only the parts listed in fields
+are filled; every other part is empty.
+"""
+type CustomerTrackingView {
+  companyName: String!
+  shipmentProNumber: String!
+  fields: [CustomerTrackingField!]!
+  expiresAt: Timestamp!
+  closed: Boolean!
+  status: CustomerTrackingPublicStatus
+  bol: String!
+  customerReference: String!
+  carrierName: String!
+  equipment: String!
+  pieces: Int
+  weight: Int
+  lastLocation: CustomerTrackingViewLocation
+  stops: [CustomerTrackingViewStop!]!
+  holds: [CustomerTrackingViewHold!]!
+  notes: [CustomerTrackingViewNote!]!
+  proofOfDelivery: CustomerTrackingViewProofOfDelivery
+}
+
 extend type Query {
   "A customer's tracking link and status email settings, or the defaults."
   customerTrackingProfile(customerId: ID!): CustomerTrackingProfile!
@@ -11666,6 +11739,11 @@ extend type Query {
   customerTrackingLinks(shipmentId: ID!): [CustomerTrackingLink!]!
   "The status emails a shipment has owed its customer, newest first."
   customerStatusNotifications(shipmentId: ID!): [CustomerStatusNotification!]!
+  """
+  What the shipment's customer would see through a tracking link opened now, built from
+  the customer's tracking settings. No link is made and no view is counted.
+  """
+  shipmentCustomerTrackingPreview(shipmentId: ID!): CustomerTrackingView!
 }
 
 extend type Mutation {
@@ -13243,6 +13321,13 @@ input DispatchAssignMoveToCarrierInput {
   (inactive, unqualified, or expired coverage) can never be overridden.
   """
   overrideInsuranceWarning: Boolean
+  """
+  Price the assignment from the carrier's contract instead of the rate given. A rate typed
+  alongside it still wins.
+  """
+  autoRate: Boolean
+  "Assign the carrier even though the contract's margin terms would refuse it."
+  overrideMarginFloor: Boolean
 }
 
 input DispatchCarrierAssignmentPreviewInput {
@@ -25052,6 +25137,201 @@ extend type Mutation {
   acknowledgeMyReview(id: ID!, comment: String): PerformanceReview!
 }
 `, BuiltIn: false},
+	{Name: "../schema/permit.graphqls", Input: `enum PermitStatus {
+  Pending
+  Active
+  Expired
+  Void
+}
+
+enum PermitRequirementStatus {
+  Open
+  Satisfied
+  Superseded
+  Waived
+}
+
+"Which dimension of a load a state's limit or escort rule is about."
+enum PermitTrigger {
+  Width
+  Height
+  Length
+  Weight
+  Superload
+}
+
+enum PermitEscortRole {
+  Front
+  Rear
+  Police
+  RouteSurvey
+}
+
+"A time a state forbids oversize moves."
+enum PermitRestriction {
+  DaylightOnly
+  RushHour
+  Weekend
+  Holiday
+  NightOnly
+}
+
+"An oversize or overweight permit recorded against a shipment for one state."
+type Permit {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID!
+  stateId: ID!
+  permitNumber: String!
+  status: PermitStatus!
+  issuedAt: Timestamp
+  expiresAt: Timestamp
+  cost: Decimal
+  notes: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  state: UsState
+}
+
+"One way a load exceeds a state's legal envelope."
+type PermitExceedance {
+  trigger: PermitTrigger!
+  limit: Float!
+  actual: Float!
+  overBy: Float!
+  superload: Boolean!
+}
+
+type PermitEscortRequirement {
+  role: PermitEscortRole!
+  trigger: PermitTrigger!
+  threshold: Float!
+  actual: Float!
+  note: String!
+}
+
+"The jurisdiction rule a requirement was derived from, as it read at derivation."
+type PermitRuleProvenance {
+  ruleId: ID!
+  stateCode: String!
+  stateName: String!
+  verificationState: JurisdictionVerificationState!
+  verifiedAt: Timestamp
+  sourceNote: String!
+  sourceUrl: String!
+  maxWidthFeet: Float!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  overriddenFields: [String!]
+  overrideReason: String!
+}
+
+"""
+A permit one state on the route requires. A requirement inside an assessment is freshly
+derived and not yet saved, so its id and shipmentId are empty; the persisted rows from
+shipmentPermitRequirements carry them.
+"""
+type PermitRequirement {
+  id: ID
+  businessUnitId: ID
+  organizationId: ID
+  shipmentId: ID
+  stateId: ID!
+  status: PermitRequirementStatus!
+  routeSequence: Int!
+  exceedances: [PermitExceedance!]
+  escorts: [PermitEscortRequirement!]
+  restrictions: [PermitRestriction!]
+  leadTimeDays: Int!
+  validityDays: Int!
+  estimatedFee: Decimal
+  isSuperload: Boolean!
+  satisfiedByPermitId: ID
+  waivedById: ID
+  waiverReason: String!
+  provenance: PermitRuleProvenance
+  derivedAt: Timestamp!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"The load as every jurisdiction on the route measured it."
+type PermitAssessedMeasurements {
+  widthFeet: Float!
+  heightFeet: Float!
+  lengthFeet: Float!
+  weightPounds: Int!
+}
+
+"""
+One state on the route with its limits and the load's headroom against them. A negative
+headroom is an exceedance.
+"""
+type PermitAssessedJurisdiction {
+  stateId: ID!
+  stateCode: String!
+  stateName: String!
+  sequence: Int!
+  verificationState: JurisdictionVerificationState!
+  sourceNote: String!
+  sourceUrl: String!
+  maxWidthFeet: Float!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  widthHeadroomFeet: Float!
+  heightHeadroomFeet: Float!
+  lengthHeadroomFeet: Float!
+  weightHeadroomPounds: Int!
+  requiresPermit: Boolean!
+  restrictions: [PermitRestriction!]
+}
+
+"What a shipment's load needs, where, and by when. Derived on read; nothing is saved."
+type PermitAssessment {
+  measurements: PermitAssessedMeasurements!
+  jurisdictions: [PermitAssessedJurisdiction!]
+  requirements: [PermitRequirement!]
+  open: [PermitRequirement!]
+  expiringBeforeDelivery: [PermitRequirement!]
+  totalEscorts: Int!
+  totalEstimatedFee: Decimal!
+  maxLeadTimeDays: Int!
+  earliestPickup: Timestamp!
+  "False when the route's states could not be told, so an empty list is not a clean route."
+  routeResolved: Boolean!
+  "True when per-mile fees were left out because the route has no per-state mileage."
+  feeIsBaseOnly: Boolean!
+}
+
+input PermitInput {
+  stateId: ID!
+  permitNumber: String!
+  status: PermitStatus!
+  issuedAt: Timestamp
+  expiresAt: Timestamp
+  cost: Decimal
+  notes: String
+  version: Int
+}
+
+extend type Query {
+  shipmentPermitAssessment(shipmentId: ID!): PermitAssessment!
+  shipmentPermits(shipmentId: ID!): [Permit!]!
+  shipmentPermitRequirements(shipmentId: ID!): [PermitRequirement!]!
+}
+
+extend type Mutation {
+  createShipmentPermit(shipmentId: ID!, input: PermitInput!): Permit!
+  updateShipmentPermit(shipmentId: ID!, id: ID!, input: PermitInput!): Permit!
+  "Records the signed-in person accepting the risk of moving the load without this permit."
+  waiveShipmentPermitRequirement(requirementId: ID!, reason: String!): PermitRequirement!
+}
+`, BuiltIn: false},
 	{Name: "../schema/pto_policy.graphqls", Input: `enum PTOPolicyStatus {
   Active
   Inactive
@@ -25834,6 +26114,59 @@ extend type Query {
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
 }
 `, BuiltIn: false},
+	{Name: "../schema/rate_confirmation.graphqls", Input: `enum RateConfirmationStatus {
+  Generated
+  Sent
+  Confirmed
+  Voided
+}
+
+"""
+One revision of the rate confirmation sent to a carrier for a move. Generating a new one
+supersedes the last; the frozen render payload stays on the server.
+"""
+type RateConfirmation {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierAssignmentId: ID!
+  carrierId: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  revision: Int!
+  status: RateConfirmationStatus!
+  documentId: ID
+  sentAt: Timestamp
+  sentToEmails: String!
+  confirmedAt: Timestamp
+  confirmedByName: String!
+  voidedAt: Timestamp
+  voidReason: String!
+  generatedById: ID
+  "Dispatcher, TenderAcceptance or PublicSignature."
+  generatedVia: String!
+  sourceTenderOfferId: ID
+  "Empty until confirmed: Dispatcher, TenderAcceptance or PublicSignature."
+  confirmedVia: String!
+  confirmedByTitle: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+extend type Query {
+  "Every rate confirmation revision for a move."
+  rateConfirmationsByMove(moveId: ID!): [RateConfirmation!]!
+}
+
+extend type Mutation {
+  generateRateConfirmation(moveId: ID!): RateConfirmation!
+  sendRateConfirmation(id: ID!): RateConfirmation!
+  "Records that the carrier confirmed the rate outside Trenova, under the name given."
+  confirmRateConfirmation(id: ID!, confirmedByName: String!): RateConfirmation!
+  voidRateConfirmation(id: ID!, reason: String!): RateConfirmation!
+}
+`, BuiltIn: false},
 	{Name: "../schema/recurring_shipment.graphqls", Input: `enum RecurringShipmentStatus {
   Active
   Paused
@@ -25897,9 +26230,105 @@ type RecurringShipmentConnection {
   totalCountExact: Boolean!
 }
 
+enum RecurringShipmentRunStatus {
+  Generated
+  Skipped
+  Failed
+}
+
+enum RecurringShipmentRunTrigger {
+  Auto
+  Manual
+}
+
+"The shipment a recurring series run generated."
+type RecurringShipmentGeneratedShipment @kind(resource: "shipment") {
+  id: ID!
+  proNumber: String!
+}
+
+"One occurrence a recurring series processed, and what came of it."
+type RecurringShipmentRun {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  recurringShipmentId: ID!
+  generatedShipmentId: ID
+  triggeredById: ID
+  status: RecurringShipmentRunStatus!
+  trigger: RecurringShipmentRunTrigger!
+  occurrenceAt: Timestamp!
+  "The occurrence before an exception policy moved it, when it was moved."
+  originalOccurrenceAt: Timestamp
+  detail: String!
+  createdAt: Timestamp!
+  generatedShipment: RecurringShipmentGeneratedShipment
+  triggeredBy: User
+}
+
+type GenerateRecurringShipmentResult {
+  series: RecurringShipment
+  run: RecurringShipmentRun
+  "Empty when the occurrence was skipped."
+  shipment: RecurringShipmentGeneratedShipment
+}
+
+"How often a lane has shipped without a recurring series covering it."
+type RecurringShipmentLanePattern {
+  shipmentCount: Int!
+  firstShipmentAt: Timestamp!
+  lastShipmentAt: Timestamp!
+}
+
+type MatchRecurringShipmentsResult {
+  matches: [RecurringShipment!]!
+  "Set only when no active series covers the lane but its history repeats."
+  pattern: RecurringShipmentLanePattern
+}
+
+input MatchRecurringShipmentsInput {
+  customerId: ID!
+  originLocationId: ID!
+  destinationLocationId: ID!
+}
+
+input RecurringShipmentInput {
+  sourceShipmentId: ID!
+  name: String!
+  description: String
+  status: RecurringShipmentStatus
+  cronExpression: String!
+  timezone: String!
+  startDate: Timestamp
+  endDate: Timestamp
+  maxOccurrences: Int
+  leadTimeDays: Int!
+  skipWeekends: Boolean!
+  exceptionPolicy: RecurringShipmentExceptionPolicy
+  blackoutDates: [String!]
+  autoGenerate: Boolean!
+  version: Int
+}
+
 extend type Query {
   recurringShipments(input: DataTableConnectionInput!): RecurringShipmentConnection!
   recurringShipment(id: ID!): RecurringShipment
+  "The latest runs of a series, newest first; at most 100."
+  recurringShipmentRuns(recurringShipmentId: ID!, first: Int = 50): [RecurringShipmentRun!]!
+  "The active series covering a lane, or the lane's repeating history when none does. Saves nothing."
+  matchRecurringShipments(input: MatchRecurringShipmentsInput!): MatchRecurringShipmentsResult!
+}
+
+extend type Mutation {
+  createRecurringShipment(input: RecurringShipmentInput!): RecurringShipment!
+  updateRecurringShipment(id: ID!, input: RecurringShipmentInput!): RecurringShipment!
+  updateRecurringShipmentStatus(
+    id: ID!
+    status: RecurringShipmentStatus!
+    version: Int!
+  ): RecurringShipment!
+  "Generates the series' next occurrence now, or the one given."
+  generateRecurringShipment(id: ID!, occurrenceAt: Timestamp): GenerateRecurringShipmentResult!
 }
 `, BuiltIn: false},
 	{Name: "../schema/report.graphqls", Input: `# --- Reporting catalog -------------------------------------------------------
@@ -27558,6 +27987,106 @@ type ServiceFailureConnection {
   totalCountExact: Boolean!
 }
 
+"Which lifecycle step a service failure's EDI 214 is sent for."
+enum ServiceFailureEdiTrigger {
+  Reviewed
+  Resolved
+}
+
+"One validation finding on a built EDI document."
+type ServiceFailureEdiDiagnostic {
+  "Error, Warning or Info."
+  severity: String!
+  code: String!
+  segmentId: String!
+  elementPosition: Int!
+  path: String!
+  message: String!
+  suggestedFix: String!
+}
+
+"The EDI 214 shipment status a service failure would send, and what validation found in it."
+type ServiceFailureEdi214Payload {
+  "The document payload the 214 is rendered from."
+  payload: Any!
+  diagnostics: [ServiceFailureEdiDiagnostic!]!
+}
+
+"What the EDI 214 for a service failure's next lifecycle step would do if it ran now."
+type ServiceFailureEdi214Lifecycle {
+  trigger: ServiceFailureEdiTrigger!
+  "skipped, generated, blocked, duplicate or queued."
+  action: String!
+  messageId: ID
+  skippedReason: String!
+  ediPartnerId: ID
+  "Whether the customer's EDI partner requires the 214 for this step."
+  mandatory: Boolean!
+  diagnostics: [ServiceFailureEdiDiagnostic!]!
+}
+
+"The EDI 214 messages a service failure has sent and how far each got."
+type ServiceFailureEdi214Status {
+  serviceFailureId: ID!
+  reviewedMessageId: ID
+  resolvedMessageId: ID
+  lastMessageId: ID
+  generatedStatus: String!
+  deliveryStatus: String!
+  ackStatus: String!
+  lastDiagnostic: String!
+  lastGeneratedAt: Timestamp!
+}
+
+"A stop an evaluation looked at, with what it found there. An unset part is empty."
+type ServiceFailureEvaluatedStop {
+  shipmentId: ID!
+  shipmentMoveId: ID
+  stopId: ID
+  stopSequence: Int!
+  "Pickup, Delivery, SplitPickup or SplitDelivery; empty when unknown."
+  stopType: String!
+  locationId: ID
+  locationName: String!
+  locationCode: String!
+  city: String!
+  stateCode: String!
+  scheduledCutoff: Timestamp!
+  actualArrival: Timestamp!
+  gracePeriodMinutes: Int!
+  lateMinutes: Int!
+  serviceFailureId: ID
+  reason: String!
+}
+
+"What one service failure evaluation created, updated and passed over."
+type ServiceFailureEvaluation {
+  createdIds: [ID!]!
+  updatedIds: [ID!]!
+  createdStops: [ServiceFailureEvaluatedStop!]!
+  updatedStops: [ServiceFailureEvaluatedStop!]!
+  skippedStops: [ServiceFailureEvaluatedStop!]!
+  skipped: Int!
+}
+
+input UpdateServiceFailureInput {
+  reasonCodeId: ID
+  "Clear the reason code rather than keep it when reasonCodeId is left out."
+  clearReasonCode: Boolean
+  notes: String
+  internalNotes: String
+  x12StatusCodeOverride: String
+  x12ReasonCodeOverride: String
+  x12ExceptionCode: String
+  version: Int!
+}
+
+input ServiceFailureLifecycleInput {
+  reasonCodeId: ID
+  notes: String
+  version: Int!
+}
+
 extend type Query {
   serviceFailures(
     input: DataTableConnectionInput!
@@ -27566,6 +28095,29 @@ extend type Query {
     locationId: ID
   ): ServiceFailureConnection!
   serviceFailure(id: ID!): ServiceFailure
+  "Builds the EDI 214 a service failure would send and returns it. Saves nothing."
+  serviceFailureEdi214Payload(id: ID!): ServiceFailureEdi214Payload!
+  """
+  What the EDI 214 for the failure's next step (or the trigger given) would do. Saves
+  nothing.
+  """
+  serviceFailureEdi214Readiness(
+    id: ID!
+    trigger: ServiceFailureEdiTrigger
+  ): ServiceFailureEdi214Lifecycle!
+  serviceFailureEdi214Status(id: ID!): ServiceFailureEdi214Status!
+}
+
+extend type Mutation {
+  updateServiceFailure(id: ID!, input: UpdateServiceFailureInput!): ServiceFailure!
+  reviewServiceFailure(id: ID!, input: ServiceFailureLifecycleInput!): ServiceFailure!
+  resolveServiceFailure(id: ID!, input: ServiceFailureLifecycleInput!): ServiceFailure!
+  voidServiceFailure(id: ID!, input: ServiceFailureLifecycleInput!): ServiceFailure!
+  """
+  Checks every stop of a shipment against its windows and records the late and missed
+  ones as service failures. Force re-evaluates stops already evaluated.
+  """
+  evaluateShipmentServiceFailures(shipmentId: ID!, force: Boolean): ServiceFailureEvaluation!
 }
 `, BuiltIn: false},
 	{Name: "../schema/service_failure_reason_code.graphqls", Input: `enum ServiceFailureReasonCategory {
@@ -30483,6 +31035,76 @@ extend type Mutation {
   notifyShipmentDelay(input: NotifyShipmentDelayInput!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "../schema/shipment_move.graphqls", Input: `"Which actual a dispatcher records at a stop: the arrival or the departure."
+enum StopActualAction {
+  Arrive
+  Depart
+}
+
+input ShipmentMoveAssignmentInput {
+  primaryWorkerId: ID!
+  tractorId: ID!
+  trailerId: ID
+  secondaryWorkerId: ID
+}
+
+input CheckWorkerComplianceInput {
+  shipmentMoveId: ID!
+  primaryWorkerId: ID!
+  secondaryWorkerId: ID
+}
+
+input ShipmentMoveSplitStopTimesInput {
+  scheduledWindowStart: Timestamp!
+  scheduledWindowEnd: Timestamp
+}
+
+input SplitShipmentMoveInput {
+  newDeliveryLocationId: ID!
+  "The window of the relay pickup the split adds to the new move."
+  splitPickupTimes: ShipmentMoveSplitStopTimesInput!
+  "The window of the delivery the split adds to the original move."
+  newDeliveryTimes: ShipmentMoveSplitStopTimesInput!
+  pieces: Int
+  weight: Int
+}
+
+type SplitShipmentMoveResult {
+  originalMove: ShipmentMove
+  newMove: ShipmentMove
+}
+
+input RecordShipmentStopActualInput {
+  action: StopActualAction!
+  "When it happened; the server's clock when left out."
+  occurredAt: Timestamp
+}
+
+extend type Query {
+  shipmentAssignment(id: ID!): ShipmentAssignment
+  """
+  Checks the drivers against the compliance rules for the move and saves nothing. A
+  violation is returned as a validation error naming each rule; true means they may drive it.
+  """
+  checkWorkerCompliance(input: CheckWorkerComplianceInput!): Boolean!
+}
+
+extend type Mutation {
+  assignShipmentMove(moveId: ID!, input: ShipmentMoveAssignmentInput!): ShipmentAssignment!
+  reassignShipmentMove(moveId: ID!, input: ShipmentMoveAssignmentInput!): ShipmentAssignment!
+  unassignShipmentMove(moveId: ID!): Boolean!
+  splitShipmentMove(moveId: ID!, input: SplitShipmentMoveInput!): SplitShipmentMoveResult!
+  """
+  Records a dispatcher-reported arrival or departure at a stop. A retry carrying the same
+  Idempotency-Key records it once.
+  """
+  recordShipmentStopActual(
+    moveId: ID!
+    stopId: ID!
+    input: RecordShipmentStopActualInput!
+  ): ShipmentMove!
+}
+`, BuiltIn: false},
 	{Name: "../schema/shipment_type.graphqls", Input: `type ShipmentType {
   id: ID!
   businessUnitId: ID!
@@ -31270,6 +31892,74 @@ extend type Query {
     shipmentMoveId: ID
   ): [Tender!]!
   liveTenderByMove(moveId: ID!): Tender
+}
+
+enum TenderResponseAction {
+  Accept
+  Decline
+  Counter
+}
+
+input CreateWaterfallTenderInput {
+  shipmentMoveId: ID!
+  "The routing guide to tender down; the best match for the move when left out."
+  routingGuideId: ID
+}
+
+input SpotTenderLineInput {
+  carrierId: ID!
+  rateMethod: CarrierRateMethod!
+  rate: Decimal!
+  offerTtlSeconds: Int!
+  channel: TenderChannel!
+  "Where an Email offer goes; the carrier's dispatch contact when left out."
+  email: String
+}
+
+input CreateSpotTenderInput {
+  shipmentMoveId: ID!
+  "SpotBroadcast or SpotSequential."
+  mode: TenderMode!
+  lines: [SpotTenderLineInput!]!
+  "Offer carriers whose insurance expires inside the warning window."
+  overrideInsuranceWarnings: Boolean
+}
+
+"A routing guide entry that never became an offer, or became one despite a warning."
+type TenderGuideEntryScreening {
+  carrierName: String!
+  rank: Int!
+  reasons: [String!]!
+}
+
+type TenderGuideScreening {
+  skipped: [TenderGuideEntryScreening!]!
+  warned: [TenderGuideEntryScreening!]!
+}
+
+type CreateWaterfallTenderResult {
+  tender: Tender!
+  "Empty when every routing guide entry was offered."
+  screening: TenderGuideScreening
+}
+
+input RespondToTenderOfferInput {
+  action: TenderResponseAction!
+  "Required to decline."
+  declineReason: String
+  "Required to counter."
+  counterRate: Decimal
+  counterNote: String
+}
+
+extend type Mutation {
+  createWaterfallTender(input: CreateWaterfallTenderInput!): CreateWaterfallTenderResult!
+  createSpotTender(input: CreateSpotTenderInput!): Tender!
+  cancelTender(id: ID!, reason: String!): Boolean!
+  "Records a carrier's answer to an offer that a dispatcher took outside Trenova."
+  respondToTenderOffer(offerId: ID!, input: RespondToTenderOfferInput!): Boolean!
+  "Records a carrier backing out of an accepted tender; the tender moves to the next carrier."
+  bounceTender(id: ID!, reason: String!): Tender!
 }
 `, BuiltIn: false},
 	{Name: "../schema/timesheet.graphqls", Input: `"""

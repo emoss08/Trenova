@@ -9,10 +9,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ListAssignmentsRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type GetAssignmentByIDRequest struct {
 	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
 	AssignmentID pulid.ID              `json:"assignmentId"`
@@ -176,10 +172,6 @@ type ActualTimelineWindow struct {
 }
 
 type AssignmentRepository interface {
-	List(
-		ctx context.Context,
-		req *ListAssignmentsRequest,
-	) (*pagination.ListResult[*shipment.Assignment], error)
 	GetByID(
 		ctx context.Context,
 		req *GetAssignmentByIDRequest,

@@ -1,17 +1,21 @@
-import { api } from "@trenova/shared/lib/api";
+import {
+  createRecurringShipmentGraphQL,
+  generateRecurringShipmentGraphQL,
+  listRecurringShipmentRunsGraphQL,
+  matchRecurringShipmentsGraphQL,
+  updateRecurringShipmentGraphQL,
+  updateRecurringShipmentStatusGraphQL,
+} from "@/lib/graphql/recurring-shipment";
+import type { RecurringShipmentInput } from "@trenova/graphql/generated/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   generateRecurringShipmentResultSchema,
   matchRecurringShipmentsResponseSchema,
   recurringShipmentRunSchema,
   recurringShipmentSchema,
-  type GenerateRecurringShipmentResult,
-  type MatchRecurringShipmentsResponse,
   type RecurringShipment,
-  type RecurringShipmentRun,
   type RecurringShipmentStatus,
 } from "@/types/recurring-shipment";
-import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export type MatchRecurringShipmentsInput = {
   customerId: string;
@@ -19,37 +23,44 @@ export type MatchRecurringShipmentsInput = {
   destinationLocationId: string;
 };
 
-export class RecurringShipmentService {
-  async getById(id: string, expandDetails = false) {
-    const response = await api.get<RecurringShipment>(
-      `/recurring-shipments/${id}/${expandDetails ? "?expandDetails=true" : ""}`,
-    );
-    return safeParse(recurringShipmentSchema, response, "RecurringShipment");
-  }
+export function toRecurringShipmentInput(data: RecurringShipment): RecurringShipmentInput {
+  return {
+    sourceShipmentId: data.sourceShipmentId,
+    name: data.name,
+    description: data.description || null,
+    status: data.status,
+    cronExpression: data.cronExpression,
+    timezone: data.timezone,
+    startDate: data.startDate ?? null,
+    endDate: data.endDate ?? null,
+    maxOccurrences: data.maxOccurrences ?? null,
+    leadTimeDays: data.leadTimeDays,
+    skipWeekends: data.skipWeekends,
+    exceptionPolicy: data.exceptionPolicy,
+    blackoutDates: data.blackoutDates ?? null,
+    autoGenerate: data.autoGenerate,
+    version: data.version ?? null,
+  };
+}
 
+export class RecurringShipmentService {
   async create(data: RecurringShipment) {
-    const response = await api.post<RecurringShipment>("/recurring-shipments/", data);
+    const response = await createRecurringShipmentGraphQL(toRecurringShipmentInput(data));
     return safeParse(recurringShipmentSchema, response, "RecurringShipment");
   }
 
   async update(id: string, data: RecurringShipment) {
-    const response = await api.put<RecurringShipment>(`/recurring-shipments/${id}/`, data);
+    const response = await updateRecurringShipmentGraphQL(id, toRecurringShipmentInput(data));
     return safeParse(recurringShipmentSchema, response, "RecurringShipment");
   }
 
   async updateStatus(id: string, status: RecurringShipmentStatus, version: number) {
-    const response = await api.put<RecurringShipment>(`/recurring-shipments/${id}/status/`, {
-      status,
-      version,
-    });
+    const response = await updateRecurringShipmentStatusGraphQL(id, status, version);
     return safeParse(recurringShipmentSchema, response, "RecurringShipment");
   }
 
   async generate(id: string, occurrenceAt?: number | null) {
-    const response = await api.post<GenerateRecurringShipmentResult>(
-      `/recurring-shipments/${id}/generate/`,
-      occurrenceAt ? { occurrenceAt } : {},
-    );
+    const response = await generateRecurringShipmentGraphQL(id, occurrenceAt);
     return safeParse(
       generateRecurringShipmentResultSchema,
       response,
@@ -57,11 +68,8 @@ export class RecurringShipmentService {
     );
   }
 
-  async match(input: MatchRecurringShipmentsInput) {
-    const response = await api.post<MatchRecurringShipmentsResponse>(
-      "/recurring-shipments/match/",
-      input,
-    );
+  async match(input: MatchRecurringShipmentsInput, { signal }: { signal?: AbortSignal } = {}) {
+    const response = await matchRecurringShipmentsGraphQL(input, { signal });
     return safeParse(
       matchRecurringShipmentsResponseSchema,
       response,
@@ -69,19 +77,12 @@ export class RecurringShipmentService {
     );
   }
 
-  async listRuns(id: string, params?: { limit?: number; offset?: number }) {
-    const search = new URLSearchParams();
-    if (params?.limit) search.set("limit", String(params.limit));
-    if (params?.offset) search.set("offset", String(params.offset));
-    const qs = search.toString();
-    const response = await api.get<GenericLimitOffsetResponse<RecurringShipmentRun>>(
-      `/recurring-shipments/${id}/runs/${qs ? `?${qs}` : ""}`,
-    );
+  async listRuns(id: string, limit: number, { signal }: { signal?: AbortSignal } = {}) {
+    const response = await listRecurringShipmentRunsGraphQL(id, limit, { signal });
     return {
-      ...response,
       results: await safeParse(
         recurringShipmentRunSchema.array(),
-        response.results,
+        response,
         "RecurringShipmentRuns",
       ),
     };

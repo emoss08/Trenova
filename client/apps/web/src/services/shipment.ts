@@ -9,6 +9,7 @@ import {
   createShipmentGraphQL,
   duplicateShipmentGraphQL,
   getShipmentBillingReadinessGraphQL,
+  getShipmentEtaGraphQL,
   getShipmentGraphQL,
   getShipmentPreviousRatesGraphQL,
   getShipmentUIPolicyGraphQL,
@@ -22,7 +23,15 @@ import {
   uncancelShipmentGraphQL,
   updateShipmentGraphQL,
 } from "@/lib/graphql/shipment";
-import { api } from "@trenova/shared/lib/api";
+import {
+  createShipmentPermitGraphQL,
+  getShipmentPermitAssessmentGraphQL,
+  listShipmentPermitRequirementsGraphQL,
+  listShipmentPermitsGraphQL,
+  updateShipmentPermitGraphQL,
+  waiveShipmentPermitRequirementGraphQL,
+} from "@/lib/graphql/shipment-permits";
+import type { PermitInput } from "@trenova/graphql/generated/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   loadingOptimizationResultSchema,
@@ -60,6 +69,21 @@ import {
 import type { ShipmentCommentListResponse } from "@/types/shipment-comment";
 
 const shipmentListSchema = createLimitOffsetResponse(shipmentSchema);
+
+const UNKNOWN_SHIPMENT_ETA = { verdict: "Unknown", stops: [] } as const;
+
+export function toPermitInput(payload: PermitCreateInput): PermitInput {
+  const parsed = permitCreateSchema.parse(payload);
+  return {
+    stateId: parsed.stateId,
+    permitNumber: parsed.permitNumber,
+    status: parsed.status,
+    issuedAt: parsed.issuedAt ?? null,
+    expiresAt: parsed.expiresAt ?? null,
+    cost: parsed.cost == null ? null : String(parsed.cost),
+    notes: parsed.notes ?? null,
+  };
+}
 
 export class ShipmentService {
   public async list(_include?: string) {
@@ -177,16 +201,6 @@ export class ShipmentService {
     return safeParse(previousRatesResponseSchema, response, "Previous Rates");
   }
 
-  public async delayShipments() {
-    const response = await api.post<Shipment[]>("/shipments/delay/", {});
-    return response;
-  }
-
-  public async getDelayedShipments() {
-    const response = await api.get<Shipment[]>("/shipments/delayed/");
-    return response;
-  }
-
   public async getUIPolicy() {
     const response = await getShipmentUIPolicyGraphQL();
     return safeParse(shipmentUIPolicySchema, response, "Shipment UI Policy");
@@ -210,30 +224,36 @@ export class ShipmentService {
     shipmentId: NonNullable<Shipment["id"]>,
     { signal }: { signal?: AbortSignal } = {},
   ) {
-    const response = await api.get<unknown>(`/shipments/${shipmentId}/eta/`, { signal });
-    return safeParse(shipmentEtaSchema, response, "Shipment ETA");
+    const eta = await getShipmentEtaGraphQL(shipmentId, { signal });
+    return safeParse(shipmentEtaSchema, eta ?? UNKNOWN_SHIPMENT_ETA, "Shipment ETA");
   }
 
-  public async getPermitAssessment(shipmentId: NonNullable<Shipment["id"]>) {
-    const response = await api.get<unknown>(`/shipments/${shipmentId}/permit-assessment/`);
+  public async getPermitAssessment(
+    shipmentId: NonNullable<Shipment["id"]>,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await getShipmentPermitAssessmentGraphQL(shipmentId, { signal });
     return safeParse(permitAssessmentSchema, response, "Shipment Permit Assessment");
   }
 
-  public async listPermits(shipmentId: NonNullable<Shipment["id"]>) {
-    const response = await api.get<unknown>(`/shipments/${shipmentId}/permits/`);
-    return safeParse(permitListSchema, response ?? [], "Shipment Permits");
+  public async listPermits(
+    shipmentId: NonNullable<Shipment["id"]>,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await listShipmentPermitsGraphQL(shipmentId, { signal });
+    return safeParse(permitListSchema, response, "Shipment Permits");
   }
 
-  public async listPermitRequirements(shipmentId: NonNullable<Shipment["id"]>) {
-    const response = await api.get<unknown>(`/shipments/${shipmentId}/permit-requirements/`);
-    return safeParse(permitRequirementListSchema, response ?? [], "Permit Requirements");
+  public async listPermitRequirements(
+    shipmentId: NonNullable<Shipment["id"]>,
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await listShipmentPermitRequirementsGraphQL(shipmentId, { signal });
+    return safeParse(permitRequirementListSchema, response, "Permit Requirements");
   }
 
   public async createPermit(shipmentId: NonNullable<Shipment["id"]>, payload: PermitCreateInput) {
-    const response = await api.post<unknown>(
-      `/shipments/${shipmentId}/permits/`,
-      permitCreateSchema.parse(payload),
-    );
+    const response = await createShipmentPermitGraphQL(shipmentId, toPermitInput(payload));
     return safeParse(permitSchema, response, "Permit");
   }
 
@@ -242,22 +262,16 @@ export class ShipmentService {
     permitId: string,
     payload: PermitCreateInput,
   ) {
-    const response = await api.put<unknown>(
-      `/shipments/${shipmentId}/permits/${permitId}/`,
-      permitCreateSchema.parse(payload),
+    const response = await updateShipmentPermitGraphQL(
+      shipmentId,
+      permitId,
+      toPermitInput(payload),
     );
     return safeParse(permitSchema, response, "Permit");
   }
 
-  public async waivePermitRequirement(
-    shipmentId: NonNullable<Shipment["id"]>,
-    requirementId: string,
-    reason: string,
-  ) {
-    const response = await api.post<unknown>(
-      `/shipments/${shipmentId}/permit-requirements/${requirementId}/waive/`,
-      { reason },
-    );
+  public async waivePermitRequirement(requirementId: string, reason: string) {
+    const response = await waiveShipmentPermitRequirementGraphQL(requirementId, reason);
     return safeParse(permitRequirementSchema, response, "Permit Requirement");
   }
 }

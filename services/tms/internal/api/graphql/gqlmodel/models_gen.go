@@ -97,6 +97,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -160,6 +161,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
@@ -2649,6 +2651,12 @@ type ChargeAllocationInput struct {
 	Version          *int                                 `json:"version,omitempty"`
 }
 
+type CheckWorkerComplianceInput struct {
+	ShipmentMoveID    string  `json:"shipmentMoveId"`
+	PrimaryWorkerID   string  `json:"primaryWorkerId"`
+	SecondaryWorkerID *string `json:"secondaryWorkerId,omitempty"`
+}
+
 type ChooseAccountingCompanyInput struct {
 	IntegrationType integration.Type `json:"integrationType"`
 	// The token finishAccountingAuthorization returned.
@@ -3046,6 +3054,15 @@ type CreateSettlementDisputeInput struct {
 	Description      string                           `json:"description"`
 }
 
+type CreateSpotTenderInput struct {
+	ShipmentMoveID string `json:"shipmentMoveId"`
+	// SpotBroadcast or SpotSequential.
+	Mode  tender.Mode            `json:"mode"`
+	Lines []*SpotTenderLineInput `json:"lines"`
+	// Offer carriers whose insurance expires inside the warning window.
+	OverrideInsuranceWarnings *bool `json:"overrideInsuranceWarnings,omitempty"`
+}
+
 type CreateUserInput struct {
 	Name         string `json:"name"`
 	Username     string `json:"username"`
@@ -3059,6 +3076,18 @@ type CreateUserInput struct {
 	MustChangePassword *bool              `json:"mustChangePassword,omitempty"`
 	// Roles granted in the current organization. Every grant is checked against the caller's own access.
 	RoleIds []string `json:"roleIds,omitempty"`
+}
+
+type CreateWaterfallTenderInput struct {
+	ShipmentMoveID string `json:"shipmentMoveId"`
+	// The routing guide to tender down; the best match for the move when left out.
+	RoutingGuideID *string `json:"routingGuideId,omitempty"`
+}
+
+type CreateWaterfallTenderResult struct {
+	Tender *tender.Tender `json:"tender"`
+	// Empty when every routing guide entry was offered.
+	Screening *tendercreate.GuideScreeningSummary `json:"screening,omitempty"`
 }
 
 type CreateWorkerPTOInput struct {
@@ -4196,6 +4225,11 @@ type DispatchAssignMoveToCarrierInput struct {
 	// Proceed despite insurance policies that expire inside the warning window. Hard blockers
 	// (inactive, unqualified, or expired coverage) can never be overridden.
 	OverrideInsuranceWarning *bool `json:"overrideInsuranceWarning,omitempty"`
+	// Price the assignment from the carrier's contract instead of the rate given. A rate typed
+	// alongside it still wins.
+	AutoRate *bool `json:"autoRate,omitempty"`
+	// Assign the carrier even though the contract's margin terms would refuse it.
+	OverrideMarginFloor *bool `json:"overrideMarginFloor,omitempty"`
 }
 
 // Per-move outcome of a bulk assignment. Failures carry their reason rather than aborting
@@ -7208,6 +7242,12 @@ type MarkIFTAReturnFiledInput struct {
 	FilingReference *string `json:"filingReference,omitempty"`
 }
 
+type MatchRecurringShipmentsInput struct {
+	CustomerID            string `json:"customerId"`
+	OriginLocationID      string `json:"originLocationId"`
+	DestinationLocationID string `json:"destinationLocationId"`
+}
+
 type MatchRoutingGuideInput struct {
 	OriginLocationID      *string `json:"originLocationId,omitempty"`
 	DestinationLocationID *string `json:"destinationLocationId,omitempty"`
@@ -7770,6 +7810,17 @@ type PerformanceReviewTemplatesInput struct {
 	Status       *domaintypes.Status `json:"status,omitempty"`
 }
 
+type PermitInput struct {
+	StateID      string        `json:"stateId"`
+	PermitNumber string        `json:"permitNumber"`
+	Status       permit.Status `json:"status"`
+	IssuedAt     *int          `json:"issuedAt,omitempty"`
+	ExpiresAt    *int          `json:"expiresAt,omitempty"`
+	Cost         *string       `json:"cost,omitempty"`
+	Notes        *string       `json:"notes,omitempty"`
+	Version      *int          `json:"version,omitempty"`
+}
+
 type PolicyCompliance struct {
 	Policy      *workerpolicy.WorkerPolicy `json:"policy"`
 	Signed      int                        `json:"signed"`
@@ -8304,6 +8355,12 @@ type RecordSafetyViolationInput struct {
 	OutOfService   *bool                 `json:"outOfService,omitempty"`
 }
 
+type RecordShipmentStopActualInput struct {
+	Action shipmentmoveports.StopActualAction `json:"action"`
+	// When it happened; the server's clock when left out.
+	OccurredAt *int `json:"occurredAt,omitempty"`
+}
+
 type RecordTimeEntryInput struct {
 	// Set to correct an existing entry; omit to add one.
 	ID           *string `json:"id,omitempty"`
@@ -8398,6 +8455,24 @@ type RecurringShipmentConnection struct {
 type RecurringShipmentEdge struct {
 	Node   *recurringshipment.RecurringShipment `json:"node"`
 	Cursor string                               `json:"cursor"`
+}
+
+type RecurringShipmentInput struct {
+	SourceShipmentID string                             `json:"sourceShipmentId"`
+	Name             string                             `json:"name"`
+	Description      *string                            `json:"description,omitempty"`
+	Status           *recurringshipment.Status          `json:"status,omitempty"`
+	CronExpression   string                             `json:"cronExpression"`
+	Timezone         string                             `json:"timezone"`
+	StartDate        *int                               `json:"startDate,omitempty"`
+	EndDate          *int                               `json:"endDate,omitempty"`
+	MaxOccurrences   *int                               `json:"maxOccurrences,omitempty"`
+	LeadTimeDays     int                                `json:"leadTimeDays"`
+	SkipWeekends     bool                               `json:"skipWeekends"`
+	ExceptionPolicy  *recurringshipment.ExceptionPolicy `json:"exceptionPolicy,omitempty"`
+	BlackoutDates    []string                           `json:"blackoutDates,omitempty"`
+	AutoGenerate     bool                               `json:"autoGenerate"`
+	Version          *int                               `json:"version,omitempty"`
 }
 
 type RefreezeExtractionEvalCasesInput struct {
@@ -9013,6 +9088,15 @@ type RespondToMyShiftSwapInput struct {
 	Note     *string             `json:"note,omitempty"`
 }
 
+type RespondToTenderOfferInput struct {
+	Action tender.ResponseAction `json:"action"`
+	// Required to decline.
+	DeclineReason *string `json:"declineReason,omitempty"`
+	// Required to counter.
+	CounterRate *string `json:"counterRate,omitempty"`
+	CounterNote *string `json:"counterNote,omitempty"`
+}
+
 // Retries the named records, or every failed record in the named categories.
 type RetryAccountingSyncInput struct {
 	IntegrationType integration.Type                   `json:"integrationType"`
@@ -9414,6 +9498,12 @@ type ServiceFailureConnection struct {
 type ServiceFailureEdge struct {
 	Node   *servicefailure.ServiceFailure `json:"node"`
 	Cursor string                         `json:"cursor"`
+}
+
+type ServiceFailureLifecycleInput struct {
+	ReasonCodeID *string `json:"reasonCodeId,omitempty"`
+	Notes        *string `json:"notes,omitempty"`
+	Version      int     `json:"version"`
 }
 
 type ServiceFailureReasonCodeConnection struct {
@@ -10849,6 +10939,13 @@ type ShipmentMove struct {
 	JurisdictionMiles []*shipment.ShipmentMoveJurisdictionMile `json:"jurisdictionMiles"`
 }
 
+type ShipmentMoveAssignmentInput struct {
+	PrimaryWorkerID   string  `json:"primaryWorkerId"`
+	TractorID         string  `json:"tractorId"`
+	TrailerID         *string `json:"trailerId,omitempty"`
+	SecondaryWorkerID *string `json:"secondaryWorkerId,omitempty"`
+}
+
 // Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived and
 // StopCompleted.
 type ShipmentMoveEvent struct {
@@ -10914,6 +11011,11 @@ type ShipmentMoveInput struct {
 	DistanceMetadata       map[string]any       `json:"distanceMetadata,omitempty"`
 	Version                *int                 `json:"version,omitempty"`
 	Stops                  []*ShipmentStopInput `json:"stops,omitempty"`
+}
+
+type ShipmentMoveSplitStopTimesInput struct {
+	ScheduledWindowStart int  `json:"scheduledWindowStart"`
+	ScheduledWindowEnd   *int `json:"scheduledWindowEnd,omitempty"`
 }
 
 type ShipmentOnTime struct {
@@ -11514,6 +11616,31 @@ type SnoozeWatchtowerItemInput struct {
 type SortFieldInput struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
+}
+
+type SplitShipmentMoveInput struct {
+	NewDeliveryLocationID string `json:"newDeliveryLocationId"`
+	// The window of the relay pickup the split adds to the new move.
+	SplitPickupTimes *ShipmentMoveSplitStopTimesInput `json:"splitPickupTimes"`
+	// The window of the delivery the split adds to the original move.
+	NewDeliveryTimes *ShipmentMoveSplitStopTimesInput `json:"newDeliveryTimes"`
+	Pieces           *int                             `json:"pieces,omitempty"`
+	Weight           *int                             `json:"weight,omitempty"`
+}
+
+type SplitShipmentMoveResult struct {
+	OriginalMove *ShipmentMove `json:"originalMove,omitempty"`
+	NewMove      *ShipmentMove `json:"newMove,omitempty"`
+}
+
+type SpotTenderLineInput struct {
+	CarrierID       string                          `json:"carrierId"`
+	RateMethod      shipmentvocab.CarrierRateMethod `json:"rateMethod"`
+	Rate            string                          `json:"rate"`
+	OfferTTLSeconds int                             `json:"offerTtlSeconds"`
+	Channel         tender.Channel                  `json:"channel"`
+	// Where an Email offer goes; the carrier's dispatch contact when left out.
+	Email *string `json:"email,omitempty"`
 }
 
 type StageFactoringRemittanceInput struct {
@@ -12586,6 +12713,18 @@ type UpdateSafetyViolationInput struct {
 	SeverityWeight *int                  `json:"severityWeight,omitempty"`
 	OutOfService   *bool                 `json:"outOfService,omitempty"`
 	Version        *int                  `json:"version,omitempty"`
+}
+
+type UpdateServiceFailureInput struct {
+	ReasonCodeID *string `json:"reasonCodeId,omitempty"`
+	// Clear the reason code rather than keep it when reasonCodeId is left out.
+	ClearReasonCode       *bool   `json:"clearReasonCode,omitempty"`
+	Notes                 *string `json:"notes,omitempty"`
+	InternalNotes         *string `json:"internalNotes,omitempty"`
+	X12StatusCodeOverride *string `json:"x12StatusCodeOverride,omitempty"`
+	X12ReasonCodeOverride *string `json:"x12ReasonCodeOverride,omitempty"`
+	X12ExceptionCode      *string `json:"x12ExceptionCode,omitempty"`
+	Version               int     `json:"version"`
 }
 
 type UpdateSettlementControlInput struct {

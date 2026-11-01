@@ -54,3 +54,53 @@ mutation IssueCustomerTrackingLink($input: IssueCustomerTrackingLinkInput!) {
 mutation RevokeCustomerTrackingLink($shipmentId: ID!, $linkId: ID) {
   revokeCustomerTrackingLink(shipmentId: $shipmentId, linkId: $linkId)
 }
+
+query ShipmentCustomerTrackingPreview($shipmentId: ID!) {
+  shipmentCustomerTrackingPreview(shipmentId: $shipmentId) {
+    companyName
+    shipmentProNumber
+    fields
+    expiresAt
+    closed
+    status
+    bol
+    customerReference
+    carrierName
+    equipment
+    pieces
+    weight
+    lastLocation {
+      city
+      stateCode
+      reportedAt
+    }
+    stops {
+      sequence
+      type
+      city
+      stateCode
+      locationName
+      addressLine
+      windowStart
+      windowEnd
+      arrivedAt
+      departedAt
+      estimatedArrival
+      running
+    }
+    holds {
+      type
+      label
+      startedAt
+    }
+    notes {
+      text
+      postedAt
+    }
+    proofOfDelivery {
+      documentId
+      fileName
+      filedAt
+    }
+  }
+}

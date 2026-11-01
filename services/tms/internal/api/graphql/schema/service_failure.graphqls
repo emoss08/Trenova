@@ -98,6 +98,106 @@ type ServiceFailureConnection {
   totalCountExact: Boolean!
 }
 
+"Which lifecycle step a service failure's EDI 214 is sent for."
+enum ServiceFailureEdiTrigger {
+  Reviewed
+  Resolved
+}
+
+"One validation finding on a built EDI document."
+type ServiceFailureEdiDiagnostic {
+  "Error, Warning or Info."
+  severity: String!
+  code: String!
+  segmentId: String!
+  elementPosition: Int!
+  path: String!
+  message: String!
+  suggestedFix: String!
+}
+
+"The EDI 214 shipment status a service failure would send, and what validation found in it."
+type ServiceFailureEdi214Payload {
+  "The document payload the 214 is rendered from."
+  payload: Any!
+  diagnostics: [ServiceFailureEdiDiagnostic!]!
+}
+
+"What the EDI 214 for a service failure's next lifecycle step would do if it ran now."
+type ServiceFailureEdi214Lifecycle {
+  trigger: ServiceFailureEdiTrigger!
+  "skipped, generated, blocked, duplicate or queued."
+  action: String!
+  messageId: ID
+  skippedReason: String!
+  ediPartnerId: ID
+  "Whether the customer's EDI partner requires the 214 for this step."
+  mandatory: Boolean!
+  diagnostics: [ServiceFailureEdiDiagnostic!]!
+}
+
+"The EDI 214 messages a service failure has sent and how far each got."
+type ServiceFailureEdi214Status {
+  serviceFailureId: ID!
+  reviewedMessageId: ID
+  resolvedMessageId: ID
+  lastMessageId: ID
+  generatedStatus: String!
+  deliveryStatus: String!
+  ackStatus: String!
+  lastDiagnostic: String!
+  lastGeneratedAt: Timestamp!
+}
+
+"A stop an evaluation looked at, with what it found there. An unset part is empty."
+type ServiceFailureEvaluatedStop {
+  shipmentId: ID!
+  shipmentMoveId: ID
+  stopId: ID
+  stopSequence: Int!
+  "Pickup, Delivery, SplitPickup or SplitDelivery; empty when unknown."
+  stopType: String!
+  locationId: ID
+  locationName: String!
+  locationCode: String!
+  city: String!
+  stateCode: String!
+  scheduledCutoff: Timestamp!
+  actualArrival: Timestamp!
+  gracePeriodMinutes: Int!
+  lateMinutes: Int!
+  serviceFailureId: ID
+  reason: String!
+}
+
+"What one service failure evaluation created, updated and passed over."
+type ServiceFailureEvaluation {
+  createdIds: [ID!]!
+  updatedIds: [ID!]!
+  createdStops: [ServiceFailureEvaluatedStop!]!
+  updatedStops: [ServiceFailureEvaluatedStop!]!
+  skippedStops: [ServiceFailureEvaluatedStop!]!
+  skipped: Int!
+}
+
+input UpdateServiceFailureInput {
+  reasonCodeId: ID
+  "Clear the reason code rather than keep it when reasonCodeId is left out."
+  clearReasonCode: Boolean
+  notes: String
+  internalNotes: String
+  x12StatusCodeOverride: String
+  x12ReasonCodeOverride: String
+  x12ExceptionCode: String
+  version: Int!
+}
+
+input ServiceFailureLifecycleInput {
+  reasonCodeId: ID
+  notes: String
+  version: Int!
+}
+
 extend type Query {
   serviceFailures(
     input: DataTableConnectionInput!
@@ -106,4 +206,27 @@ extend type Query {
     locationId: ID
   ): ServiceFailureConnection!
   serviceFailure(id: ID!): ServiceFailure
+  "Builds the EDI 214 a service failure would send and returns it. Saves nothing."
+  serviceFailureEdi214Payload(id: ID!): ServiceFailureEdi214Payload!
+  """
+  What the EDI 214 for the failure's next step (or the trigger given) would do. Saves
+  nothing.
+  """
+  serviceFailureEdi214Readiness(
+    id: ID!
+    trigger: ServiceFailureEdiTrigger
+  ): ServiceFailureEdi214Lifecycle!
+  serviceFailureEdi214Status(id: ID!): ServiceFailureEdi214Status!
+}
+
+extend type Mutation {
+  updateServiceFailure(id: ID!, input: UpdateServiceFailureInput!): ServiceFailure!
+  reviewServiceFailure(id: ID!, input: ServiceFailureLifecycleInput!): ServiceFailure!
+  resolveServiceFailure(id: ID!, input: ServiceFailureLifecycleInput!): ServiceFailure!
+  voidServiceFailure(id: ID!, input: ServiceFailureLifecycleInput!): ServiceFailure!
+  """
+  Checks every stop of a shipment against its windows and records the late and missed
+  ones as service failures. Force re-evaluates stops already evaluated.
+  """
+  evaluateShipmentServiceFailures(shipmentId: ID!, force: Boolean): ServiceFailureEvaluation!
 }

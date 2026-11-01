@@ -4,16 +4,14 @@ import type { RecurringShipment } from "@/types/recurring-shipment";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const recurringShipment = createQueryKeys("recurringShipment", {
-  get: (id: RecurringShipment["id"], expandDetails?: boolean) => ({
-    queryKey: ["get", id, expandDetails],
-    queryFn: async () => apiService.recurringShipmentService.getById(id as string, expandDetails),
-  }),
   match: (input: MatchRecurringShipmentsInput) => ({
     queryKey: ["match", input],
-    queryFn: async () => apiService.recurringShipmentService.match(input),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.recurringShipmentService.match(input, { signal }),
   }),
-  listRuns: (id: RecurringShipment["id"], params?: { limit?: number; offset?: number }) => ({
-    queryKey: ["runs", id, params],
-    queryFn: async () => apiService.recurringShipmentService.listRuns(id as string, params),
+  listRuns: (id: RecurringShipment["id"], limit: number) => ({
+    queryKey: ["runs", id, limit],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.recurringShipmentService.listRuns(id as string, limit, { signal }),
   }),
 });

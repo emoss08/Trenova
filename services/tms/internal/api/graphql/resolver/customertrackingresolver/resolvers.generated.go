@@ -14,6 +14,8 @@ type Deps struct {
 
 type CustomerTrackingProfileResolver struct{ *Deps }
 
+type CustomerTrackingViewResolver struct{ *Deps }
+
 type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

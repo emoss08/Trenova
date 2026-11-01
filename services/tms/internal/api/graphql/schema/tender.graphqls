@@ -130,3 +130,71 @@ extend type Query {
   ): [Tender!]!
   liveTenderByMove(moveId: ID!): Tender
 }
+
+enum TenderResponseAction {
+  Accept
+  Decline
+  Counter
+}
+
+input CreateWaterfallTenderInput {
+  shipmentMoveId: ID!
+  "The routing guide to tender down; the best match for the move when left out."
+  routingGuideId: ID
+}
+
+input SpotTenderLineInput {
+  carrierId: ID!
+  rateMethod: CarrierRateMethod!
+  rate: Decimal!
+  offerTtlSeconds: Int!
+  channel: TenderChannel!
+  "Where an Email offer goes; the carrier's dispatch contact when left out."
+  email: String
+}
+
+input CreateSpotTenderInput {
+  shipmentMoveId: ID!
+  "SpotBroadcast or SpotSequential."
+  mode: TenderMode!
+  lines: [SpotTenderLineInput!]!
+  "Offer carriers whose insurance expires inside the warning window."
+  overrideInsuranceWarnings: Boolean
+}
+
+"A routing guide entry that never became an offer, or became one despite a warning."
+type TenderGuideEntryScreening {
+  carrierName: String!
+  rank: Int!
+  reasons: [String!]!
+}
+
+type TenderGuideScreening {
+  skipped: [TenderGuideEntryScreening!]!
+  warned: [TenderGuideEntryScreening!]!
+}
+
+type CreateWaterfallTenderResult {
+  tender: Tender!
+  "Empty when every routing guide entry was offered."
+  screening: TenderGuideScreening
+}
+
+input RespondToTenderOfferInput {
+  action: TenderResponseAction!
+  "Required to decline."
+  declineReason: String
+  "Required to counter."
+  counterRate: Decimal
+  counterNote: String
+}
+
+extend type Mutation {
+  createWaterfallTender(input: CreateWaterfallTenderInput!): CreateWaterfallTenderResult!
+  createSpotTender(input: CreateSpotTenderInput!): Tender!
+  cancelTender(id: ID!, reason: String!): Boolean!
+  "Records a carrier's answer to an offer that a dispatcher took outside Trenova."
+  respondToTenderOffer(offerId: ID!, input: RespondToTenderOfferInput!): Boolean!
+  "Records a carrier backing out of an accepted tender; the tender moves to the next carrier."
+  bounceTender(id: ID!, reason: String!): Tender!
+}

@@ -111,7 +111,7 @@ the reason none should, and the writes still waiting for a tool.
 A new mutation or a new write route ships with a decision in
 `+"`%s`"+`.
 Each write is one entry under `+"`writes:`"+`, keyed as it appears below
-(`+"`mutation createShipment`"+`, `+"`POST /api/v1/tenders/:tenderID/cancel/`"+`),
+(`+"`mutation cancelTender`"+`, `+"`POST /api/v1/tender-offers/:token/accept/`"+`),
 and takes exactly one of:
 
 - `+"`tools: [dispatch_cancel_tender]`"+`: the agent tools that perform it. A tool

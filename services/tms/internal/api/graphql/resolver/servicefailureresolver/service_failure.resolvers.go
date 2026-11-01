@@ -8,12 +8,16 @@ package servicefailureresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -121,4 +125,193 @@ func (r *ServiceFailureShipmentResolver) Customer(ctx context.Context, obj *ship
 	}
 
 	return loaderfields.OptionalMatch(partiesloaders.CustomerByID(ctx, obj.CustomerID.String()))
+}
+
+func (r *QueryResolver) ServiceFailureEDI214Payload(ctx context.Context, id string) (*servicefailureports.ServiceFailureEDIPayloadResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpExport)
+	if err != nil {
+		return nil, err
+	}
+
+	failureID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureEdiPayloads.BuildShipmentStatusPayloadForServiceFailure(
+		ctx,
+		&servicefailureports.BuildServiceFailureEDIPayloadRequest{
+			TenantInfo:       resolvercore.TenantInfo(authCtx),
+			ServiceFailureID: failureID,
+		},
+	)
+}
+
+func (r *QueryResolver) ServiceFailureEDI214Readiness(ctx context.Context, id string, trigger *servicefailureports.ServiceFailureEDITrigger) (*servicefailureports.ServiceFailure214LifecycleResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	failureID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	tenantInfo := resolvercore.TenantInfo(authCtx)
+	current, err := r.ServiceFailureSvc.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
+		ID:         failureID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	readinessTrigger, nextStatus := edi214ReadinessTrigger(trigger, current.Status)
+	preview := *current
+	preview.Status = nextStatus
+
+	return r.ServiceFailureEdi214.PreviewServiceFailure214ForLifecycle(
+		ctx,
+		&ediports.ServiceFailure214LifecycleRequest{
+			TenantInfo:       tenantInfo,
+			ServiceFailureID: current.ID,
+			ShipmentID:       current.ShipmentID,
+			Trigger:          readinessTrigger,
+			PreviousStatus:   current.Status,
+			NewStatus:        nextStatus,
+			ServiceFailure:   &preview,
+		},
+	)
+}
+
+func (r *QueryResolver) ServiceFailureEDI214Status(ctx context.Context, id string) (*edimessageports.ServiceFailure214StatusRow, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	failureID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureEdi214.GetServiceFailure214Status(
+		ctx,
+		edimessageports.GetServiceFailure214StatusRequest{
+			TenantInfo:       resolvercore.TenantInfo(authCtx),
+			ServiceFailureID: failureID,
+		},
+	)
+}
+
+func (r *MutationResolver) UpdateServiceFailure(ctx context.Context, id string, input gqlmodel.UpdateServiceFailureInput) (*servicefailure.ServiceFailure, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	current, err := r.currentFailure(ctx, authCtx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := updateRequestFromInput(current, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureSvc.Update(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) ReviewServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := r.lifecycleRequest(ctx, authCtx, id, &input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureSvc.Review(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) ResolveServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := r.lifecycleRequest(ctx, authCtx, id, &input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureSvc.Resolve(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) VoidServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpArchive)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := r.lifecycleRequest(ctx, authCtx, id, &input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureSvc.Void(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) EvaluateShipmentServiceFailures(ctx context.Context, shipmentID string, force *bool) (*servicefailureports.ServiceFailureEvaluationResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceServiceFailure, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedShipmentID, err := gqlid.ParseIDField("shipmentId", shipmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ServiceFailureSvc.EvaluateShipment(
+		ctx,
+		&servicefailureports.EvaluateShipmentServiceFailuresRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			ShipmentID: parsedShipmentID,
+			Force:      force != nil && *force,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+}
+
+func (r *ServiceFailureEdi214PayloadResolver) Payload(ctx context.Context, obj *servicefailureports.ServiceFailureEDIPayloadResult) (any, error) {
+	return obj.Payload, nil
+}
+
+func (r *ServiceFailureEdiDiagnosticResolver) Severity(ctx context.Context, obj *edidocument.Diagnostic) (string, error) {
+	return string(obj.Severity), nil
+}
+
+func (r *ServiceFailureEdi214LifecycleResolver) Action(ctx context.Context, obj *servicefailureports.ServiceFailure214LifecycleResult) (string, error) {
+	return string(obj.Action), nil
+}
+
+func (r *ServiceFailureEdi214StatusResolver) GeneratedStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error) {
+	return string(obj.GeneratedStatus), nil
+}
+
+func (r *ServiceFailureEdi214StatusResolver) DeliveryStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error) {
+	return string(obj.DeliveryStatus), nil
+}
+
+func (r *ServiceFailureEdi214StatusResolver) AckStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error) {
+	return string(obj.AckStatus), nil
+}
+
+func (r *ServiceFailureEvaluatedStopResolver) StopType(ctx context.Context, obj *servicefailureports.ServiceFailureEvaluatedStopSummary) (string, error) {
+	return string(obj.StopType), nil
 }

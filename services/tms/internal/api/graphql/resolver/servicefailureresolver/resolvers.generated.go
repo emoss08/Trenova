@@ -4,15 +4,30 @@ package servicefailureresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	ediports "github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	ServiceFailureSvc servicefailureports.ServiceFailureService
+	ServiceFailureEdiPayloads ediports.ServiceFailurePayloadBuilder
+	ServiceFailureEdi214      ediports.ServiceFailure214Service
+	ServiceFailureSvc         servicefailureports.ServiceFailureService
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }
+
+type ServiceFailureEdi214LifecycleResolver struct{ *Deps }
+
+type ServiceFailureEdi214PayloadResolver struct{ *Deps }
+
+type ServiceFailureEdi214StatusResolver struct{ *Deps }
+
+type ServiceFailureEdiDiagnosticResolver struct{ *Deps }
+
+type ServiceFailureEvaluatedStopResolver struct{ *Deps }
 
 type ServiceFailureResolver struct{ *Deps }
 

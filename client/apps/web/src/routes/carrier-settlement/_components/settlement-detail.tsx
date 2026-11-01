@@ -829,9 +829,9 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
 
   const { data: rateConfirmations, isLoading } = useQuery({
     queryKey: ["carrier-settlement-rate-cons", settlement.id, moveIds],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const lists = await Promise.all(
-        moveIds.map((moveId) => apiService.rateConfirmationService.listByMove(moveId)),
+        moveIds.map((moveId) => apiService.rateConfirmationService.listByMove(moveId, { signal })),
       );
       return lists.flat();
     },

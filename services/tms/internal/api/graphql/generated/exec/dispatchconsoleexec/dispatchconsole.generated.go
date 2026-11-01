@@ -2643,7 +2643,7 @@ func unmarshalInputDispatchAssignMoveToCarrierInput(ctx context.Context, ec *gql
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"moveId", "carrierId", "rateMethod", "baseRate", "fuelSurcharge", "accessorials", "proNumber", "externalDriverName", "externalDriverPhone", "externalTractorNumber", "externalTrailerNumber", "replace", "overrideInsuranceWarning"}
+	fieldsInOrder := [...]string{"moveId", "carrierId", "rateMethod", "baseRate", "fuelSurcharge", "accessorials", "proNumber", "externalDriverName", "externalDriverPhone", "externalTractorNumber", "externalTrailerNumber", "replace", "overrideInsuranceWarning", "autoRate", "overrideMarginFloor"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2741,6 +2741,20 @@ func unmarshalInputDispatchAssignMoveToCarrierInput(ctx context.Context, ec *gql
 				return it, err
 			}
 			it.OverrideInsuranceWarning = data
+		case "autoRate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoRate"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoRate = data
+		case "overrideMarginFloor":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("overrideMarginFloor"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OverrideMarginFloor = data
 		}
 	}
 	return it, nil

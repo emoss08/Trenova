@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -81,20 +80,6 @@ func New(p Params) *service {
 
 func (s *service) SetEDIService(service ediports.ServiceFailure214Service) {
 	s.ediService = service
-}
-
-func (s *service) List(
-	ctx context.Context,
-	req *servicefailureports.ListServiceFailuresRequest,
-) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-	if req == nil || req.Filter == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Service failure list request is required",
-		)
-	}
-	return s.repo.List(ctx, req)
 }
 
 func (s *service) ListConnection(

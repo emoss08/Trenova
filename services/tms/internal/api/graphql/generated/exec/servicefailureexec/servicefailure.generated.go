@@ -9,9 +9,12 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,10 +27,83 @@ var Shard = &gqlexec.Shard{
 		{Name: "ServiceFailure", Implementors: []string{"ServiceFailure"}},
 		{Name: "ServiceFailureConnection", Implementors: []string{"ServiceFailureConnection"}},
 		{Name: "ServiceFailureEdge", Implementors: []string{"ServiceFailureEdge"}},
+		{Name: "ServiceFailureEdi214Lifecycle", Implementors: []string{"ServiceFailureEdi214Lifecycle"}},
+		{Name: "ServiceFailureEdi214Payload", Implementors: []string{"ServiceFailureEdi214Payload"}},
+		{Name: "ServiceFailureEdi214Status", Implementors: []string{"ServiceFailureEdi214Status"}},
+		{Name: "ServiceFailureEdiDiagnostic", Implementors: []string{"ServiceFailureEdiDiagnostic"}},
+		{Name: "ServiceFailureEvaluatedStop", Implementors: []string{"ServiceFailureEvaluatedStop"}},
+		{Name: "ServiceFailureEvaluation", Implementors: []string{"ServiceFailureEvaluation"}},
 		{Name: "ServiceFailureShipment", Implementors: []string{"ServiceFailureShipment"}},
 		{Name: "ServiceFailureStop", Implementors: []string{"ServiceFailureStop"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "updateServiceFailure",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailure",
+				Args:       field_Mutation_updateServiceFailure_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateServiceFailure(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UpdateServiceFailureInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐServiceFailure),
+			},
+			{
+				Name:       "reviewServiceFailure",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailure",
+				Args:       field_Mutation_reviewServiceFailure_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReviewServiceFailure(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ServiceFailureLifecycleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐServiceFailure),
+			},
+			{
+				Name:       "resolveServiceFailure",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailure",
+				Args:       field_Mutation_resolveServiceFailure_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveServiceFailure(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ServiceFailureLifecycleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐServiceFailure),
+			},
+			{
+				Name:       "voidServiceFailure",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailure",
+				Args:       field_Mutation_voidServiceFailure_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VoidServiceFailure(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ServiceFailureLifecycleInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐServiceFailure),
+			},
+			{
+				Name:       "evaluateShipmentServiceFailures",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailureEvaluation",
+				Args:       field_Mutation_evaluateShipmentServiceFailures_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EvaluateShipmentServiceFailures(ctx, fc.Args["shipmentId"].(string), fc.Args["force"].(*bool))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEvaluationResult),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "serviceFailures",
@@ -55,6 +131,48 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailure(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalOServiceFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐServiceFailure),
+			},
+			{
+				Name:       "serviceFailureEdi214Payload",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailureEdi214Payload",
+				Args:       field_Query_serviceFailureEdi214Payload_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailureEDI214Payload(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEdi214Payload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEDIPayloadResult),
+			},
+			{
+				Name:       "serviceFailureEdi214Readiness",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailureEdi214Lifecycle",
+				Args:       field_Query_serviceFailureEdi214Readiness_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailureEDI214Readiness(ctx, fc.Args["id"].(string), fc.Args["trigger"].(*servicefailureports.ServiceFailureEDITrigger))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEdi214Lifecycle2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailure214LifecycleResult),
+			},
+			{
+				Name:       "serviceFailureEdi214Status",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ServiceFailureEdi214Status",
+				Args:       field_Query_serviceFailureEdi214Status_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailureEDI214Status(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEdi214Status2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋportsᚋedimessageportsᚐServiceFailure214StatusRow),
 			},
 		}},
 		{Object: "ServiceFailure", Fields: []*gqlexec.Field{
@@ -491,6 +609,498 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "ServiceFailureEdi214Lifecycle", Fields: []*gqlexec.Field{
+			{
+				Name:     "trigger",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailure214LifecycleResult)
+					return obj.Trigger, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEdiTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEDITrigger),
+			},
+			{
+				Name:       "action",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailure214LifecycleResult)
+					return gqlexec.Resolver[resolverServiceFailureEdi214Lifecycle](ec, "ServiceFailureEdi214Lifecycle").Action(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "messageId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailure214LifecycleResult)
+					return obj.MessageID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "skippedReason",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailure214LifecycleResult)
+					return obj.SkippedReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "ediPartnerId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailure214LifecycleResult)
+					return obj.EDIPartnerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "mandatory",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailure214LifecycleResult)
+					return obj.Mandatory, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "diagnostics",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ServiceFailureEdiDiagnostic",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailure214LifecycleResult)
+					return obj.Diagnostics, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEdiDiagnostic2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDiagnosticᚄ),
+			},
+		}},
+		{Object: "ServiceFailureEdi214Payload", Fields: []*gqlexec.Field{
+			{
+				Name:       "payload",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEDIPayloadResult)
+					return gqlexec.Resolver[resolverServiceFailureEdi214Payload](ec, "ServiceFailureEdi214Payload").Payload(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+			{
+				Name:      "diagnostics",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ServiceFailureEdiDiagnostic",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEDIPayloadResult)
+					return obj.Diagnostics, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEdiDiagnostic2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDiagnosticᚄ),
+			},
+		}},
+		{Object: "ServiceFailureEdi214Status", Fields: []*gqlexec.Field{
+			{
+				Name:     "serviceFailureId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return obj.ServiceFailureID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "reviewedMessageId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return obj.ReviewedMessageID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "resolvedMessageId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return obj.ResolvedMessageID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "lastMessageId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return obj.LastMessageID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:       "generatedStatus",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return gqlexec.Resolver[resolverServiceFailureEdi214Status](ec, "ServiceFailureEdi214Status").GeneratedStatus(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "deliveryStatus",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return gqlexec.Resolver[resolverServiceFailureEdi214Status](ec, "ServiceFailureEdi214Status").DeliveryStatus(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "ackStatus",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return gqlexec.Resolver[resolverServiceFailureEdi214Status](ec, "ServiceFailureEdi214Status").AckStatus(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lastDiagnostic",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return obj.LastDiagnostic, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lastGeneratedAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edimessageports.ServiceFailure214StatusRow)
+					return obj.LastGeneratedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "ServiceFailureEdiDiagnostic", Fields: []*gqlexec.Field{
+			{
+				Name:       "severity",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edidocument.Diagnostic)
+					return gqlexec.Resolver[resolverServiceFailureEdiDiagnostic](ec, "ServiceFailureEdiDiagnostic").Severity(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edidocument.Diagnostic)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "segmentId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edidocument.Diagnostic)
+					return obj.SegmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "elementPosition",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edidocument.Diagnostic)
+					return obj.ElementPosition, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "path",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edidocument.Diagnostic)
+					return obj.Path, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "message",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edidocument.Diagnostic)
+					return obj.Message, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "suggestedFix",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edidocument.Diagnostic)
+					return obj.SuggestedFix, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "ServiceFailureEvaluatedStop", Fields: []*gqlexec.Field{
+			{
+				Name:     "shipmentId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.ShipmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "shipmentMoveId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.ShipmentMoveID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "stopId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.StopID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "stopSequence",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.StopSequence, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:       "stopType",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return gqlexec.Resolver[resolverServiceFailureEvaluatedStop](ec, "ServiceFailureEvaluatedStop").StopType(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "locationId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.LocationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "locationName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.LocationName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "locationCode",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.LocationCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "city",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.City, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "stateCode",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.StateCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "scheduledCutoff",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.ScheduledCutoff, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "actualArrival",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.ActualArrival, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "gracePeriodMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.GracePeriodMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "lateMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.LateMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "serviceFailureId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.ServiceFailureID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "reason",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluatedStopSummary)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "ServiceFailureEvaluation", Fields: []*gqlexec.Field{
+			{
+				Name:     "createdIds",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluationResult)
+					return obj.CreatedIDs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐIDᚄ),
+			},
+			{
+				Name:     "updatedIds",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluationResult)
+					return obj.UpdatedIDs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐIDᚄ),
+			},
+			{
+				Name:      "createdStops",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ServiceFailureEvaluatedStop",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluationResult)
+					return obj.CreatedStops, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEvaluatedStop2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEvaluatedStopSummaryᚄ),
+			},
+			{
+				Name:      "updatedStops",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ServiceFailureEvaluatedStop",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluationResult)
+					return obj.UpdatedStops, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEvaluatedStop2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEvaluatedStopSummaryᚄ),
+			},
+			{
+				Name:      "skippedStops",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ServiceFailureEvaluatedStop",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluationResult)
+					return obj.SkippedStops, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNServiceFailureEvaluatedStop2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEvaluatedStopSummaryᚄ),
+			},
+			{
+				Name:     "skipped",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*servicefailureports.ServiceFailureEvaluationResult)
+					return obj.Skipped, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
 		{Object: "ServiceFailureShipment", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -589,17 +1199,38 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "ServiceFailureLifecycleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputServiceFailureLifecycleInput)},
+		{Name: "UpdateServiceFailureInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateServiceFailureInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 		{Root: "ServiceFailure", Check: func(r any) bool { _, ok := r.(resolverServiceFailure); return ok }},
+		{Root: "ServiceFailureEdi214Lifecycle", Check: func(r any) bool { _, ok := r.(resolverServiceFailureEdi214Lifecycle); return ok }},
+		{Root: "ServiceFailureEdi214Payload", Check: func(r any) bool { _, ok := r.(resolverServiceFailureEdi214Payload); return ok }},
+		{Root: "ServiceFailureEdi214Status", Check: func(r any) bool { _, ok := r.(resolverServiceFailureEdi214Status); return ok }},
+		{Root: "ServiceFailureEdiDiagnostic", Check: func(r any) bool { _, ok := r.(resolverServiceFailureEdiDiagnostic); return ok }},
+		{Root: "ServiceFailureEvaluatedStop", Check: func(r any) bool { _, ok := r.(resolverServiceFailureEvaluatedStop); return ok }},
 		{Root: "ServiceFailureShipment", Check: func(r any) bool { _, ok := r.(resolverServiceFailureShipment); return ok }},
 		{Root: "ServiceFailureStop", Check: func(r any) bool { _, ok := r.(resolverServiceFailureStop); return ok }},
 	},
 }
 
+type resolverMutation interface {
+	UpdateServiceFailure(ctx context.Context, id string, input gqlmodel.UpdateServiceFailureInput) (*servicefailure.ServiceFailure, error)
+	ReviewServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error)
+	ResolveServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error)
+	VoidServiceFailure(ctx context.Context, id string, input gqlmodel.ServiceFailureLifecycleInput) (*servicefailure.ServiceFailure, error)
+	EvaluateShipmentServiceFailures(ctx context.Context, shipmentID string, force *bool) (*servicefailureports.ServiceFailureEvaluationResult, error)
+}
+
 type resolverQuery interface {
 	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
+	ServiceFailureEDI214Payload(ctx context.Context, id string) (*servicefailureports.ServiceFailureEDIPayloadResult, error)
+	ServiceFailureEDI214Readiness(ctx context.Context, id string, trigger *servicefailureports.ServiceFailureEDITrigger) (*servicefailureports.ServiceFailure214LifecycleResult, error)
+	ServiceFailureEDI214Status(ctx context.Context, id string) (*edimessageports.ServiceFailure214StatusRow, error)
 }
 
 type resolverServiceFailure interface {
@@ -608,6 +1239,28 @@ type resolverServiceFailure interface {
 	ReviewedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
 	ResolvedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
 	VoidedBy(ctx context.Context, obj *servicefailure.ServiceFailure) (*tenant.User, error)
+}
+
+type resolverServiceFailureEdi214Lifecycle interface {
+	Action(ctx context.Context, obj *servicefailureports.ServiceFailure214LifecycleResult) (string, error)
+}
+
+type resolverServiceFailureEdi214Payload interface {
+	Payload(ctx context.Context, obj *servicefailureports.ServiceFailureEDIPayloadResult) (any, error)
+}
+
+type resolverServiceFailureEdi214Status interface {
+	GeneratedStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error)
+	DeliveryStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error)
+	AckStatus(ctx context.Context, obj *edimessageports.ServiceFailure214StatusRow) (string, error)
+}
+
+type resolverServiceFailureEdiDiagnostic interface {
+	Severity(ctx context.Context, obj *edidocument.Diagnostic) (string, error)
+}
+
+type resolverServiceFailureEvaluatedStop interface {
+	StopType(ctx context.Context, obj *servicefailureports.ServiceFailureEvaluatedStopSummary) (string, error)
 }
 
 type resolverServiceFailureShipment interface {
@@ -619,16 +1272,123 @@ type resolverServiceFailureStop interface {
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type ServiceFailureType does not have child fields")
-	errNoChild3 = errors.New("field of type ServiceFailureSource does not have child fields")
-	errNoChild4 = errors.New("field of type ServiceFailureStatus does not have child fields")
-	errNoChild5 = errors.New("field of type StopType does not have child fields")
-	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild7 = errors.New("field of type Int does not have child fields")
-	errNoChild8 = errors.New("field of type Boolean does not have child fields")
+	errNoChild0  = errors.New("field of type ID does not have child fields")
+	errNoChild1  = errors.New("field of type String does not have child fields")
+	errNoChild2  = errors.New("field of type ServiceFailureType does not have child fields")
+	errNoChild3  = errors.New("field of type ServiceFailureSource does not have child fields")
+	errNoChild4  = errors.New("field of type ServiceFailureStatus does not have child fields")
+	errNoChild5  = errors.New("field of type StopType does not have child fields")
+	errNoChild6  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild7  = errors.New("field of type Int does not have child fields")
+	errNoChild8  = errors.New("field of type Boolean does not have child fields")
+	errNoChild9  = errors.New("field of type ServiceFailureEdiTrigger does not have child fields")
+	errNoChild10 = errors.New("field of type Any does not have child fields")
 )
+
+func field_Mutation_updateServiceFailure_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UpdateServiceFailureInput, error) {
+			return unmarshalNUpdateServiceFailureInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateServiceFailureInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_reviewServiceFailure_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ServiceFailureLifecycleInput, error) {
+			return unmarshalNServiceFailureLifecycleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureLifecycleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_resolveServiceFailure_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ServiceFailureLifecycleInput, error) {
+			return unmarshalNServiceFailureLifecycleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureLifecycleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_voidServiceFailure_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ServiceFailureLifecycleInput, error) {
+			return unmarshalNServiceFailureLifecycleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureLifecycleInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_evaluateShipmentServiceFailures_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "force",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["force"] = arg1
+	return args, nil
+}
 
 func field_Query_serviceFailures_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 3)
@@ -672,6 +1432,176 @@ func field_Query_serviceFailure_args(ctx context.Context, ec *gqlexec.Exec, rawA
 	return args, nil
 }
 
+func field_Query_serviceFailureEdi214Payload_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Query_serviceFailureEdi214Readiness_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "trigger",
+		func(ctx context.Context, v any) (*servicefailureports.ServiceFailureEDITrigger, error) {
+			return unmarshalOServiceFailureEdiTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEDITrigger(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["trigger"] = arg1
+	return args, nil
+}
+
+func field_Query_serviceFailureEdi214Status_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func unmarshalInputServiceFailureLifecycleInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ServiceFailureLifecycleInput, error) {
+	var it gqlmodel.ServiceFailureLifecycleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"reasonCodeId", "notes", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "reasonCodeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reasonCodeId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReasonCodeID = data
+		case "notes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Notes = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputUpdateServiceFailureInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateServiceFailureInput, error) {
+	var it gqlmodel.UpdateServiceFailureInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"reasonCodeId", "clearReasonCode", "notes", "internalNotes", "x12StatusCodeOverride", "x12ReasonCodeOverride", "x12ExceptionCode", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "reasonCodeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reasonCodeId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReasonCodeID = data
+		case "clearReasonCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearReasonCode"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearReasonCode = data
+		case "notes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Notes = data
+		case "internalNotes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("internalNotes"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.InternalNotes = data
+		case "x12StatusCodeOverride":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("x12StatusCodeOverride"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.X12StatusCodeOverride = data
+		case "x12ReasonCodeOverride":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("x12ReasonCodeOverride"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.X12ReasonCodeOverride = data
+		case "x12ExceptionCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("x12ExceptionCode"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.X12ExceptionCode = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -686,12 +1616,64 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNServiceFailureLifecycleInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐServiceFailureLifecycleInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ServiceFailureLifecycleInput, error) {
+	res, err := unmarshalInputServiceFailureLifecycleInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNUpdateServiceFailureInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateServiceFailureInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateServiceFailureInput, error) {
+	res, err := unmarshalInputUpdateServiceFailureInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalID(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOServiceFailureEdiTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEDITrigger(ctx context.Context, ec *gqlexec.Exec, v any) (*servicefailureports.ServiceFailureEDITrigger, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := servicefailureports.ServiceFailureEDITrigger(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAny2interface(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	res := graphql.MarshalAny(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -708,6 +1690,15 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNID2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐIDᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []pulid.ID) graphql.Marshaler {
+	return gqlexec.List[pulid.ID]{
+		Elem:        marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
@@ -766,6 +1757,70 @@ func marshalNServiceFailureEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ServiceFailureEdge", v)
 }
 
+func marshalNServiceFailureEdi214Lifecycle2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailure214LifecycleResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *servicefailureports.ServiceFailure214LifecycleResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ServiceFailureEdi214Lifecycle", v)
+}
+
+func marshalNServiceFailureEdi214Payload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEDIPayloadResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *servicefailureports.ServiceFailureEDIPayloadResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ServiceFailureEdi214Payload", v)
+}
+
+func marshalNServiceFailureEdi214Status2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋportsᚋedimessageportsᚐServiceFailure214StatusRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edimessageports.ServiceFailure214StatusRow) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ServiceFailureEdi214Status", v)
+}
+
+func marshalNServiceFailureEdiDiagnostic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDiagnostic(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edidocument.Diagnostic) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "ServiceFailureEdiDiagnostic", &v)
+}
+
+func marshalNServiceFailureEdiDiagnostic2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDiagnosticᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []edidocument.Diagnostic) graphql.Marshaler {
+	return gqlexec.List[edidocument.Diagnostic]{
+		Elem:        marshalNServiceFailureEdiDiagnostic2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDiagnostic,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNServiceFailureEdiTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEDITrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v servicefailureports.ServiceFailureEDITrigger) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNServiceFailureEvaluatedStop2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEvaluatedStopSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v servicefailureports.ServiceFailureEvaluatedStopSummary) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "ServiceFailureEvaluatedStop", &v)
+}
+
+func marshalNServiceFailureEvaluatedStop2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEvaluatedStopSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []servicefailureports.ServiceFailureEvaluatedStopSummary) graphql.Marshaler {
+	return gqlexec.List[servicefailureports.ServiceFailureEvaluatedStopSummary]{
+		Elem:        marshalNServiceFailureEvaluatedStop2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEvaluatedStopSummary,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNServiceFailureEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋservicefailureportsᚐServiceFailureEvaluationResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *servicefailureports.ServiceFailureEvaluationResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ServiceFailureEvaluation", v)
+}
+
 func marshalNServiceFailureSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v servicefailure.Source) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -815,6 +1870,11 @@ func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Customer", v)
+}
+
+func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pulid.ID) graphql.Marshaler {

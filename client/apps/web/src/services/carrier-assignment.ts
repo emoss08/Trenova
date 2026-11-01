@@ -1,4 +1,9 @@
-import { api } from "@trenova/shared/lib/api";
+import {
+  assignDispatchMoveToCarrierGraphQL,
+  cancelDispatchCarrierAssignmentGraphQL,
+  getDispatchCarrierAssignmentPreviewGraphQL,
+} from "@/lib/graphql/dispatch-console";
+import type { DispatchAssignMoveToCarrierInput } from "@trenova/graphql/generated/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   carrierAssignmentPayloadSchema,
@@ -9,38 +14,19 @@ import {
   type CarrierEligibility,
 } from "@trenova/shared/types/shipment";
 
-type CarrierAssignmentRequestBody = {
-  carrierId: string;
-  rateMethod: CarrierAssignmentPayload["rateMethod"];
-  baseRate: string;
-  fuelSurcharge?: string;
-  accessorials: Array<{
-    accessorialChargeId?: string;
-    description: string;
-    amount: string;
-  }>;
-  proNumber: string;
-  externalDriverName: string;
-  externalDriverPhone: string;
-  externalTractorNumber: string;
-  externalTrailerNumber: string;
-  replace: boolean;
-  overrideInsuranceWarning: boolean;
-  autoRate: boolean;
-  overrideMarginFloor: boolean;
-};
-
-export function toCarrierAssignmentRequestBody(
+export function toCarrierAssignmentInput(
+  moveId: string,
   payload: CarrierAssignmentPayload,
   replace: boolean,
-): CarrierAssignmentRequestBody {
+): DispatchAssignMoveToCarrierInput {
   return {
+    moveId,
     carrierId: payload.carrierId,
     rateMethod: payload.rateMethod,
     baseRate: payload.baseRate.toString(),
-    fuelSurcharge: payload.fuelSurcharge != null ? payload.fuelSurcharge.toString() : undefined,
+    fuelSurcharge: payload.fuelSurcharge != null ? payload.fuelSurcharge.toString() : null,
     accessorials: payload.accessorials.map((accessorial) => ({
-      accessorialChargeId: accessorial.accessorialChargeId ?? undefined,
+      accessorialChargeId: accessorial.accessorialChargeId ?? null,
       description: accessorial.description,
       amount: accessorial.amount.toString(),
     })),
@@ -57,10 +43,11 @@ export function toCarrierAssignmentRequestBody(
 }
 
 export class CarrierAssignmentService {
-  public async preview(moveId: string, carrierId: string): Promise<CarrierEligibility> {
-    const response = await api.get<CarrierEligibility>(
-      `/shipment-moves/${moveId}/carrier-assignment/preview/?carrierId=${encodeURIComponent(carrierId)}`,
-    );
+  public async preview(
+    carrierId: string,
+    { signal }: { signal?: AbortSignal } = {},
+  ): Promise<CarrierEligibility> {
+    const response = await getDispatchCarrierAssignmentPreviewGraphQL({ carrierId }, { signal });
 
     return safeParse(carrierEligibilitySchema, response, "CarrierEligibility");
   }
@@ -70,9 +57,9 @@ export class CarrierAssignmentService {
     payload: CarrierAssignmentPayload,
     options?: { replace?: boolean },
   ): Promise<CarrierAssignment> {
-    const response = await api.post<CarrierAssignment>(
-      `/shipment-moves/${moveId}/carrier-assignment/`,
-      toCarrierAssignmentRequestBody(
+    const response = await assignDispatchMoveToCarrierGraphQL(
+      toCarrierAssignmentInput(
+        moveId,
         carrierAssignmentPayloadSchema.parse(payload),
         options?.replace ?? false,
       ),
@@ -82,8 +69,6 @@ export class CarrierAssignmentService {
   }
 
   public async cancel(moveId: string, reason: string): Promise<void> {
-    await api.delete(`/shipment-moves/${moveId}/carrier-assignment/`, {
-      body: JSON.stringify({ reason }),
-    });
+    await cancelDispatchCarrierAssignmentGraphQL(moveId, reason);
   }
 }

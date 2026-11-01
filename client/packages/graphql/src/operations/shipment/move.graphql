@@ -1,0 +1,46 @@
+query ShipmentAssignment($id: ID!) {
+  shipmentAssignment(id: $id) {
+    ...ShipmentAssignmentFields
+  }
+}
+
+query CheckWorkerCompliance($input: CheckWorkerComplianceInput!) {
+  checkWorkerCompliance(input: $input)
+}
+
+mutation AssignShipmentMove($moveId: ID!, $input: ShipmentMoveAssignmentInput!) {
+  assignShipmentMove(moveId: $moveId, input: $input) {
+    ...ShipmentAssignmentFields
+  }
+}
+
+mutation ReassignShipmentMove($moveId: ID!, $input: ShipmentMoveAssignmentInput!) {
+  reassignShipmentMove(moveId: $moveId, input: $input) {
+    ...ShipmentAssignmentFields
+  }
+}
+
+mutation UnassignShipmentMove($moveId: ID!) {
+  unassignShipmentMove(moveId: $moveId)
+}
+
+mutation SplitShipmentMove($moveId: ID!, $input: SplitShipmentMoveInput!) {
+  splitShipmentMove(moveId: $moveId, input: $input) {
+    originalMove {
+      ...ShipmentMoveFields
+    }
+    newMove {
+      ...ShipmentMoveFields
+    }
+  }
+}
+
+mutation RecordShipmentStopActual(
+  $moveId: ID!
+  $stopId: ID!
+  $input: RecordShipmentStopActualInput!
+) {
+  recordShipmentStopActual(moveId: $moveId, stopId: $stopId, input: $input) {
+    ...ShipmentMoveFields
+  }
+}

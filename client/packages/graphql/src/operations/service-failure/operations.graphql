@@ -1,0 +1,106 @@
+fragment ServiceFailureEdiDiagnosticFields on ServiceFailureEdiDiagnostic {
+  severity
+  code
+  segmentId
+  elementPosition
+  path
+  message
+  suggestedFix
+}
+
+fragment ServiceFailureEvaluatedStopFields on ServiceFailureEvaluatedStop {
+  shipmentId
+  shipmentMoveId
+  stopId
+  stopSequence
+  stopType
+  locationId
+  locationName
+  locationCode
+  city
+  stateCode
+  scheduledCutoff
+  actualArrival
+  gracePeriodMinutes
+  lateMinutes
+  serviceFailureId
+  reason
+}
+
+query ServiceFailureEdi214Payload($id: ID!) {
+  serviceFailureEdi214Payload(id: $id) {
+    payload
+    diagnostics {
+      ...ServiceFailureEdiDiagnosticFields
+    }
+  }
+}
+
+query ServiceFailureEdi214Readiness($id: ID!, $trigger: ServiceFailureEdiTrigger) {
+  serviceFailureEdi214Readiness(id: $id, trigger: $trigger) {
+    trigger
+    action
+    messageId
+    skippedReason
+    ediPartnerId
+    mandatory
+    diagnostics {
+      ...ServiceFailureEdiDiagnosticFields
+    }
+  }
+}
+
+query ServiceFailureEdi214Status($id: ID!) {
+  serviceFailureEdi214Status(id: $id) {
+    serviceFailureId
+    reviewedMessageId
+    resolvedMessageId
+    lastMessageId
+    generatedStatus
+    deliveryStatus
+    ackStatus
+    lastDiagnostic
+    lastGeneratedAt
+  }
+}
+
+mutation UpdateServiceFailure($id: ID!, $input: UpdateServiceFailureInput!) {
+  updateServiceFailure(id: $id, input: $input) {
+    ...ServiceFailureTableRowFields
+  }
+}
+
+mutation ReviewServiceFailure($id: ID!, $input: ServiceFailureLifecycleInput!) {
+  reviewServiceFailure(id: $id, input: $input) {
+    ...ServiceFailureTableRowFields
+  }
+}
+
+mutation ResolveServiceFailure($id: ID!, $input: ServiceFailureLifecycleInput!) {
+  resolveServiceFailure(id: $id, input: $input) {
+    ...ServiceFailureTableRowFields
+  }
+}
+
+mutation VoidServiceFailure($id: ID!, $input: ServiceFailureLifecycleInput!) {
+  voidServiceFailure(id: $id, input: $input) {
+    ...ServiceFailureTableRowFields
+  }
+}
+
+mutation EvaluateShipmentServiceFailures($shipmentId: ID!, $force: Boolean) {
+  evaluateShipmentServiceFailures(shipmentId: $shipmentId, force: $force) {
+    createdIds
+    updatedIds
+    createdStops {
+      ...ServiceFailureEvaluatedStopFields
+    }
+    updatedStops {
+      ...ServiceFailureEvaluatedStopFields
+    }
+    skippedStops {
+      ...ServiceFailureEvaluatedStopFields
+    }
+    skipped
+  }
+}

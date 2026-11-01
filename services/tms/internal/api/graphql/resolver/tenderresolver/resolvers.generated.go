@@ -5,6 +5,10 @@ package tenderresolver
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
+	tenderbounce "github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	tendercancel "github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	tendercreate "github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	tenderresponse "github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	tenderports "github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 )
 
@@ -12,7 +16,13 @@ type Deps struct {
 	*resolvercore.Core
 	RoutingGuideService *routingguideservice.Service
 	TenderRepo          tenderports.TenderRepository
+	TenderCreator       *tendercreate.Service
+	TenderCanceler      *tendercancel.Service
+	TenderResponder     *tenderresponse.Service
+	TenderBouncer       *tenderbounce.Service
 }
+
+type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }
 

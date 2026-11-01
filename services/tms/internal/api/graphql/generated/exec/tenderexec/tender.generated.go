@@ -8,6 +8,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -18,10 +20,101 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "tender",
 	Objects: []*gqlexec.Object{
+		{Name: "CreateWaterfallTenderResult", Implementors: []string{"CreateWaterfallTenderResult"}},
 		{Name: "Tender", Implementors: []string{"Tender"}},
+		{Name: "TenderGuideEntryScreening", Implementors: []string{"TenderGuideEntryScreening"}},
+		{Name: "TenderGuideScreening", Implementors: []string{"TenderGuideScreening"}},
 		{Name: "TenderOffer", Implementors: []string{"TenderOffer"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "CreateWaterfallTenderResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "tender",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "Tender",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CreateWaterfallTenderResult)
+					return obj.Tender, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender),
+			},
+			{
+				Name:      "screening",
+				HasChild:  true,
+				ChildType: "TenderGuideScreening",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CreateWaterfallTenderResult)
+					return obj.Screening, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTenderGuideScreening2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋtendercreateᚐGuideScreeningSummary),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createWaterfallTender",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "CreateWaterfallTenderResult",
+				Args:       field_Mutation_createWaterfallTender_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWaterfallTender(ctx, fc.Args["input"].(gqlmodel.CreateWaterfallTenderInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCreateWaterfallTenderResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateWaterfallTenderResult),
+			},
+			{
+				Name:       "createSpotTender",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Tender",
+				Args:       field_Mutation_createSpotTender_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateSpotTender(ctx, fc.Args["input"].(gqlmodel.CreateSpotTenderInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender),
+			},
+			{
+				Name:       "cancelTender",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_cancelTender_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelTender(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "respondToTenderOffer",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_respondToTenderOffer_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RespondToTenderOffer(ctx, fc.Args["offerId"].(string), fc.Args["input"].(gqlmodel.RespondToTenderOfferInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "bounceTender",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Tender",
+				Args:       field_Mutation_bounceTender_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BounceTender(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "tender",
@@ -68,7 +161,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.ID, nil
@@ -78,7 +171,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.BusinessUnitID, nil
@@ -88,7 +181,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.OrganizationID, nil
@@ -98,7 +191,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.ShipmentID, nil
@@ -108,7 +201,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentMoveId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.ShipmentMoveID, nil
@@ -117,7 +210,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "routingGuideId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.RoutingGuideID, nil
@@ -127,7 +220,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "mode",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.Mode, nil
@@ -137,7 +230,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.Status, nil
@@ -147,7 +240,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currentRank",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.CurrentRank, nil
@@ -156,7 +249,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "createdById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.CreatedByID, nil
@@ -165,7 +258,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "canceledById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.CanceledByID, nil
@@ -175,7 +268,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cancellationReason",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.CancellationReason, nil
@@ -184,7 +277,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "acceptedOfferId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.AcceptedOfferID, nil
@@ -193,7 +286,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "acceptedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.AcceptedAt, nil
@@ -202,7 +295,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "exhaustedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.ExhaustedAt, nil
@@ -211,7 +304,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "canceledAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.CanceledAt, nil
@@ -221,7 +314,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "bounceCount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.BounceCount, nil
@@ -230,7 +323,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastBouncedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.LastBouncedAt, nil
@@ -239,7 +332,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "escalatedFromId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.EscalatedFromID, nil
@@ -249,7 +342,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "escalationRound",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.EscalationRound, nil
@@ -259,7 +352,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.Version, nil
@@ -269,7 +362,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.CreatedAt, nil
@@ -279,7 +372,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.Tender)
 					return obj.UpdatedAt, nil
@@ -309,11 +402,67 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTenderOffer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderOfferᚄ),
 			},
 		}},
+		{Object: "TenderGuideEntryScreening", Fields: []*gqlexec.Field{
+			{
+				Name:     "carrierName",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tendercreate.GuideEntryScreeningResult)
+					return obj.CarrierName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "rank",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tendercreate.GuideEntryScreeningResult)
+					return obj.Rank, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int16),
+			},
+			{
+				Name:     "reasons",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tendercreate.GuideEntryScreeningResult)
+					return obj.Reasons, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
+		{Object: "TenderGuideScreening", Fields: []*gqlexec.Field{
+			{
+				Name:      "skipped",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "TenderGuideEntryScreening",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tendercreate.GuideScreeningSummary)
+					return obj.Skipped, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTenderGuideEntryScreening2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋtendercreateᚐGuideEntryScreeningResultᚄ),
+			},
+			{
+				Name:      "warned",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "TenderGuideEntryScreening",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tendercreate.GuideScreeningSummary)
+					return obj.Warned, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTenderGuideEntryScreening2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋtendercreateᚐGuideEntryScreeningResultᚄ),
+			},
+		}},
 		{Object: "TenderOffer", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.ID, nil
@@ -323,7 +472,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.BusinessUnitID, nil
@@ -333,7 +482,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.OrganizationID, nil
@@ -343,7 +492,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "tenderId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.TenderID, nil
@@ -353,7 +502,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "carrierId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.CarrierID, nil
@@ -363,7 +512,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rank",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.Rank, nil
@@ -373,7 +522,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateMethod",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.RateMethod, nil
@@ -385,7 +534,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").Rate(ctx, obj)
@@ -395,7 +544,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "offerTtlSeconds",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.OfferTTLSeconds, nil
@@ -405,7 +554,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "channel",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.Channel, nil
@@ -415,7 +564,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.Status, nil
@@ -425,7 +574,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "recipientEmail",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.RecipientEmail, nil
@@ -434,7 +583,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sentAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.SentAt, nil
@@ -443,7 +592,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "expiresAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.ExpiresAt, nil
@@ -452,7 +601,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "respondedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.RespondedAt, nil
@@ -463,7 +612,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "responseSource",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild10,
+				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").ResponseSource(ctx, obj)
@@ -473,7 +622,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "declineReason",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.DeclineReason, nil
@@ -483,7 +632,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "deliveryError",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.DeliveryError, nil
@@ -492,7 +641,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "ediPartnerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.EDIPartnerID, nil
@@ -501,7 +650,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "ediMessageId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.EDIMessageID, nil
@@ -511,7 +660,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lateResponseAction",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.LateResponseAction, nil
@@ -520,7 +669,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lateResponseAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.LateResponseAt, nil
@@ -531,7 +680,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "counterRate",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").CounterRate(ctx, obj)
@@ -541,7 +690,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "counterNote",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.CounterNote, nil
@@ -550,7 +699,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "counteredAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.CounteredAt, nil
@@ -561,7 +710,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "counterMarginPercent",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").CounterMarginPercent(ctx, obj)
@@ -571,7 +720,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "counterNeedsApproval",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.CounterNeedsApproval, nil
@@ -580,7 +729,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "counterDecidedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.CounterDecidedAt, nil
@@ -589,7 +738,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "counterDecidedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.CounterDecidedByID, nil
@@ -601,7 +750,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return gqlexec.Resolver[resolverTenderOffer](ec, "TenderOffer").AgreedRate(ctx, obj)
@@ -610,7 +759,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "revokedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.RevokedAt, nil
@@ -620,7 +769,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "revokeReason",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.RevokeReason, nil
@@ -629,7 +778,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "revokedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.RevokedByID, nil
@@ -638,7 +787,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reofferedFromId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.ReofferedFromID, nil
@@ -648,7 +797,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.Version, nil
@@ -658,7 +807,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.CreatedAt, nil
@@ -668,7 +817,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tender.TenderOffer)
 					return obj.UpdatedAt, nil
@@ -687,11 +836,26 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "CreateSpotTenderInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateSpotTenderInput)},
+		{Name: "CreateWaterfallTenderInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateWaterfallTenderInput)},
+		{Name: "RespondToTenderOfferInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRespondToTenderOfferInput)},
+		{Name: "SpotTenderLineInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSpotTenderLineInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 		{Root: "Tender", Check: func(r any) bool { _, ok := r.(resolverTender); return ok }},
 		{Root: "TenderOffer", Check: func(r any) bool { _, ok := r.(resolverTenderOffer); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateWaterfallTender(ctx context.Context, input gqlmodel.CreateWaterfallTenderInput) (*gqlmodel.CreateWaterfallTenderResult, error)
+	CreateSpotTender(ctx context.Context, input gqlmodel.CreateSpotTenderInput) (*tender.Tender, error)
+	CancelTender(ctx context.Context, id string, reason string) (bool, error)
+	RespondToTenderOffer(ctx context.Context, offerID string, input gqlmodel.RespondToTenderOfferInput) (bool, error)
+	BounceTender(ctx context.Context, id string, reason string) (*tender.Tender, error)
 }
 
 type resolverQuery interface {
@@ -713,19 +877,108 @@ type resolverTenderOffer interface {
 }
 
 var (
-	errNoChild0  = errors.New("field of type ID does not have child fields")
-	errNoChild1  = errors.New("field of type TenderMode does not have child fields")
-	errNoChild2  = errors.New("field of type TenderStatus does not have child fields")
-	errNoChild3  = errors.New("field of type Int does not have child fields")
-	errNoChild4  = errors.New("field of type String does not have child fields")
-	errNoChild5  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild6  = errors.New("field of type CarrierRateMethod does not have child fields")
-	errNoChild7  = errors.New("field of type Decimal does not have child fields")
-	errNoChild8  = errors.New("field of type TenderChannel does not have child fields")
-	errNoChild9  = errors.New("field of type TenderOfferStatus does not have child fields")
-	errNoChild10 = errors.New("field of type TenderResponseSource does not have child fields")
-	errNoChild11 = errors.New("field of type Boolean does not have child fields")
+	errNoChild0  = errors.New("field of type Boolean does not have child fields")
+	errNoChild1  = errors.New("field of type ID does not have child fields")
+	errNoChild2  = errors.New("field of type TenderMode does not have child fields")
+	errNoChild3  = errors.New("field of type TenderStatus does not have child fields")
+	errNoChild4  = errors.New("field of type Int does not have child fields")
+	errNoChild5  = errors.New("field of type String does not have child fields")
+	errNoChild6  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild7  = errors.New("field of type CarrierRateMethod does not have child fields")
+	errNoChild8  = errors.New("field of type Decimal does not have child fields")
+	errNoChild9  = errors.New("field of type TenderChannel does not have child fields")
+	errNoChild10 = errors.New("field of type TenderOfferStatus does not have child fields")
+	errNoChild11 = errors.New("field of type TenderResponseSource does not have child fields")
 )
+
+func field_Mutation_createWaterfallTender_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CreateWaterfallTenderInput, error) {
+			return unmarshalNCreateWaterfallTenderInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateWaterfallTenderInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_createSpotTender_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CreateSpotTenderInput, error) {
+			return unmarshalNCreateSpotTenderInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateSpotTenderInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_cancelTender_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reason",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["reason"] = arg1
+	return args, nil
+}
+
+func field_Mutation_respondToTenderOffer_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "offerId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RespondToTenderOfferInput, error) {
+			return unmarshalNRespondToTenderOfferInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRespondToTenderOfferInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_bounceTender_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reason",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["reason"] = arg1
+	return args, nil
+}
 
 func field_Query_tender_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -774,9 +1027,292 @@ func field_Query_liveTenderByMove_args(ctx context.Context, ec *gqlexec.Exec, ra
 	return args, nil
 }
 
+func unmarshalInputCreateSpotTenderInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CreateSpotTenderInput, error) {
+	var it gqlmodel.CreateSpotTenderInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"shipmentMoveId", "mode", "lines", "overrideInsuranceWarnings"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "shipmentMoveId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shipmentMoveId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShipmentMoveID = data
+		case "mode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
+			data, err := unmarshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mode = data
+		case "lines":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lines"))
+			data, err := unmarshalNSpotTenderLineInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSpotTenderLineInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lines = data
+		case "overrideInsuranceWarnings":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("overrideInsuranceWarnings"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OverrideInsuranceWarnings = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCreateWaterfallTenderInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CreateWaterfallTenderInput, error) {
+	var it gqlmodel.CreateWaterfallTenderInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"shipmentMoveId", "routingGuideId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "shipmentMoveId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shipmentMoveId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShipmentMoveID = data
+		case "routingGuideId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("routingGuideId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RoutingGuideID = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRespondToTenderOfferInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RespondToTenderOfferInput, error) {
+	var it gqlmodel.RespondToTenderOfferInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"action", "declineReason", "counterRate", "counterNote"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "action":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("action"))
+			data, err := unmarshalNTenderResponseAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐResponseAction(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Action = data
+		case "declineReason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("declineReason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DeclineReason = data
+		case "counterRate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("counterRate"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CounterRate = data
+		case "counterNote":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("counterNote"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CounterNote = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputSpotTenderLineInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SpotTenderLineInput, error) {
+	var it gqlmodel.SpotTenderLineInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"carrierId", "rateMethod", "rate", "offerTtlSeconds", "channel", "email"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "carrierId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("carrierId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CarrierID = data
+		case "rateMethod":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rateMethod"))
+			data, err := unmarshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RateMethod = data
+		case "rate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rate"))
+			data, err := unmarshalNDecimal2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rate = data
+		case "offerTtlSeconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offerTtlSeconds"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OfferTTLSeconds = data
+		case "channel":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("channel"))
+			data, err := unmarshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐChannel(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Channel = data
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentvocabᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, v any) (shipmentvocab.CarrierRateMethod, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := shipmentvocab.CarrierRateMethod(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCreateSpotTenderInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateSpotTenderInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CreateSpotTenderInput, error) {
+	res, err := unmarshalInputCreateSpotTenderInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCreateWaterfallTenderInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateWaterfallTenderInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CreateWaterfallTenderInput, error) {
+	res, err := unmarshalInputCreateWaterfallTenderInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRespondToTenderOfferInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRespondToTenderOfferInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RespondToTenderOfferInput, error) {
+	res, err := unmarshalInputRespondToTenderOfferInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNSpotTenderLineInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSpotTenderLineInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.SpotTenderLineInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNSpotTenderLineInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSpotTenderLineInput)
+}
+
+func unmarshalNSpotTenderLineInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSpotTenderLineInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.SpotTenderLineInput, error) {
+	res, err := unmarshalInputSpotTenderLineInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐChannel(ctx context.Context, ec *gqlexec.Exec, v any) (tender.Channel, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.Channel(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode(ctx context.Context, ec *gqlexec.Exec, v any) (tender.Mode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.Mode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTenderResponseAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐResponseAction(ctx context.Context, ec *gqlexec.Exec, v any) (tender.ResponseAction, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.ResponseAction(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -784,6 +1320,14 @@ func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*stri
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -801,6 +1345,14 @@ func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNCreateWaterfallTenderResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateWaterfallTenderResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.CreateWaterfallTenderResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CreateWaterfallTenderResult", v)
 }
 
 func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
@@ -851,6 +1403,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tender.Tender) graphql.Marshaler {
 	return gqlexec.List[*tender.Tender]{
 		Elem:        marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTender,
@@ -873,6 +1434,18 @@ func marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNTenderGuideEntryScreening2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋtendercreateᚐGuideEntryScreeningResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tendercreate.GuideEntryScreeningResult) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "TenderGuideEntryScreening", &v)
+}
+
+func marshalNTenderGuideEntryScreening2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋtendercreateᚐGuideEntryScreeningResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []tendercreate.GuideEntryScreeningResult) graphql.Marshaler {
+	return gqlexec.List[tendercreate.GuideEntryScreeningResult]{
+		Elem:        marshalNTenderGuideEntryScreening2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋtendercreateᚐGuideEntryScreeningResult,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Mode) graphql.Marshaler {
@@ -950,6 +1523,13 @@ func marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋo
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Tender", v)
+}
+
+func marshalOTenderGuideScreening2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋappᚋtendercreateᚐGuideScreeningSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tendercreate.GuideScreeningSummary) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TenderGuideScreening", v)
 }
 
 func marshalOTenderOffer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐTenderOfferᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tender.TenderOffer) graphql.Marshaler {

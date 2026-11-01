@@ -5967,3 +5967,159 @@ models:
   StopEtaDriveMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod
+  StopActualAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports.StopActualAction
+  PermitStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/permit.Status
+  PermitRequirementStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/permit.RequirementStatus
+  Permit:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/permit.Permit
+    fields:
+      cost:
+        resolver: true
+  PermitTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.TriggerKind
+  PermitEscortRole:
+    model:
+      - github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.EscortRole
+  PermitRestriction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.RestrictionKind
+  PermitExceedance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.Exceedance
+  PermitEscortRequirement:
+    model:
+      - github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.EscortRequirement
+  PermitRuleProvenance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/permit.RuleProvenance
+  PermitRequirement:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/permit.Requirement
+    fields:
+      estimatedFee:
+        resolver: true
+  PermitAssessedMeasurements:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/permitports.AssessedMeasurements
+  PermitAssessedJurisdiction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/permitports.AssessedJurisdiction
+  PermitAssessment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/permitports.PermitAssessment
+    fields:
+      totalEstimatedFee:
+        resolver: true
+  CustomerTrackingPublicStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports.PublicStatus
+  CustomerTrackingViewStop:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports.PublicStop
+  CustomerTrackingViewHold:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports.PublicHold
+  CustomerTrackingViewNote:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports.PublicNote
+  CustomerTrackingViewLocation:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports.PublicLocation
+  CustomerTrackingViewProofOfDelivery:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports.PublicPod
+  CustomerTrackingView:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports.PublicTrackingView
+    fields:
+      status:
+        resolver: true
+  RateConfirmationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation.Status
+  RateConfirmation:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation.RateConfirmation
+    fields:
+      generatedVia:
+        resolver: true
+      confirmedVia:
+        resolver: true
+  TenderResponseAction:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/tender.ResponseAction
+  TenderGuideEntryScreening:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/app/tendercreate.GuideEntryScreeningResult
+  TenderGuideScreening:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/app/tendercreate.GuideScreeningSummary
+  RecurringShipmentRunStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment.RunStatus
+  RecurringShipmentRunTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment.RunTrigger
+  RecurringShipmentGeneratedShipment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.Shipment
+  RecurringShipmentRun:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment.RecurringShipmentRun
+  GenerateRecurringShipmentResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports.GenerateRecurringShipmentResult
+  RecurringShipmentLanePattern:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports.LanePatternSummary
+  MatchRecurringShipmentsResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports.MatchRecurringShipmentsResponse
+  ServiceFailureEdiTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports.ServiceFailureEDITrigger
+  ServiceFailureEdiDiagnostic:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edidocument.Diagnostic
+    fields:
+      severity:
+        resolver: true
+  ServiceFailureEdi214Payload:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports.ServiceFailureEDIPayloadResult
+    fields:
+      payload:
+        resolver: true
+  ServiceFailureEdi214Lifecycle:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports.ServiceFailure214LifecycleResult
+    fields:
+      action:
+        resolver: true
+  ServiceFailureEdi214Status:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports.ServiceFailure214StatusRow
+    fields:
+      generatedStatus:
+        resolver: true
+      deliveryStatus:
+        resolver: true
+      ackStatus:
+        resolver: true
+  ServiceFailureEvaluatedStop:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports.ServiceFailureEvaluatedStopSummary
+    fields:
+      stopType:
+        resolver: true
+  ServiceFailureEvaluation:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports.ServiceFailureEvaluationResult

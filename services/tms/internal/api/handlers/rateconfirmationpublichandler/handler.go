@@ -34,10 +34,6 @@ func New(p Params) *Handler {
 	}
 }
 
-// RegisterPublicRoutes lives under /rate-confirmation-links rather than
-// /rate-confirmations: the authed routes already bind
-// /rate-confirmations/:rateConfirmationID, and gin rejects a second wildcard
-// name in the same segment position.
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/rate-confirmation-links")
 	api.Use(h.rateLimiter.ByPublicToken(tokenParam))

@@ -1,0 +1,56 @@
+fragment RateConfirmationFields on RateConfirmation {
+  id
+  organizationId
+  businessUnitId
+  carrierAssignmentId
+  carrierId
+  shipmentId
+  shipmentMoveId
+  revision
+  status
+  documentId
+  sentAt
+  sentToEmails
+  confirmedAt
+  confirmedByName
+  voidedAt
+  voidReason
+  generatedById
+  generatedVia
+  sourceTenderOfferId
+  confirmedVia
+  confirmedByTitle
+  version
+  createdAt
+  updatedAt
+}
+
+query RateConfirmationsByMove($moveId: ID!) {
+  rateConfirmationsByMove(moveId: $moveId) {
+    ...RateConfirmationFields
+  }
+}
+
+mutation GenerateRateConfirmation($moveId: ID!) {
+  generateRateConfirmation(moveId: $moveId) {
+    ...RateConfirmationFields
+  }
+}
+
+mutation SendRateConfirmation($id: ID!) {
+  sendRateConfirmation(id: $id) {
+    ...RateConfirmationFields
+  }
+}
+
+mutation ConfirmRateConfirmation($id: ID!, $confirmedByName: String!) {
+  confirmRateConfirmation(id: $id, confirmedByName: $confirmedByName) {
+    ...RateConfirmationFields
+  }
+}
+
+mutation VoidRateConfirmation($id: ID!, $reason: String!) {
+  voidRateConfirmation(id: $id, reason: $reason) {
+    ...RateConfirmationFields
+  }
+}

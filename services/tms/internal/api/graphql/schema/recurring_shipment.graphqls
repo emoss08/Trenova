@@ -61,7 +61,103 @@ type RecurringShipmentConnection {
   totalCountExact: Boolean!
 }
 
+enum RecurringShipmentRunStatus {
+  Generated
+  Skipped
+  Failed
+}
+
+enum RecurringShipmentRunTrigger {
+  Auto
+  Manual
+}
+
+"The shipment a recurring series run generated."
+type RecurringShipmentGeneratedShipment @kind(resource: "shipment") {
+  id: ID!
+  proNumber: String!
+}
+
+"One occurrence a recurring series processed, and what came of it."
+type RecurringShipmentRun {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  recurringShipmentId: ID!
+  generatedShipmentId: ID
+  triggeredById: ID
+  status: RecurringShipmentRunStatus!
+  trigger: RecurringShipmentRunTrigger!
+  occurrenceAt: Timestamp!
+  "The occurrence before an exception policy moved it, when it was moved."
+  originalOccurrenceAt: Timestamp
+  detail: String!
+  createdAt: Timestamp!
+  generatedShipment: RecurringShipmentGeneratedShipment
+  triggeredBy: User
+}
+
+type GenerateRecurringShipmentResult {
+  series: RecurringShipment
+  run: RecurringShipmentRun
+  "Empty when the occurrence was skipped."
+  shipment: RecurringShipmentGeneratedShipment
+}
+
+"How often a lane has shipped without a recurring series covering it."
+type RecurringShipmentLanePattern {
+  shipmentCount: Int!
+  firstShipmentAt: Timestamp!
+  lastShipmentAt: Timestamp!
+}
+
+type MatchRecurringShipmentsResult {
+  matches: [RecurringShipment!]!
+  "Set only when no active series covers the lane but its history repeats."
+  pattern: RecurringShipmentLanePattern
+}
+
+input MatchRecurringShipmentsInput {
+  customerId: ID!
+  originLocationId: ID!
+  destinationLocationId: ID!
+}
+
+input RecurringShipmentInput {
+  sourceShipmentId: ID!
+  name: String!
+  description: String
+  status: RecurringShipmentStatus
+  cronExpression: String!
+  timezone: String!
+  startDate: Timestamp
+  endDate: Timestamp
+  maxOccurrences: Int
+  leadTimeDays: Int!
+  skipWeekends: Boolean!
+  exceptionPolicy: RecurringShipmentExceptionPolicy
+  blackoutDates: [String!]
+  autoGenerate: Boolean!
+  version: Int
+}
+
 extend type Query {
   recurringShipments(input: DataTableConnectionInput!): RecurringShipmentConnection!
   recurringShipment(id: ID!): RecurringShipment
+  "The latest runs of a series, newest first; at most 100."
+  recurringShipmentRuns(recurringShipmentId: ID!, first: Int = 50): [RecurringShipmentRun!]!
+  "The active series covering a lane, or the lane's repeating history when none does. Saves nothing."
+  matchRecurringShipments(input: MatchRecurringShipmentsInput!): MatchRecurringShipmentsResult!
+}
+
+extend type Mutation {
+  createRecurringShipment(input: RecurringShipmentInput!): RecurringShipment!
+  updateRecurringShipment(id: ID!, input: RecurringShipmentInput!): RecurringShipment!
+  updateRecurringShipmentStatus(
+    id: ID!
+    status: RecurringShipmentStatus!
+    version: Int!
+  ): RecurringShipment!
+  "Generates the series' next occurrence now, or the one given."
+  generateRecurringShipment(id: ID!, occurrenceAt: Timestamp): GenerateRecurringShipmentResult!
 }

@@ -16,7 +16,7 @@ the reason none should, and the writes still waiting for a tool.
 A new mutation or a new write route ships with a decision in
 `services/tms/internal/api/writecoverage/writecoverage.yml`.
 Each write is one entry under `writes:`, keyed as it appears below
-(`mutation createShipment`, `POST /api/v1/tenders/:tenderID/cancel/`),
+(`mutation cancelTender`, `POST /api/v1/tender-offers/:token/accept/`),
 and takes exactly one of:
 
 - `tools: [dispatch_cancel_tender]`: the agent tools that perform it. A tool
@@ -88,34 +88,34 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 47 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 45 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1120 writes: 697 GraphQL mutations and 423 REST writes, after merging 20 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 443 |
-| Exempt | 678 |
+| Covered by a tool | 444 |
+| Exempt | 674 |
 | — Security | 85 |
 | — Configuration | 247 |
 | — User preference | 40 |
-| — Infrastructure | 48 |
+| — Infrastructure | 47 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 45 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1120 |
 
-Of the 445 writes an agent should be able to make, 443 have a tool (99%).
+Of the 446 writes an agent should be able to make, 444 have a tool (99%).
 
 ## Pending
 
@@ -149,7 +149,6 @@ The writes no tool performs yet, and what the tool would do.
 | aiprovider | 8 | 0 | 8 | 0 |
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
-| assignment | 1 | 0 | 1 | 0 |
 | assistant | 35 | 4 | 31 | 0 |
 | auth | 7 | 0 | 7 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
@@ -265,20 +264,20 @@ The writes no tool performs yet, and what the tool would do.
 | ratesimulation | 1 | 1 | 0 | 0 |
 | ratezone | 2 | 0 | 2 | 0 |
 | realtime | 4 | 0 | 4 | 0 |
-| recurringshipment | 5 | 4 | 1 | 0 |
+| recurringshipment | 4 | 4 | 0 | 0 |
 | report | 19 | 13 | 6 | 0 |
 | role | 11 | 0 | 11 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
 | selfservice | 3 | 0 | 3 | 0 |
 | sequenceconfig | 1 | 0 | 1 | 0 |
-| servicefailure | 8 | 7 | 1 | 0 |
+| servicefailure | 5 | 5 | 0 | 0 |
 | servicefailurereasoncode | 5 | 0 | 5 | 0 |
 | servicetype | 4 | 0 | 4 | 0 |
-| shipment | 26 | 17 | 9 | 0 |
+| shipment | 25 | 17 | 8 | 0 |
 | shipmentboard | 4 | 3 | 1 | 0 |
 | shipmentcontrol | 1 | 0 | 1 | 0 |
-| shipmentmove | 2 | 2 | 0 | 0 |
+| shipmentmove | 5 | 5 | 0 | 0 |
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
 | storedmileage | 1 | 0 | 1 | 0 |
@@ -550,12 +549,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/api-keys/:apiKeyID/revoke/`<br>apikeyhandler.revoke | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
 | `POST /api/v1/api-keys/:apiKeyID/rotate/`<br>apikeyhandler.rotate | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
 | `PUT /api/v1/api-keys/:apiKeyID/`<br>apikeyhandler.update | Exempt, security: API keys grant programmatic access to the organization; only a person issues, rotates or revokes one. |
-
-### assignment
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/assignments/check-worker-compliance/`<br>assignmenthandler.checkWorkerCompliance | Exempt, read-only: Checks a worker against compliance rules before an assignment and saves nothing. |
 
 ### assistant
 
@@ -911,11 +904,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation dispatchAssignMoveToCarrier`<br>twin `POST /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `dispatch_create_carrier_assignment` |
-| `mutation dispatchAssignMoves`<br>twin `POST /api/v1/shipment-moves/:moveID/assignment/`<br>twin `PUT /api/v1/shipment-moves/:moveID/assignment/` | Tool: `dispatch_assign_move` |
-| `mutation dispatchCancelCarrierAssignment`<br>twin `DELETE /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `dispatch_cancel_carrier_assignment` |
+| `mutation dispatchAssignMoveToCarrier` | Tool: `dispatch_create_carrier_assignment` |
+| `mutation dispatchAssignMoves` | Tool: `dispatch_assign_move` |
+| `mutation dispatchCancelCarrierAssignment` | Tool: `dispatch_cancel_carrier_assignment` |
 | `mutation dispatchPlanAutoAssign` | Exempt, read-only: Plans automatic assignments for review and saves nothing. |
-| `mutation dispatchUnassignMoves`<br>twin `DELETE /api/v1/shipment-moves/:moveID/assignment/` | Tool: `dispatch_unassign_move` |
+| `mutation dispatchUnassignMoves` | Tool: `dispatch_unassign_move` |
 
 ### dispatchcontrol
 
@@ -1749,9 +1742,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/`<br>permithandler.waiveRequirement | Exempt, attestation: Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit. |
-| `POST /api/v1/shipments/:shipmentID/permits/`<br>permithandler.createPermit | Tool: `shipment_record_permit` |
-| `PUT /api/v1/shipments/:shipmentID/permits/:permitID/`<br>permithandler.updatePermit | Tool: `shipment_update_permit` |
+| `mutation createShipmentPermit` | Tool: `shipment_record_permit` |
+| `mutation updateShipmentPermit` | Tool: `shipment_update_permit` |
+| `mutation waiveShipmentPermitRequirement` | Exempt, attestation: Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit. |
 
 ### ptopolicy
 
@@ -1793,10 +1786,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/`<br>rateconfirmationhandler.confirm | Tool: `rate_record_confirmation` |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/send/`<br>rateconfirmationhandler.send | Tool: `rate_send_confirmation` |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/void/`<br>rateconfirmationhandler.void | Tool: `rate_void_confirmation` |
-| `POST /api/v1/shipment-moves/:moveID/rate-confirmations/`<br>rateconfirmationhandler.generate | Tool: `rate_generate_confirmation` |
+| `mutation confirmRateConfirmation` | Tool: `rate_record_confirmation` |
+| `mutation generateRateConfirmation` | Tool: `rate_generate_confirmation` |
+| `mutation sendRateConfirmation` | Tool: `rate_send_confirmation` |
+| `mutation voidRateConfirmation` | Tool: `rate_void_confirmation` |
 
 ### rateconfirmationpublic
 
@@ -1859,11 +1852,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/recurring-shipments/`<br>recurringshipmenthandler.create | Tool: `shipment_create_recurring` |
-| `POST /api/v1/recurring-shipments/:recurringShipmentID/generate/`<br>recurringshipmenthandler.generate | Tool: `shipment_generate_recurring` |
-| `POST /api/v1/recurring-shipments/match/`<br>recurringshipmenthandler.match | Exempt, read-only: Finds the recurring shipment a new shipment matches and saves nothing. |
-| `PUT /api/v1/recurring-shipments/:recurringShipmentID/`<br>recurringshipmenthandler.update | Tool: `shipment_update_recurring` |
-| `PUT /api/v1/recurring-shipments/:recurringShipmentID/status/`<br>recurringshipmenthandler.updateStatus | Tool: `shipment_set_recurring_status` |
+| `mutation createRecurringShipment` | Tool: `shipment_create_recurring` |
+| `mutation generateRecurringShipment` | Tool: `shipment_generate_recurring` |
+| `mutation updateRecurringShipment` | Tool: `shipment_update_recurring` |
+| `mutation updateRecurringShipmentStatus` | Tool: `shipment_set_recurring_status` |
 
 ### report
 
@@ -1943,14 +1935,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/`<br>servicefailurehandler.buildEDI214Payload | Exempt, read-only: Builds the EDI 214 a service failure would send and returns it. |
-| `POST /api/v1/service-failures/:serviceFailureID/resolve/`<br>servicefailurehandler.resolve | Tool: `exception_resolve_service_failure` |
-| `POST /api/v1/service-failures/:serviceFailureID/review/`<br>servicefailurehandler.review | Tool: `exception_review_service_failure` |
-| `POST /api/v1/service-failures/:serviceFailureID/void/`<br>servicefailurehandler.void | Tool: `exception_void_service_failure` |
-| `POST /api/v1/service-failures/bulk-evaluate/`<br>servicefailurehandler.bulkEvaluate | Tool: `exception_evaluate_service_failures` |
-| `POST /api/v1/service-failures/evaluate-shipment/:shipmentID/`<br>servicefailurehandler.evaluateShipment | Tool: `exception_evaluate_service_failures` |
-| `POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/`<br>servicefailurehandler.evaluateStop | Tool: `exception_evaluate_service_failures` |
-| `PUT /api/v1/service-failures/:serviceFailureID/`<br>servicefailurehandler.update | Tool: `exception_update_service_failure` |
+| `mutation evaluateShipmentServiceFailures` | Tool: `exception_evaluate_service_failures` |
+| `mutation resolveServiceFailure` | Tool: `exception_resolve_service_failure` |
+| `mutation reviewServiceFailure` | Tool: `exception_review_service_failure` |
+| `mutation updateServiceFailure` | Tool: `exception_update_service_failure` |
+| `mutation voidServiceFailure` | Tool: `exception_void_service_failure` |
 
 ### servicefailurereasoncode
 
@@ -1985,7 +1974,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation cancelShipment` | Tool: `shipment_cancel` |
 | `mutation checkShipmentDuplicateBol` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation checkShipmentHazmatSegregation` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation createShipment`<br>twin `POST /api/v1/shipments/` | Tool: `shipment_create` |
+| `mutation createShipment` | Tool: `shipment_create` |
 | `mutation createShipmentComment` | Tool: `shipment_add_comment` |
 | `mutation deleteShipmentComment` | Tool: `shipment_delete_comment` |
 | `mutation duplicateShipment` | Tool: `shipment_duplicate` |
@@ -1998,9 +1987,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation uncancelShipment` | Tool: `shipment_uncancel` |
 | `mutation unpinShipmentComment` | Tool: `shipment_unpin_comment` |
 | `mutation unresolveShipmentComment` | Tool: `shipment_resolve_comment` |
-| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `shipment_update`, `shipment_reschedule_stop`, `shipment_add_charge` |
+| `mutation updateShipment` | Tool: `shipment_update`, `shipment_reschedule_stop`, `shipment_add_charge` |
 | `mutation updateShipmentComment` | Tool: `shipment_update_comment` |
-| `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Exempt, infrastructure: The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; exception_evaluate_service_failures records a late stop for one shipment. |
 
 ### shipmentboard
 
@@ -2021,8 +2009,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/shipment-moves/:moveID/split/`<br>shipmentmovehandler.splitMove | Tool: `dispatch_split_move` |
-| `POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/`<br>shipmentmovehandler.recordStopActual | Tool: `dispatch_record_stop_actual` |
+| `mutation assignShipmentMove` | Tool: `dispatch_assign_move` |
+| `mutation reassignShipmentMove` | Tool: `dispatch_assign_move` |
+| `mutation recordShipmentStopActual` | Tool: `dispatch_record_stop_actual` |
+| `mutation splitShipmentMove` | Tool: `dispatch_split_move` |
+| `mutation unassignShipmentMove` | Tool: `dispatch_unassign_move` |
 
 ### shipmenttype
 
@@ -2098,11 +2089,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/tenders/:tenderID/bounce/`<br>tenderhandler.bounce | Tool: `dispatch_record_tender_response` |
-| `POST /api/v1/tenders/:tenderID/cancel/`<br>tenderhandler.cancel | Tool: `dispatch_cancel_tender` |
-| `POST /api/v1/tenders/offers/:offerID/respond/`<br>tenderhandler.recordResponse | Tool: `dispatch_record_tender_response` |
-| `POST /api/v1/tenders/spot/`<br>tenderhandler.createSpot | Tool: `dispatch_create_tender` |
-| `POST /api/v1/tenders/waterfall/`<br>tenderhandler.createWaterfall | Tool: `dispatch_create_tender_from_routing_guide` |
+| `mutation bounceTender` | Tool: `dispatch_record_tender_response` |
+| `mutation cancelTender` | Tool: `dispatch_cancel_tender` |
+| `mutation createSpotTender` | Tool: `dispatch_create_tender` |
+| `mutation createWaterfallTender` | Tool: `dispatch_create_tender_from_routing_guide` |
+| `mutation respondToTenderOffer` | Tool: `dispatch_record_tender_response` |
 
 ### tenderpublic
 

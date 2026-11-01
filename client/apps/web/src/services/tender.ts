@@ -1,4 +1,17 @@
-import { api, ApiRequestError } from "@trenova/shared/lib/api";
+import {
+  bounceTenderGraphQL,
+  cancelTenderGraphQL,
+  createSpotTenderGraphQL,
+  createWaterfallTenderGraphQL,
+  respondToTenderOfferGraphQL,
+} from "@/lib/graphql/tender";
+import type {
+  CreateSpotTenderInput,
+  RespondToTenderOfferInput,
+} from "@trenova/graphql/generated/graphql";
+import { api } from "@trenova/shared/lib/api";
+import { errorParams } from "@trenova/shared/lib/error-params";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   bounceTenderPayloadSchema,
@@ -6,36 +19,16 @@ import {
   publicTenderOfferSchema,
   recordTenderResponsePayloadSchema,
   spotTenderPayloadSchema,
-  tenderSchema,
   waterfallTenderPayloadSchema,
-  waterfallTenderResultSchema,
   type BounceTenderPayload,
   type PublicTenderCounterPayload,
   type PublicTenderOffer,
   type RecordTenderResponsePayloadInput,
   type SpotTenderPayload,
-  type Tender,
   type WaterfallTenderPayload,
-  type WaterfallTenderResult,
 } from "@trenova/shared/types/tender";
 
-type SpotTenderLineRequestBody = {
-  carrierId: string;
-  rateMethod: SpotTenderPayload["lines"][number]["rateMethod"];
-  rate: string;
-  offerTtlSeconds: number;
-  channel: SpotTenderPayload["lines"][number]["channel"];
-  email?: string;
-};
-
-type SpotTenderRequestBody = {
-  shipmentMoveId: string;
-  mode: SpotTenderPayload["mode"];
-  lines: SpotTenderLineRequestBody[];
-  overrideInsuranceWarnings: boolean;
-};
-
-export function toSpotTenderRequestBody(payload: SpotTenderPayload): SpotTenderRequestBody {
+export function toSpotTenderInput(payload: SpotTenderPayload): CreateSpotTenderInput {
   return {
     shipmentMoveId: payload.shipmentMoveId,
     mode: payload.mode,
@@ -45,7 +38,7 @@ export function toSpotTenderRequestBody(payload: SpotTenderPayload): SpotTenderR
       rate: line.rate.toString(),
       offerTtlSeconds: line.offerTtlSeconds,
       channel: line.channel,
-      email: line.channel === "EDI" ? undefined : line.email || undefined,
+      email: line.channel === "EDI" ? null : line.email || null,
     })),
     overrideInsuranceWarnings: payload.overrideInsuranceWarnings,
   };
@@ -55,29 +48,22 @@ export function toSpotTenderRequestBody(payload: SpotTenderPayload): SpotTenderR
  * The backend flags insurance-warning rejections with an `overridable` param so the
  * dialog can offer a confirm-and-resubmit instead of a dead-end toast.
  */
-export function isOverridableInsuranceWarningError(error: unknown): error is ApiRequestError {
+export function isOverridableInsuranceWarningError(error: unknown): error is GraphQLRequestError {
   return (
-    error instanceof ApiRequestError &&
+    error instanceof GraphQLRequestError &&
     error.isBusinessError() &&
-    error.getParams().overridable === "true"
+    errorParams(error).overridable === "true"
   );
 }
-
-type RecordTenderResponseRequestBody = {
-  action: RecordTenderResponsePayloadInput["action"];
-  declineReason: string;
-  counterRate?: string;
-  counterNote?: string;
-};
 
 /**
  * Only the fields the chosen action reads are sent: a decline reason left in the
  * form after switching to Accept, or a counter rate after switching to Decline,
  * must not reach the server as part of a different answer.
  */
-export function toRecordTenderResponseRequestBody(
+export function toRespondToTenderOfferInput(
   payload: RecordTenderResponsePayloadInput,
-): RecordTenderResponseRequestBody {
+): RespondToTenderOfferInput {
   const parsed = recordTenderResponsePayloadSchema.parse(payload);
   switch (parsed.action) {
     case "Decline":
@@ -95,40 +81,39 @@ export function toRecordTenderResponseRequestBody(
 }
 
 export class TenderService {
-  public async createWaterfall(payload: WaterfallTenderPayload): Promise<WaterfallTenderResult> {
+  /** Starts a routing-guide waterfall; the screening names guide carriers left out or warned. */
+  public async createWaterfall(payload: WaterfallTenderPayload) {
     const parsed = waterfallTenderPayloadSchema.parse(payload);
-    const response = await api.post<WaterfallTenderResult>("/tenders/waterfall/", {
+    const result = await createWaterfallTenderGraphQL({
       shipmentMoveId: parsed.shipmentMoveId,
-      routingGuideId: parsed.routingGuideId ?? undefined,
+      routingGuideId: parsed.routingGuideId ?? null,
     });
-    return safeParse(waterfallTenderResultSchema, response, "Tender");
+    return {
+      ...result.tender,
+      screening: result.screening
+        ? { skipped: result.screening.skipped, warned: result.screening.warned }
+        : null,
+    };
   }
 
-  public async createSpot(payload: SpotTenderPayload): Promise<Tender> {
-    const response = await api.post<Tender>(
-      "/tenders/spot/",
-      toSpotTenderRequestBody(spotTenderPayloadSchema.parse(payload)),
-    );
-    return safeParse(tenderSchema, response, "Tender");
+  public async createSpot(payload: SpotTenderPayload) {
+    return createSpotTenderGraphQL(toSpotTenderInput(spotTenderPayloadSchema.parse(payload)));
   }
 
   public async cancel(tenderId: string, reason: string): Promise<void> {
-    await api.post(`/tenders/${tenderId}/cancel/`, { reason });
+    await cancelTenderGraphQL(tenderId, reason);
   }
 
   public async recordResponse(
     offerId: string,
     payload: RecordTenderResponsePayloadInput,
   ): Promise<void> {
-    await api.post(
-      `/tenders/offers/${offerId}/respond/`,
-      toRecordTenderResponseRequestBody(payload),
-    );
+    await respondToTenderOfferGraphQL(offerId, toRespondToTenderOfferInput(payload));
   }
 
   public async bounce(tenderId: string, payload: BounceTenderPayload): Promise<void> {
     const parsed = bounceTenderPayloadSchema.parse(payload);
-    await api.post(`/tenders/${tenderId}/bounce/`, { reason: parsed.reason });
+    await bounceTenderGraphQL(tenderId, parsed.reason);
   }
 
   public async getPublicOffer(token: string): Promise<PublicTenderOffer> {

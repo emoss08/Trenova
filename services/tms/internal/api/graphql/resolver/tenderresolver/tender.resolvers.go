@@ -8,6 +8,13 @@ package tenderresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/operationsloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
@@ -129,4 +136,125 @@ func (r *TenderOfferResolver) CounterMarginPercent(ctx context.Context, obj *ten
 
 func (r *TenderOfferResolver) AgreedRate(ctx context.Context, obj *tender.TenderOffer) (string, error) {
 	return obj.AgreedRate().String(), nil
+}
+
+func (r *MutationResolver) CreateWaterfallTender(ctx context.Context, input gqlmodel.CreateWaterfallTenderInput) (*gqlmodel.CreateWaterfallTenderResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTender, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	moveID, err := gqlid.ParseIDField("shipmentMoveId", input.ShipmentMoveID)
+	if err != nil {
+		return nil, err
+	}
+	routingGuideID, err := gqlid.PulidPtrFromOptionalString(input.RoutingGuideID)
+	if err != nil {
+		return nil, gqlid.InvalidIDError("routingGuideId", "Invalid routing guide")
+	}
+
+	result, err := r.TenderCreator.CreateWaterfall(ctx, &tendercreate.CreateWaterfallTenderRequest{
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+		ShipmentMoveID: moveID,
+		RoutingGuideID: routingGuideID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.CreateWaterfallTenderResult{
+		Tender:    result.Tender,
+		Screening: result.Screening,
+	}, nil
+}
+
+func (r *MutationResolver) CreateSpotTender(ctx context.Context, input gqlmodel.CreateSpotTenderInput) (*tender.Tender, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTender, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := spotTenderRequestFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+	req.TenantInfo = resolvercore.TenantInfo(authCtx)
+
+	return r.TenderCreator.CreateSpot(ctx, req)
+}
+
+func (r *MutationResolver) CancelTender(ctx context.Context, id string, reason string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTender, permission.OpCancel)
+	if err != nil {
+		return false, err
+	}
+
+	tenderID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.TenderCanceler.Cancel(ctx, &tendercancel.CancelTenderRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		TenderID:   tenderID,
+		Reason:     reason,
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) RespondToTenderOffer(ctx context.Context, offerID string, input gqlmodel.RespondToTenderOfferInput) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTender, permission.OpUpdate)
+	if err != nil {
+		return false, err
+	}
+
+	parsedOfferID, err := gqlid.ParseIDField("offerId", offerID)
+	if err != nil {
+		return false, err
+	}
+	counterRate, err := gqldecimal.ParseDecimalField(
+		"counterRate",
+		gqlscalar.StringValue(input.CounterRate),
+		false,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.TenderResponder.RecordResponse(ctx, &tenderports.TenderResponseRequest{
+		Actor:         actorutil.FromAuthContext(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		OfferID:       parsedOfferID,
+		Action:        input.Action,
+		Source:        tender.ResponseSourceManual,
+		DeclineReason: gqlscalar.StringValue(input.DeclineReason),
+		CounterRate:   counterRate,
+		CounterNote:   gqlscalar.StringValue(input.CounterNote),
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) BounceTender(ctx context.Context, id string, reason string) (*tender.Tender, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceTender, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	tenderID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.TenderBouncer.Bounce(ctx, &tenderbounce.BounceTenderRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		TenderID:   tenderID,
+		Reason:     reason,
+		Source:     tender.ResponseSourceManual,
+	})
 }

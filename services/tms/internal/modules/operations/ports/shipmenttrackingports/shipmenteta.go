@@ -22,14 +22,6 @@ type ShipmentEta struct {
 	Stops            []*stopeta.StopETA `json:"stops"`
 }
 
-func UnknownShipmentEta(shipmentID pulid.ID) *ShipmentEta {
-	return &ShipmentEta{
-		ShipmentID: shipmentID,
-		Verdict:    stopeta.VerdictUnknown,
-		Stops:      []*stopeta.StopETA{},
-	}
-}
-
 type ShipmentEtaReader interface {
 	EtasByShipmentIDs(
 		ctx context.Context,

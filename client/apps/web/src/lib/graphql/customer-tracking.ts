@@ -4,6 +4,7 @@ import {
   CustomerTrackingProfileDocument,
   IssueCustomerTrackingLinkDocument,
   RevokeCustomerTrackingLinkDocument,
+  ShipmentCustomerTrackingPreviewDocument,
   UpdateCustomerTrackingProfileDocument,
   type CustomerStatusNotificationFieldsFragment,
   type CustomerStatusNotificationsQuery,
@@ -145,4 +146,17 @@ export async function revokeCustomerTrackingLink(
 function blankToNull(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? "";
   return trimmed === "" ? null : trimmed;
+}
+
+export async function previewShipmentCustomerTracking(
+  shipmentId: string,
+  options?: RequestOptions,
+) {
+  const data = await requestGraphQL({
+    document: ShipmentCustomerTrackingPreviewDocument,
+    operationName: "ShipmentCustomerTrackingPreview",
+    variables: { shipmentId },
+    signal: options?.signal,
+  });
+  return data.shipmentCustomerTrackingPreview;
 }

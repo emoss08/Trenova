@@ -176,6 +176,33 @@ func (r *QueryResolver) CustomerStatusNotifications(
 	return r.CustomerTrackingService.ListNotifications(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
+func (r *QueryResolver) ShipmentCustomerTrackingPreview(
+	ctx context.Context,
+	shipmentID string,
+) (*customertrackingports.PublicTrackingView, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	id, err := parseID("shipmentId", shipmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomerTrackingService.PreviewForShipment(ctx, resolvercore.TenantInfo(authCtx), id)
+}
+
+func (r *CustomerTrackingViewResolver) Status(
+	_ context.Context,
+	obj *customertrackingports.PublicTrackingView,
+) (*customertrackingports.PublicStatus, error) {
+	if obj == nil || obj.Status == "" {
+		return nil, nil //nolint:nilnil // a page that hides the status has none to show
+	}
+	status := obj.Status
+	return &status, nil
+}
+
 func parseID(field, value string) (pulid.ID, error) {
 	id, err := pulid.MustParse(value)
 	if err != nil || id.IsNil() {

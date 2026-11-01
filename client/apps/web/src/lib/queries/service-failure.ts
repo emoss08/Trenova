@@ -9,20 +9,19 @@ export const serviceFailure = createQueryKeys("serviceFailure", {
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       fetchDeskServiceFailure(id, { signal }),
   }),
-  get: (id: string) => ({
-    queryKey: ["get", id],
-    queryFn: async () => apiService.serviceFailureService.getById(id),
-  }),
   listByShipment: (shipmentId: string) => ({
     queryKey: ["list-by-shipment", shipmentId],
-    queryFn: async () => apiService.serviceFailureService.listByShipment(shipmentId, "limit=100"),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.serviceFailureService.listByShipment(shipmentId, { signal }),
   }),
   edi214Readiness: (id: string, trigger?: "Reviewed" | "Resolved") => ({
     queryKey: ["edi-214-readiness", id, trigger],
-    queryFn: async () => apiService.serviceFailureService.edi214Readiness(id, trigger),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.serviceFailureService.edi214Readiness(id, trigger, { signal }),
   }),
   edi214Status: (id: string) => ({
     queryKey: ["edi-214-status", id],
-    queryFn: async () => apiService.serviceFailureService.edi214Status(id),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.serviceFailureService.edi214Status(id, { signal }),
   }),
 });

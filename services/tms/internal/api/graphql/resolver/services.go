@@ -100,6 +100,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -127,6 +128,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
@@ -138,6 +143,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -167,6 +173,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
@@ -292,6 +299,15 @@ type Params struct {
 	CarrierAssignmentService          *carrierassignmentservice.Service
 	RoutingGuideService               *routingguideservice.Service
 	TenderRepo                        tenderports.TenderRepository
+	ShipmentMoveService               shipmentmoveports.ShipmentMoveService
+	PermitService                     permitports.PermitService
+	RateConfirmationService           *rateconfirmationservice.Service
+	TenderCreator                     *tendercreate.Service
+	TenderCanceler                    *tendercancel.Service
+	TenderResponder                   *tenderresponse.Service
+	TenderBouncer                     *tenderbounce.Service
+	ServiceFailureEDIPayloads         ediports.ServiceFailurePayloadBuilder
+	ServiceFailureEDI214              ediports.ServiceFailure214Service
 	CarrierService                    *carrierservice.Service
 	CarrierIntelService               *carrierintelservice.Service
 	CarrierIntelEnrollmentService     *carrierintelenrollmentservice.Service
@@ -582,6 +598,15 @@ type Services struct {
 	CarrierAssignmentService          *carrierassignmentservice.Service
 	RoutingGuideService               *routingguideservice.Service
 	TenderRepo                        tenderports.TenderRepository
+	ShipmentMoveService               shipmentmoveports.ShipmentMoveService
+	PermitService                     permitports.PermitService
+	RateConfirmationService           *rateconfirmationservice.Service
+	TenderCreator                     *tendercreate.Service
+	TenderCanceler                    *tendercancel.Service
+	TenderResponder                   *tenderresponse.Service
+	TenderBouncer                     *tenderbounce.Service
+	ServiceFailureEdiPayloads         ediports.ServiceFailurePayloadBuilder
+	ServiceFailureEdi214              ediports.ServiceFailure214Service
 	CarrierService                    *carrierservice.Service
 	CarrierIntelService               *carrierintelservice.Service
 	CarrierIntelEnrollmentService     *carrierintelenrollmentservice.Service
@@ -877,6 +902,15 @@ func newServices(p *Params) *Services {
 		CarrierAssignmentService:          p.CarrierAssignmentService,
 		RoutingGuideService:               p.RoutingGuideService,
 		TenderRepo:                        p.TenderRepo,
+		ShipmentMoveService:               p.ShipmentMoveService,
+		PermitService:                     p.PermitService,
+		RateConfirmationService:           p.RateConfirmationService,
+		TenderCreator:                     p.TenderCreator,
+		TenderCanceler:                    p.TenderCanceler,
+		TenderResponder:                   p.TenderResponder,
+		TenderBouncer:                     p.TenderBouncer,
+		ServiceFailureEdiPayloads:         p.ServiceFailureEDIPayloads,
+		ServiceFailureEdi214:              p.ServiceFailureEDI214,
 		CarrierService:                    p.CarrierService,
 		CarrierIntelService:               p.CarrierIntelService,
 		CarrierIntelEnrollmentService:     p.CarrierIntelEnrollmentService,

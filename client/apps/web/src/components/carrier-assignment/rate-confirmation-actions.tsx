@@ -59,7 +59,7 @@ export function RateConfirmationActions({
 
   const { data: rateConfirmations, isLoading } = useQuery({
     queryKey: rateConfirmationQueryKey(moveId),
-    queryFn: () => apiService.rateConfirmationService.listByMove(moveId),
+    queryFn: ({ signal }) => apiService.rateConfirmationService.listByMove(moveId, { signal }),
   });
 
   // A move can accumulate rate confirmations from replaced assignments; only the

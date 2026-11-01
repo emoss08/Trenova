@@ -281,11 +281,7 @@ export function PermitWaiveDialog({
 
   const mutation = useApiMutation({
     mutationFn: async (values: WaiveRequirementInput) =>
-      apiService.shipmentService.waivePermitRequirement(
-        shipmentId,
-        requirement?.id ?? "",
-        values.reason,
-      ),
+      apiService.shipmentService.waivePermitRequirement(requirement?.id ?? "", values.reason),
     onSuccess: () => {
       invalidate();
       reset();

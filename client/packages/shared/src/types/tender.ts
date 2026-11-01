@@ -148,16 +148,6 @@ export const guideScreeningSummarySchema = z.object({
 });
 export type GuideScreeningSummary = z.infer<typeof guideScreeningSummarySchema>;
 
-/**
- * The waterfall endpoint embeds the tender, so the response body is a superset of
- * a plain tender: the screening summary is absent when every routing-guide entry
- * was offered.
- */
-export const waterfallTenderResultSchema = tenderSchema.extend({
-  screening: guideScreeningSummarySchema.nullish().transform((value) => value ?? null),
-});
-export type WaterfallTenderResult = z.infer<typeof waterfallTenderResultSchema>;
-
 export const waterfallTenderPayloadSchema = z.object({
   shipmentMoveId: z.string().min(1, { error: () => translate("Shipment move is required") }),
   routingGuideId: nullableStringSchema,

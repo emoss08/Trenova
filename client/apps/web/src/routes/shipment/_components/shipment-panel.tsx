@@ -313,7 +313,6 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         onOpenChange={onOpenChange}
         row={row}
         form={editForm}
-        url="/shipments/"
         queryKey="shipment-list"
         title={t("Shipment")}
         fieldKey="proNumber"
@@ -353,7 +352,6 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       open={open}
       onOpenChange={onOpenChange}
       form={createForm}
-      url="/shipments/"
       queryKey="shipment-list"
       title={t("Shipment")}
       formComponent={<ShipmentForm />}

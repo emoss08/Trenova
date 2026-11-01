@@ -1,0 +1,140 @@
+fragment PermitFields on Permit {
+  id
+  shipmentId
+  stateId
+  permitNumber
+  status
+  issuedAt
+  expiresAt
+  cost
+  notes
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    abbreviation
+    name
+  }
+}
+
+fragment PermitRequirementFields on PermitRequirement {
+  id
+  shipmentId
+  stateId
+  status
+  routeSequence
+  exceedances {
+    trigger
+    limit
+    actual
+    overBy
+    superload
+  }
+  escorts {
+    role
+    trigger
+    threshold
+    actual
+    note
+  }
+  restrictions
+  leadTimeDays
+  validityDays
+  estimatedFee
+  isSuperload
+  satisfiedByPermitId
+  waivedById
+  waiverReason
+  provenance {
+    ruleId
+    stateCode
+    stateName
+    verificationState
+    verifiedAt
+    sourceNote
+    sourceUrl
+    maxWidthFeet
+    maxHeightFeet
+    maxLengthFeet
+    maxWeightPounds
+    overriddenFields
+    overrideReason
+  }
+  derivedAt
+}
+
+query ShipmentPermitAssessment($shipmentId: ID!) {
+  shipmentPermitAssessment(shipmentId: $shipmentId) {
+    measurements {
+      widthFeet
+      heightFeet
+      lengthFeet
+      weightPounds
+    }
+    jurisdictions {
+      stateId
+      stateCode
+      stateName
+      sequence
+      verificationState
+      sourceNote
+      sourceUrl
+      maxWidthFeet
+      maxHeightFeet
+      maxLengthFeet
+      maxWeightPounds
+      widthHeadroomFeet
+      heightHeadroomFeet
+      lengthHeadroomFeet
+      weightHeadroomPounds
+      requiresPermit
+      restrictions
+    }
+    requirements {
+      ...PermitRequirementFields
+    }
+    open {
+      ...PermitRequirementFields
+    }
+    expiringBeforeDelivery {
+      ...PermitRequirementFields
+    }
+    totalEscorts
+    totalEstimatedFee
+    maxLeadTimeDays
+    earliestPickup
+    routeResolved
+    feeIsBaseOnly
+  }
+}
+
+query ShipmentPermits($shipmentId: ID!) {
+  shipmentPermits(shipmentId: $shipmentId) {
+    ...PermitFields
+  }
+}
+
+query ShipmentPermitRequirements($shipmentId: ID!) {
+  shipmentPermitRequirements(shipmentId: $shipmentId) {
+    ...PermitRequirementFields
+  }
+}
+
+mutation CreateShipmentPermit($shipmentId: ID!, $input: PermitInput!) {
+  createShipmentPermit(shipmentId: $shipmentId, input: $input) {
+    ...PermitFields
+  }
+}
+
+mutation UpdateShipmentPermit($shipmentId: ID!, $id: ID!, $input: PermitInput!) {
+  updateShipmentPermit(shipmentId: $shipmentId, id: $id, input: $input) {
+    ...PermitFields
+  }
+}
+
+mutation WaiveShipmentPermitRequirement($requirementId: ID!, $reason: String!) {
+  waiveShipmentPermitRequirement(requirementId: $requirementId, reason: $reason) {
+    ...PermitRequirementFields
+  }
+}

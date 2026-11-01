@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { spotTenderPayloadSchema, type SpotTenderPayload } from "@trenova/shared/types/tender";
 import {
   isOverridableInsuranceWarningError,
-  toRecordTenderResponseRequestBody,
-  toSpotTenderRequestBody,
+  toRespondToTenderOfferInput,
+  toSpotTenderInput,
 } from "./tender";
-
-const PROBLEM_BASE = "https://api.trenova.app/problems/";
 
 function payload(overrides: Partial<SpotTenderPayload> = {}): SpotTenderPayload {
   return spotTenderPayloadSchema.parse({
@@ -27,24 +25,71 @@ function payload(overrides: Partial<SpotTenderPayload> = {}): SpotTenderPayload 
   });
 }
 
-function businessError(params?: Record<string, string>): ApiRequestError {
-  return new ApiRequestError(422, {
-    type: `${PROBLEM_BASE}business-rule-violation`,
-    title: "Business rule violation",
-    status: 422,
-    detail: "Carrier has insurance warnings. Confirm the override to proceed",
-    params,
+function graphQLError(type: string, params?: Record<string, string>): GraphQLRequestError {
+  const message = "Carrier has insurance warnings. Confirm the override to proceed";
+  return new GraphQLRequestError({
+    kind: "graphql",
+    message,
+    graphQLErrors: [{ message, extensions: { type, params }, type, params }],
+    status: 200,
   });
 }
 
-describe("toSpotTenderRequestBody", () => {
+function businessError(params?: Record<string, string>): GraphQLRequestError {
+  return graphQLError("business-rule-violation", params);
+}
+
+describe("toSpotTenderInput", () => {
+  it("sends no email for an EDI line and the typed address for an email line", () => {
+    const input = toSpotTenderInput(
+      payload({
+        lines: [
+          {
+            carrierId: "car_1",
+            rateMethod: "Flat",
+            rate: 1500,
+            offerTtlSeconds: 7200,
+            channel: "EDI",
+            email: "ops@carrier.test",
+          },
+          {
+            carrierId: "car_2",
+            rateMethod: "Flat",
+            rate: 1650.5,
+            offerTtlSeconds: 3600,
+            channel: "Email",
+            email: "dispatch@carrier.test",
+          },
+        ],
+      }),
+    );
+    expect(input.lines).toEqual([
+      {
+        carrierId: "car_1",
+        rateMethod: "Flat",
+        rate: "1500",
+        offerTtlSeconds: 7200,
+        channel: "EDI",
+        email: null,
+      },
+      {
+        carrierId: "car_2",
+        rateMethod: "Flat",
+        rate: "1650.5",
+        offerTtlSeconds: 3600,
+        channel: "Email",
+        email: "dispatch@carrier.test",
+      },
+    ]);
+  });
+
   it("defaults overrideInsuranceWarnings to false", () => {
-    const body = toSpotTenderRequestBody(payload());
+    const body = toSpotTenderInput(payload());
     expect(body.overrideInsuranceWarnings).toBe(false);
   });
 
   it("carries an explicit override through to the request body", () => {
-    const body = toSpotTenderRequestBody(payload({ overrideInsuranceWarnings: true }));
+    const body = toSpotTenderInput(payload({ overrideInsuranceWarnings: true }));
     expect(body.overrideInsuranceWarnings).toBe(true);
   });
 });
@@ -60,12 +105,7 @@ describe("isOverridableInsuranceWarningError", () => {
   });
 
   it("rejects non-business problems even when the param is present", () => {
-    const validation = new ApiRequestError(422, {
-      type: `${PROBLEM_BASE}validation-error`,
-      title: "Validation failed",
-      status: 422,
-      params: { overridable: "true" },
-    });
+    const validation = graphQLError("validation-error", { overridable: "true" });
     expect(isOverridableInsuranceWarningError(validation)).toBe(false);
   });
 
@@ -75,10 +115,10 @@ describe("isOverridableInsuranceWarningError", () => {
   });
 });
 
-describe("toRecordTenderResponseRequestBody", () => {
+describe("toRespondToTenderOfferInput", () => {
   it("sends an acceptance without the reason or counter left in the form", () => {
     expect(
-      toRecordTenderResponseRequestBody({
+      toRespondToTenderOfferInput({
         action: "Accept",
         declineReason: "No truck",
         counterRate: "2100",
@@ -89,7 +129,7 @@ describe("toRecordTenderResponseRequestBody", () => {
 
   it("sends a decline with its trimmed reason and no counter", () => {
     expect(
-      toRecordTenderResponseRequestBody({
+      toRespondToTenderOfferInput({
         action: "Decline",
         declineReason: "  No truck in the area ",
         counterRate: "2100",
@@ -99,7 +139,7 @@ describe("toRecordTenderResponseRequestBody", () => {
 
   it("sends a counter with its rate and note, and no decline reason", () => {
     expect(
-      toRecordTenderResponseRequestBody({
+      toRespondToTenderOfferInput({
         action: "Counter",
         declineReason: "left over",
         counterRate: " 2100.50 ",
@@ -114,14 +154,14 @@ describe("toRecordTenderResponseRequestBody", () => {
   });
 
   it("refuses a counter without a positive rate", () => {
-    expect(() => toRecordTenderResponseRequestBody({ action: "Counter", counterRate: "" })).toThrow(
+    expect(() => toRespondToTenderOfferInput({ action: "Counter", counterRate: "" })).toThrow(
       "Counter rate is required",
     );
+    expect(() => toRespondToTenderOfferInput({ action: "Counter", counterRate: "0" })).toThrow(
+      "Counter rate must be a positive amount",
+    );
     expect(() =>
-      toRecordTenderResponseRequestBody({ action: "Counter", counterRate: "0" }),
-    ).toThrow("Counter rate must be a positive amount");
-    expect(() =>
-      toRecordTenderResponseRequestBody({ action: "Counter", counterRate: "10000000" }),
+      toRespondToTenderOfferInput({ action: "Counter", counterRate: "10000000" }),
     ).toThrow("Counter rate is too large");
   });
 });

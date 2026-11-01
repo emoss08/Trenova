@@ -1,0 +1,44 @@
+mutation CreateWaterfallTender($input: CreateWaterfallTenderInput!) {
+  createWaterfallTender(input: $input) {
+    tender {
+      id
+      mode
+      status
+    }
+    screening {
+      skipped {
+        carrierName
+        rank
+        reasons
+      }
+      warned {
+        carrierName
+        rank
+        reasons
+      }
+    }
+  }
+}
+
+mutation CreateSpotTender($input: CreateSpotTenderInput!) {
+  createSpotTender(input: $input) {
+    id
+    mode
+    status
+  }
+}
+
+mutation CancelTender($id: ID!, $reason: String!) {
+  cancelTender(id: $id, reason: $reason)
+}
+
+mutation RespondToTenderOffer($offerId: ID!, $input: RespondToTenderOfferInput!) {
+  respondToTenderOffer(offerId: $offerId, input: $input)
+}
+
+mutation BounceTender($id: ID!, $reason: String!) {
+  bounceTender(id: $id, reason: $reason) {
+    id
+    status
+  }
+}

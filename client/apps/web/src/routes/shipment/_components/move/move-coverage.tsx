@@ -240,7 +240,7 @@ function DriverCoverage({ assignment }: { assignment: Assignment }) {
   );
   const { data: fetched } = useQuery({
     queryKey: ["assignment", assignment.id],
-    queryFn: () => apiService.assignmentService.get(assignment.id!),
+    queryFn: ({ signal }) => apiService.assignmentService.get(assignment.id!, { signal }),
     enabled: !!assignment.id && !embedded,
     staleTime: 5 * 60 * 1000,
   });

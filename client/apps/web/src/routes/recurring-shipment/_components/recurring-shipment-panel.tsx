@@ -6,6 +6,7 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { recurringShipmentSchema, type RecurringShipment } from "@/types/recurring-shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type DefaultValues, type Resolver } from "react-hook-form";
+import { apiService } from "@/services/api";
 import { RecurringShipmentForm } from "./recurring-shipment-form";
 
 const defaultValues: Partial<RecurringShipment> = {
@@ -46,10 +47,12 @@ export function RecurringShipmentPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/recurring-shipments/"
         queryKey="recurring-shipment-list"
         title={t("Recurring shipment")}
         fieldKey="name"
+        mutationFn={(values, currentRow) =>
+          apiService.recurringShipmentService.update(currentRow.id, values)
+        }
         formComponent={<RecurringShipmentForm mode="edit" />}
       />
     );
@@ -60,9 +63,9 @@ export function RecurringShipmentPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/recurring-shipments/"
       queryKey="recurring-shipment-list"
       title={t("Recurring shipment")}
+      mutationFn={(values) => apiService.recurringShipmentService.create(values)}
       formComponent={<RecurringShipmentForm mode="create" />}
     />
   );

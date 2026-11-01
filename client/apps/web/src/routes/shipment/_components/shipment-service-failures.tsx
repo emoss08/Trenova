@@ -18,7 +18,8 @@ import { serviceFailure } from "@/lib/queries/service-failure";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { ServiceFailure, ServiceFailureStopSummary } from "@/types/service-failure";
+import type { ServiceFailureRow } from "@/lib/graphql/service-failure-table";
+import type { ServiceFailureStopSummary } from "@/types/service-failure";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -102,7 +103,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       failure,
       action,
     }: {
-      failure: ServiceFailure;
+      failure: ServiceFailureRow;
       action: "review" | "resolve" | "void";
     }) => {
       const payload = {
@@ -368,7 +369,7 @@ function EvaluationStopGroup({
   );
 }
 
-function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure }) {
+function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailureRow }) {
   const t = useT();
 
   const trigger = ediReadinessTrigger(failure);
@@ -452,7 +453,7 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
   );
 }
 
-function ediReadinessTrigger(failure: ServiceFailure): "Reviewed" | "Resolved" | undefined {
+function ediReadinessTrigger(failure: ServiceFailureRow): "Reviewed" | "Resolved" | undefined {
   if (failure.status === "Open") return "Reviewed";
   if (failure.status === "Reviewed" || failure.status === "Resolved") return "Resolved";
   return undefined;
@@ -487,7 +488,7 @@ function evaluationTooltip(canEvaluate: boolean, shipmentId: string) {
   return "Evaluate this shipment for late pickup or delivery service failures.";
 }
 
-function reviewTooltip(canReview: boolean, failure: ServiceFailure, pending: boolean) {
+function reviewTooltip(canReview: boolean, failure: ServiceFailureRow, pending: boolean) {
   if (pending) {
     return "A service failure action is in progress.";
   }
@@ -505,7 +506,7 @@ function reviewTooltip(canReview: boolean, failure: ServiceFailure, pending: boo
 
 function resolveTooltip(
   canResolve: boolean,
-  failure: ServiceFailure,
+  failure: ServiceFailureRow,
   terminal: boolean,
   pending: boolean,
 ) {
@@ -524,7 +525,7 @@ function resolveTooltip(
   return "Mark this service failure as resolved. Customer EDI 214 generation depends on the outbound 214 profile.";
 }
 
-function voidTooltip(canVoid: boolean, failure: ServiceFailure, pending: boolean) {
+function voidTooltip(canVoid: boolean, failure: ServiceFailureRow, pending: boolean) {
   if (pending) {
     return "A service failure action is in progress.";
   }

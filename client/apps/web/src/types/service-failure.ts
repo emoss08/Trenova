@@ -3,12 +3,9 @@ import {
   nullableTextSchema,
   nullableIntegerSchema,
   optionalStringSchema,
-  tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
 import { stopTypeSchema } from "@trenova/shared/types/shipment";
-import { serviceFailureReasonCodeSchema } from "./service-failure-reason-code";
 
-const nullableTimestampSchema = z.number().int().nullable().optional();
 const evaluationResultIdsSchema = z
   .array(z.string())
   .nullish()
@@ -53,75 +50,6 @@ export type ServiceFailureSource = z.infer<typeof serviceFailureSourceSchema>;
 
 export const serviceFailureStatusSchema = z.enum(["Open", "Reviewed", "Resolved", "Voided"]);
 export type ServiceFailureStatus = z.infer<typeof serviceFailureStatusSchema>;
-
-const serviceFailureShipmentSummarySchema = z
-  .object({
-    id: optionalStringSchema,
-    proNumber: optionalStringSchema,
-    bol: optionalStringSchema,
-    status: optionalStringSchema,
-  })
-  .passthrough();
-
-const serviceFailureStopSummarySchema = z
-  .object({
-    id: optionalStringSchema,
-    type: stopTypeSchema.optional(),
-    sequence: nullableIntegerSchema,
-    locationId: optionalStringSchema,
-    location: z
-      .object({
-        id: optionalStringSchema,
-        name: optionalStringSchema,
-        code: optionalStringSchema,
-        city: optionalStringSchema,
-        state: z
-          .object({
-            abbreviation: optionalStringSchema,
-          })
-          .passthrough()
-          .nullish(),
-      })
-      .passthrough()
-      .nullish(),
-  })
-  .passthrough();
-
-export const serviceFailureSchema = z.object({
-  ...tenantInfoSchema.shape,
-  shipmentId: z.string(),
-  shipmentMoveId: z.string(),
-  stopId: z.string(),
-  reasonCodeId: z.string().nullable().optional(),
-  number: z.string(),
-  type: serviceFailureTypeSchema,
-  source: serviceFailureSourceSchema,
-  status: serviceFailureStatusSchema,
-  stopType: stopTypeSchema,
-  scheduledCutoff: z.number().int(),
-  actualArrival: z.number().int(),
-  gracePeriodMinutes: z.number().int(),
-  lateMinutes: z.number().int(),
-  notes: nullableTextSchema,
-  internalNotes: nullableTextSchema,
-  x12StatusCodeOverride: optionalStringSchema.default(""),
-  x12ReasonCodeOverride: optionalStringSchema.default(""),
-  x12ExceptionCode: optionalStringSchema.default(""),
-  detectedAt: z.number().int(),
-  reviewedAt: nullableTimestampSchema,
-  reviewedById: z.string().nullable().optional(),
-  resolvedAt: nullableTimestampSchema,
-  resolvedById: z.string().nullable().optional(),
-  voidedAt: nullableTimestampSchema,
-  voidedById: z.string().nullable().optional(),
-  voidReason: nullableTextSchema,
-  createdById: z.string().nullable().optional(),
-  reasonCode: serviceFailureReasonCodeSchema.nullish(),
-  shipment: serviceFailureShipmentSummarySchema.nullish(),
-  stop: serviceFailureStopSummarySchema.nullish(),
-});
-
-export type ServiceFailure = z.infer<typeof serviceFailureSchema>;
 
 export const serviceFailureUpdateSchema = z.object({
   id: z.string(),

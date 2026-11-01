@@ -458,6 +458,10 @@ var PerformanceReviewSpec TypeSpec
 
 var PerformanceReviewTemplateSpec TypeSpec
 
+var PermitSpec TypeSpec
+
+var PermitRequirementSpec TypeSpec
+
 var PolicyComplianceRowSpec TypeSpec
 
 var PortalInvitationSpec TypeSpec
@@ -473,6 +477,8 @@ var RateAgreementFuelBindingSpec TypeSpec
 var RateAgreementLaneSpec TypeSpec
 
 var RateAgreementVersionSpec TypeSpec
+
+var RateConfirmationSpec TypeSpec
 
 var RateMatrixSpec TypeSpec
 
@@ -493,6 +499,10 @@ var RecurringDeductionSpec TypeSpec
 var RecurringEarningSpec TypeSpec
 
 var RecurringShipmentSpec TypeSpec
+
+var RecurringShipmentGeneratedShipmentSpec TypeSpec
+
+var RecurringShipmentRunSpec TypeSpec
 
 var ReportDashboardSpec TypeSpec
 
@@ -21585,6 +21595,177 @@ func init() {
 		},
 	}
 
+	PermitSpec = TypeSpec{
+		TypeName: "Permit",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "shipmentId",
+				Column: "shipment_id",
+			},
+			{
+				Name:   "stateId",
+				Column: "state_id",
+			},
+			{
+				Name:   "permitNumber",
+				Column: "permit_number",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "issuedAt",
+				Column: "issued_at",
+			},
+			{
+				Name:   "expiresAt",
+				Column: "expires_at",
+			},
+			{
+				Name:   "cost",
+				Column: "cost",
+			},
+			{
+				Name:   "notes",
+				Column: "notes",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name:   "state",
+				Column: "state_id",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+		},
+	}
+
+	PermitRequirementSpec = TypeSpec{
+		TypeName: "PermitRequirement",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "shipmentId",
+				Column: "shipment_id",
+			},
+			{
+				Name:   "stateId",
+				Column: "state_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "routeSequence",
+				Column: "route_sequence",
+			},
+			{
+				Name:   "exceedances",
+				Column: "exceedances",
+			},
+			{
+				Name:   "escorts",
+				Column: "escorts",
+			},
+			{
+				Name:   "restrictions",
+				Column: "restrictions",
+			},
+			{
+				Name:   "leadTimeDays",
+				Column: "lead_time_days",
+			},
+			{
+				Name:   "validityDays",
+				Column: "validity_days",
+			},
+			{
+				Name:   "estimatedFee",
+				Column: "estimated_fee",
+			},
+			{
+				Name:   "isSuperload",
+				Column: "is_superload",
+			},
+			{
+				Name:   "satisfiedByPermitId",
+				Column: "satisfied_by_permit_id",
+			},
+			{
+				Name:   "waivedById",
+				Column: "waived_by_id",
+			},
+			{
+				Name:   "waiverReason",
+				Column: "waiver_reason",
+			},
+			{
+				Name:   "provenance",
+				Column: "provenance",
+			},
+			{
+				Name:   "derivedAt",
+				Column: "derived_at",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
 	PolicyComplianceRowSpec = TypeSpec{
 		TypeName: "PolicyComplianceRow",
 		AlwaysColumns: []string{
@@ -22087,6 +22268,112 @@ func init() {
 			{
 				Name:   "changeMessage",
 				Column: "change_message",
+			},
+		},
+	}
+
+	RateConfirmationSpec = TypeSpec{
+		TypeName: "RateConfirmation",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "carrierAssignmentId",
+				Column: "carrier_assignment_id",
+			},
+			{
+				Name:   "carrierId",
+				Column: "carrier_id",
+			},
+			{
+				Name:   "shipmentId",
+				Column: "shipment_id",
+			},
+			{
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
+			},
+			{
+				Name:   "revision",
+				Column: "revision",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "documentId",
+				Column: "document_id",
+			},
+			{
+				Name:   "sentAt",
+				Column: "sent_at",
+			},
+			{
+				Name:   "sentToEmails",
+				Column: "sent_to_emails",
+			},
+			{
+				Name:   "confirmedAt",
+				Column: "confirmed_at",
+			},
+			{
+				Name:   "confirmedByName",
+				Column: "confirmed_by_name",
+			},
+			{
+				Name:   "voidedAt",
+				Column: "voided_at",
+			},
+			{
+				Name:   "voidReason",
+				Column: "void_reason",
+			},
+			{
+				Name:   "generatedById",
+				Column: "generated_by_id",
+			},
+			{
+				Name:   "generatedVia",
+				Column: "generated_via",
+			},
+			{
+				Name:   "sourceTenderOfferId",
+				Column: "source_tender_offer_id",
+			},
+			{
+				Name:   "confirmedVia",
+				Column: "confirmed_via",
+			},
+			{
+				Name:   "confirmedByTitle",
+				Column: "confirmed_by_title",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -22955,6 +23242,96 @@ func init() {
 			{
 				Name:   "enteredBy",
 				Column: "entered_by_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+		},
+	}
+
+	RecurringShipmentGeneratedShipmentSpec = TypeSpec{
+		TypeName: "RecurringShipmentGeneratedShipment",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "proNumber",
+				Column: "pro_number",
+			},
+		},
+	}
+
+	RecurringShipmentRunSpec = TypeSpec{
+		TypeName: "RecurringShipmentRun",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "recurringShipmentId",
+				Column: "recurring_shipment_id",
+			},
+			{
+				Name:   "generatedShipmentId",
+				Column: "generated_shipment_id",
+			},
+			{
+				Name:   "triggeredById",
+				Column: "triggered_by_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "trigger",
+				Column: "trigger",
+			},
+			{
+				Name:   "occurrenceAt",
+				Column: "occurrence_at",
+			},
+			{
+				Name:   "originalOccurrenceAt",
+				Column: "original_occurrence_at",
+			},
+			{
+				Name:   "detail",
+				Column: "detail",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "generatedShipment",
+				Column: "generated_shipment_id",
+				Relation: &RelationSpec{
+					Target: &RecurringShipmentGeneratedShipmentSpec,
+				},
+			},
+			{
+				Name:   "triggeredBy",
+				Column: "triggered_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},

@@ -342,6 +342,13 @@ input DispatchAssignMoveToCarrierInput {
   (inactive, unqualified, or expired coverage) can never be overridden.
   """
   overrideInsuranceWarning: Boolean
+  """
+  Price the assignment from the carrier's contract instead of the rate given. A rate typed
+  alongside it still wins.
+  """
+  autoRate: Boolean
+  "Assign the carrier even though the contract's margin terms would refuse it."
+  overrideMarginFloor: Boolean
 }
 
 input DispatchCarrierAssignmentPreviewInput {

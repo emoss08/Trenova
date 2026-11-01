@@ -1,0 +1,69 @@
+"Which actual a dispatcher records at a stop: the arrival or the departure."
+enum StopActualAction {
+  Arrive
+  Depart
+}
+
+input ShipmentMoveAssignmentInput {
+  primaryWorkerId: ID!
+  tractorId: ID!
+  trailerId: ID
+  secondaryWorkerId: ID
+}
+
+input CheckWorkerComplianceInput {
+  shipmentMoveId: ID!
+  primaryWorkerId: ID!
+  secondaryWorkerId: ID
+}
+
+input ShipmentMoveSplitStopTimesInput {
+  scheduledWindowStart: Timestamp!
+  scheduledWindowEnd: Timestamp
+}
+
+input SplitShipmentMoveInput {
+  newDeliveryLocationId: ID!
+  "The window of the relay pickup the split adds to the new move."
+  splitPickupTimes: ShipmentMoveSplitStopTimesInput!
+  "The window of the delivery the split adds to the original move."
+  newDeliveryTimes: ShipmentMoveSplitStopTimesInput!
+  pieces: Int
+  weight: Int
+}
+
+type SplitShipmentMoveResult {
+  originalMove: ShipmentMove
+  newMove: ShipmentMove
+}
+
+input RecordShipmentStopActualInput {
+  action: StopActualAction!
+  "When it happened; the server's clock when left out."
+  occurredAt: Timestamp
+}
+
+extend type Query {
+  shipmentAssignment(id: ID!): ShipmentAssignment
+  """
+  Checks the drivers against the compliance rules for the move and saves nothing. A
+  violation is returned as a validation error naming each rule; true means they may drive it.
+  """
+  checkWorkerCompliance(input: CheckWorkerComplianceInput!): Boolean!
+}
+
+extend type Mutation {
+  assignShipmentMove(moveId: ID!, input: ShipmentMoveAssignmentInput!): ShipmentAssignment!
+  reassignShipmentMove(moveId: ID!, input: ShipmentMoveAssignmentInput!): ShipmentAssignment!
+  unassignShipmentMove(moveId: ID!): Boolean!
+  splitShipmentMove(moveId: ID!, input: SplitShipmentMoveInput!): SplitShipmentMoveResult!
+  """
+  Records a dispatcher-reported arrival or departure at a stop. A retry carrying the same
+  Idempotency-Key records it once.
+  """
+  recordShipmentStopActual(
+    moveId: ID!
+    stopId: ID!
+    input: RecordShipmentStopActualInput!
+  ): ShipmentMove!
+}

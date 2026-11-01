@@ -32,7 +32,7 @@ func TestProtectedRoutesAreDiscovered(t *testing.T) {
 		byPackage[route.Package]++
 	}
 
-	for _, pkg := range []string{"workerhandler", "shipmenthandler", "iamhandler"} {
+	for _, pkg := range []string{"workerhandler", "documenthandler", "iamhandler"} {
 		require.NotZerof(t, byPackage[pkg], "expected routes discovered for %s", pkg)
 	}
 }
@@ -147,12 +147,14 @@ func TestProtectedRoutesRejectsUnresolvableHandlerField(t *testing.T) {
 func TestProtectedRoutesSkipEditionRegistrations(t *testing.T) {
 	t.Parallel()
 
-	apiPath, handlersPath := writeLintFixture(t,
+	apiPath, handlersPath := writeLintFixture(
+		t,
 		"\tr.demoHandler.RegisterRoutes(protected)\n\tr.editionRoutes.RegisterProtected(protected)\n",
 		`func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/demo/", h.list)
 }
-`)
+`,
+	)
 
 	routes, err := ProtectedRoutes(apiPath, handlersPath)
 	require.NoError(t, err)

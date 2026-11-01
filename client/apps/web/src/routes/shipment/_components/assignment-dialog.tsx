@@ -36,7 +36,8 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
-import { ApiRequestError } from "@trenova/shared/lib/api";
+import { errorParams } from "@trenova/shared/lib/error-params";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import {
   hasOrganizationCapability,
   OrganizationCapability,
@@ -186,12 +187,12 @@ export function AssignmentDialog({
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onAssigned?.(data);
     },
-    onError: (error: ApiRequestError) => {
-      if (error.isBusinessError()) {
-        const params = error.getParams();
+    onError: (error: Error) => {
+      if (error instanceof GraphQLRequestError && error.isBusinessError()) {
+        const params = errorParams(error);
         if (params.trailerId && params.pickupLocationId) {
           setContinuityError({
-            message: error.data.detail || error.data.title,
+            message: error.message,
             trailerId: params.trailerId,
             pickupLocationId: params.pickupLocationId,
           });
@@ -218,7 +219,7 @@ export function AssignmentDialog({
           secondaryWorkerId: values.secondaryWorkerId,
         });
       } catch (err) {
-        if (err instanceof ApiRequestError && err.isValidationError()) {
+        if (err instanceof GraphQLRequestError && err.isValidationError()) {
           const errors = err.getFieldErrors();
           setComplianceViolations(errors.map((e) => e.message));
           return;
@@ -533,7 +534,7 @@ function CarrierAssignmentTab({
     refetch: refetchEligibility,
   } = useQuery({
     queryKey: ["carrier-assignment-preview", moveId, carrierId],
-    queryFn: () => apiService.carrierAssignmentService.preview(moveId, carrierId),
+    queryFn: ({ signal }) => apiService.carrierAssignmentService.preview(carrierId, { signal }),
     enabled: !!carrierId,
     staleTime: 30_000,
   });
@@ -545,7 +546,7 @@ function CarrierAssignmentTab({
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onCarrierAssigned?.(carrierAssignment);
     },
-    onError: (error: ApiRequestError) => {
+    onError: (error: Error) => {
       handleMutationError({ error, form, resourceName: "Carrier Assignment" });
     },
   });

@@ -99,7 +99,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgstructureresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/pageaccessresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/permitresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateconfirmationresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/recurringshipmentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/reportresolver"
@@ -114,6 +116,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailureresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentboardresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmoveresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/sidebarpreferenceresolver"
@@ -241,6 +244,7 @@ type Resolver struct {
 	customerPayment                    *customerpaymentresolver.CustomerPaymentResolver
 	customerPaymentApplication         *customerpaymentresolver.CustomerPaymentApplicationResolver
 	customerTrackingProfile            *customertrackingresolver.CustomerTrackingProfileResolver
+	customerTrackingView               *customertrackingresolver.CustomerTrackingViewResolver
 	dOTRandomDraw                      *workerdrugalcoholresolver.DOTRandomDrawResolver
 	dOTRandomDrawEntry                 *workerdrugalcoholresolver.DOTRandomDrawEntryResolver
 	dOTRandomPool                      *workerdrugalcoholresolver.DOTRandomPoolResolver
@@ -368,11 +372,15 @@ type Resolver struct {
 	pendingDecisionEdge                *decisionsresolver.PendingDecisionEdgeResolver
 	performanceReview                  *performancereviewresolver.PerformanceReviewResolver
 	performanceReviewTemplate          *performancereviewresolver.PerformanceReviewTemplateResolver
+	permit                             *permitresolver.PermitResolver
+	permitAssessment                   *permitresolver.PermitAssessmentResolver
+	permitRequirement                  *permitresolver.PermitRequirementResolver
 	plannedPTOAccrual                  *ptopolicyresolver.PlannedPTOAccrualResolver
 	portalCredential                   *driverportalresolver.PortalCredentialResolver
 	portalTraining                     *workertrainingresolver.PortalTrainingResolver
 	query                              *queryResolver
 	rateAgreement                      *rateresolver.RateAgreementResolver
+	rateConfirmation                   *rateconfirmationresolver.RateConfirmationResolver
 	rateMatrix                         *rateresolver.RateMatrixResolver
 	rateMatrixVersion                  *rateresolver.RateMatrixVersionResolver
 	reportSchedule                     *reportresolver.ReportScheduleResolver
@@ -382,6 +390,11 @@ type Resolver struct {
 	routingGuideEntry                  *routingguideresolver.RoutingGuideEntryResolver
 	safetyScorecard                    *workersafetyresolver.SafetyScorecardResolver
 	serviceFailure                     *servicefailureresolver.ServiceFailureResolver
+	serviceFailureEdi214Lifecycle      *servicefailureresolver.ServiceFailureEdi214LifecycleResolver
+	serviceFailureEdi214Payload        *servicefailureresolver.ServiceFailureEdi214PayloadResolver
+	serviceFailureEdi214Status         *servicefailureresolver.ServiceFailureEdi214StatusResolver
+	serviceFailureEdiDiagnostic        *servicefailureresolver.ServiceFailureEdiDiagnosticResolver
+	serviceFailureEvaluatedStop        *servicefailureresolver.ServiceFailureEvaluatedStopResolver
 	serviceFailureShipment             *servicefailureresolver.ServiceFailureShipmentResolver
 	serviceFailureStop                 *servicefailureresolver.ServiceFailureStopResolver
 	settlementControl                  *driversettlementresolver.SettlementControlResolver
@@ -959,6 +972,11 @@ func FromServices(s *Services) *Resolver {
 		PerformanceReviewService:   s.PerformanceReviewService,
 		DriverPortalRecordsService: s.DriverPortalRecordsService,
 	}
+	permitDeps := &permitresolver.Deps{
+		Core:           s.Core,
+		ShipmentReader: s.ShipmentReader,
+		PermitService:  s.PermitService,
+	}
 	ptopolicyDeps := &ptopolicyresolver.Deps{
 		Core:             s.Core,
 		PtoPolicyService: s.PtoPolicyService,
@@ -971,6 +989,10 @@ func FromServices(s *Services) *Resolver {
 		RateZoneService:      s.RateZoneService,
 		RateMatrixService:    s.RateMatrixService,
 		RateQuoteService:     s.RateQuoteService,
+	}
+	rateconfirmationDeps := &rateconfirmationresolver.Deps{
+		Core:                    s.Core,
+		RateConfirmationService: s.RateConfirmationService,
 	}
 	recurringshipmentDeps := &recurringshipmentresolver.Deps{
 		Core:                     s.Core,
@@ -1068,8 +1090,10 @@ func FromServices(s *Services) *Resolver {
 		SelfServiceService: s.SelfServiceService,
 	}
 	servicefailureDeps := &servicefailureresolver.Deps{
-		Core:              s.Core,
-		ServiceFailureSvc: s.ServiceFailureSvc,
+		Core:                      s.Core,
+		ServiceFailureEdiPayloads: s.ServiceFailureEdiPayloads,
+		ServiceFailureEdi214:      s.ServiceFailureEdi214,
+		ServiceFailureSvc:         s.ServiceFailureSvc,
 	}
 	servicefailurereasoncodeDeps := &servicefailurereasoncoderesolver.Deps{
 		Core:                        s.Core,
@@ -1113,6 +1137,12 @@ func FromServices(s *Services) *Resolver {
 		BoardGroups:            s.BoardGroups,
 		BoardCapabilities:      s.BoardCapabilities,
 	}
+	shipmentmoveDeps := &shipmentmoveresolver.Deps{
+		Core:                 s.Core,
+		TrackingEventService: s.TrackingEventService,
+		ShipmentMoveService:  s.ShipmentMoveService,
+		AssignmentService:    s.AssignmentService,
+	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                s.Core,
 		ShipmentTypeService: s.ShipmentTypeService,
@@ -1150,6 +1180,10 @@ func FromServices(s *Services) *Resolver {
 		Core:                s.Core,
 		RoutingGuideService: s.RoutingGuideService,
 		TenderRepo:          s.TenderRepo,
+		TenderCreator:       s.TenderCreator,
+		TenderCanceler:      s.TenderCanceler,
+		TenderResponder:     s.TenderResponder,
+		TenderBouncer:       s.TenderBouncer,
 	}
 	timesheetDeps := &timesheetresolver.Deps{
 		Core:             s.Core,
@@ -1339,6 +1373,7 @@ func FromServices(s *Services) *Resolver {
 		customerPayment:              &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps},
 		customerPaymentApplication:   &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps},
 		customerTrackingProfile:      &customertrackingresolver.CustomerTrackingProfileResolver{Deps: customertrackingDeps},
+		customerTrackingView:         &customertrackingresolver.CustomerTrackingViewResolver{Deps: customertrackingDeps},
 		dOTRandomDraw:                &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps},
 		dOTRandomDrawEntry:           &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps},
 		dOTRandomPool:                &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps},
@@ -1524,17 +1559,23 @@ func FromServices(s *Services) *Resolver {
 			orgholidayMutation:            &orgholidayMutation{Deps: orgholidayDeps},
 			orgstructureMutation:          &orgstructureMutation{Deps: orgstructureDeps},
 			performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
+			permitMutation:                &permitMutation{Deps: permitDeps},
 			ptopolicyMutation:             &ptopolicyMutation{Deps: ptopolicyDeps},
+			rateconfirmationMutation:      &rateconfirmationMutation{Deps: rateconfirmationDeps},
+			recurringshipmentMutation:     &recurringshipmentMutation{Deps: recurringshipmentDeps},
 			reportMutation:                &reportMutation{Deps: reportDeps},
 			schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
 			selfserviceMutation:           &selfserviceMutation{Deps: selfserviceDeps},
+			servicefailureMutation:        &servicefailureMutation{Deps: servicefailureDeps},
 			shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
 			shipmentboardMutation:         &shipmentboardMutation{Deps: shipmentboardDeps},
+			shipmentmoveMutation:          &shipmentmoveMutation{Deps: shipmentmoveDeps},
 			sidebarpreferenceMutation:     &sidebarpreferenceMutation{Deps: sidebarpreferenceDeps},
 			tableconfigurationMutation:    &tableconfigurationMutation{Deps: tableconfigurationDeps},
 			tablelayoutMutation:           &tablelayoutMutation{Deps: tablelayoutDeps},
 			telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
 			tenantMutation:                &tenantMutation{Deps: tenantDeps},
+			tenderMutation:                &tenderMutation{Deps: tenderDeps},
 			timesheetMutation:             &timesheetMutation{Deps: timesheetDeps},
 			tractorMutation:               &tractorMutation{Deps: tractorDeps},
 			trailerMutation:               &trailerMutation{Deps: trailerDeps},
@@ -1572,6 +1613,9 @@ func FromServices(s *Services) *Resolver {
 		pendingDecisionEdge:       &decisionsresolver.PendingDecisionEdgeResolver{Deps: decisionsDeps},
 		performanceReview:         &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps},
 		performanceReviewTemplate: &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps},
+		permit:                    &permitresolver.PermitResolver{Deps: permitDeps},
+		permitAssessment:          &permitresolver.PermitAssessmentResolver{Deps: permitDeps},
+		permitRequirement:         &permitresolver.PermitRequirementResolver{Deps: permitDeps},
 		plannedPTOAccrual:         &ptopolicyresolver.PlannedPTOAccrualResolver{Deps: ptopolicyDeps},
 		portalCredential:          &driverportalresolver.PortalCredentialResolver{Deps: driverportalDeps},
 		portalTraining:            &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps},
@@ -1669,8 +1713,10 @@ func FromServices(s *Services) *Resolver {
 			orgstructureQuery:             &orgstructureQuery{Deps: orgstructureDeps},
 			pageaccessQuery:               &pageaccessQuery{Deps: pageaccessDeps},
 			performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
+			permitQuery:                   &permitQuery{Deps: permitDeps},
 			ptopolicyQuery:                &ptopolicyQuery{Deps: ptopolicyDeps},
 			rateQuery:                     &rateQuery{Deps: rateDeps},
+			rateconfirmationQuery:         &rateconfirmationQuery{Deps: rateconfirmationDeps},
 			recurringshipmentQuery:        &recurringshipmentQuery{Deps: recurringshipmentDeps},
 			reportQuery:                   &reportQuery{Deps: reportDeps},
 			roleQuery:                     &roleQuery{Deps: roleDeps},
@@ -1685,6 +1731,7 @@ func FromServices(s *Services) *Resolver {
 			servicetypeQuery:              &servicetypeQuery{Deps: servicetypeDeps},
 			shipmentQuery:                 &shipmentQuery{Deps: shipmentDeps},
 			shipmentboardQuery:            &shipmentboardQuery{Deps: shipmentboardDeps},
+			shipmentmoveQuery:             &shipmentmoveQuery{Deps: shipmentmoveDeps},
 			shipmenttypeQuery:             &shipmenttypeQuery{Deps: shipmenttypeDeps},
 			sidebarpreferenceQuery:        &sidebarpreferenceQuery{Deps: sidebarpreferenceDeps},
 			storedmileageQuery:            &storedmileageQuery{Deps: storedmileageDeps},
@@ -1712,80 +1759,86 @@ func FromServices(s *Services) *Resolver {
 			workersafetyQuery:             &workersafetyQuery{Deps: workersafetyDeps},
 			workertrainingQuery:           &workertrainingQuery{Deps: workertrainingDeps},
 		},
-		rateAgreement:                &rateresolver.RateAgreementResolver{Deps: rateDeps},
-		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
-		rateMatrixVersion:            &rateresolver.RateMatrixVersionResolver{Deps: rateDeps},
-		reportSchedule:               &reportresolver.ReportScheduleResolver{Deps: reportDeps},
-		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
-		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
-		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
-		routingGuideEntry:            &routingguideresolver.RoutingGuideEntryResolver{Deps: routingguideDeps},
-		safetyScorecard:              &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps},
-		serviceFailure:               &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps},
-		serviceFailureShipment:       &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps},
-		serviceFailureStop:           &servicefailureresolver.ServiceFailureStopResolver{Deps: servicefailureDeps},
-		settlementControl:            &driversettlementresolver.SettlementControlResolver{Deps: driversettlementDeps},
-		settlementException:          &driversettlementresolver.SettlementExceptionResolver{Deps: driversettlementDeps},
-		shiftTemplate:                &schedulingresolver.ShiftTemplateResolver{Deps: schedulingDeps},
-		shipment:                     &shipmentresolver.ShipmentResolver{Deps: shipmentDeps},
-		shipmentCustomer:             &shipmentresolver.ShipmentCustomerResolver{Deps: shipmentDeps},
-		shipmentMove:                 &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps},
-		shipmentMoveJurisdictionMile: &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps},
-		shipmentRatingDetail:         &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps},
-		shipmentRatingReviewApproval: &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps},
-		tCASubscription:              &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps},
-		tableConfiguration:           &tableconfigurationresolver.TableConfigurationResolver{Deps: tableconfigurationDeps},
-		tender:                       &tenderresolver.TenderResolver{Deps: tenderDeps},
-		tenderOffer:                  &tenderresolver.TenderOfferResolver{Deps: tenderDeps},
-		tractor:                      &tractorresolver.TractorResolver{Deps: tractorDeps},
-		trailer:                      &trailerresolver.TrailerResolver{Deps: trailerDeps},
-		trainingCourse:               &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps},
-		triageAction:                 &inboundreplyresolver.TriageActionResolver{Deps: inboundreplyDeps},
-		triageAssignee:               &inboundmessageresolver.TriageAssigneeResolver{Deps: inboundmessageDeps},
-		triageBriefing:               &triageresolver.TriageBriefingResolver{Deps: triageDeps},
-		triageConflict:               &triageresolver.TriageConflictResolver{Deps: triageDeps},
-		triageDeckItem:               &triageresolver.TriageDeckItemResolver{Deps: triageDeps},
-		triageHandOff:                &inboundmessageresolver.TriageHandOffResolver{Deps: inboundmessageDeps},
-		triageReplyTemplate:          &inboundreplyresolver.TriageReplyTemplateResolver{Deps: inboundreplyDeps},
-		triageRule:                   &triageresolver.TriageRuleResolver{Deps: triageDeps},
-		triageSettings:               &inboundmessageresolver.TriageSettingsResolver{Deps: inboundmessageDeps},
-		triageStopTimes:              &inboundreplyresolver.TriageStopTimesResolver{Deps: inboundreplyDeps},
-		triageView:                   &inboundmessageresolver.TriageViewResolver{Deps: inboundmessageDeps},
-		user:                         &tenantresolver.UserResolver{Deps: tenantDeps},
-		watchtowerAgentWork:          &watchtowerresolver.WatchtowerAgentWorkResolver{Deps: watchtowerDeps},
-		watchtowerItem:               &watchtowerresolver.WatchtowerItemResolver{Deps: watchtowerDeps},
-		watchtowerItemEvent:          &watchtowerresolver.WatchtowerItemEventResolver{Deps: watchtowerDeps},
-		watchtowerRecord:             &watchtowerresolver.WatchtowerRecordResolver{Deps: watchtowerDeps},
-		worker:                       &workerresolver.WorkerResolver{Deps: workerDeps},
-		workerBenefitEnrollment:      &benefitsresolver.WorkerBenefitEnrollmentResolver{Deps: benefitsDeps},
-		workerChecklist:              &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps},
-		workerChecklistItem:          &workerchecklistresolver.WorkerChecklistItemResolver{Deps: workerchecklistDeps},
-		workerChecklistProgress:      &workerchecklistresolver.WorkerChecklistProgressResolver{Deps: workerchecklistDeps},
-		workerChecklistTemplate:      &workerchecklistresolver.WorkerChecklistTemplateResolver{Deps: workerchecklistDeps},
-		workerChecklistTemplateItem:  &workerchecklistresolver.WorkerChecklistTemplateItemResolver{Deps: workerchecklistDeps},
-		workerClearinghouseQuery:     &workerdrugalcoholresolver.WorkerClearinghouseQueryResolver{Deps: workerdrugalcoholDeps},
-		workerCredential:             &workercredentialresolver.WorkerCredentialResolver{Deps: workercredentialDeps},
-		workerCredentialType:         &workercredentialresolver.WorkerCredentialTypeResolver{Deps: workercredentialDeps},
-		workerDOTTest:                &workerdrugalcoholresolver.WorkerDOTTestResolver{Deps: workerdrugalcoholDeps},
-		workerDOTViolation:           &workerdrugalcoholresolver.WorkerDOTViolationResolver{Deps: workerdrugalcoholDeps},
-		workerDisciplinaryAction:     &workersafetyresolver.WorkerDisciplinaryActionResolver{Deps: workersafetyDeps},
-		workerEmploymentCascade:      &workeremploymentresolver.WorkerEmploymentCascadeResolver{Deps: workeremploymentDeps},
-		workerEmploymentEvent:        &workeremploymentresolver.WorkerEmploymentEventResolver{Deps: workeremploymentDeps},
-		workerEmploymentVerification: &workerdqfresolver.WorkerEmploymentVerificationResolver{Deps: workerdqfDeps},
-		workerInjury:                 &workerinjuryresolver.WorkerInjuryResolver{Deps: workerinjuryDeps},
-		workerLeaveCase:              &workerleaveresolver.WorkerLeaveCaseResolver{Deps: workerleaveDeps},
-		workerLeaveEntry:             &workerleaveresolver.WorkerLeaveEntryResolver{Deps: workerleaveDeps},
-		workerPTO:                    &workerresolver.WorkerPTOResolver{Deps: workerDeps},
-		workerPTOBalance:             &ptopolicyresolver.WorkerPTOBalanceResolver{Deps: ptopolicyDeps},
-		workerPTOLedgerEntry:         &ptopolicyresolver.WorkerPTOLedgerEntryResolver{Deps: ptopolicyDeps},
-		workerPTOPolicyAssignment:    &ptopolicyresolver.WorkerPTOPolicyAssignmentResolver{Deps: ptopolicyDeps},
-		workerPayAssignment:          &driversettlementresolver.WorkerPayAssignmentResolver{Deps: driversettlementDeps},
-		workerProfile:                &workerresolver.WorkerProfileResolver{Deps: workerDeps},
-		workerProfileChangeRequest:   &selfserviceresolver.WorkerProfileChangeRequestResolver{Deps: selfserviceDeps},
-		workerRecognition:            &workersafetyresolver.WorkerRecognitionResolver{Deps: workersafetyDeps},
-		workerRosterAttention:        &workeroverviewresolver.WorkerRosterAttentionResolver{Deps: workeroverviewDeps},
-		workerSafetyEvent:            &workersafetyresolver.WorkerSafetyEventResolver{Deps: workersafetyDeps},
-		workerTrainingRecord:         &workertrainingresolver.WorkerTrainingRecordResolver{Deps: workertrainingDeps},
+		rateAgreement:                 &rateresolver.RateAgreementResolver{Deps: rateDeps},
+		rateConfirmation:              &rateconfirmationresolver.RateConfirmationResolver{Deps: rateconfirmationDeps},
+		rateMatrix:                    &rateresolver.RateMatrixResolver{Deps: rateDeps},
+		rateMatrixVersion:             &rateresolver.RateMatrixVersionResolver{Deps: rateDeps},
+		reportSchedule:                &reportresolver.ReportScheduleResolver{Deps: reportDeps},
+		reviewRating:                  &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
+		riskDecision:                  &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
+		role:                          &roleresolver.RoleResolver{Deps: roleDeps},
+		routingGuideEntry:             &routingguideresolver.RoutingGuideEntryResolver{Deps: routingguideDeps},
+		safetyScorecard:               &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps},
+		serviceFailure:                &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps},
+		serviceFailureEdi214Lifecycle: &servicefailureresolver.ServiceFailureEdi214LifecycleResolver{Deps: servicefailureDeps},
+		serviceFailureEdi214Payload:   &servicefailureresolver.ServiceFailureEdi214PayloadResolver{Deps: servicefailureDeps},
+		serviceFailureEdi214Status:    &servicefailureresolver.ServiceFailureEdi214StatusResolver{Deps: servicefailureDeps},
+		serviceFailureEdiDiagnostic:   &servicefailureresolver.ServiceFailureEdiDiagnosticResolver{Deps: servicefailureDeps},
+		serviceFailureEvaluatedStop:   &servicefailureresolver.ServiceFailureEvaluatedStopResolver{Deps: servicefailureDeps},
+		serviceFailureShipment:        &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps},
+		serviceFailureStop:            &servicefailureresolver.ServiceFailureStopResolver{Deps: servicefailureDeps},
+		settlementControl:             &driversettlementresolver.SettlementControlResolver{Deps: driversettlementDeps},
+		settlementException:           &driversettlementresolver.SettlementExceptionResolver{Deps: driversettlementDeps},
+		shiftTemplate:                 &schedulingresolver.ShiftTemplateResolver{Deps: schedulingDeps},
+		shipment:                      &shipmentresolver.ShipmentResolver{Deps: shipmentDeps},
+		shipmentCustomer:              &shipmentresolver.ShipmentCustomerResolver{Deps: shipmentDeps},
+		shipmentMove:                  &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps},
+		shipmentMoveJurisdictionMile:  &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps},
+		shipmentRatingDetail:          &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps},
+		shipmentRatingReviewApproval:  &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps},
+		tCASubscription:               &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps},
+		tableConfiguration:            &tableconfigurationresolver.TableConfigurationResolver{Deps: tableconfigurationDeps},
+		tender:                        &tenderresolver.TenderResolver{Deps: tenderDeps},
+		tenderOffer:                   &tenderresolver.TenderOfferResolver{Deps: tenderDeps},
+		tractor:                       &tractorresolver.TractorResolver{Deps: tractorDeps},
+		trailer:                       &trailerresolver.TrailerResolver{Deps: trailerDeps},
+		trainingCourse:                &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps},
+		triageAction:                  &inboundreplyresolver.TriageActionResolver{Deps: inboundreplyDeps},
+		triageAssignee:                &inboundmessageresolver.TriageAssigneeResolver{Deps: inboundmessageDeps},
+		triageBriefing:                &triageresolver.TriageBriefingResolver{Deps: triageDeps},
+		triageConflict:                &triageresolver.TriageConflictResolver{Deps: triageDeps},
+		triageDeckItem:                &triageresolver.TriageDeckItemResolver{Deps: triageDeps},
+		triageHandOff:                 &inboundmessageresolver.TriageHandOffResolver{Deps: inboundmessageDeps},
+		triageReplyTemplate:           &inboundreplyresolver.TriageReplyTemplateResolver{Deps: inboundreplyDeps},
+		triageRule:                    &triageresolver.TriageRuleResolver{Deps: triageDeps},
+		triageSettings:                &inboundmessageresolver.TriageSettingsResolver{Deps: inboundmessageDeps},
+		triageStopTimes:               &inboundreplyresolver.TriageStopTimesResolver{Deps: inboundreplyDeps},
+		triageView:                    &inboundmessageresolver.TriageViewResolver{Deps: inboundmessageDeps},
+		user:                          &tenantresolver.UserResolver{Deps: tenantDeps},
+		watchtowerAgentWork:           &watchtowerresolver.WatchtowerAgentWorkResolver{Deps: watchtowerDeps},
+		watchtowerItem:                &watchtowerresolver.WatchtowerItemResolver{Deps: watchtowerDeps},
+		watchtowerItemEvent:           &watchtowerresolver.WatchtowerItemEventResolver{Deps: watchtowerDeps},
+		watchtowerRecord:              &watchtowerresolver.WatchtowerRecordResolver{Deps: watchtowerDeps},
+		worker:                        &workerresolver.WorkerResolver{Deps: workerDeps},
+		workerBenefitEnrollment:       &benefitsresolver.WorkerBenefitEnrollmentResolver{Deps: benefitsDeps},
+		workerChecklist:               &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps},
+		workerChecklistItem:           &workerchecklistresolver.WorkerChecklistItemResolver{Deps: workerchecklistDeps},
+		workerChecklistProgress:       &workerchecklistresolver.WorkerChecklistProgressResolver{Deps: workerchecklistDeps},
+		workerChecklistTemplate:       &workerchecklistresolver.WorkerChecklistTemplateResolver{Deps: workerchecklistDeps},
+		workerChecklistTemplateItem:   &workerchecklistresolver.WorkerChecklistTemplateItemResolver{Deps: workerchecklistDeps},
+		workerClearinghouseQuery:      &workerdrugalcoholresolver.WorkerClearinghouseQueryResolver{Deps: workerdrugalcoholDeps},
+		workerCredential:              &workercredentialresolver.WorkerCredentialResolver{Deps: workercredentialDeps},
+		workerCredentialType:          &workercredentialresolver.WorkerCredentialTypeResolver{Deps: workercredentialDeps},
+		workerDOTTest:                 &workerdrugalcoholresolver.WorkerDOTTestResolver{Deps: workerdrugalcoholDeps},
+		workerDOTViolation:            &workerdrugalcoholresolver.WorkerDOTViolationResolver{Deps: workerdrugalcoholDeps},
+		workerDisciplinaryAction:      &workersafetyresolver.WorkerDisciplinaryActionResolver{Deps: workersafetyDeps},
+		workerEmploymentCascade:       &workeremploymentresolver.WorkerEmploymentCascadeResolver{Deps: workeremploymentDeps},
+		workerEmploymentEvent:         &workeremploymentresolver.WorkerEmploymentEventResolver{Deps: workeremploymentDeps},
+		workerEmploymentVerification:  &workerdqfresolver.WorkerEmploymentVerificationResolver{Deps: workerdqfDeps},
+		workerInjury:                  &workerinjuryresolver.WorkerInjuryResolver{Deps: workerinjuryDeps},
+		workerLeaveCase:               &workerleaveresolver.WorkerLeaveCaseResolver{Deps: workerleaveDeps},
+		workerLeaveEntry:              &workerleaveresolver.WorkerLeaveEntryResolver{Deps: workerleaveDeps},
+		workerPTO:                     &workerresolver.WorkerPTOResolver{Deps: workerDeps},
+		workerPTOBalance:              &ptopolicyresolver.WorkerPTOBalanceResolver{Deps: ptopolicyDeps},
+		workerPTOLedgerEntry:          &ptopolicyresolver.WorkerPTOLedgerEntryResolver{Deps: ptopolicyDeps},
+		workerPTOPolicyAssignment:     &ptopolicyresolver.WorkerPTOPolicyAssignmentResolver{Deps: ptopolicyDeps},
+		workerPayAssignment:           &driversettlementresolver.WorkerPayAssignmentResolver{Deps: driversettlementDeps},
+		workerProfile:                 &workerresolver.WorkerProfileResolver{Deps: workerDeps},
+		workerProfileChangeRequest:    &selfserviceresolver.WorkerProfileChangeRequestResolver{Deps: selfserviceDeps},
+		workerRecognition:             &workersafetyresolver.WorkerRecognitionResolver{Deps: workersafetyDeps},
+		workerRosterAttention:         &workeroverviewresolver.WorkerRosterAttentionResolver{Deps: workeroverviewDeps},
+		workerSafetyEvent:             &workersafetyresolver.WorkerSafetyEventResolver{Deps: workersafetyDeps},
+		workerTrainingRecord:          &workertrainingresolver.WorkerTrainingRecordResolver{Deps: workertrainingDeps},
 	}
 }
 
@@ -2196,6 +2249,10 @@ func (r *Resolver) CustomerPaymentApplication() generated.CustomerPaymentApplica
 
 func (r *Resolver) CustomerTrackingProfile() generated.CustomerTrackingProfileResolver {
 	return r.customerTrackingProfile
+}
+
+func (r *Resolver) CustomerTrackingView() generated.CustomerTrackingViewResolver {
+	return r.customerTrackingView
 }
 
 func (r *Resolver) DOTRandomDraw() generated.DOTRandomDrawResolver {
@@ -2711,17 +2768,23 @@ type mutationResolver struct {
 	*orgholidayMutation
 	*orgstructureMutation
 	*performancereviewMutation
+	*permitMutation
 	*ptopolicyMutation
+	*rateconfirmationMutation
+	*recurringshipmentMutation
 	*reportMutation
 	*schedulingMutation
 	*selfserviceMutation
+	*servicefailureMutation
 	*shipmentMutation
 	*shipmentboardMutation
+	*shipmentmoveMutation
 	*sidebarpreferenceMutation
 	*tableconfigurationMutation
 	*tablelayoutMutation
 	*telematicsMutation
 	*tenantMutation
+	*tenderMutation
 	*timesheetMutation
 	*tractorMutation
 	*trailerMutation
@@ -2818,6 +2881,18 @@ func (r *Resolver) PerformanceReview() generated.PerformanceReviewResolver {
 
 func (r *Resolver) PerformanceReviewTemplate() generated.PerformanceReviewTemplateResolver {
 	return r.performanceReviewTemplate
+}
+
+func (r *Resolver) Permit() generated.PermitResolver {
+	return r.permit
+}
+
+func (r *Resolver) PermitAssessment() generated.PermitAssessmentResolver {
+	return r.permitAssessment
+}
+
+func (r *Resolver) PermitRequirement() generated.PermitRequirementResolver {
+	return r.permitRequirement
 }
 
 func (r *Resolver) PlannedPTOAccrual() generated.PlannedPTOAccrualResolver {
@@ -2930,8 +3005,10 @@ type queryResolver struct {
 	*orgstructureQuery
 	*pageaccessQuery
 	*performancereviewQuery
+	*permitQuery
 	*ptopolicyQuery
 	*rateQuery
+	*rateconfirmationQuery
 	*recurringshipmentQuery
 	*reportQuery
 	*roleQuery
@@ -2946,6 +3023,7 @@ type queryResolver struct {
 	*servicetypeQuery
 	*shipmentQuery
 	*shipmentboardQuery
+	*shipmentmoveQuery
 	*shipmenttypeQuery
 	*sidebarpreferenceQuery
 	*storedmileageQuery
@@ -2976,6 +3054,10 @@ type queryResolver struct {
 
 func (r *Resolver) RateAgreement() generated.RateAgreementResolver {
 	return r.rateAgreement
+}
+
+func (r *Resolver) RateConfirmation() generated.RateConfirmationResolver {
+	return r.rateConfirmation
 }
 
 func (r *Resolver) RateMatrix() generated.RateMatrixResolver {
@@ -3012,6 +3094,26 @@ func (r *Resolver) SafetyScorecard() generated.SafetyScorecardResolver {
 
 func (r *Resolver) ServiceFailure() generated.ServiceFailureResolver {
 	return r.serviceFailure
+}
+
+func (r *Resolver) ServiceFailureEdi214Lifecycle() generated.ServiceFailureEdi214LifecycleResolver {
+	return r.serviceFailureEdi214Lifecycle
+}
+
+func (r *Resolver) ServiceFailureEdi214Payload() generated.ServiceFailureEdi214PayloadResolver {
+	return r.serviceFailureEdi214Payload
+}
+
+func (r *Resolver) ServiceFailureEdi214Status() generated.ServiceFailureEdi214StatusResolver {
+	return r.serviceFailureEdi214Status
+}
+
+func (r *Resolver) ServiceFailureEdiDiagnostic() generated.ServiceFailureEdiDiagnosticResolver {
+	return r.serviceFailureEdiDiagnostic
+}
+
+func (r *Resolver) ServiceFailureEvaluatedStop() generated.ServiceFailureEvaluatedStopResolver {
+	return r.serviceFailureEvaluatedStop
 }
 
 func (r *Resolver) ServiceFailureShipment() generated.ServiceFailureShipmentResolver {
@@ -3356,17 +3458,23 @@ type (
 	orgholidayMutation              = orgholidayresolver.MutationResolver
 	orgstructureMutation            = orgstructureresolver.MutationResolver
 	performancereviewMutation       = performancereviewresolver.MutationResolver
+	permitMutation                  = permitresolver.MutationResolver
 	ptopolicyMutation               = ptopolicyresolver.MutationResolver
+	rateconfirmationMutation        = rateconfirmationresolver.MutationResolver
+	recurringshipmentMutation       = recurringshipmentresolver.MutationResolver
 	reportMutation                  = reportresolver.MutationResolver
 	schedulingMutation              = schedulingresolver.MutationResolver
 	selfserviceMutation             = selfserviceresolver.MutationResolver
+	servicefailureMutation          = servicefailureresolver.MutationResolver
 	shipmentMutation                = shipmentresolver.MutationResolver
 	shipmentboardMutation           = shipmentboardresolver.MutationResolver
+	shipmentmoveMutation            = shipmentmoveresolver.MutationResolver
 	sidebarpreferenceMutation       = sidebarpreferenceresolver.MutationResolver
 	tableconfigurationMutation      = tableconfigurationresolver.MutationResolver
 	tablelayoutMutation             = tablelayoutresolver.MutationResolver
 	telematicsMutation              = telematicsresolver.MutationResolver
 	tenantMutation                  = tenantresolver.MutationResolver
+	tenderMutation                  = tenderresolver.MutationResolver
 	timesheetMutation               = timesheetresolver.MutationResolver
 	tractorMutation                 = tractorresolver.MutationResolver
 	trailerMutation                 = trailerresolver.MutationResolver
@@ -3476,8 +3584,10 @@ type (
 	orgstructureQuery               = orgstructureresolver.QueryResolver
 	pageaccessQuery                 = pageaccessresolver.QueryResolver
 	performancereviewQuery          = performancereviewresolver.QueryResolver
+	permitQuery                     = permitresolver.QueryResolver
 	ptopolicyQuery                  = ptopolicyresolver.QueryResolver
 	rateQuery                       = rateresolver.QueryResolver
+	rateconfirmationQuery           = rateconfirmationresolver.QueryResolver
 	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver
 	reportQuery                     = reportresolver.QueryResolver
 	roleQuery                       = roleresolver.QueryResolver
@@ -3492,6 +3602,7 @@ type (
 	servicetypeQuery                = servicetyperesolver.QueryResolver
 	shipmentQuery                   = shipmentresolver.QueryResolver
 	shipmentboardQuery              = shipmentboardresolver.QueryResolver
+	shipmentmoveQuery               = shipmentmoveresolver.QueryResolver
 	shipmenttypeQuery               = shipmenttyperesolver.QueryResolver
 	sidebarpreferenceQuery          = sidebarpreferenceresolver.QueryResolver
 	storedmileageQuery              = storedmileageresolver.QueryResolver

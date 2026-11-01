@@ -93,6 +93,8 @@ func assignMoveToCarrierRequestFromInput(
 		ExternalTrailerNumber:    gqlscalar.StringValue(input.ExternalTrailerNumber),
 		Replace:                  gqlscalar.BoolValue(input.Replace),
 		OverrideInsuranceWarning: gqlscalar.BoolValue(input.OverrideInsuranceWarning),
+		AutoRate:                 gqlscalar.BoolValue(input.AutoRate),
+		OverrideMarginFloor:      gqlscalar.BoolValue(input.OverrideMarginFloor),
 	}, nil
 }
 

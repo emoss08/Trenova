@@ -164,6 +164,79 @@ type IssueCustomerTrackingLinkPayload {
   emailError: String
 }
 
+"How a customer tracking page describes where its shipment is."
+enum CustomerTrackingPublicStatus {
+  Planned
+  InTransit
+  Delayed
+  Delivered
+  Canceled
+}
+
+"One stop as a customer tracking page shows it. A part the customer's settings hide is empty."
+type CustomerTrackingViewStop {
+  sequence: Int!
+  type: String!
+  city: String!
+  stateCode: String!
+  locationName: String!
+  addressLine: String!
+  windowStart: Timestamp
+  windowEnd: Timestamp
+  arrivedAt: Timestamp
+  departedAt: Timestamp
+  estimatedArrival: Timestamp
+  "How the stop is running against its window, when the page shows ETAs."
+  running: String!
+}
+
+type CustomerTrackingViewHold {
+  type: String!
+  label: String!
+  startedAt: Timestamp!
+}
+
+type CustomerTrackingViewNote {
+  text: String!
+  postedAt: Timestamp!
+}
+
+type CustomerTrackingViewLocation {
+  city: String!
+  stateCode: String!
+  reportedAt: Timestamp!
+}
+
+type CustomerTrackingViewProofOfDelivery {
+  documentId: ID!
+  fileName: String!
+  filedAt: Timestamp!
+}
+
+"""
+What a shipment's customer sees through a tracking link: only the parts listed in fields
+are filled; every other part is empty.
+"""
+type CustomerTrackingView {
+  companyName: String!
+  shipmentProNumber: String!
+  fields: [CustomerTrackingField!]!
+  expiresAt: Timestamp!
+  closed: Boolean!
+  status: CustomerTrackingPublicStatus
+  bol: String!
+  customerReference: String!
+  carrierName: String!
+  equipment: String!
+  pieces: Int
+  weight: Int
+  lastLocation: CustomerTrackingViewLocation
+  stops: [CustomerTrackingViewStop!]!
+  holds: [CustomerTrackingViewHold!]!
+  notes: [CustomerTrackingViewNote!]!
+  proofOfDelivery: CustomerTrackingViewProofOfDelivery
+}
+
 extend type Query {
   "A customer's tracking link and status email settings, or the defaults."
   customerTrackingProfile(customerId: ID!): CustomerTrackingProfile!
@@ -171,6 +244,11 @@ extend type Query {
   customerTrackingLinks(shipmentId: ID!): [CustomerTrackingLink!]!
   "The status emails a shipment has owed its customer, newest first."
   customerStatusNotifications(shipmentId: ID!): [CustomerStatusNotification!]!
+  """
+  What the shipment's customer would see through a tracking link opened now, built from
+  the customer's tracking settings. No link is made and no view is counted.
+  """
+  shipmentCustomerTrackingPreview(shipmentId: ID!): CustomerTrackingView!
 }
 
 extend type Mutation {

@@ -24,6 +24,7 @@ import {
   ShipmentCommentsDocument,
   ShipmentBoardTableDocument,
   ShipmentDetailDocument,
+  ShipmentEtaDocument,
   ShipmentEventsDocument,
   ShipmentPageAnalyticsDocument,
   ShipmentPreviousRatesDocument,
@@ -816,4 +817,17 @@ function toCommodityInput(commodity: Shipment["commodities"][number]): ShipmentC
     heightFeet: commodity.heightFeet,
     version: commodity.version,
   };
+}
+
+export async function getShipmentEtaGraphQL(
+  shipmentId: string,
+  options?: { signal?: AbortSignal },
+) {
+  const data = await requestGraphQL({
+    document: ShipmentEtaDocument,
+    operationName: "ShipmentEta",
+    variables: { id: shipmentId },
+    signal: options?.signal,
+  });
+  return data.shipment?.eta ?? null;
 }

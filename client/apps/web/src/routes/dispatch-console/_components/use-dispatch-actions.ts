@@ -17,7 +17,7 @@ import {
 } from "@/lib/queries/dispatch-console";
 import { apiService } from "@/services/api";
 import { isOverridableInsuranceWarningError } from "@/services/tender";
-import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import type {
   DispatchAssignMoveInput,
   DispatchAssignMoveToCarrierInput,
@@ -74,7 +74,7 @@ const MAX_TENDER_ERROR_MESSAGES = 3;
  */
 function describeTenderError(title: string, error: unknown): void {
   const fieldMessages =
-    error instanceof ApiRequestError
+    error instanceof GraphQLRequestError
       ? [...new Set(error.getFieldErrors().map((fieldError) => fieldError.message))]
       : [];
   const description =

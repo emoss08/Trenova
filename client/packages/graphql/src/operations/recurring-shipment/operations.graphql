@@ -1,0 +1,78 @@
+fragment RecurringShipmentRunFields on RecurringShipmentRun {
+  id
+  businessUnitId
+  organizationId
+  recurringShipmentId
+  generatedShipmentId
+  triggeredById
+  status
+  trigger
+  occurrenceAt
+  originalOccurrenceAt
+  detail
+  createdAt
+  generatedShipment {
+    id
+    proNumber
+  }
+  triggeredBy {
+    id
+    name
+  }
+}
+
+query RecurringShipmentRuns($recurringShipmentId: ID!, $first: Int) {
+  recurringShipmentRuns(recurringShipmentId: $recurringShipmentId, first: $first) {
+    ...RecurringShipmentRunFields
+  }
+}
+
+query MatchRecurringShipments($input: MatchRecurringShipmentsInput!) {
+  matchRecurringShipments(input: $input) {
+    matches {
+      ...RecurringShipmentTableRowFields
+    }
+    pattern {
+      shipmentCount
+      firstShipmentAt
+      lastShipmentAt
+    }
+  }
+}
+
+mutation CreateRecurringShipment($input: RecurringShipmentInput!) {
+  createRecurringShipment(input: $input) {
+    ...RecurringShipmentTableRowFields
+  }
+}
+
+mutation UpdateRecurringShipment($id: ID!, $input: RecurringShipmentInput!) {
+  updateRecurringShipment(id: $id, input: $input) {
+    ...RecurringShipmentTableRowFields
+  }
+}
+
+mutation UpdateRecurringShipmentStatus(
+  $id: ID!
+  $status: RecurringShipmentStatus!
+  $version: Int!
+) {
+  updateRecurringShipmentStatus(id: $id, status: $status, version: $version) {
+    ...RecurringShipmentTableRowFields
+  }
+}
+
+mutation GenerateRecurringShipment($id: ID!, $occurrenceAt: Timestamp) {
+  generateRecurringShipment(id: $id, occurrenceAt: $occurrenceAt) {
+    series {
+      ...RecurringShipmentTableRowFields
+    }
+    run {
+      ...RecurringShipmentRunFields
+    }
+    shipment {
+      id
+      proNumber
+    }
+  }
+}

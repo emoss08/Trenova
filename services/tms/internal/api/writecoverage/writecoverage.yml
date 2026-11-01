@@ -385,11 +385,6 @@ writes:
     exempt: security
     reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
 
-  # assignment
-  "POST /api/v1/assignments/check-worker-compliance/":
-    exempt: read-only
-    reason: "Checks a worker against compliance rules before an assignment and saves nothing."
-
   # assistant
   "DELETE /api/v1/assistant/schedules/:scheduleID/":
     exempt: agent-administration
@@ -2324,13 +2319,13 @@ writes:
     reason: "Checks which permissions the caller holds."
 
   # permit
-  "POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/":
+  "mutation createShipmentPermit":
+    tools: [shipment_record_permit]
+  "mutation updateShipmentPermit":
+    tools: [shipment_update_permit]
+  "mutation waiveShipmentPermitRequirement":
     exempt: attestation
     reason: "Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit."
-  "POST /api/v1/shipments/:shipmentID/permits/":
-    tools: [shipment_record_permit]
-  "PUT /api/v1/shipments/:shipmentID/permits/:permitID/":
-    tools: [shipment_update_permit]
 
   # ptopolicy
   "mutation adjustWorkerPtoBalance":
@@ -2391,14 +2386,14 @@ writes:
     tools: [rate_update_agreement_draft]
 
   # rateconfirmation
-  "POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/":
+  "mutation confirmRateConfirmation":
     tools: [rate_record_confirmation]
-  "POST /api/v1/rate-confirmations/:rateConfirmationID/send/":
-    tools: [rate_send_confirmation]
-  "POST /api/v1/rate-confirmations/:rateConfirmationID/void/":
-    tools: [rate_void_confirmation]
-  "POST /api/v1/shipment-moves/:moveID/rate-confirmations/":
+  "mutation generateRateConfirmation":
     tools: [rate_generate_confirmation]
+  "mutation sendRateConfirmation":
+    tools: [rate_send_confirmation]
+  "mutation voidRateConfirmation":
+    tools: [rate_void_confirmation]
 
   # rateconfirmationpublic
   "POST /api/v1/rate-confirmation-links/:token/confirm/":
@@ -2478,16 +2473,13 @@ writes:
     reason: "Presence and typing signals a browser sends while a person is on the page."
 
   # recurringshipment
-  "POST /api/v1/recurring-shipments/":
+  "mutation createRecurringShipment":
     tools: [shipment_create_recurring]
-  "POST /api/v1/recurring-shipments/:recurringShipmentID/generate/":
+  "mutation generateRecurringShipment":
     tools: [shipment_generate_recurring]
-  "POST /api/v1/recurring-shipments/match/":
-    exempt: read-only
-    reason: "Finds the recurring shipment a new shipment matches and saves nothing."
-  "PUT /api/v1/recurring-shipments/:recurringShipmentID/":
+  "mutation updateRecurringShipment":
     tools: [shipment_update_recurring]
-  "PUT /api/v1/recurring-shipments/:recurringShipmentID/status/":
+  "mutation updateRecurringShipmentStatus":
     tools: [shipment_set_recurring_status]
 
   # report
@@ -2611,23 +2603,16 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
   # servicefailure
-  "POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/":
-    exempt: read-only
-    reason: "Builds the EDI 214 a service failure would send and returns it."
-  "PUT /api/v1/service-failures/:serviceFailureID/":
-    tools: [exception_update_service_failure]
-  "POST /api/v1/service-failures/:serviceFailureID/resolve/":
+  "mutation evaluateShipmentServiceFailures":
+    tools: [exception_evaluate_service_failures]
+  "mutation resolveServiceFailure":
     tools: [exception_resolve_service_failure]
-  "POST /api/v1/service-failures/:serviceFailureID/review/":
+  "mutation reviewServiceFailure":
     tools: [exception_review_service_failure]
-  "POST /api/v1/service-failures/:serviceFailureID/void/":
+  "mutation updateServiceFailure":
+    tools: [exception_update_service_failure]
+  "mutation voidServiceFailure":
     tools: [exception_void_service_failure]
-  "POST /api/v1/service-failures/bulk-evaluate/":
-    tools: [exception_evaluate_service_failures]
-  "POST /api/v1/service-failures/evaluate-shipment/:shipmentID/":
-    tools: [exception_evaluate_service_failures]
-  "POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/":
-    tools: [exception_evaluate_service_failures]
 
   # servicefailurereasoncode
   "POST /api/v1/service-failure-reason-codes/":
@@ -2661,9 +2646,6 @@ writes:
     reason: "A lookup list every record points at, maintained by an administrator."
 
   # shipment
-  "POST /api/v1/shipments/delay/":
-    exempt: infrastructure
-    reason: "The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; exception_evaluate_service_failures records a late stop for one shipment."
   "mutation acknowledgeShipmentComment":
     exempt: attestation
     reason: "Acknowledging a comment says that the person it was addressed to has read it; only that person can say so."
@@ -2740,10 +2722,16 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
   # shipmentmove
-  "POST /api/v1/shipment-moves/:moveID/split/":
-    tools: [dispatch_split_move]
-  "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/":
+  "mutation assignShipmentMove":
+    tools: [dispatch_assign_move]
+  "mutation reassignShipmentMove":
+    tools: [dispatch_assign_move]
+  "mutation recordShipmentStopActual":
     tools: [dispatch_record_stop_actual]
+  "mutation splitShipmentMove":
+    tools: [dispatch_split_move]
+  "mutation unassignShipmentMove":
+    tools: [dispatch_unassign_move]
 
   # shipmenttype
   "PATCH /api/v1/shipment-types/:shipmentTypeID/":
@@ -2849,16 +2837,16 @@ writes:
     reason: "The organization's own profile and settings."
 
   # tender
-  "POST /api/v1/tenders/:tenderID/bounce/":
+  "mutation bounceTender":
     tools: [dispatch_record_tender_response]
-  "POST /api/v1/tenders/:tenderID/cancel/":
+  "mutation cancelTender":
     tools: [dispatch_cancel_tender]
-  "POST /api/v1/tenders/offers/:offerID/respond/":
-    tools: [dispatch_record_tender_response]
-  "POST /api/v1/tenders/spot/":
+  "mutation createSpotTender":
     tools: [dispatch_create_tender]
-  "POST /api/v1/tenders/waterfall/":
+  "mutation createWaterfallTender":
     tools: [dispatch_create_tender_from_routing_guide]
+  "mutation respondToTenderOffer":
+    tools: [dispatch_record_tender_response]
 
   # tenderpublic
   "POST /api/v1/tender-offers/:token/accept/":

@@ -67,7 +67,7 @@ export function RecurringShipmentRunsDialog({
   const t = useT();
 
   const { data, isLoading } = useQuery({
-    ...recurringShipment.listRuns(series?.id ?? "", { limit: 50 }),
+    ...recurringShipment.listRuns(series?.id ?? "", 50),
     enabled: open && !!series?.id,
   });
 

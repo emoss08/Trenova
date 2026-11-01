@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/keelkinds"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -74,35 +73,6 @@ func withResources(q *assignmentQuery) *assignmentQuery {
 		a.Trailer(),
 		a.PrimaryWorker(),
 		a.SecondaryWorker(),
-	)
-}
-
-func (r *repository) List(
-	ctx context.Context,
-	req *assignmentports.ListAssignmentsRequest,
-) (*pagination.ListResult[*shipment.Assignment], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*shipment.Assignment], error) {
-			a := shipmentdb.Assignments
-			live := liveAssignments()
-
-			var items []*shipment.Assignment
-			var total keel.RowCount
-			err := keel.Batch(ctx, r.db.Keel(ctx),
-				keel.ListInto(withResources(live.Clone()).
-					Order(a.CreatedAt.Desc()).
-					Limit(req.Filter.Pagination.SafeLimit()).
-					Offset(req.Filter.Pagination.SafeOffset()), &items),
-				keel.CountEstimateInto(live, pagination.ExactTotalUpTo, &total),
-			)
-			if err != nil {
-				return nil, err
-			}
-
-			return listquery.Result(items, total), nil
-		},
 	)
 }
 

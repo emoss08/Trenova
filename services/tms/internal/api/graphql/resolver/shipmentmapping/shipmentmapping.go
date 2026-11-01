@@ -125,7 +125,7 @@ func shipmentMovesToModel(entities []*shipmentdomain.ShipmentMove) []*gqlmodel.S
 			continue
 		}
 		stops := shipmentStopsToModel(entity.Stops)
-		assignment := shipmentAssignmentToModel(entity.Assignment)
+		assignment := ShipmentAssignmentToModel(entity.Assignment)
 		coverageType := entity.CoverageType
 		if coverageType == "" {
 			coverageType = shipmentvocab.MoveCoverageTypeUnassigned
@@ -157,6 +157,13 @@ func shipmentMovesToModel(entities []*shipmentdomain.ShipmentMove) []*gqlmodel.S
 		})
 	}
 	return moves
+}
+
+func ShipmentMoveToModel(entity *shipmentdomain.ShipmentMove) *gqlmodel.ShipmentMove {
+	if entity == nil {
+		return nil
+	}
+	return shipmentMovesToModel([]*shipmentdomain.ShipmentMove{entity})[0]
 }
 
 func shipmentStopsToModel(entities []*shipmentdomain.Stop) []*gqlmodel.ShipmentStop {
@@ -193,7 +200,7 @@ func shipmentStopsToModel(entities []*shipmentdomain.Stop) []*gqlmodel.ShipmentS
 	return stops
 }
 
-func shipmentAssignmentToModel(entity *shipmentdomain.Assignment) *gqlmodel.ShipmentAssignment {
+func ShipmentAssignmentToModel(entity *shipmentdomain.Assignment) *gqlmodel.ShipmentAssignment {
 	if entity == nil {
 		return nil
 	}

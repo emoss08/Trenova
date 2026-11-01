@@ -7,7 +7,6 @@ import {
   recordTenderResponsePayloadSchema,
   spotTenderPayloadSchema,
   tenderSchema,
-  waterfallTenderResultSchema,
 } from "./tender";
 
 function makeSpotPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -130,11 +129,7 @@ describe("spotTenderPayloadSchema", () => {
   });
 });
 
-/**
- * The Go handler returns CreateWaterfallResult, which embeds the tender itself —
- * so the body stays a superset of a plain tender and any consumer still parsing
- * with tenderSchema keeps working.
- */
+/** A waterfall tender as the server returns it. */
 function makeWaterfallResponse(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: "ten_01",
@@ -155,43 +150,6 @@ function makeWaterfallResponse(overrides: Record<string, unknown> = {}): Record<
     ...overrides,
   };
 }
-
-describe("waterfallTenderResultSchema", () => {
-  it("keeps the plain tender schema parsing the new response shape", () => {
-    const response = makeWaterfallResponse({
-      screening: {
-        skipped: [
-          { carrierName: "Lapsed Logistics", rank: 1, reasons: ["Carrier status is DoNotUse"] },
-        ],
-        warned: [],
-      },
-    });
-
-    expect(() => tenderSchema.parse(response)).not.toThrow();
-  });
-
-  it("normalizes an absent screening summary to null", () => {
-    const parsed = waterfallTenderResultSchema.parse(makeWaterfallResponse());
-    expect(parsed.screening).toBeNull();
-  });
-
-  it("parses the screening summary with its reasons", () => {
-    const parsed = waterfallTenderResultSchema.parse(
-      makeWaterfallResponse({
-        screening: {
-          skipped: [
-            { carrierName: "Lapsed Logistics", rank: 1, reasons: ["Blocked", "Expired policy"] },
-          ],
-          warned: [{ carrierName: "Expiring Express", rank: 2, reasons: ["Policy expires soon"] }],
-        },
-      }),
-    );
-
-    expect(parsed.screening?.skipped).toHaveLength(1);
-    expect(parsed.screening?.skipped[0].reasons).toEqual(["Blocked", "Expired policy"]);
-    expect(parsed.screening?.warned[0].carrierName).toBe("Expiring Express");
-  });
-});
 
 const offerResponse = (overrides: Record<string, unknown> = {}) => ({
   id: "tof_01",

@@ -6,6 +6,7 @@ package assignmentportsmock
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -977,74 +978,6 @@ func (_c *MockAssignmentRepository_GetMoveByID_Call) Return(shipmentMove *shipme
 }
 
 func (_c *MockAssignmentRepository_GetMoveByID_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, moveID pulid.ID) (*shipment.ShipmentMove, error)) *MockAssignmentRepository_GetMoveByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// List provides a mock function for the type MockAssignmentRepository
-func (_mock *MockAssignmentRepository) List(ctx context.Context, req *assignmentports.ListAssignmentsRequest) (*pagination.ListResult[*shipment.Assignment], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for List")
-	}
-
-	var r0 *pagination.ListResult[*shipment.Assignment]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *assignmentports.ListAssignmentsRequest) (*pagination.ListResult[*shipment.Assignment], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *assignmentports.ListAssignmentsRequest) *pagination.ListResult[*shipment.Assignment]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*shipment.Assignment])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *assignmentports.ListAssignmentsRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockAssignmentRepository_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
-type MockAssignmentRepository_List_Call struct {
-	*mock.Call
-}
-
-// List is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListAssignmentsRequest
-func (_e *MockAssignmentRepository_Expecter) List(ctx any, req any) *MockAssignmentRepository_List_Call {
-	return &MockAssignmentRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
-}
-
-func (_c *MockAssignmentRepository_List_Call) Run(run func(ctx context.Context, req *assignmentports.ListAssignmentsRequest)) *MockAssignmentRepository_List_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *assignmentports.ListAssignmentsRequest
-		if args[1] != nil {
-			arg1 = args[1].(*assignmentports.ListAssignmentsRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAssignmentRepository_List_Call) Return(listResult *pagination.ListResult[*shipment.Assignment], err error) *MockAssignmentRepository_List_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockAssignmentRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *assignmentports.ListAssignmentsRequest) (*pagination.ListResult[*shipment.Assignment], error)) *MockAssignmentRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

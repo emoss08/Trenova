@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,11 +22,125 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "recurringshipment",
 	Objects: []*gqlexec.Object{
+		{Name: "GenerateRecurringShipmentResult", Implementors: []string{"GenerateRecurringShipmentResult"}},
+		{Name: "MatchRecurringShipmentsResult", Implementors: []string{"MatchRecurringShipmentsResult"}},
 		{Name: "RecurringShipment", Implementors: []string{"RecurringShipment"}},
 		{Name: "RecurringShipmentConnection", Implementors: []string{"RecurringShipmentConnection"}},
 		{Name: "RecurringShipmentEdge", Implementors: []string{"RecurringShipmentEdge"}},
+		{Name: "RecurringShipmentGeneratedShipment", Implementors: []string{"RecurringShipmentGeneratedShipment"}},
+		{Name: "RecurringShipmentLanePattern", Implementors: []string{"RecurringShipmentLanePattern"}},
+		{Name: "RecurringShipmentRun", Implementors: []string{"RecurringShipmentRun"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "GenerateRecurringShipmentResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "series",
+				HasChild:  true,
+				ChildType: "RecurringShipment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipmentports.GenerateRecurringShipmentResult)
+					return obj.Series, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment),
+			},
+			{
+				Name:      "run",
+				HasChild:  true,
+				ChildType: "RecurringShipmentRun",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipmentports.GenerateRecurringShipmentResult)
+					return obj.Run, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORecurringShipmentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipmentRun),
+			},
+			{
+				Name:      "shipment",
+				HasChild:  true,
+				ChildType: "RecurringShipmentGeneratedShipment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipmentports.GenerateRecurringShipmentResult)
+					return obj.Shipment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORecurringShipmentGeneratedShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipment),
+			},
+		}},
+		{Object: "MatchRecurringShipmentsResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "matches",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "RecurringShipment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipmentports.MatchRecurringShipmentsResponse)
+					return obj.Matches, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRecurringShipment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipmentᚄ),
+			},
+			{
+				Name:      "pattern",
+				HasChild:  true,
+				ChildType: "RecurringShipmentLanePattern",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipmentports.MatchRecurringShipmentsResponse)
+					return obj.Pattern, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORecurringShipmentLanePattern2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋrecurringshipmentportsᚐLanePatternSummary),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createRecurringShipment",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RecurringShipment",
+				Args:       field_Mutation_createRecurringShipment_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateRecurringShipment(ctx, fc.Args["input"].(gqlmodel.RecurringShipmentInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment),
+			},
+			{
+				Name:       "updateRecurringShipment",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RecurringShipment",
+				Args:       field_Mutation_updateRecurringShipment_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateRecurringShipment(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.RecurringShipmentInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment),
+			},
+			{
+				Name:       "updateRecurringShipmentStatus",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "RecurringShipment",
+				Args:       field_Mutation_updateRecurringShipmentStatus_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateRecurringShipmentStatus(ctx, fc.Args["id"].(string), fc.Args["status"].(recurringshipment.Status), fc.Args["version"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment),
+			},
+			{
+				Name:       "generateRecurringShipment",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "GenerateRecurringShipmentResult",
+				Args:       field_Mutation_generateRecurringShipment_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GenerateRecurringShipment(ctx, fc.Args["id"].(string), fc.Args["occurrenceAt"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNGenerateRecurringShipmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋrecurringshipmentportsᚐGenerateRecurringShipmentResult),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "recurringShipments",
@@ -52,6 +168,34 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverQuery](ec, "Query").RecurringShipment(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalORecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment),
+			},
+			{
+				Name:       "recurringShipmentRuns",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "RecurringShipmentRun",
+				Args:       field_Query_recurringShipmentRuns_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").RecurringShipmentRuns(ctx, fc.Args["recurringShipmentId"].(string), fc.Args["first"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNRecurringShipmentRun2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipmentRunᚄ),
+			},
+			{
+				Name:       "matchRecurringShipments",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "MatchRecurringShipmentsResult",
+				Args:       field_Query_matchRecurringShipments_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").MatchRecurringShipments(ctx, fc.Args["input"].(gqlmodel.MatchRecurringShipmentsInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNMatchRecurringShipmentsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋrecurringshipmentportsᚐMatchRecurringShipmentsResponse),
 			},
 		}},
 		{Object: "RecurringShipment", Fields: []*gqlexec.Field{
@@ -459,15 +603,222 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "RecurringShipmentGeneratedShipment", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*shipment.Shipment)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "proNumber",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*shipment.Shipment)
+					return obj.ProNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "RecurringShipmentLanePattern", Fields: []*gqlexec.Field{
+			{
+				Name:     "shipmentCount",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipmentports.LanePatternSummary)
+					return obj.ShipmentCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "firstShipmentAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipmentports.LanePatternSummary)
+					return obj.FirstShipmentAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "lastShipmentAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipmentports.LanePatternSummary)
+					return obj.LastShipmentAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "RecurringShipmentRun", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "recurringShipmentId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.RecurringShipmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "generatedShipmentId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.GeneratedShipmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "triggeredById",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.TriggeredByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRecurringShipmentRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRunStatus),
+			},
+			{
+				Name:     "trigger",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.Trigger, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNRecurringShipmentRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRunTrigger),
+			},
+			{
+				Name:     "occurrenceAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.OccurrenceAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "originalOccurrenceAt",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.OriginalOccurrenceAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "detail",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.Detail, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:      "generatedShipment",
+				HasChild:  true,
+				ChildType: "RecurringShipmentGeneratedShipment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.GeneratedShipment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalORecurringShipmentGeneratedShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipment),
+			},
+			{
+				Name:      "triggeredBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recurringshipment.RecurringShipmentRun)
+					return obj.TriggeredBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+		}},
+	},
+	Inputs: []gqlexec.Input{
+		{Name: "MatchRecurringShipmentsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputMatchRecurringShipmentsInput)},
+		{Name: "RecurringShipmentInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRecurringShipmentInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateRecurringShipment(ctx context.Context, input gqlmodel.RecurringShipmentInput) (*recurringshipment.RecurringShipment, error)
+	UpdateRecurringShipment(ctx context.Context, id string, input gqlmodel.RecurringShipmentInput) (*recurringshipment.RecurringShipment, error)
+	UpdateRecurringShipmentStatus(ctx context.Context, id string, status recurringshipment.Status, version int) (*recurringshipment.RecurringShipment, error)
+	GenerateRecurringShipment(ctx context.Context, id string, occurrenceAt *int) (*recurringshipmentports.GenerateRecurringShipmentResult, error)
 }
 
 type resolverQuery interface {
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
 	RecurringShipment(ctx context.Context, id string) (*recurringshipment.RecurringShipment, error)
+	RecurringShipmentRuns(ctx context.Context, recurringShipmentID string, first *int) ([]*recurringshipment.RecurringShipmentRun, error)
+	MatchRecurringShipments(ctx context.Context, input gqlmodel.MatchRecurringShipmentsInput) (*recurringshipmentports.MatchRecurringShipmentsResponse, error)
 }
 
 var (
@@ -478,7 +829,93 @@ var (
 	errNoChild4 = errors.New("field of type Int does not have child fields")
 	errNoChild5 = errors.New("field of type Boolean does not have child fields")
 	errNoChild6 = errors.New("field of type RecurringShipmentExceptionPolicy does not have child fields")
+	errNoChild7 = errors.New("field of type RecurringShipmentRunStatus does not have child fields")
+	errNoChild8 = errors.New("field of type RecurringShipmentRunTrigger does not have child fields")
 )
+
+func field_Mutation_createRecurringShipment_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RecurringShipmentInput, error) {
+			return unmarshalNRecurringShipmentInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecurringShipmentInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateRecurringShipment_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RecurringShipmentInput, error) {
+			return unmarshalNRecurringShipmentInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecurringShipmentInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_updateRecurringShipmentStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+		func(ctx context.Context, v any) (recurringshipment.Status, error) {
+			return unmarshalNRecurringShipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐStatus(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "version",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["version"] = arg2
+	return args, nil
+}
+
+func field_Mutation_generateRecurringShipment_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "occurrenceAt",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOTimestamp2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["occurrenceAt"] = arg1
+	return args, nil
+}
 
 func field_Query_recurringShipments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -506,8 +943,219 @@ func field_Query_recurringShipment_args(ctx context.Context, ec *gqlexec.Exec, r
 	return args, nil
 }
 
+func field_Query_recurringShipmentRuns_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "recurringShipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["recurringShipmentId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	return args, nil
+}
+
+func field_Query_matchRecurringShipments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.MatchRecurringShipmentsInput, error) {
+			return unmarshalNMatchRecurringShipmentsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMatchRecurringShipmentsInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func unmarshalInputMatchRecurringShipmentsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.MatchRecurringShipmentsInput, error) {
+	var it gqlmodel.MatchRecurringShipmentsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"customerId", "originLocationId", "destinationLocationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
+		case "originLocationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originLocationId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginLocationID = data
+		case "destinationLocationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationLocationId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationLocationID = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRecurringShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RecurringShipmentInput, error) {
+	var it gqlmodel.RecurringShipmentInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"sourceShipmentId", "name", "description", "status", "cronExpression", "timezone", "startDate", "endDate", "maxOccurrences", "leadTimeDays", "skipWeekends", "exceptionPolicy", "blackoutDates", "autoGenerate", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "sourceShipmentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceShipmentId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceShipmentID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalORecurringShipmentStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "cronExpression":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cronExpression"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CronExpression = data
+		case "timezone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timezone"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Timezone = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "maxOccurrences":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxOccurrences"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxOccurrences = data
+		case "leadTimeDays":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("leadTimeDays"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LeadTimeDays = data
+		case "skipWeekends":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("skipWeekends"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SkipWeekends = data
+		case "exceptionPolicy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exceptionPolicy"))
+			data, err := unmarshalORecurringShipmentExceptionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐExceptionPolicy(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExceptionPolicy = data
+		case "blackoutDates":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("blackoutDates"))
+			data, err := unmarshalOString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BlackoutDates = data
+		case "autoGenerate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoGenerate"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoGenerate = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -520,6 +1168,81 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNMatchRecurringShipmentsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMatchRecurringShipmentsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.MatchRecurringShipmentsInput, error) {
+	res, err := unmarshalInputMatchRecurringShipmentsInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRecurringShipmentInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecurringShipmentInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RecurringShipmentInput, error) {
+	res, err := unmarshalInputRecurringShipmentInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRecurringShipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (recurringshipment.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := recurringshipment.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalORecurringShipmentExceptionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐExceptionPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (*recurringshipment.ExceptionPolicy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := recurringshipment.ExceptionPolicy(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalORecurringShipmentStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*recurringshipment.Status, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := recurringshipment.Status(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
@@ -528,8 +1251,24 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
+func marshalNGenerateRecurringShipmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋrecurringshipmentportsᚐGenerateRecurringShipmentResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipmentports.GenerateRecurringShipmentResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "GenerateRecurringShipmentResult", v)
+}
+
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -560,12 +1299,28 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNMatchRecurringShipmentsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋrecurringshipmentportsᚐMatchRecurringShipmentsResponse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipmentports.MatchRecurringShipmentsResponse) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "MatchRecurringShipmentsResult", v)
+}
+
 func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
+}
+
+func marshalNRecurringShipment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*recurringshipment.RecurringShipment) graphql.Marshaler {
+	return gqlexec.List[*recurringshipment.RecurringShipment]{
+		Elem:        marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipment.RecurringShipment) graphql.Marshaler {
@@ -601,6 +1356,38 @@ func marshalNRecurringShipmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 }
 
 func marshalNRecurringShipmentExceptionPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐExceptionPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringshipment.ExceptionPolicy) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNRecurringShipmentRun2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipmentRunᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*recurringshipment.RecurringShipmentRun) graphql.Marshaler {
+	return gqlexec.List[*recurringshipment.RecurringShipmentRun]{
+		Elem:        marshalNRecurringShipmentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipmentRun,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNRecurringShipmentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipmentRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipment.RecurringShipmentRun) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RecurringShipmentRun", v)
+}
+
+func marshalNRecurringShipmentRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRunStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringshipment.RunStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNRecurringShipmentRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRunTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringshipment.RunTrigger) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -672,6 +1459,27 @@ func marshalORecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "RecurringShipment", v)
+}
+
+func marshalORecurringShipmentGeneratedShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐShipment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.Shipment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RecurringShipmentGeneratedShipment", v)
+}
+
+func marshalORecurringShipmentLanePattern2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋrecurringshipmentportsᚐLanePatternSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipmentports.LanePatternSummary) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RecurringShipmentLanePattern", v)
+}
+
+func marshalORecurringShipmentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipmentRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipment.RecurringShipmentRun) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "RecurringShipmentRun", v)
 }
 
 func marshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
