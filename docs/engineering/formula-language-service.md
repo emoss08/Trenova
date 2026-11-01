@@ -48,8 +48,8 @@ library's header is never read as a tariff's.
 ## The context
 
 `useTariffCheckContext()` (`apps/web/src/hooks/use-tariff-check-context.ts`) reads
-`GET /formula-templates/context` once per five minutes. The server answers `{context,
-libraries}`: the context the module checks against, and each approved library as the Studio
+the `formulaTemplateStudioContext` query once per five minutes. The server answers `{context,
+libraries, tablesStamp}`: the context the module checks against, and each approved library as the Studio
 names it (`path`, `libraryId`, `name`, `description`, `versionNumber`). The hook answers
 `{context, libraries, isError, refetch}`. `context` is `null` until it has loaded; every caller
 then checks against `EMPTY_TARIFF_CONTEXT`, and a failed load shows a warning with Retry above
@@ -152,7 +152,7 @@ The template studio (`routes/formula-template/_components/studio/`) and the libr
   warning counts, the test count, the tests (`useTariffTests`, run with `tariff.test` once the
   source has rested 400 ms, and not at all while it has errors) and each test's verdict by name.
   The context carries only the shapes of tables with an exact axis, so a run that answers
-  `needs` loads those cells (`useTariffTableCells`, `POST /formula-templates/context/cells`,
+  `needs` loads those cells (`useTariffTableCells`, the `formulaTemplateTableCells` query,
   cached in the query cache per rate table stamp), lays them into the context and runs again:
   three loads by combination, then the tables whole, as the server does. A test waiting for
   cells has status `needs`; the tests panel says so, and offers Retry when a load fails. Everything a
@@ -204,19 +204,20 @@ The template studio (`routes/formula-template/_components/studio/`) and the libr
   skeletons and the shortcuts.
 
 Nova works on the same file two ways. Its conversation (`TariffNovaPane`, a thread opened with
-`POST /formula-templates/ai/thread/` or `POST /formula-libraries/ai/thread/`) reads the editor
+the `openFormulaTemplateAssistantThread` or `openFormulaLibraryAssistantThread` mutation) reads the editor
 as the page draft (`formula` or `formulaLibrary`) and answers with a `formula_propose` or
 `formula_library_propose` edit carrying a `SourceProposal`. The server offers one only when it
 checks clean and every one of its tests (at least one) passes; `ProposalCard` lands it in the
 editor, draws the changed lines with the unchanged runs folded (`diffHunks`), checks and tests it
 again against the Studio's context and, for a tariff, rates it on the sample load and three
-shipments. The template studio's one-shots answer in place: Explain (`/ai/explain`, the preview
-with one sentence per traced step), Suggest tests (`/ai/suggest-tests`, blocks already run
-against the draft, added one by one), Describe inputs (`/ai/describe-inputs`, doc comments
+shipments. The template studio's one-shots answer in place: Explain (`explainFormulaTemplate`, the preview
+with one sentence per traced step), Suggest tests (`suggestFormulaTemplateTests`, blocks already run
+against the draft, added one by one), Describe inputs (`describeFormulaTemplateInputs`, doc comments
 written above the inputs as one undoable change, `inputDocEdits`), Why does this fail
-(`/ai/explain-test`, under a failing test) and the reviewer's note (`/:id/review-note`).
+(`explainFormulaTemplateTest`, under a failing test) and the reviewer's note
+(`formulaTemplateReviewNote`), all GraphQL queries since they save nothing.
 
-The preview is rated on the server (`POST /formula-templates/test`): the sample record or a real
+The preview is rated on the server (the `formulaTemplatePreview` query): the sample record or a real
 shipment, with the sample inputs; the answer is the bill, a refusal or an error, the trace and the
 lookups, and the server's run of the tests. `BillView` and `TraceView`
 (`components/tariff-bill/`) draw it, and a range in the trace or a bill line lights the source.

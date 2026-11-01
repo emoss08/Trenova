@@ -51,8 +51,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/formulalibraryhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/googlemapshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
@@ -164,8 +162,6 @@ type RouterParams struct {
 	BankReceiptHandler              *bankreceipthandler.Handler
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
-	FormulaTemplateHandler          *formulatemplatehandler.Handler
-	FormulaLibraryHandler           *formulalibraryhandler.Handler
 	PageFavoriteHandler             *pagefavoritehandler.Handler
 	TractorHandler                  *tractorhandler.Handler
 	TrailerHandler                  *trailerhandler.Handler
@@ -293,8 +289,6 @@ type Router struct {
 	bankReceiptHandler              *bankreceipthandler.Handler
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
-	formulaTemplateHandler          *formulatemplatehandler.Handler
-	formulaLibraryHandler           *formulalibraryhandler.Handler
 	pageFavoriteHandler             *pagefavoritehandler.Handler
 	serviceTypeHandler              *servicetypehandler.Handler
 	serviceFailureReasonCodeHandler *servicefailurereasoncodehandler.Handler
@@ -424,8 +418,6 @@ func NewRouter(p RouterParams) *Router {
 		bankReceiptHandler:              p.BankReceiptHandler,
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
-		formulaTemplateHandler:          p.FormulaTemplateHandler,
-		formulaLibraryHandler:           p.FormulaLibraryHandler,
 		pageFavoriteHandler:             p.PageFavoriteHandler,
 		serviceTypeHandler:              p.ServiceTypeHandler,
 		serviceFailureReasonCodeHandler: p.ServiceFailureReasonCodeHandler,
@@ -625,8 +617,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.bankReceiptBatchHandler.RegisterRoutes(protected)
 	r.bankReceiptHandler.RegisterRoutes(protected)
 	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
-	r.formulaTemplateHandler.RegisterRoutes(protected)
-	r.formulaLibraryHandler.RegisterRoutes(protected)
 	r.pageFavoriteHandler.RegisterRoutes(protected)
 	r.tractorHandler.RegisterRoutes(protected)
 	r.trailerHandler.RegisterRoutes(protected)

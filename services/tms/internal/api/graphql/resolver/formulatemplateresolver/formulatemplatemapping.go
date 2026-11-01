@@ -81,6 +81,7 @@ func formulaInputDeclarationsToModel(
 			Descriptor: descriptor,
 			Required:   input.Required,
 			Default:    defaultValue,
+			HasDefault: !input.Default.IsNone(),
 			Constraint: constraint,
 		})
 	}

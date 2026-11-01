@@ -4,14 +4,18 @@ package formulalibraryresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	assistantports "github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	formulalibraryservice "github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 )
 
 type Deps struct {
 	*resolvercore.Core
 	FormulaLibraryService *formulalibraryservice.Service
+	PageAssistant         assistantports.PageAssistant
 }
 
 type FormulaLibraryVersionResolver struct{ *Deps }
+
+type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

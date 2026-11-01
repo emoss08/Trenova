@@ -452,6 +452,7 @@ virtuals:
     - permissionScope
   FormulaTemplate:
     - usageCount
+    - billing
   RateMatrix:
     - cells
   RateMatrixVersion:

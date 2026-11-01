@@ -52,8 +52,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -164,7 +166,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
@@ -349,6 +354,11 @@ type Params struct {
 	FiscalPeriodService               *fiscalperiodservice.Service
 	FormulaTemplateService            *formulatemplateservice.Service
 	FormulaLibraryService             *formulalibraryservice.Service
+	FormulaTemplateReviewService      *formulatemplatereviewservice.Service
+	FormulaTemplateStudioService      *formulatemplatestudioservice.Service
+	FormulaTemplateImportService      *formulatemplateimportservice.Service
+	FormulaStudioAssist               formulastudioports.FormulaStudioAssist `optional:"true"`
+	PageAssistant                     assistantports.PageAssistant           `optional:"true"`
 	FuelSurchargeService              *fuelsurchargeservice.Service
 	CostingService                    *costingservice.Service
 	DetentionReview                   *detentionreview.Service
@@ -638,6 +648,11 @@ type Services struct {
 	FiscalPeriodService               *fiscalperiodservice.Service
 	FormulaTemplateService            *formulatemplateservice.Service
 	FormulaLibraryService             *formulalibraryservice.Service
+	FormulaTemplateReviewService      *formulatemplatereviewservice.Service
+	FormulaTemplateStudioService      *formulatemplatestudioservice.Service
+	FormulaTemplateImportService      *formulatemplateimportservice.Service
+	FormulaStudioAssist               formulastudioports.FormulaStudioAssist
+	PageAssistant                     assistantports.PageAssistant
 	FuelSurchargeService              *fuelsurchargeservice.Service
 	CostingService                    *costingservice.Service
 	DetentionReview                   *detentionreview.Service
@@ -933,6 +948,11 @@ func newServices(p *Params) *Services {
 		FiscalPeriodService:               p.FiscalPeriodService,
 		FormulaTemplateService:            p.FormulaTemplateService,
 		FormulaLibraryService:             p.FormulaLibraryService,
+		FormulaTemplateReviewService:      p.FormulaTemplateReviewService,
+		FormulaTemplateStudioService:      p.FormulaTemplateStudioService,
+		FormulaTemplateImportService:      p.FormulaTemplateImportService,
+		FormulaStudioAssist:               p.FormulaStudioAssist,
+		PageAssistant:                     p.PageAssistant,
 		FuelSurchargeService:              p.FuelSurchargeService,
 		CostingService:                    p.CostingService,
 		DetentionReview:                   p.DetentionReview,

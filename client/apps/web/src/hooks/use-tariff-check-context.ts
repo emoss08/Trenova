@@ -20,8 +20,8 @@ export type TariffCheckContextState = {
 };
 
 /**
- * What every Tariff file in the browser is checked against (`GET /formula-templates/context`),
- * read once and shared by every editor on the screen.
+ * What every Tariff file in the browser is checked against (the `formulaTemplateStudioContext`
+ * query), read once and shared by every editor on the screen.
  */
 export function useTariffCheckContext(): TariffCheckContextState {
   const query = useQuery({ ...formulaTemplate.context, staleTime: CONTEXT_STALE_MS });

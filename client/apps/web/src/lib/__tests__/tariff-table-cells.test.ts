@@ -25,7 +25,7 @@ test "to B" {
 }
 `;
 
-// What GET /formula-templates/context sends for a table with an exact axis: its shape, no cells
+// What the formulaTemplateStudioContext query sends for a table with an exact axis: its shape, no cells
 // (Go's nil slice is null) and no loaded combinations yet.
 const context = tariffContextSchema.parse({
   libraries: [],
@@ -53,7 +53,7 @@ const context = tariffContextSchema.parse({
   settings: { distanceUnit: "mi" },
 });
 
-// What POST /formula-templates/context/cells answers (tariff.TableCells in Go).
+// What the formulaTemplateTableCells query answers (tariff.TableCells in Go).
 const answerForA = tariffTableCellsSchema.parse({
   stamp: "1:3:1767225600",
   tables: [

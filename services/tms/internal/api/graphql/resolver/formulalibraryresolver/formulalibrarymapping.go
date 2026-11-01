@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/jsonutils"
 )
 
 func formulaLibraryColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -42,15 +41,4 @@ func formulaLibraryConnectionToModel(
 		TotalCount:      page.TotalCount,
 		TotalCountExact: page.TotalCountExact,
 	}, nil
-}
-
-func changeSummaryToModel(summary map[string]jsonutils.FieldChange) map[string]any {
-	if len(summary) == 0 {
-		return nil
-	}
-	out := make(map[string]any, len(summary))
-	for path, change := range summary {
-		out[path] = change
-	}
-	return out
 }

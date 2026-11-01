@@ -1,0 +1,240 @@
+fragment FormulaReviewerFields on FormulaReviewer {
+  id
+  name
+  username
+  profilePicUrl
+}
+
+fragment FormulaReadinessFields on FormulaReadiness {
+  canSubmit
+  canApprove
+  checks {
+    key
+    label
+    status
+    detail
+  }
+  testTotal
+  testPassed
+  testFailing
+  coverage {
+    reached
+    total
+    unreached {
+      kind
+      range {
+        from
+        to
+      }
+      at {
+        line
+        column
+      }
+      excerpt
+    }
+    more
+  }
+  pendingSchedules {
+    versionNumber
+    effectiveFrom
+  }
+}
+
+fragment FormulaReviewDiffFields on FormulaReviewDiff {
+  hasApprovedBase
+  baseVersion
+  currentVersion
+  baseSource
+  currentSource
+  baseImports {
+    path
+    libraryId
+    versionNumber
+  }
+  currentImports {
+    path
+    libraryId
+    versionNumber
+  }
+  changes
+  changeCount
+  pendingSchedules {
+    versionNumber
+    effectiveFrom
+  }
+}
+
+fragment FormulaBacktestSummaryFields on FormulaBacktestSummary {
+  shipmentCount
+  evaluatedCount
+  changedCount
+  increasedCount
+  decreasedCount
+  errorCount
+  currentErrorCount
+  candidateErrorCount
+  refusedCount
+  adjustedCount
+  currentTotal
+  candidateTotal
+  totalDelta
+  totalDeltaPct
+  maxIncrease
+  maxDecrease
+}
+
+fragment FormulaBacktestResultFields on FormulaBacktestResult {
+  results {
+    shipmentId
+    proNumber
+    currentSource
+    currentAmount
+    candidateAmount
+    delta
+    deltaPct
+    currentError
+    candidateError
+    candidateRefused
+    adjusted
+  }
+  summary {
+    ...FormulaBacktestSummaryFields
+  }
+  truncated
+}
+
+fragment PageAssistantThreadFields on PageAssistantThread {
+  thread {
+    id
+    businessUnitId
+    organizationId
+    userId
+    agentDefinitionId
+    title
+    status
+    lastMessageAt
+    lastReadAt
+    preferredProviderId
+    origin
+    pinned
+    subjectType
+    subjectId
+    canContinue
+    cannotContinueReason
+    taintedAt
+    version
+    createdAt
+    updatedAt
+  }
+  agent {
+    id
+    name
+    description
+    template
+    icon
+    accent
+    systemKey
+    toolNames
+    starters {
+      label
+      prompt
+    }
+  }
+}
+
+query FormulaTemplateReviews($templateId: ID!) {
+  formulaTemplateReviews(templateId: $templateId) {
+    id
+    templateId
+    round
+    decision
+    actorId
+    comment
+    baseVersionNumber
+    createdAt
+    actor {
+      id
+      name
+      username
+      profilePicUrl
+    }
+    requestedReviewerId
+    requestedReviewer {
+      id
+      name
+      username
+      profilePicUrl
+    }
+    reviewerNote
+  }
+}
+
+query FormulaTemplateReviewers($templateId: ID!) {
+  formulaTemplateReviewers(templateId: $templateId) {
+    ...FormulaReviewerFields
+  }
+}
+
+query FormulaTemplateReadiness($templateId: ID!) {
+  formulaTemplateReadiness(templateId: $templateId) {
+    ...FormulaReadinessFields
+  }
+}
+
+query FormulaTemplateReviewDiff($templateId: ID!) {
+  formulaTemplateReviewDiff(templateId: $templateId) {
+    ...FormulaReviewDiffFields
+  }
+}
+
+query FormulaTemplateBacktest($templateId: ID!, $input: FormulaTemplateBacktestInput!) {
+  formulaTemplateBacktest(templateId: $templateId, input: $input) {
+    ...FormulaBacktestResultFields
+  }
+}
+
+query FormulaTemplateApprovalImpact($templateId: ID!, $limit: Int) {
+  formulaTemplateApprovalImpact(templateId: $templateId, limit: $limit) {
+    ...FormulaBacktestResultFields
+  }
+}
+
+query FormulaTemplateReviewNote($templateId: ID!) {
+  formulaTemplateReviewNote(templateId: $templateId) {
+    note
+    generated
+    backtest {
+      ...FormulaBacktestSummaryFields
+    }
+  }
+}
+
+mutation SubmitFormulaTemplate($id: ID!, $input: SubmitFormulaReviewInput!) {
+  submitFormulaTemplate(id: $id, input: $input) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation ApproveFormulaTemplate($id: ID!, $input: ApproveFormulaTemplateInput!) {
+  approveFormulaTemplate(id: $id, input: $input) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation RejectFormulaTemplate($id: ID!, $comment: String) {
+  rejectFormulaTemplate(id: $id, comment: $comment) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation RequestFormulaTemplateChanges($id: ID!, $comment: String) {
+  requestFormulaTemplateChanges(id: $id, comment: $comment) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation OpenFormulaTemplateAssistantThread($templateId: ID) {
+  openFormulaTemplateAssistantThread(templateId: $templateId) {
+    ...PageAssistantThreadFields
+  }
+}

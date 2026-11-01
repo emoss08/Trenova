@@ -41,7 +41,7 @@ import { presentInputs, type PreviewSource } from "../use-live-preview";
 /**
  * "Save as test": names the test, then writes a `test` block pinning the bill the preview got.
  * For a real shipment the server builds the block from the shipment's record
- * (`POST /formula-templates/scaffold-test`); for the sample record the browser's module does.
+ * (the `formulaTemplateScaffoldTest` query); for the sample record the browser's module does.
  */
 function SaveAsTest() {
   const t = useT();

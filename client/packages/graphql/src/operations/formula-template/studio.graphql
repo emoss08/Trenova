@@ -1,0 +1,99 @@
+fragment FormulaPreviewResultFields on FormulaPreviewResult {
+  valid
+  diagnostics
+  bill
+  refusal
+  error {
+    code
+    message
+    range {
+      from
+      to
+    }
+  }
+  trace
+  lookups
+  choices
+  tests
+}
+
+# What the browser checks a tariff against: the organization's context and the libraries in it.
+query FormulaTemplateStudioContext {
+  formulaTemplateStudioContext {
+    context
+    libraries {
+      path
+      libraryId
+      name
+      description
+      versionNumber
+    }
+    tablesStamp
+  }
+}
+
+# The rate table cells a file's tests read in the browser.
+query FormulaTemplateTableCells($input: FormulaTableCellsInput!) {
+  formulaTemplateTableCells(input: $input) {
+    stamp
+    tables {
+      code
+      cells
+      loaded
+    }
+  }
+}
+
+query FormulaTemplatePreview($input: FormulaTemplatePreviewInput!) {
+  formulaTemplatePreview(input: $input) {
+    ...FormulaPreviewResultFields
+  }
+}
+
+query FormulaTemplateScaffoldTest($input: FormulaTemplateScaffoldTestInput!) {
+  formulaTemplateScaffoldTest(input: $input) {
+    test
+  }
+}
+
+query ExplainFormulaTemplate($input: FormulaExplainInput!) {
+  explainFormulaTemplate(input: $input) {
+    preview {
+      ...FormulaPreviewResultFields
+    }
+    items {
+      index
+      range {
+        from
+        to
+      }
+      says
+    }
+  }
+}
+
+query DescribeFormulaTemplateInputs($input: FormulaDraftInput!) {
+  describeFormulaTemplateInputs(input: $input) {
+    descriptions
+  }
+}
+
+query SuggestFormulaTemplateTests($input: FormulaDraftInput!) {
+  suggestFormulaTemplateTests(input: $input) {
+    tests {
+      name
+      block
+      status
+      failures
+    }
+  }
+}
+
+query ExplainFormulaTemplateTest($input: FormulaExplainTestInput!) {
+  explainFormulaTemplateTest(input: $input) {
+    verdict
+    why
+    generated
+    test
+  }
+}

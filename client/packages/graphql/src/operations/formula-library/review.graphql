@@ -1,0 +1,129 @@
+fragment FormulaLibraryWriteFields on FormulaLibrary {
+  id
+  businessUnitId
+  organizationId
+  name
+  path
+  description
+  source
+  imports {
+    path
+    libraryId
+    versionNumber
+  }
+  testCount
+  status
+  submittedById
+  submittedAt
+  approvedById
+  approvedAt
+  reviewComment
+  version
+  sourceLibraryId
+  sourceVersionNumber
+  currentVersionNumber
+  createdAt
+  updatedAt
+}
+
+query FormulaLibraryVersionDiff($libraryId: ID!, $fromVersion: Int!, $toVersion: Int!) {
+  formulaLibraryVersionDiff(
+    libraryId: $libraryId
+    fromVersion: $fromVersion
+    toVersion: $toVersion
+  ) {
+    fromVersion
+    toVersion
+    changes
+    changeCount
+  }
+}
+
+query FormulaLibraryReadiness($libraryId: ID!) {
+  formulaLibraryReadiness(libraryId: $libraryId) {
+    ...FormulaReadinessFields
+  }
+}
+
+query FormulaLibraryReviewDiff($libraryId: ID!) {
+  formulaLibraryReviewDiff(libraryId: $libraryId) {
+    ...FormulaReviewDiffFields
+  }
+}
+
+query FormulaLibraryReviewers($libraryId: ID!) {
+  formulaLibraryReviewers(libraryId: $libraryId) {
+    ...FormulaReviewerFields
+  }
+}
+
+query FormulaLibraryUsages($libraryId: ID!, $versionNumber: Int) {
+  formulaLibraryUsages(libraryId: $libraryId, versionNumber: $versionNumber) {
+    templateId
+    templateName
+    templateStatus
+    templateVersion
+    versionStatus
+    libraryVersionNumber
+  }
+}
+
+mutation CreateFormulaLibrary($input: CreateFormulaLibraryInput!) {
+  createFormulaLibrary(input: $input) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation UpdateFormulaLibrary($id: ID!, $input: UpdateFormulaLibraryInput!) {
+  updateFormulaLibrary(id: $id, input: $input) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation DuplicateFormulaLibraries($libraryIds: [ID!]!) {
+  duplicateFormulaLibraries(libraryIds: $libraryIds) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation RollbackFormulaLibrary($id: ID!, $input: RollbackFormulaVersionInput!) {
+  rollbackFormulaLibrary(id: $id, input: $input) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation ArchiveFormulaLibrary($id: ID!, $confirmInUse: Boolean!) {
+  archiveFormulaLibrary(id: $id, confirmInUse: $confirmInUse) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation SubmitFormulaLibrary($id: ID!, $input: SubmitFormulaReviewInput!) {
+  submitFormulaLibrary(id: $id, input: $input) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation ApproveFormulaLibrary($id: ID!, $comment: String) {
+  approveFormulaLibrary(id: $id, comment: $comment) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation RejectFormulaLibrary($id: ID!, $comment: String) {
+  rejectFormulaLibrary(id: $id, comment: $comment) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation RequestFormulaLibraryChanges($id: ID!, $comment: String) {
+  requestFormulaLibraryChanges(id: $id, comment: $comment) {
+    ...FormulaLibraryWriteFields
+  }
+}
+
+mutation OpenFormulaLibraryAssistantThread($libraryId: ID) {
+  openFormulaLibraryAssistantThread(libraryId: $libraryId) {
+    ...PageAssistantThreadFields
+  }
+}

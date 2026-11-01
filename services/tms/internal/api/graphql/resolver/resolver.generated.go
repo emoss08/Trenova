@@ -299,6 +299,7 @@ type Resolver struct {
 	formulaLibraryVersion              *formulalibraryresolver.FormulaLibraryVersionResolver
 	formulaTemplate                    *formulatemplateresolver.FormulaTemplateResolver
 	formulaTemplateTable               *formulatemplateresolver.FormulaTemplateTableResolver
+	formulaTemplateVersion             *formulatemplateresolver.FormulaTemplateVersionResolver
 	fuelCard                           *fuelpurchaseresolver.FuelCardResolver
 	fuelCardDeskCard                   *fuelpurchaseresolver.FuelCardDeskCardResolver
 	fuelFeedStatus                     *fuelpurchaseresolver.FuelFeedStatusResolver
@@ -832,10 +833,16 @@ func FromServices(s *Services) *Resolver {
 	formulalibraryDeps := &formulalibraryresolver.Deps{
 		Core:                  s.Core,
 		FormulaLibraryService: s.FormulaLibraryService,
+		PageAssistant:         s.PageAssistant,
 	}
 	formulatemplateDeps := &formulatemplateresolver.Deps{
-		Core:                   s.Core,
-		FormulaTemplateService: s.FormulaTemplateService,
+		Core:                         s.Core,
+		FormulaTemplateService:       s.FormulaTemplateService,
+		FormulaTemplateReviewService: s.FormulaTemplateReviewService,
+		FormulaTemplateStudioService: s.FormulaTemplateStudioService,
+		FormulaTemplateImportService: s.FormulaTemplateImportService,
+		FormulaStudioAssist:          s.FormulaStudioAssist,
+		PageAssistant:                s.PageAssistant,
 	}
 	fuelpurchaseDeps := &fuelpurchaseresolver.Deps{
 		Core:                s.Core,
@@ -1397,6 +1404,7 @@ func FromServices(s *Services) *Resolver {
 		formulaLibraryVersion:        &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps},
 		formulaTemplate:              &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps},
 		formulaTemplateTable:         &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps},
+		formulaTemplateVersion:       &formulatemplateresolver.FormulaTemplateVersionResolver{Deps: formulatemplateDeps},
 		fuelCard:                     &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps},
 		fuelCardDeskCard:             &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps},
 		fuelFeedStatus:               &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps},
@@ -1504,6 +1512,8 @@ func FromServices(s *Services) *Resolver {
 			factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
 			fleetcodeMutation:             &fleetcodeMutation{Deps: fleetcodeDeps},
 			fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
+			formulalibraryMutation:        &formulalibraryMutation{Deps: formulalibraryDeps},
+			formulatemplateMutation:       &formulatemplateMutation{Deps: formulatemplateDeps},
 			fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
 			fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
 			hazardousmaterialMutation:     &hazardousmaterialMutation{Deps: hazardousmaterialDeps},
@@ -2430,6 +2440,10 @@ func (r *Resolver) FormulaTemplateTable() generated.FormulaTemplateTableResolver
 	return r.formulaTemplateTable
 }
 
+func (r *Resolver) FormulaTemplateVersion() generated.FormulaTemplateVersionResolver {
+	return r.formulaTemplateVersion
+}
+
 func (r *Resolver) FuelCard() generated.FuelCardResolver {
 	return r.fuelCard
 }
@@ -2691,6 +2705,8 @@ type mutationResolver struct {
 	*factoringcompanyMutation
 	*fleetcodeMutation
 	*fleetsafetyMutation
+	*formulalibraryMutation
+	*formulatemplateMutation
 	*fuelpurchaseMutation
 	*fuelsurchargeMutation
 	*hazardousmaterialMutation
@@ -3336,6 +3352,8 @@ type (
 	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
 	fleetcodeMutation               = fleetcoderesolver.MutationResolver
 	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
+	formulalibraryMutation          = formulalibraryresolver.MutationResolver
+	formulatemplateMutation         = formulatemplateresolver.MutationResolver
 	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
 	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
 	hazardousmaterialMutation       = hazardousmaterialresolver.MutationResolver

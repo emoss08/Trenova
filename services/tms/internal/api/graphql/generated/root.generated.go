@@ -316,6 +316,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
@@ -555,6 +556,7 @@ type ResolverRoot interface {
 	FormulaLibraryVersion() FormulaLibraryVersionResolver
 	FormulaTemplate() FormulaTemplateResolver
 	FormulaTemplateTable() FormulaTemplateTableResolver
+	FormulaTemplateVersion() FormulaTemplateVersionResolver
 	FuelCard() FuelCardResolver
 	FuelCardDeskCard() FuelCardDeskCardResolver
 	FuelFeedStatus() FuelFeedStatusResolver
@@ -1621,6 +1623,11 @@ type FormulaTemplateTableResolver interface {
 	Archived(ctx context.Context, obj *tarifftypes.TablePin) (bool, error)
 }
 
+type FormulaTemplateVersionResolver interface {
+	Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplateVersion) ([]*gqlmodel.FormulaInputDeclaration, error)
+	ChangeSummary(ctx context.Context, obj *formulatemplate.FormulaTemplateVersion) (map[string]any, error)
+}
+
 type FuelCardResolver interface {
 	AssignedWorkerID(ctx context.Context, obj *fuelpurchase.FuelCard) (*string, error)
 	AssignedTractorID(ctx context.Context, obj *fuelpurchase.FuelCard) (*string, error)
@@ -2363,6 +2370,31 @@ type MutationResolver interface {
 	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
 	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
 	DeleteSafetyViolation(ctx context.Context, id string) (bool, error)
+	CreateFormulaLibrary(ctx context.Context, input gqlmodel.CreateFormulaLibraryInput) (*formulalibrary.FormulaLibrary, error)
+	UpdateFormulaLibrary(ctx context.Context, id string, input gqlmodel.UpdateFormulaLibraryInput) (*formulalibrary.FormulaLibrary, error)
+	DuplicateFormulaLibraries(ctx context.Context, libraryIds []string) ([]*formulalibrary.FormulaLibrary, error)
+	RollbackFormulaLibrary(ctx context.Context, id string, input gqlmodel.RollbackFormulaVersionInput) (*formulalibrary.FormulaLibrary, error)
+	ArchiveFormulaLibrary(ctx context.Context, id string, confirmInUse bool) (*formulalibrary.FormulaLibrary, error)
+	SubmitFormulaLibrary(ctx context.Context, id string, input gqlmodel.SubmitFormulaReviewInput) (*formulalibrary.FormulaLibrary, error)
+	ApproveFormulaLibrary(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error)
+	RejectFormulaLibrary(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error)
+	RequestFormulaLibraryChanges(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error)
+	OpenFormulaLibraryAssistantThread(ctx context.Context, libraryID *string) (*gqlmodel.PageAssistantThread, error)
+	CreateFormulaTemplate(ctx context.Context, input gqlmodel.CreateFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error)
+	UpdateFormulaTemplate(ctx context.Context, id string, input gqlmodel.UpdateFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error)
+	DuplicateFormulaTemplates(ctx context.Context, templateIds []string) ([]*formulatemplate.FormulaTemplate, error)
+	BulkUpdateFormulaTemplateStatus(ctx context.Context, input gqlmodel.BulkUpdateFormulaTemplateStatusInput) ([]*formulatemplate.FormulaTemplate, error)
+	ImportFormulaTemplates(ctx context.Context, input gqlmodel.ImportFormulaTemplatesInput) (*gqlmodel.ImportFormulaTemplatesResult, error)
+	InstallStandardFormulaTemplates(ctx context.Context) (*gqlmodel.InstallStandardFormulaTemplatesResult, error)
+	RollbackFormulaTemplate(ctx context.Context, id string, input gqlmodel.RollbackFormulaVersionInput) (*formulatemplate.FormulaTemplate, error)
+	ForkFormulaTemplate(ctx context.Context, id string, input gqlmodel.ForkFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error)
+	UpdateFormulaTemplateVersionTags(ctx context.Context, templateID string, versionNumber int, tags []formulatemplate.VersionTag) (*formulatemplate.FormulaTemplateVersion, error)
+	UpdateFormulaTemplateVersionEffectiveDate(ctx context.Context, templateID string, versionNumber int, effectiveFrom *int) (*formulatemplate.FormulaTemplateVersion, error)
+	SubmitFormulaTemplate(ctx context.Context, id string, input gqlmodel.SubmitFormulaReviewInput) (*formulatemplate.FormulaTemplate, error)
+	ApproveFormulaTemplate(ctx context.Context, id string, input gqlmodel.ApproveFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error)
+	RejectFormulaTemplate(ctx context.Context, id string, comment *string) (*formulatemplate.FormulaTemplate, error)
+	RequestFormulaTemplateChanges(ctx context.Context, id string, comment *string) (*formulatemplate.FormulaTemplate, error)
+	OpenFormulaTemplateAssistantThread(ctx context.Context, templateID *string) (*gqlmodel.PageAssistantThread, error)
 	CreateFuelCard(ctx context.Context, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
 	UpdateFuelCard(ctx context.Context, id string, version int, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
 	CancelFuelCard(ctx context.Context, input gqlmodel.CancelFuelCardInput) (*fuelpurchase.FuelCard, error)
@@ -3228,8 +3260,35 @@ type QueryResolver interface {
 	FormulaLibrary(ctx context.Context, id string) (*formulalibrary.FormulaLibrary, error)
 	FormulaLibraryVersions(ctx context.Context, libraryID string, first *int) ([]*formulalibrary.FormulaLibraryVersion, error)
 	FormulaLibraryReviews(ctx context.Context, libraryID string) ([]*formulalibrary.FormulaLibraryReview, error)
+	FormulaLibraryVersionDiff(ctx context.Context, libraryID string, fromVersion int, toVersion int) (*gqlmodel.FormulaVersionDiff, error)
+	FormulaLibraryReadiness(ctx context.Context, libraryID string) (*gqlmodel.FormulaReadiness, error)
+	FormulaLibraryReviewDiff(ctx context.Context, libraryID string) (*gqlmodel.FormulaReviewDiff, error)
+	FormulaLibraryReviewers(ctx context.Context, libraryID string) ([]*gqlmodel.FormulaReviewer, error)
+	FormulaLibraryUsages(ctx context.Context, libraryID string, versionNumber *int) ([]*formulatemplateports.LibraryUsage, error)
 	FormulaTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaTemplateConnection, error)
 	FormulaTemplate(ctx context.Context, id string) (*formulatemplate.FormulaTemplate, error)
+	FormulaTemplateUsage(ctx context.Context, templateID string) (*formulatemplateports.GetTemplateUsageResponse, error)
+	FormulaTemplateVersions(ctx context.Context, templateID string, limit *int, offset *int) (*gqlmodel.FormulaTemplateVersionsResult, error)
+	FormulaTemplateVersion(ctx context.Context, templateID string, versionNumber int) (*formulatemplate.FormulaTemplateVersion, error)
+	FormulaTemplateScheduledVersions(ctx context.Context, templateID string) ([]*formulatemplate.FormulaTemplateVersion, error)
+	FormulaTemplateVersionDiff(ctx context.Context, templateID string, fromVersion int, toVersion int) (*gqlmodel.FormulaVersionDiff, error)
+	FormulaTemplateLineage(ctx context.Context, templateID string) (*formulatemplate.ForkLineage, error)
+	FormulaTemplateReviews(ctx context.Context, templateID string) ([]*formulatemplate.Review, error)
+	FormulaTemplateReviewers(ctx context.Context, templateID string) ([]*gqlmodel.FormulaReviewer, error)
+	FormulaTemplateReadiness(ctx context.Context, templateID string) (*gqlmodel.FormulaReadiness, error)
+	FormulaTemplateReviewDiff(ctx context.Context, templateID string) (*gqlmodel.FormulaReviewDiff, error)
+	FormulaTemplateBacktest(ctx context.Context, templateID string, input gqlmodel.FormulaTemplateBacktestInput) (*gqlmodel.FormulaBacktestResult, error)
+	FormulaTemplateApprovalImpact(ctx context.Context, templateID string, limit *int) (*gqlmodel.FormulaBacktestResult, error)
+	FormulaTemplateStudioContext(ctx context.Context) (*gqlmodel.FormulaStudioContext, error)
+	FormulaTemplateTableCells(ctx context.Context, input gqlmodel.FormulaTableCellsInput) (*gqlmodel.FormulaTableCells, error)
+	FormulaTemplatePreview(ctx context.Context, input gqlmodel.FormulaTemplatePreviewInput) (*gqlmodel.FormulaPreviewResult, error)
+	FormulaTemplateScaffoldTest(ctx context.Context, input gqlmodel.FormulaTemplateScaffoldTestInput) (*gqlmodel.FormulaScaffoldTestResult, error)
+	FormulaTemplateStandards(ctx context.Context) ([]*formulatemplateimportservice.StandardTemplate, error)
+	ExplainFormulaTemplate(ctx context.Context, input gqlmodel.FormulaExplainInput) (*gqlmodel.FormulaExplainResult, error)
+	DescribeFormulaTemplateInputs(ctx context.Context, input gqlmodel.FormulaDraftInput) (*gqlmodel.FormulaInputDescriptionsResult, error)
+	SuggestFormulaTemplateTests(ctx context.Context, input gqlmodel.FormulaDraftInput) (*gqlmodel.FormulaSuggestedTestsResult, error)
+	ExplainFormulaTemplateTest(ctx context.Context, input gqlmodel.FormulaExplainTestInput) (*gqlmodel.FormulaExplainTestResult, error)
+	FormulaTemplateReviewNote(ctx context.Context, templateID string) (*gqlmodel.FormulaReviewNoteResult, error)
 	FuelCards(ctx context.Context, input gqlmodel.FuelCardsInput) (*gqlmodel.FuelCardConnection, error)
 	FuelCard(ctx context.Context, id string) (*fuelpurchase.FuelCard, error)
 	FuelPurchases(ctx context.Context, input gqlmodel.FuelPurchasesInput) (*gqlmodel.FuelPurchaseConnection, error)
@@ -4341,6 +4400,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FormulaLibraryVersion":              func() any { return r.FormulaLibraryVersion() },
 			"FormulaTemplate":                    func() any { return r.FormulaTemplate() },
 			"FormulaTemplateTable":               func() any { return r.FormulaTemplateTable() },
+			"FormulaTemplateVersion":             func() any { return r.FormulaTemplateVersion() },
 			"FuelCard":                           func() any { return r.FuelCard() },
 			"FuelCardDeskCard":                   func() any { return r.FuelCardDeskCard() },
 			"FuelFeedStatus":                     func() any { return r.FuelFeedStatus() },

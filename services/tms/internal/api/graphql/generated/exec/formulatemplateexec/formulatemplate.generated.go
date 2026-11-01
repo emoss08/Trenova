@@ -9,9 +9,13 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -20,19 +24,472 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "formulatemplate",
 	Objects: []*gqlexec.Object{
+		{Name: "FormulaBacktestResult", Implementors: []string{"FormulaBacktestResult"}},
+		{Name: "FormulaBacktestShipment", Implementors: []string{"FormulaBacktestShipment"}},
+		{Name: "FormulaBacktestSummary", Implementors: []string{"FormulaBacktestSummary"}},
+		{Name: "FormulaCoverage", Implementors: []string{"FormulaCoverage"}},
+		{Name: "FormulaExplainResult", Implementors: []string{"FormulaExplainResult"}},
+		{Name: "FormulaExplainTestResult", Implementors: []string{"FormulaExplainTestResult"}},
 		{Name: "FormulaInputDeclaration", Implementors: []string{"FormulaInputDeclaration"}},
+		{Name: "FormulaInputDescriptionsResult", Implementors: []string{"FormulaInputDescriptionsResult"}},
 		{Name: "FormulaLibraryImport", Implementors: []string{"FormulaLibraryImport"}},
+		{Name: "FormulaPreviewError", Implementors: []string{"FormulaPreviewError"}},
+		{Name: "FormulaPreviewResult", Implementors: []string{"FormulaPreviewResult"}},
+		{Name: "FormulaReadiness", Implementors: []string{"FormulaReadiness"}},
+		{Name: "FormulaReadinessCheck", Implementors: []string{"FormulaReadinessCheck"}},
+		{Name: "FormulaReviewDiff", Implementors: []string{"FormulaReviewDiff"}},
+		{Name: "FormulaReviewNoteResult", Implementors: []string{"FormulaReviewNoteResult"}},
+		{Name: "FormulaReviewer", Implementors: []string{"FormulaReviewer"}},
+		{Name: "FormulaScaffoldTestResult", Implementors: []string{"FormulaScaffoldTestResult"}},
+		{Name: "FormulaScheduledWindow", Implementors: []string{"FormulaScheduledWindow"}},
+		{Name: "FormulaSourcePosition", Implementors: []string{"FormulaSourcePosition"}},
+		{Name: "FormulaSourceRange", Implementors: []string{"FormulaSourceRange"}},
+		{Name: "FormulaStandardTemplate", Implementors: []string{"FormulaStandardTemplate"}},
+		{Name: "FormulaStudioContext", Implementors: []string{"FormulaStudioContext"}},
+		{Name: "FormulaStudioLibrary", Implementors: []string{"FormulaStudioLibrary"}},
+		{Name: "FormulaSuggestedTest", Implementors: []string{"FormulaSuggestedTest"}},
+		{Name: "FormulaSuggestedTestsResult", Implementors: []string{"FormulaSuggestedTestsResult"}},
+		{Name: "FormulaTableCells", Implementors: []string{"FormulaTableCells"}},
+		{Name: "FormulaTableCellsTable", Implementors: []string{"FormulaTableCellsTable"}},
 		{Name: "FormulaTemplate", Implementors: []string{"FormulaTemplate"}},
+		{Name: "FormulaTemplateBillingVersion", Implementors: []string{"FormulaTemplateBillingVersion"}},
 		{Name: "FormulaTemplateConnection", Implementors: []string{"FormulaTemplateConnection"}},
 		{Name: "FormulaTemplateEdge", Implementors: []string{"FormulaTemplateEdge"}},
+		{Name: "FormulaTemplateLineage", Implementors: []string{"FormulaTemplateLineage"}},
+		{Name: "FormulaTemplateReview", Implementors: []string{"FormulaTemplateReview"}},
 		{Name: "FormulaTemplateTable", Implementors: []string{"FormulaTemplateTable"}},
+		{Name: "FormulaTemplateUsage", Implementors: []string{"FormulaTemplateUsage"}},
+		{Name: "FormulaTemplateUsageCount", Implementors: []string{"FormulaTemplateUsageCount"}},
+		{Name: "FormulaTemplateVersion", Implementors: []string{"FormulaTemplateVersion"}},
+		{Name: "FormulaTemplateVersionsResult", Implementors: []string{"FormulaTemplateVersionsResult"}},
+		{Name: "FormulaTraceNote", Implementors: []string{"FormulaTraceNote"}},
+		{Name: "FormulaUnreachedRegion", Implementors: []string{"FormulaUnreachedRegion"}},
+		{Name: "FormulaVersionDiff", Implementors: []string{"FormulaVersionDiff"}},
+		{Name: "ImportFormulaTemplatesResult", Implementors: []string{"ImportFormulaTemplatesResult"}},
+		{Name: "InstallStandardFormulaTemplatesResult", Implementors: []string{"InstallStandardFormulaTemplatesResult"}},
+		{Name: "PageAssistantAgent", Implementors: []string{"PageAssistantAgent"}},
+		{Name: "PageAssistantConversation", Implementors: []string{"PageAssistantConversation"}},
+		{Name: "PageAssistantThread", Implementors: []string{"PageAssistantThread"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "FormulaBacktestResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "results",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaBacktestShipment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestResult)
+					return obj.Results, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaBacktestShipment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestShipmentᚄ),
+			},
+			{
+				Name:      "summary",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaBacktestSummary",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestResult)
+					return obj.Summary, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaBacktestSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestSummary),
+			},
+			{
+				Name:     "truncated",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestResult)
+					return obj.Truncated, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "FormulaBacktestShipment", Fields: []*gqlexec.Field{
+			{
+				Name:     "shipmentId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.ShipmentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "proNumber",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.ProNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "currentSource",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.CurrentSource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaBacktestCurrentSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestCurrentSource),
+			},
+			{
+				Name:     "currentAmount",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.CurrentAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "candidateAmount",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.CandidateAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "delta",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.Delta, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "deltaPct",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.DeltaPct, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "currentError",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.CurrentError, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "candidateError",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.CandidateError, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "candidateRefused",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.CandidateRefused, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "adjusted",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestShipment)
+					return obj.Adjusted, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "FormulaBacktestSummary", Fields: []*gqlexec.Field{
+			{
+				Name:     "shipmentCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.ShipmentCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "evaluatedCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.EvaluatedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "changedCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.ChangedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "increasedCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.IncreasedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "decreasedCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.DecreasedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "errorCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.ErrorCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "currentErrorCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.CurrentErrorCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "candidateErrorCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.CandidateErrorCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "refusedCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.RefusedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "adjustedCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.AdjustedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "currentTotal",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.CurrentTotal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "candidateTotal",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.CandidateTotal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "totalDelta",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.TotalDelta, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "totalDeltaPct",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.TotalDeltaPct, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "maxIncrease",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.MaxIncrease, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "maxDecrease",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaBacktestSummary)
+					return obj.MaxDecrease, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+		}},
+		{Object: "FormulaCoverage", Fields: []*gqlexec.Field{
+			{
+				Name:     "reached",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaCoverage)
+					return obj.Reached, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "total",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaCoverage)
+					return obj.Total, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "unreached",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaUnreachedRegion",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaCoverage)
+					return obj.Unreached, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaUnreachedRegion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaUnreachedRegionᚄ),
+			},
+			{
+				Name:     "more",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaCoverage)
+					return obj.More, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "FormulaExplainResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "preview",
+				HasChild:  true,
+				ChildType: "FormulaPreviewResult",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaExplainResult)
+					return obj.Preview, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFormulaPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaPreviewResult),
+			},
+			{
+				Name:      "items",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTraceNote",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaExplainResult)
+					return obj.Items, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTraceNote2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTraceNoteᚄ),
+			},
+		}},
+		{Object: "FormulaExplainTestResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "verdict",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaExplainTestResult)
+					return obj.Verdict, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTestVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTestVerdict),
+			},
+			{
+				Name:     "why",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaExplainTestResult)
+					return obj.Why, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "generated",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaExplainTestResult)
+					return obj.Generated, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "test",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaExplainTestResult)
+					return obj.Test, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAny2interface),
+			},
+		}},
 		{Object: "FormulaInputDeclaration", Fields: []*gqlexec.Field{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaInputDeclaration)
 					return obj.Name, nil
@@ -42,7 +499,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "doc",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaInputDeclaration)
 					return obj.Doc, nil
@@ -52,7 +509,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaInputDeclaration)
 					return obj.Type, nil
@@ -61,7 +518,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "descriptor",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaInputDeclaration)
 					return obj.Descriptor, nil
@@ -71,7 +528,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "required",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaInputDeclaration)
 					return obj.Required, nil
@@ -80,7 +537,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "default",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaInputDeclaration)
 					return obj.Default, nil
@@ -88,8 +545,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOAny2interface),
 			},
 			{
+				Name:     "hasDefault",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaInputDeclaration)
+					return obj.HasDefault, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "constraint",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaInputDeclaration)
 					return obj.Constraint, nil
@@ -97,11 +564,23 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOAny2interface),
 			},
 		}},
+		{Object: "FormulaInputDescriptionsResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "descriptions",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaInputDescriptionsResult)
+					return obj.Descriptions, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+		}},
 		{Object: "FormulaLibraryImport", Fields: []*gqlexec.Field{
 			{
 				Name:     "path",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tarifftypes.Import)
 					return obj.Path, nil
@@ -111,7 +590,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "libraryId",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tarifftypes.Import)
 					return obj.LibraryID, nil
@@ -121,7 +600,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "versionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tarifftypes.Import)
 					return obj.VersionNumber, nil
@@ -141,11 +620,741 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
 			},
 		}},
+		{Object: "FormulaPreviewError", Fields: []*gqlexec.Field{
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewError)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "message",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewError)
+					return obj.Message, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "range",
+				HasChild:  true,
+				ChildType: "FormulaSourceRange",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewError)
+					return obj.Range, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFormulaSourceRange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSourceRange),
+			},
+		}},
+		{Object: "FormulaPreviewResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "valid",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Valid, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "diagnostics",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Diagnostics, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+			{
+				Name:     "bill",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Bill, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAny2interface),
+			},
+			{
+				Name:     "refusal",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Refusal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAny2interface),
+			},
+			{
+				Name:      "error",
+				HasChild:  true,
+				ChildType: "FormulaPreviewError",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Error, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFormulaPreviewError2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaPreviewError),
+			},
+			{
+				Name:     "trace",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Trace, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+			{
+				Name:     "lookups",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Lookups, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+			{
+				Name:     "choices",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Choices, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+			{
+				Name:     "tests",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaPreviewResult)
+					return obj.Tests, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+		}},
+		{Object: "FormulaReadiness", Fields: []*gqlexec.Field{
+			{
+				Name:     "canSubmit",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadiness)
+					return obj.CanSubmit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "canApprove",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadiness)
+					return obj.CanApprove, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "checks",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaReadinessCheck",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadiness)
+					return obj.Checks, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReadinessCheck2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadinessCheckᚄ),
+			},
+			{
+				Name:     "testTotal",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadiness)
+					return obj.TestTotal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "testPassed",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadiness)
+					return obj.TestPassed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "testFailing",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadiness)
+					return obj.TestFailing, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:      "coverage",
+				HasChild:  true,
+				ChildType: "FormulaCoverage",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadiness)
+					return obj.Coverage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFormulaCoverage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaCoverage),
+			},
+			{
+				Name:      "pendingSchedules",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaScheduledWindow",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadiness)
+					return obj.PendingSchedules, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaScheduledWindow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaScheduledWindowᚄ),
+			},
+		}},
+		{Object: "FormulaReadinessCheck", Fields: []*gqlexec.Field{
+			{
+				Name:     "key",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadinessCheck)
+					return obj.Key, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadinessCheck)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadinessCheck)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReadinessStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadinessStatus),
+			},
+			{
+				Name:     "detail",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReadinessCheck)
+					return obj.Detail, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "FormulaReviewDiff", Fields: []*gqlexec.Field{
+			{
+				Name:     "hasApprovedBase",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.HasApprovedBase, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "baseVersion",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.BaseVersion, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "currentVersion",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.CurrentVersion, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "baseSource",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.BaseSource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "currentSource",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.CurrentSource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "baseImports",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaLibraryImport",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.BaseImports, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibraryImport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImportᚄ),
+			},
+			{
+				Name:      "currentImports",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaLibraryImport",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.CurrentImports, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibraryImport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImportᚄ),
+			},
+			{
+				Name:     "changes",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.Changes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "changeCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.ChangeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "pendingSchedules",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaScheduledWindow",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewDiff)
+					return obj.PendingSchedules, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaScheduledWindow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaScheduledWindowᚄ),
+			},
+		}},
+		{Object: "FormulaReviewNoteResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "note",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewNoteResult)
+					return obj.Note, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "generated",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewNoteResult)
+					return obj.Generated, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "backtest",
+				HasChild:  true,
+				ChildType: "FormulaBacktestSummary",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewNoteResult)
+					return obj.Backtest, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFormulaBacktestSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestSummary),
+			},
+		}},
+		{Object: "FormulaReviewer", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewer)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewer)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "username",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewer)
+					return obj.Username, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "profilePicUrl",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaReviewer)
+					return obj.ProfilePicURL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "FormulaScaffoldTestResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "test",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaScaffoldTestResult)
+					return obj.Test, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "FormulaScheduledWindow", Fields: []*gqlexec.Field{
+			{
+				Name:     "versionNumber",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaScheduledWindow)
+					return obj.VersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "effectiveFrom",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaScheduledWindow)
+					return obj.EffectiveFrom, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+		}},
+		{Object: "FormulaSourcePosition", Fields: []*gqlexec.Field{
+			{
+				Name:     "line",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSourcePosition)
+					return obj.Line, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "column",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSourcePosition)
+					return obj.Column, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "FormulaSourceRange", Fields: []*gqlexec.Field{
+			{
+				Name:     "from",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSourceRange)
+					return obj.From, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "to",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSourceRange)
+					return obj.To, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "FormulaStandardTemplate", Fields: []*gqlexec.Field{
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateimportservice.StandardTemplate)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateimportservice.StandardTemplate)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "source",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateimportservice.StandardTemplate)
+					return obj.Source, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "FormulaStudioContext", Fields: []*gqlexec.Field{
+			{
+				Name:     "context",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaStudioContext)
+					return obj.Context, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+			{
+				Name:      "libraries",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaStudioLibrary",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaStudioContext)
+					return obj.Libraries, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaStudioLibrary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaStudioLibraryᚄ),
+			},
+			{
+				Name:     "tablesStamp",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaStudioContext)
+					return obj.TablesStamp, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "FormulaStudioLibrary", Fields: []*gqlexec.Field{
+			{
+				Name:     "path",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaStudioLibrary)
+					return obj.Path, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "libraryId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaStudioLibrary)
+					return obj.LibraryID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaStudioLibrary)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaStudioLibrary)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "versionNumber",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaStudioLibrary)
+					return obj.VersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "FormulaSuggestedTest", Fields: []*gqlexec.Field{
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSuggestedTest)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "block",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSuggestedTest)
+					return obj.Block, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSuggestedTest)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "failures",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSuggestedTest)
+					return obj.Failures, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+		}},
+		{Object: "FormulaSuggestedTestsResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "tests",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaSuggestedTest",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaSuggestedTestsResult)
+					return obj.Tests, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaSuggestedTest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSuggestedTestᚄ),
+			},
+		}},
+		{Object: "FormulaTableCells", Fields: []*gqlexec.Field{
+			{
+				Name:     "stamp",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTableCells)
+					return obj.Stamp, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "tables",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTableCellsTable",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTableCells)
+					return obj.Tables, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTableCellsTable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableCellsTableᚄ),
+			},
+		}},
+		{Object: "FormulaTableCellsTable", Fields: []*gqlexec.Field{
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTableCellsTable)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "cells",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTableCellsTable)
+					return obj.Cells, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+			{
+				Name:     "loaded",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTableCellsTable)
+					return obj.Loaded, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚕᚕstringᚄ),
+			},
+		}},
 		{Object: "FormulaTemplate", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.ID, nil
@@ -155,7 +1364,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.BusinessUnitID, nil
@@ -165,7 +1374,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.OrganizationID, nil
@@ -175,7 +1384,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Name, nil
@@ -185,7 +1394,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Description, nil
@@ -195,7 +1404,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Source, nil
@@ -240,7 +1449,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "testCount",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.TestCount, nil
@@ -250,7 +1459,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Status, nil
@@ -259,7 +1468,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "submittedById",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.SubmittedByID, nil
@@ -268,7 +1477,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "submittedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.SubmittedAt, nil
@@ -277,7 +1486,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedById",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.ApprovedByID, nil
@@ -286,7 +1495,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.ApprovedAt, nil
@@ -296,7 +1505,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reviewComment",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.ReviewComment, nil
@@ -305,7 +1514,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "metadata",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Metadata, nil
@@ -315,7 +1524,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Version, nil
@@ -324,7 +1533,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceTemplateId",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.SourceTemplateID, nil
@@ -333,7 +1542,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceVersionNumber",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.SourceVersionNumber, nil
@@ -343,7 +1552,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currentVersionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.CurrentVersionNumber, nil
@@ -353,7 +1562,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.CreatedAt, nil
@@ -363,7 +1572,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.UpdatedAt, nil
@@ -375,12 +1584,22 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return gqlexec.Resolver[resolverFormulaTemplate](ec, "FormulaTemplate").UsageCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "billing",
+				HasChild:  true,
+				ChildType: "FormulaTemplateBillingVersion",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplate)
+					return obj.Billing, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFormulaTemplateBillingVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐBillingVersion),
 			},
 			{
 				Name:      "businessUnit",
@@ -401,6 +1620,38 @@ var Shard = &gqlexec.Shard{
 					return obj.Organization, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
+			},
+		}},
+		{Object: "FormulaTemplateBillingVersion", Fields: []*gqlexec.Field{
+			{
+				Name:     "versionNumber",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.BillingVersion)
+					return obj.VersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "effectiveFrom",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.BillingVersion)
+					return obj.EffectiveFrom, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "pending",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.BillingVersion)
+					return obj.Pending, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "FormulaTemplateConnection", Fields: []*gqlexec.Field{
@@ -428,7 +1679,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaTemplateConnection)
 					return obj.TotalCount, nil
@@ -438,7 +1689,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaTemplateConnection)
 					return obj.TotalCountExact, nil
@@ -461,7 +1712,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FormulaTemplateEdge)
 					return obj.Cursor, nil
@@ -469,11 +1720,182 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "FormulaTemplateLineage", Fields: []*gqlexec.Field{
+			{
+				Name:     "templateId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.ForkLineage)
+					return obj.TemplateID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "templateName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.ForkLineage)
+					return obj.TemplateName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "sourceTemplateId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.ForkLineage)
+					return obj.SourceTemplateID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "sourceVersion",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.ForkLineage)
+					return obj.SourceVersion, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
+			},
+			{
+				Name:      "forkedTemplates",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTemplateLineage",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.ForkLineage)
+					return obj.ForkedTemplates, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateLineage2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐForkLineageᚄ),
+			},
+		}},
+		{Object: "FormulaTemplateReview", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "templateId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.TemplateID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "round",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.Round, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int32),
+			},
+			{
+				Name:     "decision",
+				NonNull:  true,
+				ChildErr: errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.Decision, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReviewDecision2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐReviewDecision),
+			},
+			{
+				Name:     "actorId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.ActorID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:      "actor",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.Actor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "comment",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.Comment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "baseVersionNumber",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.BaseVersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "requestedReviewerId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.RequestedReviewerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:      "requestedReviewer",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.RequestedReviewer, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "reviewerNote",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.ReviewerNote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.Review)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
 		{Object: "FormulaTemplateTable", Fields: []*gqlexec.Field{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tarifftypes.TablePin)
 					return obj.Code, nil
@@ -483,7 +1905,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateMatrixId",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tarifftypes.TablePin)
 					return obj.RateMatrixID, nil
@@ -493,7 +1915,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "versionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tarifftypes.TablePin)
 					return obj.VersionNumber, nil
@@ -505,7 +1927,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tarifftypes.TablePin)
 					return gqlexec.Resolver[resolverFormulaTemplateTable](ec, "FormulaTemplateTable").LatestVersionNumber(ctx, obj)
@@ -517,12 +1939,969 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild2,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tarifftypes.TablePin)
 					return gqlexec.Resolver[resolverFormulaTemplateTable](ec, "FormulaTemplateTable").Archived(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "FormulaTemplateUsage", Fields: []*gqlexec.Field{
+			{
+				Name:     "inUse",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.GetTemplateUsageResponse)
+					return obj.InUse, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "usages",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTemplateUsageCount",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.GetTemplateUsageResponse)
+					return obj.Usages, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateUsageCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐTemplateUsageCountᚄ),
+			},
+		}},
+		{Object: "FormulaTemplateUsageCount", Fields: []*gqlexec.Field{
+			{
+				Name:     "type",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.TemplateUsageCount)
+					return obj.Type, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.TemplateUsageCount)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "FormulaTemplateVersion", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "templateId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.TemplateID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "versionNumber",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.VersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "source",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.Source, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "inputs",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaInputDeclaration",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return gqlexec.Resolver[resolverFormulaTemplateVersion](ec, "FormulaTemplateVersion").Inputs(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaInputDeclaration2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaInputDeclarationᚄ),
+			},
+			{
+				Name:      "imports",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaLibraryImport",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.Imports, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibraryImport2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImportᚄ),
+			},
+			{
+				Name:      "tables",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTemplateTable",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.Tables, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateTable2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐTablePinᚄ),
+			},
+			{
+				Name:     "testCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.TestCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int32),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus),
+			},
+			{
+				Name:     "effectiveFrom",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.EffectiveFrom, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "changeMessage",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.ChangeMessage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "changeSummary",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return gqlexec.Resolver[resolverFormulaTemplateVersion](ec, "FormulaTemplateVersion").ChangeSummary(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
+			},
+			{
+				Name:     "tags",
+				NonNull:  true,
+				ChildErr: errNoChild13,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.Tags, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaVersionTag2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐVersionTagᚄ),
+			},
+			{
+				Name:     "createdById",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.CreatedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:      "createdBy",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.CreatedBy, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplateVersion)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "FormulaTemplateVersionsResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "results",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTemplateVersion",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTemplateVersionsResult)
+					return obj.Results, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersionᚄ),
+			},
+			{
+				Name:     "totalCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTemplateVersionsResult)
+					return obj.TotalCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTemplateVersionsResult)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "FormulaTraceNote", Fields: []*gqlexec.Field{
+			{
+				Name:     "index",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTraceNote)
+					return obj.Index, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "range",
+				HasChild:  true,
+				ChildType: "FormulaSourceRange",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTraceNote)
+					return obj.Range, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFormulaSourceRange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSourceRange),
+			},
+			{
+				Name:     "says",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaTraceNote)
+					return obj.Says, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "FormulaUnreachedRegion", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaUnreachedRegion)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "range",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaSourceRange",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaUnreachedRegion)
+					return obj.Range, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaSourceRange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSourceRange),
+			},
+			{
+				Name:      "at",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaSourcePosition",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaUnreachedRegion)
+					return obj.At, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaSourcePosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSourcePosition),
+			},
+			{
+				Name:     "excerpt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaUnreachedRegion)
+					return obj.Excerpt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "FormulaVersionDiff", Fields: []*gqlexec.Field{
+			{
+				Name:     "fromVersion",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaVersionDiff)
+					return obj.FromVersion, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "toVersion",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaVersionDiff)
+					return obj.ToVersion, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "changes",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaVersionDiff)
+					return obj.Changes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "changeCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaVersionDiff)
+					return obj.ChangeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "ImportFormulaTemplatesResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "created",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTemplate",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ImportFormulaTemplatesResult)
+					return obj.Created, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateᚄ),
+			},
+			{
+				Name:     "renamed",
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ImportFormulaTemplatesResult)
+					return obj.Renamed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
+			},
+		}},
+		{Object: "InstallStandardFormulaTemplatesResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "installed",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTemplate",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.InstallStandardFormulaTemplatesResult)
+					return obj.Installed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateᚄ),
+			},
+			{
+				Name:     "skipped",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.InstallStandardFormulaTemplatesResult)
+					return obj.Skipped, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createFormulaTemplate",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_createFormulaTemplate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFormulaTemplate(ctx, fc.Args["input"].(gqlmodel.CreateFormulaTemplateInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
+			},
+			{
+				Name:       "updateFormulaTemplate",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_updateFormulaTemplate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFormulaTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UpdateFormulaTemplateInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
+			},
+			{
+				Name:       "duplicateFormulaTemplates",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_duplicateFormulaTemplates_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DuplicateFormulaTemplates(ctx, fc.Args["templateIds"].([]string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateᚄ),
+			},
+			{
+				Name:       "bulkUpdateFormulaTemplateStatus",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_bulkUpdateFormulaTemplateStatus_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkUpdateFormulaTemplateStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateFormulaTemplateStatusInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateᚄ),
+			},
+			{
+				Name:       "importFormulaTemplates",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ImportFormulaTemplatesResult",
+				Args:       field_Mutation_importFormulaTemplates_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ImportFormulaTemplates(ctx, fc.Args["input"].(gqlmodel.ImportFormulaTemplatesInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNImportFormulaTemplatesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐImportFormulaTemplatesResult),
+			},
+			{
+				Name:       "installStandardFormulaTemplates",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "InstallStandardFormulaTemplatesResult",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").InstallStandardFormulaTemplates(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNInstallStandardFormulaTemplatesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInstallStandardFormulaTemplatesResult),
+			},
+			{
+				Name:       "rollbackFormulaTemplate",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_rollbackFormulaTemplate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RollbackFormulaTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.RollbackFormulaVersionInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
+			},
+			{
+				Name:       "forkFormulaTemplate",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_forkFormulaTemplate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ForkFormulaTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ForkFormulaTemplateInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
+			},
+			{
+				Name:       "updateFormulaTemplateVersionTags",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplateVersion",
+				Args:       field_Mutation_updateFormulaTemplateVersionTags_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFormulaTemplateVersionTags(ctx, fc.Args["templateId"].(string), fc.Args["versionNumber"].(int), fc.Args["tags"].([]formulatemplate.VersionTag))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersion),
+			},
+			{
+				Name:       "updateFormulaTemplateVersionEffectiveDate",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplateVersion",
+				Args:       field_Mutation_updateFormulaTemplateVersionEffectiveDate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFormulaTemplateVersionEffectiveDate(ctx, fc.Args["templateId"].(string), fc.Args["versionNumber"].(int), fc.Args["effectiveFrom"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersion),
+			},
+			{
+				Name:       "submitFormulaTemplate",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_submitFormulaTemplate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitFormulaTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.SubmitFormulaReviewInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
+			},
+			{
+				Name:       "approveFormulaTemplate",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_approveFormulaTemplate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveFormulaTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ApproveFormulaTemplateInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
+			},
+			{
+				Name:       "rejectFormulaTemplate",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_rejectFormulaTemplate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectFormulaTemplate(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
+			},
+			{
+				Name:       "requestFormulaTemplateChanges",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplate",
+				Args:       field_Mutation_requestFormulaTemplateChanges_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RequestFormulaTemplateChanges(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
+			},
+			{
+				Name:       "openFormulaTemplateAssistantThread",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "PageAssistantThread",
+				Args:       field_Mutation_openFormulaTemplateAssistantThread_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").OpenFormulaTemplateAssistantThread(ctx, fc.Args["templateId"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNPageAssistantThread2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAssistantThread),
+			},
+		}},
+		{Object: "PageAssistantAgent", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "template",
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.Template, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagenttemplateᚐTemplate),
+			},
+			{
+				Name:     "icon",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.Icon, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "accent",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.Accent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "systemKey",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.SystemKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "toolNames",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.ToolNames, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:      "starters",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentStarter",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantAgent)
+					return obj.Starters, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentStarter2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentstarterᚐStarterᚄ),
+			},
+		}},
+		{Object: "PageAssistantConversation", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "businessUnitId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.BusinessUnitID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "organizationId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.OrganizationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "userId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.UserID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "agentDefinitionId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.AgentDefinitionID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "title",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.Title, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lastMessageAt",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.LastMessageAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "lastReadAt",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.LastReadAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "preferredProviderId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.PreferredProviderID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "origin",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.Origin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "pinned",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.Pinned, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "subjectType",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.SubjectType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "subjectId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.SubjectID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "canContinue",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.CanContinue, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "cannotContinueReason",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.CannotContinueReason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "taintedAt",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.TaintedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "version",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.Version, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantConversation)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+		}},
+		{Object: "PageAssistantThread", Fields: []*gqlexec.Field{
+			{
+				Name:      "thread",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageAssistantConversation",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantThread)
+					return obj.Thread, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageAssistantConversation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAssistantConversation),
+			},
+			{
+				Name:      "agent",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "PageAssistantAgent",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAssistantThread)
+					return obj.Agent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNPageAssistantAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAssistantAgent),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -553,12 +2932,336 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
 			},
+			{
+				Name:       "formulaTemplateUsage",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplateUsage",
+				Args:       field_Query_formulaTemplateUsage_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateUsage(ctx, fc.Args["templateId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐGetTemplateUsageResponse),
+			},
+			{
+				Name:       "formulaTemplateVersions",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplateVersionsResult",
+				Args:       field_Query_formulaTemplateVersions_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateVersions(ctx, fc.Args["templateId"].(string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateVersionsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateVersionsResult),
+			},
+			{
+				Name:       "formulaTemplateVersion",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplateVersion",
+				Args:       field_Query_formulaTemplateVersion_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateVersion(ctx, fc.Args["templateId"].(string), fc.Args["versionNumber"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalOFormulaTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersion),
+			},
+			{
+				Name:       "formulaTemplateScheduledVersions",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplateVersion",
+				Args:       field_Query_formulaTemplateScheduledVersions_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateScheduledVersions(ctx, fc.Args["templateId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersionᚄ),
+			},
+			{
+				Name:       "formulaTemplateVersionDiff",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaVersionDiff",
+				Args:       field_Query_formulaTemplateVersionDiff_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateVersionDiff(ctx, fc.Args["templateId"].(string), fc.Args["fromVersion"].(int), fc.Args["toVersion"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaVersionDiff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaVersionDiff),
+			},
+			{
+				Name:       "formulaTemplateLineage",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplateLineage",
+				Args:       field_Query_formulaTemplateLineage_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateLineage(ctx, fc.Args["templateId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateLineage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐForkLineage),
+			},
+			{
+				Name:       "formulaTemplateReviews",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaTemplateReview",
+				Args:       field_Query_formulaTemplateReviews_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateReviews(ctx, fc.Args["templateId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐReviewᚄ),
+			},
+			{
+				Name:       "formulaTemplateReviewers",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaReviewer",
+				Args:       field_Query_formulaTemplateReviewers_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateReviewers(ctx, fc.Args["templateId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReviewer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewerᚄ),
+			},
+			{
+				Name:       "formulaTemplateReadiness",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaReadiness",
+				Args:       field_Query_formulaTemplateReadiness_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateReadiness(ctx, fc.Args["templateId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadiness),
+			},
+			{
+				Name:       "formulaTemplateReviewDiff",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaReviewDiff",
+				Args:       field_Query_formulaTemplateReviewDiff_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateReviewDiff(ctx, fc.Args["templateId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReviewDiff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewDiff),
+			},
+			{
+				Name:       "formulaTemplateBacktest",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaBacktestResult",
+				Args:       field_Query_formulaTemplateBacktest_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateBacktest(ctx, fc.Args["templateId"].(string), fc.Args["input"].(gqlmodel.FormulaTemplateBacktestInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaBacktestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestResult),
+			},
+			{
+				Name:       "formulaTemplateApprovalImpact",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaBacktestResult",
+				Args:       field_Query_formulaTemplateApprovalImpact_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateApprovalImpact(ctx, fc.Args["templateId"].(string), fc.Args["limit"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaBacktestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestResult),
+			},
+			{
+				Name:       "formulaTemplateStudioContext",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaStudioContext",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateStudioContext(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaStudioContext2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaStudioContext),
+			},
+			{
+				Name:       "formulaTemplateTableCells",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaTableCells",
+				Args:       field_Query_formulaTemplateTableCells_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateTableCells(ctx, fc.Args["input"].(gqlmodel.FormulaTableCellsInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTableCells2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableCells),
+			},
+			{
+				Name:       "formulaTemplatePreview",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaPreviewResult",
+				Args:       field_Query_formulaTemplatePreview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplatePreview(ctx, fc.Args["input"].(gqlmodel.FormulaTemplatePreviewInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaPreviewResult),
+			},
+			{
+				Name:       "formulaTemplateScaffoldTest",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaScaffoldTestResult",
+				Args:       field_Query_formulaTemplateScaffoldTest_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateScaffoldTest(ctx, fc.Args["input"].(gqlmodel.FormulaTemplateScaffoldTestInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaScaffoldTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaScaffoldTestResult),
+			},
+			{
+				Name:       "formulaTemplateStandards",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaStandardTemplate",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateStandards(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaStandardTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋappᚋformulatemplateimportserviceᚐStandardTemplateᚄ),
+			},
+			{
+				Name:       "explainFormulaTemplate",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaExplainResult",
+				Args:       field_Query_explainFormulaTemplate_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ExplainFormulaTemplate(ctx, fc.Args["input"].(gqlmodel.FormulaExplainInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaExplainResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaExplainResult),
+			},
+			{
+				Name:       "describeFormulaTemplateInputs",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaInputDescriptionsResult",
+				Args:       field_Query_describeFormulaTemplateInputs_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").DescribeFormulaTemplateInputs(ctx, fc.Args["input"].(gqlmodel.FormulaDraftInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaInputDescriptionsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaInputDescriptionsResult),
+			},
+			{
+				Name:       "suggestFormulaTemplateTests",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaSuggestedTestsResult",
+				Args:       field_Query_suggestFormulaTemplateTests_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").SuggestFormulaTemplateTests(ctx, fc.Args["input"].(gqlmodel.FormulaDraftInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaSuggestedTestsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSuggestedTestsResult),
+			},
+			{
+				Name:       "explainFormulaTemplateTest",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaExplainTestResult",
+				Args:       field_Query_explainFormulaTemplateTest_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ExplainFormulaTemplateTest(ctx, fc.Args["input"].(gqlmodel.FormulaExplainTestInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaExplainTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaExplainTestResult),
+			},
+			{
+				Name:       "formulaTemplateReviewNote",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaReviewNoteResult",
+				Args:       field_Query_formulaTemplateReviewNote_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplateReviewNote(ctx, fc.Args["templateId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReviewNoteResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewNoteResult),
+			},
 		}},
+	},
+	Inputs: []gqlexec.Input{
+		{Name: "ApproveFormulaTemplateInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputApproveFormulaTemplateInput)},
+		{Name: "BulkUpdateFormulaTemplateStatusInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputBulkUpdateFormulaTemplateStatusInput)},
+		{Name: "CreateFormulaTemplateInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateFormulaTemplateInput)},
+		{Name: "ForkFormulaTemplateInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputForkFormulaTemplateInput)},
+		{Name: "FormulaDraftInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFormulaDraftInput)},
+		{Name: "FormulaExplainInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFormulaExplainInput)},
+		{Name: "FormulaExplainTestInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFormulaExplainTestInput)},
+		{Name: "FormulaTableCellsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFormulaTableCellsInput)},
+		{Name: "FormulaTableNeedInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFormulaTableNeedInput)},
+		{Name: "FormulaTemplateBacktestInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFormulaTemplateBacktestInput)},
+		{Name: "FormulaTemplatePreviewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFormulaTemplatePreviewInput)},
+		{Name: "FormulaTemplateScaffoldTestInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFormulaTemplateScaffoldTestInput)},
+		{Name: "ImportFormulaTemplatePayloadInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputImportFormulaTemplatePayloadInput)},
+		{Name: "ImportFormulaTemplatesInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputImportFormulaTemplatesInput)},
+		{Name: "RollbackFormulaVersionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRollbackFormulaVersionInput)},
+		{Name: "SubmitFormulaReviewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSubmitFormulaReviewInput)},
+		{Name: "UpdateFormulaTemplateInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateFormulaTemplateInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "FormulaLibraryImport", Check: func(r any) bool { _, ok := r.(resolverFormulaLibraryImport); return ok }},
 		{Root: "FormulaTemplate", Check: func(r any) bool { _, ok := r.(resolverFormulaTemplate); return ok }},
 		{Root: "FormulaTemplateTable", Check: func(r any) bool { _, ok := r.(resolverFormulaTemplateTable); return ok }},
+		{Root: "FormulaTemplateVersion", Check: func(r any) bool { _, ok := r.(resolverFormulaTemplateVersion); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -577,21 +3280,343 @@ type resolverFormulaTemplateTable interface {
 	Archived(ctx context.Context, obj *tarifftypes.TablePin) (bool, error)
 }
 
+type resolverFormulaTemplateVersion interface {
+	Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplateVersion) ([]*gqlmodel.FormulaInputDeclaration, error)
+	ChangeSummary(ctx context.Context, obj *formulatemplate.FormulaTemplateVersion) (map[string]any, error)
+}
+
+type resolverMutation interface {
+	CreateFormulaTemplate(ctx context.Context, input gqlmodel.CreateFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error)
+	UpdateFormulaTemplate(ctx context.Context, id string, input gqlmodel.UpdateFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error)
+	DuplicateFormulaTemplates(ctx context.Context, templateIds []string) ([]*formulatemplate.FormulaTemplate, error)
+	BulkUpdateFormulaTemplateStatus(ctx context.Context, input gqlmodel.BulkUpdateFormulaTemplateStatusInput) ([]*formulatemplate.FormulaTemplate, error)
+	ImportFormulaTemplates(ctx context.Context, input gqlmodel.ImportFormulaTemplatesInput) (*gqlmodel.ImportFormulaTemplatesResult, error)
+	InstallStandardFormulaTemplates(ctx context.Context) (*gqlmodel.InstallStandardFormulaTemplatesResult, error)
+	RollbackFormulaTemplate(ctx context.Context, id string, input gqlmodel.RollbackFormulaVersionInput) (*formulatemplate.FormulaTemplate, error)
+	ForkFormulaTemplate(ctx context.Context, id string, input gqlmodel.ForkFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error)
+	UpdateFormulaTemplateVersionTags(ctx context.Context, templateID string, versionNumber int, tags []formulatemplate.VersionTag) (*formulatemplate.FormulaTemplateVersion, error)
+	UpdateFormulaTemplateVersionEffectiveDate(ctx context.Context, templateID string, versionNumber int, effectiveFrom *int) (*formulatemplate.FormulaTemplateVersion, error)
+	SubmitFormulaTemplate(ctx context.Context, id string, input gqlmodel.SubmitFormulaReviewInput) (*formulatemplate.FormulaTemplate, error)
+	ApproveFormulaTemplate(ctx context.Context, id string, input gqlmodel.ApproveFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error)
+	RejectFormulaTemplate(ctx context.Context, id string, comment *string) (*formulatemplate.FormulaTemplate, error)
+	RequestFormulaTemplateChanges(ctx context.Context, id string, comment *string) (*formulatemplate.FormulaTemplate, error)
+	OpenFormulaTemplateAssistantThread(ctx context.Context, templateID *string) (*gqlmodel.PageAssistantThread, error)
+}
+
 type resolverQuery interface {
 	FormulaTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaTemplateConnection, error)
 	FormulaTemplate(ctx context.Context, id string) (*formulatemplate.FormulaTemplate, error)
+	FormulaTemplateUsage(ctx context.Context, templateID string) (*formulatemplateports.GetTemplateUsageResponse, error)
+	FormulaTemplateVersions(ctx context.Context, templateID string, limit *int, offset *int) (*gqlmodel.FormulaTemplateVersionsResult, error)
+	FormulaTemplateVersion(ctx context.Context, templateID string, versionNumber int) (*formulatemplate.FormulaTemplateVersion, error)
+	FormulaTemplateScheduledVersions(ctx context.Context, templateID string) ([]*formulatemplate.FormulaTemplateVersion, error)
+	FormulaTemplateVersionDiff(ctx context.Context, templateID string, fromVersion int, toVersion int) (*gqlmodel.FormulaVersionDiff, error)
+	FormulaTemplateLineage(ctx context.Context, templateID string) (*formulatemplate.ForkLineage, error)
+	FormulaTemplateReviews(ctx context.Context, templateID string) ([]*formulatemplate.Review, error)
+	FormulaTemplateReviewers(ctx context.Context, templateID string) ([]*gqlmodel.FormulaReviewer, error)
+	FormulaTemplateReadiness(ctx context.Context, templateID string) (*gqlmodel.FormulaReadiness, error)
+	FormulaTemplateReviewDiff(ctx context.Context, templateID string) (*gqlmodel.FormulaReviewDiff, error)
+	FormulaTemplateBacktest(ctx context.Context, templateID string, input gqlmodel.FormulaTemplateBacktestInput) (*gqlmodel.FormulaBacktestResult, error)
+	FormulaTemplateApprovalImpact(ctx context.Context, templateID string, limit *int) (*gqlmodel.FormulaBacktestResult, error)
+	FormulaTemplateStudioContext(ctx context.Context) (*gqlmodel.FormulaStudioContext, error)
+	FormulaTemplateTableCells(ctx context.Context, input gqlmodel.FormulaTableCellsInput) (*gqlmodel.FormulaTableCells, error)
+	FormulaTemplatePreview(ctx context.Context, input gqlmodel.FormulaTemplatePreviewInput) (*gqlmodel.FormulaPreviewResult, error)
+	FormulaTemplateScaffoldTest(ctx context.Context, input gqlmodel.FormulaTemplateScaffoldTestInput) (*gqlmodel.FormulaScaffoldTestResult, error)
+	FormulaTemplateStandards(ctx context.Context) ([]*formulatemplateimportservice.StandardTemplate, error)
+	ExplainFormulaTemplate(ctx context.Context, input gqlmodel.FormulaExplainInput) (*gqlmodel.FormulaExplainResult, error)
+	DescribeFormulaTemplateInputs(ctx context.Context, input gqlmodel.FormulaDraftInput) (*gqlmodel.FormulaInputDescriptionsResult, error)
+	SuggestFormulaTemplateTests(ctx context.Context, input gqlmodel.FormulaDraftInput) (*gqlmodel.FormulaSuggestedTestsResult, error)
+	ExplainFormulaTemplateTest(ctx context.Context, input gqlmodel.FormulaExplainTestInput) (*gqlmodel.FormulaExplainTestResult, error)
+	FormulaTemplateReviewNote(ctx context.Context, templateID string) (*gqlmodel.FormulaReviewNoteResult, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type String does not have child fields")
-	errNoChild1 = errors.New("field of type Any does not have child fields")
-	errNoChild2 = errors.New("field of type Boolean does not have child fields")
-	errNoChild3 = errors.New("field of type ID does not have child fields")
-	errNoChild4 = errors.New("field of type Int does not have child fields")
-	errNoChild5 = errors.New("field of type FormulaTemplateStatus does not have child fields")
-	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild7 = errors.New("field of type JSON does not have child fields")
+	errNoChild0  = errors.New("field of type Boolean does not have child fields")
+	errNoChild1  = errors.New("field of type ID does not have child fields")
+	errNoChild2  = errors.New("field of type String does not have child fields")
+	errNoChild3  = errors.New("field of type FormulaBacktestCurrentSource does not have child fields")
+	errNoChild4  = errors.New("field of type Decimal does not have child fields")
+	errNoChild5  = errors.New("field of type Int does not have child fields")
+	errNoChild6  = errors.New("field of type FormulaTestVerdict does not have child fields")
+	errNoChild7  = errors.New("field of type Any does not have child fields")
+	errNoChild8  = errors.New("field of type JSON does not have child fields")
+	errNoChild9  = errors.New("field of type FormulaReadinessStatus does not have child fields")
+	errNoChild10 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild11 = errors.New("field of type FormulaTemplateStatus does not have child fields")
+	errNoChild12 = errors.New("field of type FormulaReviewDecision does not have child fields")
+	errNoChild13 = errors.New("field of type FormulaVersionTag does not have child fields")
+	errNoChild14 = errors.New("field of type AgentTemplate does not have child fields")
 )
+
+func field_Mutation_createFormulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CreateFormulaTemplateInput, error) {
+			return unmarshalNCreateFormulaTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateFormulaTemplateInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateFormulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UpdateFormulaTemplateInput, error) {
+			return unmarshalNUpdateFormulaTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateFormulaTemplateInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_duplicateFormulaTemplates_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateIds"] = arg0
+	return args, nil
+}
+
+func field_Mutation_bulkUpdateFormulaTemplateStatus_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.BulkUpdateFormulaTemplateStatusInput, error) {
+			return unmarshalNBulkUpdateFormulaTemplateStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateFormulaTemplateStatusInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_importFormulaTemplates_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ImportFormulaTemplatesInput, error) {
+			return unmarshalNImportFormulaTemplatesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐImportFormulaTemplatesInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_rollbackFormulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RollbackFormulaVersionInput, error) {
+			return unmarshalNRollbackFormulaVersionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRollbackFormulaVersionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_forkFormulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ForkFormulaTemplateInput, error) {
+			return unmarshalNForkFormulaTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐForkFormulaTemplateInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_updateFormulaTemplateVersionTags_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "versionNumber",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["versionNumber"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "tags",
+		func(ctx context.Context, v any) ([]formulatemplate.VersionTag, error) {
+			return unmarshalNFormulaVersionTag2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐVersionTagᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["tags"] = arg2
+	return args, nil
+}
+
+func field_Mutation_updateFormulaTemplateVersionEffectiveDate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "versionNumber",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["versionNumber"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "effectiveFrom",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOTimestamp2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["effectiveFrom"] = arg2
+	return args, nil
+}
+
+func field_Mutation_submitFormulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SubmitFormulaReviewInput, error) {
+			return unmarshalNSubmitFormulaReviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSubmitFormulaReviewInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_approveFormulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ApproveFormulaTemplateInput, error) {
+			return unmarshalNApproveFormulaTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐApproveFormulaTemplateInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_rejectFormulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_requestFormulaTemplateChanges_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_openFormulaTemplateAssistantThread_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
 
 func field_Query_formulaTemplates_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -619,8 +3644,1080 @@ func field_Query_formulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, raw
 	return args, nil
 }
 
+func field_Query_formulaTemplateUsage_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateVersions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "offset",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg2
+	return args, nil
+}
+
+func field_Query_formulaTemplateVersion_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "versionNumber",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["versionNumber"] = arg1
+	return args, nil
+}
+
+func field_Query_formulaTemplateScheduledVersions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateVersionDiff_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "fromVersion",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["fromVersion"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "toVersion",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["toVersion"] = arg2
+	return args, nil
+}
+
+func field_Query_formulaTemplateLineage_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateReviews_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateReviewers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateReadiness_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateReviewDiff_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateBacktest_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FormulaTemplateBacktestInput, error) {
+			return unmarshalNFormulaTemplateBacktestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateBacktestInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Query_formulaTemplateApprovalImpact_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	return args, nil
+}
+
+func field_Query_formulaTemplateTableCells_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FormulaTableCellsInput, error) {
+			return unmarshalNFormulaTableCellsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableCellsInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplatePreview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FormulaTemplatePreviewInput, error) {
+			return unmarshalNFormulaTemplatePreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplatePreviewInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateScaffoldTest_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FormulaTemplateScaffoldTestInput, error) {
+			return unmarshalNFormulaTemplateScaffoldTestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateScaffoldTestInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_explainFormulaTemplate_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FormulaExplainInput, error) {
+			return unmarshalNFormulaExplainInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaExplainInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_describeFormulaTemplateInputs_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FormulaDraftInput, error) {
+			return unmarshalNFormulaDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaDraftInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_suggestFormulaTemplateTests_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FormulaDraftInput, error) {
+			return unmarshalNFormulaDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaDraftInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_explainFormulaTemplateTest_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FormulaExplainTestInput, error) {
+			return unmarshalNFormulaExplainTestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaExplainTestInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaTemplateReviewNote_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "templateId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["templateId"] = arg0
+	return args, nil
+}
+
+func unmarshalInputApproveFormulaTemplateInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ApproveFormulaTemplateInput, error) {
+	var it gqlmodel.ApproveFormulaTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"comment", "effectiveFrom"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "comment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Comment = data
+		case "effectiveFrom":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectiveFrom"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectiveFrom = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputBulkUpdateFormulaTemplateStatusInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.BulkUpdateFormulaTemplateStatusInput, error) {
+	var it gqlmodel.BulkUpdateFormulaTemplateStatusInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"templateIds", "status", "confirmInUse"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "templateIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("templateIds"))
+			data, err := unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemplateIds = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "confirmInUse":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("confirmInUse"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConfirmInUse = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputCreateFormulaTemplateInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CreateFormulaTemplateInput, error) {
+	var it gqlmodel.CreateFormulaTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"source", "description", "metadata"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "metadata":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Metadata = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputForkFormulaTemplateInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ForkFormulaTemplateInput, error) {
+	var it gqlmodel.ForkFormulaTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"newName", "sourceVersion", "changeMessage"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "newName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("newName"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.NewName = data
+		case "sourceVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceVersion"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceVersion = data
+		case "changeMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("changeMessage"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChangeMessage = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFormulaDraftInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FormulaDraftInput, error) {
+	var it gqlmodel.FormulaDraftInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"templateId", "name", "description", "source"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "templateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("templateId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemplateID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFormulaExplainInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FormulaExplainInput, error) {
+	var it gqlmodel.FormulaExplainInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"draft", "inputs", "shipmentId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "draft":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("draft"))
+			data, err := unmarshalNFormulaDraftInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaDraftInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Draft = data
+		case "inputs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inputs"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Inputs = data
+		case "shipmentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shipmentId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShipmentID = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFormulaExplainTestInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FormulaExplainTestInput, error) {
+	var it gqlmodel.FormulaExplainTestInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"draft", "testName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "draft":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("draft"))
+			data, err := unmarshalNFormulaDraftInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaDraftInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Draft = data
+		case "testName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("testName"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TestName = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFormulaTableCellsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FormulaTableCellsInput, error) {
+	var it gqlmodel.FormulaTableCellsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"needs", "whole"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "needs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("needs"))
+			data, err := unmarshalNFormulaTableNeedInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableNeedInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Needs = data
+		case "whole":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("whole"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Whole = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFormulaTableNeedInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FormulaTableNeedInput, error) {
+	var it gqlmodel.FormulaTableNeedInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"table", "keys"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "table":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("table"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Table = data
+		case "keys":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keys"))
+			data, err := unmarshalNString2ᚕstringᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Keys = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFormulaTemplateBacktestInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FormulaTemplateBacktestInput, error) {
+	var it gqlmodel.FormulaTemplateBacktestInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"source", "versionNumber", "limit"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "versionNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionNumber"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionNumber = data
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFormulaTemplatePreviewInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FormulaTemplatePreviewInput, error) {
+	var it gqlmodel.FormulaTemplatePreviewInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"source", "inputs", "shipmentId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "inputs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inputs"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Inputs = data
+		case "shipmentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shipmentId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShipmentID = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputFormulaTemplateScaffoldTestInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FormulaTemplateScaffoldTestInput, error) {
+	var it gqlmodel.FormulaTemplateScaffoldTestInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"source", "inputs", "shipmentId", "name"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "inputs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inputs"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Inputs = data
+		case "shipmentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shipmentId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShipmentID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputImportFormulaTemplatePayloadInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ImportFormulaTemplatePayloadInput, error) {
+	var it gqlmodel.ImportFormulaTemplatePayloadInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "source", "sourceTemplateId", "sourceVersionNumber"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "sourceTemplateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceTemplateId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceTemplateID = data
+		case "sourceVersionNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceVersionNumber"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceVersionNumber = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputImportFormulaTemplatesInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ImportFormulaTemplatesInput, error) {
+	var it gqlmodel.ImportFormulaTemplatesInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"exportVersion", "templates", "onConflict"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "exportVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exportVersion"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExportVersion = data
+		case "templates":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("templates"))
+			data, err := unmarshalNImportFormulaTemplatePayloadInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐImportFormulaTemplatePayloadInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Templates = data
+		case "onConflict":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onConflict"))
+			data, err := unmarshalOFormulaTemplateImportConflict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateImportConflict(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OnConflict = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRollbackFormulaVersionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RollbackFormulaVersionInput, error) {
+	var it gqlmodel.RollbackFormulaVersionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"targetVersion", "changeMessage"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "targetVersion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetVersion"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TargetVersion = data
+		case "changeMessage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("changeMessage"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChangeMessage = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputSubmitFormulaReviewInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SubmitFormulaReviewInput, error) {
+	var it gqlmodel.SubmitFormulaReviewInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"comment", "reviewerId", "reviewerNote"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "comment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Comment = data
+		case "reviewerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReviewerID = data
+		case "reviewerNote":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewerNote"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReviewerNote = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputUpdateFormulaTemplateInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateFormulaTemplateInput, error) {
+	var it gqlmodel.UpdateFormulaTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"source", "description", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNApproveFormulaTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐApproveFormulaTemplateInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ApproveFormulaTemplateInput, error) {
+	res, err := unmarshalInputApproveFormulaTemplateInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNBulkUpdateFormulaTemplateStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateFormulaTemplateStatusInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.BulkUpdateFormulaTemplateStatusInput, error) {
+	res, err := unmarshalInputBulkUpdateFormulaTemplateStatusInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCreateFormulaTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateFormulaTemplateInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CreateFormulaTemplateInput, error) {
+	res, err := unmarshalInputCreateFormulaTemplateInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -628,9 +4725,211 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNForkFormulaTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐForkFormulaTemplateInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ForkFormulaTemplateInput, error) {
+	res, err := unmarshalInputForkFormulaTemplateInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaDraftInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FormulaDraftInput, error) {
+	res, err := unmarshalInputFormulaDraftInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaDraftInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaDraftInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.FormulaDraftInput, error) {
+	res, err := unmarshalInputFormulaDraftInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaExplainInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaExplainInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FormulaExplainInput, error) {
+	res, err := unmarshalInputFormulaExplainInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaExplainTestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaExplainTestInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FormulaExplainTestInput, error) {
+	res, err := unmarshalInputFormulaExplainTestInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaTableCellsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableCellsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FormulaTableCellsInput, error) {
+	res, err := unmarshalInputFormulaTableCellsInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaTableNeedInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableNeedInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.FormulaTableNeedInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFormulaTableNeedInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableNeedInput)
+}
+
+func unmarshalNFormulaTableNeedInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableNeedInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.FormulaTableNeedInput, error) {
+	res, err := unmarshalInputFormulaTableNeedInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaTemplateBacktestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateBacktestInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FormulaTemplateBacktestInput, error) {
+	res, err := unmarshalInputFormulaTemplateBacktestInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaTemplatePreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplatePreviewInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FormulaTemplatePreviewInput, error) {
+	res, err := unmarshalInputFormulaTemplatePreviewInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaTemplateScaffoldTestInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateScaffoldTestInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FormulaTemplateScaffoldTestInput, error) {
+	res, err := unmarshalInputFormulaTemplateScaffoldTestInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (formulatemplate.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := formulatemplate.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaVersionTag2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐVersionTag(ctx context.Context, ec *gqlexec.Exec, v any) (formulatemplate.VersionTag, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := formulatemplate.VersionTag(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFormulaVersionTag2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐVersionTagᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]formulatemplate.VersionTag, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNFormulaVersionTag2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐVersionTag)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalNImportFormulaTemplatePayloadInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐImportFormulaTemplatePayloadInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ImportFormulaTemplatePayloadInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNImportFormulaTemplatePayloadInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐImportFormulaTemplatePayloadInput)
+}
+
+func unmarshalNImportFormulaTemplatePayloadInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐImportFormulaTemplatePayloadInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ImportFormulaTemplatePayloadInput, error) {
+	res, err := unmarshalInputImportFormulaTemplatePayloadInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNImportFormulaTemplatesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐImportFormulaTemplatesInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ImportFormulaTemplatesInput, error) {
+	res, err := unmarshalInputImportFormulaTemplatesInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRollbackFormulaVersionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRollbackFormulaVersionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RollbackFormulaVersionInput, error) {
+	res, err := unmarshalInputRollbackFormulaVersionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNString2string)
+}
+
+func unmarshalNSubmitFormulaReviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSubmitFormulaReviewInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SubmitFormulaReviewInput, error) {
+	res, err := unmarshalInputSubmitFormulaReviewInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNUpdateFormulaTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateFormulaTemplateInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateFormulaTemplateInput, error) {
+	res, err := unmarshalInputUpdateFormulaTemplateInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOFormulaTemplateImportConflict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateImportConflict(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.FormulaTemplateImportConflict, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(gqlmodel.FormulaTemplateImportConflict)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, v any) (map[string]any, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalMap(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAgentStarter2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentstarterᚐStarterᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentstarter.Starter) graphql.Marshaler {
+	return gqlexec.List[*agentstarter.Starter]{
+		Elem:        marshalNAgentStarter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentstarterᚐStarter,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentStarter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentstarterᚐStarter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentstarter.Starter) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentStarter", v)
+}
+
+func marshalNAny2interface(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	res := graphql.MarshalAny(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -639,6 +4938,66 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNFormulaBacktestCurrentSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestCurrentSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.FormulaBacktestCurrentSource) graphql.Marshaler {
+	return v
+}
+
+func marshalNFormulaBacktestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaBacktestResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaBacktestResult", v)
+}
+
+func marshalNFormulaBacktestShipment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestShipmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaBacktestShipment) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaBacktestShipment]{
+		Elem:        marshalNFormulaBacktestShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestShipment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaBacktestShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestShipment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaBacktestShipment) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaBacktestShipment", v)
+}
+
+func marshalNFormulaBacktestSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaBacktestSummary) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaBacktestSummary", v)
+}
+
+func marshalNFormulaExplainResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaExplainResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaExplainResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaExplainResult", v)
+}
+
+func marshalNFormulaExplainTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaExplainTestResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaExplainTestResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaExplainTestResult", v)
 }
 
 func marshalNFormulaInputDeclaration2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaInputDeclarationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaInputDeclaration) graphql.Marshaler {
@@ -657,6 +5016,14 @@ func marshalNFormulaInputDeclaration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "FormulaInputDeclaration", v)
 }
 
+func marshalNFormulaInputDescriptionsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaInputDescriptionsResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaInputDescriptionsResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaInputDescriptionsResult", v)
+}
+
 func marshalNFormulaLibraryImport2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tarifftypes.Import) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FormulaLibraryImport", &v)
 }
@@ -664,6 +5031,234 @@ func marshalNFormulaLibraryImport2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarif
 func marshalNFormulaLibraryImport2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImportᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []tarifftypes.Import) graphql.Marshaler {
 	return gqlexec.List[tarifftypes.Import]{
 		Elem:        marshalNFormulaLibraryImport2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImport,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaLibraryImport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImportᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tarifftypes.Import) graphql.Marshaler {
+	return gqlexec.List[*tarifftypes.Import]{
+		Elem:        marshalNFormulaLibraryImport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImport,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaLibraryImport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tarifftypes.Import) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaLibraryImport", v)
+}
+
+func marshalNFormulaPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaPreviewResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaPreviewResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaPreviewResult", v)
+}
+
+func marshalNFormulaReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadiness(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaReadiness) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaReadiness", v)
+}
+
+func marshalNFormulaReadinessCheck2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadinessCheckᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaReadinessCheck) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaReadinessCheck]{
+		Elem:        marshalNFormulaReadinessCheck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadinessCheck,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaReadinessCheck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadinessCheck(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaReadinessCheck) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaReadinessCheck", v)
+}
+
+func marshalNFormulaReadinessStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadinessStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.FormulaReadinessStatus) graphql.Marshaler {
+	return v
+}
+
+func marshalNFormulaReviewDecision2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐReviewDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.ReviewDecision) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNFormulaReviewDiff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewDiff(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaReviewDiff) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaReviewDiff", v)
+}
+
+func marshalNFormulaReviewNoteResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewNoteResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaReviewNoteResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaReviewNoteResult", v)
+}
+
+func marshalNFormulaReviewer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaReviewer) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaReviewer]{
+		Elem:        marshalNFormulaReviewer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewer,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaReviewer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaReviewer) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaReviewer", v)
+}
+
+func marshalNFormulaScaffoldTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaScaffoldTestResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaScaffoldTestResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaScaffoldTestResult", v)
+}
+
+func marshalNFormulaScheduledWindow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaScheduledWindowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaScheduledWindow) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaScheduledWindow]{
+		Elem:        marshalNFormulaScheduledWindow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaScheduledWindow,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaScheduledWindow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaScheduledWindow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaScheduledWindow) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaScheduledWindow", v)
+}
+
+func marshalNFormulaSourcePosition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSourcePosition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaSourcePosition) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaSourcePosition", v)
+}
+
+func marshalNFormulaSourceRange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSourceRange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaSourceRange) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaSourceRange", v)
+}
+
+func marshalNFormulaStandardTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋappᚋformulatemplateimportserviceᚐStandardTemplateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*formulatemplateimportservice.StandardTemplate) graphql.Marshaler {
+	return gqlexec.List[*formulatemplateimportservice.StandardTemplate]{
+		Elem:        marshalNFormulaStandardTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋappᚋformulatemplateimportserviceᚐStandardTemplate,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaStandardTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋappᚋformulatemplateimportserviceᚐStandardTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplateimportservice.StandardTemplate) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaStandardTemplate", v)
+}
+
+func marshalNFormulaStudioContext2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaStudioContext(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaStudioContext) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaStudioContext", v)
+}
+
+func marshalNFormulaStudioLibrary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaStudioLibraryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaStudioLibrary) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaStudioLibrary]{
+		Elem:        marshalNFormulaStudioLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaStudioLibrary,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaStudioLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaStudioLibrary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaStudioLibrary) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaStudioLibrary", v)
+}
+
+func marshalNFormulaSuggestedTest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSuggestedTestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaSuggestedTest) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaSuggestedTest]{
+		Elem:        marshalNFormulaSuggestedTest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSuggestedTest,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaSuggestedTest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSuggestedTest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaSuggestedTest) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaSuggestedTest", v)
+}
+
+func marshalNFormulaSuggestedTestsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSuggestedTestsResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaSuggestedTestsResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaSuggestedTestsResult", v)
+}
+
+func marshalNFormulaTableCells2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableCells(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaTableCells) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTableCells", v)
+}
+
+func marshalNFormulaTableCellsTable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableCellsTableᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaTableCellsTable) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaTableCellsTable]{
+		Elem:        marshalNFormulaTableCellsTable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableCellsTable,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaTableCellsTable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTableCellsTable(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaTableCellsTable) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTableCellsTable", v)
+}
+
+func marshalNFormulaTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*formulatemplate.FormulaTemplate) graphql.Marshaler {
+	return gqlexec.List[*formulatemplate.FormulaTemplate]{
+		Elem:        marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -701,6 +5296,42 @@ func marshalNFormulaTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "FormulaTemplateEdge", v)
 }
 
+func marshalNFormulaTemplateLineage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐForkLineage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.ForkLineage) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "FormulaTemplateLineage", &v)
+}
+
+func marshalNFormulaTemplateLineage2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐForkLineageᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []formulatemplate.ForkLineage) graphql.Marshaler {
+	return gqlexec.List[formulatemplate.ForkLineage]{
+		Elem:        marshalNFormulaTemplateLineage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐForkLineage,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaTemplateLineage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐForkLineage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.ForkLineage) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTemplateLineage", v)
+}
+
+func marshalNFormulaTemplateReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐReviewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*formulatemplate.Review) graphql.Marshaler {
+	return gqlexec.List[*formulatemplate.Review]{
+		Elem:        marshalNFormulaTemplateReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐReview,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaTemplateReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.Review) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTemplateReview", v)
+}
+
 func marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -721,12 +5352,140 @@ func marshalNFormulaTemplateTable2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋta
 	}.Marshal(ctx, ec, sel, v)
 }
 
+func marshalNFormulaTemplateUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐGetTemplateUsageResponse(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplateports.GetTemplateUsageResponse) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTemplateUsage", v)
+}
+
+func marshalNFormulaTemplateUsageCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐTemplateUsageCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplateports.TemplateUsageCount) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "FormulaTemplateUsageCount", &v)
+}
+
+func marshalNFormulaTemplateUsageCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐTemplateUsageCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []formulatemplateports.TemplateUsageCount) graphql.Marshaler {
+	return gqlexec.List[formulatemplateports.TemplateUsageCount]{
+		Elem:        marshalNFormulaTemplateUsageCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐTemplateUsageCount,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*formulatemplate.FormulaTemplateVersion) graphql.Marshaler {
+	return gqlexec.List[*formulatemplate.FormulaTemplateVersion]{
+		Elem:        marshalNFormulaTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersion,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.FormulaTemplateVersion) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTemplateVersion", v)
+}
+
+func marshalNFormulaTemplateVersionsResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTemplateVersionsResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaTemplateVersionsResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTemplateVersionsResult", v)
+}
+
+func marshalNFormulaTestVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTestVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.FormulaTestVerdict) graphql.Marshaler {
+	return v
+}
+
+func marshalNFormulaTraceNote2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTraceNoteᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaTraceNote) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaTraceNote]{
+		Elem:        marshalNFormulaTraceNote2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTraceNote,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaTraceNote2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaTraceNote(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaTraceNote) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTraceNote", v)
+}
+
+func marshalNFormulaUnreachedRegion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaUnreachedRegionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaUnreachedRegion) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaUnreachedRegion]{
+		Elem:        marshalNFormulaUnreachedRegion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaUnreachedRegion,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaUnreachedRegion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaUnreachedRegion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaUnreachedRegion) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaUnreachedRegion", v)
+}
+
+func marshalNFormulaVersionDiff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaVersionDiff(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaVersionDiff) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaVersionDiff", v)
+}
+
+func marshalNFormulaVersionTag2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐVersionTag(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.VersionTag) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNFormulaVersionTag2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐVersionTagᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []formulatemplate.VersionTag) graphql.Marshaler {
+	return gqlexec.List[formulatemplate.VersionTag]{
+		Elem:        marshalNFormulaVersionTag2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐVersionTag,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNImportFormulaTemplatesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐImportFormulaTemplatesResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ImportFormulaTemplatesResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ImportFormulaTemplatesResult", v)
+}
+
+func marshalNInstallStandardFormulaTemplatesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐInstallStandardFormulaTemplatesResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.InstallStandardFormulaTemplatesResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InstallStandardFormulaTemplatesResult", v)
 }
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
@@ -753,6 +5512,42 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNPageAssistantAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAssistantAgent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageAssistantAgent) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageAssistantAgent", v)
+}
+
+func marshalNPageAssistantConversation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAssistantConversation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageAssistantConversation) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageAssistantConversation", v)
+}
+
+func marshalNPageAssistantThread2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAssistantThread(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageAssistantThread) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageAssistantThread", v)
+}
+
 func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -769,11 +5564,36 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalOAgentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagenttemplateᚐTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agenttemplate.Template) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 
@@ -792,11 +5612,46 @@ func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
+func marshalOFormulaBacktestSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaBacktestSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaBacktestSummary) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaBacktestSummary", v)
+}
+
+func marshalOFormulaCoverage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaCoverage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaCoverage) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaCoverage", v)
+}
+
 func marshalOFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulalibrary.FormulaLibrary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FormulaLibrary", v)
+}
+
+func marshalOFormulaPreviewError2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaPreviewError(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaPreviewError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaPreviewError", v)
+}
+
+func marshalOFormulaPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaPreviewResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaPreviewResult) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaPreviewResult", v)
+}
+
+func marshalOFormulaSourceRange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaSourceRange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaSourceRange) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaSourceRange", v)
 }
 
 func marshalOFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.FormulaTemplate) graphql.Marshaler {
@@ -806,11 +5661,33 @@ func marshalOFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return ec.MarshalType(ctx, sel, "FormulaTemplate", v)
 }
 
+func marshalOFormulaTemplateBillingVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐBillingVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.BillingVersion) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTemplateBillingVersion", v)
+}
+
+func marshalOFormulaTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplateVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.FormulaTemplateVersion) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaTemplateVersion", v)
+}
+
 func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalID(*v)
 	return res
 }
 
@@ -845,10 +5722,41 @@ func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "Organization", v)
 }
 
+func marshalOString2ᚕᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v [][]string) graphql.Marshaler {
+	return gqlexec.List[[]string]{
+		Elem:        marshalNString2ᚕstringᚄ,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
 func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "User", v)
 }

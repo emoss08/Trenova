@@ -22,7 +22,8 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
   }),
   usage: (templateId: string) => ({
     queryKey: [templateId],
-    queryFn: async () => apiService.formulaTemplateService.getUsage(templateId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.getUsage(templateId, { signal }),
   }),
   /** The preview's rating of a source with sample inputs or a real shipment. */
   preview: (request: FormulaPreviewRequest) => ({
@@ -30,43 +31,43 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       apiService.formulaTemplateService.preview(request, { signal }),
   }),
-  /** What the browser checks a tariff against (GET /formula-templates/context). */
+  /** What the browser checks a tariff against (the `formulaTemplateStudioContext` query). */
   context: {
     queryKey: null,
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       apiService.formulaTemplateService.getContext({ signal }),
   },
   /**
-   * The rate table cells the browser's tests have loaded (POST /formula-templates/context/cells),
+   * The rate table cells the browser's tests have loaded (the `formulaTemplateTableCells` query),
    * kept per rate table stamp; written by `useTariffTableCells`, never fetched.
    */
   contextCells: (stamp: string) => ({ queryKey: [stamp] }),
   versionDiff: (templateId: string, fromVersion: number, toVersion: number) => ({
     queryKey: [templateId, fromVersion, toVersion],
-    queryFn: async () =>
-      apiService.formulaTemplateService.compareVersions(templateId, fromVersion, toVersion),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.compareVersions(templateId, fromVersion, toVersion, {
+        signal,
+      }),
   }),
   versions: (templateId: string, limit?: number, offset?: number) => ({
     queryKey: [templateId, limit, offset],
-    queryFn: async () =>
-      apiService.formulaTemplateService.listVersions(templateId, {
-        limit,
-        offset,
-      }),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.listVersions(templateId, { limit, offset }, { signal }),
   }),
   lineage: (templateId: string) => ({
     queryKey: [templateId],
-    queryFn: async () => {
-      return apiService.formulaTemplateService.getLineage(templateId);
-    },
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.getLineage(templateId, { signal }),
   }),
   scheduledVersions: (templateId: string) => ({
     queryKey: [templateId],
-    queryFn: async () => apiService.formulaTemplateService.listScheduledVersions(templateId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.listScheduledVersions(templateId, { signal }),
   }),
   approvalImpact: (templateId: string) => ({
     queryKey: [templateId],
-    queryFn: async () => apiService.formulaTemplateService.approvalImpact(templateId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.approvalImpact(templateId, undefined, { signal }),
   }),
   reviewers: (templateId: string) => ({
     queryKey: [templateId],
@@ -75,19 +76,23 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
   }),
   readiness: (templateId: string) => ({
     queryKey: [templateId],
-    queryFn: async () => apiService.formulaTemplateService.readiness(templateId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.readiness(templateId, { signal }),
   }),
   standards: {
     queryKey: null,
-    queryFn: async () => apiService.formulaTemplateService.listStandards(),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.listStandards({ signal }),
   },
   reviews: (templateId: string) => ({
     queryKey: [templateId],
-    queryFn: async () => apiService.formulaTemplateService.listReviews(templateId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.listReviews(templateId, { signal }),
   }),
   reviewDiff: (templateId: string) => ({
     queryKey: [templateId],
-    queryFn: async () => apiService.formulaTemplateService.reviewDiff(templateId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.reviewDiff(templateId, { signal }),
   }),
 });
 

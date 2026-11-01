@@ -108,7 +108,7 @@ describe("tariffReadiness coverage row", () => {
 });
 
 describe("withCoverageRegions", () => {
-  // The server's readiness (`GET /formula-templates/:id/readiness`): a `coverage` check, and the
+  // The server's readiness (the `formulaTemplateReadiness` query): a `coverage` check, and the
   // response's `coverage` with each unreached region placed on its line.
   const coverage = {
     reached: 10,

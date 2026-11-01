@@ -1713,6 +1713,12 @@ export type ApproveAgentMemorySuggestionInput = {
   version: number;
 };
 
+export type ApproveFormulaTemplateInput = {
+  comment?: string | null | undefined;
+  /** When the approved content starts to bill; now when null. Until then the previously approved content keeps billing. */
+  effectiveFrom?: number | null | undefined;
+};
+
 export type ArchiveWorkerCredentialInput = {
   id: string | number;
   reason?: string | null | undefined;
@@ -2071,6 +2077,13 @@ export type BulkUpdateEquipmentTypeStatusInput = {
 export type BulkUpdateFleetCodeStatusInput = {
   fleetCodeIds: Array<string | number>;
   status: EntityStatus;
+};
+
+export type BulkUpdateFormulaTemplateStatusInput = {
+  /** Sent after the person has seen what uses the templates and still means to archive them. */
+  confirmInUse?: boolean | null | undefined;
+  status: FormulaTemplateStatus;
+  templateIds: Array<string | number>;
 };
 
 export type BulkUpdateHazardousMaterialStatusInput = {
@@ -2981,6 +2994,20 @@ export type CreateFactoringRemittanceInput = {
   factoringCompanyId: string | number;
   /** The day the factor sent the report. */
   remittedOn?: number | null | undefined;
+};
+
+export type CreateFormulaLibraryInput = {
+  description?: string | null | undefined;
+  /** The module name: templates import the library as org.<name>. It must match the source's header. */
+  name: string;
+  source: string;
+};
+
+export type CreateFormulaTemplateInput = {
+  description?: string | null | undefined;
+  metadata?: unknown;
+  /** The tariff's source; the name, inputs, imports and test count are derived from it. */
+  source: string;
 };
 
 export type CreateFuelPurchaseImportInput = {
@@ -4812,6 +4839,47 @@ export type ForkCannedReportInput = {
   name?: string | null | undefined;
 };
 
+export type ForkFormulaTemplateInput = {
+  changeMessage?: string | null | undefined;
+  newName: string;
+  /** The version to fork; the current content when null. */
+  sourceVersion?: number | null | undefined;
+};
+
+/** Where a backtest's current amount came from. */
+export type FormulaBacktestCurrentSource =
+  /** The amount billed on the shipment. */
+  | 'Billed'
+  /** The shipment's billed content rated again today. */
+  | 'Recomputed';
+
+/** The file as it is in the editor, saved or not. */
+export type FormulaDraftInput = {
+  description?: string | null | undefined;
+  name?: string | null | undefined;
+  source: string;
+  templateId?: string | number | null | undefined;
+};
+
+export type FormulaExplainInput = {
+  draft: FormulaDraftInput;
+  /** The preview's sample input values by input name, as wire values. */
+  inputs?: unknown;
+  /** A saved shipment to price instead of the sample record. */
+  shipmentId?: string | number | null | undefined;
+};
+
+export type FormulaExplainTestInput = {
+  draft: FormulaDraftInput;
+  testName: string;
+};
+
+/** The outcome of one readiness check. */
+export type FormulaReadinessStatus =
+  | 'fail'
+  | 'pass'
+  | 'warn';
+
 export type FormulaReviewDecision =
   | 'Approved'
   | 'ChangesRequested'
@@ -4819,11 +4887,67 @@ export type FormulaReviewDecision =
   | 'Rejected'
   | 'Submitted';
 
+export type FormulaTableCellsInput = {
+  needs: Array<FormulaTableNeedInput>;
+  /** Load the tables the needs name, whole. */
+  whole?: boolean | null | undefined;
+};
+
+export type FormulaTableNeedInput = {
+  keys: Array<string>;
+  table: string;
+};
+
+/** Exactly one of source or versionNumber is the candidate. */
+export type FormulaTemplateBacktestInput = {
+  /** How many recent shipments to rate, at most 500. */
+  limit?: number | null | undefined;
+  source?: string | null | undefined;
+  versionNumber?: number | null | undefined;
+};
+
+/** What an import does with a template whose name the organization already uses. */
+export type FormulaTemplateImportConflict =
+  /** Refuse the whole import. */
+  | 'Reject'
+  /** Import it under a free name. */
+  | 'Rename';
+
+export type FormulaTemplatePreviewInput = {
+  /** Sample input values by input name, as wire values. */
+  inputs?: unknown;
+  /** A shipment to rate instead of the sample record. */
+  shipmentId?: string | number | null | undefined;
+  source: string;
+};
+
+export type FormulaTemplateScaffoldTestInput = {
+  inputs?: unknown;
+  name: string;
+  /** The shipment the test is written from. */
+  shipmentId: string | number;
+  source: string;
+};
+
 export type FormulaTemplateStatus =
   | 'Active'
   | 'Draft'
   | 'InReview'
   | 'Inactive';
+
+/** Whether a failing test shows a bug in the tariff or a wrong expectation. */
+export type FormulaTestVerdict =
+  | 'bug'
+  | 'intended'
+  | 'unclear';
+
+/** A label a person gives a template version. */
+export type FormulaVersionTag =
+  | 'Deprecated'
+  | 'Draft'
+  | 'Production'
+  | 'Stable'
+  | 'Testing';
 
 export type FreightClass =
   | 'Class50'
@@ -5474,6 +5598,20 @@ export type IgnoreAccountingInboundChangeInput = {
   id: string | number;
   /** Why it is not applied, for example that it was entered in Trenova by hand. */
   note: string;
+};
+
+export type ImportFormulaTemplatePayloadInput = {
+  description?: string | null | undefined;
+  name: string;
+  source: string;
+  sourceTemplateId?: string | number | null | undefined;
+  sourceVersionNumber?: number | null | undefined;
+};
+
+export type ImportFormulaTemplatesInput = {
+  exportVersion: string;
+  onConflict?: FormulaTemplateImportConflict | null | undefined;
+  templates: Array<ImportFormulaTemplatePayloadInput>;
 };
 
 export type ImportSourcedCarrierInput = {
@@ -7309,6 +7447,11 @@ export type RoleResourceGuideInput = {
   resources: Array<string>;
 };
 
+export type RollbackFormulaVersionInput = {
+  changeMessage?: string | null | undefined;
+  targetVersion: number;
+};
+
 /**
  * What one worker is doing on one day. Anything above Scheduled overrides the
  * pattern, and the strongest override wins, so a driver on approved leave never
@@ -8352,6 +8495,14 @@ export type StopType =
   | 'SplitDelivery'
   | 'SplitPickup';
 
+export type SubmitFormulaReviewInput = {
+  comment?: string | null | undefined;
+  /** Who should review; anyone who may approve when null. */
+  reviewerId?: string | number | null | undefined;
+  /** The note the reviewer reads first. */
+  reviewerNote?: string | null | undefined;
+};
+
 export type SubmitMyExpenseInput = {
   amountMinor: number;
   description: string;
@@ -8977,6 +9128,19 @@ export type UpdateFactoringRemittanceLineInput = {
   reason?: string | null | undefined;
   remittanceId: string | number;
   /** The remittance's version. */
+  version: number;
+};
+
+export type UpdateFormulaLibraryInput = {
+  description?: string | null | undefined;
+  name: string;
+  source: string;
+  version: number;
+};
+
+export type UpdateFormulaTemplateInput = {
+  description?: string | null | undefined;
+  source: string;
   version: number;
 };
 
@@ -15383,6 +15547,123 @@ export type FormulaLibraryQueryVariables = Exact<{
 
 export type FormulaLibraryQuery = { formulaLibrary: { id: string, businessUnitId: string, organizationId: string, name: string, path: string, description: string, source: string, testCount: number, status: FormulaTemplateStatus, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, version: number, sourceLibraryId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } | null, formulaLibraryVersions: Array<{ id: string, libraryId: string, versionNumber: number, name: string, path: string, description: string, source: string, testCount: number, status: FormulaTemplateStatus, changeMessage: string, createdById: string, createdAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }>, createdBy: { id: string, name: string, username: string, profilePicUrl: string } | null }>, formulaLibraryReviews: Array<{ id: string, libraryId: string, round: number, decision: FormulaReviewDecision, actorId: string | null, comment: string, baseVersionNumber: number, createdAt: number, requestedReviewerId: string | null, reviewerNote: string, actor: { id: string, name: string, username: string, profilePicUrl: string } | null, requestedReviewer: { id: string, name: string, username: string, profilePicUrl: string } | null }> };
 
+export type FormulaLibraryWriteFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, path: string, description: string, source: string, testCount: number, status: FormulaTemplateStatus, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, version: number, sourceLibraryId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } & { ' $fragmentName'?: 'FormulaLibraryWriteFieldsFragment' };
+
+export type FormulaLibraryVersionDiffQueryVariables = Exact<{
+  libraryId: string | number;
+  fromVersion: number;
+  toVersion: number;
+}>;
+
+
+export type FormulaLibraryVersionDiffQuery = { formulaLibraryVersionDiff: { fromVersion: number, toVersion: number, changes: unknown, changeCount: number } };
+
+export type FormulaLibraryReadinessQueryVariables = Exact<{
+  libraryId: string | number;
+}>;
+
+
+export type FormulaLibraryReadinessQuery = { formulaLibraryReadiness: { ' $fragmentRefs'?: { 'FormulaReadinessFieldsFragment': FormulaReadinessFieldsFragment } } };
+
+export type FormulaLibraryReviewDiffQueryVariables = Exact<{
+  libraryId: string | number;
+}>;
+
+
+export type FormulaLibraryReviewDiffQuery = { formulaLibraryReviewDiff: { ' $fragmentRefs'?: { 'FormulaReviewDiffFieldsFragment': FormulaReviewDiffFieldsFragment } } };
+
+export type FormulaLibraryReviewersQueryVariables = Exact<{
+  libraryId: string | number;
+}>;
+
+
+export type FormulaLibraryReviewersQuery = { formulaLibraryReviewers: Array<{ ' $fragmentRefs'?: { 'FormulaReviewerFieldsFragment': FormulaReviewerFieldsFragment } }> };
+
+export type FormulaLibraryUsagesQueryVariables = Exact<{
+  libraryId: string | number;
+  versionNumber?: number | null | undefined;
+}>;
+
+
+export type FormulaLibraryUsagesQuery = { formulaLibraryUsages: Array<{ templateId: string, templateName: string, templateStatus: FormulaTemplateStatus, templateVersion: number, versionStatus: FormulaTemplateStatus, libraryVersionNumber: number }> };
+
+export type CreateFormulaLibraryMutationVariables = Exact<{
+  input: CreateFormulaLibraryInput;
+}>;
+
+
+export type CreateFormulaLibraryMutation = { createFormulaLibrary: { ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } } };
+
+export type UpdateFormulaLibraryMutationVariables = Exact<{
+  id: string | number;
+  input: UpdateFormulaLibraryInput;
+}>;
+
+
+export type UpdateFormulaLibraryMutation = { updateFormulaLibrary: { ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } } };
+
+export type DuplicateFormulaLibrariesMutationVariables = Exact<{
+  libraryIds: Array<string | number> | string | number;
+}>;
+
+
+export type DuplicateFormulaLibrariesMutation = { duplicateFormulaLibraries: Array<{ ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } }> };
+
+export type RollbackFormulaLibraryMutationVariables = Exact<{
+  id: string | number;
+  input: RollbackFormulaVersionInput;
+}>;
+
+
+export type RollbackFormulaLibraryMutation = { rollbackFormulaLibrary: { ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } } };
+
+export type ArchiveFormulaLibraryMutationVariables = Exact<{
+  id: string | number;
+  confirmInUse: boolean;
+}>;
+
+
+export type ArchiveFormulaLibraryMutation = { archiveFormulaLibrary: { ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } } };
+
+export type SubmitFormulaLibraryMutationVariables = Exact<{
+  id: string | number;
+  input: SubmitFormulaReviewInput;
+}>;
+
+
+export type SubmitFormulaLibraryMutation = { submitFormulaLibrary: { ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } } };
+
+export type ApproveFormulaLibraryMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type ApproveFormulaLibraryMutation = { approveFormulaLibrary: { ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } } };
+
+export type RejectFormulaLibraryMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type RejectFormulaLibraryMutation = { rejectFormulaLibrary: { ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } } };
+
+export type RequestFormulaLibraryChangesMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type RequestFormulaLibraryChangesMutation = { requestFormulaLibraryChanges: { ' $fragmentRefs'?: { 'FormulaLibraryWriteFieldsFragment': FormulaLibraryWriteFieldsFragment } } };
+
+export type OpenFormulaLibraryAssistantThreadMutationVariables = Exact<{
+  libraryId?: string | number | null | undefined;
+}>;
+
+
+export type OpenFormulaLibraryAssistantThreadMutation = { openFormulaLibraryAssistantThread: { ' $fragmentRefs'?: { 'PageAssistantThreadFieldsFragment': PageAssistantThreadFieldsFragment } } };
+
 export type FormulaLibraryTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, path: string, description: string, status: FormulaTemplateStatus, testCount: number, version: number, currentVersionNumber: number, approvedAt: number | null, createdAt: number, updatedAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } & { ' $fragmentName'?: 'FormulaLibraryTableRowFieldsFragment' };
 
 export type FormulaLibraryTableQueryVariables = Exact<{
@@ -15407,6 +15688,321 @@ export type DeskFormulaTemplateCardQueryVariables = Exact<{
 
 
 export type DeskFormulaTemplateCardQuery = { formulaTemplate: { id: string, name: string, description: string, source: string, testCount: number, status: FormulaTemplateStatus, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, usageCount: number, createdAt: number, updatedAt: number, inputs: Array<{ name: string, doc: string, type: string, descriptor: unknown, required: boolean, default: unknown }>, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } | null };
+
+export type FormulaInputDeclarationFieldsFragment = { name: string, doc: string, type: string, descriptor: unknown, required: boolean, default: unknown, hasDefault: boolean, constraint: unknown } & { ' $fragmentName'?: 'FormulaInputDeclarationFieldsFragment' };
+
+export type FormulaTemplateRecordFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, source: string, status: FormulaTemplateStatus, testCount: number, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, usageCount: number, inputs: Array<{ ' $fragmentRefs'?: { 'FormulaInputDeclarationFieldsFragment': FormulaInputDeclarationFieldsFragment } }>, imports: Array<{ path: string, libraryId: string, versionNumber: number }>, tables: Array<{ code: string, rateMatrixId: string, versionNumber: number }> } & { ' $fragmentName'?: 'FormulaTemplateRecordFieldsFragment' };
+
+export type FormulaTemplateVersionFieldsFragment = { id: string, templateId: string, organizationId: string, businessUnitId: string, versionNumber: number, name: string, description: string, source: string, status: FormulaTemplateStatus, testCount: number, effectiveFrom: number | null, changeMessage: string, changeSummary: unknown, tags: Array<FormulaVersionTag>, createdById: string, createdAt: number, inputs: Array<{ ' $fragmentRefs'?: { 'FormulaInputDeclarationFieldsFragment': FormulaInputDeclarationFieldsFragment } }>, imports: Array<{ path: string, libraryId: string, versionNumber: number }>, tables: Array<{ code: string, rateMatrixId: string, versionNumber: number }>, createdBy: { id: string, name: string, username: string, profilePicUrl: string } | null } & { ' $fragmentName'?: 'FormulaTemplateVersionFieldsFragment' };
+
+export type FormulaTemplateRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FormulaTemplateRecordQuery = { formulaTemplate: (
+    { billing: { versionNumber: number, effectiveFrom: number, pending: boolean } | null }
+    & { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } }
+  ) | null };
+
+export type FormulaTemplateRecentQueryVariables = Exact<{
+  first: number;
+}>;
+
+
+export type FormulaTemplateRecentQuery = { formulaTemplates: { edges: Array<{ node: { id: string, name: string, description: string, source: string, status: FormulaTemplateStatus } }> } };
+
+export type FormulaTemplateDeclaredInputsQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FormulaTemplateDeclaredInputsQuery = { formulaTemplate: { id: string, inputs: Array<{ ' $fragmentRefs'?: { 'FormulaInputDeclarationFieldsFragment': FormulaInputDeclarationFieldsFragment } }>, billing: { versionNumber: number, effectiveFrom: number, pending: boolean } | null } | null };
+
+export type FormulaTemplateVersionInputsQueryVariables = Exact<{
+  templateId: string | number;
+  versionNumber: number;
+}>;
+
+
+export type FormulaTemplateVersionInputsQuery = { formulaTemplateVersion: { id: string, inputs: Array<{ ' $fragmentRefs'?: { 'FormulaInputDeclarationFieldsFragment': FormulaInputDeclarationFieldsFragment } }> } | null };
+
+export type FormulaTemplateUsageQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+
+export type FormulaTemplateUsageQuery = { formulaTemplateUsage: { inUse: boolean, usages: Array<{ type: string, count: number }> } };
+
+export type FormulaTemplateVersionsQueryVariables = Exact<{
+  templateId: string | number;
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type FormulaTemplateVersionsQuery = { formulaTemplateVersions: { totalCount: number, totalCountExact: boolean, results: Array<{ ' $fragmentRefs'?: { 'FormulaTemplateVersionFieldsFragment': FormulaTemplateVersionFieldsFragment } }> } };
+
+export type FormulaTemplateScheduledVersionsQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+
+export type FormulaTemplateScheduledVersionsQuery = { formulaTemplateScheduledVersions: Array<{ ' $fragmentRefs'?: { 'FormulaTemplateVersionFieldsFragment': FormulaTemplateVersionFieldsFragment } }> };
+
+export type FormulaTemplateVersionDiffQueryVariables = Exact<{
+  templateId: string | number;
+  fromVersion: number;
+  toVersion: number;
+}>;
+
+
+export type FormulaTemplateVersionDiffQuery = { formulaTemplateVersionDiff: { fromVersion: number, toVersion: number, changes: unknown, changeCount: number } };
+
+export type FormulaTemplateLineageQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+
+export type FormulaTemplateLineageQuery = { formulaTemplateLineage: { templateId: string, templateName: string, sourceTemplateId: string | null, sourceVersion: number | null, forkedTemplates: Array<{ templateId: string, templateName: string, sourceTemplateId: string | null, sourceVersion: number | null }> } };
+
+export type FormulaTemplateStandardsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type FormulaTemplateStandardsQuery = { formulaTemplateStandards: Array<{ name: string, description: string, source: string }> };
+
+export type CreateFormulaTemplateMutationVariables = Exact<{
+  input: CreateFormulaTemplateInput;
+}>;
+
+
+export type CreateFormulaTemplateMutation = { createFormulaTemplate: { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } } };
+
+export type UpdateFormulaTemplateMutationVariables = Exact<{
+  id: string | number;
+  input: UpdateFormulaTemplateInput;
+}>;
+
+
+export type UpdateFormulaTemplateMutation = { updateFormulaTemplate: { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } } };
+
+export type DuplicateFormulaTemplatesMutationVariables = Exact<{
+  templateIds: Array<string | number> | string | number;
+}>;
+
+
+export type DuplicateFormulaTemplatesMutation = { duplicateFormulaTemplates: Array<{ ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } }> };
+
+export type BulkUpdateFormulaTemplateStatusMutationVariables = Exact<{
+  input: BulkUpdateFormulaTemplateStatusInput;
+}>;
+
+
+export type BulkUpdateFormulaTemplateStatusMutation = { bulkUpdateFormulaTemplateStatus: Array<{ ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } }> };
+
+export type ImportFormulaTemplatesMutationVariables = Exact<{
+  input: ImportFormulaTemplatesInput;
+}>;
+
+
+export type ImportFormulaTemplatesMutation = { importFormulaTemplates: { renamed: unknown, created: Array<{ ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } }> } };
+
+export type InstallStandardFormulaTemplatesMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InstallStandardFormulaTemplatesMutation = { installStandardFormulaTemplates: { skipped: Array<string>, installed: Array<{ ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } }> } };
+
+export type RollbackFormulaTemplateMutationVariables = Exact<{
+  id: string | number;
+  input: RollbackFormulaVersionInput;
+}>;
+
+
+export type RollbackFormulaTemplateMutation = { rollbackFormulaTemplate: { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } } };
+
+export type ForkFormulaTemplateMutationVariables = Exact<{
+  id: string | number;
+  input: ForkFormulaTemplateInput;
+}>;
+
+
+export type ForkFormulaTemplateMutation = { forkFormulaTemplate: { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } } };
+
+export type UpdateFormulaTemplateVersionTagsMutationVariables = Exact<{
+  templateId: string | number;
+  versionNumber: number;
+  tags: Array<FormulaVersionTag> | FormulaVersionTag;
+}>;
+
+
+export type UpdateFormulaTemplateVersionTagsMutation = { updateFormulaTemplateVersionTags: { ' $fragmentRefs'?: { 'FormulaTemplateVersionFieldsFragment': FormulaTemplateVersionFieldsFragment } } };
+
+export type UpdateFormulaTemplateVersionEffectiveDateMutationVariables = Exact<{
+  templateId: string | number;
+  versionNumber: number;
+  effectiveFrom?: number | null | undefined;
+}>;
+
+
+export type UpdateFormulaTemplateVersionEffectiveDateMutation = { updateFormulaTemplateVersionEffectiveDate: { ' $fragmentRefs'?: { 'FormulaTemplateVersionFieldsFragment': FormulaTemplateVersionFieldsFragment } } };
+
+export type FormulaReviewerFieldsFragment = { id: string, name: string, username: string, profilePicUrl: string | null } & { ' $fragmentName'?: 'FormulaReviewerFieldsFragment' };
+
+export type FormulaReadinessFieldsFragment = { canSubmit: boolean, canApprove: boolean, testTotal: number, testPassed: number, testFailing: Array<string>, checks: Array<{ key: string, label: string, status: FormulaReadinessStatus, detail: string }>, coverage: { reached: number, total: number, more: number, unreached: Array<{ kind: string, excerpt: string, range: { from: number, to: number }, at: { line: number, column: number } }> } | null, pendingSchedules: Array<{ versionNumber: number, effectiveFrom: number }> } & { ' $fragmentName'?: 'FormulaReadinessFieldsFragment' };
+
+export type FormulaReviewDiffFieldsFragment = { hasApprovedBase: boolean, baseVersion: number, currentVersion: number, baseSource: string, currentSource: string, changes: unknown, changeCount: number, baseImports: Array<{ path: string, libraryId: string, versionNumber: number }>, currentImports: Array<{ path: string, libraryId: string, versionNumber: number }>, pendingSchedules: Array<{ versionNumber: number, effectiveFrom: number }> } & { ' $fragmentName'?: 'FormulaReviewDiffFieldsFragment' };
+
+export type FormulaBacktestSummaryFieldsFragment = { shipmentCount: number, evaluatedCount: number, changedCount: number, increasedCount: number, decreasedCount: number, errorCount: number, currentErrorCount: number, candidateErrorCount: number, refusedCount: number, adjustedCount: number, currentTotal: string, candidateTotal: string, totalDelta: string, totalDeltaPct: string, maxIncrease: string, maxDecrease: string } & { ' $fragmentName'?: 'FormulaBacktestSummaryFieldsFragment' };
+
+export type FormulaBacktestResultFieldsFragment = { truncated: boolean, results: Array<{ shipmentId: string, proNumber: string, currentSource: FormulaBacktestCurrentSource, currentAmount: string, candidateAmount: string, delta: string, deltaPct: string, currentError: string | null, candidateError: string | null, candidateRefused: boolean, adjusted: boolean }>, summary: { ' $fragmentRefs'?: { 'FormulaBacktestSummaryFieldsFragment': FormulaBacktestSummaryFieldsFragment } } } & { ' $fragmentName'?: 'FormulaBacktestResultFieldsFragment' };
+
+export type PageAssistantThreadFieldsFragment = { thread: { id: string, businessUnitId: string, organizationId: string, userId: string, agentDefinitionId: string, title: string, status: string, lastMessageAt: number, lastReadAt: number, preferredProviderId: string | null, origin: string, pinned: boolean, subjectType: string, subjectId: string | null, canContinue: boolean, cannotContinueReason: string | null, taintedAt: number | null, version: number, createdAt: number, updatedAt: number }, agent: { id: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, systemKey: string, toolNames: Array<string>, starters: Array<{ label: string, prompt: string }> } } & { ' $fragmentName'?: 'PageAssistantThreadFieldsFragment' };
+
+export type FormulaTemplateReviewsQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+
+export type FormulaTemplateReviewsQuery = { formulaTemplateReviews: Array<{ id: string, templateId: string, round: number, decision: FormulaReviewDecision, actorId: string | null, comment: string, baseVersionNumber: number, createdAt: number, requestedReviewerId: string | null, reviewerNote: string, actor: { id: string, name: string, username: string, profilePicUrl: string } | null, requestedReviewer: { id: string, name: string, username: string, profilePicUrl: string } | null }> };
+
+export type FormulaTemplateReviewersQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+
+export type FormulaTemplateReviewersQuery = { formulaTemplateReviewers: Array<{ ' $fragmentRefs'?: { 'FormulaReviewerFieldsFragment': FormulaReviewerFieldsFragment } }> };
+
+export type FormulaTemplateReadinessQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+
+export type FormulaTemplateReadinessQuery = { formulaTemplateReadiness: { ' $fragmentRefs'?: { 'FormulaReadinessFieldsFragment': FormulaReadinessFieldsFragment } } };
+
+export type FormulaTemplateReviewDiffQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+
+export type FormulaTemplateReviewDiffQuery = { formulaTemplateReviewDiff: { ' $fragmentRefs'?: { 'FormulaReviewDiffFieldsFragment': FormulaReviewDiffFieldsFragment } } };
+
+export type FormulaTemplateBacktestQueryVariables = Exact<{
+  templateId: string | number;
+  input: FormulaTemplateBacktestInput;
+}>;
+
+
+export type FormulaTemplateBacktestQuery = { formulaTemplateBacktest: { ' $fragmentRefs'?: { 'FormulaBacktestResultFieldsFragment': FormulaBacktestResultFieldsFragment } } };
+
+export type FormulaTemplateApprovalImpactQueryVariables = Exact<{
+  templateId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type FormulaTemplateApprovalImpactQuery = { formulaTemplateApprovalImpact: { ' $fragmentRefs'?: { 'FormulaBacktestResultFieldsFragment': FormulaBacktestResultFieldsFragment } } };
+
+export type FormulaTemplateReviewNoteQueryVariables = Exact<{
+  templateId: string | number;
+}>;
+
+
+export type FormulaTemplateReviewNoteQuery = { formulaTemplateReviewNote: { note: string, generated: boolean, backtest: { ' $fragmentRefs'?: { 'FormulaBacktestSummaryFieldsFragment': FormulaBacktestSummaryFieldsFragment } } | null } };
+
+export type SubmitFormulaTemplateMutationVariables = Exact<{
+  id: string | number;
+  input: SubmitFormulaReviewInput;
+}>;
+
+
+export type SubmitFormulaTemplateMutation = { submitFormulaTemplate: { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } } };
+
+export type ApproveFormulaTemplateMutationVariables = Exact<{
+  id: string | number;
+  input: ApproveFormulaTemplateInput;
+}>;
+
+
+export type ApproveFormulaTemplateMutation = { approveFormulaTemplate: { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } } };
+
+export type RejectFormulaTemplateMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type RejectFormulaTemplateMutation = { rejectFormulaTemplate: { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } } };
+
+export type RequestFormulaTemplateChangesMutationVariables = Exact<{
+  id: string | number;
+  comment?: string | null | undefined;
+}>;
+
+
+export type RequestFormulaTemplateChangesMutation = { requestFormulaTemplateChanges: { ' $fragmentRefs'?: { 'FormulaTemplateRecordFieldsFragment': FormulaTemplateRecordFieldsFragment } } };
+
+export type OpenFormulaTemplateAssistantThreadMutationVariables = Exact<{
+  templateId?: string | number | null | undefined;
+}>;
+
+
+export type OpenFormulaTemplateAssistantThreadMutation = { openFormulaTemplateAssistantThread: { ' $fragmentRefs'?: { 'PageAssistantThreadFieldsFragment': PageAssistantThreadFieldsFragment } } };
+
+export type FormulaPreviewResultFieldsFragment = { valid: boolean, diagnostics: unknown, bill: unknown, refusal: unknown, trace: unknown, lookups: unknown, choices: unknown, tests: unknown, error: { code: string, message: string, range: { from: number, to: number } | null } | null } & { ' $fragmentName'?: 'FormulaPreviewResultFieldsFragment' };
+
+export type FormulaTemplateStudioContextQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type FormulaTemplateStudioContextQuery = { formulaTemplateStudioContext: { context: unknown, tablesStamp: string, libraries: Array<{ path: string, libraryId: string, name: string, description: string, versionNumber: number }> } };
+
+export type FormulaTemplateTableCellsQueryVariables = Exact<{
+  input: FormulaTableCellsInput;
+}>;
+
+
+export type FormulaTemplateTableCellsQuery = { formulaTemplateTableCells: { stamp: string, tables: Array<{ code: string, cells: unknown, loaded: Array<Array<string>> | null }> } };
+
+export type FormulaTemplatePreviewQueryVariables = Exact<{
+  input: FormulaTemplatePreviewInput;
+}>;
+
+
+export type FormulaTemplatePreviewQuery = { formulaTemplatePreview: { ' $fragmentRefs'?: { 'FormulaPreviewResultFieldsFragment': FormulaPreviewResultFieldsFragment } } };
+
+export type FormulaTemplateScaffoldTestQueryVariables = Exact<{
+  input: FormulaTemplateScaffoldTestInput;
+}>;
+
+
+export type FormulaTemplateScaffoldTestQuery = { formulaTemplateScaffoldTest: { test: string } };
+
+export type ExplainFormulaTemplateQueryVariables = Exact<{
+  input: FormulaExplainInput;
+}>;
+
+
+export type ExplainFormulaTemplateQuery = { explainFormulaTemplate: { preview: { ' $fragmentRefs'?: { 'FormulaPreviewResultFieldsFragment': FormulaPreviewResultFieldsFragment } } | null, items: Array<{ index: number, says: string, range: { from: number, to: number } | null }> } };
+
+export type DescribeFormulaTemplateInputsQueryVariables = Exact<{
+  input: FormulaDraftInput;
+}>;
+
+
+export type DescribeFormulaTemplateInputsQuery = { describeFormulaTemplateInputs: { descriptions: unknown } };
+
+export type SuggestFormulaTemplateTestsQueryVariables = Exact<{
+  input: FormulaDraftInput;
+}>;
+
+
+export type SuggestFormulaTemplateTestsQuery = { suggestFormulaTemplateTests: { tests: Array<{ name: string, block: string, status: string, failures: unknown }> } };
+
+export type ExplainFormulaTemplateTestQueryVariables = Exact<{
+  input: FormulaExplainTestInput;
+}>;
+
+
+export type ExplainFormulaTemplateTestQuery = { explainFormulaTemplateTest: { verdict: FormulaTestVerdict, why: string, generated: boolean, test: unknown } };
 
 export type FormulaTemplateTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, status: FormulaTemplateStatus, testCount: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, version: number, currentVersionNumber: number, approvedAt: number | null, usageCount: number, createdAt: number, updatedAt: number, imports: Array<{ path: string, libraryId: string, versionNumber: number }> } & { ' $fragmentName'?: 'FormulaTemplateTableRowFieldsFragment' };
 
@@ -20830,8 +21426,12 @@ export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./do
 export { FleetSafetyDocument, WorkerSafetyViolationsDocument, RecordSafetyViolationDocument, UpdateSafetyViolationDocument, DeleteSafetyViolationDocument } from "./documents/fleet-safety/operations";
 export { DeskFormulaLibrariesDocument, DeskFormulaLibraryCardDocument } from "./documents/formula-library/desk";
 export { FormulaLibraryDocument } from "./documents/formula-library/record";
+export { FormulaLibraryWriteFieldsFragmentDoc, FormulaLibraryVersionDiffDocument, FormulaLibraryReadinessDocument, FormulaLibraryReviewDiffDocument, FormulaLibraryReviewersDocument, FormulaLibraryUsagesDocument, CreateFormulaLibraryDocument, UpdateFormulaLibraryDocument, DuplicateFormulaLibrariesDocument, RollbackFormulaLibraryDocument, ArchiveFormulaLibraryDocument, SubmitFormulaLibraryDocument, ApproveFormulaLibraryDocument, RejectFormulaLibraryDocument, RequestFormulaLibraryChangesDocument, OpenFormulaLibraryAssistantThreadDocument } from "./documents/formula-library/review";
 export { FormulaLibraryTableRowFieldsFragmentDoc, FormulaLibraryTableDocument } from "./documents/formula-library/table";
 export { DeskFormulaTemplatesDocument, DeskFormulaTemplateCardDocument } from "./documents/formula-template/desk";
+export { FormulaInputDeclarationFieldsFragmentDoc, FormulaTemplateRecordFieldsFragmentDoc, FormulaTemplateVersionFieldsFragmentDoc, FormulaTemplateRecordDocument, FormulaTemplateRecentDocument, FormulaTemplateDeclaredInputsDocument, FormulaTemplateVersionInputsDocument, FormulaTemplateUsageDocument, FormulaTemplateVersionsDocument, FormulaTemplateScheduledVersionsDocument, FormulaTemplateVersionDiffDocument, FormulaTemplateLineageDocument, FormulaTemplateStandardsDocument, CreateFormulaTemplateDocument, UpdateFormulaTemplateDocument, DuplicateFormulaTemplatesDocument, BulkUpdateFormulaTemplateStatusDocument, ImportFormulaTemplatesDocument, InstallStandardFormulaTemplatesDocument, RollbackFormulaTemplateDocument, ForkFormulaTemplateDocument, UpdateFormulaTemplateVersionTagsDocument, UpdateFormulaTemplateVersionEffectiveDateDocument } from "./documents/formula-template/record";
+export { FormulaReviewerFieldsFragmentDoc, FormulaReadinessFieldsFragmentDoc, FormulaReviewDiffFieldsFragmentDoc, FormulaBacktestSummaryFieldsFragmentDoc, FormulaBacktestResultFieldsFragmentDoc, PageAssistantThreadFieldsFragmentDoc, FormulaTemplateReviewsDocument, FormulaTemplateReviewersDocument, FormulaTemplateReadinessDocument, FormulaTemplateReviewDiffDocument, FormulaTemplateBacktestDocument, FormulaTemplateApprovalImpactDocument, FormulaTemplateReviewNoteDocument, SubmitFormulaTemplateDocument, ApproveFormulaTemplateDocument, RejectFormulaTemplateDocument, RequestFormulaTemplateChangesDocument, OpenFormulaTemplateAssistantThreadDocument } from "./documents/formula-template/review";
+export { FormulaPreviewResultFieldsFragmentDoc, FormulaTemplateStudioContextDocument, FormulaTemplateTableCellsDocument, FormulaTemplatePreviewDocument, FormulaTemplateScaffoldTestDocument, ExplainFormulaTemplateDocument, DescribeFormulaTemplateInputsDocument, SuggestFormulaTemplateTestsDocument, ExplainFormulaTemplateTestDocument } from "./documents/formula-template/studio";
 export { FormulaTemplateTableRowFieldsFragmentDoc, FormulaTemplateTableDocument } from "./documents/formula-template/table";
 export { FormulaTemplateTablesDocument } from "./documents/formula-template/tables";
 export { DeskFuelCardPurchaseFieldsFragmentDoc, DeskFuelCardCardDocument, DeskFuelCardsDocument } from "./documents/fuel-card/desk";

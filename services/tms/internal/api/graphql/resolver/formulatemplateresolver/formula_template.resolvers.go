@@ -8,14 +8,27 @@ package formulatemplateresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/ratingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/formulamapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -96,4 +109,973 @@ func (r *FormulaTemplateTableResolver) Archived(ctx context.Context, obj *tariff
 		return false, err
 	}
 	return matrix.Status == formulatemplate.StatusInactive, nil
+}
+
+func (r *FormulaTemplateVersionResolver) Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplateVersion) ([]*gqlmodel.FormulaInputDeclaration, error) {
+	return formulaInputDeclarationsToModel(obj.Inputs)
+}
+
+func (r *FormulaTemplateVersionResolver) ChangeSummary(ctx context.Context, obj *formulatemplate.FormulaTemplateVersion) (map[string]any, error) {
+	if len(obj.ChangeSummary) == 0 {
+		return nil, nil
+	}
+	return formulamapping.Changes(obj.ChangeSummary), nil
+}
+
+func (r *QueryResolver) FormulaTemplateUsage(ctx context.Context, templateID string) (*formulatemplateports.GetTemplateUsageResponse, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.GetUsage(ctx, &formulatemplateports.GetTemplateUsageRequest{
+		TemplateID: id,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *QueryResolver) FormulaTemplateVersions(ctx context.Context, templateID string, limit *int, offset *int) (*gqlmodel.FormulaTemplateVersionsResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	tenant := resolvercore.TenantInfo(authCtx)
+	result, err := r.FormulaTemplateService.ListVersions(ctx, &formulatemplateports.ListVersionsRequest{
+		TemplateID: id,
+		Filter: &pagination.QueryOptions{
+			TenantInfo: tenant,
+			Pagination: pagination.Info{
+				Limit:  pagination.ClampLimit(gqlscalar.IntValue(limit)),
+				Offset: pagination.ClampOffset(gqlscalar.IntValue(offset)),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	results := result.Items
+	if results == nil {
+		results = []*formulatemplate.FormulaTemplateVersion{}
+	}
+	return &gqlmodel.FormulaTemplateVersionsResult{
+		Results:         results,
+		TotalCount:      result.Total,
+		TotalCountExact: result.TotalExact,
+	}, nil
+}
+
+func (r *QueryResolver) FormulaTemplateVersion(ctx context.Context, templateID string, versionNumber int) (*formulatemplate.FormulaTemplateVersion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.GetVersion(ctx, &formulatemplateports.GetVersionRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		TemplateID:    id,
+		VersionNumber: int64(versionNumber),
+	})
+}
+
+func (r *QueryResolver) FormulaTemplateScheduledVersions(ctx context.Context, templateID string) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.ListScheduledVersions(
+		ctx,
+		&formulatemplateports.ListScheduledVersionsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			TemplateID: id,
+		},
+	)
+}
+
+func (r *QueryResolver) FormulaTemplateVersionDiff(ctx context.Context, templateID string, fromVersion int, toVersion int) (*gqlmodel.FormulaVersionDiff, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	if fromVersion <= 0 || toVersion <= 0 {
+		return nil, errortypes.NewValidationError(
+			"fromVersion",
+			errortypes.ErrRequired,
+			"Both 'from' and 'to' version parameters are required and must be positive",
+		)
+	}
+	if fromVersion == toVersion {
+		return nil, errortypes.NewValidationError(
+			"toVersion",
+			errortypes.ErrInvalid,
+			"The 'from' and 'to' versions must be different",
+		)
+	}
+
+	diff, err := r.FormulaTemplateService.CompareVersions(
+		ctx,
+		&formulatemplateports.CompareVersionsRequest{
+			TenantInfo:  resolvercore.TenantInfo(authCtx),
+			TemplateID:  id,
+			FromVersion: int64(fromVersion),
+			ToVersion:   int64(toVersion),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return formulamapping.VersionDiff(diff.FromVersion, diff.ToVersion, diff.Changes, diff.ChangeCount), nil
+}
+
+func (r *QueryResolver) FormulaTemplateLineage(ctx context.Context, templateID string) (*formulatemplate.ForkLineage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.GetLineage(ctx, &formulatemplateports.GetLineageRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		TemplateID: id,
+	})
+}
+
+func (r *QueryResolver) FormulaTemplateReviews(ctx context.Context, templateID string) ([]*formulatemplate.Review, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateReviewService.ListReviews(
+		ctx,
+		&formulatemplatereviewservice.ListReviewsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			TemplateID: id,
+		},
+	)
+}
+
+func (r *QueryResolver) FormulaTemplateReviewers(ctx context.Context, templateID string) ([]*gqlmodel.FormulaReviewer, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	reviewers, err := r.FormulaTemplateReviewService.ListReviewers(
+		ctx,
+		&formulatemplatereviewservice.ListReviewersRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			TemplateID: id,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return reviewersToModel(reviewers), nil
+}
+
+func (r *QueryResolver) FormulaTemplateReadiness(ctx context.Context, templateID string) (*gqlmodel.FormulaReadiness, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaTemplateReviewService.Readiness(
+		ctx,
+		&formulatemplatereviewservice.ReadinessRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			TemplateID: id,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return readinessToModel(resp), nil
+}
+
+func (r *QueryResolver) FormulaTemplateReviewDiff(ctx context.Context, templateID string) (*gqlmodel.FormulaReviewDiff, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaTemplateReviewService.ReviewDiff(
+		ctx,
+		&formulatemplatereviewservice.ReviewDiffRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			TemplateID: id,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return reviewDiffToModel(resp), nil
+}
+
+func (r *QueryResolver) FormulaTemplateBacktest(ctx context.Context, templateID string, input gqlmodel.FormulaTemplateBacktestInput) (*gqlmodel.FormulaBacktestResult, error) {
+	authCtx, err := r.requireAuthoring(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = r.requireShipmentRead(ctx, authCtx); err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaTemplateStudioService.Backtest(
+		ctx,
+		&formulatemplatestudioservice.BacktestRequest{
+			TenantInfo:    resolvercore.TenantInfo(authCtx),
+			TemplateID:    id,
+			Source:        gqlscalar.StringValue(input.Source),
+			VersionNumber: gqlscalar.Int64Ptr(input.VersionNumber),
+			Limit:         gqlscalar.IntValue(input.Limit),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return backtestToModel(resp), nil
+}
+
+func (r *QueryResolver) FormulaTemplateApprovalImpact(ctx context.Context, templateID string, limit *int) (*gqlmodel.FormulaBacktestResult, error) {
+	authCtx, err := r.requireAnyTemplatePermission(
+		ctx,
+		permission.OpCreate,
+		permission.OpUpdate,
+		permission.OpApprove,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = r.requireShipmentRead(ctx, authCtx); err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaTemplateStudioService.ApprovalImpact(
+		ctx,
+		&formulatemplatestudioservice.ApprovalImpactRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			TemplateID: id,
+			Limit:      gqlscalar.IntValue(limit),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return backtestToModel(resp), nil
+}
+
+func (r *QueryResolver) FormulaTemplateStudioContext(ctx context.Context) (*gqlmodel.FormulaStudioContext, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	studio, err := r.FormulaTemplateStudioService.StudioContext(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return studioContextToModel(studio)
+}
+
+func (r *QueryResolver) FormulaTemplateTableCells(ctx context.Context, input gqlmodel.FormulaTableCellsInput) (*gqlmodel.FormulaTableCells, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	cells, err := r.FormulaTemplateStudioService.StudioCells(
+		ctx,
+		&formulatemplatestudioservice.StudioCellsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Needs:      tableNeeds(input.Needs),
+			Whole:      gqlscalar.BoolValue(input.Whole),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return tableCellsToModel(cells)
+}
+
+func (r *QueryResolver) FormulaTemplatePreview(ctx context.Context, input gqlmodel.FormulaTemplatePreviewInput) (*gqlmodel.FormulaPreviewResult, error) {
+	authCtx, err := r.requireAuthoring(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	inputs, err := formulamapping.InputValues(input.Inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	shipmentID, err := r.optionalShipment(ctx, authCtx, input.ShipmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.FormulaTemplateStudioService.Preview(
+		ctx,
+		&formulatemplatestudioservice.PreviewRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Source:     input.Source,
+			Inputs:     inputs,
+			ShipmentID: shipmentID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return previewToModel(result)
+}
+
+func (r *QueryResolver) FormulaTemplateScaffoldTest(ctx context.Context, input gqlmodel.FormulaTemplateScaffoldTestInput) (*gqlmodel.FormulaScaffoldTestResult, error) {
+	authCtx, err := r.requireAuthoring(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	inputs, err := formulamapping.InputValues(input.Inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	shipmentID, err := r.optionalShipment(ctx, authCtx, &input.ShipmentID)
+	if err != nil {
+		return nil, err
+	}
+	if shipmentID == nil {
+		return nil, errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"Choose the shipment the test is written from",
+		)
+	}
+
+	result, err := r.FormulaTemplateStudioService.ScaffoldTest(
+		ctx,
+		&formulatemplatestudioservice.ScaffoldTestRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Source:     input.Source,
+			Inputs:     inputs,
+			ShipmentID: *shipmentID,
+			Name:       input.Name,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.FormulaScaffoldTestResult{Test: result.Test}, nil
+}
+
+func (r *QueryResolver) FormulaTemplateStandards(ctx context.Context) ([]*formulatemplateimportservice.StandardTemplate, error) {
+	if _, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	standards, err := r.FormulaTemplateImportService.ListStandards()
+	if err != nil {
+		return nil, err
+	}
+
+	return standardsToModel(standards), nil
+}
+
+func (r *QueryResolver) ExplainFormulaTemplate(ctx context.Context, input gqlmodel.FormulaExplainInput) (*gqlmodel.FormulaExplainResult, error) {
+	authCtx, err := r.requireTemplateAssistant(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	draft, err := formulaDraft(input.Draft)
+	if err != nil {
+		return nil, err
+	}
+	inputs, err := explainInputValues(input.Inputs)
+	if err != nil {
+		return nil, err
+	}
+	shipment, err := r.optionalShipment(ctx, authCtx, input.ShipmentID)
+	if err != nil {
+		return nil, err
+	}
+	shipmentID := pulid.Nil
+	if shipment != nil {
+		shipmentID = *shipment
+	}
+
+	resp, err := r.FormulaStudioAssist.ExplainFormula(
+		ctx,
+		&formulastudioports.ExplainFormulaRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Draft:      draft,
+			Inputs:     inputs,
+			ShipmentID: shipmentID,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return explainToModel(resp)
+}
+
+func (r *QueryResolver) DescribeFormulaTemplateInputs(ctx context.Context, input gqlmodel.FormulaDraftInput) (*gqlmodel.FormulaInputDescriptionsResult, error) {
+	authCtx, err := r.requireTemplateAssistant(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	draft, err := formulaDraft(&input)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaStudioAssist.DescribeInputs(
+		ctx,
+		&formulastudioports.DescribeFormulaInputsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Draft:      draft,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.FormulaInputDescriptionsResult{
+		Descriptions: descriptionsToModel(resp.Descriptions),
+	}, nil
+}
+
+func (r *QueryResolver) SuggestFormulaTemplateTests(ctx context.Context, input gqlmodel.FormulaDraftInput) (*gqlmodel.FormulaSuggestedTestsResult, error) {
+	authCtx, err := r.requireTemplateAssistant(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	draft, err := formulaDraft(&input)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaStudioAssist.SuggestTests(
+		ctx,
+		&formulastudioports.SuggestFormulaTestsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Draft:      draft,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return suggestedTestsToModel(resp)
+}
+
+func (r *QueryResolver) ExplainFormulaTemplateTest(ctx context.Context, input gqlmodel.FormulaExplainTestInput) (*gqlmodel.FormulaExplainTestResult, error) {
+	authCtx, err := r.requireTemplateAssistant(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	draft, err := formulaDraft(input.Draft)
+	if err != nil {
+		return nil, err
+	}
+	name, err := explainTestName(input.TestName)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaStudioAssist.ExplainTest(
+		ctx,
+		&formulastudioports.ExplainFormulaTestRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Draft:      draft,
+			TestName:   name,
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return explainTestToModel(resp)
+}
+
+func (r *QueryResolver) FormulaTemplateReviewNote(ctx context.Context, templateID string) (*gqlmodel.FormulaReviewNoteResult, error) {
+	authCtx, err := r.requireTemplateAssistant(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaStudioAssist.DraftReviewNote(
+		ctx,
+		&formulastudioports.DraftFormulaReviewNoteRequest{
+			TenantInfo:      resolvercore.TenantInfo(authCtx),
+			TemplateID:      id,
+			IncludeBacktest: r.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead),
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.FormulaReviewNoteResult{
+		Note:      resp.Note,
+		Generated: resp.Generated,
+		Backtest:  backtestSummaryToModel(resp.Backtest),
+	}, nil
+}
+
+func (r *MutationResolver) CreateFormulaTemplate(ctx context.Context, input gqlmodel.CreateFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.Create(ctx, &formulatemplate.FormulaTemplate{
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		Description:    gqlscalar.StringValue(input.Description),
+		Source:         input.Source,
+		Metadata:       input.Metadata,
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateFormulaTemplate(ctx context.Context, id string, input gqlmodel.UpdateFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	templateID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.Update(ctx, &formulatemplate.FormulaTemplate{
+		ID:             templateID,
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		Description:    gqlscalar.StringValue(input.Description),
+		Source:         input.Source,
+		Version:        int64(input.Version),
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) DuplicateFormulaTemplates(ctx context.Context, templateIds []string) ([]*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpDuplicate)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := gqlid.ParseIDListField("templateIds", templateIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.Duplicate(ctx, &formulatemplateports.BulkDuplicateFormulaTemplateRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
+		TemplateIDs: ids,
+	})
+}
+
+func (r *MutationResolver) BulkUpdateFormulaTemplateStatus(ctx context.Context, input gqlmodel.BulkUpdateFormulaTemplateStatusInput) ([]*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := gqlid.ParseIDListField("templateIds", input.TemplateIds)
+	if err != nil {
+		return nil, err
+	}
+
+	mayApprove, err := r.templateAllows(ctx, authCtx, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.BulkUpdateStatus(
+		ctx,
+		&formulatemplateports.BulkUpdateFormulaTemplateStatusRequest{
+			TenantInfo:      resolvercore.TenantInfo(authCtx),
+			TemplateIDs:     ids,
+			Status:          input.Status,
+			ConfirmInUse:    gqlscalar.BoolValue(input.ConfirmInUse),
+			MayArchiveInUse: mayApprove,
+		},
+	)
+}
+
+func (r *MutationResolver) ImportFormulaTemplates(ctx context.Context, input gqlmodel.ImportFormulaTemplatesInput) (*gqlmodel.ImportFormulaTemplatesResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	payloads, err := importPayloads(input.Templates)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.FormulaTemplateImportService.Import(
+		ctx,
+		&formulatemplateimportservice.ImportTemplatesRequest{
+			ExportVersion: input.ExportVersion,
+			Templates:     payloads,
+			OnConflict:    importConflict(input.OnConflict),
+			TenantInfo:    resolvercore.TenantInfo(authCtx),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	created := result.Created
+	if created == nil {
+		created = []*formulatemplate.FormulaTemplate{}
+	}
+	return &gqlmodel.ImportFormulaTemplatesResult{
+		Created: created,
+		Renamed: renamedToModel(result.Renamed),
+	}, nil
+}
+
+func (r *MutationResolver) InstallStandardFormulaTemplates(ctx context.Context) (*gqlmodel.InstallStandardFormulaTemplatesResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.FormulaTemplateImportService.InstallStandards(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	installed := result.Installed
+	if installed == nil {
+		installed = []*formulatemplate.FormulaTemplate{}
+	}
+	skipped := result.Skipped
+	if skipped == nil {
+		skipped = []string{}
+	}
+	return &gqlmodel.InstallStandardFormulaTemplatesResult{
+		Installed: installed,
+		Skipped:   skipped,
+	}, nil
+}
+
+func (r *MutationResolver) RollbackFormulaTemplate(ctx context.Context, id string, input gqlmodel.RollbackFormulaVersionInput) (*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	templateID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.Rollback(ctx, &formulatemplateports.RollbackRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		TemplateID:    templateID,
+		TargetVersion: int64(input.TargetVersion),
+		ChangeMessage: gqlscalar.StringValue(input.ChangeMessage),
+	})
+}
+
+func (r *MutationResolver) ForkFormulaTemplate(ctx context.Context, id string, input gqlmodel.ForkFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	templateID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.Fork(ctx, &formulatemplateports.ForkTemplateRequest{
+		TenantInfo:       resolvercore.TenantInfo(authCtx),
+		SourceTemplateID: templateID,
+		SourceVersion:    gqlscalar.Int64Ptr(input.SourceVersion),
+		NewName:          input.NewName,
+		ChangeMessage:    gqlscalar.StringValue(input.ChangeMessage),
+	})
+}
+
+func (r *MutationResolver) UpdateFormulaTemplateVersionTags(ctx context.Context, templateID string, versionNumber int, tags []formulatemplate.VersionTag) (*formulatemplate.FormulaTemplateVersion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	values := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		values = append(values, string(tag))
+	}
+
+	return r.FormulaTemplateService.UpdateVersionTags(
+		ctx,
+		&formulatemplateports.UpdateVersionTagsRequest{
+			TenantInfo:    resolvercore.TenantInfo(authCtx),
+			TemplateID:    id,
+			VersionNumber: int64(versionNumber),
+			Tags:          values,
+		},
+	)
+}
+
+func (r *MutationResolver) UpdateFormulaTemplateVersionEffectiveDate(ctx context.Context, templateID string, versionNumber int, effectiveFrom *int) (*formulatemplate.FormulaTemplateVersion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateService.UpdateVersionEffectiveDate(
+		ctx,
+		&formulatemplateports.UpdateEffectiveDateRequest{
+			TenantInfo:    resolvercore.TenantInfo(authCtx),
+			TemplateID:    id,
+			VersionNumber: int64(versionNumber),
+			EffectiveFrom: gqlscalar.Int64Ptr(effectiveFrom),
+		},
+	)
+}
+
+func (r *MutationResolver) SubmitFormulaTemplate(ctx context.Context, id string, input gqlmodel.SubmitFormulaReviewInput) (*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpSubmit)
+	if err != nil {
+		return nil, err
+	}
+
+	templateID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	reviewerID, err := formulamapping.ParseOptionalID(
+		input.ReviewerID,
+		"reviewerId",
+		"Choose an active reviewer, other than you, who can approve formula templates",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateReviewService.Submit(ctx, &formulatemplatereviewservice.SubmitRequest{
+		ApprovalActionRequest: formulatemplatereviewservice.ApprovalActionRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			EntityID:   templateID,
+			Comment:    gqlscalar.StringValue(input.Comment),
+		},
+		ReviewerID:   reviewerID,
+		ReviewerNote: gqlscalar.StringValue(input.ReviewerNote),
+	})
+}
+
+func (r *MutationResolver) ApproveFormulaTemplate(ctx context.Context, id string, input gqlmodel.ApproveFormulaTemplateInput) (*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	templateID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	mayApproveOwn, err := r.templateAllows(ctx, authCtx, permission.OpApproveOwn)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateReviewService.ApproveFrom(
+		ctx,
+		&formulatemplatereviewservice.ApproveRequest{
+			ApprovalActionRequest: formulatemplatereviewservice.ApprovalActionRequest{
+				TenantInfo:    resolvercore.TenantInfo(authCtx),
+				EntityID:      templateID,
+				Comment:       gqlscalar.StringValue(input.Comment),
+				MayApproveOwn: mayApproveOwn,
+			},
+			EffectiveFrom: gqlscalar.Int64Ptr(input.EffectiveFrom),
+		},
+	)
+}
+
+func (r *MutationResolver) RejectFormulaTemplate(ctx context.Context, id string, comment *string) (*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpReject)
+	if err != nil {
+		return nil, err
+	}
+
+	templateID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateReviewService.Reject(ctx, &formulatemplatereviewservice.ApprovalActionRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		EntityID:   templateID,
+		Comment:    gqlscalar.StringValue(comment),
+	})
+}
+
+func (r *MutationResolver) RequestFormulaTemplateChanges(ctx context.Context, id string, comment *string) (*formulatemplate.FormulaTemplate, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpReject)
+	if err != nil {
+		return nil, err
+	}
+
+	templateID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaTemplateReviewService.RequestChanges(
+		ctx,
+		&formulatemplatereviewservice.ApprovalActionRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			EntityID:   templateID,
+			Comment:    gqlscalar.StringValue(comment),
+		},
+	)
+}
+
+func (r *MutationResolver) OpenFormulaTemplateAssistantThread(ctx context.Context, templateID *string) (*gqlmodel.PageAssistantThread, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaTemplate, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate); err != nil {
+		return nil, err
+	}
+
+	id, err := formulamapping.ParseOptionalID(templateID, "templateId", "Invalid formula template ID")
+	if err != nil {
+		return nil, err
+	}
+
+	if r.PageAssistant == nil {
+		return nil, errortypes.NewBusinessError("The formula assistant is not available on this server")
+	}
+
+	tenant := resolvercore.TenantInfo(authCtx)
+	if id.IsNotNil() {
+		if _, err = r.FormulaTemplateService.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
+			TemplateID: id,
+			TenantInfo: tenant,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	opened, err := r.PageAssistant.OpenPageThread(ctx, &assistantports.OpenPageThreadRequest{
+		TenantInfo:  tenant,
+		Origin:      conversation.ThreadOriginFormula,
+		SubjectType: agent.SubjectFormulaTemplate,
+		SubjectID:   id,
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return formulamapping.PageThread(opened), nil
 }

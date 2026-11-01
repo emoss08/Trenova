@@ -35,7 +35,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
@@ -184,6 +186,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 )
 
 // One thing waiting on a person: a proposal that stands on its own, or a plan
@@ -1663,6 +1666,12 @@ type ApproveAgentMemorySuggestionInput struct {
 	Version int                      `json:"version"`
 }
 
+type ApproveFormulaTemplateInput struct {
+	Comment *string `json:"comment,omitempty"`
+	// When the approved content starts to bill; now when null. Until then the previously approved content keeps billing.
+	EffectiveFrom *int `json:"effectiveFrom,omitempty"`
+}
+
 type ArchiveWorkerCredentialInput struct {
 	ID      string  `json:"id"`
 	Reason  *string `json:"reason,omitempty"`
@@ -2112,6 +2121,13 @@ type BulkUpdateEquipmentTypeStatusInput struct {
 type BulkUpdateFleetCodeStatusInput struct {
 	FleetCodeIds []string           `json:"fleetCodeIds"`
 	Status       domaintypes.Status `json:"status"`
+}
+
+type BulkUpdateFormulaTemplateStatusInput struct {
+	TemplateIds []string               `json:"templateIds"`
+	Status      formulatemplate.Status `json:"status"`
+	// Sent after the person has seen what uses the templates and still means to archive them.
+	ConfirmInUse *bool `json:"confirmInUse,omitempty"`
 }
 
 type BulkUpdateHazardousMaterialStatusInput struct {
@@ -2927,6 +2943,20 @@ type CreateFactoringRemittanceInput struct {
 	DefaultKind *factoringremittance.RemittanceLineKind `json:"defaultKind,omitempty"`
 	// The day the factor sent the report.
 	RemittedOn *int `json:"remittedOn,omitempty"`
+}
+
+type CreateFormulaLibraryInput struct {
+	// The module name: templates import the library as org.<name>. It must match the source's header.
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	Source      string  `json:"source"`
+}
+
+type CreateFormulaTemplateInput struct {
+	// The tariff's source; the name, inputs, imports and test count are derived from it.
+	Source      string         `json:"source"`
+	Description *string        `json:"description,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 type CreateFuelPurchaseImportInput struct {
@@ -5909,9 +5939,107 @@ type ForkCannedReportInput struct {
 	Name      *string `json:"name,omitempty"`
 }
 
+type ForkFormulaTemplateInput struct {
+	NewName string `json:"newName"`
+	// The version to fork; the current content when null.
+	SourceVersion *int    `json:"sourceVersion,omitempty"`
+	ChangeMessage *string `json:"changeMessage,omitempty"`
+}
+
 type FormSubmissionField struct {
 	Label string `json:"label"`
 	Value string `json:"value"`
+}
+
+// Recent shipments rated with the current content and with a candidate.
+type FormulaBacktestResult struct {
+	Results []*FormulaBacktestShipment `json:"results"`
+	Summary *FormulaBacktestSummary    `json:"summary"`
+	// True when the run hit its time limit before rating every shipment.
+	Truncated bool `json:"truncated"`
+}
+
+// One shipment a backtest rated with the current and the candidate content.
+type FormulaBacktestShipment struct {
+	ShipmentID      string                       `json:"shipmentId"`
+	ProNumber       string                       `json:"proNumber"`
+	CurrentSource   FormulaBacktestCurrentSource `json:"currentSource"`
+	CurrentAmount   string                       `json:"currentAmount"`
+	CandidateAmount string                       `json:"candidateAmount"`
+	Delta           string                       `json:"delta"`
+	DeltaPct        string                       `json:"deltaPct"`
+	CurrentError    *string                      `json:"currentError,omitempty"`
+	CandidateError  *string                      `json:"candidateError,omitempty"`
+	// The candidate refused to rate this shipment.
+	CandidateRefused bool `json:"candidateRefused"`
+	// The shipment's billed amount was adjusted after it was rated.
+	Adjusted bool `json:"adjusted"`
+}
+
+// The totals of a backtest.
+type FormulaBacktestSummary struct {
+	ShipmentCount       int    `json:"shipmentCount"`
+	EvaluatedCount      int    `json:"evaluatedCount"`
+	ChangedCount        int    `json:"changedCount"`
+	IncreasedCount      int    `json:"increasedCount"`
+	DecreasedCount      int    `json:"decreasedCount"`
+	ErrorCount          int    `json:"errorCount"`
+	CurrentErrorCount   int    `json:"currentErrorCount"`
+	CandidateErrorCount int    `json:"candidateErrorCount"`
+	RefusedCount        int    `json:"refusedCount"`
+	AdjustedCount       int    `json:"adjustedCount"`
+	CurrentTotal        string `json:"currentTotal"`
+	CandidateTotal      string `json:"candidateTotal"`
+	TotalDelta          string `json:"totalDelta"`
+	TotalDeltaPct       string `json:"totalDeltaPct"`
+	MaxIncrease         string `json:"maxIncrease"`
+	MaxDecrease         string `json:"maxDecrease"`
+}
+
+// How much of the saved source the tests reach.
+type FormulaCoverage struct {
+	Reached   int                       `json:"reached"`
+	Total     int                       `json:"total"`
+	Unreached []*FormulaUnreachedRegion `json:"unreached"`
+	// How many more unreached regions there are than unreached lists.
+	More int `json:"more"`
+}
+
+// The file as it is in the editor, saved or not.
+type FormulaDraftInput struct {
+	TemplateID  *string `json:"templateId,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Source      string  `json:"source"`
+}
+
+type FormulaExplainInput struct {
+	Draft *FormulaDraftInput `json:"draft"`
+	// The preview's sample input values by input name, as wire values.
+	Inputs map[string]any `json:"inputs,omitempty"`
+	// A saved shipment to price instead of the sample record.
+	ShipmentID *string `json:"shipmentId,omitempty"`
+}
+
+// Nova's reading of a rating: the preview it ran with the trace on, and a sentence per traced step.
+type FormulaExplainResult struct {
+	Preview *FormulaPreviewResult `json:"preview,omitempty"`
+	Items   []*FormulaTraceNote   `json:"items"`
+}
+
+type FormulaExplainTestInput struct {
+	Draft    *FormulaDraftInput `json:"draft"`
+	TestName string             `json:"testName"`
+}
+
+// Why a test fails on the draft, in Nova's words, with the test's own run.
+type FormulaExplainTestResult struct {
+	Verdict FormulaTestVerdict `json:"verdict"`
+	Why     string             `json:"why"`
+	// False when no model wrote the reason and it was written from the failure.
+	Generated bool `json:"generated"`
+	// The test's run: the rules module's TariffTestResult wire value.
+	Test any `json:"test,omitempty"`
 }
 
 // An input a formula declares. Its value comes from the rate agreement rule, then the agreement, then this default.
@@ -5926,11 +6054,19 @@ type FormulaInputDeclaration struct {
 	Required   bool `json:"required"`
 	// The default as a wire value, or null when the input has none.
 	Default any `json:"default,omitempty"`
+	// Whether the input declares a default; default is then its wire value, which may itself be null.
+	HasDefault bool `json:"hasDefault"`
 	// The values the input accepts, from its where clause, or null when it has none:
 	// {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
 	// minimum is inclusive and an open end is null) or {"oneOf": [wire, ...]}. For a
 	// list input it bounds each item.
 	Constraint any `json:"constraint,omitempty"`
+}
+
+// Doc comments Nova wrote for the inputs the draft declares without one.
+type FormulaInputDescriptionsResult struct {
+	// The doc comment of each input, by input name.
+	Descriptions map[string]any `json:"descriptions"`
 }
 
 type FormulaLibraryConnection struct {
@@ -5946,6 +6082,182 @@ type FormulaLibraryEdge struct {
 	Cursor string                         `json:"cursor"`
 }
 
+// Why a preview stopped.
+type FormulaPreviewError struct {
+	Code string `json:"code"`
+	// In the reader's language.
+	Message string              `json:"message"`
+	Range   *FormulaSourceRange `json:"range,omitempty"`
+}
+
+// What a preview answers: every finding, the bill (or why the tariff refused, or the
+// error that stopped it), the trace, the table lookups, the choices its best and worst
+// blocks made, and the file's tests as the server ran them. The list and bill fields
+// carry the rules module's own wire values (pkg/rules), which the browser's module reads.
+type FormulaPreviewResult struct {
+	Valid       bool                 `json:"valid"`
+	Diagnostics any                  `json:"diagnostics"`
+	Bill        any                  `json:"bill,omitempty"`
+	Refusal     any                  `json:"refusal,omitempty"`
+	Error       *FormulaPreviewError `json:"error,omitempty"`
+	Trace       any                  `json:"trace"`
+	Lookups     any                  `json:"lookups"`
+	Choices     any                  `json:"choices"`
+	Tests       any                  `json:"tests"`
+}
+
+// The server's verdict on a submission: whether it can be submitted and approved,
+// each check, and the test totals.
+type FormulaReadiness struct {
+	CanSubmit   bool                     `json:"canSubmit"`
+	CanApprove  bool                     `json:"canApprove"`
+	Checks      []*FormulaReadinessCheck `json:"checks"`
+	TestTotal   int                      `json:"testTotal"`
+	TestPassed  int                      `json:"testPassed"`
+	TestFailing []string                 `json:"testFailing"`
+	// The saved source's coverage; null when it does not check or its tests did not all run.
+	Coverage *FormulaCoverage `json:"coverage,omitempty"`
+	// Approved template versions waiting to bill. Always empty for a library.
+	PendingSchedules []*FormulaScheduledWindow `json:"pendingSchedules"`
+}
+
+// One check a submission must pass.
+type FormulaReadinessCheck struct {
+	Key    string                 `json:"key"`
+	Label  string                 `json:"label"`
+	Status FormulaReadinessStatus `json:"status"`
+	Detail string                 `json:"detail"`
+}
+
+// What review compares: the source and pinned imports of the approved version a
+// submission would replace, against the submission's, with the field changes between them.
+type FormulaReviewDiff struct {
+	HasApprovedBase bool                  `json:"hasApprovedBase"`
+	BaseVersion     int                   `json:"baseVersion"`
+	CurrentVersion  int                   `json:"currentVersion"`
+	BaseSource      string                `json:"baseSource"`
+	CurrentSource   string                `json:"currentSource"`
+	BaseImports     []*tarifftypes.Import `json:"baseImports"`
+	CurrentImports  []*tarifftypes.Import `json:"currentImports"`
+	// The changed fields by field path: {from, to, type, fieldType, path}.
+	Changes     map[string]any `json:"changes"`
+	ChangeCount int            `json:"changeCount"`
+	// Approved template versions waiting to bill. Always empty for a library.
+	PendingSchedules []*FormulaScheduledWindow `json:"pendingSchedules"`
+}
+
+// The note Nova drafts for the reviewer of a submission.
+type FormulaReviewNoteResult struct {
+	Note      string `json:"note"`
+	Generated bool   `json:"generated"`
+	// The backtest of the submission, when the person may read shipments.
+	Backtest *FormulaBacktestSummary `json:"backtest,omitempty"`
+}
+
+// Someone who may approve: holds the resource's approve permission and is not the author.
+type FormulaReviewer struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	Username      string  `json:"username"`
+	ProfilePicURL *string `json:"profilePicUrl,omitempty"`
+}
+
+// A test block from a real shipment's facts and the bill it gets, for the person to
+// place in the source.
+type FormulaScaffoldTestResult struct {
+	Test string `json:"test"`
+}
+
+// An approved snapshot whose start has not come yet: approved content waiting to bill.
+type FormulaScheduledWindow struct {
+	VersionNumber int `json:"versionNumber"`
+	EffectiveFrom int `json:"effectiveFrom"`
+}
+
+// A 1-based line and column in a Tariff source.
+type FormulaSourcePosition struct {
+	Line   int `json:"line"`
+	Column int `json:"column"`
+}
+
+// A span of a Tariff source, as byte offsets.
+type FormulaSourceRange struct {
+	From int `json:"from"`
+	To   int `json:"to"`
+}
+
+// What the browser checks a tariff against: the organization's settings, its rate
+// tables' shapes, its accessorial charge codes and the sources of the libraries a tariff
+// may import.
+type FormulaStudioContext struct {
+	// The rules module's TariffContext wire value.
+	Context   any                     `json:"context"`
+	Libraries []*FormulaStudioLibrary `json:"libraries"`
+	// The organization's rate table stamp the context was read at; cells are cached per stamp.
+	TablesStamp string `json:"tablesStamp"`
+}
+
+// An approved organization library the Studio's context holds.
+type FormulaStudioLibrary struct {
+	// The module path a file imports: org.<name>.
+	Path        string `json:"path"`
+	LibraryID   string `json:"libraryId"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	// The approved version the context holds, the one a new template version would pin.
+	VersionNumber int `json:"versionNumber"`
+}
+
+// A test Nova suggests, already run against the draft.
+type FormulaSuggestedTest struct {
+	Name string `json:"name"`
+	// The test block to add to the source.
+	Block string `json:"block"`
+	// The test's verdict, as the rules module wrote it.
+	Status string `json:"status"`
+	// What each failing expectation saw: the rules module's TariffTestFailure wire values.
+	Failures any `json:"failures"`
+}
+
+// Tests Nova suggests for the draft.
+type FormulaSuggestedTestsResult struct {
+	Tests []*FormulaSuggestedTest `json:"tests"`
+}
+
+// The rate table cells a file's tests read, at the organization's rate table stamp.
+type FormulaTableCells struct {
+	Stamp  string                    `json:"stamp"`
+	Tables []*FormulaTableCellsTable `json:"tables"`
+}
+
+type FormulaTableCellsInput struct {
+	Needs []*FormulaTableNeedInput `json:"needs"`
+	// Load the tables the needs name, whole.
+	Whole *bool `json:"whole,omitempty"`
+}
+
+// The cells of one rate table a file's tests read.
+type FormulaTableCellsTable struct {
+	Code string `json:"code"`
+	// The rules module's TariffCell wire values.
+	Cells any `json:"cells"`
+	// The key combinations loaded; null when the table came whole.
+	Loaded [][]string `json:"loaded,omitempty"`
+}
+
+type FormulaTableNeedInput struct {
+	Table string   `json:"table"`
+	Keys  []string `json:"keys"`
+}
+
+// Exactly one of source or versionNumber is the candidate.
+type FormulaTemplateBacktestInput struct {
+	Source        *string `json:"source,omitempty"`
+	VersionNumber *int    `json:"versionNumber,omitempty"`
+	// How many recent shipments to rate, at most 500.
+	Limit *int `json:"limit,omitempty"`
+}
+
 type FormulaTemplateConnection struct {
 	Edges      []*FormulaTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -5957,6 +6269,56 @@ type FormulaTemplateConnection struct {
 type FormulaTemplateEdge struct {
 	Node   *formulatemplate.FormulaTemplate `json:"node"`
 	Cursor string                           `json:"cursor"`
+}
+
+type FormulaTemplatePreviewInput struct {
+	Source string `json:"source"`
+	// Sample input values by input name, as wire values.
+	Inputs map[string]any `json:"inputs,omitempty"`
+	// A shipment to rate instead of the sample record.
+	ShipmentID *string `json:"shipmentId,omitempty"`
+}
+
+type FormulaTemplateScaffoldTestInput struct {
+	Source string         `json:"source"`
+	Inputs map[string]any `json:"inputs,omitempty"`
+	// The shipment the test is written from.
+	ShipmentID string `json:"shipmentId"`
+	Name       string `json:"name"`
+}
+
+// A page of a template's versions, newest first.
+type FormulaTemplateVersionsResult struct {
+	Results    []*formulatemplate.FormulaTemplateVersion `json:"results"`
+	TotalCount int                                       `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+// One sentence of Nova's reading of a rating, by the traced step's index.
+type FormulaTraceNote struct {
+	Index int                 `json:"index"`
+	Range *FormulaSourceRange `json:"range,omitempty"`
+	Says  string              `json:"says"`
+}
+
+// A region of the source no test reaches.
+type FormulaUnreachedRegion struct {
+	// The coverage region's kind: if, arm, option, …
+	Kind  string                 `json:"kind"`
+	Range *FormulaSourceRange    `json:"range"`
+	At    *FormulaSourcePosition `json:"at"`
+	// The source line the region starts on.
+	Excerpt string `json:"excerpt"`
+}
+
+// The field changes between two versions of a template or library.
+type FormulaVersionDiff struct {
+	FromVersion int `json:"fromVersion"`
+	ToVersion   int `json:"toVersion"`
+	// The changed fields by field path: {from, to, type, fieldType, path}.
+	Changes     map[string]any `json:"changes"`
+	ChangeCount int            `json:"changeCount"`
 }
 
 type FuelCardConnection struct {
@@ -6804,6 +7166,27 @@ type IgnoreAccountingInboundChangeInput struct {
 	Note string `json:"note"`
 }
 
+type ImportFormulaTemplatePayloadInput struct {
+	Name                string  `json:"name"`
+	Description         *string `json:"description,omitempty"`
+	Source              string  `json:"source"`
+	SourceTemplateID    *string `json:"sourceTemplateId,omitempty"`
+	SourceVersionNumber *int    `json:"sourceVersionNumber,omitempty"`
+}
+
+type ImportFormulaTemplatesInput struct {
+	ExportVersion string                               `json:"exportVersion"`
+	Templates     []*ImportFormulaTemplatePayloadInput `json:"templates"`
+	OnConflict    *FormulaTemplateImportConflict       `json:"onConflict,omitempty"`
+}
+
+// What an import created, and the names it changed to avoid a clash.
+type ImportFormulaTemplatesResult struct {
+	Created []*formulatemplate.FormulaTemplate `json:"created"`
+	// The new name of each renamed template, by the name it was exported under.
+	Renamed map[string]any `json:"renamed,omitempty"`
+}
+
 type ImportSourcedCarrierInput struct {
 	DOTNumber        string  `json:"dotNumber"`
 	Code             *string `json:"code,omitempty"`
@@ -6863,6 +7246,12 @@ type InboundMessagesInput struct {
 	Since *int `json:"since,omitempty"`
 	// Words from the sender's name or address, or from the subject.
 	Query *string `json:"query,omitempty"`
+}
+
+// The standard templates installed, and the names skipped because they were already in use.
+type InstallStandardFormulaTemplatesResult struct {
+	Installed []*formulatemplate.FormulaTemplate `json:"installed"`
+	Skipped   []string                           `json:"skipped"`
 }
 
 type InviteWorkerToPortalInput struct {
@@ -7585,6 +7974,52 @@ type PageAccessRoleDraftInput struct {
 type PageAccessScreen struct {
 	Path string `json:"path"`
 	Name string `json:"name"`
+}
+
+// The system agent a page's conversation is with, which no chat picker lists.
+type PageAssistantAgent struct {
+	ID          string                  `json:"id"`
+	Name        string                  `json:"name"`
+	Description string                  `json:"description"`
+	Template    *agenttemplate.Template `json:"template,omitempty"`
+	Icon        string                  `json:"icon"`
+	Accent      string                  `json:"accent"`
+	SystemKey   string                  `json:"systemKey"`
+	ToolNames   []string                `json:"toolNames"`
+	Starters    []*agentstarter.Starter `json:"starters"`
+}
+
+// A page's conversation with its assistant, as the page opens it.
+type PageAssistantConversation struct {
+	ID                string `json:"id"`
+	BusinessUnitID    string `json:"businessUnitId"`
+	OrganizationID    string `json:"organizationId"`
+	UserID            string `json:"userId"`
+	AgentDefinitionID string `json:"agentDefinitionId"`
+	Title             string `json:"title"`
+	// Active or Archived.
+	Status              string  `json:"status"`
+	LastMessageAt       int     `json:"lastMessageAt"`
+	LastReadAt          int     `json:"lastReadAt"`
+	PreferredProviderID *string `json:"preferredProviderId,omitempty"`
+	// Where the conversation began: Import, Formula, …
+	Origin      string  `json:"origin"`
+	Pinned      bool    `json:"pinned"`
+	SubjectType string  `json:"subjectType"`
+	SubjectID   *string `json:"subjectId,omitempty"`
+	CanContinue bool    `json:"canContinue"`
+	// Why canContinue is false; null while it is true.
+	CannotContinueReason *string `json:"cannotContinueReason,omitempty"`
+	TaintedAt            *int    `json:"taintedAt,omitempty"`
+	Version              int     `json:"version"`
+	CreatedAt            int     `json:"createdAt"`
+	UpdatedAt            int     `json:"updatedAt"`
+}
+
+// The person's conversation with a page's assistant, and the agent it is with.
+type PageAssistantThread struct {
+	Thread *PageAssistantConversation `json:"thread"`
+	Agent  *PageAssistantAgent        `json:"agent"`
 }
 
 type PageInfo struct {
@@ -9121,6 +9556,11 @@ type RoleResourceScreen struct {
 	Path string        `json:"path"`
 	Name string        `json:"name"`
 	Use  PageAccessUse `json:"use"`
+}
+
+type RollbackFormulaVersionInput struct {
+	TargetVersion int     `json:"targetVersion"`
+	ChangeMessage *string `json:"changeMessage,omitempty"`
 }
 
 // The composed board. It is derived on every read and never stored: a stored week
@@ -11573,6 +12013,14 @@ type StoredMileageEdge struct {
 	Cursor string                       `json:"cursor"`
 }
 
+type SubmitFormulaReviewInput struct {
+	Comment *string `json:"comment,omitempty"`
+	// Who should review; anyone who may approve when null.
+	ReviewerID *string `json:"reviewerId,omitempty"`
+	// The note the reviewer reads first.
+	ReviewerNote *string `json:"reviewerNote,omitempty"`
+}
+
 type SubmitMyExpenseInput struct {
 	ShipmentID   *string `json:"shipmentId,omitempty"`
 	PayCodeID    *string `json:"payCodeId,omitempty"`
@@ -12371,6 +12819,19 @@ type UpdateFactoringRemittanceLineInput struct {
 	Kind *factoringremittance.RemittanceLineKind `json:"kind,omitempty"`
 	// Why the line is not booked, for Ignore.
 	Reason *string `json:"reason,omitempty"`
+}
+
+type UpdateFormulaLibraryInput struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	Source      string  `json:"source"`
+	Version     int     `json:"version"`
+}
+
+type UpdateFormulaTemplateInput struct {
+	Source      string  `json:"source"`
+	Description *string `json:"description,omitempty"`
+	Version     int     `json:"version"`
 }
 
 type UpdateFuelIndexPriceInput struct {
@@ -14264,6 +14725,238 @@ func (e *FactoringRemittanceField) UnmarshalJSON(b []byte) error {
 }
 
 func (e FactoringRemittanceField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Where a backtest's current amount came from.
+type FormulaBacktestCurrentSource string
+
+const (
+	// The amount billed on the shipment.
+	FormulaBacktestCurrentSourceBilled FormulaBacktestCurrentSource = "Billed"
+	// The shipment's billed content rated again today.
+	FormulaBacktestCurrentSourceRecomputed FormulaBacktestCurrentSource = "Recomputed"
+)
+
+var AllFormulaBacktestCurrentSource = []FormulaBacktestCurrentSource{
+	FormulaBacktestCurrentSourceBilled,
+	FormulaBacktestCurrentSourceRecomputed,
+}
+
+func (e FormulaBacktestCurrentSource) IsValid() bool {
+	switch e {
+	case FormulaBacktestCurrentSourceBilled, FormulaBacktestCurrentSourceRecomputed:
+		return true
+	}
+	return false
+}
+
+func (e FormulaBacktestCurrentSource) String() string {
+	return string(e)
+}
+
+func (e *FormulaBacktestCurrentSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FormulaBacktestCurrentSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FormulaBacktestCurrentSource", str)
+	}
+	return nil
+}
+
+func (e FormulaBacktestCurrentSource) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FormulaBacktestCurrentSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FormulaBacktestCurrentSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// The outcome of one readiness check.
+type FormulaReadinessStatus string
+
+const (
+	FormulaReadinessStatusPass FormulaReadinessStatus = "pass"
+	FormulaReadinessStatusWarn FormulaReadinessStatus = "warn"
+	FormulaReadinessStatusFail FormulaReadinessStatus = "fail"
+)
+
+var AllFormulaReadinessStatus = []FormulaReadinessStatus{
+	FormulaReadinessStatusPass,
+	FormulaReadinessStatusWarn,
+	FormulaReadinessStatusFail,
+}
+
+func (e FormulaReadinessStatus) IsValid() bool {
+	switch e {
+	case FormulaReadinessStatusPass, FormulaReadinessStatusWarn, FormulaReadinessStatusFail:
+		return true
+	}
+	return false
+}
+
+func (e FormulaReadinessStatus) String() string {
+	return string(e)
+}
+
+func (e *FormulaReadinessStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FormulaReadinessStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FormulaReadinessStatus", str)
+	}
+	return nil
+}
+
+func (e FormulaReadinessStatus) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FormulaReadinessStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FormulaReadinessStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// What an import does with a template whose name the organization already uses.
+type FormulaTemplateImportConflict string
+
+const (
+	// Refuse the whole import.
+	FormulaTemplateImportConflictReject FormulaTemplateImportConflict = "Reject"
+	// Import it under a free name.
+	FormulaTemplateImportConflictRename FormulaTemplateImportConflict = "Rename"
+)
+
+var AllFormulaTemplateImportConflict = []FormulaTemplateImportConflict{
+	FormulaTemplateImportConflictReject,
+	FormulaTemplateImportConflictRename,
+}
+
+func (e FormulaTemplateImportConflict) IsValid() bool {
+	switch e {
+	case FormulaTemplateImportConflictReject, FormulaTemplateImportConflictRename:
+		return true
+	}
+	return false
+}
+
+func (e FormulaTemplateImportConflict) String() string {
+	return string(e)
+}
+
+func (e *FormulaTemplateImportConflict) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FormulaTemplateImportConflict(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FormulaTemplateImportConflict", str)
+	}
+	return nil
+}
+
+func (e FormulaTemplateImportConflict) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FormulaTemplateImportConflict) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FormulaTemplateImportConflict) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether a failing test shows a bug in the tariff or a wrong expectation.
+type FormulaTestVerdict string
+
+const (
+	FormulaTestVerdictIntended FormulaTestVerdict = "intended"
+	FormulaTestVerdictBug      FormulaTestVerdict = "bug"
+	FormulaTestVerdictUnclear  FormulaTestVerdict = "unclear"
+)
+
+var AllFormulaTestVerdict = []FormulaTestVerdict{
+	FormulaTestVerdictIntended,
+	FormulaTestVerdictBug,
+	FormulaTestVerdictUnclear,
+}
+
+func (e FormulaTestVerdict) IsValid() bool {
+	switch e {
+	case FormulaTestVerdictIntended, FormulaTestVerdictBug, FormulaTestVerdictUnclear:
+		return true
+	}
+	return false
+}
+
+func (e FormulaTestVerdict) String() string {
+	return string(e)
+}
+
+func (e *FormulaTestVerdict) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FormulaTestVerdict(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FormulaTestVerdict", str)
+	}
+	return nil
+}
+
+func (e FormulaTestVerdict) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FormulaTestVerdict) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FormulaTestVerdict) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

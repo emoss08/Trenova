@@ -1312,16 +1312,18 @@ the Tariff host sends them as each table axis's `normalization` and `overflow`
 ## The Tariff server API
 
 The Studio checks and tests Tariff in the browser with the same module the server uses, so only
-these facts cross HTTP (all under `/api/v1`; every range is the module's `{from, to}` in UTF-16
-code units of the source):
+these facts cross the API, all GraphQL (`formula_template.graphqls`). Every range is the module's
+`{from, to}` in UTF-16 code units of the source; the module's own values (the context, cells,
+diagnostics, bill, refusal, trace, lookups, choices and test results) travel as `Any`, in the wire
+form `pkg/rules` writes and the browser's module reads:
 
-- **`GET /formula-templates/context`** returns `{context, libraries, tablesStamp}`. `context` is the
+- **`formulaTemplateStudioContext`** returns `{context, libraries, tablesStamp}`. `context` is the
   organisation's `rules.TariffContext` (settings, table shapes, accessorial codes and the source
   of every importable library, the latest approved version of each); `libraries` lists them as
   `{path, libraryId, name, description, versionNumber}`. The browser passes `context` to its own
   `tariff.check`, `tariff.test` and editor operations, and reads the language itself from
   `tariff.catalog`.
-- **`POST /formula-templates/context/cells`** (formula-template read) takes `{needs, whole?}`,
+- **`formulaTemplateTableCells`** (formula-template read) takes `{needs, whole?}`,
   the `needs` a browser `tariff.test` answered (at most 200, each a table code and at most four
   keys), and answers the cells of those combinations, or with `whole: true` the tables they
   name entire, read at the organisation's rate table stamp:
@@ -1333,25 +1335,23 @@ code units of the source):
   ```
 
   A table the organisation does not have is left out; a whole table has `loaded: null`. It is
-  a read (write coverage `read-only`, allowed on a read-only plan). The context endpoint's
+  a query, so a read-only plan allows it. The context query's
   `tablesStamp` is the same stamp: the browser keeps loaded cells per stamp
   (`lib/tariff-table-cells.ts`), and an answer at another stamp means a matrix changed, so it
   reads the context again.
-- **`POST /formula-templates/test`** (the preview) takes `{source, inputs?, shipmentId?}`, with
-  `inputs` a map of wire values, and answers:
+- **`formulaTemplatePreview`** (a query; formula-template create or update) takes
+  `{source, inputs?, shipmentId?}`, with `inputs` a map of wire values, and answers:
 
   ```json
   {
     "valid": true,
     "diagnostics": [],
-    "inputs": [{"name": "rate", "doc": "...", "type": "Money/mi", "descriptor": {"kind": "quantity", "unit": "$/mi"}, "required": true}],
-    "imports": [{"path": "org.accessorials", "libraryId": "fl_...", "versionNumber": 3}],
-    "charges": [{"label": "Linehaul", "code": null, "range": {"from": 120, "to": 171}}],
     "bill": {"lines": [], "notes": [], "freightTotal": "865.2", "accessorialTotal": "0", "total": "865.2"},
     "refusal": null,
     "error": null,
     "trace": [],
     "lookups": [],
+    "choices": [],
     "tests": [{"name": "...", "range": {"from": 300, "to": 340}, "status": "passed", "failures": []}]
   }
   ```
@@ -1366,8 +1366,8 @@ code units of the source):
   - Without `shipmentId` the preview rates the sample record; with one it rates that shipment's
     record, which needs `shipment:read`.
   - `tests` are the file's own `test` blocks, run by `tariff.test`.
-  - A source over 64 KiB or more than 100 inputs is a 400 validation problem.
-- **`POST /formula-templates/scaffold-test`** takes `{source, inputs?, shipmentId, name}` and
+  - A source over 64 KiB or more than 100 inputs is a validation error.
+- **`formulaTemplateScaffoldTest`** (a query) takes `{source, inputs?, shipmentId, name}` and
   answers `{test}`: a `test` block written by `tariff.scaffoldTest` from that shipment's facts,
   for the person to paste into the source ("Save as test").
 - **Saving** a template (create, update, import, rollback, fork, a schedule of billed content)
@@ -1541,7 +1541,7 @@ tests; `SourceCheck` carries the tenant its context was built for) run `tariff.t
 `ScaffoldTest` runs `tariff.scaffoldTest`, both loading the cells the module `needs` exactly as
 the rater does (below), so saving, submitting, readiness, the preview and "Save as test" all
 pass a tariff that reads a matrix. `TableCells` serves the browser's loads
-(`POST /formula-templates/context/cells`, under "The Tariff server API").
+(the `formulaTemplateTableCells` query, under "The Tariff server API").
 `Catalog` caches `tariff.catalog` per module version.
 
 **The rater.** `tariff.Rater.Rate` (the `tariffports.Rater` that `rateengine/pricing.go` and
@@ -1748,7 +1748,7 @@ Each screen calls once per question for everything it shows, and waits in one of
 | Lane key labels (`useLaneKeyLabels`: import rate sheet, simulation) | `lane.parse` | every distinct key on screen | `LaneKeyTableSkeleton`, `SimulationPanelSkeleton` |
 | Desk rate agreement card | `lane.keys` | every lane read so far, again when a page arrives | the card's skeleton |
 | Tariff editor in both Studios (`components/formula-editor`): highlighting, lint, completion, hover, signature help, definition, rename, inlays, folding, format | `tariff.tokens`, `tariff.check`, `tariff.complete`, `tariff.hover`, `tariff.signature`, `tariff.definition`, `tariff.rename`, `tariff.inlays`, `tariff.format` | the document at the cursor or the visible range; one check per text, kind and context (an LRU of four), shared by the linter, the folding and the Studio | `StudioSkeleton` (the Studio's provider), and `TariffEditor`'s own `useRules()` |
-| Template and library Studios: outline, problems, tests panel, readiness, reference pane, "Save as test" on the sample load | `tariff.check`, `tariff.test`, `tariff.catalog`, `tariff.scaffoldTest` | the source once per text (`useTariffWorkbench`); the tests once the source has rested 400 ms, again after each load of the table cells they need (`useTariffTests`: three loads by combination, then the tables whole, through `POST /formula-templates/context/cells`, kept per stamp); the catalog once per loaded runtime | `StudioSkeleton` |
+| Template and library Studios: outline, problems, tests panel, readiness, reference pane, "Save as test" on the sample load | `tariff.check`, `tariff.test`, `tariff.catalog`, `tariff.scaffoldTest` | the source once per text (`useTariffWorkbench`); the tests once the source has rested 400 ms, again after each load of the table cells they need (`useTariffTests`: three loads by combination, then the tables whole, through the `formulaTemplateTableCells` query, kept per stamp); the catalog once per loaded runtime | `StudioSkeleton` |
 | Nova's proposal card | `tariff.check`, `tariff.test`, `tariff.format` | the proposed source | the Studio's boundary |
 | Desk formula template card, every read-only source (`TariffCode`) | `tariff.tokens`, `tariff.check` | the source, once per text | the card's skeleton |
 | Rate matrix grid editor | `matrix.coverage` | the whole matrix, on each change of its cells or axes; each axis labelled as the screen names it | `MatrixGridEditorSkeleton` |

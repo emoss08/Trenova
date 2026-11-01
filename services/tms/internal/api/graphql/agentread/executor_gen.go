@@ -161,8 +161,10 @@ import (
 	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	assistantports "github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	dispatchconsoleports "github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	formulastudioports "github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	factoringledgerports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -237,7 +239,10 @@ import (
 	locationservice "github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	formulalibraryservice "github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
+	formulatemplateimportservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	formulatemplatereviewservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	formulatemplateservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	formulatemplatestudioservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	fuelsurchargeservice "github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	rateagreementservice "github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	ratematrixservice "github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
@@ -383,7 +388,11 @@ type ResolverParams struct {
 	FiscalPeriodService               *fiscalperiodservice.Service
 	FleetCodeService                  *fleetcodeservice.Service
 	FormulaLibraryService             *formulalibraryservice.Service
+	FormulaStudioAssist               formulastudioports.FormulaStudioAssist `optional:"true"`
+	FormulaTemplateImportService      *formulatemplateimportservice.Service
+	FormulaTemplateReviewService      *formulatemplatereviewservice.Service
 	FormulaTemplateService            *formulatemplateservice.Service
+	FormulaTemplateStudioService      *formulatemplatestudioservice.Service
 	FuelDeskCards                     *fueldeskcardservice.Service
 	FuelIndexPriceRepo                fuelsurchargeports.FuelIndexPriceRepository
 	FuelIndexRepo                     fuelsurchargeports.FuelIndexRepository
@@ -422,6 +431,7 @@ type ResolverParams struct {
 	OrderService                      *orderservice.Service
 	OrgStructureService               *orgstructureservice.Service
 	OrganizationService               tenantports.OrganizationService
+	PageAssistant                     assistantports.PageAssistant `optional:"true"`
 	PayAdvanceRepo                    driverpayports.PayAdvanceRepository
 	PayEventRepo                      driversettlementports.PayEventRepository
 	PayProfileRepo                    driverpayports.PayProfileRepository
@@ -663,8 +673,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CustomerTable",
-		Hash:     "sha256:77fc50a2943abe8cc016f3b69f09896edacab646e68166b8cc4d87a08bd86e99",
-		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:974b5806f950d3ca2b8665065d7df4b1801814d8717b546c29b5317d3131d091",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } brokerVettingEnabled businessUnitId checkCallIntervalHours city code consolidationPriority createdAt dotNumber emailProfile { ...CustomerEmailProfileFields } etaRiskThresholdMinutes exclusiveConsolidation externalId id isGeocoded latitude longitude mcNumber name organizationId placeId postalCode stateId status statusUpdatePreference statusUpdateRecipients updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskDetentionCard",
@@ -1003,8 +1013,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CommodityTable",
-		Hash:     "sha256:563bed9f11970bc10ed428708f0673b049b3695462590cf2681fc74729a9593f",
-		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:20cdf710d66aeebbbbba36e2128af8c748fa48044d3bb6360b7077b70e892efc",
+		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId heightPerUnit id lengthPerUnit linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit widthPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "FleetCodeTable",
@@ -1018,8 +1028,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "HoldReasonTable",
-		Hash:     "sha256:a90ea543247ade1f06a13a861011a27d0e03255bc5f1d0673d628b66f547893c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:6f82d9070c470b39add2c4acea54155f342a1d4b1ea43b16dbb22f1bdfd5fd0b",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description externalMap id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ServiceTypeTable",
@@ -1476,10 +1486,16 @@ func NewSchema(p ResolverParams) Schema {
 	formulalibraryDeps := &formulalibraryresolver.Deps{
 		Core:                  core,
 		FormulaLibraryService: p.FormulaLibraryService,
+		PageAssistant:         p.PageAssistant,
 	}
 	formulatemplateDeps := &formulatemplateresolver.Deps{
-		Core:                   core,
-		FormulaTemplateService: p.FormulaTemplateService,
+		Core:                         core,
+		FormulaTemplateService:       p.FormulaTemplateService,
+		FormulaTemplateReviewService: p.FormulaTemplateReviewService,
+		FormulaTemplateStudioService: p.FormulaTemplateStudioService,
+		FormulaTemplateImportService: p.FormulaTemplateImportService,
+		FormulaStudioAssist:          p.FormulaStudioAssist,
+		PageAssistant:                p.PageAssistant,
 	}
 	fuelpurchaseDeps := &fuelpurchaseresolver.Deps{
 		Core:                core,
@@ -1744,6 +1760,8 @@ func NewSchema(p ResolverParams) Schema {
 		factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
 		fleetcodeMutation:             &fleetcodeMutation{Deps: fleetcodeDeps},
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
+		formulalibraryMutation:        &formulalibraryMutation{Deps: formulalibraryDeps},
+		formulatemplateMutation:       &formulatemplateMutation{Deps: formulatemplateDeps},
 		fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
 		fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
 		hazardousmaterialMutation:     &hazardousmaterialMutation{Deps: hazardousmaterialDeps},
@@ -1986,6 +2004,7 @@ func NewSchema(p ResolverParams) Schema {
 		"FormulaLibraryVersion":        func() any { return &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps} },
 		"FormulaTemplate":              func() any { return &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps} },
 		"FormulaTemplateTable":         func() any { return &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps} },
+		"FormulaTemplateVersion":       func() any { return &formulatemplateresolver.FormulaTemplateVersionResolver{Deps: formulatemplateDeps} },
 		"FuelCard":                     func() any { return &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps} },
 		"FuelCardDeskCard":             func() any { return &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps} },
 		"FuelFeedStatus":               func() any { return &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps} },
@@ -2158,6 +2177,8 @@ type mutationResolver struct {
 	*factoringcompanyMutation
 	*fleetcodeMutation
 	*fleetsafetyMutation
+	*formulalibraryMutation
+	*formulatemplateMutation
 	*fuelpurchaseMutation
 	*fuelsurchargeMutation
 	*hazardousmaterialMutation
@@ -2297,6 +2318,8 @@ type (
 	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
 	fleetcodeMutation               = fleetcoderesolver.MutationResolver
 	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
+	formulalibraryMutation          = formulalibraryresolver.MutationResolver
+	formulatemplateMutation         = formulatemplateresolver.MutationResolver
 	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
 	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
 	hazardousmaterialMutation       = hazardousmaterialresolver.MutationResolver

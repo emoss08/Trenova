@@ -1251,7 +1251,7 @@ variant's name, and `null` is none.
   derived, for contract forms and queries. The test-case table and the scenario columns are
   dropped.
 - **Formula libraries** are a new organisation-level record with the same versioning and review as
-  templates (`formula_libraries`, `formula_library_versions`), with GraphQL reads, REST writes,
+  templates (`formula_libraries`, `formula_library_versions`), with GraphQL reads and writes,
   permissions, audit, agent tools and an editor.
 - **Rate matrices** are versioned with the library review flow and statuses: the draft is version
   `0` of `rate_matrix_dimensions` and `rate_matrix_cells`, each published version a

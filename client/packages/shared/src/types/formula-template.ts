@@ -238,7 +238,7 @@ export type ForkLineage = {
 };
 
 /**
- * What the Studio's preview asks `POST /formula-templates/test`: the source as it is, the
+ * What the Studio's preview asks the `formulaTemplatePreview` query: the source as it is, the
  * sample input values, and a real shipment to rate instead of the sample record.
  */
 export type FormulaPreviewRequest = {
@@ -311,24 +311,54 @@ export const backtestRequestSchema = z
   });
 export type BacktestRequest = z.infer<typeof backtestRequestSchema>;
 
-export const backtestResultSchema = z.object({
-  shipmentId: z.string(),
-  proNumber: z
-    .string()
-    .nullish()
-    .transform((v) => v ?? ""),
-  /** Billed: the amount on the shipment. Recomputed: its billed content rated again today. */
-  currentSource: z.enum(["Billed", "Recomputed"]).default("Recomputed"),
-  currentAmount: z.coerce.number(),
-  candidateAmount: z.coerce.number(),
-  delta: z.coerce.number(),
-  deltaPct: z.coerce.number(),
-  currentError: z.string().optional(),
-  candidateError: z.string().optional(),
+export const backtestResultSchema = z
+  .object({
+    shipmentId: z.string(),
+    proNumber: z
+      .string()
+      .nullish()
+      .transform((v) => v ?? ""),
+    /** Billed: the amount on the shipment. Recomputed: its billed content rated again today. */
+    currentSource: z.enum(["Billed", "Recomputed"]).default("Recomputed"),
+    currentAmount: z.coerce.number(),
+    candidateAmount: z.coerce.number(),
+    delta: z.coerce.number(),
+    deltaPct: z.coerce.number(),
+    currentError: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? undefined),
+    candidateError: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? undefined),
+    /** The server's flag that `candidateError` is the candidate's refusal, not a failure. */
+    candidateRefused: z.boolean().default(false),
+  })
+  .transform(({ candidateRefused, candidateError, currentError, ...result }): BacktestResult => ({
+    ...result,
+    ...(currentError === undefined ? {} : { currentError }),
+    ...(candidateError === undefined
+      ? {}
+      : candidateRefused
+        ? { candidateRefusal: candidateError }
+        : { candidateError }),
+  }));
+
+/** One shipment of a backtest: an error stops a side's rating; a refusal is the author's. */
+export type BacktestResult = {
+  shipmentId: string;
+  proNumber: string;
+  currentSource: "Billed" | "Recomputed";
+  currentAmount: number;
+  candidateAmount: number;
+  delta: number;
+  deltaPct: number;
+  currentError?: string;
+  candidateError?: string;
   /** The candidate refused to rate this shipment, in the author's words. */
-  candidateRefusal: z.string().optional(),
-});
-export type BacktestResult = z.output<typeof backtestResultSchema>;
+  candidateRefusal?: string;
+};
 
 export const backtestSummarySchema = z.object({
   shipmentCount: z.number(),
@@ -360,11 +390,6 @@ export const backtestResponseSchema = z.object({
 });
 export type BacktestResponse = z.output<typeof backtestResponseSchema>;
 
-export const updateEffectiveDateRequestSchema = z.object({
-  effectiveFrom: z.number().nullable(),
-});
-export type UpdateEffectiveDateRequest = z.infer<typeof updateEffectiveDateRequestSchema>;
-
 export const bulkUpdateStatusRequestSchema = z.object({
   templateIds: z.array(z.string()),
   status: formulaTemplateStatusSchema,
@@ -381,11 +406,6 @@ export const bulkDuplicateFormulaTemplateRequestSchema = z.object({
 export type BulkDuplicateFormulaTemplateRequest = z.infer<
   typeof bulkDuplicateFormulaTemplateRequestSchema
 >;
-
-export const createVersionRequestSchema = z.object({
-  changeMessage: z.string().optional(),
-});
-export type CreateVersionRequest = z.infer<typeof createVersionRequestSchema>;
 
 export const rollbackRequestSchema = z.object({
   targetVersion: z.number(),

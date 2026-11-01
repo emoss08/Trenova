@@ -1,0 +1,280 @@
+fragment FormulaInputDeclarationFields on FormulaInputDeclaration {
+  name
+  doc
+  type
+  descriptor
+  required
+  default
+  hasDefault
+  constraint
+}
+
+fragment FormulaTemplateRecordFields on FormulaTemplate {
+  id
+  organizationId
+  businessUnitId
+  name
+  description
+  source
+  status
+  inputs {
+    ...FormulaInputDeclarationFields
+  }
+  imports {
+    path
+    libraryId
+    versionNumber
+  }
+  tables {
+    code
+    rateMatrixId
+    versionNumber
+  }
+  testCount
+  submittedById
+  submittedAt
+  approvedById
+  approvedAt
+  reviewComment
+  version
+  sourceTemplateId
+  sourceVersionNumber
+  currentVersionNumber
+  createdAt
+  updatedAt
+  usageCount
+}
+
+fragment FormulaTemplateVersionFields on FormulaTemplateVersion {
+  id
+  templateId
+  organizationId
+  businessUnitId
+  versionNumber
+  name
+  description
+  source
+  status
+  inputs {
+    ...FormulaInputDeclarationFields
+  }
+  imports {
+    path
+    libraryId
+    versionNumber
+  }
+  tables {
+    code
+    rateMatrixId
+    versionNumber
+  }
+  testCount
+  effectiveFrom
+  changeMessage
+  changeSummary
+  tags
+  createdById
+  createdAt
+  createdBy {
+    id
+    name
+    username
+    profilePicUrl
+  }
+}
+
+# A formula template whole, with the approved version that bills today.
+query FormulaTemplateRecord($id: ID!) {
+  formulaTemplate(id: $id) {
+    ...FormulaTemplateRecordFields
+    billing {
+      versionNumber
+      effectiveFrom
+      pending
+    }
+  }
+}
+
+# The organization's most recently changed templates, for the Studio's start card.
+query FormulaTemplateRecent($first: Int!) {
+  formulaTemplates(input: { first: $first, sort: [{ field: "updatedAt", direction: "desc" }] }) {
+    edges {
+      node {
+        id
+        name
+        description
+        source
+        status
+      }
+    }
+  }
+}
+
+# The inputs a template declares and the version that bills today, for a contract form.
+query FormulaTemplateDeclaredInputs($id: ID!) {
+  formulaTemplate(id: $id) {
+    id
+    inputs {
+      ...FormulaInputDeclarationFields
+    }
+    billing {
+      versionNumber
+      effectiveFrom
+      pending
+    }
+  }
+}
+
+# The inputs one template version declares.
+query FormulaTemplateVersionInputs($templateId: ID!, $versionNumber: Int!) {
+  formulaTemplateVersion(templateId: $templateId, versionNumber: $versionNumber) {
+    id
+    inputs {
+      ...FormulaInputDeclarationFields
+    }
+  }
+}
+
+query FormulaTemplateUsage($templateId: ID!) {
+  formulaTemplateUsage(templateId: $templateId) {
+    inUse
+    usages {
+      type
+      count
+    }
+  }
+}
+
+query FormulaTemplateVersions($templateId: ID!, $limit: Int, $offset: Int) {
+  formulaTemplateVersions(templateId: $templateId, limit: $limit, offset: $offset) {
+    results {
+      ...FormulaTemplateVersionFields
+    }
+    totalCount
+    totalCountExact
+  }
+}
+
+query FormulaTemplateScheduledVersions($templateId: ID!) {
+  formulaTemplateScheduledVersions(templateId: $templateId) {
+    ...FormulaTemplateVersionFields
+  }
+}
+
+query FormulaTemplateVersionDiff($templateId: ID!, $fromVersion: Int!, $toVersion: Int!) {
+  formulaTemplateVersionDiff(
+    templateId: $templateId
+    fromVersion: $fromVersion
+    toVersion: $toVersion
+  ) {
+    fromVersion
+    toVersion
+    changes
+    changeCount
+  }
+}
+
+query FormulaTemplateLineage($templateId: ID!) {
+  formulaTemplateLineage(templateId: $templateId) {
+    templateId
+    templateName
+    sourceTemplateId
+    sourceVersion
+    forkedTemplates {
+      templateId
+      templateName
+      sourceTemplateId
+      sourceVersion
+    }
+  }
+}
+
+query FormulaTemplateStandards {
+  formulaTemplateStandards {
+    name
+    description
+    source
+  }
+}
+
+mutation CreateFormulaTemplate($input: CreateFormulaTemplateInput!) {
+  createFormulaTemplate(input: $input) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation UpdateFormulaTemplate($id: ID!, $input: UpdateFormulaTemplateInput!) {
+  updateFormulaTemplate(id: $id, input: $input) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation DuplicateFormulaTemplates($templateIds: [ID!]!) {
+  duplicateFormulaTemplates(templateIds: $templateIds) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation BulkUpdateFormulaTemplateStatus($input: BulkUpdateFormulaTemplateStatusInput!) {
+  bulkUpdateFormulaTemplateStatus(input: $input) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation ImportFormulaTemplates($input: ImportFormulaTemplatesInput!) {
+  importFormulaTemplates(input: $input) {
+    created {
+      ...FormulaTemplateRecordFields
+    }
+    renamed
+  }
+}
+
+mutation InstallStandardFormulaTemplates {
+  installStandardFormulaTemplates {
+    installed {
+      ...FormulaTemplateRecordFields
+    }
+    skipped
+  }
+}
+
+mutation RollbackFormulaTemplate($id: ID!, $input: RollbackFormulaVersionInput!) {
+  rollbackFormulaTemplate(id: $id, input: $input) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation ForkFormulaTemplate($id: ID!, $input: ForkFormulaTemplateInput!) {
+  forkFormulaTemplate(id: $id, input: $input) {
+    ...FormulaTemplateRecordFields
+  }
+}
+
+mutation UpdateFormulaTemplateVersionTags(
+  $templateId: ID!
+  $versionNumber: Int!
+  $tags: [FormulaVersionTag!]!
+) {
+  updateFormulaTemplateVersionTags(
+    templateId: $templateId
+    versionNumber: $versionNumber
+    tags: $tags
+  ) {
+    ...FormulaTemplateVersionFields
+  }
+}
+
+mutation UpdateFormulaTemplateVersionEffectiveDate(
+  $templateId: ID!
+  $versionNumber: Int!
+  $effectiveFrom: Timestamp
+) {
+  updateFormulaTemplateVersionEffectiveDate(
+    templateId: $templateId
+    versionNumber: $versionNumber
+    effectiveFrom: $effectiveFrom
+  ) {
+    ...FormulaTemplateVersionFields
+  }
+}

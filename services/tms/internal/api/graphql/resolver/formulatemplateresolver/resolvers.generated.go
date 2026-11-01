@@ -4,12 +4,22 @@ package formulatemplateresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	assistantports "github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	formulastudioports "github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	formulatemplateimportservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	formulatemplatereviewservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	formulatemplateservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	formulatemplatestudioservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	FormulaTemplateService *formulatemplateservice.Service
+	FormulaTemplateService       *formulatemplateservice.Service
+	FormulaTemplateReviewService *formulatemplatereviewservice.Service
+	FormulaTemplateStudioService *formulatemplatestudioservice.Service
+	FormulaTemplateImportService *formulatemplateimportservice.Service
+	FormulaStudioAssist          formulastudioports.FormulaStudioAssist
+	PageAssistant                assistantports.PageAssistant
 }
 
 type FormulaLibraryImportResolver struct{ *Deps }
@@ -17,5 +27,9 @@ type FormulaLibraryImportResolver struct{ *Deps }
 type FormulaTemplateResolver struct{ *Deps }
 
 type FormulaTemplateTableResolver struct{ *Deps }
+
+type FormulaTemplateVersionResolver struct{ *Deps }
+
+type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

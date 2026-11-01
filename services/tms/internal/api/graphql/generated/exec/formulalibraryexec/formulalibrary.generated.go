@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -24,6 +25,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "FormulaLibraryConnection", Implementors: []string{"FormulaLibraryConnection"}},
 		{Name: "FormulaLibraryEdge", Implementors: []string{"FormulaLibraryEdge"}},
 		{Name: "FormulaLibraryReview", Implementors: []string{"FormulaLibraryReview"}},
+		{Name: "FormulaLibraryUsage", Implementors: []string{"FormulaLibraryUsage"}},
 		{Name: "FormulaLibraryVersion", Implementors: []string{"FormulaLibraryVersion"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -421,6 +423,68 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "FormulaLibraryUsage", Fields: []*gqlexec.Field{
+			{
+				Name:     "templateId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.LibraryUsage)
+					return obj.TemplateID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "templateName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.LibraryUsage)
+					return obj.TemplateName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "templateStatus",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.LibraryUsage)
+					return obj.TemplateStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus),
+			},
+			{
+				Name:     "templateVersion",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.LibraryUsage)
+					return obj.TemplateVersion, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "versionStatus",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.LibraryUsage)
+					return obj.VersionStatus, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus),
+			},
+			{
+				Name:     "libraryVersionNumber",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplateports.LibraryUsage)
+					return obj.LibraryVersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+		}},
 		{Object: "FormulaLibraryVersion", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -576,6 +640,138 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createFormulaLibrary",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_createFormulaLibrary_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFormulaLibrary(ctx, fc.Args["input"].(gqlmodel.CreateFormulaLibraryInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
+			},
+			{
+				Name:       "updateFormulaLibrary",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_updateFormulaLibrary_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFormulaLibrary(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.UpdateFormulaLibraryInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
+			},
+			{
+				Name:       "duplicateFormulaLibraries",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_duplicateFormulaLibraries_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DuplicateFormulaLibraries(ctx, fc.Args["libraryIds"].([]string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibraryᚄ),
+			},
+			{
+				Name:       "rollbackFormulaLibrary",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_rollbackFormulaLibrary_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RollbackFormulaLibrary(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.RollbackFormulaVersionInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
+			},
+			{
+				Name:       "archiveFormulaLibrary",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_archiveFormulaLibrary_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveFormulaLibrary(ctx, fc.Args["id"].(string), fc.Args["confirmInUse"].(bool))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
+			},
+			{
+				Name:       "submitFormulaLibrary",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_submitFormulaLibrary_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitFormulaLibrary(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.SubmitFormulaReviewInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
+			},
+			{
+				Name:       "approveFormulaLibrary",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_approveFormulaLibrary_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveFormulaLibrary(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
+			},
+			{
+				Name:       "rejectFormulaLibrary",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_rejectFormulaLibrary_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectFormulaLibrary(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
+			},
+			{
+				Name:       "requestFormulaLibraryChanges",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibrary",
+				Args:       field_Mutation_requestFormulaLibraryChanges_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RequestFormulaLibraryChanges(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary),
+			},
+			{
+				Name:       "openFormulaLibraryAssistantThread",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "PageAssistantThread",
+				Args:       field_Mutation_openFormulaLibraryAssistantThread_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").OpenFormulaLibraryAssistantThread(ctx, fc.Args["libraryId"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNPageAssistantThread2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAssistantThread),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "formulaLibraries",
@@ -632,10 +828,85 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNFormulaLibraryReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibraryReviewᚄ),
 			},
+			{
+				Name:       "formulaLibraryVersionDiff",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaVersionDiff",
+				Args:       field_Query_formulaLibraryVersionDiff_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibraryVersionDiff(ctx, fc.Args["libraryId"].(string), fc.Args["fromVersion"].(int), fc.Args["toVersion"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaVersionDiff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaVersionDiff),
+			},
+			{
+				Name:       "formulaLibraryReadiness",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaReadiness",
+				Args:       field_Query_formulaLibraryReadiness_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibraryReadiness(ctx, fc.Args["libraryId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadiness),
+			},
+			{
+				Name:       "formulaLibraryReviewDiff",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaReviewDiff",
+				Args:       field_Query_formulaLibraryReviewDiff_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibraryReviewDiff(ctx, fc.Args["libraryId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReviewDiff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewDiff),
+			},
+			{
+				Name:       "formulaLibraryReviewers",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaReviewer",
+				Args:       field_Query_formulaLibraryReviewers_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibraryReviewers(ctx, fc.Args["libraryId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaReviewer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewerᚄ),
+			},
+			{
+				Name:       "formulaLibraryUsages",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FormulaLibraryUsage",
+				Args:       field_Query_formulaLibraryUsages_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaLibraryUsages(ctx, fc.Args["libraryId"].(string), fc.Args["versionNumber"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaLibraryUsage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐLibraryUsageᚄ),
+			},
 		}},
+	},
+	Inputs: []gqlexec.Input{
+		{Name: "CreateFormulaLibraryInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateFormulaLibraryInput)},
+		{Name: "UpdateFormulaLibraryInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputUpdateFormulaLibraryInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "FormulaLibraryVersion", Check: func(r any) bool { _, ok := r.(resolverFormulaLibraryVersion); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -644,11 +915,29 @@ type resolverFormulaLibraryVersion interface {
 	ChangeSummary(ctx context.Context, obj *formulalibrary.FormulaLibraryVersion) (map[string]any, error)
 }
 
+type resolverMutation interface {
+	CreateFormulaLibrary(ctx context.Context, input gqlmodel.CreateFormulaLibraryInput) (*formulalibrary.FormulaLibrary, error)
+	UpdateFormulaLibrary(ctx context.Context, id string, input gqlmodel.UpdateFormulaLibraryInput) (*formulalibrary.FormulaLibrary, error)
+	DuplicateFormulaLibraries(ctx context.Context, libraryIds []string) ([]*formulalibrary.FormulaLibrary, error)
+	RollbackFormulaLibrary(ctx context.Context, id string, input gqlmodel.RollbackFormulaVersionInput) (*formulalibrary.FormulaLibrary, error)
+	ArchiveFormulaLibrary(ctx context.Context, id string, confirmInUse bool) (*formulalibrary.FormulaLibrary, error)
+	SubmitFormulaLibrary(ctx context.Context, id string, input gqlmodel.SubmitFormulaReviewInput) (*formulalibrary.FormulaLibrary, error)
+	ApproveFormulaLibrary(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error)
+	RejectFormulaLibrary(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error)
+	RequestFormulaLibraryChanges(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error)
+	OpenFormulaLibraryAssistantThread(ctx context.Context, libraryID *string) (*gqlmodel.PageAssistantThread, error)
+}
+
 type resolverQuery interface {
 	FormulaLibraries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaLibraryConnection, error)
 	FormulaLibrary(ctx context.Context, id string) (*formulalibrary.FormulaLibrary, error)
 	FormulaLibraryVersions(ctx context.Context, libraryID string, first *int) ([]*formulalibrary.FormulaLibraryVersion, error)
 	FormulaLibraryReviews(ctx context.Context, libraryID string) ([]*formulalibrary.FormulaLibraryReview, error)
+	FormulaLibraryVersionDiff(ctx context.Context, libraryID string, fromVersion int, toVersion int) (*gqlmodel.FormulaVersionDiff, error)
+	FormulaLibraryReadiness(ctx context.Context, libraryID string) (*gqlmodel.FormulaReadiness, error)
+	FormulaLibraryReviewDiff(ctx context.Context, libraryID string) (*gqlmodel.FormulaReviewDiff, error)
+	FormulaLibraryReviewers(ctx context.Context, libraryID string) ([]*gqlmodel.FormulaReviewer, error)
+	FormulaLibraryUsages(ctx context.Context, libraryID string, versionNumber *int) ([]*formulatemplateports.LibraryUsage, error)
 }
 
 var (
@@ -661,6 +950,192 @@ var (
 	errNoChild6 = errors.New("field of type FormulaReviewDecision does not have child fields")
 	errNoChild7 = errors.New("field of type JSON does not have child fields")
 )
+
+func field_Mutation_createFormulaLibrary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CreateFormulaLibraryInput, error) {
+			return unmarshalNCreateFormulaLibraryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateFormulaLibraryInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateFormulaLibrary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UpdateFormulaLibraryInput, error) {
+			return unmarshalNUpdateFormulaLibraryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateFormulaLibraryInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_duplicateFormulaLibraries_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "libraryIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["libraryIds"] = arg0
+	return args, nil
+}
+
+func field_Mutation_rollbackFormulaLibrary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RollbackFormulaVersionInput, error) {
+			return unmarshalNRollbackFormulaVersionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRollbackFormulaVersionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_archiveFormulaLibrary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "confirmInUse",
+		func(ctx context.Context, v any) (bool, error) {
+			return unmarshalNBoolean2bool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["confirmInUse"] = arg1
+	return args, nil
+}
+
+func field_Mutation_submitFormulaLibrary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SubmitFormulaReviewInput, error) {
+			return unmarshalNSubmitFormulaReviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSubmitFormulaReviewInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_approveFormulaLibrary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_rejectFormulaLibrary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_requestFormulaLibraryChanges_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "comment",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["comment"] = arg1
+	return args, nil
+}
+
+func field_Mutation_openFormulaLibraryAssistantThread_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "libraryId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["libraryId"] = arg0
+	return args, nil
+}
 
 func field_Query_formulaLibraries_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -722,8 +1197,210 @@ func field_Query_formulaLibraryReviews_args(ctx context.Context, ec *gqlexec.Exe
 	return args, nil
 }
 
+func field_Query_formulaLibraryVersionDiff_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "libraryId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["libraryId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "fromVersion",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["fromVersion"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "toVersion",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["toVersion"] = arg2
+	return args, nil
+}
+
+func field_Query_formulaLibraryReadiness_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "libraryId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["libraryId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaLibraryReviewDiff_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "libraryId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["libraryId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaLibraryReviewers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "libraryId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["libraryId"] = arg0
+	return args, nil
+}
+
+func field_Query_formulaLibraryUsages_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "libraryId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["libraryId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "versionNumber",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["versionNumber"] = arg1
+	return args, nil
+}
+
+func unmarshalInputCreateFormulaLibraryInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CreateFormulaLibraryInput, error) {
+	var it gqlmodel.CreateFormulaLibraryInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "source"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputUpdateFormulaLibraryInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.UpdateFormulaLibraryInput, error) {
+	var it gqlmodel.UpdateFormulaLibraryInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "description", "source", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalInputRollbackFormulaVersionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RollbackFormulaVersionInput, error) {
+	return gqlexec.UnmarshalInput[gqlmodel.RollbackFormulaVersionInput](ctx, ec, "RollbackFormulaVersionInput", obj)
+}
+
+func unmarshalInputSubmitFormulaReviewInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SubmitFormulaReviewInput, error) {
+	return gqlexec.UnmarshalInput[gqlmodel.SubmitFormulaReviewInput](ctx, ec, "SubmitFormulaReviewInput", obj)
+}
+
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNCreateFormulaLibraryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateFormulaLibraryInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CreateFormulaLibraryInput, error) {
+	res, err := unmarshalInputCreateFormulaLibraryInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -736,11 +1413,56 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNRollbackFormulaVersionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRollbackFormulaVersionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RollbackFormulaVersionInput, error) {
+	res, err := unmarshalInputRollbackFormulaVersionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNSubmitFormulaReviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSubmitFormulaReviewInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SubmitFormulaReviewInput, error) {
+	res, err := unmarshalInputSubmitFormulaReviewInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNUpdateFormulaLibraryInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateFormulaLibraryInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateFormulaLibraryInput, error) {
+	res, err := unmarshalInputUpdateFormulaLibraryInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -750,6 +1472,14 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNFormulaLibrary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibraryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*formulalibrary.FormulaLibrary) graphql.Marshaler {
+	return gqlexec.List[*formulalibrary.FormulaLibrary]{
+		Elem:        marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNFormulaLibrary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibrary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulalibrary.FormulaLibrary) graphql.Marshaler {
@@ -812,6 +1542,22 @@ func marshalNFormulaLibraryReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "FormulaLibraryReview", v)
 }
 
+func marshalNFormulaLibraryUsage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐLibraryUsageᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*formulatemplateports.LibraryUsage) graphql.Marshaler {
+	return gqlexec.List[*formulatemplateports.LibraryUsage]{
+		Elem:        marshalNFormulaLibraryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐLibraryUsage,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaLibraryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋportsᚋformulatemplateportsᚐLibraryUsage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplateports.LibraryUsage) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaLibraryUsage", v)
+}
+
 func marshalNFormulaLibraryVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibraryVersionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*formulalibrary.FormulaLibraryVersion) graphql.Marshaler {
 	return gqlexec.List[*formulalibrary.FormulaLibraryVersion]{
 		Elem:        marshalNFormulaLibraryVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulalibraryᚐFormulaLibraryVersion,
@@ -828,6 +1574,14 @@ func marshalNFormulaLibraryVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "FormulaLibraryVersion", v)
 }
 
+func marshalNFormulaReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReadiness(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaReadiness) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaReadiness", v)
+}
+
 func marshalNFormulaReviewDecision2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐReviewDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.ReviewDecision) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -836,12 +1590,44 @@ func marshalNFormulaReviewDecision2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
+func marshalNFormulaReviewDiff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewDiff(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaReviewDiff) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaReviewDiff", v)
+}
+
+func marshalNFormulaReviewer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FormulaReviewer) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.FormulaReviewer]{
+		Elem:        marshalNFormulaReviewer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewer,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFormulaReviewer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaReviewer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaReviewer) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaReviewer", v)
+}
+
 func marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNFormulaVersionDiff2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFormulaVersionDiff(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FormulaVersionDiff) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FormulaVersionDiff", v)
 }
 
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
@@ -866,6 +1652,14 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNPageAssistantThread2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAssistantThread(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageAssistantThread) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageAssistantThread", v)
 }
 
 func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {

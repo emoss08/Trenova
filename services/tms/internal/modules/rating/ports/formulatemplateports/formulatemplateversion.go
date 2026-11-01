@@ -8,12 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type CreateVersionRequest struct {
-	TenantInfo    pagination.TenantInfo
-	TemplateID    pulid.ID
-	ChangeMessage string
-}
-
 type ListVersionsRequest struct {
 	Filter     *pagination.QueryOptions
 	TemplateID pulid.ID

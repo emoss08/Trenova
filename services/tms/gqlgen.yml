@@ -3993,6 +3993,33 @@ models:
   FormulaTemplate:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.FormulaTemplate
+  FormulaVersionTag:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.VersionTag
+  FormulaTemplateBillingVersion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.BillingVersion
+  FormulaTemplateVersion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.FormulaTemplateVersion
+  FormulaTemplateReview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.Review
+  FormulaTemplateLineage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.ForkLineage
+  FormulaTemplateUsageCount:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports.TemplateUsageCount
+  FormulaTemplateUsage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports.GetTemplateUsageResponse
+  FormulaLibraryUsage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports.LibraryUsage
+  FormulaStandardTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice.StandardTemplate
   FuelIndexSource:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge.IndexSource

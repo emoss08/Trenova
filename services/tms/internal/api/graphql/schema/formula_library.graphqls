@@ -85,6 +85,30 @@ type FormulaLibraryReview {
   createdAt: Timestamp!
 }
 
+"A template version that imports a library, and the library version it pinned."
+type FormulaLibraryUsage {
+  templateId: ID!
+  templateName: String!
+  templateStatus: FormulaTemplateStatus!
+  templateVersion: Int!
+  versionStatus: FormulaTemplateStatus!
+  libraryVersionNumber: Int!
+}
+
+input CreateFormulaLibraryInput {
+  "The module name: templates import the library as org.<name>. It must match the source's header."
+  name: String!
+  description: String
+  source: String!
+}
+
+input UpdateFormulaLibraryInput {
+  name: String!
+  description: String
+  source: String!
+  version: Int!
+}
+
 extend type Query {
   formulaLibraries(input: DataTableConnectionInput!): FormulaLibraryConnection!
   formulaLibrary(id: ID!): FormulaLibrary
@@ -92,4 +116,30 @@ extend type Query {
   formulaLibraryVersions(libraryId: ID!, first: Int): [FormulaLibraryVersion!]!
   "A library's review history, newest first."
   formulaLibraryReviews(libraryId: ID!): [FormulaLibraryReview!]!
+  formulaLibraryVersionDiff(libraryId: ID!, fromVersion: Int!, toVersion: Int!): FormulaVersionDiff!
+  formulaLibraryReadiness(libraryId: ID!): FormulaReadiness!
+  formulaLibraryReviewDiff(libraryId: ID!): FormulaReviewDiff!
+  formulaLibraryReviewers(libraryId: ID!): [FormulaReviewer!]!
+  "The template versions that import the library; with versionNumber, those pinning that version."
+  formulaLibraryUsages(libraryId: ID!, versionNumber: Int): [FormulaLibraryUsage!]!
+}
+
+extend type Mutation {
+  createFormulaLibrary(input: CreateFormulaLibraryInput!): FormulaLibrary!
+  "A change to the source or the name saves a new version and returns the library to draft."
+  updateFormulaLibrary(id: ID!, input: UpdateFormulaLibraryInput!): FormulaLibrary!
+  "Copies each library as a draft under a free name; returns the copies."
+  duplicateFormulaLibraries(libraryIds: [ID!]!): [FormulaLibrary!]!
+  rollbackFormulaLibrary(id: ID!, input: RollbackFormulaVersionInput!): FormulaLibrary!
+  "Archiving a library templates import needs confirmInUse."
+  archiveFormulaLibrary(id: ID!, confirmInUse: Boolean!): FormulaLibrary!
+  submitFormulaLibrary(id: ID!, input: SubmitFormulaReviewInput!): FormulaLibrary!
+  approveFormulaLibrary(id: ID!, comment: String): FormulaLibrary!
+  rejectFormulaLibrary(id: ID!, comment: String): FormulaLibrary!
+  requestFormulaLibraryChanges(id: ID!, comment: String): FormulaLibrary!
+  """
+  Opens the person's conversation with the formula assistant about a saved library,
+  or a fresh one while the library is unsaved (libraryId null).
+  """
+  openFormulaLibraryAssistantThread(libraryId: ID): PageAssistantThread!
 }

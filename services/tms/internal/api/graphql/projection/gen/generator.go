@@ -41,9 +41,30 @@ const (
 	journalDTO          = "GraphQL journal DTO without column projection metadata"
 	costingDTO          = "GraphQL costing DTO without column projection metadata"
 	telematicsFormDTO   = "GraphQL telematics form DTO without column projection metadata"
+	formulaStudioDTO    = "GraphQL formula review and Studio DTO built by its resolver"
+	pageAssistantDTO    = "GraphQL page assistant thread DTO built by its resolver"
 )
 
 var nonProjectionObjects = map[string]string{
+	"FormulaVersionDiff":              formulaStudioDTO,
+	"FormulaReviewDiff":               formulaStudioDTO,
+	"FormulaReadinessCheck":           formulaStudioDTO,
+	"FormulaCoverage":                 formulaStudioDTO,
+	"FormulaUnreachedRegion":          formulaStudioDTO,
+	"FormulaReviewer":                 formulaStudioDTO,
+	"FormulaBacktestShipment":         formulaStudioDTO,
+	"FormulaPreviewError":             formulaStudioDTO,
+	"FormulaTraceNote":                formulaStudioDTO,
+	"FormulaSuggestedTest":            formulaStudioDTO,
+	"FormulaTableCellsTable":          formulaStudioDTO,
+	"FormulaTableCells":               formulaStudioDTO,
+	"FormulaSourceRange":              formulaStudioDTO,
+	"FormulaSourcePosition":           formulaStudioDTO,
+	"FormulaScheduledWindow":          formulaStudioDTO,
+	"FormulaStudioLibrary":            formulaStudioDTO,
+	"PageAssistantThread":             pageAssistantDTO,
+	"PageAssistantConversation":       pageAssistantDTO,
+	"PageAssistantAgent":              pageAssistantDTO,
 	"CarrierIntelRuleSetting":         "GraphQL DTO built by its resolver",
 	"BillingQueueHeadline":            "GraphQL billing queue item headline built from its review issues",
 	"CustomFieldFormField":            "GraphQL form DTO over the active definitions a form draws, read whole",

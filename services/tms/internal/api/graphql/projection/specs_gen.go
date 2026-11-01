@@ -338,6 +338,10 @@ var FormulaLibraryVersionSpec TypeSpec
 
 var FormulaTemplateSpec TypeSpec
 
+var FormulaTemplateReviewSpec TypeSpec
+
+var FormulaTemplateVersionSpec TypeSpec
+
 var FuelCardSpec TypeSpec
 
 var FuelFeedStatusSpec TypeSpec
@@ -16119,6 +16123,10 @@ func init() {
 				Special: "usageCount",
 			},
 			{
+				Name:    "billing",
+				Special: "billing",
+			},
+			{
 				Name:   "businessUnit",
 				Column: "business_unit_id",
 				Relation: &RelationSpec{
@@ -16131,6 +16139,163 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	FormulaTemplateReviewSpec = TypeSpec{
+		TypeName: "FormulaTemplateReview",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "templateId",
+				Column: "template_id",
+			},
+			{
+				Name:   "round",
+				Column: "round",
+			},
+			{
+				Name:   "decision",
+				Column: "decision",
+			},
+			{
+				Name:   "actorId",
+				Column: "actor_id",
+			},
+			{
+				Name:   "actor",
+				Column: "actor_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "comment",
+				Column: "comment",
+			},
+			{
+				Name:   "baseVersionNumber",
+				Column: "base_version_number",
+			},
+			{
+				Name:   "requestedReviewerId",
+				Column: "requested_reviewer_id",
+			},
+			{
+				Name:   "requestedReviewer",
+				Column: "requested_reviewer_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "reviewerNote",
+				Column: "reviewer_note",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+		},
+	}
+
+	FormulaTemplateVersionSpec = TypeSpec{
+		TypeName: "FormulaTemplateVersion",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "templateId",
+				Column: "template_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "versionNumber",
+				Column: "version_number",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "description",
+				Column: "description",
+			},
+			{
+				Name:   "source",
+				Column: "source",
+			},
+			{
+				Name:   "inputs",
+				Column: "inputs",
+			},
+			{
+				Name:   "imports",
+				Column: "imports",
+			},
+			{
+				Name:   "tables",
+				Column: "tables",
+			},
+			{
+				Name:   "testCount",
+				Column: "test_count",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "effectiveFrom",
+				Column: "effective_from",
+			},
+			{
+				Name:   "changeMessage",
+				Column: "change_message",
+			},
+			{
+				Name:   "changeSummary",
+				Column: "change_summary",
+			},
+			{
+				Name:   "tags",
+				Column: "tags",
+			},
+			{
+				Name:   "createdById",
+				Column: "created_by_id",
+			},
+			{
+				Name:   "createdBy",
+				Column: "created_by_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}

@@ -894,7 +894,7 @@ export const tariffTableShapeSchema = z.object({
 export type TariffTableShape = z.output<typeof tariffTableShapeSchema>;
 
 /**
- * What `POST /formula-templates/context/cells` answers: the needed tables' cells, read at the
+ * What the `formulaTemplateTableCells` query answers: the needed tables' cells, read at the
  * organisation's rate table `stamp`. A table's `loaded` absent means it came whole.
  */
 export const tariffTableCellsSchema = z.object({
@@ -918,7 +918,7 @@ export type TariffChargeCode = z.output<typeof tariffChargeCodeSchema>;
 
 /**
  * What every `tariff.*` operation that reads a file is given besides the file, and what
- * `GET /formula-templates/context` answers: the libraries it may import, the rate tables' shapes,
+ * the `formulaTemplateStudioContext` query answers: the libraries it may import, the rate tables' shapes,
  * the accessorial charge codes (null while unknown, so codes go unchecked) and the settings.
  */
 export const tariffContextSchema = z.object({
@@ -962,7 +962,7 @@ export const tariffStudioLibrarySchema = z.object({
 export type TariffStudioLibrary = z.output<typeof tariffStudioLibrarySchema>;
 
 /**
- * What `GET /formula-templates/context` answers: the context every check is given, and each
+ * What the `formulaTemplateStudioContext` query answers: the context every check is given, and each
  * library in it with its name, description and approved version number.
  */
 export const tariffStudioContextSchema = z.object({

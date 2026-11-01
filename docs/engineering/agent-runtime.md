@@ -2794,7 +2794,7 @@ Neither agent is offered in chat pickers, as a delegate, or on schedules.
 **One conversation per page.** A page thread has origin `Import` or `Formula`
 and its subject: the document being imported, or the formula template being
 written (`FormulaTemplate`). `POST /documents/:documentID/import-assistant/thread/`
-and `POST /formula-templates/ai/thread/` open it, requiring document or formula
+and the `openFormulaTemplateAssistantThread` mutation open it, requiring document or formula
 template read, `assistant:create`, and use of the agent (`MayUseAgent`). A
 partial unique index keeps one live thread per person and subject; a template
 not yet saved has a thread of its own, removed by the stale-thread sweep once it
@@ -2866,11 +2866,11 @@ fresh one.
 
 **The studio's one-shot calls.** Besides its thread, the Formula Studio asks the
 formula assistant five single questions through `formulastudioports.FormulaStudioAssist`
-(`formulastudioservice`): `POST /formula-templates/ai/explain` (one sentence per
-step of the rate trace), `ai/describe-inputs` (doc comments for inputs that have
-none), `ai/suggest-tests` (up to five `test` blocks, each run by `tariff.test`
-before it is answered), `ai/explain-test` (why a test fails, with a verdict) and
-`/:templateID/review-note` (the note for the reviewer). Each requires formula
+(`formulastudioservice`), each a GraphQL query: `explainFormulaTemplate` (one sentence per
+step of the rate trace), `describeFormulaTemplateInputs` (doc comments for inputs that have
+none), `suggestFormulaTemplateTests` (up to five `test` blocks, each run by `tariff.test`
+before it is answered), `explainFormulaTemplateTest` (why a test fails, with a verdict) and
+`formulaTemplateReviewNote` (the note for the reviewer). Each requires formula
 template read and `assistant:create`, ensures the organization's
 `formula_assistant` and checks `MayUseAgent`, then asks on the structured path with
 the agent's preferred provider, attributed to the agent and the person

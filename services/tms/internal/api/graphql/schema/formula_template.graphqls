@@ -17,6 +17,8 @@ type FormulaInputDeclaration {
   required: Boolean!
   "The default as a wire value, or null when the input has none."
   default: Any
+  "Whether the input declares a default; default is then its wire value, which may itself be null."
+  hasDefault: Boolean!
   """
   The values the input accepts, from its where clause, or null when it has none:
   {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
@@ -82,6 +84,11 @@ type FormulaTemplate {
   updatedAt: Timestamp!
   "How many shipments, rate agreement rules and billing fallbacks rate with this template."
   usageCount: Int!
+  """
+  The approved version that prices shipments today. Set when the template is read
+  by id; null on list rows and while nothing has been approved.
+  """
+  billing: FormulaTemplateBillingVersion
   businessUnit: BusinessUnit
   organization: Organization
 }
@@ -99,7 +106,644 @@ type FormulaTemplateConnection {
   totalCountExact: Boolean!
 }
 
+"A label a person gives a template version."
+enum FormulaVersionTag {
+  Stable
+  Production
+  Draft
+  Testing
+  Deprecated
+}
+
+"What an import does with a template whose name the organization already uses."
+enum FormulaTemplateImportConflict {
+  "Refuse the whole import."
+  Reject
+  "Import it under a free name."
+  Rename
+}
+
+"Where a backtest's current amount came from."
+enum FormulaBacktestCurrentSource {
+  "The amount billed on the shipment."
+  Billed
+  "The shipment's billed content rated again today."
+  Recomputed
+}
+
+"Whether a failing test shows a bug in the tariff or a wrong expectation."
+enum FormulaTestVerdict {
+  intended
+  bug
+  unclear
+}
+
+"The outcome of one readiness check."
+enum FormulaReadinessStatus {
+  pass
+  warn
+  fail
+}
+
+"A span of a Tariff source, as byte offsets."
+type FormulaSourceRange {
+  from: Int!
+  to: Int!
+}
+
+"A 1-based line and column in a Tariff source."
+type FormulaSourcePosition {
+  line: Int!
+  column: Int!
+}
+
+"The approved template version that prices shipments today."
+type FormulaTemplateBillingVersion {
+  versionNumber: Int!
+  effectiveFrom: Timestamp!
+  "True while the version's window has not started and nothing bills until it does."
+  pending: Boolean!
+}
+
+"A snapshot of a template. An Active version is approved; its effectiveFrom is when it starts to bill."
+type FormulaTemplateVersion {
+  id: ID!
+  templateId: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  versionNumber: Int!
+  name: String!
+  description: String!
+  source: String!
+  inputs: [FormulaInputDeclaration!]!
+  imports: [FormulaLibraryImport!]!
+  tables: [FormulaTemplateTable!]!
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  effectiveFrom: Timestamp
+  changeMessage: String!
+  "The fields that changed from the previous version, by field path."
+  changeSummary: JSON
+  tags: [FormulaVersionTag!]!
+  createdById: ID!
+  createdBy: User
+  createdAt: Timestamp!
+}
+
+"A page of a template's versions, newest first."
+type FormulaTemplateVersionsResult {
+  results: [FormulaTemplateVersion!]!
+  totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+"One step of a template's review: who did what, in which round, against which approved version."
+type FormulaTemplateReview {
+  id: ID!
+  templateId: ID!
+  round: Int!
+  decision: FormulaReviewDecision!
+  actorId: ID
+  actor: User
+  comment: String!
+  baseVersionNumber: Int!
+  requestedReviewerId: ID
+  requestedReviewer: User
+  reviewerNote: String!
+  createdAt: Timestamp!
+}
+
+"Someone who may approve: holds the resource's approve permission and is not the author."
+type FormulaReviewer {
+  id: ID!
+  name: String!
+  username: String!
+  profilePicUrl: String
+}
+
+"The field changes between two versions of a template or library."
+type FormulaVersionDiff {
+  fromVersion: Int!
+  toVersion: Int!
+  "The changed fields by field path: {from, to, type, fieldType, path}."
+  changes: JSON!
+  changeCount: Int!
+}
+
+"A template and the templates forked from it."
+type FormulaTemplateLineage {
+  templateId: ID!
+  templateName: String!
+  sourceTemplateId: ID
+  sourceVersion: Int
+  forkedTemplates: [FormulaTemplateLineage!]!
+}
+
+"How many records of one kind rate with a template."
+type FormulaTemplateUsageCount {
+  "Shipment, RateAgreementRule or BillingFallback."
+  type: String!
+  count: Int!
+}
+
+"What rates with a template."
+type FormulaTemplateUsage {
+  inUse: Boolean!
+  usages: [FormulaTemplateUsageCount!]!
+}
+
+"An approved snapshot whose start has not come yet: approved content waiting to bill."
+type FormulaScheduledWindow {
+  versionNumber: Int!
+  effectiveFrom: Timestamp!
+}
+
+"""
+What review compares: the source and pinned imports of the approved version a
+submission would replace, against the submission's, with the field changes between them.
+"""
+type FormulaReviewDiff {
+  hasApprovedBase: Boolean!
+  baseVersion: Int!
+  currentVersion: Int!
+  baseSource: String!
+  currentSource: String!
+  baseImports: [FormulaLibraryImport!]!
+  currentImports: [FormulaLibraryImport!]!
+  "The changed fields by field path: {from, to, type, fieldType, path}."
+  changes: JSON!
+  changeCount: Int!
+  "Approved template versions waiting to bill. Always empty for a library."
+  pendingSchedules: [FormulaScheduledWindow!]!
+}
+
+"One check a submission must pass."
+type FormulaReadinessCheck {
+  key: String!
+  label: String!
+  status: FormulaReadinessStatus!
+  detail: String!
+}
+
+"A region of the source no test reaches."
+type FormulaUnreachedRegion {
+  "The coverage region's kind: if, arm, option, …"
+  kind: String!
+  range: FormulaSourceRange!
+  at: FormulaSourcePosition!
+  "The source line the region starts on."
+  excerpt: String!
+}
+
+"How much of the saved source the tests reach."
+type FormulaCoverage {
+  reached: Int!
+  total: Int!
+  unreached: [FormulaUnreachedRegion!]!
+  "How many more unreached regions there are than unreached lists."
+  more: Int!
+}
+
+"""
+The server's verdict on a submission: whether it can be submitted and approved,
+each check, and the test totals.
+"""
+type FormulaReadiness {
+  canSubmit: Boolean!
+  canApprove: Boolean!
+  checks: [FormulaReadinessCheck!]!
+  testTotal: Int!
+  testPassed: Int!
+  testFailing: [String!]!
+  "The saved source's coverage; null when it does not check or its tests did not all run."
+  coverage: FormulaCoverage
+  "Approved template versions waiting to bill. Always empty for a library."
+  pendingSchedules: [FormulaScheduledWindow!]!
+}
+
+"One shipment a backtest rated with the current and the candidate content."
+type FormulaBacktestShipment {
+  shipmentId: ID!
+  proNumber: String!
+  currentSource: FormulaBacktestCurrentSource!
+  currentAmount: Decimal!
+  candidateAmount: Decimal!
+  delta: Decimal!
+  deltaPct: Decimal!
+  currentError: String
+  candidateError: String
+  "The candidate refused to rate this shipment."
+  candidateRefused: Boolean!
+  "The shipment's billed amount was adjusted after it was rated."
+  adjusted: Boolean!
+}
+
+"The totals of a backtest."
+type FormulaBacktestSummary {
+  shipmentCount: Int!
+  evaluatedCount: Int!
+  changedCount: Int!
+  increasedCount: Int!
+  decreasedCount: Int!
+  errorCount: Int!
+  currentErrorCount: Int!
+  candidateErrorCount: Int!
+  refusedCount: Int!
+  adjustedCount: Int!
+  currentTotal: Decimal!
+  candidateTotal: Decimal!
+  totalDelta: Decimal!
+  totalDeltaPct: Decimal!
+  maxIncrease: Decimal!
+  maxDecrease: Decimal!
+}
+
+"Recent shipments rated with the current content and with a candidate."
+type FormulaBacktestResult {
+  results: [FormulaBacktestShipment!]!
+  summary: FormulaBacktestSummary!
+  "True when the run hit its time limit before rating every shipment."
+  truncated: Boolean!
+}
+
+"Why a preview stopped."
+type FormulaPreviewError {
+  code: String!
+  "In the reader's language."
+  message: String!
+  range: FormulaSourceRange
+}
+
+"""
+What a preview answers: every finding, the bill (or why the tariff refused, or the
+error that stopped it), the trace, the table lookups, the choices its best and worst
+blocks made, and the file's tests as the server ran them. The list and bill fields
+carry the rules module's own wire values (pkg/rules), which the browser's module reads.
+"""
+type FormulaPreviewResult {
+  valid: Boolean!
+  diagnostics: Any!
+  bill: Any
+  refusal: Any
+  error: FormulaPreviewError
+  trace: Any!
+  lookups: Any!
+  choices: Any!
+  tests: Any!
+}
+
+"""
+A test block from a real shipment's facts and the bill it gets, for the person to
+place in the source.
+"""
+type FormulaScaffoldTestResult {
+  test: String!
+}
+
+"An approved organization library the Studio's context holds."
+type FormulaStudioLibrary {
+  "The module path a file imports: org.<name>."
+  path: String!
+  libraryId: ID!
+  name: String!
+  description: String!
+  "The approved version the context holds, the one a new template version would pin."
+  versionNumber: Int!
+}
+
+"""
+What the browser checks a tariff against: the organization's settings, its rate
+tables' shapes, its accessorial charge codes and the sources of the libraries a tariff
+may import.
+"""
+type FormulaStudioContext {
+  "The rules module's TariffContext wire value."
+  context: Any!
+  libraries: [FormulaStudioLibrary!]!
+  "The organization's rate table stamp the context was read at; cells are cached per stamp."
+  tablesStamp: String!
+}
+
+"The cells of one rate table a file's tests read."
+type FormulaTableCellsTable {
+  code: String!
+  "The rules module's TariffCell wire values."
+  cells: Any!
+  "The key combinations loaded; null when the table came whole."
+  loaded: [[String!]!]
+}
+
+"The rate table cells a file's tests read, at the organization's rate table stamp."
+type FormulaTableCells {
+  stamp: String!
+  tables: [FormulaTableCellsTable!]!
+}
+
+"A template the platform ships, as Tariff source with its own tests."
+type FormulaStandardTemplate {
+  name: String!
+  description: String!
+  source: String!
+}
+
+"What an import created, and the names it changed to avoid a clash."
+type ImportFormulaTemplatesResult {
+  created: [FormulaTemplate!]!
+  "The new name of each renamed template, by the name it was exported under."
+  renamed: JSON
+}
+
+"The standard templates installed, and the names skipped because they were already in use."
+type InstallStandardFormulaTemplatesResult {
+  installed: [FormulaTemplate!]!
+  skipped: [String!]!
+}
+
+"One sentence of Nova's reading of a rating, by the traced step's index."
+type FormulaTraceNote {
+  index: Int!
+  range: FormulaSourceRange
+  says: String!
+}
+
+"Nova's reading of a rating: the preview it ran with the trace on, and a sentence per traced step."
+type FormulaExplainResult {
+  preview: FormulaPreviewResult
+  items: [FormulaTraceNote!]!
+}
+
+"Doc comments Nova wrote for the inputs the draft declares without one."
+type FormulaInputDescriptionsResult {
+  "The doc comment of each input, by input name."
+  descriptions: JSON!
+}
+
+"A test Nova suggests, already run against the draft."
+type FormulaSuggestedTest {
+  name: String!
+  "The test block to add to the source."
+  block: String!
+  "The test's verdict, as the rules module wrote it."
+  status: String!
+  "What each failing expectation saw: the rules module's TariffTestFailure wire values."
+  failures: Any!
+}
+
+"Tests Nova suggests for the draft."
+type FormulaSuggestedTestsResult {
+  tests: [FormulaSuggestedTest!]!
+}
+
+"Why a test fails on the draft, in Nova's words, with the test's own run."
+type FormulaExplainTestResult {
+  verdict: FormulaTestVerdict!
+  why: String!
+  "False when no model wrote the reason and it was written from the failure."
+  generated: Boolean!
+  "The test's run: the rules module's TariffTestResult wire value."
+  test: Any
+}
+
+"The note Nova drafts for the reviewer of a submission."
+type FormulaReviewNoteResult {
+  note: String!
+  generated: Boolean!
+  "The backtest of the submission, when the person may read shipments."
+  backtest: FormulaBacktestSummary
+}
+
+"A page's conversation with its assistant, as the page opens it."
+type PageAssistantConversation {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  userId: ID!
+  agentDefinitionId: ID!
+  title: String!
+  "Active or Archived."
+  status: String!
+  lastMessageAt: Timestamp!
+  lastReadAt: Timestamp!
+  preferredProviderId: ID
+  "Where the conversation began: Import, Formula, …"
+  origin: String!
+  pinned: Boolean!
+  subjectType: String!
+  subjectId: ID
+  canContinue: Boolean!
+  "Why canContinue is false; null while it is true."
+  cannotContinueReason: String
+  taintedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"The system agent a page's conversation is with, which no chat picker lists."
+type PageAssistantAgent {
+  id: ID!
+  name: String!
+  description: String!
+  template: AgentTemplate
+  icon: String!
+  accent: String!
+  systemKey: String!
+  toolNames: [String!]!
+  starters: [AgentStarter!]!
+}
+
+"The person's conversation with a page's assistant, and the agent it is with."
+type PageAssistantThread {
+  thread: PageAssistantConversation!
+  agent: PageAssistantAgent!
+}
+
+input CreateFormulaTemplateInput {
+  "The tariff's source; the name, inputs, imports and test count are derived from it."
+  source: String!
+  description: String
+  metadata: JSON
+}
+
+input UpdateFormulaTemplateInput {
+  source: String!
+  description: String
+  version: Int!
+}
+
+input BulkUpdateFormulaTemplateStatusInput {
+  templateIds: [ID!]!
+  status: FormulaTemplateStatus!
+  "Sent after the person has seen what uses the templates and still means to archive them."
+  confirmInUse: Boolean
+}
+
+input ImportFormulaTemplatePayloadInput {
+  name: String!
+  description: String
+  source: String!
+  sourceTemplateId: ID
+  sourceVersionNumber: Int
+}
+
+input ImportFormulaTemplatesInput {
+  exportVersion: String!
+  templates: [ImportFormulaTemplatePayloadInput!]!
+  onConflict: FormulaTemplateImportConflict
+}
+
+input RollbackFormulaVersionInput {
+  targetVersion: Int!
+  changeMessage: String
+}
+
+input ForkFormulaTemplateInput {
+  newName: String!
+  "The version to fork; the current content when null."
+  sourceVersion: Int
+  changeMessage: String
+}
+
+input SubmitFormulaReviewInput {
+  comment: String
+  "Who should review; anyone who may approve when null."
+  reviewerId: ID
+  "The note the reviewer reads first."
+  reviewerNote: String
+}
+
+input ApproveFormulaTemplateInput {
+  comment: String
+  "When the approved content starts to bill; now when null. Until then the previously approved content keeps billing."
+  effectiveFrom: Timestamp
+}
+
+"Exactly one of source or versionNumber is the candidate."
+input FormulaTemplateBacktestInput {
+  source: String
+  versionNumber: Int
+  "How many recent shipments to rate, at most 500."
+  limit: Int
+}
+
+input FormulaTemplatePreviewInput {
+  source: String!
+  "Sample input values by input name, as wire values."
+  inputs: JSON
+  "A shipment to rate instead of the sample record."
+  shipmentId: ID
+}
+
+input FormulaTemplateScaffoldTestInput {
+  source: String!
+  inputs: JSON
+  "The shipment the test is written from."
+  shipmentId: ID!
+  name: String!
+}
+
+input FormulaTableNeedInput {
+  table: String!
+  keys: [String!]!
+}
+
+input FormulaTableCellsInput {
+  needs: [FormulaTableNeedInput!]!
+  "Load the tables the needs name, whole."
+  whole: Boolean
+}
+
+"The file as it is in the editor, saved or not."
+input FormulaDraftInput {
+  templateId: ID
+  name: String
+  description: String
+  source: String!
+}
+
+input FormulaExplainInput {
+  draft: FormulaDraftInput!
+  "The preview's sample input values by input name, as wire values."
+  inputs: JSON
+  "A saved shipment to price instead of the sample record."
+  shipmentId: ID
+}
+
+input FormulaExplainTestInput {
+  draft: FormulaDraftInput!
+  testName: String!
+}
+
 extend type Query {
   formulaTemplates(input: DataTableConnectionInput!): FormulaTemplateConnection!
   formulaTemplate(id: ID!): FormulaTemplate
+  "What rates with the template."
+  formulaTemplateUsage(templateId: ID!): FormulaTemplateUsage!
+  "A page of the template's versions, newest first."
+  formulaTemplateVersions(templateId: ID!, limit: Int, offset: Int): FormulaTemplateVersionsResult!
+  formulaTemplateVersion(templateId: ID!, versionNumber: Int!): FormulaTemplateVersion
+  "The approved versions waiting to bill, soonest first."
+  formulaTemplateScheduledVersions(templateId: ID!): [FormulaTemplateVersion!]!
+  formulaTemplateVersionDiff(templateId: ID!, fromVersion: Int!, toVersion: Int!): FormulaVersionDiff!
+  formulaTemplateLineage(templateId: ID!): FormulaTemplateLineage!
+  "The template's review history, newest first."
+  formulaTemplateReviews(templateId: ID!): [FormulaTemplateReview!]!
+  formulaTemplateReviewers(templateId: ID!): [FormulaReviewer!]!
+  formulaTemplateReadiness(templateId: ID!): FormulaReadiness!
+  formulaTemplateReviewDiff(templateId: ID!): FormulaReviewDiff!
+  "Rates recent shipments with the current content and a candidate. Saves nothing."
+  formulaTemplateBacktest(templateId: ID!, input: FormulaTemplateBacktestInput!): FormulaBacktestResult!
+  "What approving the submission would change on recent shipments. Saves nothing."
+  formulaTemplateApprovalImpact(templateId: ID!, limit: Int): FormulaBacktestResult!
+  formulaTemplateStudioContext: FormulaStudioContext!
+  formulaTemplateTableCells(input: FormulaTableCellsInput!): FormulaTableCells!
+  "Rates a source against the sample record or a real shipment. Saves nothing."
+  formulaTemplatePreview(input: FormulaTemplatePreviewInput!): FormulaPreviewResult!
+  "Writes a test block pinning what the source bills for a shipment. Saves nothing."
+  formulaTemplateScaffoldTest(input: FormulaTemplateScaffoldTestInput!): FormulaScaffoldTestResult!
+  formulaTemplateStandards: [FormulaStandardTemplate!]!
+  "Nova's statement-by-statement reading of a rating of the draft. Saves nothing."
+  explainFormulaTemplate(input: FormulaExplainInput!): FormulaExplainResult!
+  "Doc comments for the inputs the draft declares without one. Saves nothing."
+  describeFormulaTemplateInputs(input: FormulaDraftInput!): FormulaInputDescriptionsResult!
+  "Tests Nova suggests for the draft, run against it. Saves nothing."
+  suggestFormulaTemplateTests(input: FormulaDraftInput!): FormulaSuggestedTestsResult!
+  "Why the named test fails on the draft. Saves nothing."
+  explainFormulaTemplateTest(input: FormulaExplainTestInput!): FormulaExplainTestResult!
+  "The note Nova drafts for the submission's reviewer. Saves nothing."
+  formulaTemplateReviewNote(templateId: ID!): FormulaReviewNoteResult!
+}
+
+extend type Mutation {
+  createFormulaTemplate(input: CreateFormulaTemplateInput!): FormulaTemplate!
+  "Saves the content; a change to the source saves a new version and returns the template to draft."
+  updateFormulaTemplate(id: ID!, input: UpdateFormulaTemplateInput!): FormulaTemplate!
+  "Copies each template as a draft under a free name; returns the copies."
+  duplicateFormulaTemplates(templateIds: [ID!]!): [FormulaTemplate!]!
+  bulkUpdateFormulaTemplateStatus(input: BulkUpdateFormulaTemplateStatusInput!): [FormulaTemplate!]!
+  importFormulaTemplates(input: ImportFormulaTemplatesInput!): ImportFormulaTemplatesResult!
+  installStandardFormulaTemplates: InstallStandardFormulaTemplatesResult!
+  rollbackFormulaTemplate(id: ID!, input: RollbackFormulaVersionInput!): FormulaTemplate!
+  forkFormulaTemplate(id: ID!, input: ForkFormulaTemplateInput!): FormulaTemplate!
+  updateFormulaTemplateVersionTags(
+    templateId: ID!
+    versionNumber: Int!
+    tags: [FormulaVersionTag!]!
+  ): FormulaTemplateVersion!
+  "Moves when an approved version starts to bill; null starts it now."
+  updateFormulaTemplateVersionEffectiveDate(
+    templateId: ID!
+    versionNumber: Int!
+    effectiveFrom: Timestamp
+  ): FormulaTemplateVersion!
+  submitFormulaTemplate(id: ID!, input: SubmitFormulaReviewInput!): FormulaTemplate!
+  approveFormulaTemplate(id: ID!, input: ApproveFormulaTemplateInput!): FormulaTemplate!
+  rejectFormulaTemplate(id: ID!, comment: String): FormulaTemplate!
+  requestFormulaTemplateChanges(id: ID!, comment: String): FormulaTemplate!
+  """
+  Opens the person's conversation with the formula assistant about a saved template,
+  or a fresh one while the template is unsaved (templateId null).
+  """
+  openFormulaTemplateAssistantThread(templateId: ID): PageAssistantThread!
 }

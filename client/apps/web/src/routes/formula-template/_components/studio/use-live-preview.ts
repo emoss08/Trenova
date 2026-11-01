@@ -38,7 +38,7 @@ export function presentInputs(values: TariffInputValues | undefined): TariffInpu
 }
 
 /**
- * Rates what is in the editor on the server (`POST /formula-templates/test`), again once the
+ * Rates what is in the editor on the server (the `formulaTemplatePreview` query), again once the
  * source or the sample inputs settle: the sample record with the inputs the person set, or a
  * saved shipment's record. It watches only the source and those inputs, never the name or the
  * description, and sends nothing while the source has errors, which the editor already shows.

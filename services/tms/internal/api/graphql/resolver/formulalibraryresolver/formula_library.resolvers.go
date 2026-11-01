@@ -8,18 +8,30 @@ package formulalibraryresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/formulamapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *FormulaLibraryVersionResolver) ChangeSummary(ctx context.Context, obj *formulalibrary.FormulaLibraryVersion) (map[string]any, error) {
-	return changeSummaryToModel(obj.ChangeSummary), nil
+	if len(obj.ChangeSummary) == 0 {
+		return nil, nil
+	}
+	return formulamapping.Changes(obj.ChangeSummary), nil
 }
 
 func (r *QueryResolver) FormulaLibraries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaLibraryConnection, error) {
@@ -103,4 +115,356 @@ func (r *QueryResolver) FormulaLibraryReviews(ctx context.Context, libraryID str
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		LibraryID:  id,
 	})
+}
+
+func (r *QueryResolver) FormulaLibraryVersionDiff(ctx context.Context, libraryID string, fromVersion int, toVersion int) (*gqlmodel.FormulaVersionDiff, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(libraryID)
+	if err != nil {
+		return nil, err
+	}
+
+	if fromVersion < 1 || toVersion < 1 {
+		return nil, errortypes.NewValidationError(
+			"versions",
+			errortypes.ErrInvalid,
+			"from and to must be version numbers",
+		)
+	}
+
+	diff, err := r.FormulaLibraryService.CompareVersions(
+		ctx,
+		&formulalibraryports.GetLibraryVersionRangeRequest{
+			TenantInfo:  resolvercore.TenantInfo(authCtx),
+			LibraryID:   id,
+			FromVersion: int64(fromVersion),
+			ToVersion:   int64(toVersion),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return formulamapping.VersionDiff(diff.FromVersion, diff.ToVersion, diff.Changes, diff.ChangeCount), nil
+}
+
+func (r *QueryResolver) FormulaLibraryReadiness(ctx context.Context, libraryID string) (*gqlmodel.FormulaReadiness, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(libraryID)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaLibraryService.Readiness(ctx, &formulalibraryservice.ReadinessRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		LibraryID:  id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return readinessToModel(resp), nil
+}
+
+func (r *QueryResolver) FormulaLibraryReviewDiff(ctx context.Context, libraryID string) (*gqlmodel.FormulaReviewDiff, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(libraryID)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.FormulaLibraryService.ReviewDiff(ctx, &formulalibraryservice.ReviewDiffRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		LibraryID:  id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return reviewDiffToModel(resp), nil
+}
+
+func (r *QueryResolver) FormulaLibraryReviewers(ctx context.Context, libraryID string) ([]*gqlmodel.FormulaReviewer, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = pulid.MustParse(libraryID); err != nil {
+		return nil, err
+	}
+
+	reviewers, err := r.FormulaLibraryService.ListReviewers(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return reviewersToModel(reviewers), nil
+}
+
+func (r *QueryResolver) FormulaLibraryUsages(ctx context.Context, libraryID string, versionNumber *int) ([]*formulatemplateports.LibraryUsage, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(libraryID)
+	if err != nil {
+		return nil, err
+	}
+
+	if versionNumber != nil && *versionNumber < 1 {
+		return nil, errortypes.NewValidationError(
+			"versionNumber",
+			errortypes.ErrInvalid,
+			"versionNumber must be a version number",
+		)
+	}
+
+	return r.FormulaLibraryService.ListUsages(ctx, &formulalibraryservice.ListUsagesRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		LibraryID:     id,
+		VersionNumber: gqlscalar.Int64Ptr(versionNumber),
+	})
+}
+
+func (r *MutationResolver) CreateFormulaLibrary(ctx context.Context, input gqlmodel.CreateFormulaLibraryInput) (*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.Create(ctx, &formulalibrary.FormulaLibrary{
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		Name:           input.Name,
+		Description:    gqlscalar.StringValue(input.Description),
+		Source:         input.Source,
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateFormulaLibrary(ctx context.Context, id string, input gqlmodel.UpdateFormulaLibraryInput) (*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	libraryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.Update(ctx, &formulalibrary.FormulaLibrary{
+		ID:             libraryID,
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		Name:           input.Name,
+		Description:    gqlscalar.StringValue(input.Description),
+		Source:         input.Source,
+		Version:        int64(input.Version),
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) DuplicateFormulaLibraries(ctx context.Context, libraryIds []string) ([]*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpDuplicate)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := gqlid.ParseIDListField("libraryIds", libraryIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.Duplicate(ctx, &formulalibraryservice.DuplicateRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		LibraryIDs: ids,
+	})
+}
+
+func (r *MutationResolver) RollbackFormulaLibrary(ctx context.Context, id string, input gqlmodel.RollbackFormulaVersionInput) (*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	libraryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.Rollback(ctx, &formulalibraryservice.RollbackRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		LibraryID:     libraryID,
+		TargetVersion: int64(input.TargetVersion),
+		ChangeMessage: gqlscalar.StringValue(input.ChangeMessage),
+	})
+}
+
+func (r *MutationResolver) ArchiveFormulaLibrary(ctx context.Context, id string, confirmInUse bool) (*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpArchive)
+	if err != nil {
+		return nil, err
+	}
+
+	libraryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.Archive(ctx, &formulalibraryservice.ArchiveRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		LibraryID:    libraryID,
+		ConfirmInUse: confirmInUse,
+	})
+}
+
+func (r *MutationResolver) SubmitFormulaLibrary(ctx context.Context, id string, input gqlmodel.SubmitFormulaReviewInput) (*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpSubmit)
+	if err != nil {
+		return nil, err
+	}
+
+	libraryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	reviewerID, err := formulamapping.ParseOptionalID(
+		input.ReviewerID,
+		"reviewerId",
+		"Choose an active reviewer, other than you, who can approve formula libraries",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.Submit(ctx, &formulalibraryservice.SubmitRequest{
+		ApprovalActionRequest: formulalibraryservice.ApprovalActionRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			EntityID:   libraryID,
+			Comment:    gqlscalar.StringValue(input.Comment),
+		},
+		ReviewerID:   reviewerID,
+		ReviewerNote: gqlscalar.StringValue(input.ReviewerNote),
+	})
+}
+
+func (r *MutationResolver) ApproveFormulaLibrary(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	libraryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	mayApproveOwn, err := resolvercore.CheckPermission(
+		ctx,
+		r.PermissionEngine,
+		authCtx,
+		permission.ResourceFormulaLibrary,
+		permission.OpApproveOwn,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.Approve(ctx, &formulalibraryservice.ApprovalActionRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		EntityID:      libraryID,
+		Comment:       gqlscalar.StringValue(comment),
+		MayApproveOwn: mayApproveOwn,
+	})
+}
+
+func (r *MutationResolver) RejectFormulaLibrary(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpReject)
+	if err != nil {
+		return nil, err
+	}
+
+	libraryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.Reject(ctx, &formulalibraryservice.ApprovalActionRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		EntityID:   libraryID,
+		Comment:    gqlscalar.StringValue(comment),
+	})
+}
+
+func (r *MutationResolver) RequestFormulaLibraryChanges(ctx context.Context, id string, comment *string) (*formulalibrary.FormulaLibrary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpReject)
+	if err != nil {
+		return nil, err
+	}
+
+	libraryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FormulaLibraryService.RequestChanges(ctx, &formulalibraryservice.ApprovalActionRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		EntityID:   libraryID,
+		Comment:    gqlscalar.StringValue(comment),
+	})
+}
+
+func (r *MutationResolver) OpenFormulaLibraryAssistantThread(ctx context.Context, libraryID *string) (*gqlmodel.PageAssistantThread, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFormulaLibrary, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate); err != nil {
+		return nil, err
+	}
+
+	id, err := formulamapping.ParseOptionalID(libraryID, "libraryId", "Invalid formula library ID")
+	if err != nil {
+		return nil, err
+	}
+
+	if r.PageAssistant == nil {
+		return nil, errortypes.NewBusinessError("The formula assistant is not available on this server")
+	}
+
+	tenant := resolvercore.TenantInfo(authCtx)
+	if id.IsNotNil() {
+		if _, err = r.FormulaLibraryService.GetByID(ctx, &formulalibraryports.GetLibraryByIDRequest{
+			LibraryID:  id,
+			TenantInfo: tenant,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	opened, err := r.PageAssistant.OpenPageThread(ctx, &assistantports.OpenPageThreadRequest{
+		TenantInfo:  tenant,
+		Origin:      conversation.ThreadOriginFormula,
+		SubjectType: agent.SubjectFormulaLibrary,
+		SubjectID:   id,
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return formulamapping.PageThread(opened), nil
 }

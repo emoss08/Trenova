@@ -86,34 +86,34 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 38 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1112 writes: 696 GraphQL mutations and 416 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 678 |
+| Exempt | 667 |
 | — Security | 85 |
-| — Configuration | 247 |
+| — Configuration | 246 |
 | — User preference | 40 |
 | — Infrastructure | 48 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 38 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1112 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -212,7 +212,7 @@ The writes no tool performs yet, and what the tool would do.
 | fleetcode | 4 | 0 | 4 | 0 |
 | fleetsafety | 3 | 3 | 0 | 0 |
 | formulalibrary | 10 | 0 | 10 | 0 |
-| formulatemplate | 26 | 0 | 26 | 0 |
+| formulatemplate | 15 | 0 | 15 | 0 |
 | fuelpurchase | 13 | 7 | 6 | 0 |
 | fuelsurcharge | 9 | 2 | 7 | 0 |
 | googlemaps | 1 | 0 | 1 | 0 |
@@ -1290,47 +1290,36 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/formula-libraries/`<br>formulalibraryhandler.create | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `POST /api/v1/formula-libraries/:libraryID/approve`<br>formulalibraryhandler.approve | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `POST /api/v1/formula-libraries/:libraryID/archive`<br>formulalibraryhandler.archive | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `POST /api/v1/formula-libraries/:libraryID/reject`<br>formulalibraryhandler.reject | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `POST /api/v1/formula-libraries/:libraryID/request-changes`<br>formulalibraryhandler.requestChanges | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `POST /api/v1/formula-libraries/:libraryID/rollback`<br>formulalibraryhandler.rollback | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `POST /api/v1/formula-libraries/:libraryID/submit`<br>formulalibraryhandler.submit | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `POST /api/v1/formula-libraries/ai/thread/`<br>formulalibraryhandler.openAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
-| `POST /api/v1/formula-libraries/duplicate`<br>formulalibraryhandler.duplicate | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
-| `PUT /api/v1/formula-libraries/:libraryID/`<br>formulalibraryhandler.update | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation approveFormulaLibrary` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation archiveFormulaLibrary` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation createFormulaLibrary` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation duplicateFormulaLibraries` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation openFormulaLibraryAssistantThread` | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `mutation rejectFormulaLibrary` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation requestFormulaLibraryChanges` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation rollbackFormulaLibrary` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation submitFormulaLibrary` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `mutation updateFormulaLibrary` | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
 
 ### formulatemplate
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/effective-date`<br>formulatemplatehandler.updateVersionEffectiveDate | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/tags`<br>formulatemplatehandler.updateVersionTags | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/`<br>formulatemplatehandler.create | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/approve`<br>formulatemplatehandler.approve | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/backtest`<br>formulatemplatehandler.backtest | Exempt, read-only: Evaluates a pricing formula against samples or past shipments and saves nothing. |
-| `POST /api/v1/formula-templates/:templateID/fork`<br>formulatemplatehandler.fork | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/impact`<br>formulatemplatehandler.approvalImpact | Exempt, read-only: Evaluates a pricing formula against samples or past shipments and saves nothing. |
-| `POST /api/v1/formula-templates/:templateID/reject`<br>formulatemplatehandler.reject | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/request-changes`<br>formulatemplatehandler.requestChanges | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/review-note`<br>formulatemplatehandler.reviewNote | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
-| `POST /api/v1/formula-templates/:templateID/rollback`<br>formulatemplatehandler.rollback | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/submit`<br>formulatemplatehandler.submit | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/versions`<br>formulatemplatehandler.createVersion | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/ai/describe-inputs`<br>formulatemplatehandler.describeInputs | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
-| `POST /api/v1/formula-templates/ai/explain`<br>formulatemplatehandler.explainFormula | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
-| `POST /api/v1/formula-templates/ai/explain-test`<br>formulatemplatehandler.explainTest | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
-| `POST /api/v1/formula-templates/ai/suggest-tests`<br>formulatemplatehandler.suggestTests | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
-| `POST /api/v1/formula-templates/ai/thread/`<br>formulatemplatehandler.openAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
-| `POST /api/v1/formula-templates/bulk-update-status`<br>formulatemplatehandler.bulkUpdateStatus | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/context/cells`<br>formulatemplatehandler.getContextCells | Exempt, read-only: Reads the rate table cells a formula's tests need in the browser; nothing is saved. |
-| `POST /api/v1/formula-templates/duplicate`<br>formulatemplatehandler.duplicate | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/import`<br>formulatemplatehandler.importTemplates | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/install-standards`<br>formulatemplatehandler.installStandards | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/scaffold-test`<br>formulatemplatehandler.scaffoldTest | Exempt, read-only: Writes a test block from a shipment's facts and returns it for the person to place in the source; nothing is saved. |
-| `POST /api/v1/formula-templates/test`<br>formulatemplatehandler.preview | Exempt, read-only: Evaluates a pricing formula against samples or past shipments and saves nothing. |
-| `PUT /api/v1/formula-templates/:templateID/`<br>formulatemplatehandler.update | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation approveFormulaTemplate` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation bulkUpdateFormulaTemplateStatus` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation createFormulaTemplate` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation duplicateFormulaTemplates` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation forkFormulaTemplate` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation importFormulaTemplates` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation installStandardFormulaTemplates` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation openFormulaTemplateAssistantThread` | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `mutation rejectFormulaTemplate` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation requestFormulaTemplateChanges` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation rollbackFormulaTemplate` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation submitFormulaTemplate` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation updateFormulaTemplate` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation updateFormulaTemplateVersionEffectiveDate` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `mutation updateFormulaTemplateVersionTags` | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 
 ### fuelpurchase
 

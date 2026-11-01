@@ -39,7 +39,7 @@ if shipment.reefer {
 minimum $250
 `;
 
-/** A template as the server's GET /formula-templates/{id}/ returns it. */
+/** A template as the server's formulaTemplate query returns it. */
 function template(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
   return {
     ...formulaTemplateSchema.parse({
