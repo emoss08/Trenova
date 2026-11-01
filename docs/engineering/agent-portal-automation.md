@@ -114,7 +114,7 @@ Listing a conversation's waits attaches `signInCode` (`portalRunId`, `prompt`,
 `expiresAt`, `attempts`) to an open `PortalRun` wait whose run is waiting. The
 Desk draws the code box on that wait's row, and AI control draws it on the run
 for someone who can update extensions. The box posts to
-`POST /agent-portals/runs/:runID/sign-in-code/`, which takes only the person the
+the `provideAgentPortalSignInCode` mutation, which takes only the person the
 run was asked for, or someone who can update agent extensions (anyone else is
 told there is no such run), and only while the run waits. The code is read as a
 person types it, spaces and dashes dropped, and refused unless it is 4 to 12
@@ -133,7 +133,7 @@ A code can arrive too late for the portal, or the portal can ask for more than a
 code (a captcha, a security question, a push to a phone). While a run is open
 (`Running` or `AwaitingCode` with its browser open), the person it was asked for,
 or someone who can update agent extensions, can open the browser itself:
-`GET /agent-portals/runs/:runID/live/` returns the vendor's live view of the
+the `agentPortalRunLive` query returns the vendor's live view of the
 session (`BrowserProvider.LiveView`, Browser Use's `liveUrl`), where they can
 watch the task or take over and sign in. The address opens a browser signed in to
 the portal, so it is read only when someone asks for it, sent `no-store`, and
@@ -238,7 +238,7 @@ and session, every page visited and those off the site, the outcome and the
 answer, the steps and cost, who asked and from which agent run, conversation and
 proposal. The Desk shows each task as a `portal_task` artifact (see
 [desk-artifacts.md](desk-artifacts.md#the-portal-task)) that follows the run while
-its browser is open, read through `GET /agent-portals/runs/:runID/` by the person
+its browser is open, read through the `agentPortalRun` query by the person
 it was asked for or someone who can read agent extensions. AI control lists the
 history under the extension; a run's recording is
 fetched from the vendor when someone opens it, because its address is signed and
@@ -286,7 +286,7 @@ every extension does.
 | `/browser` | the extension command registry: `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, `assistantservice/assistantthreads/commands.go`, the composer's `use-desk-extension-commands.ts` and `EXTENSION_COMMANDS` in `composer-commands.ts` |
 | Vendor connector | `internal/infrastructure/agentextension/browseruseconnector/` over `shared/browseruse` |
 | Tools | `querytools/webquerytools/portal_tools.go` (`web_list_portal_sites`, `web_read_portal`), `agenttools/portaltools/` (`web_use_portal`) |
-| REST API | `/agent-portals/sites/` (list, create, `/:siteID/` update and delete), `/agent-portals/runs/` (list, `/:runID/`, `/:runID/live/`, `/:runID/recording/`, `/:runID/sign-in-code/`) |
+| API | GraphQL (`schema/agentextension.graphqls`): `agentPortalSites`, `createAgentPortalSite`, `updateAgentPortalSite`, `deleteAgentPortalSite`, `agentPortalRuns`, `agentPortalRun`, `agentPortalRunLive`, `agentPortalRunRecording`, `provideAgentPortalSignInCode` |
 | Relayed codes and signing in by hand | `extensionportal/portalsignin.go`, `extensionportalservice/portal_codes.go`, the code box in `client/apps/web/src/components/assistant/portal-code-form.tsx`, the live browser and "I've signed in" in `portal-sign-in.tsx` |
 | What a person reads of a run | `client/apps/web/src/components/assistant/portal-run-result.tsx`, drawn by AI control and by the Desk's `portal_task` artifact (`routes/desk/_components/artifacts/kinds/portal/`, recorded by `assistantservice/toolartifacts/portal_task_artifact.go`) |
 | AI control | `client/apps/web/src/routes/agent-control/_components/extensions/portal-*.tsx` |

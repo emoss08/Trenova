@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/agenttrustmapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -19,11 +20,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -605,4 +609,160 @@ func (r *MutationResolver) SetAgentUnattendedRole(ctx context.Context, agentID s
 		AgentID:    definitionID,
 		RoleID:     role,
 	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) AgentBudgetStatus(ctx context.Context, agentID string) (*agentbudgetports.AgentBudgetStatus, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := gqlid.ParseIDField("agentId", agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	definition, err := r.AgentDefinitionService.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
+		ID:         definitionID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentBudgetService.Status(ctx, definition)
+}
+
+func (r *QueryResolver) AgentToolTrust(ctx context.Context, agentID string) ([]*gqlmodel.AgentToolTrust, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := gqlid.ParseIDField("agentId", agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.AgentTrustService.ListForDefinition(ctx, agenttoolports.ListToolTrustRequest{
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
+		AgentDefinitionID: definitionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return agenttrustmapping.ToolTrusts(rows), nil
+}
+
+func (r *QueryResolver) AgentToolCatalog(ctx context.Context) ([]*agentdefinitionports.ToolCatalogEntry, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	entries, err := r.AgentDefinitionService.ToolCatalog(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return sliceutils.Pointers(entries), nil
+}
+
+func (r *QueryResolver) AgentEventKinds(ctx context.Context) ([]*agenttrigger.EventDescriptor, error) {
+	if _, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	return sliceutils.Pointers(r.AgentDefinitionService.EventKinds()), nil
+}
+
+func (r *MutationResolver) CreateAgentDefinition(ctx context.Context, input gqlmodel.SaveAgentDefinitionInput) (*agentdefinition.Definition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := saveRequestFromInput(pulid.Nil, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentDefinitionService.Create(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateAgentDefinition(ctx context.Context, id string, input gqlmodel.SaveAgentDefinitionInput) (*agentdefinition.Definition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := saveRequestFromInput(definitionID, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentDefinitionService.Update(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) DeleteAgentDefinition(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	definitionID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.AgentDefinitionService.Delete(ctx, agentdefinitionports.DeleteAgentDefinitionRequest{
+		ID:         definitionID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *AgentEventKindResolver) Kind(ctx context.Context, obj *agenttrigger.EventDescriptor) (string, error) {
+	return string(obj.Kind), nil
+}
+
+func (r *AgentEventKindResolver) SubjectType(ctx context.Context, obj *agenttrigger.EventDescriptor) (string, error) {
+	return string(obj.SubjectType), nil
+}
+
+func (r *AgentToolCatalogEntryResolver) Kind(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error) {
+	return string(obj.Kind), nil
+}
+
+func (r *AgentToolCatalogEntryResolver) Resource(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error) {
+	return string(obj.Resource), nil
+}
+
+func (r *AgentToolCatalogEntryResolver) Operation(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error) {
+	return string(obj.Operation), nil
+}
+
+func (r *AgentToolCatalogEntryResolver) DefaultAutonomyTier(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error) {
+	return string(obj.DefaultAutonomyTier), nil
+}
+
+func (r *AgentToolCatalogEntryResolver) MaxAutonomyTier(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error) {
+	return string(obj.MaxAutonomyTier), nil
+}
+
+func (r *AgentToolCatalogEntryResolver) Effect(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error) {
+	return string(obj.Effect), nil
+}
+
+func (r *AgentToolCatalogEntryResolver) Extension(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error) {
+	return string(obj.Extension), nil
 }

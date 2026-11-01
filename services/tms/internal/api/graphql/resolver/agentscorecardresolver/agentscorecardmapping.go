@@ -2,8 +2,8 @@ package agentscorecardresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/agenttrustmapping"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 )
 
@@ -40,7 +40,7 @@ func toGQLAgentScorecard(
 		ByTool:                make([]*agentevaluation.ToolOutcomeCount, 0, len(card.ByTool)),
 		ToolVerdicts:          make([]*agentevaluation.ToolVerdictCount, 0, len(card.ToolVerdicts)),
 		Trend:                 make([]*agentevaluation.ScorecardPoint, 0, len(card.Trend)),
-		ToolTrust:             make([]*gqlmodel.AgentToolTrust, 0, len(result.ToolTrust)),
+		ToolTrust:             agenttrustmapping.ToolTrusts(result.ToolTrust),
 	}
 
 	for index := range card.ByTool {
@@ -52,43 +52,6 @@ func toGQLAgentScorecard(
 	for index := range card.Trend {
 		out.Trend = append(out.Trend, &card.Trend[index])
 	}
-	for _, trust := range result.ToolTrust {
-		out.ToolTrust = append(out.ToolTrust, toGQLAgentToolTrust(trust))
-	}
 
 	return out
-}
-
-func toGQLAgentToolTrust(trust *agenttooltrust.ToolTrust) *gqlmodel.AgentToolTrust {
-	out := &gqlmodel.AgentToolTrust{
-		ToolName:          trust.ToolName,
-		Streak:            trust.Streak,
-		Approvals:         trust.Approvals,
-		Modifications:     trust.Modifications,
-		Rejections:        trust.Rejections,
-		ExecutionFailures: trust.ExecutionFailures,
-		LastDecisionAt:    optionalUnix(trust.LastDecisionAt),
-		PromotedAt:        optionalUnix(trust.PromotedAt),
-		DemotedAt:         optionalUnix(trust.DemotedAt),
-	}
-	// An empty earned tier means the tool's tier was chosen by a person, not
-	// granted by the ledger, which is a different thing from "granted the
-	// lowest tier" and has to stay absent rather than become one.
-	if trust.EarnedTier != "" {
-		tier := trust.EarnedTier
-		out.EarnedTier = &tier
-	}
-
-	return out
-}
-
-// optionalUnix carries a nullable instant to the wire without turning an
-// absent timestamp into the epoch.
-func optionalUnix(at *int64) *int {
-	if at == nil {
-		return nil
-	}
-	value := int(*at)
-
-	return &value
 }

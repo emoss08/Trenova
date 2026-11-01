@@ -1,0 +1,41 @@
+"A record a palette question names, as the person picked it."
+input PaletteMentionInput {
+  "The kind of record, as the permission registry names it."
+  type: String!
+  id: String!
+  label: String!
+}
+
+input AskPaletteInput {
+  content: String!
+  """
+  What the person was looking at, in the shape the Desk sends with a message:
+  path, entityType, entityId, title and view. Any draft is ignored.
+  """
+  context: JSON
+  "At most ten."
+  mentions: [PaletteMentionInput!]
+}
+
+"A palette question handed to a worker: the id that names it, and where its answer streams."
+type PaletteAsk {
+  askId: ID!
+  "The path of the server-sent event stream the answer arrives on."
+  streamUrl: String!
+}
+
+"The Desk conversation a palette question was carried into."
+type KeptPaletteAsk {
+  threadId: ID!
+  "The question, when there was no answer to carry, for the Desk to ask; empty otherwise."
+  unanswered: String!
+}
+
+extend type Mutation {
+  "Asks Nova a quick question from the palette, answered on a worker without making a conversation."
+  askPalette(input: AskPaletteInput!): PaletteAsk!
+  "Takes back the caller's palette question nobody is waiting for."
+  stopPaletteAsk(askId: ID!): Boolean!
+  "Carries the caller's palette question and its answer into a new Desk conversation."
+  keepPaletteAsk(askId: ID!): KeptPaletteAsk!
+}

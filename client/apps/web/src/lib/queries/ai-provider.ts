@@ -27,7 +27,8 @@ export const aiProvider = createQueryKeys("aiProvider", {
   }),
   catalog: () => ({
     queryKey: ["ai-provider-catalog"],
-    queryFn: () => apiService.aiProviderService.catalog(),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.aiProviderService.catalog({ signal }),
   }),
   models: (endpoint: AIProviderEndpoint) => ({
     queryKey: [endpoint],

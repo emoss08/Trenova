@@ -1,0 +1,19 @@
+# A quick question from the palette. Its answer streams from the REST stream
+# path the result names.
+mutation AskPalette($input: AskPaletteInput!) {
+  askPalette(input: $input) {
+    askId
+    streamUrl
+  }
+}
+
+mutation StopPaletteAsk($askId: ID!) {
+  stopPaletteAsk(askId: $askId)
+}
+
+mutation KeepPaletteAsk($askId: ID!) {
+  keepPaletteAsk(askId: $askId) {
+    threadId
+    unanswered
+  }
+}

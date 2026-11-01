@@ -242,21 +242,15 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["role-agents", roleId],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchRoleAgents(roleId, { signal }),
   }),
-  systemAgent: (systemKey: string) => ({
-    queryKey: ["agent-definition-system", systemKey],
-    queryFn: () => apiService.agentDefinitionService.getBySystemKey(systemKey),
-  }),
   toolCatalog: () => ({
     queryKey: ["agent-tool-catalog"],
-    queryFn: () => apiService.agentDefinitionService.tools(),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentDefinitionService.tools({ signal }),
   }),
   eventKinds: () => ({
     queryKey: ["agent-event-kinds"],
-    queryFn: () => apiService.agentDefinitionService.eventKinds(),
-  }),
-  agent: (id: string) => ({
-    queryKey: ["agent-definition", id],
-    queryFn: () => apiService.agentDefinitionService.get(id),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentDefinitionService.eventKinds({ signal }),
   }),
   agentBudget: (id: string) => ({
     queryKey: ["agent-budget", id],
@@ -267,10 +261,6 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["agent-trust", id],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.agentDefinitionService.trust(id, { signal }),
-  }),
-  agentTemplates: () => ({
-    queryKey: ["agent-templates"],
-    queryFn: () => apiService.agentDefinitionService.templates(),
   }),
 });
 

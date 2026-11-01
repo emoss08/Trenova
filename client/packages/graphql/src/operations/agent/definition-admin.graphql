@@ -1,0 +1,87 @@
+# What AI Control saves and reads about one agent beyond the agent itself:
+# its caps, its track record, and the tools and events the builder offers.
+mutation CreateAgentDefinition($input: SaveAgentDefinitionInput!) {
+  createAgentDefinition(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateAgentDefinition($id: ID!, $input: SaveAgentDefinitionInput!) {
+  updateAgentDefinition(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation DeleteAgentDefinition($id: ID!) {
+  deleteAgentDefinition(id: $id)
+}
+
+query AgentBudgetStatus($agentId: ID!) {
+  agentBudgetStatus(agentId: $agentId) {
+    monthStart
+    dayStart
+    spentUsd
+    monthlyBudgetUsd
+    monthCalls
+    unpricedCalls
+    runsToday
+    dailyRunLimit
+    tools {
+      tool
+      used
+      limit
+    }
+    simulationMode
+  }
+}
+
+query AgentToolTrust($agentId: ID!) {
+  agentToolTrust(agentId: $agentId) {
+    toolName
+    streak
+  }
+}
+
+query AgentToolCatalog {
+  agentToolCatalog {
+    name
+    description
+    parameters
+    kind
+    resource
+    operation
+    defaultAutonomyTier
+    reversible
+    core
+    effect
+    prerequisites
+    extension
+    grantedToEveryAgent
+  }
+}
+
+query AgentEventKinds {
+  agentEventKinds {
+    kind
+    subjectType
+    label
+    description
+  }
+}
+
+mutation StartAgentRun($input: StartAgentRunInput!) {
+  startAgentRun(input: $input) {
+    id
+    agentDefinitionId
+    agentType
+    subjectType
+    subjectId
+    status
+    trigger
+    summary
+    workflowId
+    createdAt
+  }
+}

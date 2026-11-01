@@ -1,0 +1,88 @@
+# The organization's analyses, newest first, for AI Control's history.
+query AgentAnalysisRuns($before: Timestamp, $beforeId: ID, $limit: Int) {
+  agentAnalysisRuns(before: $before, beforeId: $beforeId, limit: $limit) {
+    items {
+      id
+      status
+      title
+      purpose
+      durationMs
+      agentDefinitionId
+      agentRunId
+      threadId
+      requestedById
+      startedAt
+      finishedAt
+    }
+    nextBefore
+    nextBeforeId
+  }
+}
+
+# One analysis, whole: the Desk reads it for a table longer than the agent was shown.
+query AgentAnalysisRun($id: ID!) {
+  agentAnalysisRun(id: $id) {
+    id
+    status
+    title
+    purpose
+    durationMs
+    agentDefinitionId
+    agentRunId
+    threadId
+    requestedById
+    startedAt
+    finishedAt
+    code
+    output
+    errorName
+    errorValue
+    traceback
+    failure
+    datasets {
+      name
+      source
+      sourceId
+      label
+      rows
+    }
+    tables {
+      title
+      columns {
+        name
+        kind
+        currency
+      }
+      rows
+      totalRows
+    }
+    figures {
+      label
+      value
+      kind
+      currency
+      note
+    }
+    charts {
+      kind
+      title
+      x {
+        label
+        kind
+        values
+      }
+      series {
+        name
+        values
+      }
+      valueKind
+      currency
+      stacked
+      horizontal
+    }
+    layout {
+      kind
+      index
+    }
+  }
+}

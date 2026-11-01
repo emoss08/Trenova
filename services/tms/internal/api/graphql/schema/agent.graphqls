@@ -1092,3 +1092,19 @@ extend type Query {
   "What agents did since the moment given, at most 31 days ago."
   agentActivitySummary(since: Timestamp!): AgentActivitySummary!
 }
+
+"""
+What a manual run starts: an agent by its id, or a system agent by its key,
+optionally on one record.
+"""
+input StartAgentRunInput {
+  agentDefinitionId: ID
+  systemKey: String
+  subjectType: AgentSubjectType
+  subjectId: ID
+}
+
+extend type Mutation {
+  "Starts an agent now, as the caller. The run goes on in the background."
+  startAgentRun(input: StartAgentRunInput!): AgentRun!
+}

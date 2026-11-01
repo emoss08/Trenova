@@ -689,3 +689,150 @@ extend type Mutation {
   """
   tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
 }
+
+"An agent's autonomy for one change tool, overriding its default."
+input AgentToolTierInput {
+  tool: String!
+  tier: AgentAutonomyTier!
+}
+
+"A cap on how often an agent may run one tool in a day."
+input AgentToolDailyLimitInput {
+  tool: String!
+  limit: Int!
+}
+
+"""
+An agent as the builder saves it. A save replaces every setting the input
+carries; delegateIds and access are left as they are when absent.
+"""
+input SaveAgentDefinitionInput {
+  name: String!
+  description: String!
+  template: AgentTemplate
+  "At most 20000 characters."
+  instructions: String!
+  guardrails: [String!]!
+  toolNames: [String!]!
+  "Autonomy per change tool; each is held at the tool's maximum and autonomyCeiling."
+  toolTiers: [AgentToolTierInput!]!
+  autonomyCeiling: AgentAutonomyTier!
+  dataAccessCeiling: AgentDataAccessCeiling!
+  enabled: Boolean!
+  shadowMode: Boolean!
+  decisionTimeoutSeconds: Int!
+  icon: String!
+  accent: String!
+  triggerMode: AgentTriggerMode!
+  cronExpression: String!
+  cronTimezone: String!
+  eventKinds: [String!]!
+  intervalSeconds: Int!
+  endsAt: Timestamp
+  maxConcurrentRuns: Int!
+  runTimeoutSeconds: Int!
+  maxToolCalls: Int!
+  "Cost cap for a calendar month across the agent's runs; null for none."
+  monthlyBudgetUsd: Decimal
+  "Runs the agent may start in a day; 0 for no cap."
+  dailyRunLimit: Int!
+  toolDailyLimits: [AgentToolDailyLimitInput!]!
+  simulationMode: Boolean!
+  "Tokens of recorded memory one prompt may carry; null for the default."
+  memoryTokenBudget: Int
+  learningOff: Boolean
+  contextProviders: [AgentContextProvider!]!
+  outputMode: AgentOutputMode!
+  preferredProviderId: ID
+  "The agents this one may hand a task to. Absent keeps them; a list, empty or not, replaces them."
+  delegateIds: [ID!]
+  """
+  Who may use the agent, set with the save. Absent with accessRoleIds keeps it;
+  given with accessRoleIds replaces it. Needs permission to update roles.
+  """
+  accessMode: AgentAccessMode
+  accessRoleIds: [ID!]
+  version: Int!
+}
+
+"How much of one tool's daily limit an agent has used today."
+type AgentToolBudgetUse {
+  tool: String!
+  used: Int!
+  limit: Int!
+}
+
+"Where an agent stands against its caps this calendar month and today."
+type AgentBudgetStatus {
+  monthStart: Timestamp!
+  dayStart: Timestamp!
+  "Spent this month over the calls that carried a price, in USD."
+  spentUsd: Decimal!
+  monthlyBudgetUsd: Decimal
+  monthCalls: Int!
+  "Calls this month whose provider has no price, so spentUsd leaves them out."
+  unpricedCalls: Int!
+  runsToday: Int!
+  dailyRunLimit: Int!
+  "The tools with a daily limit, and how much of it each has used."
+  tools: [AgentToolBudgetUse!]!
+  simulationMode: Boolean!
+}
+
+"A tool an agent may be given, as the builder lists it."
+type AgentToolCatalogEntry {
+  name: String!
+  description: String!
+  "The tool's arguments, as a JSON schema."
+  parameters: JSON
+  "query for a tool that reads, action for one that changes something."
+  kind: String!
+  "The permission resource the tool needs."
+  resource: String!
+  "The operation on that resource."
+  operation: String!
+  defaultAutonomyTier: String!
+  "The most autonomy the tool may be given; empty when only the agent's ceiling limits it."
+  maxAutonomyTier: String!
+  reversible: Boolean!
+  "Held by every agent without being chosen."
+  core: Boolean!
+  "What the tool does: lookup, change, navigate, discover, present, ask or delegate."
+  effect: String!
+  "The tools this one takes its arguments from; the reads among them come with it."
+  prerequisites: [String!]!
+  "The extension the tool comes with; empty for Trenova's own tools."
+  extension: String!
+  "The extension gives the tool to every agent, so it is never chosen."
+  grantedToEveryAgent: Boolean!
+}
+
+"Something that happens in Trenova that can start an event agent."
+type AgentEventKind {
+  kind: String!
+  "The kind of record the event is about."
+  subjectType: String!
+  label: String!
+  description: String!
+}
+
+extend type Query {
+  "Where an agent stands against its caps this month and today."
+  agentBudgetStatus(agentId: ID!): AgentBudgetStatus!
+  """
+  How each of an agent's tools has been decided on: the streak, the totals and
+  any tier the ledger granted. A tool with no decision yet is absent.
+  """
+  agentToolTrust(agentId: ID!): [AgentToolTrust!]!
+  "Every tool an agent may be given, with the extension tools the organization has on."
+  agentToolCatalog: [AgentToolCatalogEntry!]!
+  "Every event an event agent may be started by."
+  agentEventKinds: [AgentEventKind!]!
+}
+
+extend type Mutation {
+  createAgentDefinition(input: SaveAgentDefinitionInput!): AgentDefinition!
+  updateAgentDefinition(id: ID!, input: SaveAgentDefinitionInput!): AgentDefinition!
+  "Deletes an agent. A system agent cannot be deleted; disable it instead."
+  deleteAgentDefinition(id: ID!): Boolean!
+}

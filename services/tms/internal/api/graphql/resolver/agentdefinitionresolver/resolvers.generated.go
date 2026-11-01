@@ -4,11 +4,13 @@ package agentdefinitionresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentbudgetports "github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	agentcapabilityports "github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	agentdefinitionports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	agentdraftports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	agentrecommendationports "github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	agentshadowports "github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	agenttrustports "github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 )
 
 type Deps struct {
@@ -17,8 +19,10 @@ type Deps struct {
 	AgentCapabilityService agentcapabilityports.AgentCapabilityService
 	AgentRecommender       agentrecommendationports.AgentRecommender
 	AgentShadowService     agentshadowports.AgentShadowService
+	AgentTrustService      agenttrustports.AgentTrustService
 	AgentTestPromptService agentdefinitionports.AgentTestPromptService
 	AgentDraftingService   agentdraftports.AgentDraftingService
+	AgentBudgetService     agentbudgetports.AgentBudgetService
 	AgentAccessService     agentdefinitionports.AgentAccessService
 }
 
@@ -26,7 +30,11 @@ type AgentDefinitionResolver struct{ *Deps }
 
 type AgentDraftResolver struct{ *Deps }
 
+type AgentEventKindResolver struct{ *Deps }
+
 type AgentInstructionFindingResolver struct{ *Deps }
+
+type AgentToolCatalogEntryResolver struct{ *Deps }
 
 type MutationResolver struct{ *Deps }
 

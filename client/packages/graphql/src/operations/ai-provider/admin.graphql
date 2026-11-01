@@ -1,0 +1,87 @@
+# What the provider editor offers, and the saves and probes it makes.
+query AIProviderCatalog {
+  aiProviderCatalog {
+    kinds {
+      kind
+      label
+      description
+      defaultBaseUrl
+      requiresApiKey
+      requiresBaseUrl
+      defaultStructuredOutputMode
+      supportsStructuredEnforced
+      supportsEmbedding
+    }
+    presets {
+      key
+      label
+      kind
+      baseUrl
+      structuredOutputMode
+      allowPrivateNetwork
+      requiresApiKey
+      selfHosted
+      exampleModel
+      notes
+      domain
+      tasks
+      embeddingDimensions
+      embeddingInputStyle
+      platform
+    }
+    tasks {
+      task
+      label
+      description
+      requiresTrust
+      volumeGuidance
+    }
+    embeddingDimensions
+    embeddingInputStyles {
+      style
+      label
+      description
+    }
+    platforms {
+      platform
+      settings
+      auths {
+        auth
+        requiresCredential
+        settings
+      }
+      listsModels
+    }
+    serverCloudCredentials
+  }
+}
+
+mutation CreateAIProvider($input: SaveAIProviderInput!) {
+  createAIProvider(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateAIProvider($id: ID!, $input: SaveAIProviderInput!) {
+  updateAIProvider(id: $id, input: $input) {
+    id
+    version
+  }
+}
+
+mutation DeleteAIProvider($id: ID!) {
+  deleteAIProvider(id: $id)
+}
+
+mutation TestAIProvider($id: ID!) {
+  testAIProvider(id: $id) {
+    success
+    message
+    detail
+    hint
+    modelIdentifier
+    schemaHonoured
+    latencyMs
+  }
+}

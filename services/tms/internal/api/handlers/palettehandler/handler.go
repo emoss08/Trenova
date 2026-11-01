@@ -1,12 +1,9 @@
 package palettehandler
 
 import (
-	"net/http"
-
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -51,46 +48,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/assistant/ask")
 	resource := permission.ResourceAssistant.String()
 
-	api.POST("/", h.pm.RequirePermission(resource, permission.OpRead), h.ask)
 	api.GET("/:askID/stream/", h.pm.RequirePermission(resource, permission.OpRead), h.stream)
-	api.DELETE("/:askID/", h.pm.RequirePermission(resource, permission.OpRead), h.stop)
-	// Carrying a question into the Desk starts a conversation, so it needs
-	// what starting one needs.
-	api.POST("/:askID/keep/", h.pm.RequirePermission(resource, permission.OpCreate), h.keep)
-}
-
-type askRequest struct {
-	Content  string                        `json:"content"`
-	Context  *agentpagecontext.PageContext `json:"context"`
-	Mentions []agentpagecontext.EntityRef  `json:"mentions"`
-}
-
-func (h *Handler) ask(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	var body askRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	if body.Context != nil {
-		body.Context.Draft = nil
-	}
-
-	ask, err := h.palette.Ask(c.Request.Context(), &paletteports.AskRequest{
-		Question: paletteports.Question{
-			Content:  body.Content,
-			Page:     body.Context,
-			Mentions: body.Mentions,
-		},
-		TenantInfo: actorutil.TenantInfoFrom(authCtx),
-	}, actorutil.FromAuthContext(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusAccepted, ask)
 }
 
 func (h *Handler) stream(c *gin.Context) {
@@ -123,40 +81,6 @@ func (h *Handler) stream(c *gin.Context) {
 			"message": "The answer stopped arriving. Ask again, or open it in the Desk.",
 		})
 	}
-}
-
-func (h *Handler) stop(c *gin.Context) {
-	ref, err := askRef(c)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	if err = h.palette.Stop(c.Request.Context(), ref); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
-func (h *Handler) keep(c *gin.Context) {
-	ref, err := askRef(c)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	kept, err := h.palette.Keep(
-		c.Request.Context(),
-		ref,
-		actorutil.FromAuthContext(authctx.GetAuthContext(c)),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusCreated, kept)
 }
 
 // askRef names the question by the session's person, never by anything the

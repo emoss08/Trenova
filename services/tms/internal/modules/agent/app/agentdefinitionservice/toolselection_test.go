@@ -161,16 +161,6 @@ func TestBuildToolCatalog_SaysWhatEachToolDoes(t *testing.T) {
 	assert.Equal(t, agenttooltrust.ToolEffectChange, byName["reassign_move"].Effect)
 }
 
-func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
-	t.Parallel()
-
-	actions, queries := testRegistries()
-	tools := registeredStarterTools(agenttemplate.TemplateBillingException, actions, queries)
-
-	assert.Equal(t, []string{"shipment_get", "billing_correct_charge_codes"}, tools,
-		"starter tools that no registry provides are not offered")
-}
-
 type stubDefinitionRepo struct {
 	agentdefinitionports.AgentDefinitionRepository
 

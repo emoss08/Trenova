@@ -200,16 +200,13 @@ writes:
     reason: "A person curating what agents are told about their own work; an agent records guidance through agent_guide_profile and never retires what a person gave."
 
   # agentdefinition
-  "DELETE /api/v1/agent-definitions/:agentID/":
+  "mutation createAgentDefinition":
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
-  "POST /api/v1/agent-definitions/":
+  "mutation deleteAgentDefinition":
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
-  "POST /api/v1/agent-definitions/preview-prompt/":
-    exempt: read-only
-    reason: "Renders an agent prompt for review and saves nothing."
-  "PUT /api/v1/agent-definitions/:agentID/":
+  "mutation updateAgentDefinition":
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
   "POST /api/v1/agent-definitions/dry-run/":
@@ -256,25 +253,25 @@ writes:
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
 
   # agentextension
-  "POST /api/v1/agent-extensions/:type/test/":
+  "mutation testAgentExtension":
     exempt: read-only
-    reason: "Tests the vendor credentials and returns the result."
-  "PUT /api/v1/agent-extensions/:type/config/":
+    reason: "Tests the vendor credentials and returns the result; only the call's usage is metered."
+  "mutation updateAgentExtensionConfig":
     exempt: agent-administration
     reason: "Configures a vendor account an organization turns on for its agents; it holds the vendor credentials."
-  "POST /api/v1/agent-portals/sites/":
+  "mutation createAgentPortalSite":
     exempt: agent-administration
     reason: "Adds a portal agents may read and act on, with its sign-in; an agent that could add one could choose where its own browser goes."
-  "PUT /api/v1/agent-portals/sites/:siteID/":
+  "mutation updateAgentPortalSite":
     exempt: agent-administration
     reason: "Changes a portal's addresses, sign-in or whether agents may act on it, which bound what agents can reach; an agent must not widen its own reach."
-  "DELETE /api/v1/agent-portals/sites/:siteID/":
+  "mutation deleteAgentPortalSite":
     exempt: agent-administration
     reason: "Removes a portal from what agents may use, an administrator's decision about the agents themselves."
-  "POST /api/v1/agent-portals/runs/:runID/sign-in-code/":
+  "mutation provideAgentPortalSignInCode":
     exempt: security
     reason: "Relays a sign-in code a portal sent the person to the browser signing in for them; a second factor is given only by the person who received it, and never passes through an agent."
-  "POST /api/v1/agent-web-watches/:watchID/stop/":
+  "mutation stopAgentWebWatch":
     tools: [web_stop_watch]
   "POST /api/v1/webhooks/agent-extensions/web-watches/:orgID/:buID/:watchID/":
     exempt: infrastructure
@@ -306,7 +303,7 @@ writes:
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
 
   # agentrun
-  "POST /api/v1/agent-runs/":
+  "mutation startAgentRun":
     exempt: agent-administration
     reason: "Starts an agent on demand; agents hand work to one another through delegate_task instead."
 
@@ -350,16 +347,16 @@ writes:
   "mutation testAIProviderDraft":
     exempt: read-only
     reason: "Tests an unsaved provider's credentials once and returns the result; it saves nothing."
-  "DELETE /api/v1/ai-providers/:providerID/":
+  "mutation createAIProvider":
     exempt: agent-administration
     reason: "Configures the model providers agents run on, including their API keys."
-  "POST /api/v1/ai-providers/":
+  "mutation deleteAIProvider":
     exempt: agent-administration
     reason: "Configures the model providers agents run on, including their API keys."
-  "POST /api/v1/ai-providers/:providerID/test/":
+  "mutation testAIProvider":
     exempt: read-only
-    reason: "Tests the provider credentials and returns the result."
-  "PUT /api/v1/ai-providers/:providerID/":
+    reason: "Tests the provider credentials and returns the result; only the outcome is kept as its last test."
+  "mutation updateAIProvider":
     exempt: agent-administration
     reason: "Configures the model providers agents run on, including their API keys."
 
@@ -418,13 +415,13 @@ writes:
   "PATCH /api/v1/assistant/threads/:threadID/queue/:itemID/":
     exempt: agent-administration
     reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
-  "POST /api/v1/assistant/ask/":
+  "mutation askPalette":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
-  "DELETE /api/v1/assistant/ask/:askID/":
+  "mutation stopPaletteAsk":
     exempt: agent-administration
     reason: "Stops a question a person typed into the command palette; it is that person's own conversation with Nova, not work an agent does."
-  "POST /api/v1/assistant/ask/:askID/keep/":
+  "mutation keepPaletteAsk":
     exempt: agent-administration
     reason: "Keeps a palette answer as a Desk conversation for the person who asked; an agent has no palette question of its own to keep."
   "POST /api/v1/assistant/schedules/:scheduleID/run/":

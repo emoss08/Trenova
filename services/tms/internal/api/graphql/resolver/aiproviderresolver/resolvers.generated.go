@@ -4,15 +4,23 @@ package aiproviderresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	aiconfig "github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	aiproviderports "github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 )
 
 type Deps struct {
 	*resolvercore.Core
+	AIConfig          *aiconfig.Config
 	AiProviderService aiproviderports.AIProviderService
 }
 
 type AIProviderKeyInfoResolver struct{ *Deps }
+
+type AIProviderPlatformAuthDescriptorResolver struct{ *Deps }
+
+type AIProviderPlatformDescriptorResolver struct{ *Deps }
+
+type AIProviderPresetResolver struct{ *Deps }
 
 type AIProviderResolver struct{ *Deps }
 

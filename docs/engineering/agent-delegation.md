@@ -60,7 +60,7 @@ cannot carry a foreign key; this is the cascade. Each agent changed gets a new
 version, so a save from a copy loaded before the delete is refused rather than
 putting the deleted agent back.
 
-The REST save body (`POST`/`PUT /agent-definitions/`) takes `delegateIds`:
+The save input (`createAgentDefinition`/`updateAgentDefinition`) takes `delegateIds`:
 absent or `null` keeps the list, `[]` clears it, a list replaces it. GraphQL
 reads it as `AgentDefinition.delegateIds` and resolves `AgentDefinition.delegates`
 through the request's `AgentDefinitionByID` loader, so a page of agents costs
@@ -576,7 +576,7 @@ each is enforced on the server.
 |---|---|
 | **Deciding a plan in your own conversation.** `decideMyPlan(id, input)` needs `assistant:update`, a plan whose run's subject is an assistant thread the caller owns (someone else's is *not found*), and access to every agent with a step in it — the one whose run the plan hangs on, and each agent a step was filed by, such as a delegate. It then goes through `agentplanservice.Decide`, so every step is decided by the decision service as the caller and each write is permission-checked against them when it runs. The in-thread plan card uses it; AI Control and the decisions queue keep `decideAgentPlan` (`agent_proposal:update`). | `agentplanservice.DecideOwn`, `resolver.DecideMyPlan`, `authzlint` (`TestAgentAccessResolversAreAuthorized`) |
 | **Why a conversation cannot continue.** A thread is served with `canContinue` and, when it is false, `cannotContinueReason`: `AgentDeleted`, `NoAccess` (the reader may not use the agent, or the assistant at all), `AgentDisabled`, or `AgentNotConversational` (it now runs on a schedule, an event or continuously), in that order of precedence, so a reader is never told an agent they could not use anyway was merely turned off. Worked out when served, never stored. | `agentaccess.Access.MarkContinuable`, `conversation.ContinueRefusal` |
-| **Saving an agent with who may use it.** `POST`/`PUT /agent-definitions/` take `accessMode` and `accessRoleIds` together (both absent keeps access; one without the other is refused). The save and the access are one transaction (`AgentAccessService.SaveWithAccess`), so a restricted agent is created restricted and enabled in one request. Changing access needs `role:update` as well, as `setAgentAccess` does; access that already reads as asked needs nothing more, and the client sends it only when it changed. | `agentdefinitionservice.save`, `agentaccessservice.SaveWithAccess` |
+| **Saving an agent with who may use it.** `createAgentDefinition`/`updateAgentDefinition` take `accessMode` and `accessRoleIds` together (both absent keeps access; one without the other is refused). The save and the access are one transaction (`AgentAccessService.SaveWithAccess`), so a restricted agent is created restricted and enabled in one request. Changing access needs `role:update` as well, as `setAgentAccess` does; access that already reads as asked needs nothing more, and the client sends it only when it changed. | `agentdefinitionservice.save`, `agentaccessservice.SaveWithAccess` |
 | **The audience of an unsaved form.** `agentAccessPreview(input)` works each role's coverage and, while the form says Everyone, the sensitive tools out of the tools and access the form holds (for a saved agent, its other settings as saved), writing nothing. The form asks it debounced, keyed by the normalized request. | `agentaccessservice.PreviewAudience` |
 
 ## Limits

@@ -8,17 +8,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -49,7 +43,6 @@ type Params struct {
 	AgentPlans   agentplanports.AgentPlanRepository
 	Tools        agenttoolports.AgentToolRegistry
 	QueryTools   agenttoolports.AgentQueryToolRegistry
-	Contexts     agentruntimeports.RuntimeContextBuilder
 	AuditService auditports.AuditService
 	// Schedules keeps the schedule behind a scheduled or continuous agent
 	// in line with the agent as it is saved.
@@ -72,7 +65,6 @@ type Service struct {
 	agentPlans  agentplanports.AgentPlanRepository
 	tools       agenttoolports.AgentToolRegistry
 	queryTools  agenttoolports.AgentQueryToolRegistry
-	contexts    agentruntimeports.RuntimeContextBuilder
 	audit       auditports.AuditService
 	schedules   agentdefinitionports.AgentDefinitionScheduler
 	extensions  agentextensionports.AgentExtensionGate
@@ -91,7 +83,6 @@ func New(p Params) agentdefinitionports.AgentDefinitionService {
 		agentPlans:  p.AgentPlans,
 		tools:       p.Tools,
 		queryTools:  p.QueryTools,
-		contexts:    p.Contexts,
 		audit:       p.AuditService,
 		schedules:   p.Schedules,
 		extensions:  p.Extensions,
@@ -120,13 +111,6 @@ func (s *Service) GetByID(
 	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return s.repo.GetByID(ctx, req)
-}
-
-func (s *Service) GetBySystemKey(
-	ctx context.Context,
-	req agentdefinitionports.GetAgentDefinitionBySystemKeyRequest,
-) (*agentdefinition.Definition, error) {
-	return s.repo.GetBySystemKey(ctx, req)
 }
 
 func (s *Service) Create(
@@ -322,40 +306,6 @@ func (s *Service) withdrawAndDelete(
 	return nil
 }
 
-func (s *Service) Templates() []agentdefinitionports.AgentTemplateDescriptor {
-	templates := agenttemplate.AllTemplates()
-	descriptors := make([]agentdefinitionports.AgentTemplateDescriptor, 0, len(templates))
-
-	for _, template := range templates {
-		descriptors = append(descriptors, agentdefinitionports.AgentTemplateDescriptor{
-			Template:             template,
-			Label:                template.Label(),
-			Description:          template.Description(),
-			StarterInstructions:  agentinstructions.StarterInstructions(template),
-			StarterTools:         registeredStarterTools(template, s.tools, s.queryTools),
-			StarterTrigger:       agentpreset.StarterTrigger(template),
-			StarterEvents:        agentpreset.StarterEvents(template),
-			StarterCron:          agentpreset.StarterCron(template),
-			StarterCeiling:       agentpreset.StarterCeiling(template),
-			StarterDataAccess:    agentpreset.StarterDataAccess(template),
-			StarterOutput:        starterOutput(template),
-			StarterDailyRunLimit: agentpreset.StarterDailyRunLimit(template),
-			StarterShadow:        agentpreset.StarterShadow(template),
-			ContextProviders:     agentdefinition.AllContextProviders(),
-		})
-	}
-
-	return descriptors
-}
-
-func starterOutput(template agenttemplate.Template) agentdefinition.OutputMode {
-	if agentpreset.StarterTrigger(template) == agentdefinition.TriggerChat {
-		return agentdefinition.OutputConversational
-	}
-
-	return agentdefinition.OutputReport
-}
-
 func (s *Service) ToolCatalog(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -388,34 +338,6 @@ func (s *Service) activeExtensions(
 
 func (s *Service) EventKinds() []agenttrigger.EventDescriptor {
 	return agenttrigger.KnownEvents()
-}
-
-func (s *Service) PreviewPrompt(
-	ctx context.Context,
-	req *agentdefinitionports.PreviewPromptRequest,
-) (string, error) {
-	definition := &agentdefinition.Definition{
-		OrganizationID: req.Definition.TenantInfo.OrgID,
-		BusinessUnitID: req.Definition.TenantInfo.BuID,
-	}
-	apply(definition, req.Definition)
-
-	runtimeContext := agentturn.RuntimeContext{
-		Trigger: definition.TriggerMode.RunTrigger(),
-	}
-	if s.contexts != nil {
-		built, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
-			Definition: definition,
-			Actor:      req.Actor,
-			Trigger:    definition.TriggerMode.RunTrigger(),
-		})
-		if err != nil {
-			return "", err
-		}
-		runtimeContext = built
-	}
-
-	return agentprompt.BuildSystemPrompt(definition, runtimeContext), nil
 }
 
 // validate checks the definition as it would be saved. previous is the

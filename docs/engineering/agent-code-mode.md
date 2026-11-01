@@ -347,14 +347,14 @@ A kept analysis that ran to the end becomes the Desk's `analysis` artifact
 (`assistantservice/toolartifacts/analysis_artifact.go`), titled by the script's title, so running it again
 under the same title is the next version of one card. The card draws the figures as a strip,
 then each chart and table in the order shown, and folds what it printed and the code beneath; a
-table longer than the agent was shown is read whole from `GET /agent-analysis/runs/:runID/`.
+table longer than the agent was shown is read whole through the `agentAnalysisRun` query.
 
-Who reads an analysis (`agentanalysishandler`):
+Who reads an analysis (`resolver/agentanalysisresolver`):
 
-- `GET /agent-analysis/runs/` is the history, for those who oversee agents (`agent_run:read`),
+- `agentAnalysisRuns` is the history, for those who oversee agents (`agent_run:read`),
   newest first, paged by the last run's start time and id, each run's status, title, purpose
   and timing only. AI Control shows it under Activity → Analyses.
-- `GET /agent-analysis/runs/:runID/` is one analysis whole, for the person it ran for
+- `agentAnalysisRun(id)` is one analysis whole, for the person it ran for
   (`code_mode:read`) and for those who oversee agents; anyone else is told it does not exist.
 
 An analysis is the `analysis_run` record kind; its link
@@ -703,7 +703,7 @@ decides from its own use whether to keep it.
 | Permission resource | `permission.ResourceCodeMode`, granted by the `platform.assistant` bundle |
 | Datasets (resolving, typing) | `querytools/scriptquerytools/script_datasets.go` |
 | Paging datasets in, what a script shows | `scriptrunner/display.go`; `domain/analysis` (`run.go`, `display.go`) |
-| Kept analyses and who reads them | `analysisrunservice`, `analysisrunrepository`, `api/handlers/agentanalysishandler`; table `agent_analysis_runs` |
+| Kept analyses and who reads them | `analysisrunservice`, `analysisrunrepository`, `api/graphql/resolver/agentanalysisresolver`; table `agent_analysis_runs` |
 | The Desk card and the history | `assistantservice/toolartifacts/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/`, `components/assistant/analysis-result.tsx` and `analysis-chart.tsx`, `routes/agent-control/_components/activity/analysis-runs.tsx` |
 | Red-team cases and harness | `agentredteam/testdata/cases/16_*`–`27_*`, `scripts.go` (`providerScripts`) |
 | Scenarios | `deskbench/scenarios/codemode.yaml`; `mode` and `pair` in `internal/deskbench/benchscenario` |

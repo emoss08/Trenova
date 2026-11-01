@@ -1,0 +1,123 @@
+# AI Control's extensions: the vendors an organization turns on for its agents,
+# their settings, the portals agents browse and the web watches they keep.
+query AgentExtensionCatalog {
+  agentExtensionCatalog {
+    items {
+      type
+      name
+      vendor
+      summary
+      description
+      category
+      categoryLabel
+      capability
+      capabilityLabel
+      capabilityHeldBy
+      brandDomain
+      docsUrl
+      websiteUrl
+      pricingUrl
+      capabilities
+      tools {
+        name
+        label
+        description
+      }
+      dataNotice
+      featured
+      sortOrder
+      releasedAt
+      enabled
+      configured
+      availability
+      configSpec {
+        key
+        label
+        type
+        required
+        sensitive
+        placeholder
+        helpText
+        default
+        options
+      }
+      supportsTestConnect
+      dailyRequestLimit
+      usage {
+        requestsToday
+        requestsThisMonth
+        failuresThisMonth
+        costThisMonthUsd
+      }
+      enabledAt
+      updatedAt
+      version
+    }
+    categories {
+      value
+      label
+    }
+  }
+}
+
+query AgentExtensionConfig($type: String!) {
+  agentExtensionConfig(type: $type) {
+    type
+    enabled
+    availability
+    fields {
+      key
+      value
+      hasValue
+    }
+    spec {
+      key
+      label
+      type
+      required
+      sensitive
+      placeholder
+      helpText
+      default
+      options
+    }
+    version
+    updatedAt
+  }
+}
+
+mutation UpdateAgentExtensionConfig($type: String!, $input: UpdateAgentExtensionConfigInput!) {
+  updateAgentExtensionConfig(type: $type, input: $input) {
+    type
+    enabled
+    availability
+    fields {
+      key
+      value
+      hasValue
+    }
+    spec {
+      key
+      label
+      type
+      required
+      sensitive
+      placeholder
+      helpText
+      default
+      options
+    }
+    version
+    updatedAt
+  }
+}
+
+mutation TestAgentExtension($type: String!) {
+  testAgentExtension(type: $type) {
+    type
+    success
+    checkedAt
+    latencyMs
+    message
+  }
+}

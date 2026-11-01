@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionbatch"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
@@ -1020,4 +1021,33 @@ func (r *AgentPlanResolver) RunMode(ctx context.Context, obj *agentplan.AgentPla
 	}
 
 	return agentplan.PlanRunModeOf(steps), nil
+}
+
+func (r *MutationResolver) StartAgentRun(ctx context.Context, input gqlmodel.StartAgentRunInput) (*agent.AgentRun, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentRun, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := gqlid.ParseOptionalIDField("agentDefinitionId", input.AgentDefinitionID)
+	if err != nil {
+		return nil, err
+	}
+	subjectID, err := gqlid.ParseOptionalIDField("subjectId", input.SubjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &agentruntimeports.StartAgentRunForDefinitionRequest{
+		DefinitionID: definitionID,
+		SystemKey:    gqlscalar.StringValue(input.SystemKey),
+		SubjectID:    subjectID,
+		Trigger:      agent.RunTriggerManual,
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+	}
+	if input.SubjectType != nil {
+		req.SubjectType = *input.SubjectType
+	}
+
+	return r.AgentRunService.StartForDefinition(ctx, req, actorutil.FromAuthContext(authCtx))
 }

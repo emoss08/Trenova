@@ -1,0 +1,115 @@
+"A report run, an attached file or a report run from its definition that an analysis read, by the name it read it by."
+type AgentAnalysisDataset {
+  name: String!
+  "ReportRun, Attachment or ReportDefinition."
+  source: String!
+  sourceId: ID!
+  label: String!
+  rows: Int!
+}
+
+type AgentAnalysisTableColumn {
+  name: String!
+  "How the column's values read: text, number, money, count, percent, date, datetime or bool."
+  kind: String!
+  currency: String!
+}
+
+"A table an analysis showed. Percentages are fractions; dates are ISO 8601 text."
+type AgentAnalysisTable {
+  title: String!
+  columns: [AgentAnalysisTableColumn!]!
+  "Each row's values in column order: text, a number, a boolean or null."
+  rows: [[Any]!]!
+  totalRows: Int!
+}
+
+"A headline number an analysis showed."
+type AgentAnalysisFigure {
+  label: String!
+  value: Any
+  kind: String!
+  currency: String!
+  note: String!
+}
+
+type AgentAnalysisChartAxis {
+  label: String!
+  kind: String!
+  values: [Any]!
+}
+
+"One line, set of bars or slice set of a chart: a number, or null, for each point along its axis."
+type AgentAnalysisChartSeries {
+  name: String!
+  values: [Any]!
+}
+
+"A chart an analysis showed, as what it plots."
+type AgentAnalysisChart {
+  "bar, line, area, scatter or pie."
+  kind: String!
+  title: String!
+  x: AgentAnalysisChartAxis!
+  series: [AgentAnalysisChartSeries!]!
+  valueKind: String!
+  currency: String!
+  stacked: Boolean!
+  horizontal: Boolean!
+}
+
+"One chart or table, in the order the analysis showed it, by its index among the charts or the tables."
+type AgentAnalysisBlock {
+  "chart or table."
+  kind: String!
+  index: Int!
+}
+
+"""
+A script that showed the person something: a figure, a table or a chart. The
+Desk reads it whole beyond the rows its agent was shown; AI Control lists the
+organization's analyses.
+"""
+type AgentAnalysisRun {
+  id: ID!
+  "Succeeded, Errored, Stopped, TimedOut or Failed."
+  status: String!
+  title: String!
+  purpose: String!
+  code: String!
+  datasets: [AgentAnalysisDataset!]!
+  output: String!
+  tables: [AgentAnalysisTable!]!
+  figures: [AgentAnalysisFigure!]!
+  charts: [AgentAnalysisChart!]!
+  layout: [AgentAnalysisBlock!]!
+  errorName: String!
+  errorValue: String!
+  traceback: String!
+  failure: String!
+  durationMs: Int!
+  agentDefinitionId: ID!
+  agentRunId: ID!
+  threadId: ID!
+  requestedById: ID!
+  startedAt: Timestamp!
+  finishedAt: Timestamp!
+}
+
+"A page of analyses, newest first."
+type AgentAnalysisRunList {
+  items: [AgentAnalysisRun!]!
+  "With nextBeforeId, where the next page starts; 0 when there is none."
+  nextBefore: Timestamp!
+  nextBeforeId: ID!
+}
+
+extend type Query {
+  """
+  The organization's analyses, newest first, for those who oversee agents: at
+  most limit (1 to 200), after the analysis before and beforeId name.
+  """
+  agentAnalysisRuns(before: Timestamp, beforeId: ID, limit: Int): AgentAnalysisRunList!
+  "One analysis, whole, for the person it ran for or someone who oversees agents."
+  agentAnalysisRun(id: ID!): AgentAnalysisRun!
+}

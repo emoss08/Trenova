@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
@@ -43,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
@@ -1207,6 +1209,12 @@ type AgentExceptionResolveInput struct {
 	ResolutionNotes *string                        `json:"resolutionNotes,omitempty"`
 }
 
+// One setting of an extension, by its key.
+type AgentExtensionSettingInput struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // One thing that changed about an agent between a suite run and the run it is compared with.
 type AgentFingerprintChange struct {
 	// definitionVersion, prompt, tools, model or provider.
@@ -1287,6 +1295,13 @@ type AgentPlanDecisionResult struct {
 type AgentPlanEdge struct {
 	Node   *agentplan.AgentPlan `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+type AgentPortalSignInCodeInput struct {
+	// The code the portal sent the person. Empty when signedIn is true.
+	Code string `json:"code"`
+	// The person signed in themselves in the live browser, so there is no code to send.
+	SignedIn bool `json:"signedIn"`
 }
 
 // A profile as AI Control and the Desk show it.
@@ -1479,6 +1494,12 @@ type AgentSuiteRunEdge struct {
 	Cursor string                      `json:"cursor"`
 }
 
+// A cap on how often an agent may run one tool in a day.
+type AgentToolDailyLimitInput struct {
+	Tool  string `json:"tool"`
+	Limit int    `json:"limit"`
+}
+
 // One tool's safety policy, as declared in code.
 type AgentToolPolicy struct {
 	// The tool's name, which keys its row.
@@ -1578,6 +1599,12 @@ type AgentToolSafetyEdge struct {
 	Cursor string                          `json:"cursor"`
 }
 
+// An agent's autonomy for one change tool, overriding its default.
+type AgentToolTierInput struct {
+	Tool string             `json:"tool"`
+	Tier agent.AutonomyTier `json:"tier"`
+}
+
 // What one tool has earned on this agent.
 //
 // The ladder is not windowed: a tier is earned over the agent's whole life and
@@ -1667,6 +1694,15 @@ type ArchiveWorkerCredentialInput struct {
 	ID      string  `json:"id"`
 	Reason  *string `json:"reason,omitempty"`
 	Version *int    `json:"version,omitempty"`
+}
+
+type AskPaletteInput struct {
+	Content string `json:"content"`
+	// What the person was looking at, in the shape the Desk sends with a message:
+	// path, entityType, entityId, title and view. Any draft is ignored.
+	Context map[string]any `json:"context,omitempty"`
+	// At most ten.
+	Mentions []*PaletteMentionInput `json:"mentions,omitempty"`
 }
 
 type AssignDocumentTemplateInput struct {
@@ -7044,6 +7080,13 @@ type JurisdictionRuleOverrideEdge struct {
 	Cursor string                     `json:"cursor"`
 }
 
+// The Desk conversation a palette question was carried into.
+type KeptPaletteAsk struct {
+	ThreadID string `json:"threadId"`
+	// The question, when there was no answer to carry, for the Desk to ask; empty otherwise.
+	Unanswered string `json:"unanswered"`
+}
+
 type LateChargeAssessmentInput struct {
 	// Limit the run to these customers; empty means every customer.
 	CustomerIds []string `json:"customerIds,omitempty"`
@@ -7590,6 +7633,14 @@ type PageAccessScreen struct {
 type PageInfo struct {
 	HasNextPage bool    `json:"hasNextPage"`
 	EndCursor   *string `json:"endCursor,omitempty"`
+}
+
+// A record a palette question names, as the person picked it.
+type PaletteMentionInput struct {
+	// The kind of record, as the permission registry names it.
+	Type  string `json:"type"`
+	ID    string `json:"id"`
+	Label string `json:"label"`
 }
 
 type PauseAccountingSyncInput struct {
@@ -9248,6 +9299,49 @@ type SafetyEventStatusInput struct {
 	Version    *int    `json:"version,omitempty"`
 }
 
+// A provider as its editor saves it. A save replaces every setting; the
+// credential alone is kept when apiKey is absent.
+type SaveAIProviderInput struct {
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Kind        aiprovider.Kind `json:"kind"`
+	BaseURL     string          `json:"baseUrl"`
+	Model       string          `json:"model"`
+	// A new credential. Absent keeps the stored one, an empty string clears it. Never returned.
+	APIKey                   *string                          `json:"apiKey,omitempty"`
+	AllowPrivateNetwork      bool                             `json:"allowPrivateNetwork"`
+	StructuredOutputMode     aiprovider.StructuredOutputMode  `json:"structuredOutputMode"`
+	ReasoningEffort          aireasoning.ReasoningEffort      `json:"reasoningEffort"`
+	ThinkingStyle            aireasoning.ThinkingStyle        `json:"thinkingStyle"`
+	Platform                 aiplatform.Platform              `json:"platform"`
+	PlatformSettings         *AIProviderPlatformSettingsInput `json:"platformSettings,omitempty"`
+	AdvisorEnabled           bool                             `json:"advisorEnabled"`
+	AdvisorModel             string                           `json:"advisorModel"`
+	Scripts                  bool                             `json:"scripts"`
+	ScriptWrites             bool                             `json:"scriptWrites"`
+	ExtraBody                map[string]any                   `json:"extraBody,omitempty"`
+	InputCostPerMillion      *string                          `json:"inputCostPerMillion,omitempty"`
+	OutputCostPerMillion     *string                          `json:"outputCostPerMillion,omitempty"`
+	CacheReadCostPerMillion  *string                          `json:"cacheReadCostPerMillion,omitempty"`
+	CacheWriteCostPerMillion *string                          `json:"cacheWriteCostPerMillion,omitempty"`
+	MaxTokens                int                              `json:"maxTokens"`
+	// The model's context window in tokens; null reads it off the model.
+	ContextWindow       *int                           `json:"contextWindow,omitempty"`
+	Tasks               []aitask.Task                  `json:"tasks"`
+	Priority            int                            `json:"priority"`
+	EmbeddingDimensions *int                           `json:"embeddingDimensions,omitempty"`
+	EmbeddingInputStyle aiprovider.EmbeddingInputStyle `json:"embeddingInputStyle"`
+	Trusted             bool                           `json:"trusted"`
+	Enabled             bool                           `json:"enabled"`
+	TimeoutSeconds      int                            `json:"timeoutSeconds"`
+	MaxConcurrent       int                            `json:"maxConcurrent"`
+	MonthlyCapUsd       *string                        `json:"monthlyCapUsd,omitempty"`
+	OnCap               aiprovider.CapAction           `json:"onCap"`
+	// Keeps a replaced key as a fallback for a day while the new one propagates.
+	KeepPreviousKey bool `json:"keepPreviousKey"`
+	Version         int  `json:"version"`
+}
+
 // The organization's own app keys. Leave the secret or verifier token out to keep the saved one.
 type SaveAccountingAppInput struct {
 	IntegrationType integration.Type                  `json:"integrationType"`
@@ -9258,6 +9352,73 @@ type SaveAccountingAppInput struct {
 	WebhookVerifierToken *string `json:"webhookVerifierToken,omitempty"`
 	// Removes the saved webhook verifier token.
 	ClearWebhookVerifierToken *bool `json:"clearWebhookVerifierToken,omitempty"`
+}
+
+// An agent as the builder saves it. A save replaces every setting the input
+// carries; delegateIds and access are left as they are when absent.
+type SaveAgentDefinitionInput struct {
+	Name        string                  `json:"name"`
+	Description string                  `json:"description"`
+	Template    *agenttemplate.Template `json:"template,omitempty"`
+	// At most 20000 characters.
+	Instructions string   `json:"instructions"`
+	Guardrails   []string `json:"guardrails"`
+	ToolNames    []string `json:"toolNames"`
+	// Autonomy per change tool; each is held at the tool's maximum and autonomyCeiling.
+	ToolTiers              []*AgentToolTierInput             `json:"toolTiers"`
+	AutonomyCeiling        agent.AutonomyTier                `json:"autonomyCeiling"`
+	DataAccessCeiling      agentdefinition.DataAccessCeiling `json:"dataAccessCeiling"`
+	Enabled                bool                              `json:"enabled"`
+	ShadowMode             bool                              `json:"shadowMode"`
+	DecisionTimeoutSeconds int                               `json:"decisionTimeoutSeconds"`
+	Icon                   string                            `json:"icon"`
+	Accent                 string                            `json:"accent"`
+	TriggerMode            agentdefinition.TriggerMode       `json:"triggerMode"`
+	CronExpression         string                            `json:"cronExpression"`
+	CronTimezone           string                            `json:"cronTimezone"`
+	EventKinds             []string                          `json:"eventKinds"`
+	IntervalSeconds        int                               `json:"intervalSeconds"`
+	EndsAt                 *int                              `json:"endsAt,omitempty"`
+	MaxConcurrentRuns      int                               `json:"maxConcurrentRuns"`
+	RunTimeoutSeconds      int                               `json:"runTimeoutSeconds"`
+	MaxToolCalls           int                               `json:"maxToolCalls"`
+	// Cost cap for a calendar month across the agent's runs; null for none.
+	MonthlyBudgetUsd *string `json:"monthlyBudgetUsd,omitempty"`
+	// Runs the agent may start in a day; 0 for no cap.
+	DailyRunLimit   int                         `json:"dailyRunLimit"`
+	ToolDailyLimits []*AgentToolDailyLimitInput `json:"toolDailyLimits"`
+	SimulationMode  bool                        `json:"simulationMode"`
+	// Tokens of recorded memory one prompt may carry; null for the default.
+	MemoryTokenBudget   *int                              `json:"memoryTokenBudget,omitempty"`
+	LearningOff         *bool                             `json:"learningOff,omitempty"`
+	ContextProviders    []agentdefinition.ContextProvider `json:"contextProviders"`
+	OutputMode          agentdefinition.OutputMode        `json:"outputMode"`
+	PreferredProviderID *string                           `json:"preferredProviderId,omitempty"`
+	// The agents this one may hand a task to. Absent keeps them; a list, empty or not, replaces them.
+	DelegateIds []string `json:"delegateIds,omitempty"`
+	// Who may use the agent, set with the save. Absent with accessRoleIds keeps it;
+	// given with accessRoleIds replaces it. Needs permission to update roles.
+	AccessMode    *agentdefinition.AccessMode `json:"accessMode,omitempty"`
+	AccessRoleIds []string                    `json:"accessRoleIds,omitempty"`
+	Version       int                         `json:"version"`
+}
+
+// A portal as its form saves it. A sign-in or authenticator key left empty keeps
+// the stored one; clearSignIn and clearAuthenticator remove them.
+type SaveAgentPortalSiteInput struct {
+	Name               string   `json:"name"`
+	Purpose            string   `json:"purpose"`
+	Domains            []string `json:"domains"`
+	StartURL           string   `json:"startUrl"`
+	Username           string   `json:"username"`
+	Password           string   `json:"password"`
+	AuthenticatorKey   string   `json:"authenticatorKey"`
+	ClearSignIn        bool     `json:"clearSignIn"`
+	ClearAuthenticator bool     `json:"clearAuthenticator"`
+	BrowserProfileID   string   `json:"browserProfileId"`
+	AllowActions       bool     `json:"allowActions"`
+	Enabled            bool     `json:"enabled"`
+	Version            int      `json:"version"`
 }
 
 type SaveFactoringTransportInput struct {
@@ -11535,6 +11696,15 @@ type StageFuelPurchaseImportInput struct {
 	Mapping    map[string]any `json:"mapping,omitempty"`
 }
 
+// What a manual run starts: an agent by its id, or a system agent by its key,
+// optionally on one record.
+type StartAgentRunInput struct {
+	AgentDefinitionID *string            `json:"agentDefinitionId,omitempty"`
+	SystemKey         *string            `json:"systemKey,omitempty"`
+	SubjectType       *agent.SubjectType `json:"subjectType,omitempty"`
+	SubjectID         *string            `json:"subjectId,omitempty"`
+}
+
 type StartBillingTransferRunInput struct {
 	Scope billingtransfer.RunScope `json:"scope"`
 	// Required when scope is Selected.
@@ -12182,6 +12352,15 @@ type UpdateAgentEvalCaseInput struct {
 	Rubric    *string        `json:"rubric,omitempty"`
 	// Absent leaves the expiry alone; null clears it.
 	ExpiresAt graphql.Omittable[*int] `json:"expiresAt,omitempty"`
+}
+
+type UpdateAgentExtensionConfigInput struct {
+	Enabled bool `json:"enabled"`
+	// AllAgents or SelectedAgents.
+	Availability string `json:"availability"`
+	// The settings, by key.
+	Configuration []*AgentExtensionSettingInput `json:"configuration"`
+	Version       int                           `json:"version"`
 }
 
 type UpdateAgentQualityControlInput struct {

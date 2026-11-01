@@ -26,13 +26,13 @@ returned nothing, and every Ask-a-table request failed with
 ErrNoProviderConfigured. The feature was dead on arrival and the build was green.
 
 These read the other files' source rather than importing them, because the
-descriptors live in an API handler and the sampling table in an infrastructure
-adapter; a domain test that imported either would invert the dependency it is
-supposed to be checking.
+sampling table lives in an infrastructure adapter, which a domain test that
+imported it would invert the dependency it is supposed to be checking; the
+provider catalog's descriptors are read the same way.
 */
 
 const (
-	descriptorsFile = "../../../../api/handlers/aiproviderhandler/catalog.go"
+	descriptorsFile = "../aiprovidercatalog/catalog.go"
 	samplingFile    = "../../../../infrastructure/agentcompletion/modeladapter/sampling.go"
 	schemaFile      = "../../../../api/graphql/schema/aiprovider.graphqls"
 )

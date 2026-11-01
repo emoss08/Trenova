@@ -77,24 +77,6 @@ type PatchAgentDefinitionRequest struct {
 	Edit    func(definition *agentdefinition.Definition) error
 }
 
-type AgentTemplateDescriptor struct {
-	Template             agenttemplate.Template            `json:"template"`
-	Label                string                            `json:"label"`
-	Description          string                            `json:"description"`
-	StarterInstructions  string                            `json:"starterInstructions"`
-	StarterTools         []string                          `json:"starterTools"`
-	StarterTrigger       agentdefinition.TriggerMode       `json:"starterTrigger"`
-	StarterEvents        []agenttrigger.EventKind          `json:"starterEvents"`
-	StarterCron          string                            `json:"starterCron"`
-	StarterCeiling       agent.AutonomyTier                `json:"starterCeiling"`
-	StarterDataAccess    agentdefinition.DataAccessCeiling `json:"starterDataAccess"`
-	StarterOutput        agentdefinition.OutputMode        `json:"starterOutput"`
-	StarterDailyRunLimit int                               `json:"starterDailyRunLimit"`
-	StarterShadow        bool                              `json:"starterShadow"`
-	SystemKey            string                            `json:"systemKey"`
-	ContextProviders     []agentdefinition.ContextProvider `json:"contextProviders"`
-}
-
 type ToolCatalogKind string
 
 const ToolCatalogKindQuery = ToolCatalogKind("query")
@@ -131,11 +113,6 @@ type LintAgentInstructionsRequest struct {
 	DisabledToolNames []string
 }
 
-type PreviewPromptRequest struct {
-	Definition *SaveAgentDefinitionRequest
-	Actor      *permissionports.RequestActor
-}
-
 // AgentDefinitionScheduler keeps the schedule behind a scheduled or continuous
 // agent in line with the agent. Neither call fails the save that made it: a
 // schedule a failed call left behind is repaired by the next reconcile.
@@ -156,10 +133,6 @@ type AgentDefinitionService interface {
 	GetByID(
 		ctx context.Context,
 		req GetAgentDefinitionByIDRequest,
-	) (*agentdefinition.Definition, error)
-	GetBySystemKey(
-		ctx context.Context,
-		req GetAgentDefinitionBySystemKeyRequest,
 	) (*agentdefinition.Definition, error)
 	Create(
 		ctx context.Context,
@@ -195,10 +168,8 @@ type AgentDefinitionService interface {
 		ctx context.Context,
 		req *LintAgentInstructionsRequest,
 	) ([]agentlint.Finding, error)
-	Templates() []AgentTemplateDescriptor
 	ToolCatalog(ctx context.Context, tenantInfo pagination.TenantInfo) ([]ToolCatalogEntry, error)
 	EventKinds() []agenttrigger.EventDescriptor
-	PreviewPrompt(ctx context.Context, req *PreviewPromptRequest) (string, error)
 	EnsureSystem(
 		ctx context.Context,
 		req EnsureSystemAgentRequest,

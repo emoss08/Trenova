@@ -1,0 +1,102 @@
+fragment AgentPortalSiteFields on AgentPortalSite {
+  id
+  name
+  purpose
+  domains
+  startUrl
+  browserProfileId
+  allowActions
+  enabled
+  hasSignIn
+  hasAuthenticator
+  version
+  createdAt
+  updatedAt
+}
+
+fragment AgentPortalRunFields on AgentPortalRun {
+  id
+  siteId
+  siteName
+  extensionType
+  mode
+  status
+  instruction
+  details
+  usedSignIn
+  answer
+  visitedUrls
+  offSiteUrls
+  steps
+  costUsd
+  failure
+  agentRunId
+  threadId
+  proposalId
+  requestedById
+  hasRecording
+  codePrompt
+  codeExpiresAt
+  codeAttempts
+  startedAt
+  finishedAt
+}
+
+query AgentPortalSites {
+  agentPortalSites {
+    ...AgentPortalSiteFields
+  }
+}
+
+mutation CreateAgentPortalSite($input: SaveAgentPortalSiteInput!) {
+  createAgentPortalSite(input: $input) {
+    ...AgentPortalSiteFields
+  }
+}
+
+mutation UpdateAgentPortalSite($id: ID!, $input: SaveAgentPortalSiteInput!) {
+  updateAgentPortalSite(id: $id, input: $input) {
+    ...AgentPortalSiteFields
+  }
+}
+
+mutation DeleteAgentPortalSite($id: ID!) {
+  deleteAgentPortalSite(id: $id)
+}
+
+query AgentPortalRuns($siteId: ID, $before: Timestamp, $limit: Int) {
+  agentPortalRuns(siteId: $siteId, before: $before, limit: $limit) {
+    items {
+      ...AgentPortalRunFields
+    }
+    nextBefore
+  }
+}
+
+# One portal task, for the person it was asked for: the Desk's card follows it as it runs.
+query AgentPortalRun($id: ID!) {
+  agentPortalRun(id: $id) {
+    ...AgentPortalRunFields
+  }
+}
+
+# The open browser a portal task runs in. It is signed in to the portal, so it
+# is read when the person asks to open it and never kept.
+query AgentPortalRunLive($id: ID!) {
+  agentPortalRunLive(id: $id) {
+    liveUrl
+  }
+}
+
+query AgentPortalRunRecording($id: ID!) {
+  agentPortalRunRecording(id: $id) {
+    recordingUrl
+    shareUrl
+  }
+}
+
+mutation ProvideAgentPortalSignInCode($id: ID!, $input: AgentPortalSignInCodeInput!) {
+  provideAgentPortalSignInCode(id: $id, input: $input) {
+    ...AgentPortalRunFields
+  }
+}

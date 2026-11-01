@@ -221,35 +221,6 @@ const toolTiersSchema = z.preprocess(
   z.record(z.string(), autonomyTierSchema),
 );
 
-/**
- * One row of the earned-autonomy ledger: how decisions on an agent's
- * proposals for one tool have gone. Rows exist only for tools that have had a
- * decision.
- */
-export const toolTrustSchema = z.object({
-  id: z.string(),
-  organizationId: z.string(),
-  businessUnitId: z.string(),
-  agentDefinitionId: z.string(),
-  toolName: z.string(),
-  streak: z.number().default(0),
-  approvals: z.number().default(0),
-  modifications: z.number().default(0),
-  rejections: z.number().default(0),
-  executionFailures: z.number().default(0),
-  earnedTier: nullableEnum(autonomyTierSchema),
-  lastDecisionAt: z.number().nullish(),
-  promotedAt: z.number().nullish(),
-  demotedAt: z.number().nullish(),
-  version: z.number().default(0),
-  createdAt: z.number(),
-  updatedAt: z.number(),
-});
-
-export const toolTrustListSchema = z.object({
-  results: z.array(toolTrustSchema),
-});
-
 /** Where an agent stands against its caps this month and today. */
 export const agentBudgetStatusSchema = z.object({
   monthStart: z.number(),
@@ -320,30 +291,6 @@ export const agentDefinitionSchema = z.object({
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
-});
-
-export const agentTemplateSchema = z.object({
-  template: agentTemplateKindSchema,
-  label: z.string(),
-  description: z.string(),
-  starterInstructions: z.string().optional().default(""),
-  starterTools: nullableList(z.string()),
-  starterTrigger: triggerModeSchema,
-  starterEvents: nullableList(z.string()),
-  starterCron: z.string().optional().default(""),
-  starterCeiling: autonomyTierSchema,
-  starterDataAccess: dataAccessCeilingSchema.default("Internal"),
-  starterOutput: outputModeSchema,
-  /** Runs a day the starter suggests; 0 is no cap. */
-  starterDailyRunLimit: z.number().int().nonnegative().default(0),
-  /** The starter asks to begin in shadow mode: its runs are recorded, not acted on. */
-  starterShadow: z.boolean().default(false),
-  systemKey: z.string().optional().default(""),
-  contextProviders: nullableList(contextProviderSchema),
-});
-
-export const agentTemplateListSchema = z.object({
-  templates: z.array(agentTemplateSchema),
 });
 
 /**
@@ -2194,9 +2141,7 @@ export type TriggerMode = z.infer<typeof triggerModeSchema>;
 export type OutputMode = z.infer<typeof outputModeSchema>;
 export type ContextProvider = z.infer<typeof contextProviderSchema>;
 export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;
-export type AgentTemplate = z.infer<typeof agentTemplateSchema>;
 export type ToolCatalogEntry = z.infer<typeof toolCatalogEntrySchema>;
-export type ToolTrust = z.infer<typeof toolTrustSchema>;
 export type AgentBudgetStatus = z.infer<typeof agentBudgetStatusSchema>;
 export type ToolSimulation = z.infer<typeof toolSimulationSchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;

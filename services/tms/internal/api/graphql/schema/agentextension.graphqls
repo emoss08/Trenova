@@ -1,0 +1,308 @@
+"A tool an agent extension gives the agents it is offered to."
+type AgentExtensionTool {
+  name: String!
+  label: String!
+  description: String!
+}
+
+"How much an extension was used today and this calendar month (UTC)."
+type AgentExtensionUsage {
+  requestsToday: Int!
+  requestsThisMonth: Int!
+  failuresThisMonth: Int!
+  costThisMonthUsd: Decimal!
+}
+
+"A setting an extension asks for. A sensitive one is never returned once stored."
+type AgentExtensionConfigField {
+  key: String!
+  label: String!
+  "string, url, password, select, boolean, number or multi-select."
+  type: String!
+  required: Boolean!
+  sensitive: Boolean!
+  placeholder: String!
+  helpText: String!
+  default: String!
+  options: [String!]!
+}
+
+"A stored setting of an extension. A sensitive one carries no value, only whether one is stored."
+type AgentExtensionConfigValue {
+  key: String!
+  value: String!
+  hasValue: Boolean!
+}
+
+"A vendor an organization can turn on for its agents, and how it stands."
+type AgentExtensionCatalogItem {
+  type: String!
+  name: String!
+  vendor: String!
+  summary: String!
+  description: String!
+  category: String!
+  categoryLabel: String!
+  "What the extension gives agents. Vendors of one capability are interchangeable."
+  capability: String!
+  capabilityLabel: String!
+  "Another extension already on that gives agents the same capability; empty when none."
+  capabilityHeldBy: String!
+  brandDomain: String!
+  docsUrl: String!
+  websiteUrl: String!
+  pricingUrl: String!
+  capabilities: [String!]!
+  tools: [AgentExtensionTool!]!
+  dataNotice: String!
+  featured: Boolean!
+  sortOrder: Int!
+  releasedAt: Timestamp!
+  enabled: Boolean!
+  configured: Boolean!
+  "AllAgents or SelectedAgents."
+  availability: String!
+  configSpec: [AgentExtensionConfigField!]!
+  supportsTestConnect: Boolean!
+  dailyRequestLimit: Int!
+  usage: AgentExtensionUsage!
+  enabledAt: Timestamp
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type AgentExtensionCategoryOption {
+  value: String!
+  label: String!
+}
+
+"Every extension an organization can turn on, with the categories they are grouped in."
+type AgentExtensionCatalog {
+  items: [AgentExtensionCatalogItem!]!
+  categories: [AgentExtensionCategoryOption!]!
+}
+
+"An extension's settings. Sensitive values are never returned."
+type AgentExtensionConfig {
+  type: String!
+  enabled: Boolean!
+  availability: String!
+  fields: [AgentExtensionConfigValue!]!
+  spec: [AgentExtensionConfigField!]!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"One setting of an extension, by its key."
+input AgentExtensionSettingInput {
+  key: String!
+  value: String!
+}
+
+input UpdateAgentExtensionConfigInput {
+  enabled: Boolean!
+  "AllAgents or SelectedAgents."
+  availability: String!
+  "The settings, by key."
+  configuration: [AgentExtensionSettingInput!]!
+  version: Int!
+}
+
+"What one live call to the extension's vendor revealed."
+type AgentExtensionTestResult {
+  type: String!
+  success: Boolean!
+  checkedAt: Timestamp!
+  latencyMs: Int!
+  message: String!
+}
+
+"A portal agents may read and act on. Its sign-in is never returned, only whether one is stored."
+type AgentPortalSite {
+  id: ID!
+  name: String!
+  purpose: String!
+  domains: [String!]!
+  startUrl: String!
+  browserProfileId: String!
+  allowActions: Boolean!
+  enabled: Boolean!
+  hasSignIn: Boolean!
+  hasAuthenticator: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+A portal as its form saves it. A sign-in or authenticator key left empty keeps
+the stored one; clearSignIn and clearAuthenticator remove them.
+"""
+input SaveAgentPortalSiteInput {
+  name: String!
+  purpose: String!
+  domains: [String!]!
+  startUrl: String!
+  username: String!
+  password: String!
+  authenticatorKey: String!
+  clearSignIn: Boolean!
+  clearAuthenticator: Boolean!
+  browserProfileId: String!
+  allowActions: Boolean!
+  enabled: Boolean!
+  version: Int!
+}
+
+"One task an agent ran in a portal's browser."
+type AgentPortalRun {
+  id: ID!
+  siteId: ID!
+  siteName: String!
+  extensionType: String!
+  "Read or Act."
+  mode: String!
+  "Running, AwaitingCode, Succeeded, Failed, Stopped, TimedOut or Strayed."
+  status: String!
+  instruction: String!
+  "The details the task was given, by name."
+  details: JSON!
+  usedSignIn: Boolean!
+  answer: String!
+  visitedUrls: [String!]!
+  offSiteUrls: [String!]!
+  steps: Int!
+  costUsd: Decimal!
+  failure: String!
+  agentRunId: ID!
+  threadId: ID!
+  proposalId: ID!
+  requestedById: ID!
+  hasRecording: Boolean!
+  "How the portal asked for the sign-in code it sent, while the run waits on one."
+  codePrompt: String!
+  "When the browser stops waiting for the code; set only while the run waits."
+  codeExpiresAt: Timestamp
+  "How many codes a person has entered for the run."
+  codeAttempts: Int!
+  startedAt: Timestamp!
+  finishedAt: Timestamp
+}
+
+"A page of portal runs, newest first."
+type AgentPortalRunList {
+  items: [AgentPortalRun!]!
+  "Pass as before for the next page; 0 when there is none."
+  nextBefore: Timestamp!
+}
+
+"The address of the open browser a portal run is in. It is signed in to the portal, so it is never kept."
+type AgentPortalLiveView {
+  liveUrl: String!
+}
+
+"Where a finished portal run's recording is. Both addresses are signed and short-lived."
+type AgentPortalRecording {
+  recordingUrl: String!
+  shareUrl: String!
+}
+
+input AgentPortalSignInCodeInput {
+  "The code the portal sent the person. Empty when signedIn is true."
+  code: String!
+  "The person signed in themselves in the live browser, so there is no code to send."
+  signedIn: Boolean!
+}
+
+"A standing search of the web that hands what it finds to the work waiting on it."
+type AgentWebWatch {
+  id: ID!
+  extensionType: String!
+  query: String!
+  purpose: String!
+  sites: [String!]!
+  "SixHours, Daily or Weekly."
+  cadence: String!
+  "Active, Ended, Stopped or Failed."
+  status: String!
+  endsAt: Timestamp!
+  lastCheckedAt: Timestamp
+  lastRunAt: Timestamp
+  runCount: Int!
+  findingCount: Int!
+  costUsd: Decimal!
+  failure: String!
+  agentDefinitionId: ID!
+  agentRunId: ID!
+  threadId: ID!
+  requestedById: ID!
+  stoppedById: ID!
+  finishedAt: Timestamp
+  createdAt: Timestamp!
+}
+
+"A page of web watches, newest first."
+type AgentWebWatchList {
+  items: [AgentWebWatch!]!
+  "Pass as before for the next page; 0 when there is none."
+  nextBefore: Timestamp!
+}
+
+"A page a web watch found."
+type AgentWebWatchResult {
+  title: String!
+  url: String!
+  publishedDate: String!
+  excerpt: String!
+}
+
+"One run of a web watch that found something new."
+type AgentWebWatchFinding {
+  id: ID!
+  summary: String!
+  results: [AgentWebWatchResult!]!
+  foundAt: Timestamp!
+  deliveredAt: Timestamp
+}
+
+extend type Query {
+  "Every extension the organization can turn on, and how each stands."
+  agentExtensionCatalog: AgentExtensionCatalog!
+  "One extension's settings, by its type."
+  agentExtensionConfig(type: String!): AgentExtensionConfig!
+  "The portals agents may use."
+  agentPortalSites: [AgentPortalSite!]!
+  "Portal runs, newest first: at most limit (1 to 200), started before before, at one site when siteId is given."
+  agentPortalRuns(siteId: ID, before: Timestamp, limit: Int): AgentPortalRunList!
+  "One portal run, for the person it was asked for or someone who administers agents."
+  agentPortalRun(id: ID!): AgentPortalRun!
+  """
+  The open browser a portal run is in, where the person watches it or signs in
+  themselves. Another person's run needs permission to update agent extensions.
+  """
+  agentPortalRunLive(id: ID!): AgentPortalLiveView!
+  "Where a portal run's recording is, asked of the vendor when opened."
+  agentPortalRunRecording(id: ID!): AgentPortalRecording!
+  "Web watches, newest first: at most limit (1 to 100), created before before, in one status when given."
+  agentWebWatches(status: String, before: Timestamp, limit: Int): AgentWebWatchList!
+  "What a web watch has found, newest first."
+  agentWebWatchFindings(id: ID!): [AgentWebWatchFinding!]!
+}
+
+extend type Mutation {
+  "Turns an extension on or off, sets who it is offered to and stores its settings."
+  updateAgentExtensionConfig(type: String!, input: UpdateAgentExtensionConfigInput!): AgentExtensionConfig!
+  "Calls the extension's vendor once with its stored settings. The call is metered like any other."
+  testAgentExtension(type: String!): AgentExtensionTestResult!
+  createAgentPortalSite(input: SaveAgentPortalSiteInput!): AgentPortalSite!
+  updateAgentPortalSite(id: ID!, input: SaveAgentPortalSiteInput!): AgentPortalSite!
+  deleteAgentPortalSite(id: ID!): Boolean!
+  """
+  Continues a portal run waiting on a sign-in code, with the code the person was
+  sent or their word that they signed in themselves. The person the run was
+  asked for, or someone who administers agents.
+  """
+  provideAgentPortalSignInCode(id: ID!, input: AgentPortalSignInCodeInput!): AgentPortalRun!
+  "Stops a web watch for the person it was set for, or anyone who administers agents."
+  stopAgentWebWatch(id: ID!): AgentWebWatch!
+}

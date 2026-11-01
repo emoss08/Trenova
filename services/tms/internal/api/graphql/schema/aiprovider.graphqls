@@ -365,8 +365,8 @@ input AIProviderDraftTestInput {
   timeoutSeconds: Int
 }
 
-"What a probe of an unsaved endpoint revealed, with a next step when it failed."
-type AIProviderDraftTestResult {
+"What a probe of an endpoint revealed, with a next step when it failed."
+type AIProviderTestResult {
   success: Boolean!
   message: String!
   "The endpoint's own words, such as the transport error."
@@ -403,7 +403,7 @@ extend type Query {
 
 extend type Mutation {
   "Probes an unsaved endpoint once and records nothing."
-  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
+  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderTestResult!
   "Sets the routing order: the first ID takes work first. Every provider must be listed once."
   reorderAIProviders(ids: [ID!]!): [AIProvider!]!
   """
@@ -413,4 +413,143 @@ extend type Mutation {
   """
   routeAITask(task: AITask!, providerId: ID!): [AIProvider!]!
   patchAIProvider(id: ID!, version: Int!, input: AIProviderPatchInput!): AIProvider!
+}
+
+"""
+A provider as its editor saves it. A save replaces every setting; the
+credential alone is kept when apiKey is absent.
+"""
+input SaveAIProviderInput {
+  name: String!
+  description: String!
+  kind: AIProviderKind!
+  baseUrl: String!
+  model: String!
+  "A new credential. Absent keeps the stored one, an empty string clears it. Never returned."
+  apiKey: String
+  allowPrivateNetwork: Boolean!
+  structuredOutputMode: AIStructuredOutputMode!
+  reasoningEffort: AIReasoningEffort!
+  thinkingStyle: AIThinkingStyle!
+  platform: AIProviderPlatform!
+  platformSettings: AIProviderPlatformSettingsInput
+  advisorEnabled: Boolean!
+  advisorModel: String!
+  scripts: Boolean!
+  scriptWrites: Boolean!
+  extraBody: JSON
+  inputCostPerMillion: Decimal
+  outputCostPerMillion: Decimal
+  cacheReadCostPerMillion: Decimal
+  cacheWriteCostPerMillion: Decimal
+  maxTokens: Int!
+  "The model's context window in tokens; null reads it off the model."
+  contextWindow: Int
+  tasks: [AITask!]!
+  priority: Int!
+  embeddingDimensions: Int
+  embeddingInputStyle: AIEmbeddingInputStyle!
+  trusted: Boolean!
+  enabled: Boolean!
+  timeoutSeconds: Int!
+  maxConcurrent: Int!
+  monthlyCapUsd: Decimal
+  onCap: AIProviderCapAction!
+  "Keeps a replaced key as a fallback for a day while the new one propagates."
+  keepPreviousKey: Boolean!
+  version: Int!
+}
+
+"A wire protocol, as the provider editor describes it."
+type AIProviderKindDescriptor {
+  kind: AIProviderKind!
+  label: String!
+  description: String!
+  defaultBaseUrl: String!
+  requiresApiKey: Boolean!
+  requiresBaseUrl: Boolean!
+  defaultStructuredOutputMode: AIStructuredOutputMode!
+  supportsStructuredEnforced: Boolean!
+  supportsEmbedding: Boolean!
+}
+
+"A known deployment an administrator can start a provider from."
+type AIProviderPreset {
+  key: String!
+  label: String!
+  kind: AIProviderKind!
+  baseUrl: String!
+  structuredOutputMode: AIStructuredOutputMode!
+  allowPrivateNetwork: Boolean!
+  requiresApiKey: Boolean!
+  selfHosted: Boolean!
+  exampleModel: String!
+  notes: String!
+  "The vendor's web domain, from which the editor resolves its logo; empty for generic servers."
+  domain: String!
+  "The tasks the preset is made for; empty for any."
+  tasks: [AITask!]!
+  "The vector size an embedding preset returns; 0 for a preset that serves none."
+  embeddingDimensions: Int!
+  "How an embedding preset tells documents from queries; empty for a preset that serves none."
+  embeddingInputStyle: String!
+  "Where an Anthropic Messages preset reaches Claude; empty calls the base URL directly."
+  platform: String!
+}
+
+"One way a platform signs in."
+type AIProviderPlatformAuthDescriptor {
+  auth: AIProviderPlatformAuth!
+  "Whether a secret is stored for it."
+  requiresCredential: Boolean!
+  "The settings it adds: region, projectId, workspaceId, resource, accessKeyId, tenantId or clientId."
+  settings: [String!]!
+}
+
+"What a platform needs: its settings, the ways it signs in, the first being its default, and whether it lists its models."
+type AIProviderPlatformDescriptor {
+  platform: AIProviderPlatform!
+  settings: [String!]!
+  auths: [AIProviderPlatformAuthDescriptor!]!
+  listsModels: Boolean!
+}
+
+"A routable unit of work, as the provider editor describes it."
+type AITaskDescriptor {
+  task: AITask!
+  label: String!
+  description: String!
+  requiresTrust: Boolean!
+  volumeGuidance: String!
+}
+
+type AIEmbeddingInputStyleDescriptor {
+  style: AIEmbeddingInputStyle!
+  label: String!
+  description: String!
+}
+
+"The protocols, presets, platforms and tasks the provider editor offers."
+type AIProviderCatalog {
+  kinds: [AIProviderKindDescriptor!]!
+  presets: [AIProviderPreset!]!
+  tasks: [AITaskDescriptor!]!
+  embeddingDimensions: [Int!]!
+  embeddingInputStyles: [AIEmbeddingInputStyleDescriptor!]!
+  platforms: [AIProviderPlatformDescriptor!]!
+  "Whether a platform provider may sign in with the server's own cloud identity."
+  serverCloudCredentials: Boolean!
+}
+
+extend type Query {
+  "What the provider editor offers, so the form does not keep a list that drifts from the server."
+  aiProviderCatalog: AIProviderCatalog!
+}
+
+extend type Mutation {
+  createAIProvider(input: SaveAIProviderInput!): AIProvider!
+  updateAIProvider(id: ID!, input: SaveAIProviderInput!): AIProvider!
+  deleteAIProvider(id: ID!): Boolean!
+  "Probes a saved provider once and records the outcome as its last test."
+  testAIProvider(id: ID!): AIProviderTestResult!
 }

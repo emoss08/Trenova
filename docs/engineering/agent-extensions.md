@@ -34,7 +34,7 @@ and every tool call agree on which vendor answers.
 | Portal sites and tasks | `internal/modules/agent/app/extensionportalservice/` |
 | Web watches | `internal/modules/agent/app/extensionwebwatchservice/` |
 | Secret scopes and re-encryption columns | `internal/modules/agent/app/extensionsecrets/` |
-| REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
+| API | GraphQL `schema/agentextension.graphqls`, `resolver/agentextensionresolver/`; the web watch webhook is REST, `internal/api/handlers/agentextensionhandler/` |
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
 | Tools | `internal/modules/agent/app/querytools/webquerytools/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `web_use_portal`, `agenttools/webwatchtools/` for `web_watch` and `web_stop_watch` |
 | Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/toolaccess/extensions.go` |
@@ -56,7 +56,7 @@ tool is offered asks it through `Offers`, `Grants` and `Serving`:
 - With **Every agent** availability, `OpenTurn` adds the tools to what every agent holds (the
   assistant included) and to the prompt's tool list. With **Agents you choose**, an administrator
   adds them to an agent under **Choose tools**.
-- The agent editor's catalog (`GET /agent-definitions/tools/`) lists an extension's tools only
+- The agent editor's catalog (the `agentToolCatalog` query) lists an extension's tools only
   while it is active, marks them `extension`, and flags `grantedToEveryAgent`. Saving an agent
   refuses a newly added tool from an inactive extension; one the agent already held is kept, so
   turning an extension off does not make its agents unsaveable.

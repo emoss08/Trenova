@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/accountsreceivableresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/accounttyperesolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentanalysisresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentdefinitionresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentextensionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentpreviewresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentprofileresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentqualityresolver"
@@ -98,6 +100,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgholidayresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgstructureresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/pageaccessresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/paletteresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
@@ -154,6 +157,9 @@ type Resolver struct {
 	aIFeedback                         *aifeedbackresolver.AIFeedbackResolver
 	aIProvider                         *aiproviderresolver.AIProviderResolver
 	aIProviderKeyInfo                  *aiproviderresolver.AIProviderKeyInfoResolver
+	aIProviderPlatformAuthDescriptor   *aiproviderresolver.AIProviderPlatformAuthDescriptorResolver
+	aIProviderPlatformDescriptor       *aiproviderresolver.AIProviderPlatformDescriptorResolver
+	aIProviderPreset                   *aiproviderresolver.AIProviderPresetResolver
 	aIRouteChoice                      *aiproviderresolver.AIRouteChoiceResolver
 	aITuneUpEvidence                   *aicontrolresolver.AITuneUpEvidenceResolver
 	accessorialCharge                  *accessorialchargeresolver.AccessorialChargeResolver
@@ -169,15 +175,30 @@ type Resolver struct {
 	accountingSyncAttempt              *accountingsyncresolver.AccountingSyncAttemptResolver
 	accountingSyncAttentionGroup       *accountingsyncresolver.AccountingSyncAttentionGroupResolver
 	accountingSyncRecord               *accountingsyncresolver.AccountingSyncRecordResolver
+	agentAnalysisBlock                 *agentanalysisresolver.AgentAnalysisBlockResolver
+	agentAnalysisChart                 *agentanalysisresolver.AgentAnalysisChartResolver
+	agentAnalysisChartAxis             *agentanalysisresolver.AgentAnalysisChartAxisResolver
+	agentAnalysisDataset               *agentanalysisresolver.AgentAnalysisDatasetResolver
+	agentAnalysisFigure                *agentanalysisresolver.AgentAnalysisFigureResolver
+	agentAnalysisRun                   *agentanalysisresolver.AgentAnalysisRunResolver
+	agentAnalysisTableColumn           *agentanalysisresolver.AgentAnalysisTableColumnResolver
 	agentControl                       *agentresolver.AgentControlResolver
 	agentDecision                      *agentDecisionResolver
 	agentDefinition                    *agentdefinitionresolver.AgentDefinitionResolver
 	agentDraft                         *agentdefinitionresolver.AgentDraftResolver
 	agentEvalCase                      *agentqualityresolver.AgentEvalCaseResolver
 	agentEvaluation                    *agentresolver.AgentEvaluationResolver
+	agentEventKind                     *agentdefinitionresolver.AgentEventKindResolver
+	agentExtensionCatalogItem          *agentextensionresolver.AgentExtensionCatalogItemResolver
+	agentExtensionCategoryOption       *agentextensionresolver.AgentExtensionCategoryOptionResolver
+	agentExtensionConfig               *agentextensionresolver.AgentExtensionConfigResolver
+	agentExtensionConfigField          *agentextensionresolver.AgentExtensionConfigFieldResolver
+	agentExtensionTestResult           *agentextensionresolver.AgentExtensionTestResultResolver
+	agentExtensionUsage                *agentextensionresolver.AgentExtensionUsageResolver
 	agentInstructionFinding            *agentdefinitionresolver.AgentInstructionFindingResolver
 	agentMemory                        *agentresolver.AgentMemoryResolver
 	agentPlan                          *agentPlanResolver
+	agentPortalRun                     *agentextensionresolver.AgentPortalRunResolver
 	agentPreviewFieldChange            *agentpreviewresolver.AgentPreviewFieldChangeResolver
 	agentPreviewMessage                *agentpreviewresolver.AgentPreviewMessageResolver
 	agentPreviewMoney                  *agentpreviewresolver.AgentPreviewMoneyResolver
@@ -197,9 +218,11 @@ type Resolver struct {
 	agentSafety                        *agentsafetyresolver.AgentSafetyResolver
 	agentSafetySummary                 *agentsafetyresolver.AgentSafetySummaryResolver
 	agentSuiteRun                      *agentqualityresolver.AgentSuiteRunResolver
+	agentToolCatalogEntry              *agentdefinitionresolver.AgentToolCatalogEntryResolver
 	agentToolHolders                   *agentsafetyresolver.AgentToolHoldersResolver
 	agentToolRule                      *agentsafetyresolver.AgentToolRuleResolver
 	agentToolSafety                    *agentsafetyresolver.AgentToolSafetyResolver
+	agentWebWatch                      *agentextensionresolver.AgentWebWatchResolver
 	agentWorstRatedAnswer              *agentqualityresolver.AgentWorstRatedAnswerResolver
 	apiKey                             *apikeyresolver.ApiKeyResolver
 	approvalDelegation                 *orgstructureresolver.ApprovalDelegationResolver
@@ -501,15 +524,28 @@ func FromServices(s *Services) *Resolver {
 		AgentControlService:       s.AgentControlService,
 		AccountingControlRepo:     s.AccountingControlRepo,
 	}
+	agentanalysisDeps := &agentanalysisresolver.Deps{
+		Core:               s.Core,
+		AnalysisRunService: s.AnalysisRunService,
+	}
 	agentdefinitionDeps := &agentdefinitionresolver.Deps{
 		Core:                   s.Core,
 		AgentDefinitionService: s.AgentDefinitionService,
 		AgentCapabilityService: s.AgentCapabilityService,
 		AgentRecommender:       s.AgentRecommender,
 		AgentShadowService:     s.AgentShadowService,
+		AgentTrustService:      s.AgentTrustService,
 		AgentTestPromptService: s.AgentTestPromptService,
 		AgentDraftingService:   s.AgentDraftingService,
+		AgentBudgetService:     s.AgentBudgetService,
 		AgentAccessService:     s.AgentAccessService,
+	}
+	agentextensionDeps := &agentextensionresolver.Deps{
+		Core:                  s.Core,
+		AgentExtensionService: s.AgentExtensionService,
+		AgentPortalService:    s.AgentPortalService,
+		AgentWebWatchService:  s.AgentWebWatchService,
+		WebWatchWaits:         s.WebWatchWaits,
 	}
 	agentpreviewDeps := &agentpreviewresolver.Deps{
 		Core:                   s.Core,
@@ -565,6 +601,7 @@ func FromServices(s *Services) *Resolver {
 	}
 	aiproviderDeps := &aiproviderresolver.Deps{
 		Core:              s.Core,
+		AIConfig:          s.AIConfig,
 		AiProviderService: s.AiProviderService,
 	}
 	airetrievalDeps := &airetrievalresolver.Deps{
@@ -954,6 +991,10 @@ func FromServices(s *Services) *Resolver {
 		Core:              s.Core,
 		PageAccessService: s.PageAccessService,
 	}
+	paletteDeps := &paletteresolver.Deps{
+		Core:           s.Core,
+		PaletteService: s.PaletteService,
+	}
 	performancereviewDeps := &performancereviewresolver.Deps{
 		Core:                       s.Core,
 		PerformanceReviewService:   s.PerformanceReviewService,
@@ -1227,46 +1268,64 @@ func FromServices(s *Services) *Resolver {
 	}
 
 	return &Resolver{
-		Services:                     s,
-		aIAuditChainStatus:           &aiauditresolver.AIAuditChainStatusResolver{Deps: aiauditDeps},
-		aIAuditEvent:                 &aiauditresolver.AIAuditEventResolver{Deps: aiauditDeps},
-		aIAuditExport:                &aiauditresolver.AIAuditExportResolver{Deps: aiauditDeps},
-		aIControlSegment:             &aicontrolresolver.AIControlSegmentResolver{Deps: aicontrolDeps},
-		aIControlSummary:             &aicontrolresolver.AIControlSummaryResolver{Deps: aicontrolDeps},
-		aICorrection:                 &extractionevalresolver.AICorrectionResolver{Deps: extractionevalDeps},
-		aIFeedback:                   &aifeedbackresolver.AIFeedbackResolver{Deps: aifeedbackDeps},
-		aIProvider:                   &aiproviderresolver.AIProviderResolver{Deps: aiproviderDeps},
-		aIProviderKeyInfo:            &aiproviderresolver.AIProviderKeyInfoResolver{Deps: aiproviderDeps},
-		aIRouteChoice:                &aiproviderresolver.AIRouteChoiceResolver{Deps: aiproviderDeps},
-		aITuneUpEvidence:             &aicontrolresolver.AITuneUpEvidenceResolver{Deps: aicontrolDeps},
-		accessorialCharge:            &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps},
-		accountingAppCredential:      &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps},
-		accountingAppSettings:        &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps},
-		accountingConnection:         &accountingsyncresolver.AccountingConnectionResolver{Deps: accountingsyncDeps},
-		accountingDriftFinding:       &accountingsyncresolver.AccountingDriftFindingResolver{Deps: accountingsyncDeps},
-		accountingDriftFixPreview:    &accountingsyncresolver.AccountingDriftFixPreviewResolver{Deps: accountingsyncDeps},
-		accountingInboundChange:      &accountingsyncresolver.AccountingInboundChangeResolver{Deps: accountingsyncDeps},
-		accountingInboundLine:        &accountingsyncresolver.AccountingInboundLineResolver{Deps: accountingsyncDeps},
-		accountingMapping:            &accountingsyncresolver.AccountingMappingResolver{Deps: accountingsyncDeps},
-		accountingReferenceObject:    &accountingsyncresolver.AccountingReferenceObjectResolver{Deps: accountingsyncDeps},
-		accountingSyncAttempt:        &accountingsyncresolver.AccountingSyncAttemptResolver{Deps: accountingsyncDeps},
-		accountingSyncAttentionGroup: &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps},
-		accountingSyncRecord:         &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps},
-		agentControl:                 &agentresolver.AgentControlResolver{Deps: agentDeps},
+		Services:                         s,
+		aIAuditChainStatus:               &aiauditresolver.AIAuditChainStatusResolver{Deps: aiauditDeps},
+		aIAuditEvent:                     &aiauditresolver.AIAuditEventResolver{Deps: aiauditDeps},
+		aIAuditExport:                    &aiauditresolver.AIAuditExportResolver{Deps: aiauditDeps},
+		aIControlSegment:                 &aicontrolresolver.AIControlSegmentResolver{Deps: aicontrolDeps},
+		aIControlSummary:                 &aicontrolresolver.AIControlSummaryResolver{Deps: aicontrolDeps},
+		aICorrection:                     &extractionevalresolver.AICorrectionResolver{Deps: extractionevalDeps},
+		aIFeedback:                       &aifeedbackresolver.AIFeedbackResolver{Deps: aifeedbackDeps},
+		aIProvider:                       &aiproviderresolver.AIProviderResolver{Deps: aiproviderDeps},
+		aIProviderKeyInfo:                &aiproviderresolver.AIProviderKeyInfoResolver{Deps: aiproviderDeps},
+		aIProviderPlatformAuthDescriptor: &aiproviderresolver.AIProviderPlatformAuthDescriptorResolver{Deps: aiproviderDeps},
+		aIProviderPlatformDescriptor:     &aiproviderresolver.AIProviderPlatformDescriptorResolver{Deps: aiproviderDeps},
+		aIProviderPreset:                 &aiproviderresolver.AIProviderPresetResolver{Deps: aiproviderDeps},
+		aIRouteChoice:                    &aiproviderresolver.AIRouteChoiceResolver{Deps: aiproviderDeps},
+		aITuneUpEvidence:                 &aicontrolresolver.AITuneUpEvidenceResolver{Deps: aicontrolDeps},
+		accessorialCharge:                &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps},
+		accountingAppCredential:          &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps},
+		accountingAppSettings:            &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps},
+		accountingConnection:             &accountingsyncresolver.AccountingConnectionResolver{Deps: accountingsyncDeps},
+		accountingDriftFinding:           &accountingsyncresolver.AccountingDriftFindingResolver{Deps: accountingsyncDeps},
+		accountingDriftFixPreview:        &accountingsyncresolver.AccountingDriftFixPreviewResolver{Deps: accountingsyncDeps},
+		accountingInboundChange:          &accountingsyncresolver.AccountingInboundChangeResolver{Deps: accountingsyncDeps},
+		accountingInboundLine:            &accountingsyncresolver.AccountingInboundLineResolver{Deps: accountingsyncDeps},
+		accountingMapping:                &accountingsyncresolver.AccountingMappingResolver{Deps: accountingsyncDeps},
+		accountingReferenceObject:        &accountingsyncresolver.AccountingReferenceObjectResolver{Deps: accountingsyncDeps},
+		accountingSyncAttempt:            &accountingsyncresolver.AccountingSyncAttemptResolver{Deps: accountingsyncDeps},
+		accountingSyncAttentionGroup:     &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps},
+		accountingSyncRecord:             &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps},
+		agentAnalysisBlock:               &agentanalysisresolver.AgentAnalysisBlockResolver{Deps: agentanalysisDeps},
+		agentAnalysisChart:               &agentanalysisresolver.AgentAnalysisChartResolver{Deps: agentanalysisDeps},
+		agentAnalysisChartAxis:           &agentanalysisresolver.AgentAnalysisChartAxisResolver{Deps: agentanalysisDeps},
+		agentAnalysisDataset:             &agentanalysisresolver.AgentAnalysisDatasetResolver{Deps: agentanalysisDeps},
+		agentAnalysisFigure:              &agentanalysisresolver.AgentAnalysisFigureResolver{Deps: agentanalysisDeps},
+		agentAnalysisRun:                 &agentanalysisresolver.AgentAnalysisRunResolver{Deps: agentanalysisDeps},
+		agentAnalysisTableColumn:         &agentanalysisresolver.AgentAnalysisTableColumnResolver{Deps: agentanalysisDeps},
+		agentControl:                     &agentresolver.AgentControlResolver{Deps: agentDeps},
 		agentDecision: &agentDecisionResolver{
 			agentAgentDecision:        &agentAgentDecision{Deps: agentDeps},
 			agentpreviewAgentDecision: &agentpreviewAgentDecision{Deps: agentpreviewDeps},
 		},
-		agentDefinition:         &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
-		agentDraft:              &agentdefinitionresolver.AgentDraftResolver{Deps: agentdefinitionDeps},
-		agentEvalCase:           &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
-		agentEvaluation:         &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
-		agentInstructionFinding: &agentdefinitionresolver.AgentInstructionFindingResolver{Deps: agentdefinitionDeps},
-		agentMemory:             &agentresolver.AgentMemoryResolver{Deps: agentDeps},
+		agentDefinition:              &agentdefinitionresolver.AgentDefinitionResolver{Deps: agentdefinitionDeps},
+		agentDraft:                   &agentdefinitionresolver.AgentDraftResolver{Deps: agentdefinitionDeps},
+		agentEvalCase:                &agentqualityresolver.AgentEvalCaseResolver{Deps: agentqualityDeps},
+		agentEvaluation:              &agentresolver.AgentEvaluationResolver{Deps: agentDeps},
+		agentEventKind:               &agentdefinitionresolver.AgentEventKindResolver{Deps: agentdefinitionDeps},
+		agentExtensionCatalogItem:    &agentextensionresolver.AgentExtensionCatalogItemResolver{Deps: agentextensionDeps},
+		agentExtensionCategoryOption: &agentextensionresolver.AgentExtensionCategoryOptionResolver{Deps: agentextensionDeps},
+		agentExtensionConfig:         &agentextensionresolver.AgentExtensionConfigResolver{Deps: agentextensionDeps},
+		agentExtensionConfigField:    &agentextensionresolver.AgentExtensionConfigFieldResolver{Deps: agentextensionDeps},
+		agentExtensionTestResult:     &agentextensionresolver.AgentExtensionTestResultResolver{Deps: agentextensionDeps},
+		agentExtensionUsage:          &agentextensionresolver.AgentExtensionUsageResolver{Deps: agentextensionDeps},
+		agentInstructionFinding:      &agentdefinitionresolver.AgentInstructionFindingResolver{Deps: agentdefinitionDeps},
+		agentMemory:                  &agentresolver.AgentMemoryResolver{Deps: agentDeps},
 		agentPlan: &agentPlanResolver{
 			agentAgentPlan:     &agentAgentPlan{Deps: agentDeps},
 			decisionsAgentPlan: &decisionsAgentPlan{Deps: decisionsDeps},
 		},
+		agentPortalRun:           &agentextensionresolver.AgentPortalRunResolver{Deps: agentextensionDeps},
 		agentPreviewFieldChange:  &agentpreviewresolver.AgentPreviewFieldChangeResolver{Deps: agentpreviewDeps},
 		agentPreviewMessage:      &agentpreviewresolver.AgentPreviewMessageResolver{Deps: agentpreviewDeps},
 		agentPreviewMoney:        &agentpreviewresolver.AgentPreviewMoneyResolver{Deps: agentpreviewDeps},
@@ -1292,9 +1351,11 @@ func FromServices(s *Services) *Resolver {
 		agentSafety:                  &agentsafetyresolver.AgentSafetyResolver{Deps: agentsafetyDeps},
 		agentSafetySummary:           &agentsafetyresolver.AgentSafetySummaryResolver{Deps: agentsafetyDeps},
 		agentSuiteRun:                &agentqualityresolver.AgentSuiteRunResolver{Deps: agentqualityDeps},
+		agentToolCatalogEntry:        &agentdefinitionresolver.AgentToolCatalogEntryResolver{Deps: agentdefinitionDeps},
 		agentToolHolders:             &agentsafetyresolver.AgentToolHoldersResolver{Deps: agentsafetyDeps},
 		agentToolRule:                &agentsafetyresolver.AgentToolRuleResolver{Deps: agentsafetyDeps},
 		agentToolSafety:              &agentsafetyresolver.AgentToolSafetyResolver{Deps: agentsafetyDeps},
+		agentWebWatch:                &agentextensionresolver.AgentWebWatchResolver{Deps: agentextensionDeps},
 		agentWorstRatedAnswer:        &agentqualityresolver.AgentWorstRatedAnswerResolver{Deps: agentqualityDeps},
 		apiKey:                       &apikeyresolver.ApiKeyResolver{Deps: apikeyDeps},
 		approvalDelegation:           &orgstructureresolver.ApprovalDelegationResolver{Deps: orgstructureDeps},
@@ -1463,6 +1524,7 @@ func FromServices(s *Services) *Resolver {
 			accounttypeMutation:           &accounttypeMutation{Deps: accounttypeDeps},
 			agentMutation:                 &agentMutation{Deps: agentDeps},
 			agentdefinitionMutation:       &agentdefinitionMutation{Deps: agentdefinitionDeps},
+			agentextensionMutation:        &agentextensionMutation{Deps: agentextensionDeps},
 			agentprofileMutation:          &agentprofileMutation{Deps: agentprofileDeps},
 			agentqualityMutation:          &agentqualityMutation{Deps: agentqualityDeps},
 			agentsafetyMutation:           &agentsafetyMutation{Deps: agentsafetyDeps},
@@ -1523,6 +1585,7 @@ func FromServices(s *Services) *Resolver {
 			orderMutation:                 &orderMutation{Deps: orderDeps},
 			orgholidayMutation:            &orgholidayMutation{Deps: orgholidayDeps},
 			orgstructureMutation:          &orgstructureMutation{Deps: orgstructureDeps},
+			paletteMutation:               &paletteMutation{Deps: paletteDeps},
 			performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
 			ptopolicyMutation:             &ptopolicyMutation{Deps: ptopolicyDeps},
 			reportMutation:                &reportMutation{Deps: reportDeps},
@@ -1581,7 +1644,9 @@ func FromServices(s *Services) *Resolver {
 			accountsreceivableQuery:       &accountsreceivableQuery{Deps: accountsreceivableDeps},
 			accounttypeQuery:              &accounttypeQuery{Deps: accounttypeDeps},
 			agentQuery:                    &agentQuery{Deps: agentDeps},
+			agentanalysisQuery:            &agentanalysisQuery{Deps: agentanalysisDeps},
 			agentdefinitionQuery:          &agentdefinitionQuery{Deps: agentdefinitionDeps},
+			agentextensionQuery:           &agentextensionQuery{Deps: agentextensionDeps},
 			agentpreviewQuery:             &agentpreviewQuery{Deps: agentpreviewDeps},
 			agentprofileQuery:             &agentprofileQuery{Deps: agentprofileDeps},
 			agentqualityQuery:             &agentqualityQuery{Deps: agentqualityDeps},
@@ -1825,6 +1890,18 @@ func (r *Resolver) AIProviderKeyInfo() generated.AIProviderKeyInfoResolver {
 	return r.aIProviderKeyInfo
 }
 
+func (r *Resolver) AIProviderPlatformAuthDescriptor() generated.AIProviderPlatformAuthDescriptorResolver {
+	return r.aIProviderPlatformAuthDescriptor
+}
+
+func (r *Resolver) AIProviderPlatformDescriptor() generated.AIProviderPlatformDescriptorResolver {
+	return r.aIProviderPlatformDescriptor
+}
+
+func (r *Resolver) AIProviderPreset() generated.AIProviderPresetResolver {
+	return r.aIProviderPreset
+}
+
 func (r *Resolver) AIRouteChoice() generated.AIRouteChoiceResolver {
 	return r.aIRouteChoice
 }
@@ -1885,6 +1962,34 @@ func (r *Resolver) AccountingSyncRecord() generated.AccountingSyncRecordResolver
 	return r.accountingSyncRecord
 }
 
+func (r *Resolver) AgentAnalysisBlock() generated.AgentAnalysisBlockResolver {
+	return r.agentAnalysisBlock
+}
+
+func (r *Resolver) AgentAnalysisChart() generated.AgentAnalysisChartResolver {
+	return r.agentAnalysisChart
+}
+
+func (r *Resolver) AgentAnalysisChartAxis() generated.AgentAnalysisChartAxisResolver {
+	return r.agentAnalysisChartAxis
+}
+
+func (r *Resolver) AgentAnalysisDataset() generated.AgentAnalysisDatasetResolver {
+	return r.agentAnalysisDataset
+}
+
+func (r *Resolver) AgentAnalysisFigure() generated.AgentAnalysisFigureResolver {
+	return r.agentAnalysisFigure
+}
+
+func (r *Resolver) AgentAnalysisRun() generated.AgentAnalysisRunResolver {
+	return r.agentAnalysisRun
+}
+
+func (r *Resolver) AgentAnalysisTableColumn() generated.AgentAnalysisTableColumnResolver {
+	return r.agentAnalysisTableColumn
+}
+
 func (r *Resolver) AgentControl() generated.AgentControlResolver {
 	return r.agentControl
 }
@@ -1914,6 +2019,34 @@ func (r *Resolver) AgentEvaluation() generated.AgentEvaluationResolver {
 	return r.agentEvaluation
 }
 
+func (r *Resolver) AgentEventKind() generated.AgentEventKindResolver {
+	return r.agentEventKind
+}
+
+func (r *Resolver) AgentExtensionCatalogItem() generated.AgentExtensionCatalogItemResolver {
+	return r.agentExtensionCatalogItem
+}
+
+func (r *Resolver) AgentExtensionCategoryOption() generated.AgentExtensionCategoryOptionResolver {
+	return r.agentExtensionCategoryOption
+}
+
+func (r *Resolver) AgentExtensionConfig() generated.AgentExtensionConfigResolver {
+	return r.agentExtensionConfig
+}
+
+func (r *Resolver) AgentExtensionConfigField() generated.AgentExtensionConfigFieldResolver {
+	return r.agentExtensionConfigField
+}
+
+func (r *Resolver) AgentExtensionTestResult() generated.AgentExtensionTestResultResolver {
+	return r.agentExtensionTestResult
+}
+
+func (r *Resolver) AgentExtensionUsage() generated.AgentExtensionUsageResolver {
+	return r.agentExtensionUsage
+}
+
 func (r *Resolver) AgentInstructionFinding() generated.AgentInstructionFindingResolver {
 	return r.agentInstructionFinding
 }
@@ -1929,6 +2062,10 @@ func (r *Resolver) AgentPlan() generated.AgentPlanResolver {
 type agentPlanResolver struct {
 	*agentAgentPlan
 	*decisionsAgentPlan
+}
+
+func (r *Resolver) AgentPortalRun() generated.AgentPortalRunResolver {
+	return r.agentPortalRun
 }
 
 func (r *Resolver) AgentPreviewFieldChange() generated.AgentPreviewFieldChangeResolver {
@@ -2017,6 +2154,10 @@ func (r *Resolver) AgentSuiteRun() generated.AgentSuiteRunResolver {
 	return r.agentSuiteRun
 }
 
+func (r *Resolver) AgentToolCatalogEntry() generated.AgentToolCatalogEntryResolver {
+	return r.agentToolCatalogEntry
+}
+
 func (r *Resolver) AgentToolHolders() generated.AgentToolHoldersResolver {
 	return r.agentToolHolders
 }
@@ -2027,6 +2168,10 @@ func (r *Resolver) AgentToolRule() generated.AgentToolRuleResolver {
 
 func (r *Resolver) AgentToolSafety() generated.AgentToolSafetyResolver {
 	return r.agentToolSafety
+}
+
+func (r *Resolver) AgentWebWatch() generated.AgentWebWatchResolver {
+	return r.agentWebWatch
 }
 
 func (r *Resolver) AgentWorstRatedAnswer() generated.AgentWorstRatedAnswerResolver {
@@ -2650,6 +2795,7 @@ type mutationResolver struct {
 	*accounttypeMutation
 	*agentMutation
 	*agentdefinitionMutation
+	*agentextensionMutation
 	*agentprofileMutation
 	*agentqualityMutation
 	*agentsafetyMutation
@@ -2710,6 +2856,7 @@ type mutationResolver struct {
 	*orderMutation
 	*orgholidayMutation
 	*orgstructureMutation
+	*paletteMutation
 	*performancereviewMutation
 	*ptopolicyMutation
 	*reportMutation
@@ -2842,7 +2989,9 @@ type queryResolver struct {
 	*accountsreceivableQuery
 	*accounttypeQuery
 	*agentQuery
+	*agentanalysisQuery
 	*agentdefinitionQuery
+	*agentextensionQuery
 	*agentpreviewQuery
 	*agentprofileQuery
 	*agentqualityQuery
@@ -3295,6 +3444,7 @@ type (
 	accounttypeMutation             = accounttyperesolver.MutationResolver
 	agentMutation                   = agentresolver.MutationResolver
 	agentdefinitionMutation         = agentdefinitionresolver.MutationResolver
+	agentextensionMutation          = agentextensionresolver.MutationResolver
 	agentprofileMutation            = agentprofileresolver.MutationResolver
 	agentqualityMutation            = agentqualityresolver.MutationResolver
 	agentsafetyMutation             = agentsafetyresolver.MutationResolver
@@ -3355,6 +3505,7 @@ type (
 	orderMutation                   = orderresolver.MutationResolver
 	orgholidayMutation              = orgholidayresolver.MutationResolver
 	orgstructureMutation            = orgstructureresolver.MutationResolver
+	paletteMutation                 = paletteresolver.MutationResolver
 	performancereviewMutation       = performancereviewresolver.MutationResolver
 	ptopolicyMutation               = ptopolicyresolver.MutationResolver
 	reportMutation                  = reportresolver.MutationResolver
@@ -3388,7 +3539,9 @@ type (
 	accountsreceivableQuery         = accountsreceivableresolver.QueryResolver
 	accounttypeQuery                = accounttyperesolver.QueryResolver
 	agentQuery                      = agentresolver.QueryResolver
+	agentanalysisQuery              = agentanalysisresolver.QueryResolver
 	agentdefinitionQuery            = agentdefinitionresolver.QueryResolver
+	agentextensionQuery             = agentextensionresolver.QueryResolver
 	agentpreviewQuery               = agentpreviewresolver.QueryResolver
 	agentprofileQuery               = agentprofileresolver.QueryResolver
 	agentqualityQuery               = agentqualityresolver.QueryResolver

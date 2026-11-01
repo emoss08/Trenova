@@ -91,29 +91,29 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1122 writes: 689 GraphQL mutations and 433 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 678 |
+| Exempt | 677 |
 | — Security | 85 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 48 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 47 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1122 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -135,12 +135,11 @@ The writes no tool performs yet, and what the tool would do.
 | accountingsync | 33 | 20 | 13 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
-| agent | 16 | 2 | 14 | 0 |
-| agentdefinition | 13 | 0 | 13 | 0 |
+| agent | 17 | 2 | 15 | 0 |
+| agentdefinition | 12 | 0 | 12 | 0 |
 | agentextension | 8 | 1 | 7 | 0 |
 | agentprofile | 8 | 2 | 6 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
-| agentrun | 1 | 0 | 1 | 0 |
 | agentsafety | 1 | 0 | 1 | 0 |
 | agentsuggestion | 2 | 0 | 2 | 0 |
 | aiaudit | 3 | 0 | 3 | 0 |
@@ -419,6 +418,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation resolveAgentException` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
 | `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
 | `mutation setAgentMemoryStatus` | Tool: `agent_retire_memory` |
+| `mutation startAgentRun` | Exempt, agent-administration: Starts an agent on demand; agents hand work to one another through delegate_task instead. |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation updateAgentControl` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
 | `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
@@ -427,6 +427,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation createAgentDefinition` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
+| `mutation deleteAgentDefinition` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation deleteAgentTestPrompt` | Exempt, agent-administration: Removes a prompt a person kept in an agent's builder. |
 | `mutation draftAgentFromDescription` | Exempt, read-only: Asks a model to draft an agent from a description and returns the draft; it saves nothing, and saving it is the agent builder's create. |
 | `mutation keepAgentTestPrompt` | Exempt, agent-administration: Keeps a prompt a person tries an agent with in its builder; an agent has no use for keeping prompts to test itself. |
@@ -435,24 +437,21 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation setRoleAgentAccess` | Exempt, security: Decides which roles may use which agents. |
 | `mutation tightenAgentInstructions` | Exempt, read-only: Asks a model to shorten an agent's instructions and returns the text; it saves nothing. |
 | `mutation updateAgentCapabilities` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
-| `DELETE /api/v1/agent-definitions/:agentID/`<br>agentdefinitionhandler.remove | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
-| `POST /api/v1/agent-definitions/`<br>agentdefinitionhandler.create | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
+| `mutation updateAgentDefinition` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `POST /api/v1/agent-definitions/dry-run/`<br>agentdefinitionhandler.dryRun | Exempt, read-only: Tries a draft agent once with every write simulated; it saves and changes nothing. |
-| `POST /api/v1/agent-definitions/preview-prompt/`<br>agentdefinitionhandler.previewPrompt | Exempt, read-only: Renders an agent prompt for review and saves nothing. |
-| `PUT /api/v1/agent-definitions/:agentID/`<br>agentdefinitionhandler.update | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 
 ### agentextension
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/agent-portals/sites/:siteID/`<br>agentextensionhandler.deleteSite | Exempt, agent-administration: Removes a portal from what agents may use, an administrator's decision about the agents themselves. |
-| `POST /api/v1/agent-extensions/:type/test/`<br>agentextensionhandler.test | Exempt, read-only: Tests the vendor credentials and returns the result. |
-| `POST /api/v1/agent-portals/runs/:runID/sign-in-code/`<br>agentextensionhandler.provideSignInCode | Exempt, security: Relays a sign-in code a portal sent the person to the browser signing in for them; a second factor is given only by the person who received it, and never passes through an agent. |
-| `POST /api/v1/agent-portals/sites/`<br>agentextensionhandler.createSite | Exempt, agent-administration: Adds a portal agents may read and act on, with its sign-in; an agent that could add one could choose where its own browser goes. |
-| `POST /api/v1/agent-web-watches/:watchID/stop/`<br>agentextensionhandler.stopWebWatch | Tool: `web_stop_watch` |
+| `mutation createAgentPortalSite` | Exempt, agent-administration: Adds a portal agents may read and act on, with its sign-in; an agent that could add one could choose where its own browser goes. |
+| `mutation deleteAgentPortalSite` | Exempt, agent-administration: Removes a portal from what agents may use, an administrator's decision about the agents themselves. |
+| `mutation provideAgentPortalSignInCode` | Exempt, security: Relays a sign-in code a portal sent the person to the browser signing in for them; a second factor is given only by the person who received it, and never passes through an agent. |
+| `mutation stopAgentWebWatch` | Tool: `web_stop_watch` |
+| `mutation testAgentExtension` | Exempt, read-only: Tests the vendor credentials and returns the result; only the call's usage is metered. |
+| `mutation updateAgentExtensionConfig` | Exempt, agent-administration: Configures a vendor account an organization turns on for its agents; it holds the vendor credentials. |
+| `mutation updateAgentPortalSite` | Exempt, agent-administration: Changes a portal's addresses, sign-in or whether agents may act on it, which bound what agents can reach; an agent must not widen its own reach. |
 | `POST /api/v1/webhooks/agent-extensions/web-watches/:orgID/:buID/:watchID/`<br>agentextensionhandler.receiveWatchDelivery | Exempt, infrastructure: A research vendor reporting a web watch's run, signed with the watch's secret; it only asks the watch to be checked now, and is not a person's decision. |
-| `PUT /api/v1/agent-extensions/:type/config/`<br>agentextensionhandler.updateConfig | Exempt, agent-administration: Configures a vendor account an organization turns on for its agents; it holds the vendor credentials. |
-| `PUT /api/v1/agent-portals/sites/:siteID/`<br>agentextensionhandler.updateSite | Exempt, agent-administration: Changes a portal's addresses, sign-in or whether agents may act on it, which bound what agents can reach; an agent must not widen its own reach. |
 
 ### agentprofile
 
@@ -477,12 +476,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation setAgentEvalCaseStatus` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation updateAgentEvalCase` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation updateAgentQualityControl` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
-
-### agentrun
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/agent-runs/`<br>agentrunhandler.start | Exempt, agent-administration: Starts an agent on demand; agents hand work to one another through delegate_task instead. |
 
 ### agentsafety
 
@@ -526,14 +519,14 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation createAIProvider` | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
+| `mutation deleteAIProvider` | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 | `mutation patchAIProvider` | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 | `mutation reorderAIProviders` | Exempt, agent-administration: Sets the order in which the model providers agents run on take work. |
 | `mutation routeAITask` | Exempt, agent-administration: Makes one model provider the first to take a task, from the AI analytics; it is the human check on where agents' work goes. |
+| `mutation testAIProvider` | Exempt, read-only: Tests the provider credentials and returns the result; only the outcome is kept as its last test. |
 | `mutation testAIProviderDraft` | Exempt, read-only: Tests an unsaved provider's credentials once and returns the result; it saves nothing. |
-| `DELETE /api/v1/ai-providers/:providerID/`<br>aiproviderhandler.remove | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
-| `POST /api/v1/ai-providers/`<br>aiproviderhandler.create | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
-| `POST /api/v1/ai-providers/:providerID/test/`<br>aiproviderhandler.test | Exempt, read-only: Tests the provider credentials and returns the result. |
-| `PUT /api/v1/ai-providers/:providerID/`<br>aiproviderhandler.update | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
+| `mutation updateAIProvider` | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 
 ### airetrieval
 
@@ -1719,9 +1712,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/assistant/ask/:askID/`<br>palettehandler.stop | Exempt, agent-administration: Stops a question a person typed into the command palette; it is that person's own conversation with Nova, not work an agent does. |
-| `POST /api/v1/assistant/ask/`<br>palettehandler.ask | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
-| `POST /api/v1/assistant/ask/:askID/keep/`<br>palettehandler.keep | Exempt, agent-administration: Keeps a palette answer as a Desk conversation for the person who asked; an agent has no palette question of its own to keep. |
+| `mutation askPalette` | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `mutation keepPaletteAsk` | Exempt, agent-administration: Keeps a palette answer as a Desk conversation for the person who asked; an agent has no palette question of its own to keep. |
+| `mutation stopPaletteAsk` | Exempt, agent-administration: Stops a question a person typed into the command palette; it is that person's own conversation with Nova, not work an agent does. |
 
 ### performancereview
 

@@ -8,6 +8,8 @@ package aiproviderresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/sliceutils"
+
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
@@ -18,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -258,4 +261,99 @@ func (r *MutationResolver) RouteAITask(ctx context.Context, task aitask.Task, pr
 		ProviderID: id,
 		Task:       task,
 	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) AiProviderCatalog(ctx context.Context) (*aiprovidercatalog.Catalog, error) {
+	if _, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	return aiprovidercatalog.Build(r.AIConfig.ServerCloudCredentialsAllowed()), nil
+}
+
+func (r *MutationResolver) CreateAIProvider(ctx context.Context, input gqlmodel.SaveAIProviderInput) (*aiprovider.Provider, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := saveRequestFromInput(pulid.Nil, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AiProviderService.Create(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateAIProvider(ctx context.Context, id string, input gqlmodel.SaveAIProviderInput) (*aiprovider.Provider, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	providerID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := saveRequestFromInput(providerID, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AiProviderService.Update(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) DeleteAIProvider(ctx context.Context, id string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpDelete)
+	if err != nil {
+		return false, err
+	}
+
+	providerID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.AiProviderService.Delete(ctx, aiproviderports.DeleteAIProviderRequest{
+		ID:         providerID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) TestAIProvider(ctx context.Context, id string) (*aiproviderports.TestAIProviderResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+
+	providerID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AiProviderService.Test(ctx, aiproviderports.GetAIProviderByIDRequest{
+		ID:         providerID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *AIProviderPlatformAuthDescriptorResolver) Settings(ctx context.Context, obj *aiprovidercatalog.PlatformAuthDescriptor) ([]string, error) {
+	return sliceutils.Strings(obj.Settings), nil
+}
+
+func (r *AIProviderPlatformDescriptorResolver) Settings(ctx context.Context, obj *aiprovidercatalog.PlatformDescriptor) ([]string, error) {
+	return sliceutils.Strings(obj.Settings), nil
+}
+
+func (r *AIProviderPresetResolver) EmbeddingInputStyle(ctx context.Context, obj *aiprovidercatalog.Preset) (string, error) {
+	return string(obj.EmbeddingInputStyle), nil
+}
+
+func (r *AIProviderPresetResolver) Platform(ctx context.Context, obj *aiprovidercatalog.Preset) (string, error) {
+	return string(obj.Platform), nil
 }

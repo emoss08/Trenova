@@ -11,8 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountsreceivableexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accounttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentanalysisexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentdefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentextensionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentpreviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentprofileexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/agentqualityexec"
@@ -101,6 +103,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgholidayexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgstructureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pageaccessexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/paletteexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
@@ -176,6 +179,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
@@ -192,23 +196,29 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -217,6 +227,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
@@ -283,6 +295,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
@@ -410,6 +423,9 @@ type ResolverRoot interface {
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
 	AIProviderKeyInfo() AIProviderKeyInfoResolver
+	AIProviderPlatformAuthDescriptor() AIProviderPlatformAuthDescriptorResolver
+	AIProviderPlatformDescriptor() AIProviderPlatformDescriptorResolver
+	AIProviderPreset() AIProviderPresetResolver
 	AIRouteChoice() AIRouteChoiceResolver
 	AITuneUpEvidence() AITuneUpEvidenceResolver
 	AccessorialCharge() AccessorialChargeResolver
@@ -425,15 +441,30 @@ type ResolverRoot interface {
 	AccountingSyncAttempt() AccountingSyncAttemptResolver
 	AccountingSyncAttentionGroup() AccountingSyncAttentionGroupResolver
 	AccountingSyncRecord() AccountingSyncRecordResolver
+	AgentAnalysisBlock() AgentAnalysisBlockResolver
+	AgentAnalysisChart() AgentAnalysisChartResolver
+	AgentAnalysisChartAxis() AgentAnalysisChartAxisResolver
+	AgentAnalysisDataset() AgentAnalysisDatasetResolver
+	AgentAnalysisFigure() AgentAnalysisFigureResolver
+	AgentAnalysisRun() AgentAnalysisRunResolver
+	AgentAnalysisTableColumn() AgentAnalysisTableColumnResolver
 	AgentControl() AgentControlResolver
 	AgentDecision() AgentDecisionResolver
 	AgentDefinition() AgentDefinitionResolver
 	AgentDraft() AgentDraftResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
+	AgentEventKind() AgentEventKindResolver
+	AgentExtensionCatalogItem() AgentExtensionCatalogItemResolver
+	AgentExtensionCategoryOption() AgentExtensionCategoryOptionResolver
+	AgentExtensionConfig() AgentExtensionConfigResolver
+	AgentExtensionConfigField() AgentExtensionConfigFieldResolver
+	AgentExtensionTestResult() AgentExtensionTestResultResolver
+	AgentExtensionUsage() AgentExtensionUsageResolver
 	AgentInstructionFinding() AgentInstructionFindingResolver
 	AgentMemory() AgentMemoryResolver
 	AgentPlan() AgentPlanResolver
+	AgentPortalRun() AgentPortalRunResolver
 	AgentPreviewFieldChange() AgentPreviewFieldChangeResolver
 	AgentPreviewMessage() AgentPreviewMessageResolver
 	AgentPreviewMoney() AgentPreviewMoneyResolver
@@ -453,9 +484,11 @@ type ResolverRoot interface {
 	AgentSafety() AgentSafetyResolver
 	AgentSafetySummary() AgentSafetySummaryResolver
 	AgentSuiteRun() AgentSuiteRunResolver
+	AgentToolCatalogEntry() AgentToolCatalogEntryResolver
 	AgentToolHolders() AgentToolHoldersResolver
 	AgentToolRule() AgentToolRuleResolver
 	AgentToolSafety() AgentToolSafetyResolver
+	AgentWebWatch() AgentWebWatchResolver
 	AgentWorstRatedAnswer() AgentWorstRatedAnswerResolver
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
@@ -766,6 +799,19 @@ type AIProviderKeyInfoResolver interface {
 	AddedBy(ctx context.Context, obj *aiproviderkey.KeyInfo) (*tenant.User, error)
 }
 
+type AIProviderPlatformAuthDescriptorResolver interface {
+	Settings(ctx context.Context, obj *aiprovidercatalog.PlatformAuthDescriptor) ([]string, error)
+}
+
+type AIProviderPlatformDescriptorResolver interface {
+	Settings(ctx context.Context, obj *aiprovidercatalog.PlatformDescriptor) ([]string, error)
+}
+
+type AIProviderPresetResolver interface {
+	EmbeddingInputStyle(ctx context.Context, obj *aiprovidercatalog.Preset) (string, error)
+	Platform(ctx context.Context, obj *aiprovidercatalog.Preset) (string, error)
+}
+
 type AIRouteChoiceResolver interface {
 	ProviderID(ctx context.Context, obj *airouting.RouteChoice) (*string, error)
 }
@@ -859,6 +905,35 @@ type AccountingSyncRecordResolver interface {
 	SkippedBy(ctx context.Context, obj *accountingsync.AccountingSyncRecord) (*tenant.User, error)
 }
 
+type AgentAnalysisBlockResolver interface {
+	Kind(ctx context.Context, obj *analysis.Block) (string, error)
+}
+
+type AgentAnalysisChartResolver interface {
+	Kind(ctx context.Context, obj *analysis.Chart) (string, error)
+	ValueKind(ctx context.Context, obj *analysis.Chart) (string, error)
+}
+
+type AgentAnalysisChartAxisResolver interface {
+	Kind(ctx context.Context, obj *analysis.ChartAxis) (string, error)
+}
+
+type AgentAnalysisDatasetResolver interface {
+	Source(ctx context.Context, obj *analysis.Dataset) (string, error)
+}
+
+type AgentAnalysisFigureResolver interface {
+	Kind(ctx context.Context, obj *analysis.Figure) (string, error)
+}
+
+type AgentAnalysisRunResolver interface {
+	Status(ctx context.Context, obj *analysis.Run) (string, error)
+}
+
+type AgentAnalysisTableColumnResolver interface {
+	Kind(ctx context.Context, obj *analysis.TableColumn) (string, error)
+}
+
 type AgentControlResolver interface {
 	AgentMoneyCallCeiling(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
 	AgentMoneyRunAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
@@ -909,6 +984,39 @@ type AgentEvaluationResolver interface {
 	Fingerprint(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
 }
 
+type AgentEventKindResolver interface {
+	Kind(ctx context.Context, obj *agenttrigger.EventDescriptor) (string, error)
+	SubjectType(ctx context.Context, obj *agenttrigger.EventDescriptor) (string, error)
+}
+
+type AgentExtensionCatalogItemResolver interface {
+	Type(ctx context.Context, obj *agentextensionports.AgentExtensionCatalogItem) (string, error)
+	Category(ctx context.Context, obj *agentextensionports.AgentExtensionCatalogItem) (string, error)
+	Capability(ctx context.Context, obj *agentextensionports.AgentExtensionCatalogItem) (string, error)
+	Availability(ctx context.Context, obj *agentextensionports.AgentExtensionCatalogItem) (string, error)
+}
+
+type AgentExtensionCategoryOptionResolver interface {
+	Value(ctx context.Context, obj *agentextensionports.AgentExtensionCategoryOption) (string, error)
+}
+
+type AgentExtensionConfigResolver interface {
+	Type(ctx context.Context, obj *agentextensionports.AgentExtensionConfigResponse) (string, error)
+	Availability(ctx context.Context, obj *agentextensionports.AgentExtensionConfigResponse) (string, error)
+}
+
+type AgentExtensionConfigFieldResolver interface {
+	Type(ctx context.Context, obj *configspec.Field) (string, error)
+}
+
+type AgentExtensionTestResultResolver interface {
+	Type(ctx context.Context, obj *agentextensionports.AgentExtensionTestResponse) (string, error)
+}
+
+type AgentExtensionUsageResolver interface {
+	CostThisMonthUsd(ctx context.Context, obj *agentextension.UsageSummary) (string, error)
+}
+
 type AgentInstructionFindingResolver interface {
 	Resource(ctx context.Context, obj *agentlint.Finding) (string, error)
 	Operation(ctx context.Context, obj *agentlint.Finding) (string, error)
@@ -924,6 +1032,14 @@ type AgentPlanResolver interface {
 	RunMode(ctx context.Context, obj *agentplan.AgentPlan) (agentplan.PlanRunMode, error)
 	Run(ctx context.Context, obj *agentplan.AgentPlan) (*agent.AgentRun, error)
 	Hold(ctx context.Context, obj *agentplan.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
+}
+
+type AgentPortalRunResolver interface {
+	ExtensionType(ctx context.Context, obj *agentextensionports.PortalRunView) (string, error)
+	Mode(ctx context.Context, obj *agentextensionports.PortalRunView) (string, error)
+	Status(ctx context.Context, obj *agentextensionports.PortalRunView) (string, error)
+	Details(ctx context.Context, obj *agentextensionports.PortalRunView) (map[string]any, error)
+	CostUsd(ctx context.Context, obj *agentextensionports.PortalRunView) (string, error)
 }
 
 type AgentPreviewFieldChangeResolver interface {
@@ -1028,6 +1144,16 @@ type AgentSuiteRunResolver interface {
 	CostUsd(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
 }
 
+type AgentToolCatalogEntryResolver interface {
+	Kind(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error)
+	Resource(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error)
+	Operation(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error)
+	DefaultAutonomyTier(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error)
+	MaxAutonomyTier(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error)
+	Effect(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error)
+	Extension(ctx context.Context, obj *agentdefinitionports.ToolCatalogEntry) (string, error)
+}
+
 type AgentToolHoldersResolver interface {
 	AgentIds(ctx context.Context, obj *agenttoolports.AgentToolHolders) ([]string, error)
 }
@@ -1041,6 +1167,13 @@ type AgentToolRuleResolver interface {
 type AgentToolSafetyResolver interface {
 	ID(ctx context.Context, obj *agenttoolports.AgentToolSafety) (string, error)
 	Policy(ctx context.Context, obj *agenttoolports.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
+}
+
+type AgentWebWatchResolver interface {
+	ExtensionType(ctx context.Context, obj *agentextensionports.WebWatchView) (string, error)
+	Cadence(ctx context.Context, obj *agentextensionports.WebWatchView) (string, error)
+	Status(ctx context.Context, obj *agentextensionports.WebWatchView) (string, error)
+	CostUsd(ctx context.Context, obj *agentextensionports.WebWatchView) (string, error)
 }
 
 type AgentWorstRatedAnswerResolver interface {
@@ -2091,6 +2224,7 @@ type MutationResolver interface {
 	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agentmemory.Memory, error)
 	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agentexception.AgentException, error)
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*agentcontrol.AgentControl, error)
+	StartAgentRun(ctx context.Context, input gqlmodel.StartAgentRunInput) (*agent.AgentRun, error)
 	AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
 	ApproveAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
@@ -2107,6 +2241,16 @@ type MutationResolver interface {
 	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentcapabilityports.AgentCapabilities, error)
 	DraftAgentFromDescription(ctx context.Context, description string) (*agentdraftports.AgentDraft, error)
 	TightenAgentInstructions(ctx context.Context, instructions string) (*agentdraftports.TightenedAgentInstructions, error)
+	CreateAgentDefinition(ctx context.Context, input gqlmodel.SaveAgentDefinitionInput) (*agentdefinition.Definition, error)
+	UpdateAgentDefinition(ctx context.Context, id string, input gqlmodel.SaveAgentDefinitionInput) (*agentdefinition.Definition, error)
+	DeleteAgentDefinition(ctx context.Context, id string) (bool, error)
+	UpdateAgentExtensionConfig(ctx context.Context, typeArg string, input gqlmodel.UpdateAgentExtensionConfigInput) (*agentextensionports.AgentExtensionConfigResponse, error)
+	TestAgentExtension(ctx context.Context, typeArg string) (*agentextensionports.AgentExtensionTestResponse, error)
+	CreateAgentPortalSite(ctx context.Context, input gqlmodel.SaveAgentPortalSiteInput) (*agentextensionports.PortalSiteView, error)
+	UpdateAgentPortalSite(ctx context.Context, id string, input gqlmodel.SaveAgentPortalSiteInput) (*agentextensionports.PortalSiteView, error)
+	DeleteAgentPortalSite(ctx context.Context, id string) (bool, error)
+	ProvideAgentPortalSignInCode(ctx context.Context, id string, input gqlmodel.AgentPortalSignInCodeInput) (*agentextensionports.PortalRunView, error)
+	StopAgentWebWatch(ctx context.Context, id string) (*agentextensionports.WebWatchView, error)
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
@@ -2130,6 +2274,10 @@ type MutationResolver interface {
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
 	RouteAITask(ctx context.Context, task aitask.Task, providerID string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
+	CreateAIProvider(ctx context.Context, input gqlmodel.SaveAIProviderInput) (*aiprovider.Provider, error)
+	UpdateAIProvider(ctx context.Context, id string, input gqlmodel.SaveAIProviderInput) (*aiprovider.Provider, error)
+	DeleteAIProvider(ctx context.Context, id string) (bool, error)
+	TestAIProvider(ctx context.Context, id string) (*aiproviderports.TestAIProviderResult, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*retrievalports.AIRetrievalStatus, error)
 	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalStatus, error)
 	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*paybenefit.BenefitPlan, error)
@@ -2492,6 +2640,9 @@ type MutationResolver interface {
 	AssignUserPosition(ctx context.Context, userID string, positionID *string) (bool, error)
 	DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*approvaldelegation.ApprovalDelegation, error)
 	RevokeApprovalDelegation(ctx context.Context, id string) (*approvaldelegation.ApprovalDelegation, error)
+	AskPalette(ctx context.Context, input gqlmodel.AskPaletteInput) (*paletteports.Ask, error)
+	StopPaletteAsk(ctx context.Context, askID string) (bool, error)
+	KeepPaletteAsk(ctx context.Context, askID string) (*gqlmodel.KeptPaletteAsk, error)
 	CreatePerformanceReviewTemplate(ctx context.Context, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error)
 	UpdatePerformanceReviewTemplate(ctx context.Context, id string, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error)
 	ArchivePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*workerreview.PerformanceReviewTemplate, error)
@@ -2895,6 +3046,8 @@ type QueryResolver interface {
 	AgentOrganizationProfile(ctx context.Context) (*gqlmodel.AgentProfile, error)
 	AgentOrganizationProfileHistory(ctx context.Context, limit *int) ([]*agentprofile.Profile, error)
 	MyAgentProfile(ctx context.Context) (*gqlmodel.AgentProfile, error)
+	AgentAnalysisRuns(ctx context.Context, before *int, beforeID *string, limit *int) (*analysisports.RunListResponse, error)
+	AgentAnalysisRun(ctx context.Context, id string) (*analysis.Run, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
@@ -2908,6 +3061,19 @@ type QueryResolver interface {
 	AgentTestPrompts(ctx context.Context, agentID string) ([]*agenttestprompt.TestPrompt, error)
 	AgentCapabilities(ctx context.Context, agentID string) (*agentcapabilityports.AgentCapabilities, error)
 	AgentDraftingAvailable(ctx context.Context) (bool, error)
+	AgentBudgetStatus(ctx context.Context, agentID string) (*agentbudgetports.AgentBudgetStatus, error)
+	AgentToolTrust(ctx context.Context, agentID string) ([]*gqlmodel.AgentToolTrust, error)
+	AgentToolCatalog(ctx context.Context) ([]*agentdefinitionports.ToolCatalogEntry, error)
+	AgentEventKinds(ctx context.Context) ([]*agenttrigger.EventDescriptor, error)
+	AgentExtensionCatalog(ctx context.Context) (*agentextensionports.AgentExtensionCatalogResponse, error)
+	AgentExtensionConfig(ctx context.Context, typeArg string) (*agentextensionports.AgentExtensionConfigResponse, error)
+	AgentPortalSites(ctx context.Context) ([]*agentextensionports.PortalSiteView, error)
+	AgentPortalRuns(ctx context.Context, siteID *string, before *int, limit *int) (*agentextensionports.PortalRunListResponse, error)
+	AgentPortalRun(ctx context.Context, id string) (*agentextensionports.PortalRunView, error)
+	AgentPortalRunLive(ctx context.Context, id string) (*agentextensionports.PortalLiveView, error)
+	AgentPortalRunRecording(ctx context.Context, id string) (*agentextensionports.PortalRecordingResponse, error)
+	AgentWebWatches(ctx context.Context, status *string, before *int, limit *int) (*agentextensionports.WebWatchListResponse, error)
+	AgentWebWatchFindings(ctx context.Context, id string) ([]*agentextensionports.WebWatchFindingView, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)
 	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
@@ -2947,6 +3113,7 @@ type QueryResolver interface {
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
 	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*airouting.TaskRoute, error)
+	AiProviderCatalog(ctx context.Context) (*aiprovidercatalog.Catalog, error)
 	AiRetrievalStatus(ctx context.Context) (*retrievalports.AIRetrievalStatus, error)
 	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
@@ -4040,7 +4207,9 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		accountsreceivableexec.Shard,
 		accounttypeexec.Shard,
 		agentexec.Shard,
+		agentanalysisexec.Shard,
 		agentdefinitionexec.Shard,
+		agentextensionexec.Shard,
 		agentpreviewexec.Shard,
 		agentprofileexec.Shard,
 		agentqualityexec.Shard,
@@ -4129,6 +4298,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		orgholidayexec.Shard,
 		orgstructureexec.Shard,
 		pageaccessexec.Shard,
+		paletteexec.Shard,
 		performancereviewexec.Shard,
 		preludeexec.Shard,
 		ptopolicyexec.Shard,
@@ -4196,6 +4366,9 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AIFeedback":                         func() any { return r.AIFeedback() },
 			"AIProvider":                         func() any { return r.AIProvider() },
 			"AIProviderKeyInfo":                  func() any { return r.AIProviderKeyInfo() },
+			"AIProviderPlatformAuthDescriptor":   func() any { return r.AIProviderPlatformAuthDescriptor() },
+			"AIProviderPlatformDescriptor":       func() any { return r.AIProviderPlatformDescriptor() },
+			"AIProviderPreset":                   func() any { return r.AIProviderPreset() },
 			"AIRouteChoice":                      func() any { return r.AIRouteChoice() },
 			"AITuneUpEvidence":                   func() any { return r.AITuneUpEvidence() },
 			"AccessorialCharge":                  func() any { return r.AccessorialCharge() },
@@ -4211,15 +4384,30 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AccountingSyncAttempt":              func() any { return r.AccountingSyncAttempt() },
 			"AccountingSyncAttentionGroup":       func() any { return r.AccountingSyncAttentionGroup() },
 			"AccountingSyncRecord":               func() any { return r.AccountingSyncRecord() },
+			"AgentAnalysisBlock":                 func() any { return r.AgentAnalysisBlock() },
+			"AgentAnalysisChart":                 func() any { return r.AgentAnalysisChart() },
+			"AgentAnalysisChartAxis":             func() any { return r.AgentAnalysisChartAxis() },
+			"AgentAnalysisDataset":               func() any { return r.AgentAnalysisDataset() },
+			"AgentAnalysisFigure":                func() any { return r.AgentAnalysisFigure() },
+			"AgentAnalysisRun":                   func() any { return r.AgentAnalysisRun() },
+			"AgentAnalysisTableColumn":           func() any { return r.AgentAnalysisTableColumn() },
 			"AgentControl":                       func() any { return r.AgentControl() },
 			"AgentDecision":                      func() any { return r.AgentDecision() },
 			"AgentDefinition":                    func() any { return r.AgentDefinition() },
 			"AgentDraft":                         func() any { return r.AgentDraft() },
 			"AgentEvalCase":                      func() any { return r.AgentEvalCase() },
 			"AgentEvaluation":                    func() any { return r.AgentEvaluation() },
+			"AgentEventKind":                     func() any { return r.AgentEventKind() },
+			"AgentExtensionCatalogItem":          func() any { return r.AgentExtensionCatalogItem() },
+			"AgentExtensionCategoryOption":       func() any { return r.AgentExtensionCategoryOption() },
+			"AgentExtensionConfig":               func() any { return r.AgentExtensionConfig() },
+			"AgentExtensionConfigField":          func() any { return r.AgentExtensionConfigField() },
+			"AgentExtensionTestResult":           func() any { return r.AgentExtensionTestResult() },
+			"AgentExtensionUsage":                func() any { return r.AgentExtensionUsage() },
 			"AgentInstructionFinding":            func() any { return r.AgentInstructionFinding() },
 			"AgentMemory":                        func() any { return r.AgentMemory() },
 			"AgentPlan":                          func() any { return r.AgentPlan() },
+			"AgentPortalRun":                     func() any { return r.AgentPortalRun() },
 			"AgentPreviewFieldChange":            func() any { return r.AgentPreviewFieldChange() },
 			"AgentPreviewMessage":                func() any { return r.AgentPreviewMessage() },
 			"AgentPreviewMoney":                  func() any { return r.AgentPreviewMoney() },
@@ -4239,9 +4427,11 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentSafety":                        func() any { return r.AgentSafety() },
 			"AgentSafetySummary":                 func() any { return r.AgentSafetySummary() },
 			"AgentSuiteRun":                      func() any { return r.AgentSuiteRun() },
+			"AgentToolCatalogEntry":              func() any { return r.AgentToolCatalogEntry() },
 			"AgentToolHolders":                   func() any { return r.AgentToolHolders() },
 			"AgentToolRule":                      func() any { return r.AgentToolRule() },
 			"AgentToolSafety":                    func() any { return r.AgentToolSafety() },
+			"AgentWebWatch":                      func() any { return r.AgentWebWatch() },
 			"AgentWorstRatedAnswer":              func() any { return r.AgentWorstRatedAnswer() },
 			"ApiKey":                             func() any { return r.ApiKey() },
 			"ApprovalDelegation":                 func() any { return r.ApprovalDelegation() },

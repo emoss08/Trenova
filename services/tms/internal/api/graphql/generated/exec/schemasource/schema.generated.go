@@ -2993,6 +2993,22 @@ extend type Query {
   "What agents did since the moment given, at most 31 days ago."
   agentActivitySummary(since: Timestamp!): AgentActivitySummary!
 }
+
+"""
+What a manual run starts: an agent by its id, or a system agent by its key,
+optionally on one record.
+"""
+input StartAgentRunInput {
+  agentDefinitionId: ID
+  systemKey: String
+  subjectType: AgentSubjectType
+  subjectId: ID
+}
+
+extend type Mutation {
+  "Starts an agent now, as the caller. The run goes on in the background."
+  startAgentRun(input: StartAgentRunInput!): AgentRun!
+}
 `, BuiltIn: false},
 	{Name: "../schema/agent_profile.graphqls", Input: `"Whom an agent profile describes: the organization's business, or one person's work in it."
 enum AgentProfileSubject {
@@ -3123,6 +3139,122 @@ extend type Mutation {
   retireMyAgentProfileGuidance(id: ID!): AgentProfileGuidance!
   "Write the signed-in person's own profile again now."
   regenerateMyAgentProfile: Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../schema/agentanalysis.graphqls", Input: `"A report run, an attached file or a report run from its definition that an analysis read, by the name it read it by."
+type AgentAnalysisDataset {
+  name: String!
+  "ReportRun, Attachment or ReportDefinition."
+  source: String!
+  sourceId: ID!
+  label: String!
+  rows: Int!
+}
+
+type AgentAnalysisTableColumn {
+  name: String!
+  "How the column's values read: text, number, money, count, percent, date, datetime or bool."
+  kind: String!
+  currency: String!
+}
+
+"A table an analysis showed. Percentages are fractions; dates are ISO 8601 text."
+type AgentAnalysisTable {
+  title: String!
+  columns: [AgentAnalysisTableColumn!]!
+  "Each row's values in column order: text, a number, a boolean or null."
+  rows: [[Any]!]!
+  totalRows: Int!
+}
+
+"A headline number an analysis showed."
+type AgentAnalysisFigure {
+  label: String!
+  value: Any
+  kind: String!
+  currency: String!
+  note: String!
+}
+
+type AgentAnalysisChartAxis {
+  label: String!
+  kind: String!
+  values: [Any]!
+}
+
+"One line, set of bars or slice set of a chart: a number, or null, for each point along its axis."
+type AgentAnalysisChartSeries {
+  name: String!
+  values: [Any]!
+}
+
+"A chart an analysis showed, as what it plots."
+type AgentAnalysisChart {
+  "bar, line, area, scatter or pie."
+  kind: String!
+  title: String!
+  x: AgentAnalysisChartAxis!
+  series: [AgentAnalysisChartSeries!]!
+  valueKind: String!
+  currency: String!
+  stacked: Boolean!
+  horizontal: Boolean!
+}
+
+"One chart or table, in the order the analysis showed it, by its index among the charts or the tables."
+type AgentAnalysisBlock {
+  "chart or table."
+  kind: String!
+  index: Int!
+}
+
+"""
+A script that showed the person something: a figure, a table or a chart. The
+Desk reads it whole beyond the rows its agent was shown; AI Control lists the
+organization's analyses.
+"""
+type AgentAnalysisRun {
+  id: ID!
+  "Succeeded, Errored, Stopped, TimedOut or Failed."
+  status: String!
+  title: String!
+  purpose: String!
+  code: String!
+  datasets: [AgentAnalysisDataset!]!
+  output: String!
+  tables: [AgentAnalysisTable!]!
+  figures: [AgentAnalysisFigure!]!
+  charts: [AgentAnalysisChart!]!
+  layout: [AgentAnalysisBlock!]!
+  errorName: String!
+  errorValue: String!
+  traceback: String!
+  failure: String!
+  durationMs: Int!
+  agentDefinitionId: ID!
+  agentRunId: ID!
+  threadId: ID!
+  requestedById: ID!
+  startedAt: Timestamp!
+  finishedAt: Timestamp!
+}
+
+"A page of analyses, newest first."
+type AgentAnalysisRunList {
+  items: [AgentAnalysisRun!]!
+  "With nextBeforeId, where the next page starts; 0 when there is none."
+  nextBefore: Timestamp!
+  nextBeforeId: ID!
+}
+
+extend type Query {
+  """
+  The organization's analyses, newest first, for those who oversee agents: at
+  most limit (1 to 200), after the analysis before and beforeId name.
+  """
+  agentAnalysisRuns(before: Timestamp, beforeId: ID, limit: Int): AgentAnalysisRunList!
+  "One analysis, whole, for the person it ran for or someone who oversees agents."
+  agentAnalysisRun(id: ID!): AgentAnalysisRun!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentdefinition.graphqls", Input: `enum AgentTemplate {
@@ -3815,6 +3947,462 @@ extend type Mutation {
   what they ask for. Saves nothing. Needs permission to create or update agents.
   """
   tightenAgentInstructions(instructions: String!): AgentInstructionsTightened!
+}
+
+"An agent's autonomy for one change tool, overriding its default."
+input AgentToolTierInput {
+  tool: String!
+  tier: AgentAutonomyTier!
+}
+
+"A cap on how often an agent may run one tool in a day."
+input AgentToolDailyLimitInput {
+  tool: String!
+  limit: Int!
+}
+
+"""
+An agent as the builder saves it. A save replaces every setting the input
+carries; delegateIds and access are left as they are when absent.
+"""
+input SaveAgentDefinitionInput {
+  name: String!
+  description: String!
+  template: AgentTemplate
+  "At most 20000 characters."
+  instructions: String!
+  guardrails: [String!]!
+  toolNames: [String!]!
+  "Autonomy per change tool; each is held at the tool's maximum and autonomyCeiling."
+  toolTiers: [AgentToolTierInput!]!
+  autonomyCeiling: AgentAutonomyTier!
+  dataAccessCeiling: AgentDataAccessCeiling!
+  enabled: Boolean!
+  shadowMode: Boolean!
+  decisionTimeoutSeconds: Int!
+  icon: String!
+  accent: String!
+  triggerMode: AgentTriggerMode!
+  cronExpression: String!
+  cronTimezone: String!
+  eventKinds: [String!]!
+  intervalSeconds: Int!
+  endsAt: Timestamp
+  maxConcurrentRuns: Int!
+  runTimeoutSeconds: Int!
+  maxToolCalls: Int!
+  "Cost cap for a calendar month across the agent's runs; null for none."
+  monthlyBudgetUsd: Decimal
+  "Runs the agent may start in a day; 0 for no cap."
+  dailyRunLimit: Int!
+  toolDailyLimits: [AgentToolDailyLimitInput!]!
+  simulationMode: Boolean!
+  "Tokens of recorded memory one prompt may carry; null for the default."
+  memoryTokenBudget: Int
+  learningOff: Boolean
+  contextProviders: [AgentContextProvider!]!
+  outputMode: AgentOutputMode!
+  preferredProviderId: ID
+  "The agents this one may hand a task to. Absent keeps them; a list, empty or not, replaces them."
+  delegateIds: [ID!]
+  """
+  Who may use the agent, set with the save. Absent with accessRoleIds keeps it;
+  given with accessRoleIds replaces it. Needs permission to update roles.
+  """
+  accessMode: AgentAccessMode
+  accessRoleIds: [ID!]
+  version: Int!
+}
+
+"How much of one tool's daily limit an agent has used today."
+type AgentToolBudgetUse {
+  tool: String!
+  used: Int!
+  limit: Int!
+}
+
+"Where an agent stands against its caps this calendar month and today."
+type AgentBudgetStatus {
+  monthStart: Timestamp!
+  dayStart: Timestamp!
+  "Spent this month over the calls that carried a price, in USD."
+  spentUsd: Decimal!
+  monthlyBudgetUsd: Decimal
+  monthCalls: Int!
+  "Calls this month whose provider has no price, so spentUsd leaves them out."
+  unpricedCalls: Int!
+  runsToday: Int!
+  dailyRunLimit: Int!
+  "The tools with a daily limit, and how much of it each has used."
+  tools: [AgentToolBudgetUse!]!
+  simulationMode: Boolean!
+}
+
+"A tool an agent may be given, as the builder lists it."
+type AgentToolCatalogEntry {
+  name: String!
+  description: String!
+  "The tool's arguments, as a JSON schema."
+  parameters: JSON
+  "query for a tool that reads, action for one that changes something."
+  kind: String!
+  "The permission resource the tool needs."
+  resource: String!
+  "The operation on that resource."
+  operation: String!
+  defaultAutonomyTier: String!
+  "The most autonomy the tool may be given; empty when only the agent's ceiling limits it."
+  maxAutonomyTier: String!
+  reversible: Boolean!
+  "Held by every agent without being chosen."
+  core: Boolean!
+  "What the tool does: lookup, change, navigate, discover, present, ask or delegate."
+  effect: String!
+  "The tools this one takes its arguments from; the reads among them come with it."
+  prerequisites: [String!]!
+  "The extension the tool comes with; empty for Trenova's own tools."
+  extension: String!
+  "The extension gives the tool to every agent, so it is never chosen."
+  grantedToEveryAgent: Boolean!
+}
+
+"Something that happens in Trenova that can start an event agent."
+type AgentEventKind {
+  kind: String!
+  "The kind of record the event is about."
+  subjectType: String!
+  label: String!
+  description: String!
+}
+
+extend type Query {
+  "Where an agent stands against its caps this month and today."
+  agentBudgetStatus(agentId: ID!): AgentBudgetStatus!
+  """
+  How each of an agent's tools has been decided on: the streak, the totals and
+  any tier the ledger granted. A tool with no decision yet is absent.
+  """
+  agentToolTrust(agentId: ID!): [AgentToolTrust!]!
+  "Every tool an agent may be given, with the extension tools the organization has on."
+  agentToolCatalog: [AgentToolCatalogEntry!]!
+  "Every event an event agent may be started by."
+  agentEventKinds: [AgentEventKind!]!
+}
+
+extend type Mutation {
+  createAgentDefinition(input: SaveAgentDefinitionInput!): AgentDefinition!
+  updateAgentDefinition(id: ID!, input: SaveAgentDefinitionInput!): AgentDefinition!
+  "Deletes an agent. A system agent cannot be deleted; disable it instead."
+  deleteAgentDefinition(id: ID!): Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../schema/agentextension.graphqls", Input: `"A tool an agent extension gives the agents it is offered to."
+type AgentExtensionTool {
+  name: String!
+  label: String!
+  description: String!
+}
+
+"How much an extension was used today and this calendar month (UTC)."
+type AgentExtensionUsage {
+  requestsToday: Int!
+  requestsThisMonth: Int!
+  failuresThisMonth: Int!
+  costThisMonthUsd: Decimal!
+}
+
+"A setting an extension asks for. A sensitive one is never returned once stored."
+type AgentExtensionConfigField {
+  key: String!
+  label: String!
+  "string, url, password, select, boolean, number or multi-select."
+  type: String!
+  required: Boolean!
+  sensitive: Boolean!
+  placeholder: String!
+  helpText: String!
+  default: String!
+  options: [String!]!
+}
+
+"A stored setting of an extension. A sensitive one carries no value, only whether one is stored."
+type AgentExtensionConfigValue {
+  key: String!
+  value: String!
+  hasValue: Boolean!
+}
+
+"A vendor an organization can turn on for its agents, and how it stands."
+type AgentExtensionCatalogItem {
+  type: String!
+  name: String!
+  vendor: String!
+  summary: String!
+  description: String!
+  category: String!
+  categoryLabel: String!
+  "What the extension gives agents. Vendors of one capability are interchangeable."
+  capability: String!
+  capabilityLabel: String!
+  "Another extension already on that gives agents the same capability; empty when none."
+  capabilityHeldBy: String!
+  brandDomain: String!
+  docsUrl: String!
+  websiteUrl: String!
+  pricingUrl: String!
+  capabilities: [String!]!
+  tools: [AgentExtensionTool!]!
+  dataNotice: String!
+  featured: Boolean!
+  sortOrder: Int!
+  releasedAt: Timestamp!
+  enabled: Boolean!
+  configured: Boolean!
+  "AllAgents or SelectedAgents."
+  availability: String!
+  configSpec: [AgentExtensionConfigField!]!
+  supportsTestConnect: Boolean!
+  dailyRequestLimit: Int!
+  usage: AgentExtensionUsage!
+  enabledAt: Timestamp
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type AgentExtensionCategoryOption {
+  value: String!
+  label: String!
+}
+
+"Every extension an organization can turn on, with the categories they are grouped in."
+type AgentExtensionCatalog {
+  items: [AgentExtensionCatalogItem!]!
+  categories: [AgentExtensionCategoryOption!]!
+}
+
+"An extension's settings. Sensitive values are never returned."
+type AgentExtensionConfig {
+  type: String!
+  enabled: Boolean!
+  availability: String!
+  fields: [AgentExtensionConfigValue!]!
+  spec: [AgentExtensionConfigField!]!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"One setting of an extension, by its key."
+input AgentExtensionSettingInput {
+  key: String!
+  value: String!
+}
+
+input UpdateAgentExtensionConfigInput {
+  enabled: Boolean!
+  "AllAgents or SelectedAgents."
+  availability: String!
+  "The settings, by key."
+  configuration: [AgentExtensionSettingInput!]!
+  version: Int!
+}
+
+"What one live call to the extension's vendor revealed."
+type AgentExtensionTestResult {
+  type: String!
+  success: Boolean!
+  checkedAt: Timestamp!
+  latencyMs: Int!
+  message: String!
+}
+
+"A portal agents may read and act on. Its sign-in is never returned, only whether one is stored."
+type AgentPortalSite {
+  id: ID!
+  name: String!
+  purpose: String!
+  domains: [String!]!
+  startUrl: String!
+  browserProfileId: String!
+  allowActions: Boolean!
+  enabled: Boolean!
+  hasSignIn: Boolean!
+  hasAuthenticator: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+A portal as its form saves it. A sign-in or authenticator key left empty keeps
+the stored one; clearSignIn and clearAuthenticator remove them.
+"""
+input SaveAgentPortalSiteInput {
+  name: String!
+  purpose: String!
+  domains: [String!]!
+  startUrl: String!
+  username: String!
+  password: String!
+  authenticatorKey: String!
+  clearSignIn: Boolean!
+  clearAuthenticator: Boolean!
+  browserProfileId: String!
+  allowActions: Boolean!
+  enabled: Boolean!
+  version: Int!
+}
+
+"One task an agent ran in a portal's browser."
+type AgentPortalRun {
+  id: ID!
+  siteId: ID!
+  siteName: String!
+  extensionType: String!
+  "Read or Act."
+  mode: String!
+  "Running, AwaitingCode, Succeeded, Failed, Stopped, TimedOut or Strayed."
+  status: String!
+  instruction: String!
+  "The details the task was given, by name."
+  details: JSON!
+  usedSignIn: Boolean!
+  answer: String!
+  visitedUrls: [String!]!
+  offSiteUrls: [String!]!
+  steps: Int!
+  costUsd: Decimal!
+  failure: String!
+  agentRunId: ID!
+  threadId: ID!
+  proposalId: ID!
+  requestedById: ID!
+  hasRecording: Boolean!
+  "How the portal asked for the sign-in code it sent, while the run waits on one."
+  codePrompt: String!
+  "When the browser stops waiting for the code; set only while the run waits."
+  codeExpiresAt: Timestamp
+  "How many codes a person has entered for the run."
+  codeAttempts: Int!
+  startedAt: Timestamp!
+  finishedAt: Timestamp
+}
+
+"A page of portal runs, newest first."
+type AgentPortalRunList {
+  items: [AgentPortalRun!]!
+  "Pass as before for the next page; 0 when there is none."
+  nextBefore: Timestamp!
+}
+
+"The address of the open browser a portal run is in. It is signed in to the portal, so it is never kept."
+type AgentPortalLiveView {
+  liveUrl: String!
+}
+
+"Where a finished portal run's recording is. Both addresses are signed and short-lived."
+type AgentPortalRecording {
+  recordingUrl: String!
+  shareUrl: String!
+}
+
+input AgentPortalSignInCodeInput {
+  "The code the portal sent the person. Empty when signedIn is true."
+  code: String!
+  "The person signed in themselves in the live browser, so there is no code to send."
+  signedIn: Boolean!
+}
+
+"A standing search of the web that hands what it finds to the work waiting on it."
+type AgentWebWatch {
+  id: ID!
+  extensionType: String!
+  query: String!
+  purpose: String!
+  sites: [String!]!
+  "SixHours, Daily or Weekly."
+  cadence: String!
+  "Active, Ended, Stopped or Failed."
+  status: String!
+  endsAt: Timestamp!
+  lastCheckedAt: Timestamp
+  lastRunAt: Timestamp
+  runCount: Int!
+  findingCount: Int!
+  costUsd: Decimal!
+  failure: String!
+  agentDefinitionId: ID!
+  agentRunId: ID!
+  threadId: ID!
+  requestedById: ID!
+  stoppedById: ID!
+  finishedAt: Timestamp
+  createdAt: Timestamp!
+}
+
+"A page of web watches, newest first."
+type AgentWebWatchList {
+  items: [AgentWebWatch!]!
+  "Pass as before for the next page; 0 when there is none."
+  nextBefore: Timestamp!
+}
+
+"A page a web watch found."
+type AgentWebWatchResult {
+  title: String!
+  url: String!
+  publishedDate: String!
+  excerpt: String!
+}
+
+"One run of a web watch that found something new."
+type AgentWebWatchFinding {
+  id: ID!
+  summary: String!
+  results: [AgentWebWatchResult!]!
+  foundAt: Timestamp!
+  deliveredAt: Timestamp
+}
+
+extend type Query {
+  "Every extension the organization can turn on, and how each stands."
+  agentExtensionCatalog: AgentExtensionCatalog!
+  "One extension's settings, by its type."
+  agentExtensionConfig(type: String!): AgentExtensionConfig!
+  "The portals agents may use."
+  agentPortalSites: [AgentPortalSite!]!
+  "Portal runs, newest first: at most limit (1 to 200), started before before, at one site when siteId is given."
+  agentPortalRuns(siteId: ID, before: Timestamp, limit: Int): AgentPortalRunList!
+  "One portal run, for the person it was asked for or someone who administers agents."
+  agentPortalRun(id: ID!): AgentPortalRun!
+  """
+  The open browser a portal run is in, where the person watches it or signs in
+  themselves. Another person's run needs permission to update agent extensions.
+  """
+  agentPortalRunLive(id: ID!): AgentPortalLiveView!
+  "Where a portal run's recording is, asked of the vendor when opened."
+  agentPortalRunRecording(id: ID!): AgentPortalRecording!
+  "Web watches, newest first: at most limit (1 to 100), created before before, in one status when given."
+  agentWebWatches(status: String, before: Timestamp, limit: Int): AgentWebWatchList!
+  "What a web watch has found, newest first."
+  agentWebWatchFindings(id: ID!): [AgentWebWatchFinding!]!
+}
+
+extend type Mutation {
+  "Turns an extension on or off, sets who it is offered to and stores its settings."
+  updateAgentExtensionConfig(type: String!, input: UpdateAgentExtensionConfigInput!): AgentExtensionConfig!
+  "Calls the extension's vendor once with its stored settings. The call is metered like any other."
+  testAgentExtension(type: String!): AgentExtensionTestResult!
+  createAgentPortalSite(input: SaveAgentPortalSiteInput!): AgentPortalSite!
+  updateAgentPortalSite(id: ID!, input: SaveAgentPortalSiteInput!): AgentPortalSite!
+  deleteAgentPortalSite(id: ID!): Boolean!
+  """
+  Continues a portal run waiting on a sign-in code, with the code the person was
+  sent or their word that they signed in themselves. The person the run was
+  asked for, or someone who administers agents.
+  """
+  provideAgentPortalSignInCode(id: ID!, input: AgentPortalSignInCodeInput!): AgentPortalRun!
+  "Stops a web watch for the person it was set for, or anyone who administers agents."
+  stopAgentWebWatch(id: ID!): AgentWebWatch!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentpreview.graphqls", Input: `"How much of what a write would do its preview could say."
@@ -6662,8 +7250,8 @@ input AIProviderDraftTestInput {
   timeoutSeconds: Int
 }
 
-"What a probe of an unsaved endpoint revealed, with a next step when it failed."
-type AIProviderDraftTestResult {
+"What a probe of an endpoint revealed, with a next step when it failed."
+type AIProviderTestResult {
   success: Boolean!
   message: String!
   "The endpoint's own words, such as the transport error."
@@ -6700,7 +7288,7 @@ extend type Query {
 
 extend type Mutation {
   "Probes an unsaved endpoint once and records nothing."
-  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
+  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderTestResult!
   "Sets the routing order: the first ID takes work first. Every provider must be listed once."
   reorderAIProviders(ids: [ID!]!): [AIProvider!]!
   """
@@ -6710,6 +7298,145 @@ extend type Mutation {
   """
   routeAITask(task: AITask!, providerId: ID!): [AIProvider!]!
   patchAIProvider(id: ID!, version: Int!, input: AIProviderPatchInput!): AIProvider!
+}
+
+"""
+A provider as its editor saves it. A save replaces every setting; the
+credential alone is kept when apiKey is absent.
+"""
+input SaveAIProviderInput {
+  name: String!
+  description: String!
+  kind: AIProviderKind!
+  baseUrl: String!
+  model: String!
+  "A new credential. Absent keeps the stored one, an empty string clears it. Never returned."
+  apiKey: String
+  allowPrivateNetwork: Boolean!
+  structuredOutputMode: AIStructuredOutputMode!
+  reasoningEffort: AIReasoningEffort!
+  thinkingStyle: AIThinkingStyle!
+  platform: AIProviderPlatform!
+  platformSettings: AIProviderPlatformSettingsInput
+  advisorEnabled: Boolean!
+  advisorModel: String!
+  scripts: Boolean!
+  scriptWrites: Boolean!
+  extraBody: JSON
+  inputCostPerMillion: Decimal
+  outputCostPerMillion: Decimal
+  cacheReadCostPerMillion: Decimal
+  cacheWriteCostPerMillion: Decimal
+  maxTokens: Int!
+  "The model's context window in tokens; null reads it off the model."
+  contextWindow: Int
+  tasks: [AITask!]!
+  priority: Int!
+  embeddingDimensions: Int
+  embeddingInputStyle: AIEmbeddingInputStyle!
+  trusted: Boolean!
+  enabled: Boolean!
+  timeoutSeconds: Int!
+  maxConcurrent: Int!
+  monthlyCapUsd: Decimal
+  onCap: AIProviderCapAction!
+  "Keeps a replaced key as a fallback for a day while the new one propagates."
+  keepPreviousKey: Boolean!
+  version: Int!
+}
+
+"A wire protocol, as the provider editor describes it."
+type AIProviderKindDescriptor {
+  kind: AIProviderKind!
+  label: String!
+  description: String!
+  defaultBaseUrl: String!
+  requiresApiKey: Boolean!
+  requiresBaseUrl: Boolean!
+  defaultStructuredOutputMode: AIStructuredOutputMode!
+  supportsStructuredEnforced: Boolean!
+  supportsEmbedding: Boolean!
+}
+
+"A known deployment an administrator can start a provider from."
+type AIProviderPreset {
+  key: String!
+  label: String!
+  kind: AIProviderKind!
+  baseUrl: String!
+  structuredOutputMode: AIStructuredOutputMode!
+  allowPrivateNetwork: Boolean!
+  requiresApiKey: Boolean!
+  selfHosted: Boolean!
+  exampleModel: String!
+  notes: String!
+  "The vendor's web domain, from which the editor resolves its logo; empty for generic servers."
+  domain: String!
+  "The tasks the preset is made for; empty for any."
+  tasks: [AITask!]!
+  "The vector size an embedding preset returns; 0 for a preset that serves none."
+  embeddingDimensions: Int!
+  "How an embedding preset tells documents from queries; empty for a preset that serves none."
+  embeddingInputStyle: String!
+  "Where an Anthropic Messages preset reaches Claude; empty calls the base URL directly."
+  platform: String!
+}
+
+"One way a platform signs in."
+type AIProviderPlatformAuthDescriptor {
+  auth: AIProviderPlatformAuth!
+  "Whether a secret is stored for it."
+  requiresCredential: Boolean!
+  "The settings it adds: region, projectId, workspaceId, resource, accessKeyId, tenantId or clientId."
+  settings: [String!]!
+}
+
+"What a platform needs: its settings, the ways it signs in, the first being its default, and whether it lists its models."
+type AIProviderPlatformDescriptor {
+  platform: AIProviderPlatform!
+  settings: [String!]!
+  auths: [AIProviderPlatformAuthDescriptor!]!
+  listsModels: Boolean!
+}
+
+"A routable unit of work, as the provider editor describes it."
+type AITaskDescriptor {
+  task: AITask!
+  label: String!
+  description: String!
+  requiresTrust: Boolean!
+  volumeGuidance: String!
+}
+
+type AIEmbeddingInputStyleDescriptor {
+  style: AIEmbeddingInputStyle!
+  label: String!
+  description: String!
+}
+
+"The protocols, presets, platforms and tasks the provider editor offers."
+type AIProviderCatalog {
+  kinds: [AIProviderKindDescriptor!]!
+  presets: [AIProviderPreset!]!
+  tasks: [AITaskDescriptor!]!
+  embeddingDimensions: [Int!]!
+  embeddingInputStyles: [AIEmbeddingInputStyleDescriptor!]!
+  platforms: [AIProviderPlatformDescriptor!]!
+  "Whether a platform provider may sign in with the server's own cloud identity."
+  serverCloudCredentials: Boolean!
+}
+
+extend type Query {
+  "What the provider editor offers, so the form does not keep a list that drifts from the server."
+  aiProviderCatalog: AIProviderCatalog!
+}
+
+extend type Mutation {
+  createAIProvider(input: SaveAIProviderInput!): AIProvider!
+  updateAIProvider(id: ID!, input: SaveAIProviderInput!): AIProvider!
+  deleteAIProvider(id: ID!): Boolean!
+  "Probes a saved provider once and records the outcome as its last test."
+  testAIProvider(id: ID!): AIProviderTestResult!
 }
 `, BuiltIn: false},
 	{Name: "../schema/airetrieval.graphqls", Input: `"What retrieval indexes by meaning."
@@ -24842,6 +25569,48 @@ extend type Query {
   pageAccessScreens: [PageAccessScreen!]!
   "The role editor's sentences for each resource, with the screens it affects."
   roleResourceGuides(input: RoleResourceGuideInput!): [RoleResourceGuide!]!
+}
+`, BuiltIn: false},
+	{Name: "../schema/palette.graphqls", Input: `"A record a palette question names, as the person picked it."
+input PaletteMentionInput {
+  "The kind of record, as the permission registry names it."
+  type: String!
+  id: String!
+  label: String!
+}
+
+input AskPaletteInput {
+  content: String!
+  """
+  What the person was looking at, in the shape the Desk sends with a message:
+  path, entityType, entityId, title and view. Any draft is ignored.
+  """
+  context: JSON
+  "At most ten."
+  mentions: [PaletteMentionInput!]
+}
+
+"A palette question handed to a worker: the id that names it, and where its answer streams."
+type PaletteAsk {
+  askId: ID!
+  "The path of the server-sent event stream the answer arrives on."
+  streamUrl: String!
+}
+
+"The Desk conversation a palette question was carried into."
+type KeptPaletteAsk {
+  threadId: ID!
+  "The question, when there was no answer to carry, for the Desk to ask; empty otherwise."
+  unanswered: String!
+}
+
+extend type Mutation {
+  "Asks Nova a quick question from the palette, answered on a worker without making a conversation."
+  askPalette(input: AskPaletteInput!): PaletteAsk!
+  "Takes back the caller's palette question nobody is waiting for."
+  stopPaletteAsk(askId: ID!): Boolean!
+  "Carries the caller's palette question and its answer into a new Desk conversation."
+  keepPaletteAsk(askId: ID!): KeptPaletteAsk!
 }
 `, BuiltIn: false},
 	{Name: "../schema/performance_review.graphqls", Input: `enum PerformanceReviewStatus {

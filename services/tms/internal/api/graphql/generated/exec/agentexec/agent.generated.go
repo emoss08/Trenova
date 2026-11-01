@@ -3997,6 +3997,19 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋagentcontrolᚐAgentControl),
 			},
+			{
+				Name:       "startAgentRun",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AgentRun",
+				Args:       field_Mutation_startAgentRun_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartAgentRun(ctx, fc.Args["input"].(gqlmodel.StartAgentRunInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
@@ -4236,6 +4249,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentPlanDecisionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentPlanDecisionInput)},
 		{Name: "AgentProposalDecisionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputAgentProposalDecisionInput)},
 		{Name: "ApproveAgentMemorySuggestionInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputApproveAgentMemorySuggestionInput)},
+		{Name: "StartAgentRunInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputStartAgentRunInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "AgentControl", Check: func(r any) bool { _, ok := r.(resolverAgentControl); return ok }},
@@ -4324,6 +4338,7 @@ type resolverMutation interface {
 	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agentmemory.Memory, error)
 	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agentexception.AgentException, error)
 	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*agentcontrol.AgentControl, error)
+	StartAgentRun(ctx context.Context, input gqlmodel.StartAgentRunInput) (*agent.AgentRun, error)
 }
 
 type resolverQuery interface {
@@ -4688,6 +4703,19 @@ func field_Mutation_updateAgentControl_args(ctx context.Context, ec *gqlexec.Exe
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.AgentControlInput, error) {
 			return unmarshalNAgentControlInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentControlInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_startAgentRun_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.StartAgentRunInput, error) {
+			return unmarshalNStartAgentRunInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStartAgentRunInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5274,6 +5302,57 @@ func unmarshalInputApproveAgentMemorySuggestionInput(ctx context.Context, ec *gq
 	return it, nil
 }
 
+func unmarshalInputStartAgentRunInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.StartAgentRunInput, error) {
+	var it gqlmodel.StartAgentRunInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"agentDefinitionId", "systemKey", "subjectType", "subjectId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "agentDefinitionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agentDefinitionId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AgentDefinitionID = data
+		case "systemKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("systemKey"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SystemKey = data
+		case "subjectType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subjectType"))
+			data, err := unmarshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐSubjectType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubjectType = data
+		case "subjectId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subjectId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubjectID = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -5413,6 +5492,11 @@ func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNStartAgentRunInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStartAgentRunInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.StartAgentRunInput, error) {
+	res, err := unmarshalInputStartAgentRunInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5447,6 +5531,15 @@ func unmarshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	}
 	tmp, err := graphql.UnmarshalString(v)
 	res := agentmemory.MemorySubjectType(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐSubjectType(ctx context.Context, ec *gqlexec.Exec, v any) (*agent.SubjectType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := agent.SubjectType(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

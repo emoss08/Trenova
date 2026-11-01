@@ -343,7 +343,7 @@ or call other addresses), loaded with its `token_uri` pinned to
   both Claude Platforms; listing anywhere else returns `ErrModelsNotListed`, which the
   prober reports as "type the model ID instead", and the editor skips the fetch.
 
-The catalog (`GET /ai-providers/catalog/`) describes each platform's settings, ways of
+The catalog (the `aiProviderCatalog` query, built by `domain/aiprovidercatalog`) describes each platform's settings, ways of
 signing in, which of those store a credential and whether it lists models, plus
 `serverCloudCredentials`, so the editor (`providers/platform-model.ts`) offers only
 what the server accepts and sends only the settings the chosen platform takes.

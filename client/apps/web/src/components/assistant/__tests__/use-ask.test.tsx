@@ -1,5 +1,5 @@
 import type { KeptAsk, StartedAsk } from "@/services/assistant";
-import { assistantThreadSchema, type AssistantStreamEvent } from "@/types/assistant";
+import type { AssistantStreamEvent } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -42,17 +42,7 @@ const started: StartedAsk = {
   streamUrl: "/api/v1/assistant/ask/pask_1/stream/",
 };
 
-const deskThread = assistantThreadSchema.parse({
-  id: "athr_1",
-  businessUnitId: "bu_1",
-  organizationId: "org_1",
-  userId: "usr_1",
-  agentDefinitionId: "agdef_1",
-  status: "Active",
-  origin: "Desk",
-  createdAt: 1,
-  updatedAt: 1,
-});
+const deskThreadId = "athr_1";
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -184,7 +174,7 @@ describe("useAsk reset", () => {
     attachAsk.mockImplementation(async (_askId, onEvent) => {
       onEvent({ event: "done", data: null }, "3");
     });
-    keepAsk.mockResolvedValue({ thread: deskThread, unanswered: "" });
+    keepAsk.mockResolvedValue({ threadId: deskThreadId, unanswered: "" });
     const { result } = renderAsk();
 
     await act(async () => {
@@ -220,7 +210,7 @@ describe("useAsk reset", () => {
       second = result.current.keep();
     });
     await act(async () => {
-      pending.resolve({ thread: deskThread, unanswered: "" });
+      pending.resolve({ threadId: deskThreadId, unanswered: "" });
     });
 
     expect(keepAsk).toHaveBeenCalledTimes(1);
@@ -233,7 +223,7 @@ describe("useAsk reset", () => {
     attachAsk.mockImplementation(async (_askId, onEvent) => {
       onEvent({ event: "error", data: { message: "Nova couldn't answer that just now." } }, "2");
     });
-    keepAsk.mockResolvedValue({ thread: deskThread, unanswered: "Where is S1?" });
+    keepAsk.mockResolvedValue({ threadId: deskThreadId, unanswered: "Where is S1?" });
     const { result } = renderAsk();
 
     await act(async () => {

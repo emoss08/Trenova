@@ -210,11 +210,11 @@ export function useAsk() {
     const keeping = (async () => {
       const kept = await apiService.assistantService.keepAsk(current.id);
       if (kept.unanswered !== "") {
-        await apiService.assistantService.startTurn(kept.thread.id, kept.unanswered);
+        await apiService.assistantService.startTurn(kept.threadId, kept.unanswered);
       }
       await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
 
-      return kept.thread.id;
+      return kept.threadId;
     })().finally(() => {
       keepingRef.current = null;
     });

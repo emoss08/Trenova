@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
@@ -19,10 +20,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/extensionwebwatchservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
@@ -31,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
@@ -52,8 +58,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -423,6 +431,14 @@ type Params struct {
 	AgentTrustService                 agenttrustports.AgentTrustService
 	AgentTestPromptService            agentdefinitionports.AgentTestPromptService
 	AgentDraftingService              agentdraftports.AgentDraftingService
+	AgentBudgetService                agentbudgetports.AgentBudgetService
+	AgentExtensionService             *agentextensionservice.Service
+	AgentPortalService                *extensionportalservice.Service
+	AgentWebWatchService              *extensionwebwatchservice.Service
+	WebWatchWaits                     agentextensionports.WebWatchWaits `optional:"true"`
+	AnalysisRunService                analysisports.Runs
+	PaletteService                    paletteports.PaletteService
+	AIConfig                          *aiconfig.Config `optional:"true"`
 	AIControlSummaryService           aicontrolsummaryports.AIControlSummaryService
 	AITuneUpService                   aituneupports.AITuneUpService
 	AIAnalyticsService                aianalyticsports.AnalyticsService
@@ -712,6 +728,14 @@ type Services struct {
 	AgentTrustService                 agenttrustports.AgentTrustService
 	AgentTestPromptService            agentdefinitionports.AgentTestPromptService
 	AgentDraftingService              agentdraftports.AgentDraftingService
+	AgentBudgetService                agentbudgetports.AgentBudgetService
+	AgentExtensionService             *agentextensionservice.Service
+	AgentPortalService                *extensionportalservice.Service
+	AgentWebWatchService              *extensionwebwatchservice.Service
+	WebWatchWaits                     agentextensionports.WebWatchWaits
+	AnalysisRunService                analysisports.Runs
+	PaletteService                    paletteports.PaletteService
+	AIConfig                          *aiconfig.Config
 	AiControlSummaryService           aicontrolsummaryports.AIControlSummaryService
 	AiTuneUpService                   aituneupports.AITuneUpService
 	AiAnalyticsService                aianalyticsports.AnalyticsService
@@ -1007,6 +1031,14 @@ func newServices(p *Params) *Services {
 		AgentTrustService:                 p.AgentTrustService,
 		AgentTestPromptService:            p.AgentTestPromptService,
 		AgentDraftingService:              p.AgentDraftingService,
+		AgentBudgetService:                p.AgentBudgetService,
+		AgentExtensionService:             p.AgentExtensionService,
+		AgentPortalService:                p.AgentPortalService,
+		AgentWebWatchService:              p.AgentWebWatchService,
+		WebWatchWaits:                     p.WebWatchWaits,
+		AnalysisRunService:                p.AnalysisRunService,
+		PaletteService:                    p.PaletteService,
+		AIConfig:                          p.AIConfig,
 		AiControlSummaryService:           p.AIControlSummaryService,
 		AiTuneUpService:                   p.AITuneUpService,
 		AiAnalyticsService:                p.AIAnalyticsService,

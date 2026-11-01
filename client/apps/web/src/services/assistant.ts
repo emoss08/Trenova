@@ -1,16 +1,26 @@
+import {
+  AgentBudgetStatusDocument,
+  AgentEventKindsDocument,
+  AgentToolCatalogDocument,
+  AgentToolTrustDocument,
+  AskPaletteDocument,
+  CreateAgentDefinitionDocument,
+  DeleteAgentDefinitionDocument,
+  KeepPaletteAskDocument,
+  StopPaletteAskDocument,
+  UpdateAgentDefinitionDocument,
+  type SaveAgentDefinitionInput,
+} from "@trenova/graphql/generated/graphql";
 import { api, withSessionHeaders } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { readEventStream } from "@trenova/shared/lib/sse";
 import { downloadFromUrl } from "@trenova/shared/lib/utils";
 import { z } from "zod";
 import {
-  agentDefinitionSchema,
   agentEventListSchema,
-  agentTemplateListSchema,
-  previewPromptResponseSchema,
   toolCatalogSchema,
-  toolTrustListSchema,
   assistantMessagePageSchema,
   mentionCandidateListSchema,
   mentionPageSchema,
@@ -154,23 +164,13 @@ const startedTurnSchema = z.object({
 });
 
 /** A palette question handed to a worker, and where its answer streams. */
-const startedAskSchema = z.object({
-  askId: z.string(),
-  streamUrl: z.string(),
-});
-
-export type StartedAsk = z.infer<typeof startedAskSchema>;
+export type StartedAsk = { askId: string; streamUrl: string };
 
 /**
  * The Desk conversation a palette question was carried into. `unanswered` is
  * the question when there was no answer to carry, for the Desk to ask.
  */
-const keptAskSchema = z.object({
-  thread: assistantThreadSchema,
-  unanswered: z.string().optional().default(""),
-});
-
-export type KeptAsk = z.infer<typeof keptAskSchema>;
+export type KeptAsk = { threadId: string; unanswered: string };
 
 export type StartedTurn = z.infer<typeof startedTurnSchema>;
 
@@ -896,17 +896,20 @@ export class AssistantService {
     options: AskOptions = {},
     { signal }: { signal?: AbortSignal } = {},
   ): Promise<StartedAsk> {
-    const response = await api.post(
-      "/assistant/ask/",
-      {
-        content,
-        context: options.context ?? null,
-        mentions: options.mentions ?? [],
+    const data = await requestGraphQL({
+      document: AskPaletteDocument,
+      operationName: "AskPalette",
+      variables: {
+        input: {
+          content,
+          context: options.context ?? null,
+          mentions: options.mentions ? [...options.mentions] : [],
+        },
       },
-      { signal },
-    );
+      signal,
+    });
 
-    return safeParse(startedAskSchema, response, "Palette Question");
+    return data.askPalette;
   }
 
   /** Follows a palette question's answer from where the reader left off. */
@@ -925,13 +928,21 @@ export class AssistantService {
 
   /** Takes back a palette question nobody is waiting for. */
   public async stopAsk(askId: string): Promise<void> {
-    await api.delete(`/assistant/ask/${askId}/`);
+    await requestGraphQL({
+      document: StopPaletteAskDocument,
+      operationName: "StopPaletteAsk",
+      variables: { askId },
+    });
   }
 
   /** Carries a palette question and its answer into a new Desk conversation. */
   public async keepAsk(askId: string): Promise<KeptAsk> {
-    const response = await api.post(`/assistant/ask/${askId}/keep/`, {});
-    return safeParse(keptAskSchema, response, "Kept Question");
+    const data = await requestGraphQL({
+      document: KeepPaletteAskDocument,
+      operationName: "KeepPaletteAsk",
+      variables: { askId },
+    });
+    return data.keepPaletteAsk;
   }
 
   /**
@@ -1101,20 +1112,72 @@ async function streamFailureMessage(response: Response): Promise<string> {
     : "The assistant could not be reached. Try again in a moment.";
 }
 
+/** The builder's request as the save mutations take it. Absent delegates and access keep what is saved. */
+export function toSaveAgentDefinitionInput(
+  payload: SaveAgentDefinitionRequest,
+): SaveAgentDefinitionInput {
+  const request = saveAgentDefinitionRequestSchema.parse(payload);
+
+  return {
+    name: request.name,
+    description: request.description,
+    template: request.template,
+    instructions: request.instructions,
+    guardrails: request.guardrails,
+    toolNames: request.toolNames,
+    toolTiers: Object.entries(request.toolTiers).map(([tool, tier]) => ({ tool, tier })),
+    autonomyCeiling: request.autonomyCeiling,
+    dataAccessCeiling: request.dataAccessCeiling,
+    enabled: request.enabled,
+    shadowMode: request.shadowMode,
+    decisionTimeoutSeconds: request.decisionTimeoutSeconds,
+    icon: request.icon,
+    accent: request.accent,
+    triggerMode: request.triggerMode,
+    cronExpression: request.cronExpression,
+    cronTimezone: request.cronTimezone,
+    eventKinds: request.eventKinds,
+    intervalSeconds: request.intervalSeconds,
+    endsAt: request.endsAt,
+    maxConcurrentRuns: request.maxConcurrentRuns,
+    runTimeoutSeconds: request.runTimeoutSeconds,
+    maxToolCalls: request.maxToolCalls,
+    monthlyBudgetUsd: request.monthlyBudgetUsd === null ? null : String(request.monthlyBudgetUsd),
+    dailyRunLimit: request.dailyRunLimit,
+    toolDailyLimits: Object.entries(request.toolDailyLimits).map(([tool, limit]) => ({
+      tool,
+      limit,
+    })),
+    simulationMode: request.simulationMode,
+    memoryTokenBudget: request.memoryTokenBudget,
+    learningOff: request.learningOff,
+    contextProviders: request.contextProviders,
+    outputMode: request.outputMode,
+    preferredProviderId: request.preferredProviderId || null,
+    delegateIds: request.delegateIds,
+    accessMode: request.accessMode,
+    accessRoleIds: request.accessRoleIds,
+    version: request.version,
+  };
+}
+
 export class AgentDefinitionService {
-  public async getBySystemKey(systemKey: string) {
-    const response = await api.get(`/agent-definitions/system/${systemKey}/`);
-    return safeParse(agentDefinitionSchema, response, "Agent");
+  public async tools(options?: { signal?: AbortSignal }) {
+    const data = await requestGraphQL({
+      document: AgentToolCatalogDocument,
+      operationName: "AgentToolCatalog",
+      signal: options?.signal,
+    });
+    return safeParse(toolCatalogSchema, { tools: data.agentToolCatalog }, "Agent Tool");
   }
 
-  public async tools() {
-    const response = await api.get("/agent-definitions/tools/");
-    return safeParse(toolCatalogSchema, response, "Agent Tool");
-  }
-
-  public async eventKinds() {
-    const response = await api.get("/agent-definitions/event-kinds/");
-    return safeParse(agentEventListSchema, response, "Agent Event");
+  public async eventKinds(options?: { signal?: AbortSignal }) {
+    const data = await requestGraphQL({
+      document: AgentEventKindsDocument,
+      operationName: "AgentEventKinds",
+      signal: options?.signal,
+    });
+    return safeParse(agentEventListSchema, { events: data.agentEventKinds }, "Agent Event");
   }
 
   /**
@@ -1155,46 +1218,51 @@ export class AgentDefinitionService {
     );
   }
 
-  public async previewPrompt(payload: SaveAgentDefinitionRequest) {
-    const request = saveAgentDefinitionRequestSchema.parse(payload);
-    const response = await api.post("/agent-definitions/preview-prompt/", request);
-    return safeParse(previewPromptResponseSchema, response, "Agent Prompt");
-  }
-
-  public async get(id: AgentDefinition["id"]) {
-    const response = await api.get(`/agent-definitions/${id}/`);
-    return safeParse(agentDefinitionSchema, response, "Agent");
-  }
-
   /** Where the agent stands against its caps, for the form that sets them. */
   public async budget(id: AgentDefinition["id"], options?: { signal?: AbortSignal }) {
-    const response = await api.get(`/agent-definitions/${id}/budget/`, { signal: options?.signal });
-    return safeParse(agentBudgetStatusSchema, response, "Agent Budget");
+    const data = await requestGraphQL({
+      document: AgentBudgetStatusDocument,
+      operationName: "AgentBudgetStatus",
+      variables: { agentId: id },
+      signal: options?.signal,
+    });
+    return safeParse(agentBudgetStatusSchema, data.agentBudgetStatus, "Agent Budget");
   }
 
+  /** How each of the agent's tools has been decided on; a tool with no decision is absent. */
   public async trust(id: AgentDefinition["id"], options?: { signal?: AbortSignal }) {
-    const response = await api.get(`/agent-definitions/${id}/trust/`, { signal: options?.signal });
-    return safeParse(toolTrustListSchema, response, "Agent Track Record");
-  }
-
-  public async templates() {
-    const response = await api.get("/agent-definitions/templates/");
-    return safeParse(agentTemplateListSchema, response, "Agent Template");
+    const data = await requestGraphQL({
+      document: AgentToolTrustDocument,
+      operationName: "AgentToolTrust",
+      variables: { agentId: id },
+      signal: options?.signal,
+    });
+    return { results: data.agentToolTrust };
   }
 
   public async create(payload: SaveAgentDefinitionRequest) {
-    const request = saveAgentDefinitionRequestSchema.parse(payload);
-    const response = await api.post("/agent-definitions/", request);
-    return safeParse(agentDefinitionSchema, response, "Agent");
+    const data = await requestGraphQL({
+      document: CreateAgentDefinitionDocument,
+      operationName: "CreateAgentDefinition",
+      variables: { input: toSaveAgentDefinitionInput(payload) },
+    });
+    return data.createAgentDefinition;
   }
 
   public async update(id: AgentDefinition["id"], payload: SaveAgentDefinitionRequest) {
-    const request = saveAgentDefinitionRequestSchema.parse(payload);
-    const response = await api.put(`/agent-definitions/${id}/`, request);
-    return safeParse(agentDefinitionSchema, response, "Agent");
+    const data = await requestGraphQL({
+      document: UpdateAgentDefinitionDocument,
+      operationName: "UpdateAgentDefinition",
+      variables: { id, input: toSaveAgentDefinitionInput(payload) },
+    });
+    return data.updateAgentDefinition;
   }
 
   public async remove(id: AgentDefinition["id"]) {
-    await api.delete(`/agent-definitions/${id}/`);
+    await requestGraphQL({
+      document: DeleteAgentDefinitionDocument,
+      operationName: "DeleteAgentDefinition",
+      variables: { id },
+    });
   }
 }

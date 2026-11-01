@@ -1,0 +1,54 @@
+fragment AgentWebWatchFields on AgentWebWatch {
+  id
+  extensionType
+  query
+  purpose
+  sites
+  cadence
+  status
+  endsAt
+  lastCheckedAt
+  lastRunAt
+  runCount
+  findingCount
+  costUsd
+  failure
+  agentDefinitionId
+  agentRunId
+  threadId
+  requestedById
+  stoppedById
+  finishedAt
+  createdAt
+}
+
+query AgentWebWatches($status: String, $before: Timestamp, $limit: Int) {
+  agentWebWatches(status: $status, before: $before, limit: $limit) {
+    items {
+      ...AgentWebWatchFields
+    }
+    nextBefore
+  }
+}
+
+query AgentWebWatchFindings($id: ID!) {
+  agentWebWatchFindings(id: $id) {
+    id
+    summary
+    results {
+      title
+      url
+      publishedDate
+      excerpt
+    }
+    foundAt
+    deliveredAt
+  }
+}
+
+# Stops a web watch, so the vendor searches and bills for it no more.
+mutation StopAgentWebWatch($id: ID!) {
+  stopAgentWebWatch(id: $id) {
+    ...AgentWebWatchFields
+  }
+}

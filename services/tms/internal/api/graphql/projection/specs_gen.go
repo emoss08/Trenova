@@ -40,6 +40,8 @@ var AccountingSyncAttemptSpec TypeSpec
 
 var AccountingSyncRecordSpec TypeSpec
 
+var AgentAnalysisRunSpec TypeSpec
+
 var AgentControlSpec TypeSpec
 
 var AgentDecisionSpec TypeSpec
@@ -2738,6 +2740,104 @@ func init() {
 			{
 				Name:   "updatedAt",
 				Column: "updated_at",
+			},
+		},
+	}
+
+	AgentAnalysisRunSpec = TypeSpec{
+		TypeName: "AgentAnalysisRun",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "title",
+				Column: "title",
+			},
+			{
+				Name:   "purpose",
+				Column: "purpose",
+			},
+			{
+				Name:   "code",
+				Column: "code",
+			},
+			{
+				Name:   "datasets",
+				Column: "datasets",
+			},
+			{
+				Name:   "output",
+				Column: "output",
+			},
+			{
+				Name:   "tables",
+				Column: "tables",
+			},
+			{
+				Name:   "figures",
+				Column: "figures",
+			},
+			{
+				Name:   "charts",
+				Column: "charts",
+			},
+			{
+				Name:   "layout",
+				Column: "layout",
+			},
+			{
+				Name:   "errorName",
+				Column: "error_name",
+			},
+			{
+				Name:   "errorValue",
+				Column: "error_value",
+			},
+			{
+				Name:   "traceback",
+				Column: "traceback",
+			},
+			{
+				Name:   "failure",
+				Column: "failure",
+			},
+			{
+				Name:   "durationMs",
+				Column: "duration_ms",
+			},
+			{
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
+			},
+			{
+				Name:   "agentRunId",
+				Column: "agent_run_id",
+			},
+			{
+				Name:   "threadId",
+				Column: "thread_id",
+			},
+			{
+				Name:   "requestedById",
+				Column: "requested_by_id",
+			},
+			{
+				Name:   "startedAt",
+				Column: "started_at",
+			},
+			{
+				Name:   "finishedAt",
+				Column: "finished_at",
 			},
 		},
 	}

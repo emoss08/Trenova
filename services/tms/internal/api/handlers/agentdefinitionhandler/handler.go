@@ -1,24 +1,18 @@
 package agentdefinitionhandler
 
 import (
-	"net/http"
-
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -31,8 +25,6 @@ type Params struct {
 	fx.In
 
 	Service              agentdefinitionports.AgentDefinitionService
-	Trust                agenttrustports.AgentTrustService
-	Budgets              agentbudgetports.AgentBudgetService
 	Workflows            kernelports.WorkflowStarter
 	Streams              assistantstreamports.TurnStreamReader
 	Logger               *zap.Logger
@@ -42,8 +34,6 @@ type Params struct {
 
 type Handler struct {
 	service   agentdefinitionports.AgentDefinitionService
-	trust     agenttrustports.AgentTrustService
-	budgets   agentbudgetports.AgentBudgetService
 	workflows kernelports.WorkflowStarter
 	streams   assistantstreamports.TurnStreamReader
 	logger    *zap.Logger
@@ -54,8 +44,6 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service:   p.Service,
-		trust:     p.Trust,
-		budgets:   p.Budgets,
 		workflows: p.Workflows,
 		streams:   p.Streams,
 		logger:    p.Logger.Named("handler.agentdefinition"),
@@ -68,27 +56,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/agent-definitions")
 	resource := permission.ResourceAgentDefinition.String()
 
-	api.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.list)
-	api.GET("/templates/", h.pm.RequirePermission(resource, permission.OpRead), h.templates)
-	api.GET("/tools/", h.pm.RequirePermission(resource, permission.OpRead), h.tools)
-	api.GET("/event-kinds/", h.pm.RequirePermission(resource, permission.OpRead), h.eventKinds)
-	api.POST(
-		"/preview-prompt/",
-		h.pm.RequirePermission(resource, permission.OpRead),
-		h.previewPrompt,
-	)
 	api.POST("/dry-run/", h.pm.RequirePermission(resource, permission.OpUpdate), h.dryRun)
-	api.GET(
-		"/system/:systemKey/",
-		h.pm.RequirePermission(resource, permission.OpRead),
-		h.getBySystemKey,
-	)
-	api.GET("/:agentID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
-	api.GET("/:agentID/trust/", h.pm.RequirePermission(resource, permission.OpRead), h.trustLedger)
-	api.GET("/:agentID/budget/", h.pm.RequirePermission(resource, permission.OpRead), h.budget)
-	api.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.create)
-	api.PUT("/:agentID/", h.pm.RequirePermission(resource, permission.OpUpdate), h.update)
-	api.DELETE("/:agentID/", h.pm.RequirePermission(resource, permission.OpDelete), h.remove)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
@@ -108,116 +76,6 @@ func tenantFromAuthContext(authCtx *authctx.AuthContext) pagination.TenantInfo {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
-}
-
-func (h *Handler) list(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	enabledOnly := c.Query("enabledOnly") == "true"
-	chatOnly := c.Query("chatOnly") == "true"
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*agentdefinition.Definition], error) {
-			return h.service.List(
-				c.Request.Context(),
-				&agentdefinitionports.ListAgentDefinitionRequest{
-					Filter:      req,
-					EnabledOnly: enabledOnly,
-					ChatOnly:    chatOnly,
-				},
-			)
-		},
-	)
-}
-
-func (h *Handler) templates(c *gin.Context) {
-	helpers.JSON(c, http.StatusOK, gin.H{"templates": h.service.Templates()})
-}
-
-func (h *Handler) tools(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	tools, err := h.service.ToolCatalog(c.Request.Context(), tenantFromAuthContext(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, gin.H{"tools": tools})
-}
-
-func (h *Handler) eventKinds(c *gin.Context) {
-	helpers.JSON(c, http.StatusOK, gin.H{"events": h.service.EventKinds()})
-}
-
-func (h *Handler) get(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	agentID, err := pulid.Parse(c.Param("agentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	definition, err := h.service.GetByID(
-		c.Request.Context(),
-		agentdefinitionports.GetAgentDefinitionByIDRequest{
-			ID:         agentID,
-			TenantInfo: tenantFromAuthContext(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, definition)
-}
-
-// trustLedger answers how each of the agent's tools has been decided on: the
-// streak, the totals and any tier the ledger granted. Rows exist only for
-// tools that have had a decision, so a tool with none is simply absent.
-func (h *Handler) trustLedger(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	agentID, err := pulid.Parse(c.Param("agentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	rows, err := h.trust.ListForDefinition(c.Request.Context(), agenttoolports.ListToolTrustRequest{
-		TenantInfo:        tenantFromAuthContext(authCtx),
-		AgentDefinitionID: agentID,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, gin.H{"results": rows})
-}
-
-func (h *Handler) getBySystemKey(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	definition, err := h.service.GetBySystemKey(
-		c.Request.Context(),
-		agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
-			SystemKey:  c.Param("systemKey"),
-			TenantInfo: tenantFromAuthContext(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, definition)
 }
 
 type saveAgentRequest struct {
@@ -256,41 +114,7 @@ type saveAgentRequest struct {
 	// DelegateIDs is absent to keep the agents this one may hand work to,
 	// and a list, empty or not, to replace them.
 	DelegateIDs *[]pulid.ID `json:"delegateIds"`
-	// AccessMode and AccessRoleIDs say who may use the agent, set in the
-	// same transaction as the save. Both absent keeps who may use it; both
-	// present replaces it. Changing it needs permission to update roles.
-	AccessMode    *agentdefinition.AccessMode `json:"accessMode"`
-	AccessRoleIDs *[]pulid.ID                 `json:"accessRoleIds"`
-	Version       int64                       `json:"version"`
-}
-
-// access is who the body says may use the agent; given is false when it
-// says nothing. One of the two fields without the other is refused rather
-// than guessed at.
-func (r *saveAgentRequest) access() (
-	access agentdefinitionports.AgentAccessWrite,
-	given bool,
-	err error,
-) {
-	switch {
-	case r.AccessMode == nil && r.AccessRoleIDs == nil:
-		return access, false, nil
-	case r.AccessMode == nil:
-		return access, false, errortypes.NewValidationError(
-			"accessMode", errortypes.ErrRequired,
-			"Access is required when roles are given",
-		)
-	case r.AccessRoleIDs == nil:
-		return access, false, errortypes.NewValidationError(
-			"accessRoleIds", errortypes.ErrRequired,
-			"Roles are required when access is given; send an empty list for none",
-		)
-	}
-
-	return agentdefinitionports.AgentAccessWrite{
-		Mode:    *r.AccessMode,
-		RoleIDs: *r.AccessRoleIDs,
-	}, true, nil
+	Version     int64       `json:"version"`
 }
 
 func (r *saveAgentRequest) toServiceRequest(
@@ -335,161 +159,4 @@ func (r *saveAgentRequest) toServiceRequest(
 		Version:                r.Version,
 		TenantInfo:             tenantInfo,
 	}
-}
-
-// toSaveRequest is the save the body asks for, with who may use the agent
-// when it says.
-func (r *saveAgentRequest) toSaveRequest(
-	id pulid.ID,
-	tenantInfo pagination.TenantInfo,
-) (*agentdefinitionports.SaveAgentDefinitionRequest, error) {
-	access, given, err := r.access()
-	if err != nil {
-		return nil, err
-	}
-
-	req := r.toServiceRequest(id, tenantInfo)
-	if given {
-		req.Access = &access
-	}
-
-	return req, nil
-}
-
-func (h *Handler) create(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	var body saveAgentRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	req, err := body.toSaveRequest(pulid.Nil, tenantFromAuthContext(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	actor := requestActorFromAuthContext(authCtx)
-	created, err := h.service.Create(c.Request.Context(), req, &actor)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusCreated, created)
-}
-
-func (h *Handler) update(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	agentID, err := pulid.Parse(c.Param("agentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	var body saveAgentRequest
-	if err = c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	req, err := body.toSaveRequest(agentID, tenantFromAuthContext(authCtx))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	actor := requestActorFromAuthContext(authCtx)
-	updated, err := h.service.Update(c.Request.Context(), req, &actor)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, updated)
-}
-
-func (h *Handler) previewPrompt(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	var body saveAgentRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	actor := requestActorFromAuthContext(authCtx)
-	prompt, err := h.service.PreviewPrompt(
-		c.Request.Context(),
-		&agentdefinitionports.PreviewPromptRequest{
-			Definition: body.toServiceRequest(pulid.Nil, tenantFromAuthContext(authCtx)),
-			Actor:      &actor,
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, gin.H{"prompt": prompt})
-}
-
-func (h *Handler) remove(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	agentID, err := pulid.Parse(c.Param("agentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	actor := requestActorFromAuthContext(authCtx)
-	if err = h.service.Delete(
-		c.Request.Context(),
-		agentdefinitionports.DeleteAgentDefinitionRequest{
-			ID:         agentID,
-			TenantInfo: tenantFromAuthContext(authCtx),
-		},
-		&actor,
-	); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
-// budget answers where the agent stands against its caps this month and
-// today, for the form that sets them.
-func (h *Handler) budget(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	agentID, err := pulid.Parse(c.Param("agentID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	definition, err := h.service.GetByID(
-		c.Request.Context(),
-		agentdefinitionports.GetAgentDefinitionByIDRequest{
-			ID:         agentID,
-			TenantInfo: tenantFromAuthContext(authCtx),
-		},
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	status, err := h.budgets.Status(c.Request.Context(), definition)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, status)
 }

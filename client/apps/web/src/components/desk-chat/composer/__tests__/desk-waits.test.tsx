@@ -3,7 +3,7 @@ import { waitIdOfNote } from "@/components/assistant/use-conversation-waits";
 import type { AgentWait } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { api } from "@trenova/shared/lib/api";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeskWaitNote } from "../../conversation/desk-wait-note";
 import { DeskWaits } from "../desk-waits";
@@ -13,6 +13,10 @@ vi.mock("@trenova/shared/lib/api", () => ({
     get: vi.fn(),
     post: vi.fn(),
   },
+}));
+
+vi.mock("@trenova/shared/lib/graphql", () => ({
+  requestGraphQL: vi.fn(),
 }));
 
 afterEach(() => {
@@ -73,24 +77,26 @@ describe("DeskWaits", () => {
   });
 
   it("asks for the sign-in code a portal sent and sends it only to the portal", async () => {
-    vi.mocked(api.post).mockResolvedValue({
-      id: "aprn_1",
-      siteId: "apst_1",
-      siteName: "Acme DC",
-      extensionType: "BrowserUse",
-      mode: "Read",
-      status: "Running",
-      instruction: "On Acme DC, find out: Which slots are open?",
-      usedSignIn: true,
-      answer: "",
-      visitedUrls: [],
-      offSiteUrls: [],
-      steps: 2,
-      costUsd: "0.03",
-      failure: "",
-      hasRecording: true,
-      codeAttempts: 1,
-      startedAt: 1_800_000_000,
+    vi.mocked(requestGraphQL).mockResolvedValue({
+      provideAgentPortalSignInCode: {
+        id: "aprn_1",
+        siteId: "apst_1",
+        siteName: "Acme DC",
+        extensionType: "BrowserUse",
+        mode: "Read",
+        status: "Running",
+        instruction: "On Acme DC, find out: Which slots are open?",
+        usedSignIn: true,
+        answer: "",
+        visitedUrls: [],
+        offSiteUrls: [],
+        steps: 2,
+        costUsd: "0.03",
+        failure: "",
+        hasRecording: true,
+        codeAttempts: 1,
+        startedAt: 1_800_000_000,
+      },
     });
     const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
     render(
@@ -123,9 +129,12 @@ describe("DeskWaits", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send code" }));
 
     await waitFor(() =>
-      expect(api.post).toHaveBeenCalledWith("/agent-portals/runs/aprn_1/sign-in-code/", {
-        code: "123 456",
-      }),
+      expect(requestGraphQL).toHaveBeenCalledWith(
+        expect.objectContaining({
+          operationName: "ProvideAgentPortalSignInCode",
+          variables: { id: "aprn_1", input: { code: "123 456", signedIn: false } },
+        }),
+      ),
     );
   });
 

@@ -10,11 +10,13 @@ export const WEB_WATCHES_PAGE = 50;
 export const agentExtension = createQueryKeys("agentExtension", {
   catalog: () => ({
     queryKey: ["catalog"],
-    queryFn: () => apiService.agentExtensionService.getCatalog(),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentExtensionService.getCatalog({ signal }),
   }),
   config: (type: string) => ({
     queryKey: ["config", type],
-    queryFn: () => apiService.agentExtensionService.getConfig(type),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.agentExtensionService.getConfig(type, { signal }),
   }),
   portalSites: () => ({
     queryKey: ["portal-sites"],

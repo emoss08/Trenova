@@ -1,4 +1,4 @@
-import { agentDefinitionSchema, agentTemplateSchema } from "@/types/assistant";
+import { agentDefinitionSchema } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -81,42 +81,5 @@ describe("agentDefinitionSchema", () => {
     const { toolNames: _omitted, ...withoutTools } = customAgent;
 
     expect(agentDefinitionSchema.parse(withoutTools).toolNames).toEqual([]);
-  });
-});
-
-describe("agentTemplateSchema", () => {
-  it("reads a starter whose optional lists the server wrote as null", () => {
-    const parsed = agentTemplateSchema.parse({
-      template: "GeneralAssistant",
-      label: "General assistant",
-      description: "Answers questions across the system.",
-      starterInstructions: "You explain how Trenova works.",
-      starterTools: null,
-      starterTrigger: "Chat",
-      starterEvents: null,
-      starterCron: "",
-      starterCeiling: "Propose",
-      starterOutput: "Conversational",
-      systemKey: "",
-      contextProviders: null,
-    });
-
-    expect(parsed.starterTools).toEqual([]);
-    expect(parsed.starterEvents).toEqual([]);
-    expect(parsed.starterDataAccess).toBe("Internal");
-  });
-
-  it("reads the data access a starter asks for", () => {
-    const parsed = agentTemplateSchema.parse({
-      template: "CashApplication",
-      label: "Cash application",
-      description: "Matches bank receipts.",
-      starterTrigger: "Event",
-      starterCeiling: "Propose",
-      starterDataAccess: "Restricted",
-      starterOutput: "Report",
-    });
-
-    expect(parsed.starterDataAccess).toBe("Restricted");
   });
 });

@@ -99,7 +99,7 @@ is 401 and an unknown watch 404.
 ## Stopping and ending
 
 `web_stop_watch`, **Stop watching** on the Desk's wait, and **Stop watching** under the
-extension in AI control (`POST /agent-web-watches/:watchID/stop/`) remove the monitor, record
+extension in AI control (the `stopAgentWebWatch` mutation) remove the monitor, record
 the watch `Stopped` with who stopped it, close its waits quietly (`EndWebWatchWaits`) and
 signal the workflow, which then ends. Only the person a watch was set for, the agent whose
 background work set one for no person, or someone who can update agent extensions may stop it;
@@ -132,5 +132,5 @@ lets its wait run out an hour later, and the work hears the watch ended.
 | Waits | `agentwait.KindWebWatch`, `app/agentwaitservice/webwatch.go` |
 | Tools | `app/agenttools/webwatchtools/` (`web_watch`, `web_stop_watch`), `app/querytools/webquerytools/web_watch_tools.go` (`web_list_watches`) |
 | Vendor | `shared/exa/monitors.go`, `internal/infrastructure/agentextension/exaconnector/monitors.go` |
-| REST | `GET /agent-web-watches/`, `GET /agent-web-watches/:watchID/findings/`, `POST /agent-web-watches/:watchID/stop/`, the public webhook |
+| API | GraphQL `agentWebWatches`, `agentWebWatchFindings`, `stopAgentWebWatch` (`schema/agentextension.graphqls`); the public webhook stays REST (`api/handlers/agentextensionhandler/`) |
 | Client | `routes/agent-control/_components/extensions/web-watches.tsx`, `components/desk-chat/composer/desk-waits.tsx`, `lib/web-watch.ts` |

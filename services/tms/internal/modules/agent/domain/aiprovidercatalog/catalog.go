@@ -1,4 +1,4 @@
-package aiproviderhandler
+package aiprovidercatalog
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
@@ -590,5 +590,27 @@ func embeddingInputStyleDescriptors() []EmbeddingInputStyleDescriptor {
 			Description: "Prefixes each text with search_document: or search_query:, " +
 				"which nomic-embed-text needs to embed each side of a search correctly.",
 		},
+	}
+}
+
+type Catalog struct {
+	Kinds                  []KindDescriptor                `json:"kinds"`
+	Presets                []Preset                        `json:"presets"`
+	Tasks                  []TaskDescriptor                `json:"tasks"`
+	EmbeddingDimensions    []int                           `json:"embeddingDimensions"`
+	EmbeddingInputStyles   []EmbeddingInputStyleDescriptor `json:"embeddingInputStyles"`
+	Platforms              []PlatformDescriptor            `json:"platforms"`
+	ServerCloudCredentials bool                            `json:"serverCloudCredentials"`
+}
+
+func Build(serverCloudCredentials bool) *Catalog {
+	return &Catalog{
+		Kinds:                  kindDescriptors(),
+		Presets:                Presets(),
+		Tasks:                  taskDescriptors(),
+		EmbeddingDimensions:    aiprovider.AllowedEmbeddingDimensions(),
+		EmbeddingInputStyles:   embeddingInputStyleDescriptors(),
+		Platforms:              platformDescriptors(),
+		ServerCloudCredentials: serverCloudCredentials,
 	}
 }

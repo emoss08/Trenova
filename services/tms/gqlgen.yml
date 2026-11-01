@@ -2695,7 +2695,7 @@ models:
     fields:
       addedBy:
         resolver: true
-  AIProviderDraftTestResult:
+  AIProviderTestResult:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports.TestAIProviderResult
   AIProviderKind:
@@ -5967,3 +5967,143 @@ models:
   StopEtaDriveMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod
+  AgentToolBudgetUse:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports.ToolBudgetUse
+  AgentBudgetStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports.AgentBudgetStatus
+    fields:
+      monthlyBudgetUsd:
+        fieldName: MonthlyBudget
+  AgentToolCatalogEntry:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports.ToolCatalogEntry
+  AgentEventKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger.EventDescriptor
+  AIProviderKindDescriptor:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog.KindDescriptor
+    fields:
+      defaultStructuredOutputMode:
+        fieldName: DefaultStructuredOutput
+  AIProviderPreset:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog.Preset
+  AIProviderPlatformAuthDescriptor:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog.PlatformAuthDescriptor
+  AIProviderPlatformDescriptor:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog.PlatformDescriptor
+  AITaskDescriptor:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog.TaskDescriptor
+  AIEmbeddingInputStyleDescriptor:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog.EmbeddingInputStyleDescriptor
+  AIProviderCatalog:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovidercatalog.Catalog
+  AgentExtensionTool:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.AgentExtensionTool
+  AgentExtensionUsage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentextension.UsageSummary
+    fields:
+      costThisMonthUsd:
+        resolver: true
+  AgentExtensionConfigField:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/domain/configspec.Field
+  AgentExtensionConfigValue:
+    model:
+      - github.com/emoss08/trenova/internal/modules/kernel/domain/configspec.FieldValue
+  AgentExtensionCatalogItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.AgentExtensionCatalogItem
+  AgentExtensionCategoryOption:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.AgentExtensionCategoryOption
+  AgentExtensionCatalog:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.AgentExtensionCatalogResponse
+  AgentExtensionConfig:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.AgentExtensionConfigResponse
+  AgentExtensionTestResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.AgentExtensionTestResponse
+  AgentPortalSite:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.PortalSiteView
+  AgentPortalRun:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.PortalRunView
+    fields:
+      details:
+        resolver: true
+      costUsd:
+        resolver: true
+  AgentPortalRunList:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.PortalRunListResponse
+  AgentPortalLiveView:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.PortalLiveView
+  AgentPortalRecording:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.PortalRecordingResponse
+  AgentWebWatch:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.WebWatchView
+    fields:
+      costUsd:
+        resolver: true
+  AgentWebWatchList:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.WebWatchListResponse
+  AgentWebWatchResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch.WebWatchResult
+  AgentWebWatchFinding:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports.WebWatchFindingView
+  AgentAnalysisDataset:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.Dataset
+  AgentAnalysisTableColumn:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.TableColumn
+  AgentAnalysisTable:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.Table
+  AgentAnalysisFigure:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.Figure
+  AgentAnalysisChartAxis:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.ChartAxis
+  AgentAnalysisChartSeries:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.ChartSeries
+  AgentAnalysisChart:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.Chart
+  AgentAnalysisBlock:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.Block
+  AgentAnalysisRun:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/analysis.Run
+  AgentAnalysisRunList:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/analysisports.RunListResponse
+  PaletteAsk:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/paletteports.Ask
+    fields:
+      askId:
+        fieldName: ID

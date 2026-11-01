@@ -1202,6 +1202,12 @@ export type AgentExceptionResolveInput = {
   resolutionState: AgentResolutionState;
 };
 
+/** One setting of an extension, by its key. */
+export type AgentExtensionSettingInput = {
+  key: string;
+  value: string;
+};
+
 /** Whether a tool's result carries text written outside the organization. */
 export type AgentExternalRead =
   | 'Always'
@@ -1311,6 +1317,13 @@ export type AgentPlanStatus =
   | 'Failed'
   | 'Pending'
   | 'Rejected';
+
+export type AgentPortalSignInCodeInput = {
+  /** The code the portal sent the person. Empty when signedIn is true. */
+  code: string;
+  /** The person signed in themselves in the live browser, so there is no code to send. */
+  signedIn: boolean;
+};
 
 /** How much of what a write would do its preview could say. */
 export type AgentPreviewCoverage =
@@ -1622,6 +1635,12 @@ export type AgentTemplate =
   | 'ShipmentIntake'
   | 'WorkforceCoordinator';
 
+/** A cap on how often an agent may run one tool in a day. */
+export type AgentToolDailyLimitInput = {
+  limit: number;
+  tool: string;
+};
+
 export type AgentToolEffect =
   | 'Ask'
   | 'Change'
@@ -1652,6 +1671,12 @@ export type AgentToolScope =
   | 'Self'
   /** The organization's records, under the caller's permissions. */
   | 'Tenant';
+
+/** An agent's autonomy for one change tool, overriding its default. */
+export type AgentToolTierInput = {
+  tier: AgentAutonomyTier;
+  tool: string;
+};
 
 export type AgentTriggerMode =
   | 'Chat'
@@ -1717,6 +1742,17 @@ export type ArchiveWorkerCredentialInput = {
   id: string | number;
   reason?: string | null | undefined;
   version?: number | null | undefined;
+};
+
+export type AskPaletteInput = {
+  content: string;
+  /**
+   * What the person was looking at, in the shape the Desk sends with a message:
+   * path, entityType, entityId, title and view. Any draft is ignored.
+   */
+  context?: unknown;
+  /** At most ten. */
+  mentions?: Array<PaletteMentionInput> | null | undefined;
 };
 
 /**
@@ -6444,6 +6480,14 @@ export type PageAccessUse =
   /** The screen's route, or a REST endpoint it calls, checks the kind. */
   | 'REQUIRED';
 
+/** A record a palette question names, as the person picked it. */
+export type PaletteMentionInput = {
+  id: string;
+  label: string;
+  /** The kind of record, as the permission registry names it. */
+  type: string;
+};
+
 export type PauseAccountingSyncInput = {
   integrationType: AccountingSystem;
   reason?: string | null | undefined;
@@ -7388,6 +7432,51 @@ export type SafetySeverity =
   | 'Minor'
   | 'Moderate';
 
+/**
+ * A provider as its editor saves it. A save replaces every setting; the
+ * credential alone is kept when apiKey is absent.
+ */
+export type SaveAiProviderInput = {
+  advisorEnabled: boolean;
+  advisorModel: string;
+  allowPrivateNetwork: boolean;
+  /** A new credential. Absent keeps the stored one, an empty string clears it. Never returned. */
+  apiKey?: string | null | undefined;
+  baseUrl: string;
+  cacheReadCostPerMillion?: string | null | undefined;
+  cacheWriteCostPerMillion?: string | null | undefined;
+  /** The model's context window in tokens; null reads it off the model. */
+  contextWindow?: number | null | undefined;
+  description: string;
+  embeddingDimensions?: number | null | undefined;
+  embeddingInputStyle: AiEmbeddingInputStyle;
+  enabled: boolean;
+  extraBody?: unknown;
+  inputCostPerMillion?: string | null | undefined;
+  /** Keeps a replaced key as a fallback for a day while the new one propagates. */
+  keepPreviousKey: boolean;
+  kind: AiProviderKind;
+  maxConcurrent: number;
+  maxTokens: number;
+  model: string;
+  monthlyCapUsd?: string | null | undefined;
+  name: string;
+  onCap: AiProviderCapAction;
+  outputCostPerMillion?: string | null | undefined;
+  platform: AiProviderPlatform;
+  platformSettings?: AiProviderPlatformSettingsInput | null | undefined;
+  priority: number;
+  reasoningEffort: AiReasoningEffort;
+  scriptWrites: boolean;
+  scripts: boolean;
+  structuredOutputMode: AiStructuredOutputMode;
+  tasks: Array<AiTask>;
+  thinkingStyle: AiThinkingStyle;
+  timeoutSeconds: number;
+  trusted: boolean;
+  version: number;
+};
+
 /** The organization's own app keys. Leave the secret or verifier token out to keep the saved one. */
 export type SaveAccountingAppInput = {
   /** Removes the saved webhook verifier token. */
@@ -7398,6 +7487,79 @@ export type SaveAccountingAppInput = {
   environment: AccountingAppEnvironment;
   integrationType: AccountingSystem;
   webhookVerifierToken?: string | null | undefined;
+};
+
+/**
+ * An agent as the builder saves it. A save replaces every setting the input
+ * carries; delegateIds and access are left as they are when absent.
+ */
+export type SaveAgentDefinitionInput = {
+  accent: string;
+  /**
+   * Who may use the agent, set with the save. Absent with accessRoleIds keeps it;
+   * given with accessRoleIds replaces it. Needs permission to update roles.
+   */
+  accessMode?: AgentAccessMode | null | undefined;
+  accessRoleIds?: Array<string | number> | null | undefined;
+  autonomyCeiling: AgentAutonomyTier;
+  contextProviders: Array<AgentContextProvider>;
+  cronExpression: string;
+  cronTimezone: string;
+  /** Runs the agent may start in a day; 0 for no cap. */
+  dailyRunLimit: number;
+  dataAccessCeiling: AgentDataAccessCeiling;
+  decisionTimeoutSeconds: number;
+  /** The agents this one may hand a task to. Absent keeps them; a list, empty or not, replaces them. */
+  delegateIds?: Array<string | number> | null | undefined;
+  description: string;
+  enabled: boolean;
+  endsAt?: number | null | undefined;
+  eventKinds: Array<string>;
+  guardrails: Array<string>;
+  icon: string;
+  /** At most 20000 characters. */
+  instructions: string;
+  intervalSeconds: number;
+  learningOff?: boolean | null | undefined;
+  maxConcurrentRuns: number;
+  maxToolCalls: number;
+  /** Tokens of recorded memory one prompt may carry; null for the default. */
+  memoryTokenBudget?: number | null | undefined;
+  /** Cost cap for a calendar month across the agent's runs; null for none. */
+  monthlyBudgetUsd?: string | null | undefined;
+  name: string;
+  outputMode: AgentOutputMode;
+  preferredProviderId?: string | number | null | undefined;
+  runTimeoutSeconds: number;
+  shadowMode: boolean;
+  simulationMode: boolean;
+  template?: AgentTemplate | null | undefined;
+  toolDailyLimits: Array<AgentToolDailyLimitInput>;
+  toolNames: Array<string>;
+  /** Autonomy per change tool; each is held at the tool's maximum and autonomyCeiling. */
+  toolTiers: Array<AgentToolTierInput>;
+  triggerMode: AgentTriggerMode;
+  version: number;
+};
+
+/**
+ * A portal as its form saves it. A sign-in or authenticator key left empty keeps
+ * the stored one; clearSignIn and clearAuthenticator remove them.
+ */
+export type SaveAgentPortalSiteInput = {
+  allowActions: boolean;
+  authenticatorKey: string;
+  browserProfileId: string;
+  clearAuthenticator: boolean;
+  clearSignIn: boolean;
+  domains: Array<string>;
+  enabled: boolean;
+  name: string;
+  password: string;
+  purpose: string;
+  startUrl: string;
+  username: string;
+  version: number;
 };
 
 export type SaveFactoringTransportInput = {
@@ -8311,6 +8473,17 @@ export type StageFuelPurchaseImportInput = {
   mapping?: unknown;
 };
 
+/**
+ * What a manual run starts: an agent by its id, or a system agent by its key,
+ * optionally on one record.
+ */
+export type StartAgentRunInput = {
+  agentDefinitionId?: string | number | null | undefined;
+  subjectId?: string | number | null | undefined;
+  subjectType?: AgentSubjectType | null | undefined;
+  systemKey?: string | null | undefined;
+};
+
 export type StartBillingTransferRunInput = {
   billType?: BillType | null | undefined;
   /** Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it. */
@@ -8788,6 +8961,15 @@ export type UpdateAgentEvalCaseInput = {
   input?: string | null | undefined;
   rubric?: string | null | undefined;
   title?: string | null | undefined;
+  version: number;
+};
+
+export type UpdateAgentExtensionConfigInput = {
+  /** AllAgents or SelectedAgents. */
+  availability: string;
+  /** The settings, by key. */
+  configuration: Array<AgentExtensionSettingInput>;
+  enabled: boolean;
   version: number;
 };
 
@@ -10461,6 +10643,127 @@ export type ArCustomerProfileQueryVariables = Exact<{
 
 export type ArCustomerProfileQuery = { arCustomerProfile: { dsoDays: number, creditUtilization: number, delinquencyScore: number, snapshot: { customerId: string, customerName: string, totalOpenMinor: number, overdueMinor: number, unappliedCashMinor: number, creditLimitMinor: number, hasCreditLimit: boolean, openInvoiceCount: number, oldestOpenInvoiceDate: number, oldestDaysPastDue: number, lastPaymentDate: number, lastPaymentMinor: number, avgDaysToPay: number, billedTrailing91Minor: number, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, monthlyCollections: Array<{ monthStart: number, amountMinor: number }> } } };
 
+export type AgentExtensionCatalogQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentExtensionCatalogQuery = { agentExtensionCatalog: { items: Array<{ type: string, name: string, vendor: string, summary: string, description: string, category: string, categoryLabel: string, capability: string, capabilityLabel: string, capabilityHeldBy: string, brandDomain: string, docsUrl: string, websiteUrl: string, pricingUrl: string, capabilities: Array<string>, dataNotice: string, featured: boolean, sortOrder: number, releasedAt: number, enabled: boolean, configured: boolean, availability: string, supportsTestConnect: boolean, dailyRequestLimit: number, enabledAt: number | null, updatedAt: number, version: number, tools: Array<{ name: string, label: string, description: string }>, configSpec: Array<{ key: string, label: string, type: string, required: boolean, sensitive: boolean, placeholder: string, helpText: string, default: string, options: Array<string> }>, usage: { requestsToday: number, requestsThisMonth: number, failuresThisMonth: number, costThisMonthUsd: string } }>, categories: Array<{ value: string, label: string }> } };
+
+export type AgentExtensionConfigQueryVariables = Exact<{
+  type: string;
+}>;
+
+
+export type AgentExtensionConfigQuery = { agentExtensionConfig: { type: string, enabled: boolean, availability: string, version: number, updatedAt: number, fields: Array<{ key: string, value: string, hasValue: boolean }>, spec: Array<{ key: string, label: string, type: string, required: boolean, sensitive: boolean, placeholder: string, helpText: string, default: string, options: Array<string> }> } };
+
+export type UpdateAgentExtensionConfigMutationVariables = Exact<{
+  type: string;
+  input: UpdateAgentExtensionConfigInput;
+}>;
+
+
+export type UpdateAgentExtensionConfigMutation = { updateAgentExtensionConfig: { type: string, enabled: boolean, availability: string, version: number, updatedAt: number, fields: Array<{ key: string, value: string, hasValue: boolean }>, spec: Array<{ key: string, label: string, type: string, required: boolean, sensitive: boolean, placeholder: string, helpText: string, default: string, options: Array<string> }> } };
+
+export type TestAgentExtensionMutationVariables = Exact<{
+  type: string;
+}>;
+
+
+export type TestAgentExtensionMutation = { testAgentExtension: { type: string, success: boolean, checkedAt: number, latencyMs: number, message: string } };
+
+export type AgentPortalSiteFieldsFragment = { id: string, name: string, purpose: string, domains: Array<string>, startUrl: string, browserProfileId: string, allowActions: boolean, enabled: boolean, hasSignIn: boolean, hasAuthenticator: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentPortalSiteFieldsFragment' };
+
+export type AgentPortalRunFieldsFragment = { id: string, siteId: string, siteName: string, extensionType: string, mode: string, status: string, instruction: string, details: unknown, usedSignIn: boolean, answer: string, visitedUrls: Array<string>, offSiteUrls: Array<string>, steps: number, costUsd: string, failure: string, agentRunId: string, threadId: string, proposalId: string, requestedById: string, hasRecording: boolean, codePrompt: string, codeExpiresAt: number | null, codeAttempts: number, startedAt: number, finishedAt: number | null } & { ' $fragmentName'?: 'AgentPortalRunFieldsFragment' };
+
+export type AgentPortalSitesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentPortalSitesQuery = { agentPortalSites: Array<{ ' $fragmentRefs'?: { 'AgentPortalSiteFieldsFragment': AgentPortalSiteFieldsFragment } }> };
+
+export type CreateAgentPortalSiteMutationVariables = Exact<{
+  input: SaveAgentPortalSiteInput;
+}>;
+
+
+export type CreateAgentPortalSiteMutation = { createAgentPortalSite: { ' $fragmentRefs'?: { 'AgentPortalSiteFieldsFragment': AgentPortalSiteFieldsFragment } } };
+
+export type UpdateAgentPortalSiteMutationVariables = Exact<{
+  id: string | number;
+  input: SaveAgentPortalSiteInput;
+}>;
+
+
+export type UpdateAgentPortalSiteMutation = { updateAgentPortalSite: { ' $fragmentRefs'?: { 'AgentPortalSiteFieldsFragment': AgentPortalSiteFieldsFragment } } };
+
+export type DeleteAgentPortalSiteMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteAgentPortalSiteMutation = { deleteAgentPortalSite: boolean };
+
+export type AgentPortalRunsQueryVariables = Exact<{
+  siteId?: string | number | null | undefined;
+  before?: number | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type AgentPortalRunsQuery = { agentPortalRuns: { nextBefore: number, items: Array<{ ' $fragmentRefs'?: { 'AgentPortalRunFieldsFragment': AgentPortalRunFieldsFragment } }> } };
+
+export type AgentPortalRunQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentPortalRunQuery = { agentPortalRun: { ' $fragmentRefs'?: { 'AgentPortalRunFieldsFragment': AgentPortalRunFieldsFragment } } };
+
+export type AgentPortalRunLiveQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentPortalRunLiveQuery = { agentPortalRunLive: { liveUrl: string } };
+
+export type AgentPortalRunRecordingQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentPortalRunRecordingQuery = { agentPortalRunRecording: { recordingUrl: string, shareUrl: string } };
+
+export type ProvideAgentPortalSignInCodeMutationVariables = Exact<{
+  id: string | number;
+  input: AgentPortalSignInCodeInput;
+}>;
+
+
+export type ProvideAgentPortalSignInCodeMutation = { provideAgentPortalSignInCode: { ' $fragmentRefs'?: { 'AgentPortalRunFieldsFragment': AgentPortalRunFieldsFragment } } };
+
+export type AgentWebWatchFieldsFragment = { id: string, extensionType: string, query: string, purpose: string, sites: Array<string>, cadence: string, status: string, endsAt: number, lastCheckedAt: number | null, lastRunAt: number | null, runCount: number, findingCount: number, costUsd: string, failure: string, agentDefinitionId: string, agentRunId: string, threadId: string, requestedById: string, stoppedById: string, finishedAt: number | null, createdAt: number } & { ' $fragmentName'?: 'AgentWebWatchFieldsFragment' };
+
+export type AgentWebWatchesQueryVariables = Exact<{
+  status?: string | null | undefined;
+  before?: number | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type AgentWebWatchesQuery = { agentWebWatches: { nextBefore: number, items: Array<{ ' $fragmentRefs'?: { 'AgentWebWatchFieldsFragment': AgentWebWatchFieldsFragment } }> } };
+
+export type AgentWebWatchFindingsQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentWebWatchFindingsQuery = { agentWebWatchFindings: Array<{ id: string, summary: string, foundAt: number, deliveredAt: number | null, results: Array<{ title: string, url: string, publishedDate: string, excerpt: string }> }> };
+
+export type StopAgentWebWatchMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type StopAgentWebWatchMutation = { stopAgentWebWatch: { ' $fragmentRefs'?: { 'AgentWebWatchFieldsFragment': AgentWebWatchFieldsFragment } } };
+
 export type AgentScorecardFieldsFragment = { agentDefinitionId: string, window: AgentScorecardWindow, since: number, runs: number, runsFailed: number, exceptions: number, proposals: number, approved: number, modified: number, rejected: number, pending: number, executed: number, executionFailures: number, autoExecuted: number, approvalRate: number | null, inputTokens: number, outputTokens: number, costUsd: string, estimatedMinutesSaved: number, byTool: Array<{ toolName: string, approved: number, modified: number, rejected: number, executed: number, failed: number, pending: number, automatic: number }>, toolVerdicts: Array<{ toolName: string, verdict: string, calls: number, topReasons: Array<{ reason: string, calls: number }> }>, toolTrust: Array<{ toolName: string, streak: number, approvals: number, modifications: number, rejections: number, executionFailures: number, earnedTier: AgentAutonomyTier | null, lastDecisionAt: number | null, promotedAt: number | null, demotedAt: number | null }> } & { ' $fragmentName'?: 'AgentScorecardFieldsFragment' };
 
 export type AgentScorecardQueryVariables = Exact<{
@@ -10683,6 +10986,22 @@ export type AiAgentRosterQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type AiAgentRosterQuery = { aiAgentRoster: Array<{ agentId: string, runsByDay: Array<number>, runs: number, approved: number, modified: number, rejected: number, failed: number, shadowRecorded: number, approvalRate: number | null }> };
+
+export type AgentAnalysisRunsQueryVariables = Exact<{
+  before?: number | null | undefined;
+  beforeId?: string | number | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type AgentAnalysisRunsQuery = { agentAnalysisRuns: { nextBefore: number, nextBeforeId: string, items: Array<{ id: string, status: string, title: string, purpose: string, durationMs: number, agentDefinitionId: string, agentRunId: string, threadId: string, requestedById: string, startedAt: number, finishedAt: number }> } };
+
+export type AgentAnalysisRunQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentAnalysisRunQuery = { agentAnalysisRun: { id: string, status: string, title: string, purpose: string, durationMs: number, agentDefinitionId: string, agentRunId: string, threadId: string, requestedById: string, startedAt: number, finishedAt: number, code: string, output: string, errorName: string, errorValue: string, traceback: string, failure: string, datasets: Array<{ name: string, source: string, sourceId: string, label: string, rows: number }>, tables: Array<{ title: string, rows: Array<Array<unknown>>, totalRows: number, columns: Array<{ name: string, kind: string, currency: string }> }>, figures: Array<{ label: string, value: unknown, kind: string, currency: string, note: string }>, charts: Array<{ kind: string, title: string, valueKind: string, currency: string, stacked: boolean, horizontal: boolean, x: { label: string, kind: string, values: Array<unknown> }, series: Array<{ name: string, values: Array<unknown> }> }>, layout: Array<{ kind: string, index: number }> } };
 
 export type AiAnalyticsProviderFieldsFragment = { id: string | null, name: string, shortName: string, kind: AiProviderKind | null, baseUrl: string, enabled: boolean, removed: boolean } & { ' $fragmentName'?: 'AiAnalyticsProviderFieldsFragment' };
 
@@ -10925,6 +11244,59 @@ export type RecentDecisionsQuery = { recentDecisions: Array<{ id: string, decisi
       { executionError: string }
       & { ' $fragmentRefs'?: { 'PendingProposalFieldsFragment': PendingProposalFieldsFragment } }
     ) }> };
+
+export type CreateAgentDefinitionMutationVariables = Exact<{
+  input: SaveAgentDefinitionInput;
+}>;
+
+
+export type CreateAgentDefinitionMutation = { createAgentDefinition: { id: string, version: number } };
+
+export type UpdateAgentDefinitionMutationVariables = Exact<{
+  id: string | number;
+  input: SaveAgentDefinitionInput;
+}>;
+
+
+export type UpdateAgentDefinitionMutation = { updateAgentDefinition: { id: string, version: number } };
+
+export type DeleteAgentDefinitionMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteAgentDefinitionMutation = { deleteAgentDefinition: boolean };
+
+export type AgentBudgetStatusQueryVariables = Exact<{
+  agentId: string | number;
+}>;
+
+
+export type AgentBudgetStatusQuery = { agentBudgetStatus: { monthStart: number, dayStart: number, spentUsd: string, monthlyBudgetUsd: string | null, monthCalls: number, unpricedCalls: number, runsToday: number, dailyRunLimit: number, simulationMode: boolean, tools: Array<{ tool: string, used: number, limit: number }> } };
+
+export type AgentToolTrustQueryVariables = Exact<{
+  agentId: string | number;
+}>;
+
+
+export type AgentToolTrustQuery = { agentToolTrust: Array<{ toolName: string, streak: number }> };
+
+export type AgentToolCatalogQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentToolCatalogQuery = { agentToolCatalog: Array<{ name: string, description: string, parameters: unknown, kind: string, resource: string, operation: string, defaultAutonomyTier: string, reversible: boolean, core: boolean, effect: string, prerequisites: Array<string>, extension: string, grantedToEveryAgent: boolean }> };
+
+export type AgentEventKindsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentEventKindsQuery = { agentEventKinds: Array<{ kind: string, subjectType: string, label: string, description: string }> };
+
+export type StartAgentRunMutationVariables = Exact<{
+  input: StartAgentRunInput;
+}>;
+
+
+export type StartAgentRunMutation = { startAgentRun: { id: string, agentDefinitionId: string, agentType: AgentType, subjectType: AgentSubjectType, subjectId: string, status: AgentRunStatus, trigger: AgentRunTrigger, summary: string, workflowId: string, createdAt: number } };
 
 export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string | null, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, enabled: boolean | null, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, learningOff: boolean, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string | null, delegateIds: Array<string>, accessMode: AgentAccessMode | null, unattendedRoleId: string | null, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean | null, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
@@ -11654,6 +12026,40 @@ export type AgentFeedbackSummaryQueryVariables = Exact<{
 
 
 export type AgentFeedbackSummaryQuery = { agentFeedbackSummary: { agentDefinitionId: string, windowDays: number, since: number, positive: number, negative: number, satisfaction: number | null, days: Array<{ day: string, positive: number, negative: number, satisfaction: number | null }>, worstRated: Array<{ targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, sample: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } | null }> } };
+
+export type AiProviderCatalogQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AiProviderCatalogQuery = { aiProviderCatalog: { embeddingDimensions: Array<number>, serverCloudCredentials: boolean, kinds: Array<{ kind: AiProviderKind, label: string, description: string, defaultBaseUrl: string, requiresApiKey: boolean, requiresBaseUrl: boolean, defaultStructuredOutputMode: AiStructuredOutputMode, supportsStructuredEnforced: boolean, supportsEmbedding: boolean }>, presets: Array<{ key: string, label: string, kind: AiProviderKind, baseUrl: string, structuredOutputMode: AiStructuredOutputMode, allowPrivateNetwork: boolean, requiresApiKey: boolean, selfHosted: boolean, exampleModel: string, notes: string, domain: string, tasks: Array<AiTask>, embeddingDimensions: number, embeddingInputStyle: string, platform: string }>, tasks: Array<{ task: AiTask, label: string, description: string, requiresTrust: boolean, volumeGuidance: string }>, embeddingInputStyles: Array<{ style: AiEmbeddingInputStyle, label: string, description: string }>, platforms: Array<{ platform: AiProviderPlatform, settings: Array<string>, listsModels: boolean, auths: Array<{ auth: AiProviderPlatformAuth, requiresCredential: boolean, settings: Array<string> }> }> } };
+
+export type CreateAiProviderMutationVariables = Exact<{
+  input: SaveAiProviderInput;
+}>;
+
+
+export type CreateAiProviderMutation = { createAIProvider: { id: string, version: number } };
+
+export type UpdateAiProviderMutationVariables = Exact<{
+  id: string | number;
+  input: SaveAiProviderInput;
+}>;
+
+
+export type UpdateAiProviderMutation = { updateAIProvider: { id: string, version: number } };
+
+export type DeleteAiProviderMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteAiProviderMutation = { deleteAIProvider: boolean };
+
+export type TestAiProviderMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type TestAiProviderMutation = { testAIProvider: { success: boolean, message: string, detail: string, hint: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number } };
 
 export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, advisorEnabled: boolean, advisorModel: string, scripts: boolean, scriptWrites: boolean, platform: AiProviderPlatform, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, cacheReadCostPerMillion: string | null, cacheWriteCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, advisorRefusal: { advisor: string, model: string, message: string, refusedAt: number } | null, platformSettings: { auth: AiProviderPlatformAuth, region: string, projectId: string, workspaceId: string, accessKeyId: string, resource: string, tenantId: string, clientId: string } | null, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
@@ -12822,6 +13228,27 @@ export type CarrierTableQueryVariables = Exact<{
 
 
 export type CarrierTableQuery = { carriers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AskPaletteMutationVariables = Exact<{
+  input: AskPaletteInput;
+}>;
+
+
+export type AskPaletteMutation = { askPalette: { askId: string, streamUrl: string } };
+
+export type StopPaletteAskMutationVariables = Exact<{
+  askId: string | number;
+}>;
+
+
+export type StopPaletteAskMutation = { stopPaletteAsk: boolean };
+
+export type KeepPaletteAskMutationVariables = Exact<{
+  askId: string | number;
+}>;
+
+
+export type KeepPaletteAskMutation = { keepPaletteAsk: { threadId: string, unanswered: string } };
 
 export type CommandPaletteCustomerPreviewQueryVariables = Exact<{
   id: string | number;
@@ -20725,15 +21152,20 @@ export { AccountingMappingFieldsFragmentDoc, AccountingReferenceObjectFieldsFrag
 export { AccountingSyncRecordTableDocument } from "./documents/accounting-sync/table";
 export { LateChargeAssessmentResultFieldsFragmentDoc, LateChargePreviewDocument, AssessLateChargesDocument } from "./documents/accounts-receivable/late-charges";
 export { ArAgingSummaryDocument, ArOpenItemsDocument, ArCustomerLedgerDocument, ArCustomerStatementDocument, AccountingBriefingDocument, ArDashboardKpisDocument, ArDsoTrendDocument, ArAgingTrendDocument, ArCashFlowForecastDocument, ArTopOverdueCustomersDocument, ArCollectionsWorklistDocument, ArPaymentStatsDocument, ArCustomerProfileDocument } from "./documents/accounts-receivable/operations";
+export { AgentExtensionCatalogDocument, AgentExtensionConfigDocument, UpdateAgentExtensionConfigDocument, TestAgentExtensionDocument } from "./documents/agent-extension/extensions";
+export { AgentPortalSiteFieldsFragmentDoc, AgentPortalRunFieldsFragmentDoc, AgentPortalSitesDocument, CreateAgentPortalSiteDocument, UpdateAgentPortalSiteDocument, DeleteAgentPortalSiteDocument, AgentPortalRunsDocument, AgentPortalRunDocument, AgentPortalRunLiveDocument, AgentPortalRunRecordingDocument, ProvideAgentPortalSignInCodeDocument } from "./documents/agent-extension/portals";
+export { AgentWebWatchFieldsFragmentDoc, AgentWebWatchesDocument, AgentWebWatchFindingsDocument, StopAgentWebWatchDocument } from "./documents/agent-extension/web-watches";
 export { AgentScorecardFieldsFragmentDoc, AgentScorecardDocument } from "./documents/agent-scorecard/scorecard";
 export { MyAgentFieldsFragmentDoc, AgentAccessRoleFieldsFragmentDoc, AgentAccessFieldsFragmentDoc, RoleAgentAccessFieldsFragmentDoc, MyAgentsDocument, MyAgentMatchDocument, RecordMyAgentSuggestionDocument, SettleMyAgentSuggestionDocument, DecideMyPlanDocument, DecideMyProposalDocument, AgentAccessDocument, SetAgentAccessDocument, SetAgentUnattendedRoleDocument, RoleAgentAccessDocument, SetRoleAgentAccessDocument, AgentAccessPreviewDocument, SuggestedAgentAudienceDocument, DecideMyProposalsDocument, UndoMyDecisionDocument, CommitMyDecisionNowDocument } from "./documents/agent/access";
 export { AiProviderFailureFieldsFragmentDoc, AiTuneUpFieldsFragmentDoc, AiControlSummaryDocument, DismissAiProviderFailureDocument, RestoreAiProviderFailureDocument, AgentPromotionPreviewDocument, AiUsageDailyDocument, AiUsageFeaturesDocument, AiTuneUpsDocument, ApplyAiTuneUpDocument, DismissAiTuneUpDocument, RestoreAiTuneUpDocument, AiAgentRosterDocument } from "./documents/agent/ai-control";
+export { AgentAnalysisRunsDocument, AgentAnalysisRunDocument } from "./documents/agent/analysis";
 export { AiAnalyticsSegmentFieldsFragmentDoc, AiAnalyticsProviderFieldsFragmentDoc, AiAnalyticsSeriesFieldsFragmentDoc, AgentAnalyticsDocument, AgentAnalyticsToolFailuresDocument, RouteAiTaskDocument } from "./documents/agent/analytics";
 export { AiAuditEventRowFieldsFragmentDoc, AiAuditEventDetailFieldsFragmentDoc, AiAuditChainStatusFieldsFragmentDoc, AiAuditExportFieldsFragmentDoc, AiAuditEventTableDocument, AiAuditEventDetailDocument, AiAuditChainStatusDocument, AiAuditExportTableDocument, AiAuditExportDetailDocument, RequestAiAuditExportDocument, AiAuditExportDownloadDocument, VerifyAiAuditChainDocument } from "./documents/agent/audit";
 export { AgentInstructionLintDocument, AgentShadowReportDocument, AgentDefinitionVersionsDocument, AgentDefinitionVersionDraftDocument, AgentDefinitionCardDocument, AgentDraftingAvailableDocument, DraftAgentFromDescriptionDocument, TightenAgentInstructionsDocument } from "./documents/agent/builder";
 export { AgentCapabilityToolFieldsFragmentDoc, AgentCapabilitiesFieldsFragmentDoc, AgentCapabilitiesDocument, UpdateAgentCapabilitiesDocument } from "./documents/agent/capabilities";
 export { AgentControlFieldsFragmentDoc, AgentControlSettingsDocument, UpdateAgentControlDocument, AiTrainingExportHistoryDocument } from "./documents/agent/control";
 export { PendingProposalFieldsFragmentDoc, PendingPlanFieldsFragmentDoc, PendingDecisionsDocument, PendingDecisionSummaryDocument, PlanStepsDocument, DecideAgentProposalsDocument, RecentDecisionsDocument } from "./documents/agent/decisions";
+export { CreateAgentDefinitionDocument, UpdateAgentDefinitionDocument, DeleteAgentDefinitionDocument, AgentBudgetStatusDocument, AgentToolTrustDocument, AgentToolCatalogDocument, AgentEventKindsDocument, StartAgentRunDocument } from "./documents/agent/definition-admin";
 export { AgentDefinitionCardFieldsFragmentDoc, AgentChoiceFieldsFragmentDoc, AgentDefinitionCardsDocument, AgentChoicesDocument, AgentDefinitionCountDocument, AgentRunCountDocument, AgentProposalCountDocument } from "./documents/agent/definitions";
 export { DeskBoardCardDocument } from "./documents/agent/desk-board";
 export { DeskMemoryFieldsFragmentDoc, DeskMemorySettingsFieldsFragmentDoc, DeskMemoriesDocument, DeskMemoriesByIdsDocument, DeskMemorySettingsDocument, CreateDeskMemoryDocument, ReviseDeskMemoryDocument, SetDeskMemoryStatusDocument, ConfirmDeskMemoryDocument, DismissDeskMemoryDocument, SetMemorySavingModeDocument } from "./documents/agent/desk-memory";
@@ -20750,6 +21182,7 @@ export { AiRetrievalStatusFieldsFragmentDoc, AiRetrievalFailedEntryFieldsFragmen
 export { AgentRunTableRowFieldsFragmentDoc, AgentRunTranscriptFieldsFragmentDoc, AgentRunTableDocument, AgentRunDetailDocument, AgentActivitySummaryDocument } from "./documents/agent/runs";
 export { AgentToolRuleImpactFieldsFragmentDoc, AgentSafetyHeaderFieldsFragmentDoc, AgentToolPolicyFieldsFragmentDoc, AgentToolAutonomyFieldsFragmentDoc, AgentToolSafetyRowFieldsFragmentDoc, AgentToolRuleTableDocument, AgentToolSafetyTableDocument, AgentSafetySummaryDocument, AgentSafetyDocument, AgentToolHoldersDocument, AgentToolRuleImpactDocument, SaveAgentToolRuleDocument } from "./documents/agent/safety";
 export { MyAiFeedbackFieldsFragmentDoc, AiFeedbackTableRowFieldsFragmentDoc, MyAiFeedbackDocument, SetMyAiFeedbackDocument, ClearMyAiFeedbackDocument, AiFeedbackTableDocument, AgentFeedbackSummaryDocument } from "./documents/ai-feedback/ai-feedback";
+export { AiProviderCatalogDocument, CreateAiProviderDocument, UpdateAiProviderDocument, DeleteAiProviderDocument, TestAiProviderDocument } from "./documents/ai-provider/admin";
 export { AiProviderCardFieldsFragmentDoc, AiProviderLimitFieldsFragmentDoc, AiProviderCardsDocument, AiProviderDetailDocument, AiProviderLimitsDocument, AiRoutePreviewDocument, AiProviderModelsDocument, AiProviderUsageDailyDocument, TestAiProviderDraftDocument, ReorderAiProvidersDocument, PatchAiProviderDocument } from "./documents/ai-provider/providers";
 export { AiUsageSummaryDocument } from "./documents/ai-provider/usage-summary";
 export { ApiKeyTableRowFieldsFragmentDoc, ApiKeyTableDocument } from "./documents/api-key/table";
@@ -20771,6 +21204,7 @@ export { CarrierIntelFindingFieldsFragmentDoc, CarrierIntelSnapshotSummaryFields
 export { DeskCarrierSettlementCardDocument } from "./documents/carrier-settlement/desk";
 export { CarrierSettlementTableDocument, CarrierSettlementDetailDocument, CarrierSettlementBatchTableDocument, CarrierSettlementBatchDetailDocument, CarrierCostEventTableDocument, CarrierSettlementControlDocument, CurrentCarrierSettlementPeriodDocument, CarrierSettlementWorkspaceSummaryDocument, CarrierLedgerEntriesDocument, CarrierInvoiceMatchesDocument, EdiCarrierInvoicesDocument, SuggestCarrierForEdiInvoiceDocument, ExportCarrierSettlementBatchCsvDocument, GenerateCarrierSettlementBatchDocument, SubmitCarrierSettlementDocument, ApproveCarrierSettlementDocument, RejectCarrierSettlementDocument, PostCarrierSettlementDocument, MarkCarrierSettlementPaidDocument, VoidCarrierSettlementDocument, RecalculateCarrierSettlementDocument, AddCarrierSettlementAdjustmentDocument, RemoveCarrierSettlementAdjustmentDocument, UpdateCarrierSettlementControlDocument, LinkEdiCarrierInvoiceToCarrierDocument, CreateCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchWithVarianceDocument, RejectCarrierInvoiceMatchDocument } from "./documents/carrier-settlement/operations";
 export { CarrierContactFieldsFragmentDoc, CarrierInsurancePolicyFieldsFragmentDoc, CarrierTableRowFieldsFragmentDoc, CarrierTableDocument } from "./documents/carrier/table";
+export { AskPaletteDocument, StopPaletteAskDocument, KeepPaletteAskDocument } from "./documents/command-palette/ask";
 export { CommandPaletteCustomerPreviewDocument } from "./documents/command-palette/operations";
 export { CreateCommodityDocument, UpdateCommodityDocument, PatchCommodityDocument, BulkUpdateCommodityStatusDocument } from "./documents/commodity/mutations";
 export { CommodityTableRowFieldsFragmentDoc, CommodityTableDocument } from "./documents/commodity/table";
