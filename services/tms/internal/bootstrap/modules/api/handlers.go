@@ -4,7 +4,6 @@ package api
 import (
 	"github.com/emoss08/trenova/internal/api/handlers/accountingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountingwebhookhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentanalysishandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentdefinitionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentextensionhandler"
@@ -15,9 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assistanthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptbatchhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
@@ -25,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carriertrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/collectionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerstatementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
@@ -46,11 +41,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/editransferhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulalibraryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/googlemapshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
@@ -62,10 +54,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicerunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicesharehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
@@ -155,12 +145,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	agentanalysishandler.New,
 	agentrunhandler.New,
 	assignmenthandler.New,
-	accountsreceivablehandler.New,
-	collectionhandler.New,
 	customerstatementhandler.New,
-	bankreceiptbatchhandler.New,
-	bankreceipthandler.New,
-	bankreceiptworkitemhandler.New,
 	versionhandler.New,
 	servicetypehandler.New,
 	servicefailurereasoncodehandler.New,
@@ -193,9 +178,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	googlemapshandler.New,
 	weatheralerthandler.New,
 	accountingcontrolhandler.New,
-	glbalancehandler.New,
-	fiscalyearhandler.New,
-	fiscalperiodhandler.New,
 	locationhandler.New,
 	recurringshipmenthandler.New,
 	rateagreementhandler.New,
@@ -207,8 +189,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	detentionhandler.New,
 	invoiceadjustmenthandler.New,
 	invoiceadjustmentcontrolhandler.New,
-	journalreversalhandler.New,
-	manualjournalhandler.New,
 	billingcontrolhandler.New,
 	casechecklisthandler.New,
 	billingqueuehandler.New,

@@ -12,4 +12,8 @@ type Deps struct {
 	FiscalPeriodService *fiscalperiodservice.Service
 }
 
+type FiscalCloseBlockerResolver struct{ *Deps }
+
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

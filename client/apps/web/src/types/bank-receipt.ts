@@ -21,7 +21,7 @@ export const bankReceiptSchema = z.object({
   exceptionReason: optionalStringSchema,
   importBatchId: nullableStringSchema,
   createdById: optionalStringSchema,
-  updatedById: optionalStringSchema,
+  updatedById: nullableStringSchema,
 });
 export type BankReceipt = z.infer<typeof bankReceiptSchema>;
 

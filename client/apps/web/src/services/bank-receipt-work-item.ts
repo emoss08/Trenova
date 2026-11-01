@@ -1,47 +1,74 @@
-import { z } from "zod";
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
 import {
-  bankReceiptWorkItemSchema,
-  type BankReceiptWorkItem,
-} from "@/types/bank-receipt-work-item";
+  AssignBankReceiptWorkItemDocument,
+  BankReceiptWorkItemDocument,
+  BankReceiptWorkItemsDocument,
+  DismissBankReceiptWorkItemDocument,
+  ResolveBankReceiptWorkItemDocument,
+  StartBankReceiptWorkItemReviewDocument,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { BankReceiptWorkItem, ResolutionType } from "@/types/bank-receipt-work-item";
 
-const workItemListSchema = z.array(bankReceiptWorkItemSchema);
+type RequestOptions = { signal?: AbortSignal };
 
 export class BankReceiptWorkItemService {
-  async list(params?: Record<string, string>) {
-    const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-    const response = await api.get<BankReceiptWorkItem[]>(
-      `/accounting/bank-receipt-work-items/${query}`,
-    );
-    return safeParse(workItemListSchema, response, "BankReceiptWorkItemList");
-  }
-
-  async getById(id: string) {
-    return api.get<BankReceiptWorkItem>(`/accounting/bank-receipt-work-items/${id}/`);
-  }
-
-  async assign(id: string, userId: string) {
-    return api.post<BankReceiptWorkItem>(`/accounting/bank-receipt-work-items/${id}/assign/`, {
-      userId,
+  /** The work items not yet resolved or dismissed, newest first. */
+  async list({ signal }: RequestOptions = {}): Promise<BankReceiptWorkItem[]> {
+    const response = await requestGraphQL({
+      document: BankReceiptWorkItemsDocument,
+      operationName: "BankReceiptWorkItems",
+      variables: {},
+      signal,
     });
+    return response.bankReceiptWorkItems;
   }
 
-  async startReview(id: string) {
-    return api.post<BankReceiptWorkItem>(`/accounting/bank-receipt-work-items/${id}/start-review/`);
+  async getById(id: string, { signal }: RequestOptions = {}): Promise<BankReceiptWorkItem> {
+    const response = await requestGraphQL({
+      document: BankReceiptWorkItemDocument,
+      operationName: "BankReceiptWorkItem",
+      variables: { id },
+      signal,
+    });
+    return response.bankReceiptWorkItem;
   }
 
-  async resolve(id: string, data: { resolutionType: string; resolutionNote: string }) {
-    return api.post<BankReceiptWorkItem>(
-      `/accounting/bank-receipt-work-items/${id}/resolve/`,
-      data,
-    );
+  async assign(id: string, userId: string): Promise<BankReceiptWorkItem> {
+    const response = await requestGraphQL({
+      document: AssignBankReceiptWorkItemDocument,
+      operationName: "AssignBankReceiptWorkItem",
+      variables: { id, assignedToUserId: userId },
+    });
+    return response.assignBankReceiptWorkItem;
   }
 
-  async dismiss(id: string, data: { resolutionNote: string }) {
-    return api.post<BankReceiptWorkItem>(
-      `/accounting/bank-receipt-work-items/${id}/dismiss/`,
-      data,
-    );
+  async startReview(id: string): Promise<BankReceiptWorkItem> {
+    const response = await requestGraphQL({
+      document: StartBankReceiptWorkItemReviewDocument,
+      operationName: "StartBankReceiptWorkItemReview",
+      variables: { id },
+    });
+    return response.startBankReceiptWorkItemReview;
+  }
+
+  async resolve(
+    id: string,
+    data: { resolutionType: ResolutionType; resolutionNote: string },
+  ): Promise<BankReceiptWorkItem> {
+    const response = await requestGraphQL({
+      document: ResolveBankReceiptWorkItemDocument,
+      operationName: "ResolveBankReceiptWorkItem",
+      variables: { id, input: data },
+    });
+    return response.resolveBankReceiptWorkItem;
+  }
+
+  async dismiss(id: string, data: { resolutionNote: string }): Promise<BankReceiptWorkItem> {
+    const response = await requestGraphQL({
+      document: DismissBankReceiptWorkItemDocument,
+      operationName: "DismissBankReceiptWorkItem",
+      variables: { id, resolutionNote: data.resolutionNote },
+    });
+    return response.dismissBankReceiptWorkItem;
   }
 }

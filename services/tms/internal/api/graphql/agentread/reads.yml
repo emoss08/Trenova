@@ -43,7 +43,7 @@ reads:
     reason: The Desk's journal entry card, read by journalEntryCard, carries each line's account and the approval and reversal history the tool returns; journalEntry reads the bare entry.
   - tool: ledger_get_manual_journal
     operation: DeskManualJournalCard
-    reason: The Desk's manual journal card, read by manualJournalCard, carries each line's account and the entries the journal became; no operation reads manualJournal alone.
+    reason: The Desk's manual journal card, read by manualJournalCard, carries each line's account and the entries the journal became; ManualJournal reads the bare journal and its lines for the edit form.
   - tool: equipment_list_manufacturers
   - tool: equipment_list_tractors
   - tool: equipment_list_trailers

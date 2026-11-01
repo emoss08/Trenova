@@ -7,7 +7,6 @@ import (
 	graphqlapi "github.com/emoss08/trenova/internal/api/graphql"
 	"github.com/emoss08/trenova/internal/api/handlers/accountingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountingwebhookhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentanalysishandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentdefinitionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentextensionhandler"
@@ -18,9 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/assistanthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptbatchhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
@@ -28,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carriertrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/collectionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerstatementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
@@ -49,11 +44,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/editransferhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulalibraryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/googlemapshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/inboundhandler"
@@ -65,10 +57,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicerunhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicesharehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/notificationpreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/onboardinghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
@@ -161,9 +151,6 @@ type RouterParams struct {
 	DriverPortalHandler             *driverportalhandler.Handler
 	PushHandler                     *pushhandler.Handler
 	NotificationPreferenceHandler   *notificationpreferencehandler.Handler
-	BankReceiptHandler              *bankreceipthandler.Handler
-	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
-	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	FormulaTemplateHandler          *formulatemplatehandler.Handler
 	FormulaLibraryHandler           *formulalibraryhandler.Handler
 	PageFavoriteHandler             *pagefavoritehandler.Handler
@@ -219,13 +206,8 @@ type RouterParams struct {
 	ShipmentTrackingPublicHandler   *shipmenttrackingpublichandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
 	AccountingControlHandler        *accountingcontrolhandler.Handler
-	AccountsReceivableHandler       *accountsreceivablehandler.Handler
-	CollectionHandler               *collectionhandler.Handler
 	CustomerStatementHandler        *customerstatementhandler.Handler
 	AssignmentHandler               *assignmenthandler.Handler
-	GLBalanceHandler                *glbalancehandler.Handler
-	FiscalYearHandler               *fiscalyearhandler.Handler
-	FiscalPeriodHandler             *fiscalperiodhandler.Handler
 	LocationHandler                 *locationhandler.Handler
 	RecurringShipmentHandler        *recurringshipmenthandler.Handler
 	RateAgreementHandler            *rateagreementhandler.Handler
@@ -240,8 +222,6 @@ type RouterParams struct {
 	InvoiceRunHandler               *invoicerunhandler.Handler
 	InvoiceShareHandler             *invoicesharehandler.Handler
 	InvoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
-	JournalReversalHandler          *journalreversalhandler.Handler
-	ManualJournalHandler            *manualjournalhandler.Handler
 	BillingControlHandler           *billingcontrolhandler.Handler
 	CaseChecklistHandler            *casechecklisthandler.Handler
 	InvoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
@@ -290,9 +270,6 @@ type Router struct {
 	driverPortalHandler             *driverportalhandler.Handler
 	pushHandler                     *pushhandler.Handler
 	notificationPreferenceHandler   *notificationpreferencehandler.Handler
-	bankReceiptHandler              *bankreceipthandler.Handler
-	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
-	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	formulaTemplateHandler          *formulatemplatehandler.Handler
 	formulaLibraryHandler           *formulalibraryhandler.Handler
 	pageFavoriteHandler             *pagefavoritehandler.Handler
@@ -348,13 +325,8 @@ type Router struct {
 	shipmentTrackingPublicHandler   *shipmenttrackingpublichandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
 	accountingControlHandler        *accountingcontrolhandler.Handler
-	accountsReceivableHandler       *accountsreceivablehandler.Handler
-	collectionHandler               *collectionhandler.Handler
 	customerStatementHandler        *customerstatementhandler.Handler
 	assignmentHandler               *assignmenthandler.Handler
-	glBalanceHandler                *glbalancehandler.Handler
-	fiscalYearHandler               *fiscalyearhandler.Handler
-	fiscalPeriodHandler             *fiscalperiodhandler.Handler
 	locationHandler                 *locationhandler.Handler
 	recurringShipmentHandler        *recurringshipmenthandler.Handler
 	rateAgreementHandler            *rateagreementhandler.Handler
@@ -369,8 +341,6 @@ type Router struct {
 	invoiceRunHandler               *invoicerunhandler.Handler
 	invoiceShareHandler             *invoicesharehandler.Handler
 	invoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
-	journalReversalHandler          *journalreversalhandler.Handler
-	manualJournalHandler            *manualjournalhandler.Handler
 	billingControlHandler           *billingcontrolhandler.Handler
 	caseChecklistHandler            *casechecklisthandler.Handler
 	invoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
@@ -421,9 +391,6 @@ func NewRouter(p RouterParams) *Router {
 		driverPortalHandler:             p.DriverPortalHandler,
 		pushHandler:                     p.PushHandler,
 		notificationPreferenceHandler:   p.NotificationPreferenceHandler,
-		bankReceiptHandler:              p.BankReceiptHandler,
-		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
-		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
 		formulaLibraryHandler:           p.FormulaLibraryHandler,
 		pageFavoriteHandler:             p.PageFavoriteHandler,
@@ -479,13 +446,8 @@ func NewRouter(p RouterParams) *Router {
 		shipmentTrackingPublicHandler:   p.ShipmentTrackingPublicHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
 		accountingControlHandler:        p.AccountingControlHandler,
-		accountsReceivableHandler:       p.AccountsReceivableHandler,
-		collectionHandler:               p.CollectionHandler,
 		customerStatementHandler:        p.CustomerStatementHandler,
 		assignmentHandler:               p.AssignmentHandler,
-		glBalanceHandler:                p.GLBalanceHandler,
-		fiscalYearHandler:               p.FiscalYearHandler,
-		fiscalPeriodHandler:             p.FiscalPeriodHandler,
 		locationHandler:                 p.LocationHandler,
 		recurringShipmentHandler:        p.RecurringShipmentHandler,
 		rateAgreementHandler:            p.RateAgreementHandler,
@@ -500,8 +462,6 @@ func NewRouter(p RouterParams) *Router {
 		invoiceRunHandler:               p.InvoiceRunHandler,
 		invoiceShareHandler:             p.InvoiceShareHandler,
 		invoiceAdjustmentHandler:        p.InvoiceAdjustmentHandler,
-		journalReversalHandler:          p.JournalReversalHandler,
-		manualJournalHandler:            p.ManualJournalHandler,
 		billingControlHandler:           p.BillingControlHandler,
 		caseChecklistHandler:            p.CaseChecklistHandler,
 		invoiceAdjustmentControlHandler: p.InvoiceAdjustmentControlHandler,
@@ -622,9 +582,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dataRetentionHandler.RegisterRoutes(protected)
 	r.iamHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
-	r.bankReceiptBatchHandler.RegisterRoutes(protected)
-	r.bankReceiptHandler.RegisterRoutes(protected)
-	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
 	r.formulaTemplateHandler.RegisterRoutes(protected)
 	r.formulaLibraryHandler.RegisterRoutes(protected)
 	r.pageFavoriteHandler.RegisterRoutes(protected)
@@ -670,13 +627,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.googleMapsHandler.RegisterRoutes(protected)
 	r.weatherAlertHandler.RegisterRoutes(protected)
 	r.accountingControlHandler.RegisterRoutes(protected)
-	r.accountsReceivableHandler.RegisterRoutes(protected)
-	r.collectionHandler.RegisterRoutes(protected)
 	r.customerStatementHandler.RegisterRoutes(protected)
 	r.assignmentHandler.RegisterRoutes(protected)
-	r.glBalanceHandler.RegisterRoutes(protected)
-	r.fiscalYearHandler.RegisterRoutes(protected)
-	r.fiscalPeriodHandler.RegisterRoutes(protected)
 	r.locationHandler.RegisterRoutes(protected)
 	r.recurringShipmentHandler.RegisterRoutes(protected)
 	r.rateAgreementHandler.RegisterRoutes(protected)
@@ -691,8 +643,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.invoiceRunHandler.RegisterRoutes(protected)
 	r.invoiceShareHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentHandler.RegisterRoutes(protected)
-	r.journalReversalHandler.RegisterRoutes(protected)
-	r.manualJournalHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)
 	r.caseChecklistHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentControlHandler.RegisterRoutes(protected)

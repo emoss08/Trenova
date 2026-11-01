@@ -5967,3 +5967,137 @@ models:
   StopEtaDriveMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.DriveMethod
+  FiscalCloseBlocker:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose.Blocker
+    fields:
+      code:
+        resolver: true
+  FiscalCloseCheck:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose.Result
+  FiscalCloseEntryKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose.EntryKind
+  FiscalClosePlanLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose.PlanLine
+    fields:
+      isRetainedEarnings:
+        fieldName: IsRetainedEarn
+  FiscalClosePlanEntry:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose.PlanEntry
+  FiscalSubledgerCheck:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose.SubledgerCheck
+  FiscalYearClosePlan:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose.Plan
+    fields:
+      retainedEarningsAccountCode:
+        fieldName: RetainedEarningsCode
+      retainedEarningsAccountName:
+        fieldName: RetainedEarningsName
+  GLPeriodAccountBalance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports.GLPeriodAccountBalance
+  GLStatementLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports.GLStatementLine
+  GLStatementSection:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports.GLStatementSection
+  GLIncomeStatement:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports.GLIncomeStatement
+  GLBalanceSheet:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports.GLBalanceSheet
+  ManualJournalLine:
+    model:
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal.Line
+    fields:
+      glAccount:
+        resolver: true
+  CollectorScope:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/collectionports.CollectorScope
+  CollectionActivityKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/collection.ActivityKind
+  CollectionPromiseStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/collection.PromiseStatus
+  CollectionPriority:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/collection.Priority
+  CollectionPromise:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/collectionports.Promise
+  CollectionWorklistRow:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/collectionports.WorklistRow
+    fields:
+      lastActivityKind:
+        resolver: true
+  CollectionCurrencyTotal:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/collectionports.CurrencyTotal
+  CollectionWorklistSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/collectionports.WorklistSummary
+  CollectionWorklistPage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/collectionports.WorklistPage
+  CollectionActivity:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/collectionports.ActivityView
+  CollectionAccountView:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/collectionports.AccountView
+  PaymentReminderSendResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports.SendNowResult
+  SentCustomerStatement:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports.SentStatement
+  CustomerStatementSendResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports.SendResult
+  BankReceiptStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt.Status
+  BankReceiptBatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch.Status
+  BankReceiptWorkItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem.Status
+  BankReceiptWorkItemResolutionType:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem.ResolutionType
+  BankReceipt:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt.BankReceipt
+  BankReceiptBatch:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch.BankReceiptBatch
+  BankReceiptBatchDetail:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports.BankReceiptBatchResult
+  BankReceiptWorkItem:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem.WorkItem
+    fields:
+      resolutionType:
+        resolver: true
+  BankReceiptMatchSuggestion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports.BankReceiptMatchSuggestion
+  BankReceiptExceptionAging:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports.BankReceiptExceptionAging
+  BankReceiptReconciliationSummary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports.BankReceiptReconciliationSummary

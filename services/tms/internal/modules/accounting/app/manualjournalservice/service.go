@@ -78,13 +78,6 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 	}
 }
 
-func (s *Service) List(
-	ctx context.Context,
-	req *manualjournalports.ListManualJournalRequest,
-) (*pagination.ListResult[*manualjournal.Request], error) {
-	return s.repo.List(ctx, req)
-}
-
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *manualjournalports.ListManualJournalConnectionRequest,

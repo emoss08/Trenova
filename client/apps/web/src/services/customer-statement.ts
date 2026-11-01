@@ -1,11 +1,16 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
 import {
-  sentStatementListSchema,
-  statementSendResultSchema,
-  type StatementRange,
-  type StatementSendResult,
+  SendCustomerStatementDocument,
+  SentCustomerStatementsDocument,
+} from "@trenova/graphql/generated/graphql";
+import { api } from "@trenova/shared/lib/api";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type {
+  SentStatement,
+  StatementRange,
+  StatementSendResult,
 } from "@/types/customer-statement";
+
+type RequestOptions = { signal?: AbortSignal };
 
 const customerPath = (customerId: string) =>
   `/accounting/accounts-receivable/customers/${encodeURIComponent(customerId)}`;
@@ -28,18 +33,34 @@ export class CustomerStatementService {
   }
 
   /** Emails the statement to the customer's invoice recipients, PDF attached. */
-  async send(customerId: string, range: StatementRange, note: string) {
-    const response = await api.post<StatementSendResult>(
-      `${customerPath(customerId)}/statement/send/`,
-      { ...range, note },
-    );
-    return safeParse(statementSendResultSchema, response, "StatementSendResult");
+  async send(
+    customerId: string,
+    range: StatementRange,
+    note: string,
+  ): Promise<StatementSendResult> {
+    const response = await requestGraphQL({
+      document: SendCustomerStatementDocument,
+      operationName: "SendCustomerStatement",
+      variables: {
+        customerId,
+        input: {
+          startDate: range.startDate || null,
+          asOfDate: range.asOfDate || null,
+          note,
+        },
+      },
+    });
+    return response.sendCustomerStatement;
   }
 
   /** The statements the customer has been sent, newest first. */
-  async listSent(customerId: string) {
-    const response = await api.get(`${customerPath(customerId)}/statements/`);
-    const parsed = await safeParse(sentStatementListSchema, response, "SentStatementList");
-    return parsed.statements;
+  async listSent(customerId: string, { signal }: RequestOptions = {}): Promise<SentStatement[]> {
+    const response = await requestGraphQL({
+      document: SentCustomerStatementsDocument,
+      operationName: "SentCustomerStatements",
+      variables: { customerId },
+      signal,
+    });
+    return response.sentCustomerStatements;
   }
 }

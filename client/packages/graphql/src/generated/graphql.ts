@@ -1832,6 +1832,28 @@ export type BackfillJurisdictionMilesInput = {
   periodStart: number;
 };
 
+export type BankReceiptBatchStatus =
+  | 'Completed'
+  | 'Processing';
+
+export type BankReceiptStatus =
+  | 'Exception'
+  | 'Imported'
+  | 'Matched';
+
+export type BankReceiptWorkItemResolutionType =
+  | 'MarkedFalsePositive'
+  | 'MatchedToPayment'
+  | 'RequiresExternalFollowUp'
+  | 'Superseded';
+
+export type BankReceiptWorkItemStatus =
+  | 'Assigned'
+  | 'Dismissed'
+  | 'InReview'
+  | 'Open'
+  | 'Resolved';
+
 export type BenefitEnrollmentStatus =
   | 'Active'
   | 'Ended'
@@ -2746,6 +2768,47 @@ export type ClockInput = {
   workerId: string | number;
 };
 
+/** The oldest activity already shown; the page holds what came before it. */
+export type CollectionActivityCursorInput = {
+  createdAt: number;
+  id: string | number;
+};
+
+export type CollectionActivityKind =
+  | 'Call'
+  | 'CollectorAssigned'
+  | 'Email'
+  | 'FollowUpScheduled'
+  | 'Note'
+  | 'PromiseToPay';
+
+export type CollectionPriority =
+  | 'Critical'
+  | 'High'
+  | 'Low'
+  | 'Normal';
+
+export type CollectionPromiseStatus =
+  | 'Broken'
+  | 'Kept'
+  | 'Open';
+
+export type CollectionWorklistInput = {
+  /** Only accounts whose follow-up has come round. */
+  dueOnly: boolean;
+  limit: number;
+  offset: number;
+  scope: CollectorScope;
+  search: string;
+};
+
+/** Whose accounts a collections worklist shows. */
+export type CollectorScope =
+  | 'All'
+  /** The accounts assigned to the person reading. */
+  | 'Mine'
+  | 'Unassigned';
+
 export type CommodityInput = {
   description: string;
   fragile: boolean;
@@ -2989,6 +3052,14 @@ export type CreateFuelPurchaseImportInput = {
   defaultFuelType?: IftaFuelType | null | undefined;
   mapping?: unknown;
   provider: FuelCardProvider;
+};
+
+export type CreateJournalReversalInput = {
+  originalJournalEntryId: string | number;
+  reasonCode: string;
+  reasonText: string;
+  /** The day the reversal should post; the fiscal period is resolved from it. */
+  requestedAccountingDate: number;
 };
 
 export type CreateMemoInput = {
@@ -4748,12 +4819,29 @@ export type FilterGroupInput = {
   filters: Array<FieldFilterInput>;
 };
 
+export type FiscalCloseEntryKind =
+  | 'Closing'
+  | 'Opening';
+
 export type FiscalPeriodStatus =
   | 'Closed'
   | 'Inactive'
   | 'Locked'
   | 'Open'
   | 'PermanentlyClosed';
+
+export type FiscalYearInput = {
+  allowAdjustingEntries?: boolean | null | undefined;
+  description?: string | null | undefined;
+  endDate: number;
+  isCalendarYear?: boolean | null | undefined;
+  isCurrent?: boolean | null | undefined;
+  name: string;
+  startDate: number;
+  status: FiscalYearStatus;
+  version?: number | null | undefined;
+  year: number;
+};
 
 export type FiscalYearStatus =
   | 'Closed'
@@ -5476,6 +5564,19 @@ export type IgnoreAccountingInboundChangeInput = {
   note: string;
 };
 
+export type ImportBankReceiptBatchInput = {
+  receipts: Array<ImportBankReceiptBatchLineInput>;
+  reference: string;
+  source: string;
+};
+
+export type ImportBankReceiptBatchLineInput = {
+  amountMinor: number;
+  memo?: string | null | undefined;
+  receiptDate: number;
+  referenceNumber: string;
+};
+
 export type ImportSourcedCarrierInput = {
   code?: string | null | undefined;
   dotNumber: string;
@@ -6043,12 +6144,42 @@ export type LogCheckCallInput = {
   stopId?: string | number | null | undefined;
 };
 
+export type LogCollectionActivityInput = {
+  contactName: string;
+  followUpOn?: number | null | undefined;
+  invoiceId?: string | number | null | undefined;
+  kind: CollectionActivityKind;
+  /** The amount promised, for a promise to pay. */
+  promisedAmount?: string | null | undefined;
+  promisedOn?: number | null | undefined;
+  summary: string;
+};
+
 export type LogInboundExceptionInput = {
   kind: TriageExceptionKind;
   note?: string | null | undefined;
   quantity: number;
   /** What was short, over or damaged: pallets, cases, pieces. */
   unit: string;
+};
+
+export type ManualJournalDraftInput = {
+  /** The day it books to; null until one is picked, which the draft refuses. */
+  accountingDate?: number | null | undefined;
+  currencyCode: string;
+  description: string;
+  lines: Array<ManualJournalDraftLineInput>;
+  reason?: string | null | undefined;
+};
+
+export type ManualJournalDraftLineInput = {
+  creditAmount: number;
+  customerId?: string | number | null | undefined;
+  debitAmount: number;
+  description: string;
+  /** Empty until an account is picked; the draft is refused with the line named. */
+  glAccountId: string | number;
+  locationId?: string | number | null | undefined;
 };
 
 export type ManualJournalStatus =
@@ -7189,6 +7320,11 @@ export type ResolveAccountingDriftInput = {
   id: string | number;
 };
 
+export type ResolveBankReceiptWorkItemInput = {
+  resolutionNote: string;
+  resolutionType: BankReceiptWorkItemResolutionType;
+};
+
 export type ResolveCarrierIntelEventInput = {
   id: string | number;
   note?: string | null | undefined;
@@ -7566,6 +7702,14 @@ export type SelectOptionsInput = {
   offset?: number | null | undefined;
   query?: string | null | undefined;
   resource: SelectOptionResource;
+};
+
+export type SendCustomerStatementInput = {
+  /** The statement date; null is today. */
+  asOfDate?: number | null | undefined;
+  note: string;
+  /** Where the statement starts; null runs from the first transaction. */
+  startDate?: number | null | undefined;
 };
 
 export type SendFactoringNoaInput = {
@@ -9841,6 +9985,27 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type TrialBalanceQueryVariables = Exact<{
+  fiscalPeriodId: string | number;
+}>;
+
+
+export type TrialBalanceQuery = { trialBalance: Array<{ organizationId: string, businessUnitId: string, glAccountId: string, fiscalYearId: string, fiscalPeriodId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, periodDebitMinor: number, periodCreditMinor: number, netChangeMinor: number }> };
+
+export type IncomeStatementQueryVariables = Exact<{
+  fiscalPeriodId: string | number;
+}>;
+
+
+export type IncomeStatementQuery = { incomeStatement: { fiscalPeriodId: string, grossProfitMinor: number, netIncomeMinor: number, revenue: { key: string, label: string, totalMinor: number, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, amountMinor: number }> }, costOfRevenue: { key: string, label: string, totalMinor: number, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, amountMinor: number }> }, operatingExpense: { key: string, label: string, totalMinor: number, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, amountMinor: number }> } } };
+
+export type BalanceSheetQueryVariables = Exact<{
+  fiscalPeriodId: string | number;
+}>;
+
+
+export type BalanceSheetQuery = { balanceSheet: { fiscalPeriodId: string, currentYearEarningsMinor: number, totalAssetsMinor: number, totalLiabilitiesMinor: number, totalEquityMinor: number, assets: { key: string, label: string, totalMinor: number, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, amountMinor: number }> }, liabilities: { key: string, label: string, totalMinor: number, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, amountMinor: number }> }, equity: { key: string, label: string, totalMinor: number, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, amountMinor: number }> } } };
+
 export type DeskAccountingConnectionQueryVariables = Exact<{
   integrationType: AccountingSystem;
 }>;
@@ -10460,6 +10625,21 @@ export type ArCustomerProfileQueryVariables = Exact<{
 
 
 export type ArCustomerProfileQuery = { arCustomerProfile: { dsoDays: number, creditUtilization: number, delinquencyScore: number, snapshot: { customerId: string, customerName: string, totalOpenMinor: number, overdueMinor: number, unappliedCashMinor: number, creditLimitMinor: number, hasCreditLimit: boolean, openInvoiceCount: number, oldestOpenInvoiceDate: number, oldestDaysPastDue: number, lastPaymentDate: number, lastPaymentMinor: number, avgDaysToPay: number, billedTrailing91Minor: number, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, monthlyCollections: Array<{ monthStart: number, amountMinor: number }> } } };
+
+export type SentCustomerStatementsQueryVariables = Exact<{
+  customerId: string | number;
+}>;
+
+
+export type SentCustomerStatementsQuery = { sentCustomerStatements: Array<{ id: string, periodStart: number, periodEnd: number, endingBalanceMinor: number, pastDueMinor: number, currencyCode: string, sentTo: string, monthly: boolean, sentByName: string, sentAt: number }> };
+
+export type SendCustomerStatementMutationVariables = Exact<{
+  customerId: string | number;
+  input: SendCustomerStatementInput;
+}>;
+
+
+export type SendCustomerStatementMutation = { sendCustomerStatement: { sentTo: Array<string>, endingBalance: string, fileName: string } };
 
 export type AgentScorecardFieldsFragment = { agentDefinitionId: string, window: AgentScorecardWindow, since: number, runs: number, runsFailed: number, exceptions: number, proposals: number, approved: number, modified: number, rejected: number, pending: number, executed: number, executionFailures: number, autoExecuted: number, approvalRate: number | null, inputTokens: number, outputTokens: number, costUsd: string, estimatedMinutesSaved: number, byTool: Array<{ toolName: string, approved: number, modified: number, rejected: number, executed: number, failed: number, pending: number, automatic: number }>, toolVerdicts: Array<{ toolName: string, verdict: string, calls: number, topReasons: Array<{ reason: string, calls: number }> }>, toolTrust: Array<{ toolName: string, streak: number, approvals: number, modifications: number, rejections: number, executionFailures: number, earnedTier: AgentAutonomyTier | null, lastDecisionAt: number | null, promotedAt: number | null, demotedAt: number | null }> } & { ' $fragmentName'?: 'AgentScorecardFieldsFragment' };
 
@@ -11766,6 +11946,102 @@ export type AuditLogTableQueryVariables = Exact<{
 
 export type AuditLogTableQuery = { auditEntries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type BankReceiptBatchesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BankReceiptBatchesQuery = { bankReceiptBatches: Array<{ id: string, organizationId: string, businessUnitId: string, source: string, reference: string, status: BankReceiptBatchStatus, importedCount: number, matchedCount: number, exceptionCount: number, importedAmountMinor: number, matchedAmountMinor: number, exceptionAmountMinor: number, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number }> };
+
+export type BankReceiptBatchQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BankReceiptBatchQuery = { bankReceiptBatch: { batch: { id: string, organizationId: string, businessUnitId: string, source: string, reference: string, status: BankReceiptBatchStatus, importedCount: number, matchedCount: number, exceptionCount: number, importedAmountMinor: number, matchedAmountMinor: number, exceptionAmountMinor: number, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number }, receipts: Array<{ id: string, organizationId: string, businessUnitId: string, receiptDate: number, amountMinor: number, referenceNumber: string, memo: string, status: BankReceiptStatus, importBatchId: string | null, matchedCustomerPaymentId: string | null, matchedAt: number | null, matchedById: string | null, exceptionReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number }> } };
+
+export type ImportBankReceiptBatchMutationVariables = Exact<{
+  input: ImportBankReceiptBatchInput;
+}>;
+
+
+export type ImportBankReceiptBatchMutation = { importBankReceiptBatch: { batch: { id: string, organizationId: string, businessUnitId: string, source: string, reference: string, status: BankReceiptBatchStatus, importedCount: number, matchedCount: number, exceptionCount: number, importedAmountMinor: number, matchedAmountMinor: number, exceptionAmountMinor: number, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number }, receipts: Array<{ id: string, organizationId: string, businessUnitId: string, receiptDate: number, amountMinor: number, referenceNumber: string, memo: string, status: BankReceiptStatus, importBatchId: string | null, matchedCustomerPaymentId: string | null, matchedAt: number | null, matchedById: string | null, exceptionReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number }> } };
+
+export type BankReceiptQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BankReceiptQuery = { bankReceipt: { id: string, organizationId: string, businessUnitId: string, receiptDate: number, amountMinor: number, referenceNumber: string, memo: string, status: BankReceiptStatus, importBatchId: string | null, matchedCustomerPaymentId: string | null, matchedAt: number | null, matchedById: string | null, exceptionReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type BankReceiptExceptionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BankReceiptExceptionsQuery = { bankReceiptExceptions: Array<{ id: string, organizationId: string, businessUnitId: string, receiptDate: number, amountMinor: number, referenceNumber: string, memo: string, status: BankReceiptStatus, importBatchId: string | null, matchedCustomerPaymentId: string | null, matchedAt: number | null, matchedById: string | null, exceptionReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number }> };
+
+export type BankReceiptMatchSuggestionsQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BankReceiptMatchSuggestionsQuery = { bankReceiptMatchSuggestions: Array<{ customerPaymentId: string, referenceNumber: string, amountMinor: number, customerId: string, score: number, reason: string }> };
+
+export type BankReceiptSummaryQueryVariables = Exact<{
+  asOfDate?: number | null | undefined;
+}>;
+
+
+export type BankReceiptSummaryQuery = { bankReceiptSummary: { asOfDate: number, importedCount: number, importedAmount: number, matchedCount: number, matchedAmount: number, exceptionCount: number, exceptionAmount: number, activeWorkItemCount: number, assignedWorkItemCount: number, inReviewWorkItemCount: number, exceptionAging: { currentCount: number, currentAmount: number, days1To3Count: number, days1To3Amount: number, days4To7Count: number, days4To7Amount: number, daysOver7Count: number, daysOver7Amount: number } } };
+
+export type MatchBankReceiptMutationVariables = Exact<{
+  id: string | number;
+  paymentId: string | number;
+}>;
+
+
+export type MatchBankReceiptMutation = { matchBankReceipt: { id: string, organizationId: string, businessUnitId: string, receiptDate: number, amountMinor: number, referenceNumber: string, memo: string, status: BankReceiptStatus, importBatchId: string | null, matchedCustomerPaymentId: string | null, matchedAt: number | null, matchedById: string | null, exceptionReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type BankReceiptWorkItemsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BankReceiptWorkItemsQuery = { bankReceiptWorkItems: Array<{ id: string, organizationId: string, businessUnitId: string, bankReceiptId: string, status: BankReceiptWorkItemStatus, assignedToUserId: string | null, assignedAt: number | null, resolutionType: BankReceiptWorkItemResolutionType | null, resolutionNote: string, resolvedByUserId: string | null, resolvedAt: number | null, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number }> };
+
+export type BankReceiptWorkItemQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type BankReceiptWorkItemQuery = { bankReceiptWorkItem: { id: string, organizationId: string, businessUnitId: string, bankReceiptId: string, status: BankReceiptWorkItemStatus, assignedToUserId: string | null, assignedAt: number | null, resolutionType: BankReceiptWorkItemResolutionType | null, resolutionNote: string, resolvedByUserId: string | null, resolvedAt: number | null, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type AssignBankReceiptWorkItemMutationVariables = Exact<{
+  id: string | number;
+  assignedToUserId: string | number;
+}>;
+
+
+export type AssignBankReceiptWorkItemMutation = { assignBankReceiptWorkItem: { id: string, organizationId: string, businessUnitId: string, bankReceiptId: string, status: BankReceiptWorkItemStatus, assignedToUserId: string | null, assignedAt: number | null, resolutionType: BankReceiptWorkItemResolutionType | null, resolutionNote: string, resolvedByUserId: string | null, resolvedAt: number | null, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type StartBankReceiptWorkItemReviewMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type StartBankReceiptWorkItemReviewMutation = { startBankReceiptWorkItemReview: { id: string, organizationId: string, businessUnitId: string, bankReceiptId: string, status: BankReceiptWorkItemStatus, assignedToUserId: string | null, assignedAt: number | null, resolutionType: BankReceiptWorkItemResolutionType | null, resolutionNote: string, resolvedByUserId: string | null, resolvedAt: number | null, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type ResolveBankReceiptWorkItemMutationVariables = Exact<{
+  id: string | number;
+  input: ResolveBankReceiptWorkItemInput;
+}>;
+
+
+export type ResolveBankReceiptWorkItemMutation = { resolveBankReceiptWorkItem: { id: string, organizationId: string, businessUnitId: string, bankReceiptId: string, status: BankReceiptWorkItemStatus, assignedToUserId: string | null, assignedAt: number | null, resolutionType: BankReceiptWorkItemResolutionType | null, resolutionNote: string, resolvedByUserId: string | null, resolvedAt: number | null, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type DismissBankReceiptWorkItemMutationVariables = Exact<{
+  id: string | number;
+  resolutionNote: string;
+}>;
+
+
+export type DismissBankReceiptWorkItemMutation = { dismissBankReceiptWorkItem: { id: string, organizationId: string, businessUnitId: string, bankReceiptId: string, status: BankReceiptWorkItemStatus, assignedToUserId: string | null, assignedAt: number | null, resolutionType: BankReceiptWorkItemResolutionType | null, resolutionNote: string, resolvedByUserId: string | null, resolvedAt: number | null, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
 export type BenefitPlansQueryVariables = Exact<{
   activeOnly?: boolean | null | undefined;
   planYear?: number | null | undefined;
@@ -12822,6 +13098,54 @@ export type CarrierTableQueryVariables = Exact<{
 
 
 export type CarrierTableQuery = { carriers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CollectionWorklistQueryVariables = Exact<{
+  input: CollectionWorklistInput;
+}>;
+
+
+export type CollectionWorklistQuery = { collectionWorklist: { total: number, rows: Array<{ customerId: string, customerName: string, customerCode: string, creditStatus: string, currencyCode: string, totalOpenMinor: number, overdueMinor: number, oldestDaysPastDue: number, openInvoiceCount: number, disputedInvoiceCount: number, collectorId: string | null, collectorName: string, nextFollowUpOn: number | null, followUpDue: boolean, lastActivityAt: number | null, lastActivityKind: CollectionActivityKind | null, lastActivitySummary: string, priority: CollectionPriority, promise: { activityId: string, amountMinor: number, currencyCode: string, promisedOn: number, madeAt: number, madeByName: string, paidSinceMinor: number, status: CollectionPromiseStatus } | null }>, summary: { accounts: number, followUpsDue: number, brokenPromises: number, unassigned: number, overdue: Array<{ currencyCode: string, amountMinor: number }> } } };
+
+export type CollectionAccountQueryVariables = Exact<{
+  customerId: string | number;
+  before?: CollectionActivityCursorInput | null | undefined;
+}>;
+
+
+export type CollectionAccountQuery = { collectionAccount: { hasMore: boolean, row: { customerId: string, customerName: string, customerCode: string, creditStatus: string, currencyCode: string, totalOpenMinor: number, overdueMinor: number, oldestDaysPastDue: number, openInvoiceCount: number, disputedInvoiceCount: number, collectorId: string | null, collectorName: string, nextFollowUpOn: number | null, followUpDue: boolean, lastActivityAt: number | null, lastActivityKind: CollectionActivityKind | null, lastActivitySummary: string, priority: CollectionPriority, promise: { activityId: string, amountMinor: number, currencyCode: string, promisedOn: number, madeAt: number, madeByName: string, paidSinceMinor: number, status: CollectionPromiseStatus } | null }, activities: Array<{ id: string, customerId: string, kind: CollectionActivityKind, summary: string, contactName: string, invoiceId: string | null, invoiceNumber: string, promisedAmountMinor: number | null, promisedOn: number | null, currencyCode: string, followUpOn: number | null, collectorId: string | null, collectorName: string, createdById: string, createdByName: string, createdAt: number }> } };
+
+export type LogCollectionActivityMutationVariables = Exact<{
+  customerId: string | number;
+  input: LogCollectionActivityInput;
+}>;
+
+
+export type LogCollectionActivityMutation = { logCollectionActivity: { hasMore: boolean, row: { customerId: string, customerName: string, customerCode: string, creditStatus: string, currencyCode: string, totalOpenMinor: number, overdueMinor: number, oldestDaysPastDue: number, openInvoiceCount: number, disputedInvoiceCount: number, collectorId: string | null, collectorName: string, nextFollowUpOn: number | null, followUpDue: boolean, lastActivityAt: number | null, lastActivityKind: CollectionActivityKind | null, lastActivitySummary: string, priority: CollectionPriority, promise: { activityId: string, amountMinor: number, currencyCode: string, promisedOn: number, madeAt: number, madeByName: string, paidSinceMinor: number, status: CollectionPromiseStatus } | null }, activities: Array<{ id: string, customerId: string, kind: CollectionActivityKind, summary: string, contactName: string, invoiceId: string | null, invoiceNumber: string, promisedAmountMinor: number | null, promisedOn: number | null, currencyCode: string, followUpOn: number | null, collectorId: string | null, collectorName: string, createdById: string, createdByName: string, createdAt: number }> } };
+
+export type AssignCollectionCollectorMutationVariables = Exact<{
+  customerId: string | number;
+  collectorId?: string | number | null | undefined;
+}>;
+
+
+export type AssignCollectionCollectorMutation = { assignCollectionCollector: { hasMore: boolean, row: { customerId: string, customerName: string, customerCode: string, creditStatus: string, currencyCode: string, totalOpenMinor: number, overdueMinor: number, oldestDaysPastDue: number, openInvoiceCount: number, disputedInvoiceCount: number, collectorId: string | null, collectorName: string, nextFollowUpOn: number | null, followUpDue: boolean, lastActivityAt: number | null, lastActivityKind: CollectionActivityKind | null, lastActivitySummary: string, priority: CollectionPriority, promise: { activityId: string, amountMinor: number, currencyCode: string, promisedOn: number, madeAt: number, madeByName: string, paidSinceMinor: number, status: CollectionPromiseStatus } | null }, activities: Array<{ id: string, customerId: string, kind: CollectionActivityKind, summary: string, contactName: string, invoiceId: string | null, invoiceNumber: string, promisedAmountMinor: number | null, promisedOn: number | null, currencyCode: string, followUpOn: number | null, collectorId: string | null, collectorName: string, createdById: string, createdByName: string, createdAt: number }> } };
+
+export type ScheduleCollectionFollowUpMutationVariables = Exact<{
+  customerId: string | number;
+  followUpOn?: number | null | undefined;
+  note: string;
+}>;
+
+
+export type ScheduleCollectionFollowUpMutation = { scheduleCollectionFollowUp: { hasMore: boolean, row: { customerId: string, customerName: string, customerCode: string, creditStatus: string, currencyCode: string, totalOpenMinor: number, overdueMinor: number, oldestDaysPastDue: number, openInvoiceCount: number, disputedInvoiceCount: number, collectorId: string | null, collectorName: string, nextFollowUpOn: number | null, followUpDue: boolean, lastActivityAt: number | null, lastActivityKind: CollectionActivityKind | null, lastActivitySummary: string, priority: CollectionPriority, promise: { activityId: string, amountMinor: number, currencyCode: string, promisedOn: number, madeAt: number, madeByName: string, paidSinceMinor: number, status: CollectionPromiseStatus } | null }, activities: Array<{ id: string, customerId: string, kind: CollectionActivityKind, summary: string, contactName: string, invoiceId: string | null, invoiceNumber: string, promisedAmountMinor: number | null, promisedOn: number | null, currencyCode: string, followUpOn: number | null, collectorId: string | null, collectorName: string, createdById: string, createdByName: string, createdAt: number }> } };
+
+export type SendPaymentReminderMutationVariables = Exact<{
+  customerId: string | number;
+  note: string;
+}>;
+
+
+export type SendPaymentReminderMutation = { sendPaymentReminder: Array<{ sentTo: Array<string>, invoiceNumbers: Array<string>, totalOverdue: string }> };
 
 export type CommandPaletteCustomerPreviewQueryVariables = Exact<{
   id: string | number;
@@ -15273,6 +15597,93 @@ export type DeskFiscalPeriodsQueryVariables = Exact<{
 
 export type DeskFiscalPeriodsQuery = { fiscalPeriods: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, fiscalYearId: string, name: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, startDate: number, endDate: number, isAdjusting: boolean, lockedAt: number | null, closedAt: number | null, reopenedAt: number | null, reopenReason: string | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
+export type FiscalPeriodCloseBlockersQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FiscalPeriodCloseBlockersQuery = { fiscalPeriodCloseBlockers: { canClose: boolean, blockers: Array<{ field: string, code: string, message: string, category: string }> } };
+
+export type ActivateFiscalPeriodMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ActivateFiscalPeriodMutation = { activateFiscalPeriod: { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, isAdjusting: boolean, allowAdjustingEntries: boolean, adjustmentDeadline: number | null, lockedAt: number | null, closedAt: number | null, reopenedAt: number | null, reopenReason: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type CloseFiscalPeriodMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CloseFiscalPeriodMutation = { closeFiscalPeriod: { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, isAdjusting: boolean, allowAdjustingEntries: boolean, adjustmentDeadline: number | null, lockedAt: number | null, closedAt: number | null, reopenedAt: number | null, reopenReason: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type LockFiscalPeriodMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type LockFiscalPeriodMutation = { lockFiscalPeriod: { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, isAdjusting: boolean, allowAdjustingEntries: boolean, adjustmentDeadline: number | null, lockedAt: number | null, closedAt: number | null, reopenedAt: number | null, reopenReason: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type UnlockFiscalPeriodMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type UnlockFiscalPeriodMutation = { unlockFiscalPeriod: { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, isAdjusting: boolean, allowAdjustingEntries: boolean, adjustmentDeadline: number | null, lockedAt: number | null, closedAt: number | null, reopenedAt: number | null, reopenReason: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type ReopenFiscalPeriodMutationVariables = Exact<{
+  id: string | number;
+  reopenReason: string;
+}>;
+
+
+export type ReopenFiscalPeriodMutation = { reopenFiscalPeriod: { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, isAdjusting: boolean, allowAdjustingEntries: boolean, adjustmentDeadline: number | null, lockedAt: number | null, closedAt: number | null, reopenedAt: number | null, reopenReason: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type FiscalYearClosePreviewQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FiscalYearClosePreviewQuery = { fiscalYearClosePreview: { fiscalYearId: string, fiscalYearName: string, nextFiscalYearId: string | null, nextFiscalYearName: string | null, retainedEarningsAccountId: string | null, retainedEarningsAccountCode: string | null, retainedEarningsAccountName: string | null, revenueMinor: number, costOfRevenueMinor: number, operatingExpenseMinor: number, netIncomeMinor: number, revision: number, canClose: boolean, closingEntry: { kind: FiscalCloseEntryKind, fiscalYearId: string, fiscalPeriodId: string, fiscalPeriodName: string, createsPeriod: boolean, accountingDate: number, description: string, totalDebitMinor: number, totalCreditMinor: number, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, debitMinor: number, creditMinor: number, isRetainedEarnings: boolean }> } | null, openingEntry: { kind: FiscalCloseEntryKind, fiscalYearId: string, fiscalPeriodId: string, fiscalPeriodName: string, createsPeriod: boolean, accountingDate: number, description: string, totalDebitMinor: number, totalCreditMinor: number, lines: Array<{ glAccountId: string, accountCode: string, accountName: string, accountCategory: AccountCategory, debitMinor: number, creditMinor: number, isRetainedEarnings: boolean }> } | null, subledgerChecks: Array<{ key: string, label: string, glAccountId: string, accountCode: string, accountName: string, glBalanceMinor: number, subledgerBalanceMinor: number, differenceMinor: number, toleranceMinor: number, reconciled: boolean, enforced: boolean }>, blockers: Array<{ field: string, code: string, message: string, category: string }> } };
+
+export type CreateFiscalYearMutationVariables = Exact<{
+  input: FiscalYearInput;
+}>;
+
+
+export type CreateFiscalYearMutation = { createFiscalYear: { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateFiscalYearMutationVariables = Exact<{
+  id: string | number;
+  input: FiscalYearInput;
+}>;
+
+
+export type UpdateFiscalYearMutation = { updateFiscalYear: { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number } };
+
+export type ActivateFiscalYearMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ActivateFiscalYearMutation = { activateFiscalYear: { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number } };
+
+export type CloseFiscalYearMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CloseFiscalYearMutation = { closeFiscalYear: { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number } };
+
+export type ReopenFiscalYearMutationVariables = Exact<{
+  id: string | number;
+  reopenReason: string;
+}>;
+
+
+export type ReopenFiscalYearMutation = { reopenFiscalYear: { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number } };
+
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType | null, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
 export type FiscalYearTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: FiscalYearStatus, year: number, name: string, description: string, startDate: number, endDate: number, isCurrent: boolean, isCalendarYear: boolean, allowAdjustingEntries: boolean, version: number, createdAt: number, updatedAt: number, periods: Array<{ ' $fragmentRefs'?: { 'FiscalPeriodFieldsFragment': FiscalPeriodFieldsFragment } }> } & { ' $fragmentName'?: 'FiscalYearTableRowFieldsFragment' };
@@ -17002,6 +17413,43 @@ export type DeskJournalReversalsQueryVariables = Exact<{
 
 export type DeskJournalReversalsQuery = { journalReversals: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, status: JournalReversalStatus, originalJournalEntryId: string, reversalJournalEntryId: string | null, requestedAccountingDate: number, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, approvedAt: number | null, postedAt: number | null, rejectionReason: string | null, cancelReason: string | null, createdAt: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
+export type CreateJournalReversalMutationVariables = Exact<{
+  input: CreateJournalReversalInput;
+}>;
+
+
+export type CreateJournalReversalMutation = { createJournalReversal: { id: string, status: JournalReversalStatus, originalJournalEntryId: string, reversalJournalEntryId: string | null, requestedAccountingDate: number, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, rejectionReason: string | null, cancelReason: string | null, version: number, updatedAt: number } };
+
+export type ApproveJournalReversalMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ApproveJournalReversalMutation = { approveJournalReversal: { id: string, status: JournalReversalStatus, originalJournalEntryId: string, reversalJournalEntryId: string | null, requestedAccountingDate: number, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, rejectionReason: string | null, cancelReason: string | null, version: number, updatedAt: number } };
+
+export type PostJournalReversalMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type PostJournalReversalMutation = { postJournalReversal: { id: string, status: JournalReversalStatus, originalJournalEntryId: string, reversalJournalEntryId: string | null, requestedAccountingDate: number, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, rejectionReason: string | null, cancelReason: string | null, version: number, updatedAt: number } };
+
+export type RejectJournalReversalMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type RejectJournalReversalMutation = { rejectJournalReversal: { id: string, status: JournalReversalStatus, originalJournalEntryId: string, reversalJournalEntryId: string | null, requestedAccountingDate: number, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, rejectionReason: string | null, cancelReason: string | null, version: number, updatedAt: number } };
+
+export type CancelJournalReversalMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type CancelJournalReversalMutation = { cancelJournalReversal: { id: string, status: JournalReversalStatus, originalJournalEntryId: string, reversalJournalEntryId: string | null, requestedAccountingDate: number, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, rejectionReason: string | null, cancelReason: string | null, version: number, updatedAt: number } };
+
 export type JournalReversalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, originalJournalEntryId: string, reversalJournalEntryId: string | null, postedBatchId: string | null, status: JournalReversalStatus, requestedAccountingDate: number, resolvedFiscalYearId: string, resolvedFiscalPeriodId: string, reasonCode: string, reasonText: string, requestedById: string, approvedById: string | null, approvedAt: number | null, rejectedById: string | null, rejectedAt: number | null, rejectionReason: string | null, cancelledById: string | null, cancelledAt: number | null, cancelReason: string | null, postedById: string | null, postedAt: number | null, version: number, createdAt: number, updatedAt: number, originalJournalEntry: { ' $fragmentRefs'?: { 'JournalEntryReferenceFragment': JournalEntryReferenceFragment } }, reversalJournalEntry: { ' $fragmentRefs'?: { 'JournalEntryReferenceFragment': JournalEntryReferenceFragment } } | null } & { ' $fragmentName'?: 'JournalReversalTableRowFieldsFragment' };
 
 export type JournalReversalTableQueryVariables = Exact<{
@@ -17104,6 +17552,65 @@ export type DeskManualJournalsQueryVariables = Exact<{
 
 
 export type DeskManualJournalsQuery = { manualJournals: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, isBalanced: boolean, approvedAt: number | null, rejectionReason: string | null, cancelReason: string | null, postedBatchId: string | null, createdAt: number } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
+export type ManualJournalQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ManualJournalQuery = { manualJournal: { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number, lines: Array<{ id: string, manualJournalRequestId: string, lineNumber: number, glAccountId: string, description: string, debitAmount: number, creditAmount: number, customerId: string | null, locationId: string | null, createdAt: number, updatedAt: number, glAccount: { id: string, accountCode: string, name: string } | null }> | null } | null };
+
+export type CreateManualJournalDraftMutationVariables = Exact<{
+  input: ManualJournalDraftInput;
+}>;
+
+
+export type CreateManualJournalDraftMutation = { createManualJournalDraft: { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type UpdateManualJournalDraftMutationVariables = Exact<{
+  id: string | number;
+  input: ManualJournalDraftInput;
+}>;
+
+
+export type UpdateManualJournalDraftMutation = { updateManualJournalDraft: { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type SubmitManualJournalMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type SubmitManualJournalMutation = { submitManualJournal: { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type ApproveManualJournalMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ApproveManualJournalMutation = { approveManualJournal: { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type PostManualJournalMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type PostManualJournalMutation = { postManualJournal: { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type RejectManualJournalMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type RejectManualJournalMutation = { rejectManualJournal: { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
+
+export type CancelManualJournalMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type CancelManualJournalMutation = { cancelManualJournal: { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } };
 
 export type ManualJournalTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, requestNumber: string, status: ManualJournalStatus, description: string, reason: string | null, accountingDate: number, requestedFiscalYearId: string, requestedFiscalPeriodId: string, currencyCode: string, totalDebit: number, totalCredit: number, approvedAt: number | null, approvedById: string | null, rejectedAt: number | null, rejectedById: string | null, rejectionReason: string | null, cancelledAt: number | null, cancelledById: string | null, cancelReason: string | null, postedBatchId: string | null, createdById: string | null, updatedById: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ManualJournalTableRowFieldsFragment' };
 
@@ -20718,6 +21225,7 @@ export { CreateAccessorialChargeDocument, UpdateAccessorialChargeDocument, Patch
 export { AccessorialChargeTableRowFieldsFragmentDoc, AccessorialChargeTableDocument } from "./documents/accessorial-charge/table";
 export { CreateAccountTypeDocument, UpdateAccountTypeDocument, PatchAccountTypeDocument, BulkUpdateAccountTypeStatusDocument } from "./documents/account-type/mutations";
 export { AccountTypeTableRowFieldsFragmentDoc, AccountTypeTableDocument } from "./documents/account-type/table";
+export { TrialBalanceDocument, IncomeStatementDocument, BalanceSheetDocument } from "./documents/accounting-report/operations";
 export { DeskAccountingSyncRecordFieldsFragmentDoc, DeskAccountingMappingFieldsFragmentDoc, DeskAccountingConnectionDocument, DeskAccountingSyncSummaryDocument, DeskAccountingSyncRecordsDocument, DeskAccountingSyncObjectStatesDocument, DeskAccountingSyncRecordDocument, DeskAccountingSyncAttemptsDocument, DeskAccountingMappingsDocument, DeskAccountingMappingSummaryDocument, DeskAccountingMappingDetailDocument, DeskAccountingDriftFindingsDocument, DeskAccountingDriftOverviewDocument, DeskAccountingInboundChangesDocument } from "./documents/accounting-sync/desk";
 export { AccountingDriftFindingFieldsFragmentDoc, AccountingDriftOverviewFieldsFragmentDoc, AccountingDriftOverviewDocument, AccountingDriftFindingDocument, AccountingDriftFixPreviewDocument, ResolveAccountingDriftDocument, DismissAccountingDriftDocument, CheckAccountingDriftDocument, AccountingDriftFindingTableDocument } from "./documents/accounting-sync/drift";
 export { AccountingInboundChangeFieldsFragmentDoc, AccountingInboundOverviewDocument, AccountingInboundChangeDocument, AccountingInboundApplyPreviewDocument, ApplyAccountingInboundChangeDocument, IgnoreAccountingInboundChangeDocument, AccountingInboundChangeTableDocument } from "./documents/accounting-sync/inbound";
@@ -20725,6 +21233,7 @@ export { AccountingMappingFieldsFragmentDoc, AccountingReferenceObjectFieldsFrag
 export { AccountingSyncRecordTableDocument } from "./documents/accounting-sync/table";
 export { LateChargeAssessmentResultFieldsFragmentDoc, LateChargePreviewDocument, AssessLateChargesDocument } from "./documents/accounts-receivable/late-charges";
 export { ArAgingSummaryDocument, ArOpenItemsDocument, ArCustomerLedgerDocument, ArCustomerStatementDocument, AccountingBriefingDocument, ArDashboardKpisDocument, ArDsoTrendDocument, ArAgingTrendDocument, ArCashFlowForecastDocument, ArTopOverdueCustomersDocument, ArCollectionsWorklistDocument, ArPaymentStatsDocument, ArCustomerProfileDocument } from "./documents/accounts-receivable/operations";
+export { SentCustomerStatementsDocument, SendCustomerStatementDocument } from "./documents/accounts-receivable/statements";
 export { AgentScorecardFieldsFragmentDoc, AgentScorecardDocument } from "./documents/agent-scorecard/scorecard";
 export { MyAgentFieldsFragmentDoc, AgentAccessRoleFieldsFragmentDoc, AgentAccessFieldsFragmentDoc, RoleAgentAccessFieldsFragmentDoc, MyAgentsDocument, MyAgentMatchDocument, RecordMyAgentSuggestionDocument, SettleMyAgentSuggestionDocument, DecideMyPlanDocument, DecideMyProposalDocument, AgentAccessDocument, SetAgentAccessDocument, SetAgentUnattendedRoleDocument, RoleAgentAccessDocument, SetRoleAgentAccessDocument, AgentAccessPreviewDocument, SuggestedAgentAudienceDocument, DecideMyProposalsDocument, UndoMyDecisionDocument, CommitMyDecisionNowDocument } from "./documents/agent/access";
 export { AiProviderFailureFieldsFragmentDoc, AiTuneUpFieldsFragmentDoc, AiControlSummaryDocument, DismissAiProviderFailureDocument, RestoreAiProviderFailureDocument, AgentPromotionPreviewDocument, AiUsageDailyDocument, AiUsageFeaturesDocument, AiTuneUpsDocument, ApplyAiTuneUpDocument, DismissAiTuneUpDocument, RestoreAiTuneUpDocument, AiAgentRosterDocument } from "./documents/agent/ai-control";
@@ -20756,6 +21265,7 @@ export { ApiKeyTableRowFieldsFragmentDoc, ApiKeyTableDocument } from "./document
 export { AttentionSummaryDocument } from "./documents/attention/summary";
 export { RecentActivityDocument } from "./documents/audit-log/recent-activity";
 export { AuditLogTableRowFieldsFragmentDoc, AuditLogTableDocument } from "./documents/audit-log/table";
+export { BankReceiptBatchesDocument, BankReceiptBatchDocument, ImportBankReceiptBatchDocument, BankReceiptDocument, BankReceiptExceptionsDocument, BankReceiptMatchSuggestionsDocument, BankReceiptSummaryDocument, MatchBankReceiptDocument, BankReceiptWorkItemsDocument, BankReceiptWorkItemDocument, AssignBankReceiptWorkItemDocument, StartBankReceiptWorkItemReviewDocument, ResolveBankReceiptWorkItemDocument, DismissBankReceiptWorkItemDocument } from "./documents/bank-receipt/operations";
 export { BenefitPlansDocument, WorkerBenefitEnrollmentsDocument, BenefitEnrollmentsDocument, BenefitCostsDocument, WorkerTotalCompensationDocument, MyTotalCompensationDocument, CreateBenefitPlanDocument, UpdateBenefitPlanDocument, EnrollBenefitDocument, EndBenefitEnrollmentDocument } from "./documents/benefits/operations";
 export { BillingQueueActionFieldsFragmentDoc, UpdateBillingQueueStatusDocument, AssignBillingQueueBillerDocument } from "./documents/billing-queue/mutations";
 export { BillingQueueItemsDocument } from "./documents/billing-queue/queue";
@@ -20771,6 +21281,7 @@ export { CarrierIntelFindingFieldsFragmentDoc, CarrierIntelSnapshotSummaryFields
 export { DeskCarrierSettlementCardDocument } from "./documents/carrier-settlement/desk";
 export { CarrierSettlementTableDocument, CarrierSettlementDetailDocument, CarrierSettlementBatchTableDocument, CarrierSettlementBatchDetailDocument, CarrierCostEventTableDocument, CarrierSettlementControlDocument, CurrentCarrierSettlementPeriodDocument, CarrierSettlementWorkspaceSummaryDocument, CarrierLedgerEntriesDocument, CarrierInvoiceMatchesDocument, EdiCarrierInvoicesDocument, SuggestCarrierForEdiInvoiceDocument, ExportCarrierSettlementBatchCsvDocument, GenerateCarrierSettlementBatchDocument, SubmitCarrierSettlementDocument, ApproveCarrierSettlementDocument, RejectCarrierSettlementDocument, PostCarrierSettlementDocument, MarkCarrierSettlementPaidDocument, VoidCarrierSettlementDocument, RecalculateCarrierSettlementDocument, AddCarrierSettlementAdjustmentDocument, RemoveCarrierSettlementAdjustmentDocument, UpdateCarrierSettlementControlDocument, LinkEdiCarrierInvoiceToCarrierDocument, CreateCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchWithVarianceDocument, RejectCarrierInvoiceMatchDocument } from "./documents/carrier-settlement/operations";
 export { CarrierContactFieldsFragmentDoc, CarrierInsurancePolicyFieldsFragmentDoc, CarrierTableRowFieldsFragmentDoc, CarrierTableDocument } from "./documents/carrier/table";
+export { CollectionWorklistDocument, CollectionAccountDocument, LogCollectionActivityDocument, AssignCollectionCollectorDocument, ScheduleCollectionFollowUpDocument, SendPaymentReminderDocument } from "./documents/collection/operations";
 export { CommandPaletteCustomerPreviewDocument } from "./documents/command-palette/operations";
 export { CreateCommodityDocument, UpdateCommodityDocument, PatchCommodityDocument, BulkUpdateCommodityStatusDocument } from "./documents/commodity/mutations";
 export { CommodityTableRowFieldsFragmentDoc, CommodityTableDocument } from "./documents/commodity/table";
@@ -20824,6 +21335,8 @@ export { FactoringRemittanceFieldsFragmentDoc, FactoringRemittanceLineFieldsFrag
 export { FactoringSubmissionItemFieldsFragmentDoc, FactoringSubmissionFieldsFragmentDoc, FactoringSubmissionTableDocument, FactoringSubmissionDetailDocument, FactoringSubmissionPlanDocument, SubmitInvoicesToFactorDocument, RetryFactoringSubmissionDocument, CancelFactoringSubmissionDocument } from "./documents/factoring/submissions";
 export { FactoringTransportFieldsFragmentDoc, FactoringTransportDocument, SaveFactoringTransportDocument, TestFactoringTransportDocument } from "./documents/factoring/transport";
 export { DeskFiscalPeriodsDocument } from "./documents/fiscal-period/desk";
+export { FiscalPeriodCloseBlockersDocument, ActivateFiscalPeriodDocument, CloseFiscalPeriodDocument, LockFiscalPeriodDocument, UnlockFiscalPeriodDocument, ReopenFiscalPeriodDocument } from "./documents/fiscal-period/operations";
+export { FiscalYearClosePreviewDocument, CreateFiscalYearDocument, UpdateFiscalYearDocument, ActivateFiscalYearDocument, CloseFiscalYearDocument, ReopenFiscalYearDocument } from "./documents/fiscal-year/operations";
 export { FiscalPeriodFieldsFragmentDoc, FiscalYearTableRowFieldsFragmentDoc, FiscalYearTableDocument } from "./documents/fiscal-year/table";
 export { CreateFleetCodeDocument, UpdateFleetCodeDocument, PatchFleetCodeDocument, BulkUpdateFleetCodeStatusDocument } from "./documents/fleet-code/mutations";
 export { FleetCodeTableRowFieldsFragmentDoc, FleetCodeTableDocument } from "./documents/fleet-code/table";
@@ -20872,6 +21385,7 @@ export { DeskJournalCardLineFieldsFragmentDoc, DeskJournalCardPeriodFieldsFragme
 export { JournalEntryDetailDocument, JournalSourceByObjectDocument, JournalEntriesBySourceDocument } from "./documents/journal-entry/operations";
 export { JournalReviewResultFieldsFragmentDoc, JournalReviewSummaryDocument, JournalReviewTableDocument, ApproveJournalEntriesDocument, PostJournalEntriesDocument } from "./documents/journal-entry/review";
 export { DeskJournalReversalsDocument } from "./documents/journal-reversal/desk";
+export { CreateJournalReversalDocument, ApproveJournalReversalDocument, PostJournalReversalDocument, RejectJournalReversalDocument, CancelJournalReversalDocument } from "./documents/journal-reversal/operations";
 export { JournalReversalTableRowFieldsFragmentDoc, JournalReversalTableDocument } from "./documents/journal-reversal/table";
 export { JurisdictionRuleOverrideTableRowFieldsFragmentDoc, JurisdictionRuleOverrideTableDocument } from "./documents/jurisdiction-rule/overrides";
 export { JurisdictionRuleTableRowFieldsFragmentDoc, JurisdictionRuleTableDocument } from "./documents/jurisdiction-rule/table";
@@ -20880,6 +21394,7 @@ export { LocationCategoryTableRowFieldsFragmentDoc, LocationCategoryTableDocumen
 export { DeskLocationCardDocument, DeskLocationDwellDocument, DeskLocationPoliciesDocument } from "./documents/location-desk/desk";
 export { LocationTableRowFieldsFragmentDoc, LocationTableDocument } from "./documents/location/table";
 export { DeskManualJournalCardDocument, DeskManualJournalsDocument } from "./documents/manual-journal/desk";
+export { ManualJournalDocument, CreateManualJournalDraftDocument, UpdateManualJournalDraftDocument, SubmitManualJournalDocument, ApproveManualJournalDocument, PostManualJournalDocument, RejectManualJournalDocument, CancelManualJournalDocument } from "./documents/manual-journal/operations";
 export { ManualJournalTableRowFieldsFragmentDoc, ManualJournalTableDocument } from "./documents/manual-journal/table";
 export { NotificationFieldsFragmentDoc, NotificationListDocument, NotificationUnreadCountDocument, MyNotificationListDocument, MyNotificationUnreadCountDocument, MarkAllMyNotificationsReadDocument, MarkMyNotificationsReadDocument, MarkMyNotificationsUnreadDocument, DismissMyNotificationsDocument, RestoreMyNotificationsDocument, MarkNotificationsReadDocument, MarkNotificationsUnreadDocument, MarkAllNotificationsReadDocument, DismissNotificationsDocument, RestoreNotificationsDocument } from "./documents/notification/operations";
 export { DeskOrderCardDocument, DeskOrderDocument } from "./documents/order-desk/desk";

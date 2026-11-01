@@ -15,10 +15,6 @@ export const sentStatementSchema = z.object({
 });
 export type SentStatement = z.infer<typeof sentStatementSchema>;
 
-export const sentStatementListSchema = z.object({
-  statements: z.array(sentStatementSchema),
-});
-
 export const statementSendResultSchema = z.object({
   sentTo: z.array(z.string()),
   endingBalance: z.string(),

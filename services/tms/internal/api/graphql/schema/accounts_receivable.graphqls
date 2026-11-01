@@ -309,3 +309,43 @@ extend type Query {
   arCustomerProfile(customerId: ID!): ARCustomerProfile!
   arPaymentStats: ARPaymentStats!
 }
+
+"A statement emailed to a customer."
+type SentCustomerStatement {
+  id: ID!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  endingBalanceMinor: Int!
+  pastDueMinor: Int!
+  currencyCode: String!
+  sentTo: String!
+  "True when the monthly run sent it rather than a person."
+  monthly: Boolean!
+  sentByName: String!
+  sentAt: Timestamp!
+}
+
+type CustomerStatementSendResult {
+  sentTo: [String!]!
+  "The ending balance the statement shows, formatted in its currency."
+  endingBalance: String!
+  fileName: String!
+}
+
+input SendCustomerStatementInput {
+  "Where the statement starts; null runs from the first transaction."
+  startDate: Timestamp
+  "The statement date; null is today."
+  asOfDate: Timestamp
+  note: String!
+}
+
+extend type Query {
+  "The statements a customer has been sent, newest first, at most 50."
+  sentCustomerStatements(customerId: ID!): [SentCustomerStatement!]!
+}
+
+extend type Mutation {
+  "Emails the customer's statement to its invoice recipients with the PDF attached."
+  sendCustomerStatement(customerId: ID!, input: SendCustomerStatementInput!): CustomerStatementSendResult!
+}

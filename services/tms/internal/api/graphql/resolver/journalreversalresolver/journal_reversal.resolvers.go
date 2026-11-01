@@ -8,8 +8,10 @@ package journalreversalresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
@@ -57,4 +59,94 @@ func (r *QueryResolver) JournalReversal(ctx context.Context, id string) (*journa
 		ReversalID: reversalID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *MutationResolver) CreateJournalReversal(ctx context.Context, input gqlmodel.CreateJournalReversalInput) (*journalreversal.Reversal, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalReversal, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	originalEntryID, err := gqlid.RequiredID("originalJournalEntryId", input.OriginalJournalEntryID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.JournalReversalService.Create(ctx, &journalreversalports.CreateJournalReversalRequest{
+		OriginalJournalEntryID:  originalEntryID,
+		RequestedAccountingDate: int64(input.RequestedAccountingDate),
+		ReasonCode:              input.ReasonCode,
+		ReasonText:              input.ReasonText,
+		TenantInfo:              resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) ApproveJournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalReversal, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	reversalID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.JournalReversalService.Approve(ctx, &journalreversalports.GetJournalReversalRequest{
+		ReversalID: reversalID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PostJournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalReversal, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	reversalID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.JournalReversalService.Post(ctx, &journalreversalports.GetJournalReversalRequest{
+		ReversalID: reversalID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) RejectJournalReversal(ctx context.Context, id string, reason string) (*journalreversal.Reversal, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalReversal, permission.OpReject)
+	if err != nil {
+		return nil, err
+	}
+
+	reversalID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.JournalReversalService.Reject(ctx, &journalreversalports.RejectJournalReversalRequest{
+		ReversalID: reversalID,
+		Reason:     reason,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) CancelJournalReversal(ctx context.Context, id string, reason string) (*journalreversal.Reversal, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalReversal, permission.OpCancel)
+	if err != nil {
+		return nil, err
+	}
+
+	reversalID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.JournalReversalService.Cancel(ctx, &journalreversalports.CancelJournalReversalRequest{
+		ReversalID: reversalID,
+		Reason:     reason,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
 }

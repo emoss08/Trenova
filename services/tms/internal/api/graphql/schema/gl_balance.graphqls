@@ -1,0 +1,65 @@
+"One general ledger account's debits, credits and net change within a fiscal period."
+type GLPeriodAccountBalance {
+  organizationId: ID!
+  businessUnitId: ID!
+  glAccountId: ID!
+  fiscalYearId: ID!
+  fiscalPeriodId: ID!
+  accountCode: String!
+  accountName: String!
+  accountCategory: AccountCategory!
+  periodDebitMinor: Int!
+  periodCreditMinor: Int!
+  netChangeMinor: Int!
+}
+
+"One account's amount on a financial statement, signed the way the statement reads it."
+type GLStatementLine {
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  accountCategory: AccountCategory!
+  amountMinor: Int!
+}
+
+"A titled block of a financial statement and its total."
+type GLStatementSection {
+  key: String!
+  label: String!
+  totalMinor: Int!
+  lines: [GLStatementLine!]!
+}
+
+"Revenue less costs and expenses posted within a fiscal period."
+type GLIncomeStatement {
+  fiscalPeriodId: ID!
+  revenue: GLStatementSection!
+  costOfRevenue: GLStatementSection!
+  operatingExpense: GLStatementSection!
+  grossProfitMinor: Int!
+  netIncomeMinor: Int!
+}
+
+"""
+The position at the end of a fiscal period: every period of the year up to and
+including it is summed, and the year's opening entry carries the prior year in.
+"""
+type GLBalanceSheet {
+  fiscalPeriodId: ID!
+  assets: GLStatementSection!
+  liabilities: GLStatementSection!
+  equity: GLStatementSection!
+  "Revenue less costs and expenses so far this year, not yet closed into retained earnings."
+  currentYearEarningsMinor: Int!
+  totalAssetsMinor: Int!
+  totalLiabilitiesMinor: Int!
+  "Equity including the current year's earnings."
+  totalEquityMinor: Int!
+}
+
+extend type Query {
+  "Every account's balance within a fiscal period."
+  trialBalance(fiscalPeriodId: ID!): [GLPeriodAccountBalance!]!
+  incomeStatement(fiscalPeriodId: ID!): GLIncomeStatement!
+  balanceSheet(fiscalPeriodId: ID!): GLBalanceSheet!
+}

@@ -1,6 +1,7 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { FiscalYearRow } from "@/lib/graphql/fiscal-year-table";
+import { apiService } from "@/services/api";
 import { fiscalYearSchema, type FiscalYear } from "@/types/fiscal-year";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -54,10 +55,6 @@ export function FiscalYearPanel({
           ...(formState.defaultValues as FiscalYear),
           status: updated.status,
           isCurrent: updated.isCurrent,
-          closedAt: updated.closedAt,
-          closedById: updated.closedById,
-          lockedAt: updated.lockedAt,
-          lockedById: updated.lockedById,
           version: updated.version,
           updatedAt: updated.updatedAt,
         },
@@ -74,7 +71,9 @@ export function FiscalYearPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
-        url="/fiscal-years/"
+        mutationFn={(values, currentRow) =>
+          apiService.fiscalYearService.update(currentRow.id, values)
+        }
         queryKey="fiscal-year-list"
         title={t("Fiscal year")}
         fieldKey="name"
@@ -96,7 +95,7 @@ export function FiscalYearPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
-      url="/fiscal-years/"
+      mutationFn={(values) => apiService.fiscalYearService.create(values)}
       queryKey="fiscal-year-list"
       title={t("Fiscal year")}
       formComponent={<FiscalYearForm mode="create" />}

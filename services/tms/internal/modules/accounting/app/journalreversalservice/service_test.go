@@ -140,7 +140,7 @@ func TestCreateJournalReversalBlockedWhenPolicyDisallows(t *testing.T) {
 	assert.Contains(t, err.Error(), "disabled")
 }
 
-func TestListAndGetJournalReversal(t *testing.T) {
+func TestGetJournalReversal(t *testing.T) {
 	t.Parallel()
 
 	entity := &journalreversal.Reversal{
@@ -148,16 +148,6 @@ func TestListAndGetJournalReversal(t *testing.T) {
 		Status: journalreversal.StatusRequested,
 	}
 	repo := journalreversalportsmock.NewMockJournalReversalRepository(t)
-	repo.EXPECT().
-		List(mock.Anything, mock.Anything).
-		Return(
-			&pagination.ListResult[*journalreversal.Reversal]{
-				Items:      []*journalreversal.Reversal{entity},
-				Total:      1,
-				TotalExact: true,
-			},
-			nil,
-		)
 	repo.EXPECT().
 		GetByID(
 			mock.Anything,
@@ -168,15 +158,6 @@ func TestListAndGetJournalReversal(t *testing.T) {
 		).
 		Return(entity, nil)
 	svc := &Service{journalReversalRepo: repo}
-
-	list, err := svc.List(
-		t.Context(),
-		&journalreversalports.ListJournalReversalsRequest{
-			Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}},
-		},
-	)
-	require.NoError(t, err)
-	require.Len(t, list.Items, 1)
 
 	got, err := svc.Get(
 		t.Context(),

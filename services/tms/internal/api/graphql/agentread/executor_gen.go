@@ -663,8 +663,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CustomerTable",
-		Hash:     "sha256:77fc50a2943abe8cc016f3b69f09896edacab646e68166b8cc4d87a08bd86e99",
-		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:974b5806f950d3ca2b8665065d7df4b1801814d8717b546c29b5317d3131d091",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } brokerVettingEnabled businessUnitId checkCallIntervalHours city code consolidationPriority createdAt dotNumber emailProfile { ...CustomerEmailProfileFields } etaRiskThresholdMinutes exclusiveConsolidation externalId id isGeocoded latitude longitude mcNumber name organizationId placeId postalCode stateId status statusUpdatePreference statusUpdateRecipients updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { cursor node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskDetentionCard",
@@ -1003,8 +1003,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CommodityTable",
-		Hash:     "sha256:563bed9f11970bc10ed428708f0673b049b3695462590cf2681fc74729a9593f",
-		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:20cdf710d66aeebbbbba36e2128af8c748fa48044d3bb6360b7077b70e892efc",
+		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId heightPerUnit id lengthPerUnit linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit widthPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { cursor node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "FleetCodeTable",
@@ -1018,8 +1018,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "HoldReasonTable",
-		Hash:     "sha256:a90ea543247ade1f06a13a861011a27d0e03255bc5f1d0673d628b66f547893c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:6f82d9070c470b39add2c4acea54155f342a1d4b1ea43b16dbb22f1bdfd5fd0b",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description externalMap id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { cursor node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ServiceTypeTable",
@@ -1742,6 +1742,7 @@ func NewSchema(p ResolverParams) Schema {
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 		factoringMutation:             &factoringMutation{Deps: factoringDeps},
 		factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
+		fiscalperiodMutation:          &fiscalperiodMutation{Deps: fiscalperiodDeps},
 		fleetcodeMutation:             &fleetcodeMutation{Deps: fleetcodeDeps},
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
 		fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
@@ -1756,7 +1757,9 @@ func NewSchema(p ResolverParams) Schema {
 		invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
 		invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
 		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
+		journalreversalMutation:       &journalreversalMutation{Deps: journalreversalDeps},
 		locationcategoryMutation:      &locationcategoryMutation{Deps: locationcategoryDeps},
+		manualjournalMutation:         &manualjournalMutation{Deps: manualjournalDeps},
 		orderMutation:                 &orderMutation{Deps: orderDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
 		reportMutation:                &reportMutation{Deps: reportDeps},
@@ -1980,6 +1983,7 @@ func NewSchema(p ResolverParams) Schema {
 		"FactoringSubmissionItem":      func() any { return &factoringresolver.FactoringSubmissionItemResolver{Deps: factoringDeps} },
 		"FactoringSubmissionPlan":      func() any { return &factoringresolver.FactoringSubmissionPlanResolver{Deps: factoringDeps} },
 		"FactoringTransport":           func() any { return &factoringresolver.FactoringTransportResolver{Deps: factoringDeps} },
+		"FiscalCloseBlocker":           func() any { return &fiscalperiodresolver.FiscalCloseBlockerResolver{Deps: fiscalperiodDeps} },
 		"FleetSafetyRank":              func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
 		"FleetSafetyTerminal":          func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
 		"FormulaLibraryImport":         func() any { return &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps} },
@@ -2030,6 +2034,7 @@ func NewSchema(p ResolverParams) Schema {
 		"LeaveControl":         func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
 		"LeaveEntitlement":     func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
 		"LocationCategory":     func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"ManualJournalLine":    func() any { return &manualjournalresolver.ManualJournalLineResolver{Deps: manualjournalDeps} },
 		"MyPTOBalance":         func() any { return &driverportalresolver.MyPTOBalanceResolver{Deps: driverportalDeps} },
 		"OSHAAnnualSummary":    func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
 		"Order":                func() any { return &orderresolver.OrderResolver{Deps: orderDeps} },
@@ -2156,6 +2161,7 @@ type mutationResolver struct {
 	*equipmenttypeMutation
 	*factoringMutation
 	*factoringcompanyMutation
+	*fiscalperiodMutation
 	*fleetcodeMutation
 	*fleetsafetyMutation
 	*fuelpurchaseMutation
@@ -2170,7 +2176,9 @@ type mutationResolver struct {
 	*invoiceadjustmentMutation
 	*invoicedisputeMutation
 	*journalentryMutation
+	*journalreversalMutation
 	*locationcategoryMutation
+	*manualjournalMutation
 	*orderMutation
 	*performancereviewMutation
 	*reportMutation
@@ -2295,6 +2303,7 @@ type (
 	equipmenttypeMutation           = equipmenttyperesolver.MutationResolver
 	factoringMutation               = factoringresolver.MutationResolver
 	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
+	fiscalperiodMutation            = fiscalperiodresolver.MutationResolver
 	fleetcodeMutation               = fleetcoderesolver.MutationResolver
 	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
 	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
@@ -2309,7 +2318,9 @@ type (
 	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
 	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
 	journalentryMutation            = journalentryresolver.MutationResolver
+	journalreversalMutation         = journalreversalresolver.MutationResolver
 	locationcategoryMutation        = locationcategoryresolver.MutationResolver
+	manualjournalMutation           = manualjournalresolver.MutationResolver
 	orderMutation                   = orderresolver.MutationResolver
 	performancereviewMutation       = performancereviewresolver.MutationResolver
 	reportMutation                  = reportresolver.MutationResolver

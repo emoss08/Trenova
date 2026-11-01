@@ -242,21 +242,14 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 		},
 	)
 	require.NoError(t, err)
-	listed, err := reversalRepo.List(
-		ctx,
-		&journalreversalports.ListJournalReversalsRequest{Filter: filter},
-	)
-	require.NoError(t, err)
-	for _, items := range [][]*journalreversal.Reversal{page.Items, listed.Items} {
-		idx := slices.IndexFunc(items, func(item *journalreversal.Reversal) bool {
-			return item.ID == created.ID
-		})
-		require.GreaterOrEqual(t, idx, 0)
-		require.NotNil(t, items[idx].OriginalJournalEntry)
-		assert.Equal(t, "JE-ORIG", items[idx].OriginalJournalEntry.EntryNumber)
-		require.NotNil(t, items[idx].ReversalJournalEntry)
-		assert.Equal(t, posted.ReversalJournalEntryID, items[idx].ReversalJournalEntry.ID)
-	}
+	idx := slices.IndexFunc(page.Items, func(item *journalreversal.Reversal) bool {
+		return item.ID == created.ID
+	})
+	require.GreaterOrEqual(t, idx, 0)
+	require.NotNil(t, page.Items[idx].OriginalJournalEntry)
+	assert.Equal(t, "JE-ORIG", page.Items[idx].OriginalJournalEntry.EntryNumber)
+	require.NotNil(t, page.Items[idx].ReversalJournalEntry)
+	assert.Equal(t, posted.ReversalJournalEntryID, page.Items[idx].ReversalJournalEntry.ID)
 
 	pb := glbalancedb.GLAccountPeriodBalances
 	debitBalance, err := pb.Where(

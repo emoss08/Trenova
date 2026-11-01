@@ -8,8 +8,12 @@ package manualjournalresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/accountingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
@@ -18,6 +22,23 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+func (r *ManualJournalLineResolver) GlAccount(ctx context.Context, obj *manualjournal.Line) (*gqlmodel.JournalEntryLineAccount, error) {
+	account := obj.GLAccount
+	if account == nil {
+		if obj.GLAccountID.IsNil() || !loadercore.Available(ctx) {
+			return nil, nil //nolint:nilnil // absent relation renders as null
+		}
+
+		loaded, err := accountingloaders.GLAccountByID(ctx, obj.GLAccountID.String())
+		if err != nil {
+			return nil, nil //nolint:nilerr,nilnil // fall back to the raw account id in the UI
+		}
+		account = loaded
+	}
+
+	return lineAccountToModel(account), nil
+}
 
 func (r *QueryResolver) ManualJournals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ManualJournalConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpRead)
@@ -82,4 +103,130 @@ func (r *QueryResolver) ManualJournalCard(ctx context.Context, id string) (*jour
 		},
 		IncludeEntries: r.HasPermission(ctx, authCtx, permission.ResourceJournalEntry, permission.OpRead),
 	})
+}
+
+func (r *MutationResolver) CreateManualJournalDraft(ctx context.Context, input gqlmodel.ManualJournalDraftInput) (*manualjournal.Request, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	lines, err := manualJournalLinesFromInput(input.Lines)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ManualJournalService.CreateDraft(ctx, &manualjournalports.CreateManualJournalRequest{
+		Description:    input.Description,
+		Reason:         gqlscalar.StringValue(input.Reason),
+		AccountingDate: int64(gqlscalar.DerefInt(input.AccountingDate)),
+		CurrencyCode:   input.CurrencyCode,
+		Lines:          lines,
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) UpdateManualJournalDraft(ctx context.Context, id string, input gqlmodel.ManualJournalDraftInput) (*manualjournal.Request, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	requestID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	lines, err := manualJournalLinesFromInput(input.Lines)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ManualJournalService.UpdateDraft(ctx, &manualjournalports.UpdateManualJournalDraftRequest{
+		RequestID:      requestID,
+		Description:    input.Description,
+		Reason:         gqlscalar.StringValue(input.Reason),
+		AccountingDate: int64(gqlscalar.DerefInt(input.AccountingDate)),
+		CurrencyCode:   input.CurrencyCode,
+		Lines:          lines,
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) SubmitManualJournal(ctx context.Context, id string) (*manualjournal.Request, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpSubmit)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := getManualJournalRequest(id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ManualJournalService.Submit(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) ApproveManualJournal(ctx context.Context, id string) (*manualjournal.Request, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := getManualJournalRequest(id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ManualJournalService.Approve(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PostManualJournal(ctx context.Context, id string) (*manualjournal.Request, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := getManualJournalRequest(id, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ManualJournalService.Post(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) RejectManualJournal(ctx context.Context, id string, reason string) (*manualjournal.Request, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpReject)
+	if err != nil {
+		return nil, err
+	}
+
+	requestID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ManualJournalService.Reject(ctx, &manualjournalports.RejectManualJournalRequest{
+		RequestID:  requestID,
+		Reason:     reason,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) CancelManualJournal(ctx context.Context, id string, reason string) (*manualjournal.Request, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceManualJournal, permission.OpCancel)
+	if err != nil {
+		return nil, err
+	}
+
+	requestID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ManualJournalService.Cancel(ctx, &manualjournalports.CancelManualJournalRequest{
+		RequestID:  requestID,
+		Reason:     reason,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
 }

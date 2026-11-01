@@ -1,0 +1,176 @@
+query FiscalYearClosePreview($id: ID!) {
+  fiscalYearClosePreview(id: $id) {
+    fiscalYearId
+    fiscalYearName
+    nextFiscalYearId
+    nextFiscalYearName
+    retainedEarningsAccountId
+    retainedEarningsAccountCode
+    retainedEarningsAccountName
+    revenueMinor
+    costOfRevenueMinor
+    operatingExpenseMinor
+    netIncomeMinor
+    closingEntry {
+      kind
+      fiscalYearId
+      fiscalPeriodId
+      fiscalPeriodName
+      createsPeriod
+      accountingDate
+      description
+      totalDebitMinor
+      totalCreditMinor
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        accountCategory
+        debitMinor
+        creditMinor
+        isRetainedEarnings
+      }
+    }
+    openingEntry {
+      kind
+      fiscalYearId
+      fiscalPeriodId
+      fiscalPeriodName
+      createsPeriod
+      accountingDate
+      description
+      totalDebitMinor
+      totalCreditMinor
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        accountCategory
+        debitMinor
+        creditMinor
+        isRetainedEarnings
+      }
+    }
+    subledgerChecks {
+      key
+      label
+      glAccountId
+      accountCode
+      accountName
+      glBalanceMinor
+      subledgerBalanceMinor
+      differenceMinor
+      toleranceMinor
+      reconciled
+      enforced
+    }
+    revision
+    canClose
+    blockers {
+      field
+      code
+      message
+      category
+    }
+  }
+}
+
+mutation CreateFiscalYear($input: FiscalYearInput!) {
+  createFiscalYear(input: $input) {
+    id
+    businessUnitId
+    organizationId
+    status
+    year
+    name
+    description
+    startDate
+    endDate
+    isCurrent
+    isCalendarYear
+    allowAdjustingEntries
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateFiscalYear($id: ID!, $input: FiscalYearInput!) {
+  updateFiscalYear(id: $id, input: $input) {
+    id
+    businessUnitId
+    organizationId
+    status
+    year
+    name
+    description
+    startDate
+    endDate
+    isCurrent
+    isCalendarYear
+    allowAdjustingEntries
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation ActivateFiscalYear($id: ID!) {
+  activateFiscalYear(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    status
+    year
+    name
+    description
+    startDate
+    endDate
+    isCurrent
+    isCalendarYear
+    allowAdjustingEntries
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CloseFiscalYear($id: ID!) {
+  closeFiscalYear(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    status
+    year
+    name
+    description
+    startDate
+    endDate
+    isCurrent
+    isCalendarYear
+    allowAdjustingEntries
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation ReopenFiscalYear($id: ID!, $reopenReason: String!) {
+  reopenFiscalYear(id: $id, reopenReason: $reopenReason) {
+    id
+    businessUnitId
+    organizationId
+    status
+    year
+    name
+    description
+    startDate
+    endDate
+    isCurrent
+    isCalendarYear
+    allowAdjustingEntries
+    version
+    createdAt
+    updatedAt
+  }
+}

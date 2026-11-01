@@ -3,7 +3,6 @@ package customerstatementhandler
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
@@ -36,18 +35,11 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/accounting/accounts-receivable/customers/:customerID")
-	read := h.pm.RequirePermission(
-		permission.ResourceAccountsReceivable.String(),
-		permission.OpRead,
+	api.GET(
+		"/statement/pdf/",
+		h.pm.RequirePermission(permission.ResourceAccountsReceivable.String(), permission.OpRead),
+		h.pdf,
 	)
-	work := h.pm.RequirePermission(
-		permission.ResourceAccountsReceivable.String(),
-		permission.OpUpdate,
-	)
-
-	api.GET("/statement/pdf/", read, h.pdf)
-	api.POST("/statement/send/", work, h.send)
-	api.GET("/statements/", read, h.history)
 }
 
 func (h *Handler) pdf(c *gin.Context) {
@@ -75,46 +67,6 @@ func (h *Handler) pdf(c *gin.Context) {
 	// template markup an app-origin document.
 	c.Header("X-Content-Type-Options", "nosniff")
 	c.Data(http.StatusOK, "application/pdf", rendered.PDF)
-}
-
-func (h *Handler) send(c *gin.Context) {
-	req := new(customerstatementports.SendRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	if err := h.scope(c, &req.StatementRequest); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	result, err := h.service.Send(
-		c.Request.Context(),
-		req,
-		actorutil.FromAuthContext(authctx.GetAuthContext(c)),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, result)
-}
-
-func (h *Handler) history(c *gin.Context) {
-	customerID, err := pulid.MustParse(c.Param("customerID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	sent, err := h.service.ListSent(c.Request.Context(), customerstatementports.ListSentRequest{
-		TenantInfo: tenantOf(c),
-		CustomerID: customerID,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	helpers.JSON(c, http.StatusOK, gin.H{"statements": sent})
 }
 
 // scope fills in who is asking and about which customer from the request

@@ -1,0 +1,176 @@
+enum BankReceiptStatus {
+  Imported
+  Matched
+  Exception
+}
+
+enum BankReceiptBatchStatus {
+  Processing
+  Completed
+}
+
+enum BankReceiptWorkItemStatus {
+  Open
+  Assigned
+  InReview
+  Resolved
+  Dismissed
+}
+
+enum BankReceiptWorkItemResolutionType {
+  MatchedToPayment
+  MarkedFalsePositive
+  RequiresExternalFollowUp
+  Superseded
+}
+
+"A line of cash the bank reported arriving, matched to a customer payment or left as an exception."
+type BankReceipt {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  receiptDate: Timestamp!
+  amountMinor: Int!
+  referenceNumber: String!
+  memo: String!
+  status: BankReceiptStatus!
+  importBatchId: ID
+  matchedCustomerPaymentId: ID
+  matchedAt: Timestamp
+  matchedById: ID
+  "Why it could not be matched; empty unless it is an exception."
+  exceptionReason: String!
+  createdById: ID!
+  updatedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A bank file's receipts, imported together."
+type BankReceiptBatch {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  source: String!
+  reference: String!
+  status: BankReceiptBatchStatus!
+  importedCount: Int!
+  matchedCount: Int!
+  exceptionCount: Int!
+  importedAmountMinor: Int!
+  matchedAmountMinor: Int!
+  exceptionAmountMinor: Int!
+  createdById: ID!
+  updatedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type BankReceiptBatchDetail {
+  batch: BankReceiptBatch!
+  receipts: [BankReceipt!]!
+}
+
+"An exception receipt someone has to look into."
+type BankReceiptWorkItem {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  bankReceiptId: ID!
+  status: BankReceiptWorkItemStatus!
+  assignedToUserId: ID
+  assignedAt: Timestamp
+  "How it was settled; null while it is open."
+  resolutionType: BankReceiptWorkItemResolutionType
+  resolutionNote: String!
+  resolvedByUserId: ID
+  resolvedAt: Timestamp
+  createdById: ID!
+  updatedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A customer payment a receipt could be matched to, best first."
+type BankReceiptMatchSuggestion {
+  customerPaymentId: ID!
+  referenceNumber: String!
+  amountMinor: Int!
+  customerId: ID!
+  score: Int!
+  "Why it was suggested."
+  reason: String!
+}
+
+"How long the open exceptions have waited, by count and amount."
+type BankReceiptExceptionAging {
+  currentCount: Int!
+  currentAmount: Int!
+  days1To3Count: Int!
+  days1To3Amount: Int!
+  days4To7Count: Int!
+  days4To7Amount: Int!
+  daysOver7Count: Int!
+  daysOver7Amount: Int!
+}
+
+type BankReceiptReconciliationSummary {
+  asOfDate: Timestamp!
+  importedCount: Int!
+  importedAmount: Int!
+  matchedCount: Int!
+  matchedAmount: Int!
+  exceptionCount: Int!
+  exceptionAmount: Int!
+  activeWorkItemCount: Int!
+  assignedWorkItemCount: Int!
+  inReviewWorkItemCount: Int!
+  exceptionAging: BankReceiptExceptionAging!
+}
+
+input ImportBankReceiptBatchLineInput {
+  receiptDate: Timestamp!
+  amountMinor: Int!
+  referenceNumber: String!
+  memo: String
+}
+
+input ImportBankReceiptBatchInput {
+  source: String!
+  reference: String!
+  receipts: [ImportBankReceiptBatchLineInput!]!
+}
+
+input ResolveBankReceiptWorkItemInput {
+  resolutionType: BankReceiptWorkItemResolutionType!
+  resolutionNote: String!
+}
+
+extend type Query {
+  bankReceiptBatches: [BankReceiptBatch!]!
+  "A batch and the receipts it imported."
+  bankReceiptBatch(id: ID!): BankReceiptBatchDetail!
+  bankReceipt(id: ID!): BankReceipt!
+  "The receipts no payment matched."
+  bankReceiptExceptions: [BankReceipt!]!
+  bankReceiptMatchSuggestions(id: ID!): [BankReceiptMatchSuggestion!]!
+  "Receipt and work item counts and amounts as of a day; null is today."
+  bankReceiptSummary(asOfDate: Timestamp): BankReceiptReconciliationSummary!
+  "The work items not yet resolved or dismissed."
+  bankReceiptWorkItems: [BankReceiptWorkItem!]!
+  bankReceiptWorkItem(id: ID!): BankReceiptWorkItem!
+}
+
+extend type Mutation {
+  "Imports a bank file's receipts as one batch and matches what it can."
+  importBankReceiptBatch(input: ImportBankReceiptBatchInput!): BankReceiptBatchDetail!
+  "Matches a receipt to a customer payment."
+  matchBankReceipt(id: ID!, paymentId: ID!): BankReceipt!
+  assignBankReceiptWorkItem(id: ID!, assignedToUserId: ID!): BankReceiptWorkItem!
+  startBankReceiptWorkItemReview(id: ID!): BankReceiptWorkItem!
+  resolveBankReceiptWorkItem(id: ID!, input: ResolveBankReceiptWorkItemInput!): BankReceiptWorkItem!
+  dismissBankReceiptWorkItem(id: ID!, resolutionNote: String!): BankReceiptWorkItem!
+}

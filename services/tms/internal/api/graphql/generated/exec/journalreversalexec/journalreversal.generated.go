@@ -360,6 +360,73 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createJournalReversal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JournalReversal",
+				Args:       field_Mutation_createJournalReversal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateJournalReversal(ctx, fc.Args["input"].(gqlmodel.CreateJournalReversalInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
+			},
+			{
+				Name:       "approveJournalReversal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JournalReversal",
+				Args:       field_Mutation_approveJournalReversal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveJournalReversal(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
+			},
+			{
+				Name:       "postJournalReversal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JournalReversal",
+				Args:       field_Mutation_postJournalReversal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostJournalReversal(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
+			},
+			{
+				Name:       "rejectJournalReversal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JournalReversal",
+				Args:       field_Mutation_rejectJournalReversal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectJournalReversal(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
+			},
+			{
+				Name:       "cancelJournalReversal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "JournalReversal",
+				Args:       field_Mutation_cancelJournalReversal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelJournalReversal(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "journalReversals",
@@ -390,9 +457,21 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "CreateJournalReversalInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateJournalReversalInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	CreateJournalReversal(ctx context.Context, input gqlmodel.CreateJournalReversalInput) (*journalreversal.Reversal, error)
+	ApproveJournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error)
+	PostJournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error)
+	RejectJournalReversal(ctx context.Context, id string, reason string) (*journalreversal.Reversal, error)
+	CancelJournalReversal(ctx context.Context, id string, reason string) (*journalreversal.Reversal, error)
 }
 
 type resolverQuery interface {
@@ -408,6 +487,87 @@ var (
 	errNoChild4 = errors.New("field of type Int does not have child fields")
 	errNoChild5 = errors.New("field of type Boolean does not have child fields")
 )
+
+func field_Mutation_createJournalReversal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CreateJournalReversalInput, error) {
+			return unmarshalNCreateJournalReversalInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateJournalReversalInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_approveJournalReversal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_postJournalReversal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_rejectJournalReversal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reason",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["reason"] = arg1
+	return args, nil
+}
+
+func field_Mutation_cancelJournalReversal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reason",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["reason"] = arg1
+	return args, nil
+}
 
 func field_Query_journalReversals_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -435,8 +595,64 @@ func field_Query_journalReversal_args(ctx context.Context, ec *gqlexec.Exec, raw
 	return args, nil
 }
 
+func unmarshalInputCreateJournalReversalInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CreateJournalReversalInput, error) {
+	var it gqlmodel.CreateJournalReversalInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"originalJournalEntryId", "requestedAccountingDate", "reasonCode", "reasonText"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "originalJournalEntryId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originalJournalEntryId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginalJournalEntryID = data
+		case "requestedAccountingDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requestedAccountingDate"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequestedAccountingDate = data
+		case "reasonCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reasonCode"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReasonCode = data
+		case "reasonText":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reasonText"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReasonText = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
+}
+
+func unmarshalNCreateJournalReversalInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateJournalReversalInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CreateJournalReversalInput, error) {
+	res, err := unmarshalInputCreateJournalReversalInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
@@ -446,6 +662,16 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

@@ -57,3 +57,24 @@ extend type Query {
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalReversal(id: ID!): JournalReversal
 }
+
+input CreateJournalReversalInput {
+  originalJournalEntryId: ID!
+  "The day the reversal should post; the fiscal period is resolved from it."
+  requestedAccountingDate: Timestamp!
+  reasonCode: String!
+  reasonText: String!
+}
+
+extend type Mutation {
+  "Asks for a posted journal entry to be reversed."
+  createJournalReversal(input: CreateJournalReversalInput!): JournalReversal!
+  "The second person's sign-off on a reversal."
+  approveJournalReversal(id: ID!): JournalReversal!
+  "Posts an approved reversal to the ledger."
+  postJournalReversal(id: ID!): JournalReversal!
+  "Turns a reversal down, recording why."
+  rejectJournalReversal(id: ID!, reason: String!): JournalReversal!
+  "Withdraws a reversal that has not posted, recording why."
+  cancelJournalReversal(id: ID!, reason: String!): JournalReversal!
+}

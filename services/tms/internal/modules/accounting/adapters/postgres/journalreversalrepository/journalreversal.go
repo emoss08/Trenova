@@ -78,36 +78,6 @@ func (r *repository) attachEntries(
 	return nil
 }
 
-func (r *repository) List(
-	ctx context.Context,
-	req *journalreversalports.ListJournalReversalsRequest,
-) (*pagination.ListResult[*journalreversal.Reversal], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*journalreversal.Reversal], error) {
-			jr := journalreversaldb.Reversals
-			result, err := listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				jr.Query(),
-				&listquery.Request[journalreversal.Reversal]{
-					Filter: req.Filter,
-					Then:   []keel.Order{jr.CreatedAt.Desc()},
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			if err = r.attachEntries(ctx, result.Items); err != nil {
-				return nil, err
-			}
-
-			return result, nil
-		},
-	)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *journalreversalports.ListJournalReversalConnectionRequest,

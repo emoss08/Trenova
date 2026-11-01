@@ -1898,6 +1898,46 @@ extend type Query {
   arCustomerProfile(customerId: ID!): ARCustomerProfile!
   arPaymentStats: ARPaymentStats!
 }
+
+"A statement emailed to a customer."
+type SentCustomerStatement {
+  id: ID!
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  endingBalanceMinor: Int!
+  pastDueMinor: Int!
+  currencyCode: String!
+  sentTo: String!
+  "True when the monthly run sent it rather than a person."
+  monthly: Boolean!
+  sentByName: String!
+  sentAt: Timestamp!
+}
+
+type CustomerStatementSendResult {
+  sentTo: [String!]!
+  "The ending balance the statement shows, formatted in its currency."
+  endingBalance: String!
+  fileName: String!
+}
+
+input SendCustomerStatementInput {
+  "Where the statement starts; null runs from the first transaction."
+  startDate: Timestamp
+  "The statement date; null is today."
+  asOfDate: Timestamp
+  note: String!
+}
+
+extend type Query {
+  "The statements a customer has been sent, newest first, at most 50."
+  sentCustomerStatements(customerId: ID!): [SentCustomerStatement!]!
+}
+
+extend type Mutation {
+  "Emails the customer's statement to its invoice recipients with the PDF attached."
+  sendCustomerStatement(customerId: ID!, input: SendCustomerStatementInput!): CustomerStatementSendResult!
+}
 `, BuiltIn: false},
 	{Name: "../schema/agent.graphqls", Input: `enum AgentType {
   BillingException
@@ -7196,6 +7236,183 @@ extend type Query {
   auditEntry(id: ID!): AuditEntry
 }
 `, BuiltIn: false},
+	{Name: "../schema/bank_receipt.graphqls", Input: `enum BankReceiptStatus {
+  Imported
+  Matched
+  Exception
+}
+
+enum BankReceiptBatchStatus {
+  Processing
+  Completed
+}
+
+enum BankReceiptWorkItemStatus {
+  Open
+  Assigned
+  InReview
+  Resolved
+  Dismissed
+}
+
+enum BankReceiptWorkItemResolutionType {
+  MatchedToPayment
+  MarkedFalsePositive
+  RequiresExternalFollowUp
+  Superseded
+}
+
+"A line of cash the bank reported arriving, matched to a customer payment or left as an exception."
+type BankReceipt {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  receiptDate: Timestamp!
+  amountMinor: Int!
+  referenceNumber: String!
+  memo: String!
+  status: BankReceiptStatus!
+  importBatchId: ID
+  matchedCustomerPaymentId: ID
+  matchedAt: Timestamp
+  matchedById: ID
+  "Why it could not be matched; empty unless it is an exception."
+  exceptionReason: String!
+  createdById: ID!
+  updatedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A bank file's receipts, imported together."
+type BankReceiptBatch {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  source: String!
+  reference: String!
+  status: BankReceiptBatchStatus!
+  importedCount: Int!
+  matchedCount: Int!
+  exceptionCount: Int!
+  importedAmountMinor: Int!
+  matchedAmountMinor: Int!
+  exceptionAmountMinor: Int!
+  createdById: ID!
+  updatedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type BankReceiptBatchDetail {
+  batch: BankReceiptBatch!
+  receipts: [BankReceipt!]!
+}
+
+"An exception receipt someone has to look into."
+type BankReceiptWorkItem {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  bankReceiptId: ID!
+  status: BankReceiptWorkItemStatus!
+  assignedToUserId: ID
+  assignedAt: Timestamp
+  "How it was settled; null while it is open."
+  resolutionType: BankReceiptWorkItemResolutionType
+  resolutionNote: String!
+  resolvedByUserId: ID
+  resolvedAt: Timestamp
+  createdById: ID!
+  updatedById: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A customer payment a receipt could be matched to, best first."
+type BankReceiptMatchSuggestion {
+  customerPaymentId: ID!
+  referenceNumber: String!
+  amountMinor: Int!
+  customerId: ID!
+  score: Int!
+  "Why it was suggested."
+  reason: String!
+}
+
+"How long the open exceptions have waited, by count and amount."
+type BankReceiptExceptionAging {
+  currentCount: Int!
+  currentAmount: Int!
+  days1To3Count: Int!
+  days1To3Amount: Int!
+  days4To7Count: Int!
+  days4To7Amount: Int!
+  daysOver7Count: Int!
+  daysOver7Amount: Int!
+}
+
+type BankReceiptReconciliationSummary {
+  asOfDate: Timestamp!
+  importedCount: Int!
+  importedAmount: Int!
+  matchedCount: Int!
+  matchedAmount: Int!
+  exceptionCount: Int!
+  exceptionAmount: Int!
+  activeWorkItemCount: Int!
+  assignedWorkItemCount: Int!
+  inReviewWorkItemCount: Int!
+  exceptionAging: BankReceiptExceptionAging!
+}
+
+input ImportBankReceiptBatchLineInput {
+  receiptDate: Timestamp!
+  amountMinor: Int!
+  referenceNumber: String!
+  memo: String
+}
+
+input ImportBankReceiptBatchInput {
+  source: String!
+  reference: String!
+  receipts: [ImportBankReceiptBatchLineInput!]!
+}
+
+input ResolveBankReceiptWorkItemInput {
+  resolutionType: BankReceiptWorkItemResolutionType!
+  resolutionNote: String!
+}
+
+extend type Query {
+  bankReceiptBatches: [BankReceiptBatch!]!
+  "A batch and the receipts it imported."
+  bankReceiptBatch(id: ID!): BankReceiptBatchDetail!
+  bankReceipt(id: ID!): BankReceipt!
+  "The receipts no payment matched."
+  bankReceiptExceptions: [BankReceipt!]!
+  bankReceiptMatchSuggestions(id: ID!): [BankReceiptMatchSuggestion!]!
+  "Receipt and work item counts and amounts as of a day; null is today."
+  bankReceiptSummary(asOfDate: Timestamp): BankReceiptReconciliationSummary!
+  "The work items not yet resolved or dismissed."
+  bankReceiptWorkItems: [BankReceiptWorkItem!]!
+  bankReceiptWorkItem(id: ID!): BankReceiptWorkItem!
+}
+
+extend type Mutation {
+  "Imports a bank file's receipts as one batch and matches what it can."
+  importBankReceiptBatch(input: ImportBankReceiptBatchInput!): BankReceiptBatchDetail!
+  "Matches a receipt to a customer payment."
+  matchBankReceipt(id: ID!, paymentId: ID!): BankReceipt!
+  assignBankReceiptWorkItem(id: ID!, assignedToUserId: ID!): BankReceiptWorkItem!
+  startBankReceiptWorkItemReview(id: ID!): BankReceiptWorkItem!
+  resolveBankReceiptWorkItem(id: ID!, input: ResolveBankReceiptWorkItemInput!): BankReceiptWorkItem!
+  dismissBankReceiptWorkItem(id: ID!, resolutionNote: String!): BankReceiptWorkItem!
+}
+`, BuiltIn: false},
 	{Name: "../schema/benefits.graphqls", Input: `enum BenefitPlanType {
   Medical
   Dental
@@ -10445,6 +10662,175 @@ extend type Mutation {
   "Issue a tracking link for the move's carrier, replacing any live one."
   issueCarrierTrackingLink(input: IssueCarrierTrackingLinkInput!): IssueCarrierTrackingLinkPayload!
   revokeCarrierTrackingLink(shipmentMoveId: ID!): Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../schema/collection.graphqls", Input: `"Whose accounts a collections worklist shows."
+enum CollectorScope {
+  All
+  "The accounts assigned to the person reading."
+  Mine
+  Unassigned
+}
+
+enum CollectionActivityKind {
+  Note
+  Call
+  Email
+  PromiseToPay
+  CollectorAssigned
+  FollowUpScheduled
+}
+
+enum CollectionPromiseStatus {
+  Open
+  Kept
+  Broken
+}
+
+enum CollectionPriority {
+  Critical
+  High
+  Normal
+  Low
+}
+
+"A customer's latest promise to pay and how it has gone."
+type CollectionPromise {
+  activityId: ID!
+  amountMinor: Int!
+  currencyCode: String!
+  promisedOn: Timestamp!
+  madeAt: Timestamp!
+  madeByName: String!
+  "What the customer has paid since making the promise."
+  paidSinceMinor: Int!
+  status: CollectionPromiseStatus!
+}
+
+"One customer's place on the collections worklist."
+type CollectionWorklistRow {
+  customerId: ID!
+  customerName: String!
+  customerCode: String!
+  creditStatus: String!
+  currencyCode: String!
+  totalOpenMinor: Int!
+  overdueMinor: Int!
+  oldestDaysPastDue: Int!
+  openInvoiceCount: Int!
+  disputedInvoiceCount: Int!
+  collectorId: ID
+  collectorName: String!
+  nextFollowUpOn: Timestamp
+  followUpDue: Boolean!
+  lastActivityAt: Timestamp
+  "The kind of the latest activity; null when there is none."
+  lastActivityKind: CollectionActivityKind
+  lastActivitySummary: String!
+  promise: CollectionPromise
+  priority: CollectionPriority!
+}
+
+type CollectionCurrencyTotal {
+  currencyCode: String!
+  amountMinor: Int!
+}
+
+"Counts across every account the worklist's scope and filters cover, not just the page."
+type CollectionWorklistSummary {
+  accounts: Int!
+  "The overdue balance, one total per currency."
+  overdue: [CollectionCurrencyTotal!]!
+  followUpsDue: Int!
+  brokenPromises: Int!
+  unassigned: Int!
+}
+
+"A page of the collections worklist, the customers to chase first coming first."
+type CollectionWorklistPage {
+  rows: [CollectionWorklistRow!]!
+  total: Int!
+  summary: CollectionWorklistSummary!
+}
+
+"Something done or written down while collecting from a customer."
+type CollectionActivity {
+  id: ID!
+  customerId: ID!
+  kind: CollectionActivityKind!
+  summary: String!
+  contactName: String!
+  invoiceId: ID
+  invoiceNumber: String!
+  promisedAmountMinor: Int
+  promisedOn: Timestamp
+  currencyCode: String!
+  followUpOn: Timestamp
+  collectorId: ID
+  collectorName: String!
+  createdById: ID!
+  createdByName: String!
+  createdAt: Timestamp!
+}
+
+"One customer's collections account and a page of its history, newest first."
+type CollectionAccountView {
+  row: CollectionWorklistRow!
+  activities: [CollectionActivity!]!
+  "True when older activity remains past this page."
+  hasMore: Boolean!
+}
+
+"A payment reminder emailed to a customer, one per currency it owes in."
+type PaymentReminderSendResult {
+  sentTo: [String!]!
+  invoiceNumbers: [String!]!
+  "The overdue total the reminder names, formatted in its currency."
+  totalOverdue: String!
+}
+
+input CollectionWorklistInput {
+  scope: CollectorScope!
+  "Only accounts whose follow-up has come round."
+  dueOnly: Boolean!
+  search: String!
+  limit: Int!
+  offset: Int!
+}
+
+"The oldest activity already shown; the page holds what came before it."
+input CollectionActivityCursorInput {
+  createdAt: Timestamp!
+  id: ID!
+}
+
+input LogCollectionActivityInput {
+  kind: CollectionActivityKind!
+  summary: String!
+  contactName: String!
+  invoiceId: ID
+  "The amount promised, for a promise to pay."
+  promisedAmount: Decimal
+  promisedOn: Timestamp
+  followUpOn: Timestamp
+}
+
+extend type Query {
+  "The ranked collections worklist."
+  collectionWorklist(input: CollectionWorklistInput!): CollectionWorklistPage!
+  "One customer's collections account and a page of its history, older than the cursor."
+  collectionAccount(customerId: ID!, before: CollectionActivityCursorInput): CollectionAccountView!
+}
+
+extend type Mutation {
+  "Records a call, email, note or promise to pay against a customer."
+  logCollectionActivity(customerId: ID!, input: LogCollectionActivityInput!): CollectionAccountView!
+  "Assigns a customer's account to a collector; null leaves it unassigned."
+  assignCollectionCollector(customerId: ID!, collectorId: ID): CollectionAccountView!
+  "Sets or clears when a customer is next followed up."
+  scheduleCollectionFollowUp(customerId: ID!, followUpOn: Timestamp, note: String!): CollectionAccountView!
+  "Emails the customer a reminder of everything overdue, one per currency."
+  sendPaymentReminder(customerId: ID!, note: String!): [PaymentReminderSendResult!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/commodity.graphqls", Input: `enum FreightClass {
@@ -19225,6 +19611,40 @@ extend type Query {
   "Every fiscal period of every fiscal year, latest start first."
   fiscalPeriods(input: DataTableConnectionInput!): FiscalPeriodConnection!
 }
+
+"One reason a fiscal period or year cannot close yet."
+type FiscalCloseBlocker {
+  "The field or check the blocker is about."
+  field: String!
+  code: String!
+  message: String!
+  "What kind of work clears it: an open subledger, unposted entries, a reconciliation."
+  category: String!
+}
+
+"Whether a fiscal period or year can close now, and every reason it cannot."
+type FiscalCloseCheck {
+  canClose: Boolean!
+  blockers: [FiscalCloseBlocker!]!
+}
+
+extend type Query {
+  "What stands between a fiscal period and its close."
+  fiscalPeriodCloseBlockers(id: ID!): FiscalCloseCheck!
+}
+
+extend type Mutation {
+  "Opens an inactive fiscal period for posting."
+  activateFiscalPeriod(id: ID!): FiscalPeriod!
+  "Closes a fiscal period; nothing posts to it until it is reopened."
+  closeFiscalPeriod(id: ID!): FiscalPeriod!
+  "Locks a fiscal period against subledger postings while journal entries still post."
+  lockFiscalPeriod(id: ID!): FiscalPeriod!
+  "Lifts a fiscal period's lock."
+  unlockFiscalPeriod(id: ID!): FiscalPeriod!
+  "Reopens a closed fiscal period, recording why."
+  reopenFiscalPeriod(id: ID!, reopenReason: String!): FiscalPeriod!
+}
 `, BuiltIn: false},
 	{Name: "../schema/fiscal_year.graphqls", Input: `enum FiscalYearStatus {
   Draft
@@ -19270,6 +19690,105 @@ type FiscalYearConnection {
 extend type Query {
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fiscalYear(id: ID!): FiscalYear
+}
+
+enum FiscalCloseEntryKind {
+  Closing
+  Opening
+}
+
+"One account's line on a closing or opening entry a year-end close would post."
+type FiscalClosePlanLine {
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  accountCategory: AccountCategory!
+  debitMinor: Int!
+  creditMinor: Int!
+  isRetainedEarnings: Boolean!
+}
+
+"A journal entry a year-end close would post."
+type FiscalClosePlanEntry {
+  kind: FiscalCloseEntryKind!
+  fiscalYearId: ID!
+  fiscalPeriodId: ID!
+  fiscalPeriodName: String!
+  "True when posting it creates the period it books to."
+  createsPeriod: Boolean!
+  accountingDate: Timestamp!
+  description: String!
+  totalDebitMinor: Int!
+  totalCreditMinor: Int!
+  lines: [FiscalClosePlanLine!]!
+}
+
+"A control account's balance set against the subledger it summarises."
+type FiscalSubledgerCheck {
+  key: String!
+  label: String!
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  glBalanceMinor: Int!
+  subledgerBalanceMinor: Int!
+  differenceMinor: Int!
+  toleranceMinor: Int!
+  reconciled: Boolean!
+  "True when a difference past the tolerance blocks the close."
+  enforced: Boolean!
+}
+
+"What closing a fiscal year would post, worked out without writing anything."
+type FiscalYearClosePlan {
+  fiscalYearId: ID!
+  fiscalYearName: String!
+  nextFiscalYearId: ID
+  nextFiscalYearName: String
+  retainedEarningsAccountId: ID
+  retainedEarningsAccountCode: String
+  retainedEarningsAccountName: String
+  revenueMinor: Int!
+  costOfRevenueMinor: Int!
+  operatingExpenseMinor: Int!
+  netIncomeMinor: Int!
+  closingEntry: FiscalClosePlanEntry
+  openingEntry: FiscalClosePlanEntry
+  subledgerChecks: [FiscalSubledgerCheck!]!
+  revision: Int!
+  canClose: Boolean!
+  blockers: [FiscalCloseBlocker!]!
+}
+
+input FiscalYearInput {
+  status: FiscalYearStatus!
+  year: Int!
+  name: String!
+  description: String
+  startDate: Timestamp!
+  endDate: Timestamp!
+  isCurrent: Boolean
+  isCalendarYear: Boolean
+  allowAdjustingEntries: Boolean
+  version: Int
+}
+
+extend type Query {
+  "The closing and opening entries a year-end close would post, and what blocks it."
+  fiscalYearClosePreview(id: ID!): FiscalYearClosePlan!
+}
+
+extend type Mutation {
+  "Creates a fiscal year with its periods."
+  createFiscalYear(input: FiscalYearInput!): FiscalYear!
+  "Updates a fiscal year; its status, current flag and close history stay as they are."
+  updateFiscalYear(id: ID!, input: FiscalYearInput!): FiscalYear!
+  "Makes a fiscal year the one the calendar runs on."
+  activateFiscalYear(id: ID!): FiscalYear!
+  "Closes a fiscal year, posting its closing entries into retained earnings."
+  closeFiscalYear(id: ID!): FiscalYear!
+  "Reopens a closed fiscal year, reversing its closing entries and recording why."
+  reopenFiscalYear(id: ID!, reopenReason: String!): FiscalYear!
 }
 `, BuiltIn: false},
 	{Name: "../schema/fleet_code.graphqls", Input: `type FleetCode {
@@ -20770,6 +21289,72 @@ extend type Mutation {
   createFuelSurchargeProgram(input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   updateFuelSurchargeProgram(id: ID!, input: FuelSurchargeProgramInput!): FuelSurchargeProgram!
   deleteFuelSurchargeProgram(id: ID!): Boolean!
+}
+`, BuiltIn: false},
+	{Name: "../schema/gl_balance.graphqls", Input: `"One general ledger account's debits, credits and net change within a fiscal period."
+type GLPeriodAccountBalance {
+  organizationId: ID!
+  businessUnitId: ID!
+  glAccountId: ID!
+  fiscalYearId: ID!
+  fiscalPeriodId: ID!
+  accountCode: String!
+  accountName: String!
+  accountCategory: AccountCategory!
+  periodDebitMinor: Int!
+  periodCreditMinor: Int!
+  netChangeMinor: Int!
+}
+
+"One account's amount on a financial statement, signed the way the statement reads it."
+type GLStatementLine {
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  accountCategory: AccountCategory!
+  amountMinor: Int!
+}
+
+"A titled block of a financial statement and its total."
+type GLStatementSection {
+  key: String!
+  label: String!
+  totalMinor: Int!
+  lines: [GLStatementLine!]!
+}
+
+"Revenue less costs and expenses posted within a fiscal period."
+type GLIncomeStatement {
+  fiscalPeriodId: ID!
+  revenue: GLStatementSection!
+  costOfRevenue: GLStatementSection!
+  operatingExpense: GLStatementSection!
+  grossProfitMinor: Int!
+  netIncomeMinor: Int!
+}
+
+"""
+The position at the end of a fiscal period: every period of the year up to and
+including it is summed, and the year's opening entry carries the prior year in.
+"""
+type GLBalanceSheet {
+  fiscalPeriodId: ID!
+  assets: GLStatementSection!
+  liabilities: GLStatementSection!
+  equity: GLStatementSection!
+  "Revenue less costs and expenses so far this year, not yet closed into retained earnings."
+  currentYearEarningsMinor: Int!
+  totalAssetsMinor: Int!
+  totalLiabilitiesMinor: Int!
+  "Equity including the current year's earnings."
+  totalEquityMinor: Int!
+}
+
+extend type Query {
+  "Every account's balance within a fiscal period."
+  trialBalance(fiscalPeriodId: ID!): [GLPeriodAccountBalance!]!
+  incomeStatement(fiscalPeriodId: ID!): GLIncomeStatement!
+  balanceSheet(fiscalPeriodId: ID!): GLBalanceSheet!
 }
 `, BuiltIn: false},
 	{Name: "../schema/hazardous_material.graphqls", Input: `enum HazardousClass {
@@ -23750,6 +24335,27 @@ extend type Query {
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalReversal(id: ID!): JournalReversal
 }
+
+input CreateJournalReversalInput {
+  originalJournalEntryId: ID!
+  "The day the reversal should post; the fiscal period is resolved from it."
+  requestedAccountingDate: Timestamp!
+  reasonCode: String!
+  reasonText: String!
+}
+
+extend type Mutation {
+  "Asks for a posted journal entry to be reversed."
+  createJournalReversal(input: CreateJournalReversalInput!): JournalReversal!
+  "The second person's sign-off on a reversal."
+  approveJournalReversal(id: ID!): JournalReversal!
+  "Posts an approved reversal to the ledger."
+  postJournalReversal(id: ID!): JournalReversal!
+  "Turns a reversal down, recording why."
+  rejectJournalReversal(id: ID!, reason: String!): JournalReversal!
+  "Withdraws a reversal that has not posted, recording why."
+  cancelJournalReversal(id: ID!, reason: String!): JournalReversal!
+}
 `, BuiltIn: false},
 	{Name: "../schema/jurisdiction_rule.graphqls", Input: `enum JurisdictionRuleStatus {
   Active
@@ -24163,6 +24769,24 @@ type ManualJournal {
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  "Its lines in order; null in the manualJournals list, read one journal for them."
+  lines: [ManualJournalLine!]
+}
+
+"One debit or credit line of a manual journal."
+type ManualJournalLine {
+  id: ID!
+  manualJournalRequestId: ID!
+  lineNumber: Int!
+  glAccountId: ID!
+  description: String!
+  debitAmount: Int!
+  creditAmount: Int!
+  customerId: ID
+  locationId: ID
+  glAccount: JournalEntryLineAccount
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type ManualJournalEdge {
@@ -24199,6 +24823,41 @@ extend type Query {
   manualJournal(id: ID!): ManualJournal
   "A manual journal as the Desk card draws it, read in one pass."
   manualJournalCard(id: ID!): ManualJournalCard! @authorizes(resource: "manual_journal") @authorizes(resource: "journal_entry")
+}
+
+input ManualJournalDraftLineInput {
+  "Empty until an account is picked; the draft is refused with the line named."
+  glAccountId: ID!
+  description: String!
+  debitAmount: Int!
+  creditAmount: Int!
+  customerId: ID
+  locationId: ID
+}
+
+input ManualJournalDraftInput {
+  description: String!
+  reason: String
+  "The day it books to; null until one is picked, which the draft refuses."
+  accountingDate: Timestamp
+  currencyCode: String!
+  lines: [ManualJournalDraftLineInput!]!
+}
+
+extend type Mutation {
+  createManualJournalDraft(input: ManualJournalDraftInput!): ManualJournal!
+  "Replaces a draft's header and lines."
+  updateManualJournalDraft(id: ID!, input: ManualJournalDraftInput!): ManualJournal!
+  "Sends a draft for approval."
+  submitManualJournal(id: ID!): ManualJournal!
+  "The second person's sign-off on a manual journal someone else prepared."
+  approveManualJournal(id: ID!): ManualJournal!
+  "Posts an approved manual journal to the ledger."
+  postManualJournal(id: ID!): ManualJournal!
+  "Sends a manual journal back, recording why."
+  rejectManualJournal(id: ID!, reason: String!): ManualJournal!
+  "Withdraws a manual journal that has not posted, recording why."
+  cancelManualJournal(id: ID!, reason: String!): ManualJournal!
 }
 `, BuiltIn: false},
 	{Name: "../schema/notification.graphqls", Input: `enum NotificationPriority {

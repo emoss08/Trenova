@@ -63,30 +63,6 @@ func TestGetReturnsRequest(t *testing.T) {
 	assert.Equal(t, request.ID, result.ID)
 }
 
-func TestListReturnsRequests(t *testing.T) {
-	t.Parallel()
-
-	request := approvedRequest(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_"))
-	repo := newManualJournalRepositoryFake(request)
-	svc := &Service{repo: repo}
-
-	result, err := svc.List(
-		t.Context(),
-		&manualjournalports.ListManualJournalRequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo: pagination.TenantInfo{
-					OrgID: request.OrganizationID,
-					BuID:  request.BusinessUnitID,
-				},
-			},
-		},
-	)
-
-	require.NoError(t, err)
-	require.Len(t, result.Items, 1)
-	assert.Equal(t, request.ID, result.Items[0].ID)
-}
-
 func TestCreateDraftPersistsGeneratedNumber(t *testing.T) {
 	t.Parallel()
 
@@ -743,22 +719,6 @@ var _ manualjournalports.ManualJournalRepository = (*manualJournalRepositoryFake
 
 func newManualJournalRepositoryFake(entity *manualjournal.Request) *manualJournalRepositoryFake {
 	return &manualJournalRepositoryFake{current: cloneRequest(entity)}
-}
-
-func (f *manualJournalRepositoryFake) List(
-	_ context.Context,
-	_ *manualjournalports.ListManualJournalRequest,
-) (*pagination.ListResult[*manualjournal.Request], error) {
-	items := make([]*manualjournal.Request, 0, 1)
-	if f.current != nil {
-		items = append(items, cloneRequest(f.current))
-	}
-
-	return &pagination.ListResult[*manualjournal.Request]{
-		Items:      items,
-		Total:      len(items),
-		TotalExact: true,
-	}, nil
 }
 
 func (f *manualJournalRepositoryFake) ListConnection(

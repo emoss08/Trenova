@@ -53,8 +53,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
@@ -64,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -2674,6 +2677,21 @@ type ClockInput struct {
 	Note         *string `json:"note,omitempty"`
 }
 
+// The oldest activity already shown; the page holds what came before it.
+type CollectionActivityCursorInput struct {
+	CreatedAt int    `json:"createdAt"`
+	ID        string `json:"id"`
+}
+
+type CollectionWorklistInput struct {
+	Scope collectionports.CollectorScope `json:"scope"`
+	// Only accounts whose follow-up has come round.
+	DueOnly bool   `json:"dueOnly"`
+	Search  string `json:"search"`
+	Limit   int    `json:"limit"`
+	Offset  int    `json:"offset"`
+}
+
 type CommodityConnection struct {
 	Edges      []*CommodityEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
@@ -2935,6 +2953,14 @@ type CreateFuelPurchaseImportInput struct {
 	DefaultFuelCardID *string                   `json:"defaultFuelCardId,omitempty"`
 	DefaultCurrency   *string                   `json:"defaultCurrency,omitempty"`
 	Mapping           map[string]any            `json:"mapping,omitempty"`
+}
+
+type CreateJournalReversalInput struct {
+	OriginalJournalEntryID string `json:"originalJournalEntryId"`
+	// The day the reversal should post; the fiscal period is resolved from it.
+	RequestedAccountingDate int    `json:"requestedAccountingDate"`
+	ReasonCode              string `json:"reasonCode"`
+	ReasonText              string `json:"reasonText"`
 }
 
 type CreateMemoInput struct {
@@ -5833,6 +5859,19 @@ type FiscalYearEdge struct {
 	Cursor string                 `json:"cursor"`
 }
 
+type FiscalYearInput struct {
+	Status                fiscalyear.Status `json:"status"`
+	Year                  int               `json:"year"`
+	Name                  string            `json:"name"`
+	Description           *string           `json:"description,omitempty"`
+	StartDate             int               `json:"startDate"`
+	EndDate               int               `json:"endDate"`
+	IsCurrent             *bool             `json:"isCurrent,omitempty"`
+	IsCalendarYear        *bool             `json:"isCalendarYear,omitempty"`
+	AllowAdjustingEntries *bool             `json:"allowAdjustingEntries,omitempty"`
+	Version               *int              `json:"version,omitempty"`
+}
+
 type FleetCodeConnection struct {
 	Edges      []*FleetCodeEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
@@ -6804,6 +6843,19 @@ type IgnoreAccountingInboundChangeInput struct {
 	Note string `json:"note"`
 }
 
+type ImportBankReceiptBatchInput struct {
+	Source    string                             `json:"source"`
+	Reference string                             `json:"reference"`
+	Receipts  []*ImportBankReceiptBatchLineInput `json:"receipts"`
+}
+
+type ImportBankReceiptBatchLineInput struct {
+	ReceiptDate     int     `json:"receiptDate"`
+	AmountMinor     int     `json:"amountMinor"`
+	ReferenceNumber string  `json:"referenceNumber"`
+	Memo            *string `json:"memo,omitempty"`
+}
+
 type ImportSourcedCarrierInput struct {
 	DOTNumber        string  `json:"dotNumber"`
 	Code             *string `json:"code,omitempty"`
@@ -7154,6 +7206,17 @@ type LogCheckCallPayload struct {
 	OutcomeReason *string                `json:"outcomeReason,omitempty"`
 }
 
+type LogCollectionActivityInput struct {
+	Kind        collection.ActivityKind `json:"kind"`
+	Summary     string                  `json:"summary"`
+	ContactName string                  `json:"contactName"`
+	InvoiceID   *string                 `json:"invoiceId,omitempty"`
+	// The amount promised, for a promise to pay.
+	PromisedAmount *string `json:"promisedAmount,omitempty"`
+	PromisedOn     *int    `json:"promisedOn,omitempty"`
+	FollowUpOn     *int    `json:"followUpOn,omitempty"`
+}
+
 type LogInboundExceptionInput struct {
 	Kind     inboundmessage.ExceptionKind `json:"kind"`
 	Quantity int                          `json:"quantity"`
@@ -7181,6 +7244,25 @@ type ManualJournalConnection struct {
 	TotalCount *int                 `json:"totalCount,omitempty"`
 	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
 	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type ManualJournalDraftInput struct {
+	Description string  `json:"description"`
+	Reason      *string `json:"reason,omitempty"`
+	// The day it books to; null until one is picked, which the draft refuses.
+	AccountingDate *int                           `json:"accountingDate,omitempty"`
+	CurrencyCode   string                         `json:"currencyCode"`
+	Lines          []*ManualJournalDraftLineInput `json:"lines"`
+}
+
+type ManualJournalDraftLineInput struct {
+	// Empty until an account is picked; the draft is refused with the line named.
+	GlAccountID  string  `json:"glAccountId"`
+	Description  string  `json:"description"`
+	DebitAmount  int     `json:"debitAmount"`
+	CreditAmount int     `json:"creditAmount"`
+	CustomerID   *string `json:"customerId,omitempty"`
+	LocationID   *string `json:"locationId,omitempty"`
 }
 
 type ManualJournalEdge struct {
@@ -8950,6 +9032,11 @@ type ResolveAccountingDriftInput struct {
 	Direction accountingdrift.DriftDirection `json:"direction"`
 }
 
+type ResolveBankReceiptWorkItemInput struct {
+	ResolutionType bankreceiptworkitem.ResolutionType `json:"resolutionType"`
+	ResolutionNote string                             `json:"resolutionNote"`
+}
+
 type ResolveCarrierIntelEventInput struct {
 	ID         string                            `json:"id"`
 	Resolution carrierintelevent.EventResolution `json:"resolution"`
@@ -9374,6 +9461,14 @@ type SelectOptionsInput struct {
 	Offset   *int                 `json:"offset,omitempty"`
 	Ids      []string             `json:"ids,omitempty"`
 	Filters  map[string]any       `json:"filters,omitempty"`
+}
+
+type SendCustomerStatementInput struct {
+	// Where the statement starts; null runs from the first transaction.
+	StartDate *int `json:"startDate,omitempty"`
+	// The statement date; null is today.
+	AsOfDate *int   `json:"asOfDate,omitempty"`
+	Note     string `json:"note"`
 }
 
 type SendFactoringNoaInput struct {

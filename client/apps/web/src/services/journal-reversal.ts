@@ -1,32 +1,56 @@
-import { api } from "@trenova/shared/lib/api";
-import type { JournalReversal } from "@/types/journal-reversal";
+import {
+  ApproveJournalReversalDocument,
+  CancelJournalReversalDocument,
+  CreateJournalReversalDocument,
+  PostJournalReversalDocument,
+  RejectJournalReversalDocument,
+  type CreateJournalReversalInput,
+} from "@trenova/graphql/generated/graphql";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export class JournalReversalService {
-  async getById(id: string) {
-    return api.get<JournalReversal>(`/accounting/journal-reversals/${id}/`);
-  }
-
-  async create(data: Partial<JournalReversal>) {
-    return api.post<JournalReversal>("/accounting/journal-reversals/", data);
+  async create(input: CreateJournalReversalInput) {
+    const response = await requestGraphQL({
+      document: CreateJournalReversalDocument,
+      operationName: "CreateJournalReversal",
+      variables: { input },
+    });
+    return response.createJournalReversal;
   }
 
   async approve(id: string) {
-    return api.post<JournalReversal>(`/accounting/journal-reversals/${id}/approve/`);
+    const response = await requestGraphQL({
+      document: ApproveJournalReversalDocument,
+      operationName: "ApproveJournalReversal",
+      variables: { id },
+    });
+    return response.approveJournalReversal;
   }
 
   async post(id: string) {
-    return api.post<JournalReversal>(`/accounting/journal-reversals/${id}/post/`);
+    const response = await requestGraphQL({
+      document: PostJournalReversalDocument,
+      operationName: "PostJournalReversal",
+      variables: { id },
+    });
+    return response.postJournalReversal;
   }
 
   async reject(id: string, reason: string) {
-    return api.post<JournalReversal>(`/accounting/journal-reversals/${id}/reject/`, {
-      rejectionReason: reason,
+    const response = await requestGraphQL({
+      document: RejectJournalReversalDocument,
+      operationName: "RejectJournalReversal",
+      variables: { id, reason },
     });
+    return response.rejectJournalReversal;
   }
 
   async cancel(id: string, reason: string) {
-    return api.post<JournalReversal>(`/accounting/journal-reversals/${id}/cancel/`, {
-      cancelReason: reason,
+    const response = await requestGraphQL({
+      document: CancelJournalReversalDocument,
+      operationName: "CancelJournalReversal",
+      variables: { id, reason },
     });
+    return response.cancelJournalReversal;
   }
 }

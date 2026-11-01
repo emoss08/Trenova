@@ -58,7 +58,10 @@ export const collectionWorklistRowSchema = z.object({
   nextFollowUpOn: nullableUnix,
   followUpDue: z.boolean(),
   lastActivityAt: nullableUnix,
-  lastActivityKind: z.union([collectionActivityKindSchema, z.literal("")]),
+  lastActivityKind: z
+    .union([collectionActivityKindSchema, z.literal("")])
+    .nullish()
+    .transform((value) => value ?? ""),
   lastActivitySummary: z.string(),
   promise: collectionPromiseSchema.nullish().transform((value) => value ?? null),
   priority: collectionPrioritySchema,

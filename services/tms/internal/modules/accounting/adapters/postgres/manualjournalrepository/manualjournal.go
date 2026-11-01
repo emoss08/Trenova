@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
@@ -34,33 +33,6 @@ type repository struct {
 
 func New(p Params) manualjournalports.ManualJournalRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.manual-journal-repository")}
-}
-
-func (r *repository) List(
-	ctx context.Context,
-	req *manualjournalports.ListManualJournalRequest,
-) (*pagination.ListResult[*manualjournal.Request], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*manualjournal.Request], error) {
-			mjr := manualjournaldb.Requests
-			result, err := listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				mjr.Query(),
-				&listquery.Request[manualjournal.Request]{
-					Filter: req.Filter,
-					Then:   []keel.Order{mjr.CreatedAt.Desc()},
-				},
-			)
-			if err != nil {
-				return nil, fmt.Errorf("list manual journals: %w", err)
-			}
-
-			return result, nil
-		},
-	)
 }
 
 func (r *repository) ListConnection(

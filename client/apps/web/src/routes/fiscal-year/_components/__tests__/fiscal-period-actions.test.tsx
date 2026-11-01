@@ -182,7 +182,7 @@ describe("fiscal period actions", () => {
     await vi.waitFor(() => expect(confirm).toBeEnabled());
     await user.click(confirm);
 
-    expect(mocks.closeBlockers).toHaveBeenCalledWith("fp_01");
+    expect(mocks.closeBlockers).toHaveBeenCalledWith("fp_01", expect.anything());
     expect(mocks.close).toHaveBeenCalledWith("fp_01");
     expect(await within(rowFor("Period 1")).findByText("Closed")).toBeVisible();
   });

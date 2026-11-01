@@ -43,3 +43,102 @@ extend type Query {
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fiscalYear(id: ID!): FiscalYear
 }
+
+enum FiscalCloseEntryKind {
+  Closing
+  Opening
+}
+
+"One account's line on a closing or opening entry a year-end close would post."
+type FiscalClosePlanLine {
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  accountCategory: AccountCategory!
+  debitMinor: Int!
+  creditMinor: Int!
+  isRetainedEarnings: Boolean!
+}
+
+"A journal entry a year-end close would post."
+type FiscalClosePlanEntry {
+  kind: FiscalCloseEntryKind!
+  fiscalYearId: ID!
+  fiscalPeriodId: ID!
+  fiscalPeriodName: String!
+  "True when posting it creates the period it books to."
+  createsPeriod: Boolean!
+  accountingDate: Timestamp!
+  description: String!
+  totalDebitMinor: Int!
+  totalCreditMinor: Int!
+  lines: [FiscalClosePlanLine!]!
+}
+
+"A control account's balance set against the subledger it summarises."
+type FiscalSubledgerCheck {
+  key: String!
+  label: String!
+  glAccountId: ID!
+  accountCode: String!
+  accountName: String!
+  glBalanceMinor: Int!
+  subledgerBalanceMinor: Int!
+  differenceMinor: Int!
+  toleranceMinor: Int!
+  reconciled: Boolean!
+  "True when a difference past the tolerance blocks the close."
+  enforced: Boolean!
+}
+
+"What closing a fiscal year would post, worked out without writing anything."
+type FiscalYearClosePlan {
+  fiscalYearId: ID!
+  fiscalYearName: String!
+  nextFiscalYearId: ID
+  nextFiscalYearName: String
+  retainedEarningsAccountId: ID
+  retainedEarningsAccountCode: String
+  retainedEarningsAccountName: String
+  revenueMinor: Int!
+  costOfRevenueMinor: Int!
+  operatingExpenseMinor: Int!
+  netIncomeMinor: Int!
+  closingEntry: FiscalClosePlanEntry
+  openingEntry: FiscalClosePlanEntry
+  subledgerChecks: [FiscalSubledgerCheck!]!
+  revision: Int!
+  canClose: Boolean!
+  blockers: [FiscalCloseBlocker!]!
+}
+
+input FiscalYearInput {
+  status: FiscalYearStatus!
+  year: Int!
+  name: String!
+  description: String
+  startDate: Timestamp!
+  endDate: Timestamp!
+  isCurrent: Boolean
+  isCalendarYear: Boolean
+  allowAdjustingEntries: Boolean
+  version: Int
+}
+
+extend type Query {
+  "The closing and opening entries a year-end close would post, and what blocks it."
+  fiscalYearClosePreview(id: ID!): FiscalYearClosePlan!
+}
+
+extend type Mutation {
+  "Creates a fiscal year with its periods."
+  createFiscalYear(input: FiscalYearInput!): FiscalYear!
+  "Updates a fiscal year; its status, current flag and close history stay as they are."
+  updateFiscalYear(id: ID!, input: FiscalYearInput!): FiscalYear!
+  "Makes a fiscal year the one the calendar runs on."
+  activateFiscalYear(id: ID!): FiscalYear!
+  "Closes a fiscal year, posting its closing entries into retained earnings."
+  closeFiscalYear(id: ID!): FiscalYear!
+  "Reopens a closed fiscal year, reversing its closing entries and recording why."
+  reopenFiscalYear(id: ID!, reopenReason: String!): FiscalYear!
+}

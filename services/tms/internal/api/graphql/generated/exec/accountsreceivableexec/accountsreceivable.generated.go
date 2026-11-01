@@ -8,9 +8,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -41,6 +43,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "AccountingBriefing", Implementors: []string{"AccountingBriefing"}},
 		{Name: "AccountingBriefingAction", Implementors: []string{"AccountingBriefingAction"}},
 		{Name: "AccountingBriefingSegment", Implementors: []string{"AccountingBriefingSegment"}},
+		{Name: "CustomerStatementSendResult", Implementors: []string{"CustomerStatementSendResult"}},
+		{Name: "SentCustomerStatement", Implementors: []string{"SentCustomerStatement"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "ARAgingBucketTotals", Fields: []*gqlexec.Field{
@@ -1739,6 +1743,53 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 		}},
+		{Object: "CustomerStatementSendResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "sentTo",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SendResult)
+					return obj.SentTo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "endingBalance",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SendResult)
+					return obj.EndingBalance, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "fileName",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SendResult)
+					return obj.FileName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "sendCustomerStatement",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "CustomerStatementSendResult",
+				Args:       field_Mutation_sendCustomerStatement_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SendCustomerStatement(ctx, fc.Args["customerId"].(string), fc.Args["input"].(gqlmodel.SendCustomerStatementInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNCustomerStatementSendResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerstatementportsᚐSendResult),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "accountingBriefing",
@@ -1916,11 +1967,135 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARPaymentStats),
 			},
+			{
+				Name:       "sentCustomerStatements",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "SentCustomerStatement",
+				Args:       field_Query_sentCustomerStatements_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").SentCustomerStatements(ctx, fc.Args["customerId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNSentCustomerStatement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerstatementportsᚐSentStatementᚄ),
+			},
+		}},
+		{Object: "SentCustomerStatement", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "periodStart",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.PeriodStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "periodEnd",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.PeriodEnd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "endingBalanceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.EndingBalanceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "pastDueMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.PastDueMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "currencyCode",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.CurrencyCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "sentTo",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.SentTo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "monthly",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.Monthly, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "sentByName",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.SentByName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "sentAt",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerstatementports.SentStatement)
+					return obj.SentAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "SendCustomerStatementInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSendCustomerStatementInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverMutation interface {
+	SendCustomerStatement(ctx context.Context, customerID string, input gqlmodel.SendCustomerStatementInput) (*customerstatementports.SendResult, error)
 }
 
 type resolverQuery interface {
@@ -1937,6 +2112,7 @@ type resolverQuery interface {
 	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*customerledgerports.ARCollectionsWorklistItem, error)
 	ArCustomerProfile(ctx context.Context, customerID string) (*customerledgerports.ARCustomerProfile, error)
 	ArPaymentStats(ctx context.Context) (*customerledgerports.ARPaymentStats, error)
+	SentCustomerStatements(ctx context.Context, customerID string) ([]*customerstatementports.SentStatement, error)
 }
 
 var (
@@ -1948,6 +2124,27 @@ var (
 	errNoChild5 = errors.New("field of type String does not have child fields")
 	errNoChild6 = errors.New("field of type AccountingBriefingLink does not have child fields")
 )
+
+func field_Mutation_sendCustomerStatement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "customerId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["customerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SendCustomerStatementInput, error) {
+			return unmarshalNSendCustomerStatementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSendCustomerStatementInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
 
 func field_Query_arAgingSummary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -2111,8 +2308,75 @@ func field_Query_arCustomerProfile_args(ctx context.Context, ec *gqlexec.Exec, r
 	return args, nil
 }
 
+func field_Query_sentCustomerStatements_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "customerId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["customerId"] = arg0
+	return args, nil
+}
+
+func unmarshalInputSendCustomerStatementInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SendCustomerStatementInput, error) {
+	var it gqlmodel.SendCustomerStatementInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"startDate", "asOfDate", "note"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "asOfDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("asOfDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AsOfDate = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNSendCustomerStatementInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSendCustomerStatementInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SendCustomerStatementInput, error) {
+	res, err := unmarshalInputSendCustomerStatementInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2424,6 +2688,14 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
+func marshalNCustomerStatementSendResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerstatementportsᚐSendResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerstatementports.SendResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "CustomerStatementSendResult", v)
+}
+
 func marshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v float64) graphql.Marshaler {
 	res := graphql.MarshalFloatContext(v)
 	if res == graphql.Null {
@@ -2456,12 +2728,37 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
+func marshalNSentCustomerStatement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerstatementportsᚐSentStatementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerstatementports.SentStatement) graphql.Marshaler {
+	return gqlexec.List[*customerstatementports.SentStatement]{
+		Elem:        marshalNSentCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerstatementportsᚐSentStatement,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNSentCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerstatementportsᚐSentStatement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerstatementports.SentStatement) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "SentCustomerStatement", v)
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {

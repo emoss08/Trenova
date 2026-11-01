@@ -9,6 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -19,16 +21,307 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "fiscalyear",
 	Objects: []*gqlexec.Object{
+		{Name: "FiscalClosePlanEntry", Implementors: []string{"FiscalClosePlanEntry"}},
+		{Name: "FiscalClosePlanLine", Implementors: []string{"FiscalClosePlanLine"}},
+		{Name: "FiscalSubledgerCheck", Implementors: []string{"FiscalSubledgerCheck"}},
 		{Name: "FiscalYear", Implementors: []string{"FiscalYear"}},
+		{Name: "FiscalYearClosePlan", Implementors: []string{"FiscalYearClosePlan"}},
 		{Name: "FiscalYearConnection", Implementors: []string{"FiscalYearConnection"}},
 		{Name: "FiscalYearEdge", Implementors: []string{"FiscalYearEdge"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "FiscalClosePlanEntry", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalCloseEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐEntryKind),
+			},
+			{
+				Name:     "fiscalYearId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.FiscalYearID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "fiscalPeriodId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.FiscalPeriodID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "fiscalPeriodName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.FiscalPeriodName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createsPeriod",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.CreatesPeriod, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "accountingDate",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.AccountingDate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "totalDebitMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.TotalDebitMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "totalCreditMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.TotalCreditMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:      "lines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FiscalClosePlanLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanEntry)
+					return obj.Lines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalClosePlanLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlanLineᚄ),
+			},
+		}},
+		{Object: "FiscalClosePlanLine", Fields: []*gqlexec.Field{
+			{
+				Name:     "glAccountId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanLine)
+					return obj.GLAccountID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "accountCode",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanLine)
+					return obj.AccountCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "accountName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanLine)
+					return obj.AccountName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "accountCategory",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanLine)
+					return obj.AccountCategory, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory),
+			},
+			{
+				Name:     "debitMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanLine)
+					return obj.DebitMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "creditMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanLine)
+					return obj.CreditMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "isRetainedEarnings",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.PlanLine)
+					return obj.IsRetainedEarn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "FiscalSubledgerCheck", Fields: []*gqlexec.Field{
+			{
+				Name:     "key",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.Key, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "glAccountId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.GLAccountID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "accountCode",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.AccountCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "accountName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.AccountName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "glBalanceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.GLBalanceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "subledgerBalanceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.SubledgerBalanceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "differenceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.DifferenceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "toleranceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.ToleranceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "reconciled",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.Reconciled, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "enforced",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.SubledgerCheck)
+					return obj.Enforced, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "FiscalYear", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.ID, nil
@@ -38,7 +331,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.BusinessUnitID, nil
@@ -48,7 +341,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.OrganizationID, nil
@@ -58,7 +351,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.Status, nil
@@ -68,7 +361,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "year",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.Year, nil
@@ -78,7 +371,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.Name, nil
@@ -88,7 +381,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "description",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.Description, nil
@@ -118,7 +411,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isCurrent",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.IsCurrent, nil
@@ -128,7 +421,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isCalendarYear",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.IsCalendarYear, nil
@@ -138,7 +431,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "allowAdjustingEntries",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.AllowAdjustingEntries, nil
@@ -148,7 +441,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalyear.FiscalYear)
 					return obj.Version, nil
@@ -209,6 +502,175 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriodᚄ),
 			},
 		}},
+		{Object: "FiscalYearClosePlan", Fields: []*gqlexec.Field{
+			{
+				Name:     "fiscalYearId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.FiscalYearID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "fiscalYearName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.FiscalYearName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "nextFiscalYearId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.NextFiscalYearID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "nextFiscalYearName",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.NextFiscalYearName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "retainedEarningsAccountId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.RetainedEarningsAccountID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "retainedEarningsAccountCode",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.RetainedEarningsCode, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "retainedEarningsAccountName",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.RetainedEarningsName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "revenueMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.RevenueMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "costOfRevenueMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.CostOfRevenueMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "operatingExpenseMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.OperatingExpenseMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "netIncomeMinor",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.NetIncomeMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:      "closingEntry",
+				HasChild:  true,
+				ChildType: "FiscalClosePlanEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.ClosingEntry, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFiscalClosePlanEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlanEntry),
+			},
+			{
+				Name:      "openingEntry",
+				HasChild:  true,
+				ChildType: "FiscalClosePlanEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.OpeningEntry, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFiscalClosePlanEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlanEntry),
+			},
+			{
+				Name:      "subledgerChecks",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FiscalSubledgerCheck",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.SubledgerChecks, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalSubledgerCheck2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐSubledgerCheckᚄ),
+			},
+			{
+				Name:     "revision",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.Revision, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "canClose",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.CanClose, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "blockers",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FiscalCloseBlocker",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Plan)
+					return obj.Blockers, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalCloseBlocker2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐBlockerᚄ),
+			},
+		}},
 		{Object: "FiscalYearConnection", Fields: []*gqlexec.Field{
 			{
 				Name:      "edges",
@@ -234,7 +696,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FiscalYearConnection)
 					return obj.TotalCount, nil
@@ -244,7 +706,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FiscalYearConnection)
 					return obj.TotalCountExact, nil
@@ -267,12 +729,79 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FiscalYearEdge)
 					return obj.Cursor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createFiscalYear",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalYear",
+				Args:       field_Mutation_createFiscalYear_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateFiscalYear(ctx, fc.Args["input"].(gqlmodel.FiscalYearInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
+			},
+			{
+				Name:       "updateFiscalYear",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalYear",
+				Args:       field_Mutation_updateFiscalYear_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateFiscalYear(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.FiscalYearInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
+			},
+			{
+				Name:       "activateFiscalYear",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalYear",
+				Args:       field_Mutation_activateFiscalYear_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ActivateFiscalYear(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
+			},
+			{
+				Name:       "closeFiscalYear",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalYear",
+				Args:       field_Mutation_closeFiscalYear_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CloseFiscalYear(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
+			},
+			{
+				Name:       "reopenFiscalYear",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalYear",
+				Args:       field_Mutation_reopenFiscalYear_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenFiscalYear(ctx, fc.Args["id"].(string), fc.Args["reopenReason"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -303,10 +832,28 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear),
 			},
+			{
+				Name:       "fiscalYearClosePreview",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FiscalYearClosePlan",
+				Args:       field_Query_fiscalYearClosePreview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FiscalYearClosePreview(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalYearClosePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlan),
+			},
 		}},
+	},
+	Inputs: []gqlexec.Input{
+		{Name: "FiscalYearInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputFiscalYearInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "FiscalYear", Check: func(r any) bool { _, ok := r.(resolverFiscalYear); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -315,19 +862,111 @@ type resolverFiscalYear interface {
 	Periods(ctx context.Context, obj *fiscalyear.FiscalYear) ([]*fiscalperiod.FiscalPeriod, error)
 }
 
+type resolverMutation interface {
+	CreateFiscalYear(ctx context.Context, input gqlmodel.FiscalYearInput) (*fiscalyear.FiscalYear, error)
+	UpdateFiscalYear(ctx context.Context, id string, input gqlmodel.FiscalYearInput) (*fiscalyear.FiscalYear, error)
+	ActivateFiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
+	CloseFiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
+	ReopenFiscalYear(ctx context.Context, id string, reopenReason string) (*fiscalyear.FiscalYear, error)
+}
+
 type resolverQuery interface {
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
 	FiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
+	FiscalYearClosePreview(ctx context.Context, id string) (*fiscalclose.Plan, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type FiscalYearStatus does not have child fields")
-	errNoChild2 = errors.New("field of type Int does not have child fields")
-	errNoChild3 = errors.New("field of type String does not have child fields")
+	errNoChild0 = errors.New("field of type FiscalCloseEntryKind does not have child fields")
+	errNoChild1 = errors.New("field of type ID does not have child fields")
+	errNoChild2 = errors.New("field of type String does not have child fields")
+	errNoChild3 = errors.New("field of type Boolean does not have child fields")
 	errNoChild4 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5 = errors.New("field of type Boolean does not have child fields")
+	errNoChild5 = errors.New("field of type Int does not have child fields")
+	errNoChild6 = errors.New("field of type AccountCategory does not have child fields")
+	errNoChild7 = errors.New("field of type FiscalYearStatus does not have child fields")
 )
+
+func field_Mutation_createFiscalYear_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FiscalYearInput, error) {
+			return unmarshalNFiscalYearInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFiscalYearInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateFiscalYear_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.FiscalYearInput, error) {
+			return unmarshalNFiscalYearInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFiscalYearInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_activateFiscalYear_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_closeFiscalYear_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_reopenFiscalYear_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reopenReason",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["reopenReason"] = arg1
+	return args, nil
+}
 
 func field_Query_fiscalYears_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -355,6 +994,112 @@ func field_Query_fiscalYear_args(ctx context.Context, ec *gqlexec.Exec, rawArgs 
 	return args, nil
 }
 
+func field_Query_fiscalYearClosePreview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func unmarshalInputFiscalYearInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.FiscalYearInput, error) {
+	var it gqlmodel.FiscalYearInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "year", "name", "description", "startDate", "endDate", "isCurrent", "isCalendarYear", "allowAdjustingEntries", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := unmarshalNFiscalYearStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐStatus(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "year":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Year = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := unmarshalNTimestamp2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "isCurrent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isCurrent"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsCurrent = data
+		case "isCalendarYear":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isCalendarYear"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsCalendarYear = data
+		case "allowAdjustingEntries":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowAdjustingEntries"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllowAdjustingEntries = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -364,9 +1109,67 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNFiscalYearInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFiscalYearInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.FiscalYearInput, error) {
+	res, err := unmarshalInputFiscalYearInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNFiscalYearStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (fiscalyear.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := fiscalyear.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAccountCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccounttypeᚐCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accounttype.Category) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -375,6 +1178,46 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNFiscalCloseBlocker2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐBlockerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*fiscalclose.Blocker) graphql.Marshaler {
+	return gqlexec.List[*fiscalclose.Blocker]{
+		Elem:        marshalNFiscalCloseBlocker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐBlocker,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFiscalCloseBlocker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐBlocker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalclose.Blocker) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalCloseBlocker", v)
+}
+
+func marshalNFiscalCloseEntryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐEntryKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v fiscalclose.EntryKind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNFiscalClosePlanLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlanLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*fiscalclose.PlanLine) graphql.Marshaler {
+	return gqlexec.List[*fiscalclose.PlanLine]{
+		Elem:        marshalNFiscalClosePlanLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlanLine,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFiscalClosePlanLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlanLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalclose.PlanLine) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalClosePlanLine", v)
 }
 
 func marshalNFiscalPeriod2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriodᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*fiscalperiod.FiscalPeriod) graphql.Marshaler {
@@ -393,12 +1236,36 @@ func marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "FiscalPeriod", v)
 }
 
+func marshalNFiscalSubledgerCheck2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐSubledgerCheckᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*fiscalclose.SubledgerCheck) graphql.Marshaler {
+	return gqlexec.List[*fiscalclose.SubledgerCheck]{
+		Elem:        marshalNFiscalSubledgerCheck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐSubledgerCheck,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFiscalSubledgerCheck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐSubledgerCheck(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalclose.SubledgerCheck) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalSubledgerCheck", v)
+}
+
 func marshalNFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalyear.FiscalYear) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FiscalYear", v)
+}
+
+func marshalNFiscalYearClosePlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalclose.Plan) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalYearClosePlan", v)
 }
 
 func marshalNFiscalYearConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFiscalYearConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.FiscalYearConnection) graphql.Marshaler {
@@ -488,11 +1355,23 @@ func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
+func marshalOFiscalClosePlanEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐPlanEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalclose.PlanEntry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalClosePlanEntry", v)
+}
+
 func marshalOFiscalYear2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalyearᚐFiscalYear(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalyear.FiscalYear) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FiscalYear", v)
+}
+
+func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
@@ -508,4 +1387,9 @@ func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Organization", v)
+}
+
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	return res
 }

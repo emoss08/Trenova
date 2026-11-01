@@ -1,0 +1,168 @@
+"Whose accounts a collections worklist shows."
+enum CollectorScope {
+  All
+  "The accounts assigned to the person reading."
+  Mine
+  Unassigned
+}
+
+enum CollectionActivityKind {
+  Note
+  Call
+  Email
+  PromiseToPay
+  CollectorAssigned
+  FollowUpScheduled
+}
+
+enum CollectionPromiseStatus {
+  Open
+  Kept
+  Broken
+}
+
+enum CollectionPriority {
+  Critical
+  High
+  Normal
+  Low
+}
+
+"A customer's latest promise to pay and how it has gone."
+type CollectionPromise {
+  activityId: ID!
+  amountMinor: Int!
+  currencyCode: String!
+  promisedOn: Timestamp!
+  madeAt: Timestamp!
+  madeByName: String!
+  "What the customer has paid since making the promise."
+  paidSinceMinor: Int!
+  status: CollectionPromiseStatus!
+}
+
+"One customer's place on the collections worklist."
+type CollectionWorklistRow {
+  customerId: ID!
+  customerName: String!
+  customerCode: String!
+  creditStatus: String!
+  currencyCode: String!
+  totalOpenMinor: Int!
+  overdueMinor: Int!
+  oldestDaysPastDue: Int!
+  openInvoiceCount: Int!
+  disputedInvoiceCount: Int!
+  collectorId: ID
+  collectorName: String!
+  nextFollowUpOn: Timestamp
+  followUpDue: Boolean!
+  lastActivityAt: Timestamp
+  "The kind of the latest activity; null when there is none."
+  lastActivityKind: CollectionActivityKind
+  lastActivitySummary: String!
+  promise: CollectionPromise
+  priority: CollectionPriority!
+}
+
+type CollectionCurrencyTotal {
+  currencyCode: String!
+  amountMinor: Int!
+}
+
+"Counts across every account the worklist's scope and filters cover, not just the page."
+type CollectionWorklistSummary {
+  accounts: Int!
+  "The overdue balance, one total per currency."
+  overdue: [CollectionCurrencyTotal!]!
+  followUpsDue: Int!
+  brokenPromises: Int!
+  unassigned: Int!
+}
+
+"A page of the collections worklist, the customers to chase first coming first."
+type CollectionWorklistPage {
+  rows: [CollectionWorklistRow!]!
+  total: Int!
+  summary: CollectionWorklistSummary!
+}
+
+"Something done or written down while collecting from a customer."
+type CollectionActivity {
+  id: ID!
+  customerId: ID!
+  kind: CollectionActivityKind!
+  summary: String!
+  contactName: String!
+  invoiceId: ID
+  invoiceNumber: String!
+  promisedAmountMinor: Int
+  promisedOn: Timestamp
+  currencyCode: String!
+  followUpOn: Timestamp
+  collectorId: ID
+  collectorName: String!
+  createdById: ID!
+  createdByName: String!
+  createdAt: Timestamp!
+}
+
+"One customer's collections account and a page of its history, newest first."
+type CollectionAccountView {
+  row: CollectionWorklistRow!
+  activities: [CollectionActivity!]!
+  "True when older activity remains past this page."
+  hasMore: Boolean!
+}
+
+"A payment reminder emailed to a customer, one per currency it owes in."
+type PaymentReminderSendResult {
+  sentTo: [String!]!
+  invoiceNumbers: [String!]!
+  "The overdue total the reminder names, formatted in its currency."
+  totalOverdue: String!
+}
+
+input CollectionWorklistInput {
+  scope: CollectorScope!
+  "Only accounts whose follow-up has come round."
+  dueOnly: Boolean!
+  search: String!
+  limit: Int!
+  offset: Int!
+}
+
+"The oldest activity already shown; the page holds what came before it."
+input CollectionActivityCursorInput {
+  createdAt: Timestamp!
+  id: ID!
+}
+
+input LogCollectionActivityInput {
+  kind: CollectionActivityKind!
+  summary: String!
+  contactName: String!
+  invoiceId: ID
+  "The amount promised, for a promise to pay."
+  promisedAmount: Decimal
+  promisedOn: Timestamp
+  followUpOn: Timestamp
+}
+
+extend type Query {
+  "The ranked collections worklist."
+  collectionWorklist(input: CollectionWorklistInput!): CollectionWorklistPage!
+  "One customer's collections account and a page of its history, older than the cursor."
+  collectionAccount(customerId: ID!, before: CollectionActivityCursorInput): CollectionAccountView!
+}
+
+extend type Mutation {
+  "Records a call, email, note or promise to pay against a customer."
+  logCollectionActivity(customerId: ID!, input: LogCollectionActivityInput!): CollectionAccountView!
+  "Assigns a customer's account to a collector; null leaves it unassigned."
+  assignCollectionCollector(customerId: ID!, collectorId: ID): CollectionAccountView!
+  "Sets or clears when a customer is next followed up."
+  scheduleCollectionFollowUp(customerId: ID!, followUpOn: Timestamp, note: String!): CollectionAccountView!
+  "Emails the customer a reminder of everything overdue, one per currency."
+  sendPaymentReminder(customerId: ID!, note: String!): [PaymentReminderSendResult!]!
+}

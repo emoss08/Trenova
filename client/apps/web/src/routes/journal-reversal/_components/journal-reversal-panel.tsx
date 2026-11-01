@@ -4,7 +4,6 @@ import { DataTablePanelContainer } from "@/components/data-table/data-table-pane
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { journalReversal } from "@/lib/queries/journal-reversal";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
@@ -113,12 +112,7 @@ function ReversalDetailPanel({
 
   const invalidate = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["journal-reversal-list"] });
-    if (reversal?.id) {
-      await queryClient.invalidateQueries({
-        queryKey: journalReversal.get(reversal.id).queryKey,
-      });
-    }
-  }, [queryClient, reversal]);
+  }, [queryClient]);
 
   const { mutateAsync: approve, isPending: isApproving } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.approve(reversal!.id!),

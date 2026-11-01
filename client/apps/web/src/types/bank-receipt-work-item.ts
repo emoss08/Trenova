@@ -33,6 +33,6 @@ export const bankReceiptWorkItemSchema = z.object({
   resolvedByUserId: nullableStringSchema,
   resolvedAt: z.number().int().nullish(),
   createdById: optionalStringSchema,
-  updatedById: optionalStringSchema,
+  updatedById: nullableStringSchema,
 });
 export type BankReceiptWorkItem = z.infer<typeof bankReceiptWorkItemSchema>;

@@ -14,4 +14,8 @@ type Deps struct {
 	JournalCards         *journalcardservice.Service
 }
 
+type ManualJournalLineResolver struct{ *Deps }
+
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

@@ -1,0 +1,340 @@
+query BankReceiptBatches {
+  bankReceiptBatches {
+    id
+    organizationId
+    businessUnitId
+    source
+    reference
+    status
+    importedCount
+    matchedCount
+    exceptionCount
+    importedAmountMinor
+    matchedAmountMinor
+    exceptionAmountMinor
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+query BankReceiptBatch($id: ID!) {
+  bankReceiptBatch(id: $id) {
+    batch {
+      id
+      organizationId
+      businessUnitId
+      source
+      reference
+      status
+      importedCount
+      matchedCount
+      exceptionCount
+      importedAmountMinor
+      matchedAmountMinor
+      exceptionAmountMinor
+      createdById
+      updatedById
+      version
+      createdAt
+      updatedAt
+    }
+    receipts {
+      id
+      organizationId
+      businessUnitId
+      receiptDate
+      amountMinor
+      referenceNumber
+      memo
+      status
+      importBatchId
+      matchedCustomerPaymentId
+      matchedAt
+      matchedById
+      exceptionReason
+      createdById
+      updatedById
+      version
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+mutation ImportBankReceiptBatch($input: ImportBankReceiptBatchInput!) {
+  importBankReceiptBatch(input: $input) {
+    batch {
+      id
+      organizationId
+      businessUnitId
+      source
+      reference
+      status
+      importedCount
+      matchedCount
+      exceptionCount
+      importedAmountMinor
+      matchedAmountMinor
+      exceptionAmountMinor
+      createdById
+      updatedById
+      version
+      createdAt
+      updatedAt
+    }
+    receipts {
+      id
+      organizationId
+      businessUnitId
+      receiptDate
+      amountMinor
+      referenceNumber
+      memo
+      status
+      importBatchId
+      matchedCustomerPaymentId
+      matchedAt
+      matchedById
+      exceptionReason
+      createdById
+      updatedById
+      version
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+query BankReceipt($id: ID!) {
+  bankReceipt(id: $id) {
+    id
+    organizationId
+    businessUnitId
+    receiptDate
+    amountMinor
+    referenceNumber
+    memo
+    status
+    importBatchId
+    matchedCustomerPaymentId
+    matchedAt
+    matchedById
+    exceptionReason
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+query BankReceiptExceptions {
+  bankReceiptExceptions {
+    id
+    organizationId
+    businessUnitId
+    receiptDate
+    amountMinor
+    referenceNumber
+    memo
+    status
+    importBatchId
+    matchedCustomerPaymentId
+    matchedAt
+    matchedById
+    exceptionReason
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+query BankReceiptMatchSuggestions($id: ID!) {
+  bankReceiptMatchSuggestions(id: $id) {
+    customerPaymentId
+    referenceNumber
+    amountMinor
+    customerId
+    score
+    reason
+  }
+}
+
+query BankReceiptSummary($asOfDate: Timestamp) {
+  bankReceiptSummary(asOfDate: $asOfDate) {
+    asOfDate
+    importedCount
+    importedAmount
+    matchedCount
+    matchedAmount
+    exceptionCount
+    exceptionAmount
+    activeWorkItemCount
+    assignedWorkItemCount
+    inReviewWorkItemCount
+    exceptionAging {
+      currentCount
+      currentAmount
+      days1To3Count
+      days1To3Amount
+      days4To7Count
+      days4To7Amount
+      daysOver7Count
+      daysOver7Amount
+    }
+  }
+}
+
+mutation MatchBankReceipt($id: ID!, $paymentId: ID!) {
+  matchBankReceipt(id: $id, paymentId: $paymentId) {
+    id
+    organizationId
+    businessUnitId
+    receiptDate
+    amountMinor
+    referenceNumber
+    memo
+    status
+    importBatchId
+    matchedCustomerPaymentId
+    matchedAt
+    matchedById
+    exceptionReason
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+query BankReceiptWorkItems {
+  bankReceiptWorkItems {
+    id
+    organizationId
+    businessUnitId
+    bankReceiptId
+    status
+    assignedToUserId
+    assignedAt
+    resolutionType
+    resolutionNote
+    resolvedByUserId
+    resolvedAt
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+query BankReceiptWorkItem($id: ID!) {
+  bankReceiptWorkItem(id: $id) {
+    id
+    organizationId
+    businessUnitId
+    bankReceiptId
+    status
+    assignedToUserId
+    assignedAt
+    resolutionType
+    resolutionNote
+    resolvedByUserId
+    resolvedAt
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation AssignBankReceiptWorkItem($id: ID!, $assignedToUserId: ID!) {
+  assignBankReceiptWorkItem(id: $id, assignedToUserId: $assignedToUserId) {
+    id
+    organizationId
+    businessUnitId
+    bankReceiptId
+    status
+    assignedToUserId
+    assignedAt
+    resolutionType
+    resolutionNote
+    resolvedByUserId
+    resolvedAt
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation StartBankReceiptWorkItemReview($id: ID!) {
+  startBankReceiptWorkItemReview(id: $id) {
+    id
+    organizationId
+    businessUnitId
+    bankReceiptId
+    status
+    assignedToUserId
+    assignedAt
+    resolutionType
+    resolutionNote
+    resolvedByUserId
+    resolvedAt
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation ResolveBankReceiptWorkItem($id: ID!, $input: ResolveBankReceiptWorkItemInput!) {
+  resolveBankReceiptWorkItem(id: $id, input: $input) {
+    id
+    organizationId
+    businessUnitId
+    bankReceiptId
+    status
+    assignedToUserId
+    assignedAt
+    resolutionType
+    resolutionNote
+    resolvedByUserId
+    resolvedAt
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation DismissBankReceiptWorkItem($id: ID!, $resolutionNote: String!) {
+  dismissBankReceiptWorkItem(id: $id, resolutionNote: $resolutionNote) {
+    id
+    organizationId
+    businessUnitId
+    bankReceiptId
+    status
+    assignedToUserId
+    assignedAt
+    resolutionType
+    resolutionNote
+    resolvedByUserId
+    resolvedAt
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}

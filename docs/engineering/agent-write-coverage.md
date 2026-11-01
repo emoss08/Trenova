@@ -88,7 +88,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 47 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1123 writes: 671 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1122 writes: 704 GraphQL mutations and 418 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 678 |
+| Exempt | 677 |
 | — Security | 85 |
 | — Configuration | 247 |
 | — User preference | 40 |
-| — Infrastructure | 48 |
+| — Infrastructure | 47 |
 | — Agent administration | 112 |
 | — Counterparty | 35 |
 | — Read-only | 48 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1122 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -134,6 +134,7 @@ The writes no tool performs yet, and what the tool would do.
 | accountingcontrol | 1 | 0 | 1 | 0 |
 | accountingsync | 33 | 20 | 13 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
+| accountsreceivable | 1 | 1 | 0 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 16 | 2 | 14 | 0 |
 | agentdefinition | 13 | 0 | 13 | 0 |
@@ -152,9 +153,7 @@ The writes no tool performs yet, and what the tool would do.
 | assignment | 1 | 0 | 1 | 0 |
 | assistant | 35 | 4 | 31 | 0 |
 | auth | 7 | 0 | 7 | 0 |
-| bankreceipt | 2 | 1 | 1 | 0 |
-| bankreceiptbatch | 1 | 0 | 1 | 0 |
-| bankreceiptworkitem | 4 | 4 | 0 | 0 |
+| bankreceipt | 6 | 5 | 1 | 0 |
 | benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
 | billingqueue | 16 | 9 | 6 | 1 |
@@ -174,7 +173,6 @@ The writes no tool performs yet, and what the tool would do.
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
-| customerstatement | 1 | 1 | 0 | 0 |
 | customertracking | 3 | 2 | 1 | 0 |
 | customfield | 4 | 0 | 4 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
@@ -392,6 +390,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/webhooks/accounting/:provider/`<br>accountingwebhookhandler.receive<br>also `POST /api/v1/webhooks/accounting/:provider/:app/` | Exempt, infrastructure: An inbound webhook a provider calls with a signed token, not a person. |
+
+### accountsreceivable
+
+| Write | Decision |
+| --- | --- |
+| `mutation sendCustomerStatement` | Tool: `receivable_send_statement` |
 
 ### accounttype
 
@@ -613,23 +617,12 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/bank-receipts/`<br>bankreceipthandler.importReceipt | Exempt, infrastructure: Records a line as the bank reported it, from its file or feed; a receipt is the bank's own record of cash that arrived, which an agent only ever matches and never writes. |
-| `POST /api/v1/accounting/bank-receipts/:receiptID/match/`<br>bankreceipthandler.match | Tool: `receivable_match_bank_receipt` |
-
-### bankreceiptbatch
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/accounting/bank-receipt-batches/`<br>bankreceiptbatchhandler.importBatch | Exempt, infrastructure: Loads a bank file's receipts as the bank reported them; the bank's record of cash that arrived is imported, never written by an agent. |
-
-### bankreceiptworkitem
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/`<br>bankreceiptworkitemhandler.assign | Tool: `receivable_triage_bank_receipt_work_item` |
-| `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/dismiss/`<br>bankreceiptworkitemhandler.dismiss | Tool: `receivable_resolve_bank_receipt_work_item` |
-| `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/resolve/`<br>bankreceiptworkitemhandler.resolve | Tool: `receivable_resolve_bank_receipt_work_item` |
-| `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/`<br>bankreceiptworkitemhandler.startReview | Tool: `receivable_triage_bank_receipt_work_item` |
+| `mutation assignBankReceiptWorkItem` | Tool: `receivable_triage_bank_receipt_work_item` |
+| `mutation dismissBankReceiptWorkItem` | Tool: `receivable_resolve_bank_receipt_work_item` |
+| `mutation importBankReceiptBatch` | Exempt, infrastructure: Loads a bank file's receipts as the bank reported them; the bank's record of cash that arrived is imported, never written by an agent. |
+| `mutation matchBankReceipt` | Tool: `receivable_match_bank_receipt` |
+| `mutation resolveBankReceiptWorkItem` | Tool: `receivable_resolve_bank_receipt_work_item` |
+| `mutation startBankReceiptWorkItemReview` | Tool: `receivable_triage_bank_receipt_work_item` |
 
 ### benefits
 
@@ -802,10 +795,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/collections/customers/:customerID/activities/`<br>collectionhandler.logActivity | Tool: `receivable_record_collection_activity` |
-| `POST /api/v1/accounting/collections/customers/:customerID/reminder/`<br>collectionhandler.sendReminder | Tool: `receivable_send_payment_reminder` |
-| `PUT /api/v1/accounting/collections/customers/:customerID/collector/`<br>collectionhandler.assignCollector | Tool: `receivable_assign_collector` |
-| `PUT /api/v1/accounting/collections/customers/:customerID/follow-up/`<br>collectionhandler.scheduleFollowUp | Tool: `receivable_schedule_follow_up` |
+| `mutation assignCollectionCollector` | Tool: `receivable_assign_collector` |
+| `mutation logCollectionActivity` | Tool: `receivable_record_collection_activity` |
+| `mutation scheduleCollectionFollowUp` | Tool: `receivable_schedule_follow_up` |
+| `mutation sendPaymentReminder` | Tool: `receivable_send_payment_reminder` |
 
 ### commodity
 
@@ -841,12 +834,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation postAndApplyCustomerPayment` | Tool: `receivable_post_customer_payment` |
 | `mutation reverseCustomerPayment` | Tool: `receivable_reverse_customer_payment` |
 | `mutation unapplyCreditMemoApplication` | Tool: `receivable_unapply_credit_memo` |
-
-### customerstatement
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/`<br>customerstatementhandler.send | Tool: `receivable_send_statement` |
 
 ### customertracking
 
@@ -1253,21 +1240,21 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/`<br>fiscalperiodhandler.activate | Tool: `ledger_open_fiscal_period` |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/`<br>fiscalperiodhandler.close | Tool: `ledger_close_fiscal_period` |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/`<br>fiscalperiodhandler.lock | Tool: `ledger_lock_fiscal_period` |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/`<br>fiscalperiodhandler.reopen | Tool: `ledger_reopen_fiscal_period` |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/`<br>fiscalperiodhandler.unlock | Tool: `ledger_unlock_fiscal_period` |
+| `mutation activateFiscalPeriod` | Tool: `ledger_open_fiscal_period` |
+| `mutation closeFiscalPeriod` | Tool: `ledger_close_fiscal_period` |
+| `mutation lockFiscalPeriod` | Tool: `ledger_lock_fiscal_period` |
+| `mutation reopenFiscalPeriod` | Tool: `ledger_reopen_fiscal_period` |
+| `mutation unlockFiscalPeriod` | Tool: `ledger_unlock_fiscal_period` |
 
 ### fiscalyear
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/fiscal-years/`<br>fiscalyearhandler.create | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
-| `PUT /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.update | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
-| `PUT /api/v1/fiscal-years/:fiscalYearID/activate/`<br>fiscalyearhandler.activate | Exempt, configuration: Makes a fiscal year the one the calendar runs on, part of setting up the year that an accounting administrator does once. |
-| `PUT /api/v1/fiscal-years/:fiscalYearID/close/`<br>fiscalyearhandler.close | Exempt, attestation: Closing the year books its closing entries into retained earnings and is the year-end sign-off the person accountable for the books makes. |
-| `PUT /api/v1/fiscal-years/:fiscalYearID/reopen/`<br>fiscalyearhandler.reopen | Exempt, attestation: Reverses the year's closing entries and withdraws the year-end sign-off, which only the person accountable for the books does. |
+| `mutation activateFiscalYear` | Exempt, configuration: Makes a fiscal year the one the calendar runs on, part of setting up the year that an accounting administrator does once. |
+| `mutation closeFiscalYear` | Exempt, attestation: Closing the year books its closing entries into retained earnings and is the year-end sign-off the person accountable for the books makes. |
+| `mutation createFiscalYear` | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
+| `mutation reopenFiscalYear` | Exempt, attestation: Reverses the year's closing entries and withdraws the year-end sign-off, which only the person accountable for the books does. |
+| `mutation updateFiscalYear` | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
 
 ### fleetcode
 
@@ -1594,11 +1581,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/journal-reversals/`<br>journalreversalhandler.create | Tool: `ledger_create_journal_reversal` |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/approve/`<br>journalreversalhandler.approve | Exempt, attestation: Approving a reversal is the second person's sign-off on taking a posted entry back out of the ledger; an agent requests reversals and never stands in as their approver. |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/cancel/`<br>journalreversalhandler.cancel | Tool: `ledger_cancel_journal_reversal` |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/post/`<br>journalreversalhandler.post | Tool: `ledger_post_journal_reversal` |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/reject/`<br>journalreversalhandler.reject | Exempt, attestation: Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it. |
+| `mutation approveJournalReversal` | Exempt, attestation: Approving a reversal is the second person's sign-off on taking a posted entry back out of the ledger; an agent requests reversals and never stands in as their approver. |
+| `mutation cancelJournalReversal` | Tool: `ledger_cancel_journal_reversal` |
+| `mutation createJournalReversal` | Tool: `ledger_create_journal_reversal` |
+| `mutation postJournalReversal` | Tool: `ledger_post_journal_reversal` |
+| `mutation rejectJournalReversal` | Exempt, attestation: Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it. |
 
 ### jurisdictionrule
 
@@ -1636,13 +1623,13 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/manual-journals/:requestID/approve/`<br>manualjournalhandler.approve | Exempt, attestation: Approving a manual journal is the second person's sign-off on an entry someone else prepared; an agent prepares journals and never stands in as their approver. |
-| `POST /api/v1/accounting/manual-journals/:requestID/cancel/`<br>manualjournalhandler.cancel | Tool: `ledger_cancel_manual_journal` |
-| `POST /api/v1/accounting/manual-journals/:requestID/post/`<br>manualjournalhandler.post | Tool: `ledger_post_manual_journal` |
-| `POST /api/v1/accounting/manual-journals/:requestID/reject/`<br>manualjournalhandler.reject | Exempt, attestation: Sending a manual journal back is the approver's half of the same sign-off, made by the accountable person reviewing it. |
-| `POST /api/v1/accounting/manual-journals/:requestID/submit/`<br>manualjournalhandler.submit | Tool: `ledger_submit_manual_journal` |
-| `POST /api/v1/accounting/manual-journals/drafts/`<br>manualjournalhandler.createDraft | Tool: `ledger_create_manual_journal` |
-| `PUT /api/v1/accounting/manual-journals/drafts/:requestID/`<br>manualjournalhandler.updateDraft | Tool: `ledger_update_manual_journal` |
+| `mutation approveManualJournal` | Exempt, attestation: Approving a manual journal is the second person's sign-off on an entry someone else prepared; an agent prepares journals and never stands in as their approver. |
+| `mutation cancelManualJournal` | Tool: `ledger_cancel_manual_journal` |
+| `mutation createManualJournalDraft` | Tool: `ledger_create_manual_journal` |
+| `mutation postManualJournal` | Tool: `ledger_post_manual_journal` |
+| `mutation rejectManualJournal` | Exempt, attestation: Sending a manual journal back is the approver's half of the same sign-off, made by the accountable person reviewing it. |
+| `mutation submitManualJournal` | Tool: `ledger_submit_manual_journal` |
+| `mutation updateManualJournalDraft` | Tool: `ledger_update_manual_journal` |
 
 ### notification
 

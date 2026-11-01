@@ -8,10 +8,13 @@ package accountsreceivableresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -254,4 +257,43 @@ func (r *QueryResolver) ArPaymentStats(ctx context.Context) (*customerledgerport
 		ctx,
 		customerledgerports.GetARAnalyticsRequest{TenantInfo: resolvercore.TenantInfo(authCtx)},
 	)
+}
+
+func (r *QueryResolver) SentCustomerStatements(ctx context.Context, customerID string) ([]*customerstatementports.SentStatement, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountsReceivable, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	custID, err := requiredCustomerID(customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomerStatementService.ListSent(ctx, customerstatementports.ListSentRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		CustomerID: custID,
+	})
+}
+
+func (r *MutationResolver) SendCustomerStatement(ctx context.Context, customerID string, input gqlmodel.SendCustomerStatementInput) (*customerstatementports.SendResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountsReceivable, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	custID, err := requiredCustomerID(customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.CustomerStatementService.Send(ctx, &customerstatementports.SendRequest{
+		StatementRequest: customerstatementports.StatementRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			CustomerID: custID,
+			StartDate:  int64(gqlscalar.DerefInt(input.StartDate)),
+			AsOfDate:   int64(gqlscalar.DerefInt(input.AsOfDate)),
+		},
+		Note: input.Note,
+	}, actorutil.FromAuthContext(authCtx))
 }

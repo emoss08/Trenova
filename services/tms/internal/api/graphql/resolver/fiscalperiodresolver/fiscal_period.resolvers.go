@@ -11,9 +11,16 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/shared/pulid"
 )
+
+func (r *FiscalCloseBlockerResolver) Code(ctx context.Context, obj *fiscalclose.Blocker) (string, error) {
+	return string(obj.Code), nil
+}
 
 func (r *QueryResolver) FiscalPeriods(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalPeriodConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalPeriod, permission.OpRead)
@@ -39,4 +46,107 @@ func (r *QueryResolver) FiscalPeriods(ctx context.Context, input gqlmodel.DataTa
 	}
 
 	return fiscalPeriodConnectionToModel(result)
+}
+
+func (r *QueryResolver) FiscalPeriodCloseBlockers(ctx context.Context, id string) (*fiscalclose.Result, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalPeriod, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalPeriodID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalPeriodService.GetCloseBlockers(ctx, fiscalperiodports.GetFiscalPeriodByIDRequest{
+		ID:         fiscalPeriodID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) ActivateFiscalPeriod(ctx context.Context, id string) (*fiscalperiod.FiscalPeriod, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalPeriod, permission.OpActivate)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalPeriodID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalPeriodService.Activate(ctx, fiscalperiodports.ActivateFiscalPeriodRequest{
+		ID:         fiscalPeriodID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) CloseFiscalPeriod(ctx context.Context, id string) (*fiscalperiod.FiscalPeriod, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalPeriod, permission.OpClose)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalPeriodID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalPeriodService.Close(ctx, fiscalperiodports.CloseFiscalPeriodRequest{
+		ID:         fiscalPeriodID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) LockFiscalPeriod(ctx context.Context, id string) (*fiscalperiod.FiscalPeriod, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalPeriod, permission.OpLock)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalPeriodID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalPeriodService.Lock(ctx, &fiscalperiodports.LockFiscalPeriodRequest{
+		ID:         fiscalPeriodID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) UnlockFiscalPeriod(ctx context.Context, id string) (*fiscalperiod.FiscalPeriod, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalPeriod, permission.OpUnlock)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalPeriodID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalPeriodService.Unlock(ctx, fiscalperiodports.UnlockFiscalPeriodRequest{
+		ID:         fiscalPeriodID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) ReopenFiscalPeriod(ctx context.Context, id string, reopenReason string) (*fiscalperiod.FiscalPeriod, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalPeriod, permission.OpReopen)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalPeriodID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalPeriodService.Reopen(ctx, fiscalperiodports.ReopenFiscalPeriodRequest{
+		ID:           fiscalPeriodID,
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		ReopenReason: reopenReason,
+	}, authCtx.UserID)
 }

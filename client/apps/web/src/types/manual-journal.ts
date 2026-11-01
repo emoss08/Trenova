@@ -66,3 +66,12 @@ export const manualJournalSchema = z.object({
   lines: z.array(manualJournalLineSchema).optional(),
 });
 export type ManualJournal = z.infer<typeof manualJournalSchema>;
+
+/** What the manual journal form edits: a draft's header and its lines. */
+export type ManualJournalDraftValues = {
+  description: string;
+  reason: string;
+  accountingDate: number | null;
+  currencyCode: string;
+  lines: ManualJournalLine[];
+};

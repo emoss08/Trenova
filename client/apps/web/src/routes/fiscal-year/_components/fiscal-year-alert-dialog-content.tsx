@@ -140,7 +140,7 @@ export function FiscalYearCloseAlertDialogContent({ record, onClose, onCompleted
     isError,
   } = useQuery({
     queryKey: ["fiscal-year-close-preview", record?.id],
-    queryFn: () => apiService.fiscalYearService.closePreview(record.id),
+    queryFn: ({ signal }) => apiService.fiscalYearService.closePreview(record.id, { signal }),
     enabled: !!record?.id,
     staleTime: 0,
   });

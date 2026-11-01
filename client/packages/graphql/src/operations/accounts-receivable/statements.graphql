@@ -1,0 +1,22 @@
+query SentCustomerStatements($customerId: ID!) {
+  sentCustomerStatements(customerId: $customerId) {
+    id
+    periodStart
+    periodEnd
+    endingBalanceMinor
+    pastDueMinor
+    currencyCode
+    sentTo
+    monthly
+    sentByName
+    sentAt
+  }
+}
+
+mutation SendCustomerStatement($customerId: ID!, $input: SendCustomerStatementInput!) {
+  sendCustomerStatement(customerId: $customerId, input: $input) {
+    sentTo
+    endingBalance
+    fileName
+  }
+}

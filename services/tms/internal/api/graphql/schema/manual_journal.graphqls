@@ -37,6 +37,24 @@ type ManualJournal {
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  "Its lines in order; null in the manualJournals list, read one journal for them."
+  lines: [ManualJournalLine!]
+}
+
+"One debit or credit line of a manual journal."
+type ManualJournalLine {
+  id: ID!
+  manualJournalRequestId: ID!
+  lineNumber: Int!
+  glAccountId: ID!
+  description: String!
+  debitAmount: Int!
+  creditAmount: Int!
+  customerId: ID
+  locationId: ID
+  glAccount: JournalEntryLineAccount
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 type ManualJournalEdge {
@@ -73,4 +91,39 @@ extend type Query {
   manualJournal(id: ID!): ManualJournal
   "A manual journal as the Desk card draws it, read in one pass."
   manualJournalCard(id: ID!): ManualJournalCard! @authorizes(resource: "manual_journal") @authorizes(resource: "journal_entry")
+}
+
+input ManualJournalDraftLineInput {
+  "Empty until an account is picked; the draft is refused with the line named."
+  glAccountId: ID!
+  description: String!
+  debitAmount: Int!
+  creditAmount: Int!
+  customerId: ID
+  locationId: ID
+}
+
+input ManualJournalDraftInput {
+  description: String!
+  reason: String
+  "The day it books to; null until one is picked, which the draft refuses."
+  accountingDate: Timestamp
+  currencyCode: String!
+  lines: [ManualJournalDraftLineInput!]!
+}
+
+extend type Mutation {
+  createManualJournalDraft(input: ManualJournalDraftInput!): ManualJournal!
+  "Replaces a draft's header and lines."
+  updateManualJournalDraft(id: ID!, input: ManualJournalDraftInput!): ManualJournal!
+  "Sends a draft for approval."
+  submitManualJournal(id: ID!): ManualJournal!
+  "The second person's sign-off on a manual journal someone else prepared."
+  approveManualJournal(id: ID!): ManualJournal!
+  "Posts an approved manual journal to the ledger."
+  postManualJournal(id: ID!): ManualJournal!
+  "Sends a manual journal back, recording why."
+  rejectManualJournal(id: ID!, reason: String!): ManualJournal!
+  "Withdraws a manual journal that has not posted, recording why."
+  cancelManualJournal(id: ID!, reason: String!): ManualJournal!
 }

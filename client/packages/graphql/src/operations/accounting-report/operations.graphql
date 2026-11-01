@@ -1,0 +1,105 @@
+query TrialBalance($fiscalPeriodId: ID!) {
+  trialBalance(fiscalPeriodId: $fiscalPeriodId) {
+    organizationId
+    businessUnitId
+    glAccountId
+    fiscalYearId
+    fiscalPeriodId
+    accountCode
+    accountName
+    accountCategory
+    periodDebitMinor
+    periodCreditMinor
+    netChangeMinor
+  }
+}
+
+query IncomeStatement($fiscalPeriodId: ID!) {
+  incomeStatement(fiscalPeriodId: $fiscalPeriodId) {
+    fiscalPeriodId
+    revenue {
+      key
+      label
+      totalMinor
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        accountCategory
+        amountMinor
+      }
+    }
+    costOfRevenue {
+      key
+      label
+      totalMinor
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        accountCategory
+        amountMinor
+      }
+    }
+    operatingExpense {
+      key
+      label
+      totalMinor
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        accountCategory
+        amountMinor
+      }
+    }
+    grossProfitMinor
+    netIncomeMinor
+  }
+}
+
+query BalanceSheet($fiscalPeriodId: ID!) {
+  balanceSheet(fiscalPeriodId: $fiscalPeriodId) {
+    fiscalPeriodId
+    assets {
+      key
+      label
+      totalMinor
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        accountCategory
+        amountMinor
+      }
+    }
+    liabilities {
+      key
+      label
+      totalMinor
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        accountCategory
+        amountMinor
+      }
+    }
+    equity {
+      key
+      label
+      totalMinor
+      lines {
+        glAccountId
+        accountCode
+        accountName
+        accountCategory
+        amountMinor
+      }
+    }
+    currentYearEarningsMinor
+    totalAssetsMinor
+    totalLiabilitiesMinor
+    totalEquityMinor
+  }
+}

@@ -1,0 +1,269 @@
+query CollectionWorklist($input: CollectionWorklistInput!) {
+  collectionWorklist(input: $input) {
+    rows {
+      customerId
+      customerName
+      customerCode
+      creditStatus
+      currencyCode
+      totalOpenMinor
+      overdueMinor
+      oldestDaysPastDue
+      openInvoiceCount
+      disputedInvoiceCount
+      collectorId
+      collectorName
+      nextFollowUpOn
+      followUpDue
+      lastActivityAt
+      lastActivityKind
+      lastActivitySummary
+      promise {
+        activityId
+        amountMinor
+        currencyCode
+        promisedOn
+        madeAt
+        madeByName
+        paidSinceMinor
+        status
+      }
+      priority
+    }
+    total
+    summary {
+      accounts
+      overdue {
+        currencyCode
+        amountMinor
+      }
+      followUpsDue
+      brokenPromises
+      unassigned
+    }
+  }
+}
+
+query CollectionAccount($customerId: ID!, $before: CollectionActivityCursorInput) {
+  collectionAccount(customerId: $customerId, before: $before) {
+    row {
+      customerId
+      customerName
+      customerCode
+      creditStatus
+      currencyCode
+      totalOpenMinor
+      overdueMinor
+      oldestDaysPastDue
+      openInvoiceCount
+      disputedInvoiceCount
+      collectorId
+      collectorName
+      nextFollowUpOn
+      followUpDue
+      lastActivityAt
+      lastActivityKind
+      lastActivitySummary
+      promise {
+        activityId
+        amountMinor
+        currencyCode
+        promisedOn
+        madeAt
+        madeByName
+        paidSinceMinor
+        status
+      }
+      priority
+    }
+    activities {
+      id
+      customerId
+      kind
+      summary
+      contactName
+      invoiceId
+      invoiceNumber
+      promisedAmountMinor
+      promisedOn
+      currencyCode
+      followUpOn
+      collectorId
+      collectorName
+      createdById
+      createdByName
+      createdAt
+    }
+    hasMore
+  }
+}
+
+mutation LogCollectionActivity($customerId: ID!, $input: LogCollectionActivityInput!) {
+  logCollectionActivity(customerId: $customerId, input: $input) {
+    row {
+      customerId
+      customerName
+      customerCode
+      creditStatus
+      currencyCode
+      totalOpenMinor
+      overdueMinor
+      oldestDaysPastDue
+      openInvoiceCount
+      disputedInvoiceCount
+      collectorId
+      collectorName
+      nextFollowUpOn
+      followUpDue
+      lastActivityAt
+      lastActivityKind
+      lastActivitySummary
+      promise {
+        activityId
+        amountMinor
+        currencyCode
+        promisedOn
+        madeAt
+        madeByName
+        paidSinceMinor
+        status
+      }
+      priority
+    }
+    activities {
+      id
+      customerId
+      kind
+      summary
+      contactName
+      invoiceId
+      invoiceNumber
+      promisedAmountMinor
+      promisedOn
+      currencyCode
+      followUpOn
+      collectorId
+      collectorName
+      createdById
+      createdByName
+      createdAt
+    }
+    hasMore
+  }
+}
+
+mutation AssignCollectionCollector($customerId: ID!, $collectorId: ID) {
+  assignCollectionCollector(customerId: $customerId, collectorId: $collectorId) {
+    row {
+      customerId
+      customerName
+      customerCode
+      creditStatus
+      currencyCode
+      totalOpenMinor
+      overdueMinor
+      oldestDaysPastDue
+      openInvoiceCount
+      disputedInvoiceCount
+      collectorId
+      collectorName
+      nextFollowUpOn
+      followUpDue
+      lastActivityAt
+      lastActivityKind
+      lastActivitySummary
+      promise {
+        activityId
+        amountMinor
+        currencyCode
+        promisedOn
+        madeAt
+        madeByName
+        paidSinceMinor
+        status
+      }
+      priority
+    }
+    activities {
+      id
+      customerId
+      kind
+      summary
+      contactName
+      invoiceId
+      invoiceNumber
+      promisedAmountMinor
+      promisedOn
+      currencyCode
+      followUpOn
+      collectorId
+      collectorName
+      createdById
+      createdByName
+      createdAt
+    }
+    hasMore
+  }
+}
+
+mutation ScheduleCollectionFollowUp($customerId: ID!, $followUpOn: Timestamp, $note: String!) {
+  scheduleCollectionFollowUp(customerId: $customerId, followUpOn: $followUpOn, note: $note) {
+    row {
+      customerId
+      customerName
+      customerCode
+      creditStatus
+      currencyCode
+      totalOpenMinor
+      overdueMinor
+      oldestDaysPastDue
+      openInvoiceCount
+      disputedInvoiceCount
+      collectorId
+      collectorName
+      nextFollowUpOn
+      followUpDue
+      lastActivityAt
+      lastActivityKind
+      lastActivitySummary
+      promise {
+        activityId
+        amountMinor
+        currencyCode
+        promisedOn
+        madeAt
+        madeByName
+        paidSinceMinor
+        status
+      }
+      priority
+    }
+    activities {
+      id
+      customerId
+      kind
+      summary
+      contactName
+      invoiceId
+      invoiceNumber
+      promisedAmountMinor
+      promisedOn
+      currencyCode
+      followUpOn
+      collectorId
+      collectorName
+      createdById
+      createdByName
+      createdAt
+    }
+    hasMore
+  }
+}
+
+mutation SendPaymentReminder($customerId: ID!, $note: String!) {
+  sendPaymentReminder(customerId: $customerId, note: $note) {
+    sentTo
+    invoiceNumbers
+    totalOverdue
+  }
+}

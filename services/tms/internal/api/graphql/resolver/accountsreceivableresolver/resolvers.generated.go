@@ -6,12 +6,16 @@ import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	accountingbriefports "github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	accountsreceivableservice "github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
+	customerstatementports "github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 )
 
 type Deps struct {
 	*resolvercore.Core
 	AccountsReceivableService *accountsreceivableservice.Service
 	AccountingBriefs          accountingbriefports.AccountingBriefingReader
+	CustomerStatementService  customerstatementports.Service
 }
+
+type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

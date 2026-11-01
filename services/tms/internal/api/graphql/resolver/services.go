@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/glbalanceservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
@@ -58,11 +59,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
@@ -70,6 +75,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
@@ -282,6 +288,12 @@ type Params struct {
 	AccountTypeService                *accounttypeservice.Service
 	AccountsReceivableService         *accountsreceivableservice.Service
 	AccountingBriefs                  accountingbriefports.AccountingBriefingReader
+	GLBalanceService                  *glbalanceservice.Service
+	CollectionService                 collectionports.Service
+	PaymentReminderService            paymentreminderports.Service
+	CustomerStatementService          customerstatementports.Service
+	BankReceiptService                *bankreceiptservice.Service
+	BankReceiptWorkItemService        *bankreceiptworkitemservice.Service
 	CustomerPaymentService            customerpaymentports.CustomerPaymentService
 	CustomerPaymentRepo               customerpaymentports.CustomerPaymentRepository
 	InvoiceDisputeRepo                invoiceports.InvoiceDisputeRepository
@@ -572,6 +584,12 @@ type Services struct {
 	AccountTypeService                *accounttypeservice.Service
 	AccountsReceivableService         *accountsreceivableservice.Service
 	AccountingBriefs                  accountingbriefports.AccountingBriefingReader
+	GLBalanceService                  *glbalanceservice.Service
+	CollectionService                 collectionports.Service
+	PaymentReminderService            paymentreminderports.Service
+	CustomerStatementService          customerstatementports.Service
+	BankReceiptService                *bankreceiptservice.Service
+	BankReceiptWorkItemService        *bankreceiptworkitemservice.Service
 	CustomerPaymentService            customerpaymentports.CustomerPaymentService
 	CustomerPaymentRepo               customerpaymentports.CustomerPaymentRepository
 	InvoiceDisputeRepo                invoiceports.InvoiceDisputeRepository
@@ -867,6 +885,12 @@ func newServices(p *Params) *Services {
 		AccountTypeService:                p.AccountTypeService,
 		AccountsReceivableService:         p.AccountsReceivableService,
 		AccountingBriefs:                  p.AccountingBriefs,
+		GLBalanceService:                  p.GLBalanceService,
+		CollectionService:                 p.CollectionService,
+		PaymentReminderService:            p.PaymentReminderService,
+		CustomerStatementService:          p.CustomerStatementService,
+		BankReceiptService:                p.BankReceiptService,
+		BankReceiptWorkItemService:        p.BankReceiptWorkItemService,
 		CustomerPaymentService:            p.CustomerPaymentService,
 		CustomerPaymentRepo:               p.CustomerPaymentRepo,
 		InvoiceDisputeRepo:                p.InvoiceDisputeRepo,

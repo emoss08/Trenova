@@ -54,3 +54,37 @@ extend type Query {
   "Every fiscal period of every fiscal year, latest start first."
   fiscalPeriods(input: DataTableConnectionInput!): FiscalPeriodConnection!
 }
+
+"One reason a fiscal period or year cannot close yet."
+type FiscalCloseBlocker {
+  "The field or check the blocker is about."
+  field: String!
+  code: String!
+  message: String!
+  "What kind of work clears it: an open subledger, unposted entries, a reconciliation."
+  category: String!
+}
+
+"Whether a fiscal period or year can close now, and every reason it cannot."
+type FiscalCloseCheck {
+  canClose: Boolean!
+  blockers: [FiscalCloseBlocker!]!
+}
+
+extend type Query {
+  "What stands between a fiscal period and its close."
+  fiscalPeriodCloseBlockers(id: ID!): FiscalCloseCheck!
+}
+
+extend type Mutation {
+  "Opens an inactive fiscal period for posting."
+  activateFiscalPeriod(id: ID!): FiscalPeriod!
+  "Closes a fiscal period; nothing posts to it until it is reopened."
+  closeFiscalPeriod(id: ID!): FiscalPeriod!
+  "Locks a fiscal period against subledger postings while journal entries still post."
+  lockFiscalPeriod(id: ID!): FiscalPeriod!
+  "Lifts a fiscal period's lock."
+  unlockFiscalPeriod(id: ID!): FiscalPeriod!
+  "Reopens a closed fiscal period, recording why."
+  reopenFiscalPeriod(id: ID!, reopenReason: String!): FiscalPeriod!
+}

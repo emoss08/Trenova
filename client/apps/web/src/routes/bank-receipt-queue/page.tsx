@@ -23,9 +23,8 @@ import type {
   ResolutionType,
   WorkItemStatus,
 } from "@/types/bank-receipt-work-item";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
@@ -35,7 +34,7 @@ import {
   ShieldTickIcon,
   UserPlus01Icon,
 } from "@trenova/shared/components/icons";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -67,65 +66,21 @@ export function BankReceiptQueuePage() {
     setStatusFilter(null);
   };
   const queryClient = useQueryClient();
-  const observerTarget = useRef<HTMLDivElement>(null);
 
-  const {
-    data: listData,
-    isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["bankReceiptWorkItems", searchQuery, statusFilter],
-    queryFn: async ({ pageParam }) => {
-      const params: Record<string, string> = {
-        limit: "20",
-        offset: String(pageParam),
-      };
-      if (searchQuery.trim()) {
-        params.query = searchQuery.trim();
-      }
-      if (statusFilter) {
-        params.fieldFilters = JSON.stringify([
-          { field: "status", operator: "eq", value: statusFilter },
-        ]);
-      }
-      return apiService.bankReceiptWorkItemService.list(params);
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.length === 20) {
-        return lastPageParam + 20;
-      }
-      return undefined;
-    },
-  });
+  const { data: workItems, isLoading } = useQuery(bankReceiptWorkItem.list());
 
-  const allRows = useMemo(() => listData?.pages.flat() ?? [], [listData?.pages]);
+  const allRows = useMemo(() => {
+    const search = searchQuery.trim().toLowerCase();
+    return (workItems ?? []).filter(
+      (row) =>
+        (!statusFilter || row.status === statusFilter) &&
+        (!search ||
+          row.bankReceiptId.toLowerCase().includes(search) ||
+          (row.resolutionNote ?? "").toLowerCase().includes(search)),
+    );
+  }, [workItems, searchQuery, statusFilter]);
 
   const selectedRow = allRows.find((row) => row.id === selectedWorkItemId) ?? null;
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          void fetchNextPage();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const detailQuery = useQuery({
     ...bankReceiptWorkItem.get(selectedRow?.id ?? ""),
@@ -137,7 +92,6 @@ export function BankReceiptQueuePage() {
   });
 
   const invalidateAll = () => {
-    void queryClient.invalidateQueries({ queryKey: ["bankReceiptWorkItems"] });
     void queryClient.invalidateQueries({ queryKey: ["bankReceiptWorkItem"] });
     void queryClient.invalidateQueries({ queryKey: ["bankReceipt"] });
   };
@@ -166,7 +120,7 @@ export function BankReceiptQueuePage() {
       resolutionNote,
     }: {
       id: string;
-      resolutionType: string;
+      resolutionType: ResolutionType;
       resolutionNote: string;
     }) => apiService.bankReceiptWorkItemService.resolve(id, { resolutionType, resolutionNote }),
     onSuccess: () => {
@@ -292,14 +246,6 @@ export function BankReceiptQueuePage() {
                   </button>
                 );
               })}
-              {isFetchingNextPage ? (
-                <div className="flex items-center justify-center py-4">
-                  <TextShimmer className="font-mono text-sm" duration={1}>
-                    {t("Loading more...")}
-                  </TextShimmer>
-                </div>
-              ) : null}
-              <div ref={observerTarget} className="h-px" />
             </div>
           </ScrollArea>
         </div>
@@ -350,7 +296,7 @@ function WorkItemDetail({
     typeof useMutation<
       BankReceiptWorkItem,
       Error,
-      { id: string; resolutionType: string; resolutionNote: string }
+      { id: string; resolutionType: ResolutionType; resolutionNote: string }
     >
   >;
   dismissMutation: ReturnType<
@@ -558,13 +504,14 @@ function WorkItemDetail({
                       className="bg-success text-foreground-on-solid hover:bg-success"
                       type="button"
                       disabled={!resolutionType || resolveMutation.isPending}
-                      onClick={() =>
+                      onClick={() => {
+                        if (!resolutionType) return;
                         resolveMutation.mutate({
                           id: workItem.id!,
                           resolutionType,
                           resolutionNote: resolutionNote.trim(),
-                        })
-                      }
+                        });
+                      }}
                     >
                       {t("Confirm resolution")}
                     </Button>

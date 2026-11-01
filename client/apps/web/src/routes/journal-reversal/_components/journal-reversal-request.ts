@@ -1,4 +1,4 @@
-import type { JournalReversal } from "@/types/journal-reversal";
+import type { CreateJournalReversalInput } from "@trenova/graphql/generated/graphql";
 
 /** What a person fills in to ask for a journal entry to be reversed. */
 export type ReversalRequestValues = {
@@ -10,7 +10,7 @@ export type ReversalRequestValues = {
 };
 
 /** The request the reversal is created from, its date read as the start of that day in UTC. */
-export function reversalRequestBody(values: ReversalRequestValues): Partial<JournalReversal> {
+export function reversalRequestBody(values: ReversalRequestValues): CreateJournalReversalInput {
   return {
     originalJournalEntryId: values.originalJournalEntryId,
     requestedAccountingDate: new Date(values.requestedAccountingDate).getTime() / 1000,

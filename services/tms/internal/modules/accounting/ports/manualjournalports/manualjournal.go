@@ -8,10 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type ListManualJournalRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type ListManualJournalConnectionRequest struct {
 	Filter               *pagination.QueryOptions `json:"filter"`
 	Cursor               pagination.CursorInfo    `json:"-"`
@@ -24,10 +20,6 @@ type GetManualJournalByIDRequest struct {
 }
 
 type ManualJournalRepository interface {
-	List(
-		ctx context.Context,
-		req *ListManualJournalRequest,
-	) (*pagination.ListResult[*manualjournal.Request], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListManualJournalConnectionRequest,

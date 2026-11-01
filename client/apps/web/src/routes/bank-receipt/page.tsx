@@ -6,7 +6,7 @@ import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { bankReceipt } from "@/lib/queries/bank-receipt";
 import { apiService } from "@/services/api";
 import type { BankReceipt, BankReceiptStatus, MatchSuggestion } from "@/types/bank-receipt";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { formatUnixDateMedium, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import {
@@ -30,7 +29,7 @@ import {
   SearchLgIcon,
 } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryStates } from "nuqs";
-import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef } from "react";
+import { type ReactNode, useDeferredValue, useMemo } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 const bankReceiptSearchParams = {
@@ -54,63 +53,21 @@ export function BankReceiptPage() {
   const hasActiveFilters = Boolean(query || status);
   const clearFilters = () => void setSearchParams({ query: "", status: null });
   const queryClient = useQueryClient();
-  const observerTarget = useRef<HTMLDivElement>(null);
 
-  const {
-    data: listData,
-    isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["bankReceipt", "list", deferredQuery, status],
-    queryFn: async ({ pageParam }) => {
-      const params: Record<string, string> = {
-        limit: "20",
-        offset: String(pageParam),
-      };
-      if (deferredQuery.trim()) {
-        params.query = deferredQuery.trim();
-      }
-      if (status) {
-        params.status = status;
-      }
-      return apiService.bankReceiptService.getExceptions(params);
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.length === 20) {
-        return lastPageParam + 20;
-      }
-      return undefined;
-    },
-  });
+  const { data: exceptions, isLoading } = useQuery(bankReceipt.exceptions());
 
-  const allRows = useMemo(() => listData?.pages.flatMap((page) => page) ?? [], [listData?.pages]);
+  const allRows = useMemo(() => {
+    const search = deferredQuery.trim().toLowerCase();
+    return (exceptions ?? []).filter(
+      (row) =>
+        (!status || row.status === status) &&
+        (!search ||
+          row.referenceNumber.toLowerCase().includes(search) ||
+          (row.memo ?? "").toLowerCase().includes(search)),
+    );
+  }, [exceptions, deferredQuery, status]);
 
   const selectedRow = allRows.find((row) => row.id === selectedReceiptId) ?? allRows[0] ?? null;
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          void fetchNextPage();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const detailQuery = useQuery({
     ...bankReceipt.get(selectedRow?.id ?? ""),
@@ -246,14 +203,6 @@ export function BankReceiptPage() {
                   </button>
                 );
               })}
-              {isFetchingNextPage ? (
-                <div className="flex items-center justify-center py-4">
-                  <TextShimmer className="font-mono text-sm" duration={1}>
-                    {t("Loading more...")}
-                  </TextShimmer>
-                </div>
-              ) : null}
-              <div ref={observerTarget} className="h-px" />
             </div>
           </ScrollArea>
         </div>

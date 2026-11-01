@@ -1,0 +1,136 @@
+query FiscalPeriodCloseBlockers($id: ID!) {
+  fiscalPeriodCloseBlockers(id: $id) {
+    canClose
+    blockers {
+      field
+      code
+      message
+      category
+    }
+  }
+}
+
+mutation ActivateFiscalPeriod($id: ID!) {
+  activateFiscalPeriod(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    fiscalYearId
+    periodNumber
+    periodType
+    status
+    name
+    startDate
+    endDate
+    isAdjusting
+    allowAdjustingEntries
+    adjustmentDeadline
+    lockedAt
+    closedAt
+    reopenedAt
+    reopenReason
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CloseFiscalPeriod($id: ID!) {
+  closeFiscalPeriod(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    fiscalYearId
+    periodNumber
+    periodType
+    status
+    name
+    startDate
+    endDate
+    isAdjusting
+    allowAdjustingEntries
+    adjustmentDeadline
+    lockedAt
+    closedAt
+    reopenedAt
+    reopenReason
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation LockFiscalPeriod($id: ID!) {
+  lockFiscalPeriod(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    fiscalYearId
+    periodNumber
+    periodType
+    status
+    name
+    startDate
+    endDate
+    isAdjusting
+    allowAdjustingEntries
+    adjustmentDeadline
+    lockedAt
+    closedAt
+    reopenedAt
+    reopenReason
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UnlockFiscalPeriod($id: ID!) {
+  unlockFiscalPeriod(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    fiscalYearId
+    periodNumber
+    periodType
+    status
+    name
+    startDate
+    endDate
+    isAdjusting
+    allowAdjustingEntries
+    adjustmentDeadline
+    lockedAt
+    closedAt
+    reopenedAt
+    reopenReason
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation ReopenFiscalPeriod($id: ID!, $reopenReason: String!) {
+  reopenFiscalPeriod(id: $id, reopenReason: $reopenReason) {
+    id
+    businessUnitId
+    organizationId
+    fiscalYearId
+    periodNumber
+    periodType
+    status
+    name
+    startDate
+    endDate
+    isAdjusting
+    allowAdjustingEntries
+    adjustmentDeadline
+    lockedAt
+    closedAt
+    reopenedAt
+    reopenReason
+    version
+    createdAt
+    updatedAt
+  }
+}

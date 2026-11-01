@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -17,16 +18,85 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "fiscalperiod",
 	Objects: []*gqlexec.Object{
+		{Name: "FiscalCloseBlocker", Implementors: []string{"FiscalCloseBlocker"}},
+		{Name: "FiscalCloseCheck", Implementors: []string{"FiscalCloseCheck"}},
 		{Name: "FiscalPeriod", Implementors: []string{"FiscalPeriod"}},
 		{Name: "FiscalPeriodConnection", Implementors: []string{"FiscalPeriodConnection"}},
 		{Name: "FiscalPeriodEdge", Implementors: []string{"FiscalPeriodEdge"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "FiscalCloseBlocker", Fields: []*gqlexec.Field{
+			{
+				Name:     "field",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Blocker)
+					return obj.Field, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "code",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Blocker)
+					return gqlexec.Resolver[resolverFiscalCloseBlocker](ec, "FiscalCloseBlocker").Code(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "message",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Blocker)
+					return obj.Message, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "category",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Blocker)
+					return obj.Category, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "FiscalCloseCheck", Fields: []*gqlexec.Field{
+			{
+				Name:     "canClose",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Result)
+					return obj.CanClose, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "blockers",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FiscalCloseBlocker",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*fiscalclose.Result)
+					return obj.Blockers, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalCloseBlocker2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐBlockerᚄ),
+			},
+		}},
 		{Object: "FiscalPeriod", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.ID, nil
@@ -36,7 +106,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.BusinessUnitID, nil
@@ -46,7 +116,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.OrganizationID, nil
@@ -56,7 +126,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fiscalYearId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.FiscalYearID, nil
@@ -66,7 +136,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "periodNumber",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.PeriodNumber, nil
@@ -75,7 +145,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "periodType",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.PeriodType, nil
@@ -85,7 +155,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.Status, nil
@@ -95,7 +165,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.Name, nil
@@ -105,7 +175,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "startDate",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.StartDate, nil
@@ -115,7 +185,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "endDate",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.EndDate, nil
@@ -125,7 +195,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isAdjusting",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.IsAdjusting, nil
@@ -135,7 +205,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "allowAdjustingEntries",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.AllowAdjustingEntries, nil
@@ -144,7 +214,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "adjustmentDeadline",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.AdjustmentDeadline, nil
@@ -153,7 +223,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lockedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.LockedAt, nil
@@ -162,7 +232,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "closedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.ClosedAt, nil
@@ -171,7 +241,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reopenedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.ReopenedAt, nil
@@ -180,7 +250,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reopenReason",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.ReopenReason, nil
@@ -190,7 +260,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.Version, nil
@@ -200,7 +270,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.CreatedAt, nil
@@ -210,7 +280,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*fiscalperiod.FiscalPeriod)
 					return obj.UpdatedAt, nil
@@ -243,7 +313,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FiscalPeriodConnection)
 					return obj.TotalCount, nil
@@ -253,7 +323,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FiscalPeriodConnection)
 					return obj.TotalCountExact, nil
@@ -276,12 +346,79 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FiscalPeriodEdge)
 					return obj.Cursor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "activateFiscalPeriod",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalPeriod",
+				Args:       field_Mutation_activateFiscalPeriod_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ActivateFiscalPeriod(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod),
+			},
+			{
+				Name:       "closeFiscalPeriod",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalPeriod",
+				Args:       field_Mutation_closeFiscalPeriod_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CloseFiscalPeriod(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod),
+			},
+			{
+				Name:       "lockFiscalPeriod",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalPeriod",
+				Args:       field_Mutation_lockFiscalPeriod_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").LockFiscalPeriod(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod),
+			},
+			{
+				Name:       "unlockFiscalPeriod",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalPeriod",
+				Args:       field_Mutation_unlockFiscalPeriod_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UnlockFiscalPeriod(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod),
+			},
+			{
+				Name:       "reopenFiscalPeriod",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "FiscalPeriod",
+				Args:       field_Mutation_reopenFiscalPeriod_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenFiscalPeriod(ctx, fc.Args["id"].(string), fc.Args["reopenReason"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -299,26 +436,128 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNFiscalPeriodConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFiscalPeriodConnection),
 			},
+			{
+				Name:       "fiscalPeriodCloseBlockers",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FiscalCloseCheck",
+				Args:       field_Query_fiscalPeriodCloseBlockers_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").FiscalPeriodCloseBlockers(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNFiscalCloseCheck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐResult),
+			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "FiscalCloseBlocker", Check: func(r any) bool { _, ok := r.(resolverFiscalCloseBlocker); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
 
+type resolverFiscalCloseBlocker interface {
+	Code(ctx context.Context, obj *fiscalclose.Blocker) (string, error)
+}
+
+type resolverMutation interface {
+	ActivateFiscalPeriod(ctx context.Context, id string) (*fiscalperiod.FiscalPeriod, error)
+	CloseFiscalPeriod(ctx context.Context, id string) (*fiscalperiod.FiscalPeriod, error)
+	LockFiscalPeriod(ctx context.Context, id string) (*fiscalperiod.FiscalPeriod, error)
+	UnlockFiscalPeriod(ctx context.Context, id string) (*fiscalperiod.FiscalPeriod, error)
+	ReopenFiscalPeriod(ctx context.Context, id string, reopenReason string) (*fiscalperiod.FiscalPeriod, error)
+}
+
 type resolverQuery interface {
 	FiscalPeriods(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalPeriodConnection, error)
+	FiscalPeriodCloseBlockers(ctx context.Context, id string) (*fiscalclose.Result, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type Int does not have child fields")
-	errNoChild2 = errors.New("field of type PeriodType does not have child fields")
-	errNoChild3 = errors.New("field of type FiscalPeriodStatus does not have child fields")
-	errNoChild4 = errors.New("field of type String does not have child fields")
-	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild6 = errors.New("field of type Boolean does not have child fields")
+	errNoChild0 = errors.New("field of type String does not have child fields")
+	errNoChild1 = errors.New("field of type Boolean does not have child fields")
+	errNoChild2 = errors.New("field of type ID does not have child fields")
+	errNoChild3 = errors.New("field of type Int does not have child fields")
+	errNoChild4 = errors.New("field of type PeriodType does not have child fields")
+	errNoChild5 = errors.New("field of type FiscalPeriodStatus does not have child fields")
+	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
 )
+
+func field_Mutation_activateFiscalPeriod_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_closeFiscalPeriod_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_lockFiscalPeriod_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_unlockFiscalPeriod_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_reopenFiscalPeriod_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reopenReason",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["reopenReason"] = arg1
+	return args, nil
+}
 
 func field_Query_fiscalPeriods_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -333,6 +572,19 @@ func field_Query_fiscalPeriods_args(ctx context.Context, ec *gqlexec.Exec, rawAr
 	return args, nil
 }
 
+func field_Query_fiscalPeriodCloseBlockers_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -342,12 +594,46 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNFiscalCloseBlocker2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐBlockerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*fiscalclose.Blocker) graphql.Marshaler {
+	return gqlexec.List[*fiscalclose.Blocker]{
+		Elem:        marshalNFiscalCloseBlocker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐBlocker,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNFiscalCloseBlocker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐBlocker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalclose.Blocker) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalCloseBlocker", v)
+}
+
+func marshalNFiscalCloseCheck2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalcloseᚐResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalclose.Result) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "FiscalCloseCheck", v)
 }
 
 func marshalNFiscalPeriod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋfiscalperiodᚐFiscalPeriod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *fiscalperiod.FiscalPeriod) graphql.Marshaler {

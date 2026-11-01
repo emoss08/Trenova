@@ -169,7 +169,7 @@ function FiscalPeriodActionDialogContent({
 
   const closeCheck = useQuery({
     queryKey: ["fiscal-period-close-blockers", period.id],
-    queryFn: () => apiService.fiscalPeriodService.closeBlockers(period.id),
+    queryFn: ({ signal }) => apiService.fiscalPeriodService.closeBlockers(period.id, { signal }),
     enabled: checksClose,
     staleTime: 0,
   });

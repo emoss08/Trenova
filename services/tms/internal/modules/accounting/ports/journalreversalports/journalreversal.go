@@ -13,10 +13,6 @@ type GetJournalReversalByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
-type ListJournalReversalsRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-}
-
 type ListJournalReversalConnectionRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 	Cursor pagination.CursorInfo    `json:"-"`
@@ -28,10 +24,6 @@ type ListJournalReversalsByEntryRequest struct {
 }
 
 type JournalReversalRepository interface {
-	List(
-		ctx context.Context,
-		req *ListJournalReversalsRequest,
-	) (*pagination.ListResult[*journalreversal.Reversal], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListJournalReversalConnectionRequest,

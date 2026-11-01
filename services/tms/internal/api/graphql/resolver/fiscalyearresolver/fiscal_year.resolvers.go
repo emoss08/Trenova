@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
@@ -69,4 +70,106 @@ func (r *QueryResolver) FiscalYear(ctx context.Context, id string) (*fiscalyear.
 		ID:         fiscalYearID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
+}
+
+func (r *QueryResolver) FiscalYearClosePreview(ctx context.Context, id string) (*fiscalclose.Plan, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalYear, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalYearID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalYearService.GetClosePreview(ctx, fiscalyearports.GetFiscalYearByIDRequest{
+		ID:         fiscalYearID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+}
+
+func (r *MutationResolver) CreateFiscalYear(ctx context.Context, input gqlmodel.FiscalYearInput) (*fiscalyear.FiscalYear, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalYear, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalYearService.Create(ctx, fiscalYearFromInput(&input, authCtx), authCtx.UserID)
+}
+
+func (r *MutationResolver) UpdateFiscalYear(ctx context.Context, id string, input gqlmodel.FiscalYearInput) (*fiscalyear.FiscalYear, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalYear, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalYearID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := r.FiscalYearService.Get(ctx, fiscalyearports.GetFiscalYearByIDRequest{
+		ID:         fiscalYearID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	applyFiscalYearInput(existing, &input)
+
+	return r.FiscalYearService.Update(ctx, existing, authCtx.UserID)
+}
+
+func (r *MutationResolver) ActivateFiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalYear, permission.OpActivate)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalYearID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalYearService.Activate(ctx, fiscalyearports.ActivateFiscalYearRequest{
+		ID:         fiscalYearID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) CloseFiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalYear, permission.OpClose)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalYearID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalYearService.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
+		ID:         fiscalYearID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+	}, authCtx.UserID)
+}
+
+func (r *MutationResolver) ReopenFiscalYear(ctx context.Context, id string, reopenReason string) (*fiscalyear.FiscalYear, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFiscalYear, permission.OpReopen)
+	if err != nil {
+		return nil, err
+	}
+
+	fiscalYearID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.FiscalYearService.Reopen(ctx, fiscalyearports.ReopenFiscalYearRequest{
+		ID:           fiscalYearID,
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		ReopenReason: reopenReason,
+	}, authCtx.UserID)
 }

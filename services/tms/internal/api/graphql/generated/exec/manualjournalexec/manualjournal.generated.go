@@ -25,6 +25,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ManualJournalCard", Implementors: []string{"ManualJournalCard"}},
 		{Name: "ManualJournalConnection", Implementors: []string{"ManualJournalConnection"}},
 		{Name: "ManualJournalEdge", Implementors: []string{"ManualJournalEdge"}},
+		{Name: "ManualJournalLine", Implementors: []string{"ManualJournalLine"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "ManualJournal", Fields: []*gqlexec.Field{
@@ -297,6 +298,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
+			{
+				Name:      "lines",
+				HasChild:  true,
+				ChildType: "ManualJournalLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Request)
+					return obj.Lines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOManualJournalLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐLineᚄ),
+			},
 		}},
 		{Object: "ManualJournalCard", Fields: []*gqlexec.Field{
 			{
@@ -478,6 +489,221 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "ManualJournalLine", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "manualJournalRequestId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.ManualJournalRequestID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "lineNumber",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.LineNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "glAccountId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.GLAccountID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "debitAmount",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.DebitAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "creditAmount",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.CreditAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "customerId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "locationId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.LocationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:       "glAccount",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "JournalEntryLineAccount",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return gqlexec.Resolver[resolverManualJournalLine](ec, "ManualJournalLine").GlAccount(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOJournalEntryLineAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryLineAccount),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "updatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*manualjournal.Line)
+					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "Mutation", Fields: []*gqlexec.Field{
+			{
+				Name:       "createManualJournalDraft",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ManualJournal",
+				Args:       field_Mutation_createManualJournalDraft_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateManualJournalDraft(ctx, fc.Args["input"].(gqlmodel.ManualJournalDraftInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
+			},
+			{
+				Name:       "updateManualJournalDraft",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ManualJournal",
+				Args:       field_Mutation_updateManualJournalDraft_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateManualJournalDraft(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ManualJournalDraftInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
+			},
+			{
+				Name:       "submitManualJournal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ManualJournal",
+				Args:       field_Mutation_submitManualJournal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitManualJournal(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
+			},
+			{
+				Name:       "approveManualJournal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ManualJournal",
+				Args:       field_Mutation_approveManualJournal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveManualJournal(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
+			},
+			{
+				Name:       "postManualJournal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ManualJournal",
+				Args:       field_Mutation_postManualJournal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PostManualJournal(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
+			},
+			{
+				Name:       "rejectManualJournal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ManualJournal",
+				Args:       field_Mutation_rejectManualJournal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectManualJournal(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
+			},
+			{
+				Name:       "cancelManualJournal",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "ManualJournal",
+				Args:       field_Mutation_cancelManualJournal_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelManualJournal(ctx, fc.Args["id"].(string), fc.Args["reason"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "manualJournals",
@@ -522,9 +748,29 @@ var Shard = &gqlexec.Shard{
 			},
 		}},
 	},
+	Inputs: []gqlexec.Input{
+		{Name: "ManualJournalDraftInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputManualJournalDraftInput)},
+		{Name: "ManualJournalDraftLineInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputManualJournalDraftLineInput)},
+	},
 	Resolvers: []gqlexec.ResolverRequirement{
+		{Root: "ManualJournalLine", Check: func(r any) bool { _, ok := r.(resolverManualJournalLine); return ok }},
+		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
+}
+
+type resolverManualJournalLine interface {
+	GlAccount(ctx context.Context, obj *manualjournal.Line) (*gqlmodel.JournalEntryLineAccount, error)
+}
+
+type resolverMutation interface {
+	CreateManualJournalDraft(ctx context.Context, input gqlmodel.ManualJournalDraftInput) (*manualjournal.Request, error)
+	UpdateManualJournalDraft(ctx context.Context, id string, input gqlmodel.ManualJournalDraftInput) (*manualjournal.Request, error)
+	SubmitManualJournal(ctx context.Context, id string) (*manualjournal.Request, error)
+	ApproveManualJournal(ctx context.Context, id string) (*manualjournal.Request, error)
+	PostManualJournal(ctx context.Context, id string) (*manualjournal.Request, error)
+	RejectManualJournal(ctx context.Context, id string, reason string) (*manualjournal.Request, error)
+	CancelManualJournal(ctx context.Context, id string, reason string) (*manualjournal.Request, error)
 }
 
 type resolverQuery interface {
@@ -541,6 +787,121 @@ var (
 	errNoChild4 = errors.New("field of type Int does not have child fields")
 	errNoChild5 = errors.New("field of type Boolean does not have child fields")
 )
+
+func field_Mutation_createManualJournalDraft_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ManualJournalDraftInput, error) {
+			return unmarshalNManualJournalDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalDraftInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_updateManualJournalDraft_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ManualJournalDraftInput, error) {
+			return unmarshalNManualJournalDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalDraftInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_submitManualJournal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_approveManualJournal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_postManualJournal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_rejectManualJournal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reason",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["reason"] = arg1
+	return args, nil
+}
+
+func field_Mutation_cancelManualJournal_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "reason",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNString2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["reason"] = arg1
+	return args, nil
+}
 
 func field_Query_manualJournals_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -581,6 +942,129 @@ func field_Query_manualJournalCard_args(ctx context.Context, ec *gqlexec.Exec, r
 	return args, nil
 }
 
+func unmarshalInputManualJournalDraftInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ManualJournalDraftInput, error) {
+	var it gqlmodel.ManualJournalDraftInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"description", "reason", "accountingDate", "currencyCode", "lines"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
+		case "accountingDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountingDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccountingDate = data
+		case "currencyCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currencyCode"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CurrencyCode = data
+		case "lines":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lines"))
+			data, err := unmarshalNManualJournalDraftLineInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalDraftLineInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lines = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputManualJournalDraftLineInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ManualJournalDraftLineInput, error) {
+	var it gqlmodel.ManualJournalDraftLineInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"glAccountId", "description", "debitAmount", "creditAmount", "customerId", "locationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "glAccountId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("glAccountId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.GlAccountID = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "debitAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debitAmount"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DebitAmount = data
+		case "creditAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creditAmount"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreditAmount = data
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
+		case "locationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocationID = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DataTableConnectionInput, error) {
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
@@ -595,6 +1079,54 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNManualJournalDraftInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalDraftInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ManualJournalDraftInput, error) {
+	res, err := unmarshalInputManualJournalDraftInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNManualJournalDraftLineInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalDraftLineInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.ManualJournalDraftLineInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNManualJournalDraftLineInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalDraftLineInput)
+}
+
+func unmarshalNManualJournalDraftLineInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManualJournalDraftLineInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ManualJournalDraftLineInput, error) {
+	res, err := unmarshalInputManualJournalDraftLineInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
@@ -605,6 +1137,14 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -691,6 +1231,14 @@ func marshalNManualJournalEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ManualJournalEdge", v)
 }
 
+func marshalNManualJournalLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *manualjournal.Line) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ManualJournalLine", v)
+}
+
 func marshalNManualJournalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v manualjournal.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -750,11 +1298,25 @@ func marshalOJournalCardPosting2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "JournalCardPosting", v)
 }
 
+func marshalOJournalEntryLineAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryLineAccount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.JournalEntryLineAccount) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "JournalEntryLineAccount", v)
+}
+
 func marshalOManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *manualjournal.Request) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ManualJournal", v)
+}
+
+func marshalOManualJournalLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*manualjournal.Line) graphql.Marshaler {
+	return gqlexec.List[*manualjournal.Line]{
+		Elem:        marshalNManualJournalLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐLine,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

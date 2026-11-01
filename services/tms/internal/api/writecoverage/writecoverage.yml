@@ -526,25 +526,22 @@ writes:
     reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
 
   # bankreceipt
-  "POST /api/v1/accounting/bank-receipts/":
-    exempt: infrastructure
-    reason: "Records a line as the bank reported it, from its file or feed; a receipt is the bank's own record of cash that arrived, which an agent only ever matches and never writes."
-  "POST /api/v1/accounting/bank-receipts/:receiptID/match/":
+  "mutation matchBankReceipt":
     tools: [receivable_match_bank_receipt]
 
   # bankreceiptbatch
-  "POST /api/v1/accounting/bank-receipt-batches/":
+  "mutation importBankReceiptBatch":
     exempt: infrastructure
     reason: "Loads a bank file's receipts as the bank reported them; the bank's record of cash that arrived is imported, never written by an agent."
 
   # bankreceiptworkitem
-  "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/":
+  "mutation assignBankReceiptWorkItem":
     tools: [receivable_triage_bank_receipt_work_item]
-  "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/dismiss/":
+  "mutation dismissBankReceiptWorkItem":
     tools: [receivable_resolve_bank_receipt_work_item]
-  "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/resolve/":
+  "mutation resolveBankReceiptWorkItem":
     tools: [receivable_resolve_bank_receipt_work_item]
-  "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/":
+  "mutation startBankReceiptWorkItemReview":
     tools: [receivable_triage_bank_receipt_work_item]
 
   # benefits
@@ -817,15 +814,15 @@ writes:
     reason: "What a customer's tracking page shows and which status emails it gets is a commercial agreement with the customer, set by a person on the customer record."
 
   # collection
-  "POST /api/v1/accounting/collections/customers/:customerID/activities/":
+  "mutation logCollectionActivity":
     tools: [receivable_record_collection_activity]
-  "PUT /api/v1/accounting/collections/customers/:customerID/collector/":
+  "mutation assignCollectionCollector":
     tools: [receivable_assign_collector]
-  "POST /api/v1/accounting/collections/customers/:customerID/reminder/":
+  "mutation sendPaymentReminder":
     tools: [receivable_send_payment_reminder]
-  "PUT /api/v1/accounting/collections/customers/:customerID/follow-up/":
+  "mutation scheduleCollectionFollowUp":
     tools: [receivable_schedule_follow_up]
-  "POST /api/v1/accounting/accounts-receivable/customers/:customerID/statement/send/":
+  "mutation sendCustomerStatement":
     tools: [receivable_send_statement]
 
   # commodity
@@ -1484,31 +1481,31 @@ writes:
     reason: "Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against."
 
   # fiscalperiod
-  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/":
+  "mutation activateFiscalPeriod":
     tools: [ledger_open_fiscal_period]
-  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/":
+  "mutation closeFiscalPeriod":
     tools: [ledger_close_fiscal_period]
-  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/":
+  "mutation lockFiscalPeriod":
     tools: [ledger_lock_fiscal_period]
-  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/":
+  "mutation reopenFiscalPeriod":
     tools: [ledger_reopen_fiscal_period]
-  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/":
+  "mutation unlockFiscalPeriod":
     tools: [ledger_unlock_fiscal_period]
 
   # fiscalyear
-  "POST /api/v1/fiscal-years/":
+  "mutation createFiscalYear":
     exempt: configuration
     reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
-  "PUT /api/v1/fiscal-years/:fiscalYearID/":
+  "mutation updateFiscalYear":
     exempt: configuration
     reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
-  "PUT /api/v1/fiscal-years/:fiscalYearID/activate/":
+  "mutation activateFiscalYear":
     exempt: configuration
     reason: "Makes a fiscal year the one the calendar runs on, part of setting up the year that an accounting administrator does once."
-  "PUT /api/v1/fiscal-years/:fiscalYearID/close/":
+  "mutation closeFiscalYear":
     exempt: attestation
     reason: "Closing the year books its closing entries into retained earnings and is the year-end sign-off the person accountable for the books makes."
-  "PUT /api/v1/fiscal-years/:fiscalYearID/reopen/":
+  "mutation reopenFiscalYear":
     exempt: attestation
     reason: "Reverses the year's closing entries and withdraws the year-end sign-off, which only the person accountable for the books does."
 
@@ -2121,16 +2118,16 @@ writes:
     reason: "Posting approved journals changes the general ledger balances a person signs off on; agents never hold the approve permission."
 
   # journalreversal
-  "POST /api/v1/accounting/journal-reversals/":
+  "mutation createJournalReversal":
     tools: [ledger_create_journal_reversal]
-  "POST /api/v1/accounting/journal-reversals/:reversalID/approve/":
+  "mutation approveJournalReversal":
     exempt: attestation
     reason: "Approving a reversal is the second person's sign-off on taking a posted entry back out of the ledger; an agent requests reversals and never stands in as their approver."
-  "POST /api/v1/accounting/journal-reversals/:reversalID/cancel/":
+  "mutation cancelJournalReversal":
     tools: [ledger_cancel_journal_reversal]
-  "POST /api/v1/accounting/journal-reversals/:reversalID/post/":
+  "mutation postJournalReversal":
     tools: [ledger_post_journal_reversal]
-  "POST /api/v1/accounting/journal-reversals/:reversalID/reject/":
+  "mutation rejectJournalReversal":
     exempt: attestation
     reason: "Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it."
 
@@ -2175,21 +2172,21 @@ writes:
     reason: "A lookup list every record points at, maintained by an administrator."
 
   # manualjournal
-  "POST /api/v1/accounting/manual-journals/:requestID/approve/":
+  "mutation approveManualJournal":
     exempt: attestation
     reason: "Approving a manual journal is the second person's sign-off on an entry someone else prepared; an agent prepares journals and never stands in as their approver."
-  "POST /api/v1/accounting/manual-journals/:requestID/cancel/":
+  "mutation cancelManualJournal":
     tools: [ledger_cancel_manual_journal]
-  "POST /api/v1/accounting/manual-journals/:requestID/post/":
+  "mutation postManualJournal":
     tools: [ledger_post_manual_journal]
-  "POST /api/v1/accounting/manual-journals/:requestID/reject/":
+  "mutation rejectManualJournal":
     exempt: attestation
     reason: "Sending a manual journal back is the approver's half of the same sign-off, made by the accountable person reviewing it."
-  "POST /api/v1/accounting/manual-journals/:requestID/submit/":
+  "mutation submitManualJournal":
     tools: [ledger_submit_manual_journal]
-  "POST /api/v1/accounting/manual-journals/drafts/":
+  "mutation createManualJournalDraft":
     tools: [ledger_create_manual_journal]
-  "PUT /api/v1/accounting/manual-journals/drafts/:requestID/":
+  "mutation updateManualJournalDraft":
     tools: [ledger_update_manual_journal]
 
   # notification

@@ -92,6 +92,12 @@ var AuditEntrySpec TypeSpec
 
 var AuthEventSpec TypeSpec
 
+var BankReceiptSpec TypeSpec
+
+var BankReceiptBatchSpec TypeSpec
+
+var BankReceiptWorkItemSpec TypeSpec
+
 var BenefitPlanSpec TypeSpec
 
 var BillingQueueItemSpec TypeSpec
@@ -419,6 +425,8 @@ var LogCheckCallPayloadSpec TypeSpec
 var MFAAuthenticatorSpec TypeSpec
 
 var ManualJournalSpec TypeSpec
+
+var ManualJournalLineSpec TypeSpec
 
 var MyAgentSpec TypeSpec
 
@@ -5055,6 +5063,240 @@ func init() {
 			{
 				Name:   "user",
 				Column: "user_id",
+			},
+		},
+	}
+
+	BankReceiptSpec = TypeSpec{
+		TypeName: "BankReceipt",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "receiptDate",
+				Column: "receipt_date",
+			},
+			{
+				Name:   "amountMinor",
+				Column: "amount_minor",
+			},
+			{
+				Name:   "referenceNumber",
+				Column: "reference_number",
+			},
+			{
+				Name:   "memo",
+				Column: "memo",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "importBatchId",
+				Column: "import_batch_id",
+			},
+			{
+				Name:   "matchedCustomerPaymentId",
+				Column: "matched_customer_payment_id",
+			},
+			{
+				Name:   "matchedAt",
+				Column: "matched_at",
+			},
+			{
+				Name:   "matchedById",
+				Column: "matched_by_id",
+			},
+			{
+				Name:   "exceptionReason",
+				Column: "exception_reason",
+			},
+			{
+				Name:   "createdById",
+				Column: "created_by_id",
+			},
+			{
+				Name:   "updatedById",
+				Column: "updated_by_id",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	BankReceiptBatchSpec = TypeSpec{
+		TypeName: "BankReceiptBatch",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "source",
+				Column: "source",
+			},
+			{
+				Name:   "reference",
+				Column: "reference",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "importedCount",
+				Column: "imported_count",
+			},
+			{
+				Name:   "matchedCount",
+				Column: "matched_count",
+			},
+			{
+				Name:   "exceptionCount",
+				Column: "exception_count",
+			},
+			{
+				Name:   "importedAmountMinor",
+				Column: "imported_amount_minor",
+			},
+			{
+				Name:   "matchedAmountMinor",
+				Column: "matched_amount_minor",
+			},
+			{
+				Name:   "exceptionAmountMinor",
+				Column: "exception_amount_minor",
+			},
+			{
+				Name:   "createdById",
+				Column: "created_by_id",
+			},
+			{
+				Name:   "updatedById",
+				Column: "updated_by_id",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	BankReceiptWorkItemSpec = TypeSpec{
+		TypeName: "BankReceiptWorkItem",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "bankReceiptId",
+				Column: "bank_receipt_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "assignedToUserId",
+				Column: "assigned_to_user_id",
+			},
+			{
+				Name:   "assignedAt",
+				Column: "assigned_at",
+			},
+			{
+				Name:   "resolutionType",
+				Column: "resolution_type",
+			},
+			{
+				Name:   "resolutionNote",
+				Column: "resolution_note",
+			},
+			{
+				Name:   "resolvedByUserId",
+				Column: "resolved_by_user_id",
+			},
+			{
+				Name:   "resolvedAt",
+				Column: "resolved_at",
+			},
+			{
+				Name:   "createdById",
+				Column: "created_by_id",
+			},
+			{
+				Name:   "updatedById",
+				Column: "updated_by_id",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -20230,6 +20472,73 @@ func init() {
 			{
 				Name:   "version",
 				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name: "lines",
+				Relation: &RelationSpec{
+					Target: &ManualJournalLineSpec,
+				},
+			},
+		},
+	}
+
+	ManualJournalLineSpec = TypeSpec{
+		TypeName: "ManualJournalLine",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "manualJournalRequestId",
+				Column: "manual_journal_request_id",
+			},
+			{
+				Name:   "lineNumber",
+				Column: "line_number",
+			},
+			{
+				Name:   "glAccountId",
+				Column: "gl_account_id",
+			},
+			{
+				Name:   "description",
+				Column: "description",
+			},
+			{
+				Name:   "debitAmount",
+				Column: "debit_amount_minor",
+			},
+			{
+				Name:   "creditAmount",
+				Column: "credit_amount_minor",
+			},
+			{
+				Name:   "customerId",
+				Column: "customer_id",
+			},
+			{
+				Name:   "locationId",
+				Column: "location_id",
+			},
+			{
+				Name:   "glAccount",
+				Column: "gl_account_id",
+				Relation: &RelationSpec{
+					Target: &JournalEntryLineAccountSpec,
+				},
 			},
 			{
 				Name:   "createdAt",

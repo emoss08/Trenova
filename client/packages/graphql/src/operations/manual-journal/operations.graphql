@@ -1,0 +1,273 @@
+query ManualJournal($id: ID!) {
+  manualJournal(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    requestNumber
+    status
+    description
+    reason
+    accountingDate
+    requestedFiscalYearId
+    requestedFiscalPeriodId
+    currencyCode
+    totalDebit
+    totalCredit
+    approvedAt
+    approvedById
+    rejectedAt
+    rejectedById
+    rejectionReason
+    cancelledAt
+    cancelledById
+    cancelReason
+    postedBatchId
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+    lines {
+      id
+      manualJournalRequestId
+      lineNumber
+      glAccountId
+      description
+      debitAmount
+      creditAmount
+      customerId
+      locationId
+      glAccount {
+        id
+        accountCode
+        name
+      }
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+mutation CreateManualJournalDraft($input: ManualJournalDraftInput!) {
+  createManualJournalDraft(input: $input) {
+    id
+    businessUnitId
+    organizationId
+    requestNumber
+    status
+    description
+    reason
+    accountingDate
+    requestedFiscalYearId
+    requestedFiscalPeriodId
+    currencyCode
+    totalDebit
+    totalCredit
+    approvedAt
+    approvedById
+    rejectedAt
+    rejectedById
+    rejectionReason
+    cancelledAt
+    cancelledById
+    cancelReason
+    postedBatchId
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateManualJournalDraft($id: ID!, $input: ManualJournalDraftInput!) {
+  updateManualJournalDraft(id: $id, input: $input) {
+    id
+    businessUnitId
+    organizationId
+    requestNumber
+    status
+    description
+    reason
+    accountingDate
+    requestedFiscalYearId
+    requestedFiscalPeriodId
+    currencyCode
+    totalDebit
+    totalCredit
+    approvedAt
+    approvedById
+    rejectedAt
+    rejectedById
+    rejectionReason
+    cancelledAt
+    cancelledById
+    cancelReason
+    postedBatchId
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation SubmitManualJournal($id: ID!) {
+  submitManualJournal(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    requestNumber
+    status
+    description
+    reason
+    accountingDate
+    requestedFiscalYearId
+    requestedFiscalPeriodId
+    currencyCode
+    totalDebit
+    totalCredit
+    approvedAt
+    approvedById
+    rejectedAt
+    rejectedById
+    rejectionReason
+    cancelledAt
+    cancelledById
+    cancelReason
+    postedBatchId
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation ApproveManualJournal($id: ID!) {
+  approveManualJournal(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    requestNumber
+    status
+    description
+    reason
+    accountingDate
+    requestedFiscalYearId
+    requestedFiscalPeriodId
+    currencyCode
+    totalDebit
+    totalCredit
+    approvedAt
+    approvedById
+    rejectedAt
+    rejectedById
+    rejectionReason
+    cancelledAt
+    cancelledById
+    cancelReason
+    postedBatchId
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation PostManualJournal($id: ID!) {
+  postManualJournal(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    requestNumber
+    status
+    description
+    reason
+    accountingDate
+    requestedFiscalYearId
+    requestedFiscalPeriodId
+    currencyCode
+    totalDebit
+    totalCredit
+    approvedAt
+    approvedById
+    rejectedAt
+    rejectedById
+    rejectionReason
+    cancelledAt
+    cancelledById
+    cancelReason
+    postedBatchId
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation RejectManualJournal($id: ID!, $reason: String!) {
+  rejectManualJournal(id: $id, reason: $reason) {
+    id
+    businessUnitId
+    organizationId
+    requestNumber
+    status
+    description
+    reason
+    accountingDate
+    requestedFiscalYearId
+    requestedFiscalPeriodId
+    currencyCode
+    totalDebit
+    totalCredit
+    approvedAt
+    approvedById
+    rejectedAt
+    rejectedById
+    rejectionReason
+    cancelledAt
+    cancelledById
+    cancelReason
+    postedBatchId
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CancelManualJournal($id: ID!, $reason: String!) {
+  cancelManualJournal(id: $id, reason: $reason) {
+    id
+    businessUnitId
+    organizationId
+    requestNumber
+    status
+    description
+    reason
+    accountingDate
+    requestedFiscalYearId
+    requestedFiscalPeriodId
+    currencyCode
+    totalDebit
+    totalCredit
+    approvedAt
+    approvedById
+    rejectedAt
+    rejectedById
+    rejectionReason
+    cancelledAt
+    cancelledById
+    cancelReason
+    postedBatchId
+    createdById
+    updatedById
+    version
+    createdAt
+    updatedAt
+  }
+}

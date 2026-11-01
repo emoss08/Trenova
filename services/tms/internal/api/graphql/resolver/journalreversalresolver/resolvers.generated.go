@@ -12,4 +12,6 @@ type Deps struct {
 	JournalReversalService *journalreversalservice.Service
 }
 
+type MutationResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

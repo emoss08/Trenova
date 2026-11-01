@@ -1,0 +1,84 @@
+mutation CreateJournalReversal($input: CreateJournalReversalInput!) {
+  createJournalReversal(input: $input) {
+    id
+    status
+    originalJournalEntryId
+    reversalJournalEntryId
+    requestedAccountingDate
+    resolvedFiscalPeriodId
+    reasonCode
+    reasonText
+    rejectionReason
+    cancelReason
+    version
+    updatedAt
+  }
+}
+
+mutation ApproveJournalReversal($id: ID!) {
+  approveJournalReversal(id: $id) {
+    id
+    status
+    originalJournalEntryId
+    reversalJournalEntryId
+    requestedAccountingDate
+    resolvedFiscalPeriodId
+    reasonCode
+    reasonText
+    rejectionReason
+    cancelReason
+    version
+    updatedAt
+  }
+}
+
+mutation PostJournalReversal($id: ID!) {
+  postJournalReversal(id: $id) {
+    id
+    status
+    originalJournalEntryId
+    reversalJournalEntryId
+    requestedAccountingDate
+    resolvedFiscalPeriodId
+    reasonCode
+    reasonText
+    rejectionReason
+    cancelReason
+    version
+    updatedAt
+  }
+}
+
+mutation RejectJournalReversal($id: ID!, $reason: String!) {
+  rejectJournalReversal(id: $id, reason: $reason) {
+    id
+    status
+    originalJournalEntryId
+    reversalJournalEntryId
+    requestedAccountingDate
+    resolvedFiscalPeriodId
+    reasonCode
+    reasonText
+    rejectionReason
+    cancelReason
+    version
+    updatedAt
+  }
+}
+
+mutation CancelJournalReversal($id: ID!, $reason: String!) {
+  cancelJournalReversal(id: $id, reason: $reason) {
+    id
+    status
+    originalJournalEntryId
+    reversalJournalEntryId
+    requestedAccountingDate
+    resolvedFiscalPeriodId
+    reasonCode
+    reasonText
+    rejectionReason
+    cancelReason
+    version
+    updatedAt
+  }
+}

@@ -7347,6 +7347,141 @@ input BackfillJurisdictionMilesInput {
   periodStart: Timestamp!
 }
 
+"""
+A line of cash the bank reported arriving, matched to a customer payment or left as an exception.
+"""
+type BankReceipt {
+  amountMinor: Int!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  createdById: ID!
+  """Why it could not be matched; empty unless it is an exception."""
+  exceptionReason: String!
+  id: ID!
+  importBatchId: ID
+  matchedAt: Timestamp
+  matchedById: ID
+  matchedCustomerPaymentId: ID
+  memo: String!
+  organizationId: ID!
+  receiptDate: Timestamp!
+  referenceNumber: String!
+  status: BankReceiptStatus!
+  updatedAt: Timestamp!
+  updatedById: ID
+  version: Int!
+}
+
+"""A bank file's receipts, imported together."""
+type BankReceiptBatch {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  createdById: ID!
+  exceptionAmountMinor: Int!
+  exceptionCount: Int!
+  id: ID!
+  importedAmountMinor: Int!
+  importedCount: Int!
+  matchedAmountMinor: Int!
+  matchedCount: Int!
+  organizationId: ID!
+  reference: String!
+  source: String!
+  status: BankReceiptBatchStatus!
+  updatedAt: Timestamp!
+  updatedById: ID
+  version: Int!
+}
+
+type BankReceiptBatchDetail {
+  batch: BankReceiptBatch!
+  receipts: [BankReceipt!]!
+}
+
+enum BankReceiptBatchStatus {
+  Completed
+  Processing
+}
+
+"""How long the open exceptions have waited, by count and amount."""
+type BankReceiptExceptionAging {
+  currentAmount: Int!
+  currentCount: Int!
+  days1To3Amount: Int!
+  days1To3Count: Int!
+  days4To7Amount: Int!
+  days4To7Count: Int!
+  daysOver7Amount: Int!
+  daysOver7Count: Int!
+}
+
+"""A customer payment a receipt could be matched to, best first."""
+type BankReceiptMatchSuggestion {
+  amountMinor: Int!
+  customerId: ID!
+  customerPaymentId: ID!
+  """Why it was suggested."""
+  reason: String!
+  referenceNumber: String!
+  score: Int!
+}
+
+type BankReceiptReconciliationSummary {
+  activeWorkItemCount: Int!
+  asOfDate: Timestamp!
+  assignedWorkItemCount: Int!
+  exceptionAging: BankReceiptExceptionAging!
+  exceptionAmount: Int!
+  exceptionCount: Int!
+  importedAmount: Int!
+  importedCount: Int!
+  inReviewWorkItemCount: Int!
+  matchedAmount: Int!
+  matchedCount: Int!
+}
+
+enum BankReceiptStatus {
+  Exception
+  Imported
+  Matched
+}
+
+"""An exception receipt someone has to look into."""
+type BankReceiptWorkItem {
+  assignedAt: Timestamp
+  assignedToUserId: ID
+  bankReceiptId: ID!
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  createdById: ID!
+  id: ID!
+  organizationId: ID!
+  resolutionNote: String!
+  """How it was settled; null while it is open."""
+  resolutionType: BankReceiptWorkItemResolutionType
+  resolvedAt: Timestamp
+  resolvedByUserId: ID
+  status: BankReceiptWorkItemStatus!
+  updatedAt: Timestamp!
+  updatedById: ID
+  version: Int!
+}
+
+enum BankReceiptWorkItemResolutionType {
+  MarkedFalsePositive
+  MatchedToPayment
+  RequiresExternalFollowUp
+  Superseded
+}
+
+enum BankReceiptWorkItemStatus {
+  Assigned
+  Dismissed
+  InReview
+  Open
+  Resolved
+}
+
 """One plan's cost across the organisation."""
 type BenefitCostRow {
   employeeCostMinor: Int!
@@ -10581,6 +10716,144 @@ input ClockInput {
   workerId: ID!
 }
 
+"""
+One customer's collections account and a page of its history, newest first.
+"""
+type CollectionAccountView {
+  activities: [CollectionActivity!]!
+  """True when older activity remains past this page."""
+  hasMore: Boolean!
+  row: CollectionWorklistRow!
+}
+
+"""Something done or written down while collecting from a customer."""
+type CollectionActivity {
+  collectorId: ID
+  collectorName: String!
+  contactName: String!
+  createdAt: Timestamp!
+  createdById: ID!
+  createdByName: String!
+  currencyCode: String!
+  customerId: ID!
+  followUpOn: Timestamp
+  id: ID!
+  invoiceId: ID
+  invoiceNumber: String!
+  kind: CollectionActivityKind!
+  promisedAmountMinor: Int
+  promisedOn: Timestamp
+  summary: String!
+}
+
+"""The oldest activity already shown; the page holds what came before it."""
+input CollectionActivityCursorInput {
+  createdAt: Timestamp!
+  id: ID!
+}
+
+enum CollectionActivityKind {
+  Call
+  CollectorAssigned
+  Email
+  FollowUpScheduled
+  Note
+  PromiseToPay
+}
+
+type CollectionCurrencyTotal {
+  amountMinor: Int!
+  currencyCode: String!
+}
+
+enum CollectionPriority {
+  Critical
+  High
+  Low
+  Normal
+}
+
+"""A customer's latest promise to pay and how it has gone."""
+type CollectionPromise {
+  activityId: ID!
+  amountMinor: Int!
+  currencyCode: String!
+  madeAt: Timestamp!
+  madeByName: String!
+  """What the customer has paid since making the promise."""
+  paidSinceMinor: Int!
+  promisedOn: Timestamp!
+  status: CollectionPromiseStatus!
+}
+
+enum CollectionPromiseStatus {
+  Broken
+  Kept
+  Open
+}
+
+input CollectionWorklistInput {
+  """Only accounts whose follow-up has come round."""
+  dueOnly: Boolean!
+  limit: Int!
+  offset: Int!
+  scope: CollectorScope!
+  search: String!
+}
+
+"""
+A page of the collections worklist, the customers to chase first coming first.
+"""
+type CollectionWorklistPage {
+  rows: [CollectionWorklistRow!]!
+  summary: CollectionWorklistSummary!
+  total: Int!
+}
+
+"""One customer's place on the collections worklist."""
+type CollectionWorklistRow {
+  collectorId: ID
+  collectorName: String!
+  creditStatus: String!
+  currencyCode: String!
+  customerCode: String!
+  customerId: ID!
+  customerName: String!
+  disputedInvoiceCount: Int!
+  followUpDue: Boolean!
+  lastActivityAt: Timestamp
+  """The kind of the latest activity; null when there is none."""
+  lastActivityKind: CollectionActivityKind
+  lastActivitySummary: String!
+  nextFollowUpOn: Timestamp
+  oldestDaysPastDue: Int!
+  openInvoiceCount: Int!
+  overdueMinor: Int!
+  priority: CollectionPriority!
+  promise: CollectionPromise
+  totalOpenMinor: Int!
+}
+
+"""
+Counts across every account the worklist's scope and filters cover, not just the page.
+"""
+type CollectionWorklistSummary {
+  accounts: Int!
+  brokenPromises: Int!
+  followUpsDue: Int!
+  """The overdue balance, one total per currency."""
+  overdue: [CollectionCurrencyTotal!]!
+  unassigned: Int!
+}
+
+"""Whose accounts a collections worklist shows."""
+enum CollectorScope {
+  All
+  """The accounts assigned to the person reading."""
+  Mine
+  Unassigned
+}
+
 type Commodity {
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -10968,6 +11241,16 @@ type CreateInvoicesResult {
   invoices: [Invoice!]!
   """The shipment's own payer's invoice."""
   primary: Invoice!
+}
+
+input CreateJournalReversalInput {
+  originalJournalEntryId: ID!
+  reasonCode: String!
+  reasonText: String!
+  """
+  The day the reversal should post; the fiscal period is resolved from it.
+  """
+  requestedAccountingDate: Timestamp!
 }
 
 input CreateMemoInput {
@@ -11730,6 +12013,13 @@ enum CustomerPaymentTerm {
   Net45
   Net60
   Net90
+}
+
+type CustomerStatementSendResult {
+  """The ending balance the statement shows, formatted in its currency."""
+  endingBalance: String!
+  fileName: String!
+  sentTo: [String!]!
 }
 
 """A status email a customer's rules can ask for."""
@@ -17738,6 +18028,59 @@ input FilterGroupInput {
   filters: [FieldFilterInput!]!
 }
 
+"""One reason a fiscal period or year cannot close yet."""
+type FiscalCloseBlocker {
+  """
+  What kind of work clears it: an open subledger, unposted entries, a reconciliation.
+  """
+  category: String!
+  code: String!
+  """The field or check the blocker is about."""
+  field: String!
+  message: String!
+}
+
+"""
+Whether a fiscal period or year can close now, and every reason it cannot.
+"""
+type FiscalCloseCheck {
+  blockers: [FiscalCloseBlocker!]!
+  canClose: Boolean!
+}
+
+enum FiscalCloseEntryKind {
+  Closing
+  Opening
+}
+
+"""A journal entry a year-end close would post."""
+type FiscalClosePlanEntry {
+  accountingDate: Timestamp!
+  """True when posting it creates the period it books to."""
+  createsPeriod: Boolean!
+  description: String!
+  fiscalPeriodId: ID!
+  fiscalPeriodName: String!
+  fiscalYearId: ID!
+  kind: FiscalCloseEntryKind!
+  lines: [FiscalClosePlanLine!]!
+  totalCreditMinor: Int!
+  totalDebitMinor: Int!
+}
+
+"""
+One account's line on a closing or opening entry a year-end close would post.
+"""
+type FiscalClosePlanLine {
+  accountCategory: AccountCategory!
+  accountCode: String!
+  accountName: String!
+  creditMinor: Int!
+  debitMinor: Int!
+  glAccountId: ID!
+  isRetainedEarnings: Boolean!
+}
+
 type FiscalPeriod {
   adjustmentDeadline: Timestamp
   allowAdjustingEntries: Boolean!
@@ -17785,6 +18128,22 @@ enum FiscalPeriodStatus {
   PermanentlyClosed
 }
 
+"""A control account's balance set against the subledger it summarises."""
+type FiscalSubledgerCheck {
+  accountCode: String!
+  accountName: String!
+  differenceMinor: Int!
+  """True when a difference past the tolerance blocks the close."""
+  enforced: Boolean!
+  glAccountId: ID!
+  glBalanceMinor: Int!
+  key: String!
+  label: String!
+  reconciled: Boolean!
+  subledgerBalanceMinor: Int!
+  toleranceMinor: Int!
+}
+
 type FiscalYear {
   allowAdjustingEntries: Boolean!
   businessUnit: BusinessUnit
@@ -17806,6 +18165,29 @@ type FiscalYear {
   year: Int!
 }
 
+"""
+What closing a fiscal year would post, worked out without writing anything.
+"""
+type FiscalYearClosePlan {
+  blockers: [FiscalCloseBlocker!]!
+  canClose: Boolean!
+  closingEntry: FiscalClosePlanEntry
+  costOfRevenueMinor: Int!
+  fiscalYearId: ID!
+  fiscalYearName: String!
+  netIncomeMinor: Int!
+  nextFiscalYearId: ID
+  nextFiscalYearName: String
+  openingEntry: FiscalClosePlanEntry
+  operatingExpenseMinor: Int!
+  retainedEarningsAccountCode: String
+  retainedEarningsAccountId: ID
+  retainedEarningsAccountName: String
+  revenueMinor: Int!
+  revision: Int!
+  subledgerChecks: [FiscalSubledgerCheck!]!
+}
+
 type FiscalYearConnection {
   edges: [FiscalYearEdge!]!
   pageInfo: PageInfo!
@@ -17819,6 +18201,19 @@ type FiscalYearConnection {
 type FiscalYearEdge {
   cursor: String!
   node: FiscalYear!
+}
+
+input FiscalYearInput {
+  allowAdjustingEntries: Boolean
+  description: String
+  endDate: Timestamp!
+  isCalendarYear: Boolean
+  isCurrent: Boolean
+  name: String!
+  startDate: Timestamp!
+  status: FiscalYearStatus!
+  version: Int
+  year: Int!
 }
 
 enum FiscalYearStatus {
@@ -19138,6 +19533,71 @@ type GLActualsWindow {
   toDate: Timestamp!
 }
 
+"""
+The position at the end of a fiscal period: every period of the year up to and
+including it is summed, and the year's opening entry carries the prior year in.
+"""
+type GLBalanceSheet {
+  assets: GLStatementSection!
+  """
+  Revenue less costs and expenses so far this year, not yet closed into retained earnings.
+  """
+  currentYearEarningsMinor: Int!
+  equity: GLStatementSection!
+  fiscalPeriodId: ID!
+  liabilities: GLStatementSection!
+  totalAssetsMinor: Int!
+  """Equity including the current year's earnings."""
+  totalEquityMinor: Int!
+  totalLiabilitiesMinor: Int!
+}
+
+"""Revenue less costs and expenses posted within a fiscal period."""
+type GLIncomeStatement {
+  costOfRevenue: GLStatementSection!
+  fiscalPeriodId: ID!
+  grossProfitMinor: Int!
+  netIncomeMinor: Int!
+  operatingExpense: GLStatementSection!
+  revenue: GLStatementSection!
+}
+
+"""
+One general ledger account's debits, credits and net change within a fiscal period.
+"""
+type GLPeriodAccountBalance {
+  accountCategory: AccountCategory!
+  accountCode: String!
+  accountName: String!
+  businessUnitId: ID!
+  fiscalPeriodId: ID!
+  fiscalYearId: ID!
+  glAccountId: ID!
+  netChangeMinor: Int!
+  organizationId: ID!
+  periodCreditMinor: Int!
+  periodDebitMinor: Int!
+}
+
+"""
+One account's amount on a financial statement, signed the way the statement reads it.
+"""
+type GLStatementLine {
+  accountCategory: AccountCategory!
+  accountCode: String!
+  accountName: String!
+  amountMinor: Int!
+  glAccountId: ID!
+}
+
+"""A titled block of a financial statement and its total."""
+type GLStatementSection {
+  key: String!
+  label: String!
+  lines: [GLStatementLine!]!
+  totalMinor: Int!
+}
+
 input GenerateCarrierSettlementBatchInput {
   name: String
   notes: String
@@ -20089,6 +20549,19 @@ input IgnoreAccountingInboundChangeInput {
   Why it is not applied, for example that it was entered in Trenova by hand.
   """
   note: String!
+}
+
+input ImportBankReceiptBatchInput {
+  receipts: [ImportBankReceiptBatchLineInput!]!
+  reference: String!
+  source: String!
+}
+
+input ImportBankReceiptBatchLineInput {
+  amountMinor: Int!
+  memo: String
+  receiptDate: Timestamp!
+  referenceNumber: String!
 }
 
 input ImportSourcedCarrierInput {
@@ -22259,6 +22732,17 @@ type LogCheckCallPayload {
   outcomeReason: String
 }
 
+input LogCollectionActivityInput {
+  contactName: String!
+  followUpOn: Timestamp
+  invoiceId: ID
+  kind: CollectionActivityKind!
+  """The amount promised, for a promise to pay."""
+  promisedAmount: Decimal
+  promisedOn: Timestamp
+  summary: String!
+}
+
 input LogInboundExceptionInput {
   kind: TriageExceptionKind!
   note: String
@@ -22315,6 +22799,10 @@ type ManualJournal {
   id: ID!
   """Whether it has debits and they equal its credits."""
   isBalanced: Boolean!
+  """
+  Its lines in order; null in the manualJournals list, read one journal for them.
+  """
+  lines: [ManualJournalLine!]
   organizationId: ID!
   postedBatchId: ID
   reason: String
@@ -22360,9 +22848,48 @@ type ManualJournalConnection {
   totalCountExact: Boolean!
 }
 
+input ManualJournalDraftInput {
+  """
+  The day it books to; null until one is picked, which the draft refuses.
+  """
+  accountingDate: Timestamp
+  currencyCode: String!
+  description: String!
+  lines: [ManualJournalDraftLineInput!]!
+  reason: String
+}
+
+input ManualJournalDraftLineInput {
+  creditAmount: Int!
+  customerId: ID
+  debitAmount: Int!
+  description: String!
+  """
+  Empty until an account is picked; the draft is refused with the line named.
+  """
+  glAccountId: ID!
+  locationId: ID
+}
+
 type ManualJournalEdge {
   cursor: String!
   node: ManualJournal!
+}
+
+"""One debit or credit line of a manual journal."""
+type ManualJournalLine {
+  createdAt: Timestamp!
+  creditAmount: Int!
+  customerId: ID
+  debitAmount: Int!
+  description: String!
+  glAccount: JournalEntryLineAccount
+  glAccountId: ID!
+  id: ID!
+  lineNumber: Int!
+  locationId: ID
+  manualJournalRequestId: ID!
+  updatedAt: Timestamp!
 }
 
 enum ManualJournalStatus {
@@ -22452,6 +22979,10 @@ type Mutation {
   """
   acknowledgeWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
   activateFactoringAgreement(input: ChangeFactoringAgreementStatusInput!): FactoringAgreement!
+  """Opens an inactive fiscal period for posting."""
+  activateFiscalPeriod(id: ID!): FiscalPeriod!
+  """Makes a fiscal year the one the calendar runs on."""
+  activateFiscalYear(id: ID!): FiscalYear!
   """
   Add a line of guidance to the organization's profile. From someone who manages
   agent memory it is kept and the profile is written again with it; from anyone
@@ -22510,6 +23041,12 @@ type Mutation {
   Approve journal entries awaiting approval. Each entry is decided on its own.
   """
   approveJournalEntries(input: JournalReviewInput!): JournalReviewResult!
+  """The second person's sign-off on a reversal."""
+  approveJournalReversal(id: ID!): JournalReversal!
+  """
+  The second person's sign-off on a manual journal someone else prepared.
+  """
+  approveManualJournal(id: ID!): ManualJournal!
   """
   Approves the reviews the tariff asked for on the shipment's rating, which releases the
   shipment to be billed. A person's decision: an agent cannot make it.
@@ -22525,7 +23062,12 @@ type Mutation {
   archiveWorkerCredentialType(id: ID!, version: Int): WorkerCredentialType!
   """Runs the late-charge assessment now and raises the debit memos."""
   assessLateCharges(input: LateChargeAssessmentInput): LateChargeAssessmentResult!
+  assignBankReceiptWorkItem(assignedToUserId: ID!, id: ID!): BankReceiptWorkItem!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
+  """
+  Assigns a customer's account to a collector; null leaves it unassigned.
+  """
+  assignCollectionCollector(collectorId: ID, customerId: ID!): CollectionAccountView!
   assignDocumentTemplate(input: AssignDocumentTemplateInput!): DocumentTemplateAssignment!
   assignFuelCard(input: AssignFuelCardInput!): FuelCard!
   """Assigns messages to a person, or unassigns them when ownerId is null."""
@@ -22602,6 +23144,10 @@ type Mutation {
   """Cancels a failed schedule and releases its invoices for another."""
   cancelFactoringSubmission(input: CancelFactoringSubmissionInput!): FactoringSubmission!
   cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
+  """Withdraws a reversal that has not posted, recording why."""
+  cancelJournalReversal(id: ID!, reason: String!): JournalReversal!
+  """Withdraws a manual journal that has not posted, recording why."""
+  cancelManualJournal(id: ID!, reason: String!): ManualJournal!
   cancelMyExpense(id: ID!): DriverExpense!
   cancelMyPto(id: ID!): PortalPto!
   cancelOrder(cancelReason: String!, id: ID!): Order!
@@ -22639,6 +23185,12 @@ type Mutation {
   clockIn(input: ClockInput!): TimeClockEntry!
   clockOut(input: ClockInput!): TimeClockEntry!
   closeEscrowAccount(accountId: ID!): EscrowAccount!
+  """Closes a fiscal period; nothing posts to it until it is reopened."""
+  closeFiscalPeriod(id: ID!): FiscalPeriod!
+  """
+  Closes a fiscal year, posting its closing entries into retained earnings.
+  """
+  closeFiscalYear(id: ID!): FiscalYear!
   closeLeaveCase(id: ID!): WorkerLeaveCase!
   closeOrder(id: ID!): Order!
   closePerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
@@ -22709,6 +23261,8 @@ type Mutation {
   createFactoringCompany(input: FactoringCompanyInput!): FactoringCompany!
   """Opens a remittance for a factor; upload its file next, then read it."""
   createFactoringRemittance(input: CreateFactoringRemittanceInput!): FactoringRemittance!
+  """Creates a fiscal year with its periods."""
+  createFiscalYear(input: FiscalYearInput!): FiscalYear!
   createFleetCode(input: FleetCodeInput!): FleetCode!
   createFuelCard(input: FuelCardInput!): FuelCard!
   createFuelIndex(input: FuelIndexInput!): FuelIndex!
@@ -22734,7 +23288,10 @@ type Mutation {
   """
   createInvoicesFromShipments(offCycleReason: String, shipmentIds: [ID!]!): CreateInvoicesResult!
   createJobPosition(input: JobPositionInput!): JobPosition!
+  """Asks for a posted journal entry to be reversed."""
+  createJournalReversal(input: CreateJournalReversalInput!): JournalReversal!
   createLocationCategory(input: LocationCategoryInput!): LocationCategory!
+  createManualJournalDraft(input: ManualJournalDraftInput!): ManualJournal!
   """Raises a standalone credit or debit memo against a customer."""
   createMemo(input: CreateMemoInput!): Invoice!
   """
@@ -22909,6 +23466,7 @@ type Mutation {
   Turn an offered line down; it never shapes the profile. Needs agent memory manage.
   """
   dismissAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  dismissBankReceiptWorkItem(id: ID!, resolutionNote: String!): BankReceiptWorkItem!
   """Turns down a memory an agent offered; nothing is kept."""
   dismissDeskMemory(id: ID!): DeskMemory!
   dismissMyNotifications(ids: [ID!]!): Boolean!
@@ -23000,6 +23558,8 @@ type Mutation {
   Leaves a payment recorded in the accounting system out of Trenova, with a reason.
   """
   ignoreAccountingInboundChange(input: IgnoreAccountingInboundChangeInput!): AccountingInboundChange!
+  """Imports a bank file's receipts as one batch and matches what it can."""
+  importBankReceiptBatch(input: ImportBankReceiptBatchInput!): BankReceiptBatchDetail!
   importSourcedCarrier(input: ImportSourcedCarrierInput!): Carrier!
   """Invites a worker to the driver portal (back office)."""
   inviteWorkerToPortal(input: InviteWorkerToPortalInput!): InviteWorkerToPortalResult!
@@ -23021,7 +23581,13 @@ type Mutation {
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  """
+  Locks a fiscal period against subledger postings while journal entries still post.
+  """
+  lockFiscalPeriod(id: ID!): FiscalPeriod!
   logCheckCall(input: LogCheckCallInput!): LogCheckCallPayload!
+  """Records a call, email, note or promise to pay against a customer."""
+  logCollectionActivity(customerId: ID!, input: LogCollectionActivityInput!): CollectionAccountView!
   """Adds a shortage, overage or damage exception to the matched shipment."""
   logInboundException(input: LogInboundExceptionInput!, messageId: ID!): InboundMessage!
   """
@@ -23053,6 +23619,8 @@ type Mutation {
   """
   markWatchtowerSeen(seenAt: Timestamp): WatchtowerCounts!
   markWorkerChecklistItemNotApplicable(input: WorkerChecklistItemActionInput!): WorkerChecklist!
+  """Matches a receipt to a customer payment."""
+  matchBankReceipt(id: ID!, paymentId: ID!): BankReceipt!
   notifyShipmentDelay(input: NotifyShipmentDelayInput!): Boolean!
   openEscrowAccount(input: OpenEscrowAccountInput!): EscrowAccount!
   """
@@ -23094,6 +23662,10 @@ type Mutation {
   Post approved journal entries to the general ledger. Each entry is decided on its own.
   """
   postJournalEntries(input: JournalReviewInput!): JournalReviewResult!
+  """Posts an approved reversal to the ledger."""
+  postJournalReversal(id: ID!): JournalReversal!
+  """Posts an approved manual journal to the ledger."""
+  postManualJournal(id: ID!): ManualJournal!
   """
   Generates a key pair and certificate for a certificate connection and returns the certificate to upload. Replaces a certificate still waiting to be connected.
   """
@@ -23188,6 +23760,10 @@ type Mutation {
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """Rejects a pending adjustment; the invoice stays as posted."""
   rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
+  """Turns a reversal down, recording why."""
+  rejectJournalReversal(id: ID!, reason: String!): JournalReversal!
+  """Sends a manual journal back, recording why."""
+  rejectManualJournal(id: ID!, reason: String!): ManualJournal!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Lets records waiting for approval be sent."""
   releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
@@ -23216,6 +23792,12 @@ type Mutation {
   Switches a certificate connection to a newly uploaded certificate once the accounting system accepts it.
   """
   renewAccountingCertificate(input: RenewAccountingCertificateInput!): AccountingConnection!
+  """Reopens a closed fiscal period, recording why."""
+  reopenFiscalPeriod(id: ID!, reopenReason: String!): FiscalPeriod!
+  """
+  Reopens a closed fiscal year, reversing its closing entries and recording why.
+  """
+  reopenFiscalYear(id: ID!, reopenReason: String!): FiscalYear!
   """
   Returns a Finalized return to Draft. The reason, at least ten characters, is audited.
   """
@@ -23261,6 +23843,7 @@ type Mutation {
   """
   resolveAccountingDrift(input: ResolveAccountingDriftInput!): AccountingDriftFinding!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
+  resolveBankReceiptWorkItem(id: ID!, input: ResolveBankReceiptWorkItemInput!): BankReceiptWorkItem!
   """Settles one of an item's checks with one of its options."""
   resolveBillingQueueIssue(id: ID!, issueId: ID!, optionKey: String!): BillingQueueItem!
   resolveCarrierIntelEvent(input: ResolveCarrierIntelEventInput!): CarrierIntelEvent!
@@ -23388,8 +23971,14 @@ type Mutation {
   saveMyTableLayout(input: TableLayoutInput!): TableLayout!
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
+  """Sets or clears when a customer is next followed up."""
+  scheduleCollectionFollowUp(customerId: ID!, followUpOn: Timestamp, note: String!): CollectionAccountView!
   """Saves a table's view as a report and sends it on a schedule."""
   scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
+  """
+  Emails the customer's statement to its invoice recipients with the PDF attached.
+  """
+  sendCustomerStatement(customerId: ID!, input: SendCustomerStatementInput!): CustomerStatementSendResult!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
   """
   Emails the customer the notice letter. Sending the same version again does not send twice.
@@ -23408,6 +23997,10 @@ type Mutation {
   already went out.
   """
   sendInvoiceEdi(force: Boolean, invoiceId: ID!): InvoiceEDISendResult!
+  """
+  Emails the customer a reminder of everything overdue, one per currency.
+  """
+  sendPaymentReminder(customerId: ID!, note: String!): [PaymentReminderSendResult!]!
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
   setAccountingMapping(input: SetAccountingMappingInput!): AccountingMapping!
   """
@@ -23480,6 +24073,7 @@ type Mutation {
   Starts connecting an accounting system. Returns the provider's page to send the person to.
   """
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
+  startBankReceiptWorkItemReview(id: ID!): BankReceiptWorkItem!
   startBillingTransferRun(input: StartBillingTransferRunInput!): BillingTransferRun!
   """
   Starts changing one field on every chosen row; it runs in the background.
@@ -23508,6 +24102,8 @@ type Mutation {
   Builds the schedule and its packets and sends them to the factor. Submitting the same Ready invoices again returns the first schedule.
   """
   submitInvoicesToFactor(input: FactoringSubmissionPlanInput!): FactoringSubmission!
+  """Sends a draft for approval."""
+  submitManualJournal(id: ID!): ManualJournal!
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
   submitPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   switchCarrierIntelProvider(provider: String!): CarrierIntelControl!
@@ -23558,6 +24154,8 @@ type Mutation {
   unfileInboundAttachment(attachmentId: ID!): InboundMessage!
   """Removes a link a person or the reading made."""
   unlinkInboundMessage(id: ID!, record: InboundLinkedRecord!): InboundMessage!
+  """Lifts a fiscal period's lock."""
+  unlockFiscalPeriod(id: ID!): FiscalPeriod!
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
@@ -23614,6 +24212,10 @@ type Mutation {
   updateFactoringCompany(input: UpdateFactoringCompanyInput!): FactoringCompany!
   """Matches, unmatches, ignores, restores or re-kinds one line."""
   updateFactoringRemittanceLine(input: UpdateFactoringRemittanceLineInput!): FactoringRemittance!
+  """
+  Updates a fiscal year; its status, current flag and close history stay as they are.
+  """
+  updateFiscalYear(id: ID!, input: FiscalYearInput!): FiscalYear!
   updateFleetCode(id: ID!, input: FleetCodeInput!): FleetCode!
   updateFuelCard(id: ID!, input: FuelCardInput!, version: Int!): FuelCard!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
@@ -23635,6 +24237,8 @@ type Mutation {
   updateLeaveControl(input: UpdateLeaveControlInput!): LeaveControl!
   updateLeaveDay(input: UpdateLeaveDayInput!): WorkerLeaveEntry!
   updateLocationCategory(id: ID!, input: LocationCategoryInput!): LocationCategory!
+  """Replaces a draft's header and lines."""
+  updateManualJournalDraft(id: ID!, input: ManualJournalDraftInput!): ManualJournal!
   """
   Updates the signed-in driver's own contact details (phone, address,
   emergency contact). Compliance fields are carrier-controlled.
@@ -24914,6 +25518,14 @@ enum PayeeClassification {
   OwnerOperator
 }
 
+"""A payment reminder emailed to a customer, one per currency it owes in."""
+type PaymentReminderSendResult {
+  invoiceNumbers: [String!]!
+  sentTo: [String!]!
+  """The overdue total the reminder names, formatted in its currency."""
+  totalOverdue: String!
+}
+
 """
 One run of approved timesheets handed to payroll. A sheet carries the export it
 went out on, so a period cannot be sent twice without somebody voiding the
@@ -26005,6 +26617,19 @@ type Query {
   The profiles offered when somebody starts a scan: active ones, default first.
   """
   availableCaptureProfiles: [CaptureProfile!]!
+  balanceSheet(fiscalPeriodId: ID!): GLBalanceSheet!
+  bankReceipt(id: ID!): BankReceipt!
+  """A batch and the receipts it imported."""
+  bankReceiptBatch(id: ID!): BankReceiptBatchDetail!
+  bankReceiptBatches: [BankReceiptBatch!]!
+  """The receipts no payment matched."""
+  bankReceiptExceptions: [BankReceipt!]!
+  bankReceiptMatchSuggestions(id: ID!): [BankReceiptMatchSuggestion!]!
+  """Receipt and work item counts and amounts as of a day; null is today."""
+  bankReceiptSummary(asOfDate: Timestamp): BankReceiptReconciliationSummary!
+  bankReceiptWorkItem(id: ID!): BankReceiptWorkItem!
+  """The work items not yet resolved or dismissed."""
+  bankReceiptWorkItems: [BankReceiptWorkItem!]!
   benefitCosts(planYear: Int): [BenefitCostRow!]!
   """
   Enrollments across the organisation, newest first, with the worker and the
@@ -26087,6 +26712,12 @@ type Query {
   """The live carrier tracking link on a move, if one has been issued."""
   carrierTrackingLink(shipmentMoveId: ID!): CarrierTrackingLink
   carriers(input: DataTableConnectionInput!): CarrierConnection!
+  """
+  One customer's collections account and a page of its history, older than the cursor.
+  """
+  collectionAccount(before: CollectionActivityCursorInput, customerId: ID!): CollectionAccountView!
+  """The ranked collections worklist."""
+  collectionWorklist(input: CollectionWorklistInput!): CollectionWorklistPage!
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
   costingControl: CostingControl!
@@ -26328,9 +26959,15 @@ type Query {
   factoringSummary: FactoringSummary!
   """Null until the factor's delivery is set up."""
   factoringTransport(factoringCompanyId: ID!): FactoringTransport
+  """What stands between a fiscal period and its close."""
+  fiscalPeriodCloseBlockers(id: ID!): FiscalCloseCheck!
   """Every fiscal period of every fiscal year, latest start first."""
   fiscalPeriods(input: DataTableConnectionInput!): FiscalPeriodConnection!
   fiscalYear(id: ID!): FiscalYear
+  """
+  The closing and opening entries a year-end close would post, and what blocks it.
+  """
+  fiscalYearClosePreview(id: ID!): FiscalYearClosePlan!
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
   fleetCodes(input: DataTableConnectionInput!): FleetCodeConnection!
@@ -26431,6 +27068,7 @@ type Query {
   inboundSenderProfile(messageId: ID!): InboundSenderProfile!
   """The messages in one thread, oldest first."""
   inboundThread(threadKey: String!): [InboundMessage!]!
+  incomeStatement(fiscalPeriodId: ID!): GLIncomeStatement!
   invoice(id: ID!): Invoice
   invoiceAdjustment(id: ID!): InvoiceAdjustment
   """Adjustments whose policy holds them for finance approval."""
@@ -26778,6 +27416,8 @@ type Query {
   scimDirectories(input: DataTableConnectionInput!): SCIMDirectoryConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
+  """The statements a customer has been sent, newest first, at most 50."""
+  sentCustomerStatements(customerId: ID!): [SentCustomerStatement!]!
   serviceFailure(id: ID!): ServiceFailure
   serviceFailureReasonCode(id: ID!): ServiceFailureReasonCode
   serviceFailureReasonCodes(input: DataTableConnectionInput!): ServiceFailureReasonCodeConnection!
@@ -26911,6 +27551,8 @@ type Query {
   triageSettings: TriageSettings!
   triageShipmentPeek(shipmentId: ID!): TriageShipmentPeek!
   triageStopTimes(messageId: ID!): TriageStopTimes
+  """Every account's balance within a fiscal period."""
+  trialBalance(fiscalPeriodId: ID!): [GLPeriodAccountBalance!]!
   unassignedShipments(after: String, first: Int = 20): ShipmentConnection!
   """
   A worker's accrued, unheld, unsettled pay events — the pool an instant
@@ -28678,6 +29320,11 @@ input ResolveAccountingDriftInput {
   id: ID!
 }
 
+input ResolveBankReceiptWorkItemInput {
+  resolutionNote: String!
+  resolutionType: BankReceiptWorkItemResolutionType!
+}
+
 input ResolveCarrierIntelEventInput {
   id: ID!
   note: String
@@ -29426,6 +30073,14 @@ input SelectOptionsInput {
   resource: SelectOptionResource!
 }
 
+input SendCustomerStatementInput {
+  """The statement date; null is today."""
+  asOfDate: Timestamp
+  note: String!
+  """Where the statement starts; null runs from the first transaction."""
+  startDate: Timestamp
+}
+
 input SendFactoringNoaInput {
   id: ID!
   """
@@ -29453,6 +30108,21 @@ input SendTestMessageTemplateInput {
   kind: String!
   toEmail: String!
   versionId: ID
+}
+
+"""A statement emailed to a customer."""
+type SentCustomerStatement {
+  currencyCode: String!
+  endingBalanceMinor: Int!
+  id: ID!
+  """True when the monthly run sent it rather than a person."""
+  monthly: Boolean!
+  pastDueMinor: Int!
+  periodEnd: Timestamp!
+  periodStart: Timestamp!
+  sentAt: Timestamp!
+  sentByName: String!
+  sentTo: String!
 }
 
 type ServiceFailure {

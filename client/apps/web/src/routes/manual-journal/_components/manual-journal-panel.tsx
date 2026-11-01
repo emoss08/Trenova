@@ -62,7 +62,7 @@ function CreatePanel({
     JournalFormValues
   >({
     mutationFn: async (data: JournalFormValues) =>
-      apiService.manualJournalService.createDraft(data as unknown as Partial<ManualJournal>),
+      apiService.manualJournalService.createDraft(data),
     form,
     resourceName: "manual journal",
     onSuccess: () => {
@@ -151,10 +151,7 @@ function EditPanel({
   const saveMutation = useApiMutation<ManualJournal, JournalFormValues, unknown, JournalFormValues>(
     {
       mutationFn: async (data: JournalFormValues) =>
-        apiService.manualJournalService.updateDraft(
-          row!.id!,
-          data as unknown as Partial<ManualJournal>,
-        ),
+        apiService.manualJournalService.updateDraft(row!.id!, data),
       form,
       resourceName: "manual journal",
       onSuccess: () => {

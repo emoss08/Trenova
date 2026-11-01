@@ -2,15 +2,22 @@ package manualjournalresolver
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func manualJournalColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -60,5 +67,60 @@ func manualJournalConnectionToModel(
 		PageInfo:        page.PageInfo,
 		TotalCount:      page.TotalCount,
 		TotalCountExact: page.TotalCountExact,
+	}, nil
+}
+
+func lineAccountToModel(account *glaccount.GLAccount) *gqlmodel.JournalEntryLineAccount {
+	return &gqlmodel.JournalEntryLineAccount{
+		ID:          account.ID.String(),
+		AccountCode: account.AccountCode,
+		Name:        account.Name,
+	}
+}
+
+func manualJournalLinesFromInput(
+	inputs []*gqlmodel.ManualJournalDraftLineInput,
+) ([]*manualjournalports.ManualJournalLineInput, error) {
+	lines := make([]*manualjournalports.ManualJournalLineInput, 0, len(inputs))
+	for i, input := range inputs {
+		field := fmt.Sprintf("lines[%d]", i)
+		glAccountID, err := gqlid.OptionalScopedID(field+".glAccountId", &input.GlAccountID)
+		if err != nil {
+			return nil, err
+		}
+		customerID, err := gqlid.OptionalScopedID(field+".customerId", input.CustomerID)
+		if err != nil {
+			return nil, err
+		}
+		locationID, err := gqlid.OptionalScopedID(field+".locationId", input.LocationID)
+		if err != nil {
+			return nil, err
+		}
+
+		lines = append(lines, &manualjournalports.ManualJournalLineInput{
+			GLAccountID:  glAccountID,
+			Description:  input.Description,
+			DebitAmount:  int64(input.DebitAmount),
+			CreditAmount: int64(input.CreditAmount),
+			CustomerID:   customerID,
+			LocationID:   locationID,
+		})
+	}
+
+	return lines, nil
+}
+
+func getManualJournalRequest(
+	id string,
+	authCtx *authctx.AuthContext,
+) (*manualjournalports.GetManualJournalRequest, error) {
+	requestID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &manualjournalports.GetManualJournalRequest{
+		RequestID:  requestID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, nil
 }

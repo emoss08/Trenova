@@ -5,10 +5,11 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const collection = createQueryKeys("collection", {
   worklist: (params: CollectionWorklistParams) => ({
     queryKey: ["worklist", params],
-    queryFn: async () => apiService.collectionService.worklist(params),
+    queryFn: async ({ signal }) => apiService.collectionService.worklist(params, { signal }),
   }),
   account: (customerId: string) => ({
     queryKey: ["account", customerId],
-    queryFn: async () => apiService.collectionService.getAccount(customerId),
+    queryFn: async ({ signal }) =>
+      apiService.collectionService.getAccount(customerId, undefined, { signal }),
   }),
 });
