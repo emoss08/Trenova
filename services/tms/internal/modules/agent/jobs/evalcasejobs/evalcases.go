@@ -1,11 +1,17 @@
-package agentjobs
+package evalcasejobs
 
 import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
+	"go.uber.org/fx"
 )
 
 const (
@@ -23,7 +29,72 @@ const (
 
 var evalCaseSweepOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: evalCaseSweepTimeout,
-	RetryPolicy:         deterministicRetry,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    time.Second,
+		BackoffCoefficient: 2.0,
+		MaximumInterval:    30 * time.Second,
+		MaximumAttempts:    3,
+	},
+}
+
+type ActivitiesParams struct {
+	fx.In
+
+	CaseService agentqualityports.AgentEvalCaseService `optional:"true"`
+}
+
+type Activities struct {
+	caseService agentqualityports.AgentEvalCaseService
+}
+
+func NewActivities(p ActivitiesParams) *Activities {
+	return &Activities{caseService: p.CaseService}
+}
+
+var Module = fx.Module("agent-eval-case-jobs",
+	fx.Provide(NewActivities),
+)
+
+func Workflows() []registry.WorkflowDefinition {
+	return []registry.WorkflowDefinition{
+		{
+			Name:        CaptureEvalCaseCandidatesWorkflowName,
+			Fn:          CaptureEvalCaseCandidatesWorkflow,
+			Description: "Capture decided proposals as candidate evaluation cases",
+		},
+		{
+			Name:        PurgeEvalCasesWorkflowName,
+			Fn:          PurgeEvalCasesWorkflow,
+			Description: "Purge expired evaluation cases and those of deleted conversations",
+		},
+	}
+}
+
+func Schedules() []*schedule.Schedule {
+	return []*schedule.Schedule{
+		{
+			ID:            CaptureEvalCaseCandidatesScheduleID,
+			Description:   "Capture decided proposals as candidate evaluation cases",
+			Spec:          schedule.Every(evalCaseCaptureEvery),
+			Workflow:      CaptureEvalCaseCandidatesWorkflow,
+			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": CaptureEvalCaseCandidatesScheduleID,
+			},
+		},
+		{
+			ID:            PurgeEvalCasesScheduleID,
+			Description:   "Purge expired evaluation cases and those of deleted conversations",
+			Spec:          schedule.Cron("45 4 * * *"),
+			Workflow:      PurgeEvalCasesWorkflow,
+			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": PurgeEvalCasesScheduleID,
+			},
+		},
+	}
 }
 
 type CaptureEvalCaseCandidatesInput struct {

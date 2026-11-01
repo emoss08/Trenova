@@ -113,9 +113,18 @@ func TestResolveDates_KeepsTheWindowsASentenceCanNameAndHandsBackTheRest(t *test
 func TestSearchToday_CountsFromThePersonsOwnDate(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, time.Date(2026, time.October, 31, 0, 0, 0, 0, time.UTC), searchToday("2026-10-31"))
+	assert.Equal(
+		t,
+		time.Date(2026, time.October, 31, 0, 0, 0, 0, time.UTC),
+		searchToday("2026-10-31"),
+	)
 	fallback := searchToday("31/10/2026")
-	assert.Equal(t, 0, fallback.Hour(), "a date it cannot read falls back to the start of the server's day")
+	assert.Equal(
+		t,
+		0,
+		fallback.Hour(),
+		"a date it cannot read falls back to the start of the server's day",
+	)
 }
 
 func TestResolveIntent_FindsThePayerAndTheShipmentsCustomerApart(t *testing.T) {
@@ -125,15 +134,19 @@ func TestResolveIntent_FindsThePayerAndTheShipmentsCustomerApart(t *testing.T) {
 	acmeID, globexID := pulid.MustNew("cus_"), pulid.MustNew("cus_")
 	matching := func(query string) any {
 		return mock.MatchedBy(func(req *customerports.CustomerSelectOptionsRequest) bool {
-			return req.Query == query
+			return req.SelectQueryRequest != nil && req.SelectQueryRequest.Query == query
 		})
 	}
 	customers.EXPECT().SelectOptions(mock.Anything, matching("Acme")).Return(
-		&pagination.ListResult[*customer.Customer]{Items: []*customer.Customer{{ID: acmeID, Name: "Acme Foods"}}},
+		&pagination.ListResult[*customer.Customer]{
+			Items: []*customer.Customer{{ID: acmeID, Name: "Acme Foods"}},
+		},
 		nil,
 	)
 	customers.EXPECT().SelectOptions(mock.Anything, matching("Globex")).Return(
-		&pagination.ListResult[*customer.Customer]{Items: []*customer.Customer{{ID: globexID, Name: "Globex"}}},
+		&pagination.ListResult[*customer.Customer]{
+			Items: []*customer.Customer{{ID: globexID, Name: "Globex"}},
+		},
 		nil,
 	)
 	customers.EXPECT().SelectOptions(mock.Anything, matching("Nobody")).Return(
@@ -157,8 +170,18 @@ func TestResolveIntent_FindsThePayerAndTheShipmentsCustomerApart(t *testing.T) {
 	assert.Nil(t, intent.PickedUp)
 	assert.Empty(t, intent.Unresolved)
 
-	missing, err := s.resolveIntent(t.Context(), pagination.TenantInfo{}, &searchAnswer{Customer: "Nobody"}, today)
+	missing, err := s.resolveIntent(
+		t.Context(),
+		pagination.TenantInfo{},
+		&searchAnswer{Customer: "Nobody"},
+		today,
+	)
 	require.NoError(t, err)
 	assert.True(t, missing.ShipmentCustomerID.IsNil())
-	assert.Equal(t, "Nobody", missing.Unresolved, "a customer it cannot find is what it could not read")
+	assert.Equal(
+		t,
+		"Nobody",
+		missing.Unresolved,
+		"a customer it cannot find is what it could not read",
+	)
 }

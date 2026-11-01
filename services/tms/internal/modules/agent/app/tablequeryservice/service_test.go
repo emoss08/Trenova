@@ -33,20 +33,17 @@ one condition the person cared about is the one that went missing.
 */
 
 type stubCompletion struct {
-	llmports.CompletionService
+	llmports.TaskRunner
 	reply string
-	err   error
-	saw   *llmports.StructuredCompletionRequest
+	saw   *llmports.NovaTask
 }
 
-func (s *stubCompletion) CompleteStructured(
+func (s *stubCompletion) Run(
 	_ context.Context,
-	req *llmports.StructuredCompletionRequest,
+	task *llmports.NovaTask,
+	_ any,
 ) (*llmports.StructuredCompletionResult, error) {
-	s.saw = req
-	if s.err != nil {
-		return nil, s.err
-	}
+	s.saw = task
 
 	return &llmports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
 }
@@ -90,7 +87,7 @@ func newService(reply string, allowed bool) (*Service, *stubCompletion, *stubPer
 
 	return &Service{
 		logger:      zap.NewNop(),
-		completion:  completion,
+		nova:        completion,
 		permissions: permissions,
 		catalog:     shipmentCatalog(),
 	}, completion, permissions

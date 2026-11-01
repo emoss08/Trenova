@@ -18,9 +18,10 @@ import (
 )
 
 const (
-	maxPONumberLength   = 100
-	maxInvoiceMemoChars = 2000
-	maxPacketDocuments  = 25
+	maxPONumberLength    = 100
+	maxInvoiceMemoChars  = 2000
+	maxPacketDocuments   = 25
+	shipmentResourceType = "shipment"
 )
 
 func (s *Service) UpdateInvoiceDetails(

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -105,7 +106,7 @@ func CheckFoundCount(rows int64, entityName string) error {
 }
 
 func CheckBulkAffected(rows int64, entityName string, entityIDs []pulid.ID) error {
-	if rows == 0 {
+	if rows == 0 || rows < int64(len(sliceutils.Dedupe(entityIDs))) {
 		return CreateBulkVersionMismatchError(entityName, entityIDs)
 	}
 

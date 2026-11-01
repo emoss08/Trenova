@@ -99,6 +99,8 @@ var dynamicChecks = map[string]string{
 	"handlers/assistanthandler/schedules.go:registerScheduleRoutes":                                    "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/waits.go:registerWaitRoutes":                                            "the assistant resource, passed by RegisterRoutes",
 	"middleware/permission.go:RequireParamPermission":                                                  "the resource named in the path, validated against the registry",
+
+	"graphql/resolver/customfielddefinitionresolver/custom_field_definition.resolvers.go:CustomFieldFormFields": "the form's own resource, one of the resource types custom fields support",
 }
 
 func TestEveryPermissionCheckNamesItsPermission(t *testing.T) {

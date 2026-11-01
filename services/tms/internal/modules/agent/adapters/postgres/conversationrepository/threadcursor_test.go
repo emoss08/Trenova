@@ -106,7 +106,7 @@ func TestThreadPageQueryContinuesBelowTheCursorInRailOrder(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`at_."origin" NOT IN ('Ask', 'Import', 'Formula')`,
+		`at_."origin" NOT IN ('Import', 'Formula')`,
 		"unlisted conversations stay off the rail",
 	)
 }
@@ -268,7 +268,7 @@ func TestThreadShelfCountQueryBandsEveryConversationOnce(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`at_."origin" NOT IN ('Ask', 'Import', 'Formula')`,
+		`at_."origin" NOT IN ('Import', 'Formula')`,
 		"unlisted conversations are not counted",
 	)
 }

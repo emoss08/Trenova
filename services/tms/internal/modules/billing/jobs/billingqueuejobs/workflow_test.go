@@ -23,7 +23,8 @@ func testPayload() *billingqueuecontract.ApprovalRunPayload {
 			BusinessUnitID: pulid.ID("bu_test"),
 			UserID:         pulid.ID("usr_test"),
 		},
-		RunID: pulid.ID("bqar_test"),
+		RunID:  pulid.ID("bqar_test"),
+		Action: billingapprovalrun.RunActionApprove,
 	}
 }
 
@@ -37,7 +38,7 @@ func newEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 	var a *Activities
 	env.RegisterActivity(a.StartApprovalRunActivity)
 	env.RegisterActivity(a.ListApprovalRunItemsActivity)
-	env.RegisterActivity(a.ApproveQueueItemActivity)
+	env.RegisterActivity(a.ApplyRunItemActivity)
 	env.RegisterActivity(a.RecordApprovalItemFailureActivity)
 	env.RegisterActivity(a.FinalizeApprovalRunActivity)
 
@@ -69,10 +70,10 @@ func TestBulkApprovalCommitsAfterTheUndoWindow(t *testing.T) {
 		})
 	env.OnActivity("ListApprovalRunItemsActivity", mock.Anything, mock.Anything).Return(items, nil)
 	approved := make([]pulid.ID, 0, len(items))
-	env.OnActivity("ApproveQueueItemActivity", mock.Anything, mock.Anything).
-		Return(func(_ context.Context, p *ApproveItemPayload) (*ApproveItemResult, error) {
+	env.OnActivity("ApplyRunItemActivity", mock.Anything, mock.Anything).
+		Return(func(_ context.Context, p *ApplyRunItemPayload) (*ApplyRunItemResult, error) {
 			approved = append(approved, p.ItemID)
-			return &ApproveItemResult{Status: billingapprovalrun.ApprovalItemApproved}, nil
+			return &ApplyRunItemResult{Status: billingapprovalrun.ApprovalItemSucceeded}, nil
 		})
 	finalized := captureFinalize(env)
 
@@ -106,7 +107,7 @@ func TestBulkApprovalUndoneBeforeItStartsWritesNothing(t *testing.T) {
 	assert.Equal(t, billingapprovalrun.ApprovalRunUndone, finalized.Status)
 	assert.Equal(t, billingapprovalrun.ApprovalFailureUndone, finalized.LeftoverCode)
 	env.AssertNotCalled(t, "StartApprovalRunActivity", mock.Anything, mock.Anything)
-	env.AssertNotCalled(t, "ApproveQueueItemActivity", mock.Anything, mock.Anything)
+	env.AssertNotCalled(t, "ApplyRunItemActivity", mock.Anything, mock.Anything)
 }
 
 // The undo endpoint writes the row before it signals. When the signal is lost
@@ -121,7 +122,7 @@ func TestBulkApprovalObeysAnUndoWrittenWithoutASignal(t *testing.T) {
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
 	assert.Equal(t, billingapprovalrun.ApprovalRunUndone, finalized.Status)
-	env.AssertNotCalled(t, "ApproveQueueItemActivity", mock.Anything, mock.Anything)
+	env.AssertNotCalled(t, "ApplyRunItemActivity", mock.Anything, mock.Anything)
 }
 
 // One item failing past its retries is recorded against that item and the
@@ -133,13 +134,13 @@ func TestBulkApprovalRecordsAPartialFailureAndCarriesOn(t *testing.T) {
 	env.OnActivity("StartApprovalRunActivity", mock.Anything, mock.Anything).Return(true, nil)
 	env.OnActivity("ListApprovalRunItemsActivity", mock.Anything, mock.Anything).Return(items, nil)
 	attempts := map[pulid.ID]int{}
-	env.OnActivity("ApproveQueueItemActivity", mock.Anything, mock.Anything).
-		Return(func(_ context.Context, p *ApproveItemPayload) (*ApproveItemResult, error) {
+	env.OnActivity("ApplyRunItemActivity", mock.Anything, mock.Anything).
+		Return(func(_ context.Context, p *ApplyRunItemPayload) (*ApplyRunItemResult, error) {
 			attempts[p.ItemID]++
 			if p.ItemID == "bqi_2" {
 				return nil, errors.New("database went away")
 			}
-			return &ApproveItemResult{Status: billingapprovalrun.ApprovalItemApproved}, nil
+			return &ApplyRunItemResult{Status: billingapprovalrun.ApprovalItemSucceeded}, nil
 		})
 	var failed *RecordItemFailurePayload
 	env.OnActivity("RecordApprovalItemFailureActivity", mock.Anything, mock.Anything).

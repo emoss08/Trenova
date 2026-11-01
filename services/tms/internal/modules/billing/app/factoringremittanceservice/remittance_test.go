@@ -857,17 +857,20 @@ func (f *fakeRemitContent) GetContent(
 }
 
 type fakeRemitCompletion struct {
-	llmports.CompletionService
+	llmports.TaskRunner
 	reply string
-	req   *llmports.StructuredCompletionRequest
+	req   *llmports.NovaTask
 }
 
-func (f *fakeRemitCompletion) CompleteStructured(
+func (f *fakeRemitCompletion) Run(
 	_ context.Context,
-	req *llmports.StructuredCompletionRequest,
+	task *llmports.NovaTask,
+	out any,
 ) (*llmports.StructuredCompletionResult, error) {
-	f.req = req
-	return &llmports.StructuredCompletionResult{Text: f.reply}, nil
+	f.req = task
+	result := &llmports.StructuredCompletionResult{Text: f.reply}
+
+	return result, llmports.DecodeAnswer(task.Name, f.reply, out)
 }
 
 type fakeStageStarter struct {
@@ -893,7 +896,7 @@ func TestRemittancePdfWaitsForItsTextThenReadsItWithTheModel(t *testing.T) {
 		`"face":"","advance":"","fee":"","reserve":"","cash":"35.00","date":"2027-01-15"}]}`}
 	starter := &fakeStageStarter{}
 	h.svc.content = content
-	h.svc.completion = completion
+	h.svc.nova = completion
 	h.svc.starter = starter
 
 	rem := h.create(t)
@@ -933,7 +936,7 @@ func TestRemittancePdfWaitsForItsTextThenReadsItWithTheModel(t *testing.T) {
 	assert.Equal(t, factoringremittance.RemittanceStatusParsed, read.Remittance.Status)
 	assert.Equal(t, 2, read.Remittance.MatchedCount)
 	require.NotNil(t, completion.req)
-	assert.Equal(t, aitask.TaskRemittanceExtraction, completion.req.Task)
+	assert.Equal(t, aitask.TaskRemittanceExtraction, completion.req.Name)
 	assert.Equal(t, aiusage.FeatureFactoringRemittanceExtract, completion.req.Attribution.Feature)
 	assert.False(t, completion.req.Context.Sections[0].Trusted, "the report is outside content")
 }
@@ -944,7 +947,7 @@ func TestRemittancePdfStillUnreadWhenTheWaitEndsFails(t *testing.T) {
 	h.svc.content = &fakeRemitContent{content: &documentcontent.Content{
 		Status: documentcontent.StatusExtracting,
 	}}
-	h.svc.completion = &fakeRemitCompletion{}
+	h.svc.nova = &fakeRemitCompletion{}
 	h.svc.starter = &fakeStageStarter{}
 	rem := h.create(t)
 	doc := h.upload(rem, "rts.pdf", "%PDF-1.7")

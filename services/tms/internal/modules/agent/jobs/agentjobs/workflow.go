@@ -112,16 +112,6 @@ func (w *Workflows) background() []registry.WorkflowDefinition {
 			Fn:          AssistantRetentionWorkflow,
 			Description: "Remove unsaved formula conversations and old palette question records",
 		},
-		{
-			Name:        CaptureEvalCaseCandidatesWorkflowName,
-			Fn:          CaptureEvalCaseCandidatesWorkflow,
-			Description: "Capture decided proposals as candidate evaluation cases",
-		},
-		{
-			Name:        PurgeEvalCasesWorkflowName,
-			Fn:          PurgeEvalCasesWorkflow,
-			Description: "Purge expired evaluation cases and those of deleted conversations",
-		},
 	}
 }
 

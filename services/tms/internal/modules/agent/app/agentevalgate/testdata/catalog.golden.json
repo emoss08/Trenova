@@ -8902,7 +8902,7 @@
     },
     {
       "name": "customer_list",
-      "description": "List customers narrowed by status, code, name or city, with their ids. Use it to turn a customer's name into an id: shipment_list filters on customerId, and a report filters on customer.name. Filters: addressLine1, addressLine2, allowConsolidation, brokerVettingEnabled, city, code, consolidationPriorityMin/Max, createdAtFrom/To, dotNumber, exclusiveConsolidation, externalId, isGeocoded, latitudeMin/Max, longitudeMin/Max, mcNumber, name, postalCode, status, statusUpdatePreference, statusUpdateRecipients, updatedAtFrom/To.",
+      "description": "List customers narrowed by status, code, name or city, with their ids. Use it to turn a customer's name into an id: shipment_list filters on customerId, and a report filters on customer.name. Filters: addressLine1, addressLine2, allowConsolidation, brokerVettingEnabled, checkCallIntervalHoursMin/Max, city, code, consolidationPriorityMin/Max, createdAtFrom/To, dotNumber, etaRiskThresholdMinutesMin/Max, exclusiveConsolidation, externalId, isGeocoded, latitudeMin/Max, longitudeMin/Max, mcNumber, name, postalCode, status, statusUpdatePreference, statusUpdateRecipients, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -8925,6 +8925,14 @@
           "brokerVettingEnabled": {
             "description": "true for only the records whose brokerVettingEnabled is true, false for only those whose brokerVettingEnabled is false.",
             "type": "boolean"
+          },
+          "checkCallIntervalHoursMax": {
+            "description": "How often a check call is due on this customer's freight; null uses the organization's interval. Only records whose check call interval hours is at most this.",
+            "type": "integer"
+          },
+          "checkCallIntervalHoursMin": {
+            "description": "How often a check call is due on this customer's freight; null uses the organization's interval. Only records whose check call interval hours is at least this.",
+            "type": "integer"
           },
           "city": {
             "description": "Only records whose city contains this text.",
@@ -8961,6 +8969,14 @@
           "dotNumber": {
             "description": "Only records whose dot number contains this text.",
             "type": "string"
+          },
+          "etaRiskThresholdMinutesMax": {
+            "description": "How late an ETA may run before this customer's freight is flagged at risk; null uses the organization's threshold. Only records whose eta risk threshold minutes is at most this.",
+            "type": "integer"
+          },
+          "etaRiskThresholdMinutesMin": {
+            "description": "How late an ETA may run before this customer's freight is flagged at risk; null uses the organization's threshold. Only records whose eta risk threshold minutes is at least this.",
+            "type": "integer"
           },
           "exclusiveConsolidation": {
             "description": "true for only the records whose exclusiveConsolidation is true, false for only those whose exclusiveConsolidation is false.",
@@ -9053,11 +9069,13 @@
               "addressLine2",
               "allowConsolidation",
               "brokerVettingEnabled",
+              "checkCallIntervalHours",
               "city",
               "code",
               "consolidationPriority",
               "createdAt",
               "dotNumber",
+              "etaRiskThresholdMinutes",
               "exclusiveConsolidation",
               "externalId",
               "isGeocoded",
@@ -33461,7 +33479,7 @@
     },
     {
       "name": "masterdata_list_commodities",
-      "description": "List commodities — what this organization hauls, with freight class, handling flags and whether the commodity is hazardous. Temperature-controlled commodities carry a min or max temperature. Filters: createdAtFrom/To, description, fragile, freightClass, hasHazardousMaterial, hazardousMaterialId, linearFeetPerUnitMin/Max, loadingInstructions, maxQuantityPerShipmentMin/Max, maxTemperatureMin/Max, minTemperatureMin/Max, name, stackable, status, updatedAtFrom/To, weightPerUnitMin/Max.",
+      "description": "List commodities — what this organization hauls, with freight class, handling flags and whether the commodity is hazardous. Temperature-controlled commodities carry a min or max temperature. Filters: createdAtFrom/To, description, fragile, freightClass, hasHazardousMaterial, hazardousMaterialId, heightPerUnitMin/Max, lengthPerUnitMin/Max, linearFeetPerUnitMin/Max, loadingInstructions, maxQuantityPerShipmentMin/Max, maxTemperatureMin/Max, minTemperatureMin/Max, name, stackable, status, updatedAtFrom/To, weightPerUnitMin/Max, widthPerUnitMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -33559,6 +33577,22 @@
             "type": "string",
             "x-recordOf": "hazardous_material"
           },
+          "heightPerUnitMax": {
+            "description": "Only records whose height per unit is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "heightPerUnitMin": {
+            "description": "Only records whose height per unit is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "lengthPerUnitMax": {
+            "description": "Only records whose length per unit is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "lengthPerUnitMin": {
+            "description": "Only records whose length per unit is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 100.",
             "maximum": 100,
@@ -33618,6 +33652,8 @@
               "fragile",
               "freightClass",
               "hazardousMaterialId",
+              "heightPerUnit",
+              "lengthPerUnit",
               "linearFeetPerUnit",
               "loadingInstructions",
               "maxQuantityPerShipment",
@@ -33627,7 +33663,8 @@
               "stackable",
               "status",
               "updatedAt",
-              "weightPerUnit"
+              "weightPerUnit",
+              "widthPerUnit"
             ],
             "type": "string",
             "x-enumOf": "masterdata_list_commodities.graphqlSortBy"
@@ -33680,6 +33717,14 @@
           },
           "weightPerUnitMin": {
             "description": "Only records whose weight per unit is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "widthPerUnitMax": {
+            "description": "Only records whose width per unit is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "widthPerUnitMin": {
+            "description": "Only records whose width per unit is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
           }
         },

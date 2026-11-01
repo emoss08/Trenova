@@ -24,7 +24,11 @@ import (
 
 type servesEverything struct{ llmports.TaskRunner }
 
-func (servesEverything) Available(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+func (servesEverything) Available(
+	context.Context,
+	aitask.Task,
+	pagination.TenantInfo,
+) (bool, error) {
 	return true, nil
 }
 
@@ -32,7 +36,10 @@ type reviewingControls struct {
 	tenantports.BillingControlRepository
 }
 
-func (reviewingControls) GetByOrgID(context.Context, pulid.ID) (*billingcontrol.BillingControl, error) {
+func (reviewingControls) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*billingcontrol.BillingControl, error) {
 	return &billingcontrol.BillingControl{QueueAgentReviewEnabled: true}, nil
 }
 
@@ -81,7 +88,11 @@ func generationService(
 func TestNovaGeneration_ShowsTheGenerationAlreadyRunningWithoutStartingAnother(t *testing.T) {
 	t.Parallel()
 
-	running := &billingqueueports.NovaGeneration{Phase: billingqueueports.NovaPhaseReviewing, Total: 40, Done: 12}
+	running := &billingqueueports.NovaGeneration{
+		Phase: billingqueueports.NovaPhaseReviewing,
+		Total: 40,
+		Done:  12,
+	}
 	generator := &recordingGenerator{state: billingqueueports.NovaGenerationState{Running: running}}
 	s, _ := generationService(t, generator)
 
@@ -103,8 +114,12 @@ func TestNovaGeneration_StartsOneForAQueueWithItemsNovaHasNotReviewed(t *testing
 	got, err := s.NovaGeneration(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
 
-	assert.Equal(t, &billingqueueports.NovaGeneration{Phase: billingqueueports.NovaPhaseReviewing}, got,
-		"the reader sees it start at once, before the workflow first answers")
+	assert.Equal(
+		t,
+		&billingqueueports.NovaGeneration{Phase: billingqueueports.NovaPhaseReviewing},
+		got,
+		"the reader sees it start at once, before the workflow first answers",
+	)
 	assert.Equal(t, 1, generator.requested)
 	assert.Equal(t, billingqueueports.NovaTriggerQueueOpened, generator.trigger,
 		"someone opened the queue, so it reviews at once rather than waiting on a batch")
@@ -129,7 +144,11 @@ func TestNovaGeneration_SaysWhatTheLastGenerationLeftAndWhenItTriesAgain(t *test
 		Phase:   billingqueueports.NovaPhaseLeft,
 		RetryAt: endedAt + generationRest,
 	}, got)
-	assert.Zero(t, generator.requested, "items the last generation just failed on wait for the retry")
+	assert.Zero(
+		t,
+		generator.requested,
+		"items the last generation just failed on wait for the retry",
+	)
 }
 
 func TestNovaGeneration_ShowsNothingLeftOnceWhatWasLeftHasBeenReviewed(t *testing.T) {
@@ -164,7 +183,12 @@ func TestNovaGeneration_StartsOneRightAfterAGenerationThatFinishedEverything(t *
 	_, err := s.NovaGeneration(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, generator.requested, "what is unreviewed now is new, so nothing is waited out")
+	assert.Equal(
+		t,
+		1,
+		generator.requested,
+		"what is unreviewed now is new, so nothing is waited out",
+	)
 }
 
 func TestNovaGeneration_StartsAnotherOnceTheLastHasRested(t *testing.T) {
@@ -281,7 +305,10 @@ func TestSubmitReviews_LeavesAPageSomeoneIsWaitingOnToBeReviewedOneItemAtATime(t
 		[]*billingqueueports.UnreviewedItem{{ID: first}, {ID: second}}, nil,
 	)
 
-	submission, err := s.SubmitReviews(t.Context(), &billingqueueports.SubmitReviewsRequest{Inline: true})
+	submission, err := s.SubmitReviews(
+		t.Context(),
+		&billingqueueports.SubmitReviewsRequest{Inline: true},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, []pulid.ID{first, second}, submission.Inline)
@@ -310,7 +337,7 @@ func TestCancelReviews_CancelsTheBatchTheSubmissionWentOutAs(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 	require.NoError(t, s.CancelReviews(t.Context(), tenant, &billingqueueports.ReviewSubmission{
-		Handle: &llmports.BatchHandle{ProviderID: providerID, BatchID: "msgbatch_1"},
+		Handle: &billingqueueports.ReviewBatch{ProviderID: providerID, BatchID: "msgbatch_1"},
 	}))
 	require.NoError(t, s.CancelReviews(t.Context(), tenant, &billingqueueports.ReviewSubmission{
 		Inline: []pulid.ID{pulid.MustNew("bqi_")},

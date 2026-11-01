@@ -3,7 +3,6 @@ package billingqueueports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -83,14 +82,21 @@ type ReviewTicket struct {
 	Hash   string   `json:"hash"`
 }
 
+// ReviewBatch is the provider batch a submission's reviews were sent in.
+type ReviewBatch struct {
+	ProviderID  pulid.ID `json:"providerId"`
+	BatchID     string   `json:"batchId"`
+	SubmittedAt int64    `json:"submittedAt"`
+}
+
 // ReviewSubmission is one page of unreviewed items sent for review: as a
 // batch when the provider has a batch API, otherwise to be reviewed one at a
 // time.
 type ReviewSubmission struct {
-	Handle  *llmports.BatchHandle `json:"handle,omitempty"`
-	Tickets []ReviewTicket        `json:"tickets"`
-	Inline  []pulid.ID            `json:"inline"`
-	Next    *ReviewCursor         `json:"next,omitempty"`
+	Handle  *ReviewBatch   `json:"handle,omitempty"`
+	Tickets []ReviewTicket `json:"tickets"`
+	Inline  []pulid.ID     `json:"inline"`
+	Next    *ReviewCursor  `json:"next,omitempty"`
 }
 
 // Count is how many items the submission reviews.

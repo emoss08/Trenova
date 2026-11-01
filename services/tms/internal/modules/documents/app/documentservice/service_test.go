@@ -109,6 +109,9 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 		Return(nil).
 		Maybe()
 	contentService := documentportsmock.NewMockDocumentContentService(t)
+	contentService.On("EnqueueExtraction", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
 	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
 	// Every scenario in this suite uploads at least one document, and each
 	// upload projects it into search.

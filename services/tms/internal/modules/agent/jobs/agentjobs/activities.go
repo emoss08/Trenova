@@ -90,7 +90,6 @@ type ActivitiesParams struct {
 	Baselines     agentproposalports.AgentProposalBaselineRepository `optional:"true"`
 	Evaluations   agentevaluationports.AgentEvaluationRepository
 	EvalCases     agentqualityports.AgentEvalCaseRepository
-	CaseService   agentqualityports.AgentEvalCaseService `optional:"true"`
 	Users         tenantports.UserRepository
 	QueryTools    agenttoolports.AgentQueryToolRegistry `optional:"true"`
 	ActionTools   agenttoolports.AgentToolRegistry      `optional:"true"`
@@ -125,7 +124,6 @@ type Activities struct {
 	baselines        agentproposalports.AgentProposalBaselineRepository
 	evaluations      agentevaluationports.AgentEvaluationRepository
 	evalCases        agentqualityports.AgentEvalCaseRepository
-	caseService      agentqualityports.AgentEvalCaseService
 	users            tenantports.UserRepository
 	scorer           *agentscoring.Scorer
 	decisions        agentdecisionports.AgentDecisionRepository
@@ -163,7 +161,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		baselines:        p.Baselines,
 		evaluations:      p.Evaluations,
 		evalCases:        p.EvalCases,
-		caseService:      p.CaseService,
 		users:            p.Users,
 		scorer:           scorer,
 		decisions:        p.Decisions,

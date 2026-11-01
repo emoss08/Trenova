@@ -1,8 +1,11 @@
 package agentjobs
 
 import (
+	"slices"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/evalcasejobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/worker"
@@ -43,6 +46,7 @@ type RegistryParams struct {
 	Activities *Activities
 	Flow       *agentflow.Activities
 	Reflection *reflectionjobs.Activities
+	EvalCases  *evalcasejobs.Activities
 	Workflows  *Workflows
 	Logger     *zap.Logger
 }
@@ -54,7 +58,7 @@ func newRegistry(
 ) *registry.ComposedRegistry {
 	return registry.NewComposedRegistry(registry.ComposedParams{
 		Config:     config,
-		Activities: []any{p.Activities, p.Flow, p.Reflection},
+		Activities: []any{p.Activities, p.Flow, p.Reflection, p.EvalCases},
 		Register: func(w worker.ActivityRegistry) {
 			agentflow.RegisterDynamic(w, p.Flow)
 		},
@@ -67,8 +71,12 @@ func NewBackgroundRegistry(p RegistryParams) registry.WorkerRegistry {
 	return newRegistry(
 		p,
 		&BackgroundDomainConfig,
-		append(p.Workflows.background(), reflectionjobs.Workflows()...),
+		backgroundWorkflows(p.Workflows),
 	)
+}
+
+func backgroundWorkflows(w *Workflows) []registry.WorkflowDefinition {
+	return slices.Concat(w.background(), reflectionjobs.Workflows(), evalcasejobs.Workflows())
 }
 
 func NewHeavyRegistry(p RegistryParams) registry.WorkerRegistry {

@@ -76,7 +76,7 @@ func TestAllProcessingProfiles_IsComplete(t *testing.T) {
 	for _, profile := range document.AllProcessingProfiles() {
 		assert.Truef(t, profile.IsValid(), "%s is listed but not valid", profile)
 	}
-	assert.Len(t, document.AllProcessingProfiles(), 6)
+	assert.Len(t, document.AllProcessingProfiles(), 7)
 }
 
 // A factor's remittance has its text read so billing can read its lines, and
