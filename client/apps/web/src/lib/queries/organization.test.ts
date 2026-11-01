@@ -18,10 +18,9 @@ vi.mock("@/lib/graphql/organization", () => ({
   getOrganizationSettingsGraphQL: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    organizationService: organizationServiceMocks,
-  },
+vi.mock("@/services/organization", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/organization")>()),
+  organizationService: organizationServiceMocks,
 }));
 
 const getOrganizationSettingsGraphQLMock = vi.mocked(getOrganizationSettingsGraphQL);

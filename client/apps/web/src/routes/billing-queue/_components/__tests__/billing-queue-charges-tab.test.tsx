@@ -26,7 +26,10 @@ vi.mock("@/hooks/use-permission", () => ({
 const { fetchGraphQLSelectOptions } = vi.hoisted(() => ({
   fetchGraphQLSelectOptions: vi.fn(),
 }));
-vi.mock("@/lib/graphql/select-options", () => ({ fetchGraphQLSelectOptions }));
+vi.mock("@/lib/graphql/select-options", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/select-options")>()),
+  fetchGraphQLSelectOptions,
+}));
 vi.mock("../billing-queue-rerate-dialog", () => ({ BillingQueueRerateDialog: () => null }));
 vi.mock("../billing-queue-reassign-charge-dialog", () => ({
   BillingQueueReassignChargeDialog: ({
@@ -40,7 +43,8 @@ vi.mock("../billing-queue-reassign-charge-dialog", () => ({
 
 afterEach(cleanup);
 beforeEach(() => {
-  vi.clearAllMocks();
+  // A test that fails before using its queued responses must not hand them to the next.
+  vi.resetAllMocks();
   fetchGraphQLSelectOptions.mockResolvedValue({ count: 0, results: [] });
 });
 
@@ -86,9 +90,13 @@ describe("BillingQueueChargesTab payer bill", () => {
     expect(screen.getByTestId("payer-bill-total")).toHaveTextContent("$1,500.00");
     expect(screen.getByTestId("payer-line-freight")).toHaveTextContent("$1,500.00");
     expect(screen.queryByTestId(`payer-line-${DETENTION_ID}`)).not.toBeInTheDocument();
-    expect(screen.getByText("No accessorial charges for this payer")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("table", { name: "Charge lines" }))
+        .getAllByRole("row")
+        .map((row) => row.dataset.testid ?? null),
+    ).toEqual([null, "payer-line-freight"]);
 
-    await user.click(screen.getByRole("button", { name: /Billed to other payers \(1\)/ }));
+    await user.click(screen.getByText("Billed to other payers (1)"));
     const other = await screen.findByTestId(`other-payer-line-${DETENTION_ID}`);
     expect(other).toHaveTextContent("Detention Fee");
     expect(other).toHaveTextContent("Acme Manufacturing");
@@ -211,7 +219,8 @@ describe("BillingQueueChargesTab on a tariff's bill", () => {
     expect(screen.getByText("Linehaul")).toBeInTheDocument();
     expect(screen.getByText("12.4 cwt × $210.00/cwt")).toBeInTheDocument();
     expect(screen.getByText("Deficit weight")).toBeInTheDocument();
-    expect(screen.getByText("Freight subtotal")).toBeInTheDocument();
+    const lineHaul = screen.getByText("Line haul", { selector: "dt" });
+    expect(lineHaul.nextElementSibling).toHaveTextContent("$2,850.00");
     expect(screen.queryByText("Base rate")).not.toBeInTheDocument();
   });
 
@@ -220,7 +229,10 @@ describe("BillingQueueChargesTab on a tariff's bill", () => {
 
     expect(screen.getByText("Liftgate, 2 stops")).toBeInTheDocument();
     expect(screen.getByText("2 × $75.00")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Delete Liftgate, 2 stops" })).toBeDisabled();
+    expect(screen.getByText("Liftgate, 2 stops").nextElementSibling).toHaveTextContent("Tariff");
+    expect(
+      screen.queryByRole("button", { name: "Edit Liftgate, 2 stops" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the tariff's terms the shipment rated with, with a way to adjust them", () => {
@@ -230,7 +242,7 @@ describe("BillingQueueChargesTab on a tariff's bill", () => {
     expect(within(terms).getByText("Minimum charge")).toBeInTheDocument();
     expect(within(terms).getByText("$95.00")).toBeInTheDocument();
     expect(within(terms).getByText("$1.20/gal")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Adjust terms" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Re-rate" })).toBeEnabled();
   });
 });
 
@@ -259,7 +271,8 @@ describe("BillingQueueChargesTab safe edits", () => {
       .mockResolvedValueOnce(queueItem({ payer: "acme" }));
     renderTab(queueItem({ payer: "acme" }));
 
-    await user.click(screen.getByRole("button", { name: "Delete Detention Fee" }));
+    await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
+    await user.click(screen.getByRole("button", { name: "Remove line" }));
 
     const dialog = await screen.findByRole("alertdialog");
     expect(within(dialog).getByText(/The freight split no longer adds up/)).toBeInTheDocument();
@@ -286,7 +299,7 @@ describe("BillingQueueChargesTab safe edits", () => {
     const user = userEvent.setup();
     renderTab(queueItem({ payer: "peak", status: "ReadyForReview" }));
 
-    await user.click(screen.getByRole("button", { name: /Billed to other payers/ }));
+    await user.click(screen.getByText("Billed to other payers (1)"));
     await user.click(await screen.findByRole("button", { name: "Change payer for Detention Fee" }));
 
     expect(await screen.findByText("Reassigning Detention Fee")).toBeInTheDocument();
@@ -365,7 +378,8 @@ describe("BillingQueueChargesTab editing a line in place", () => {
     renderTab(queueItem({ payer: "acme" }));
 
     await user.click(screen.getByRole("button", { name: "Edit Detention Fee" }));
-    await user.click(screen.getByRole("button", { name: "Split between payers" }));
+    const editor = screen.getByRole("button", { name: "Save line" }).closest("form")!;
+    await user.click(within(editor).getByRole("button", { name: "Split between payers" }));
 
     expect(await screen.findByText("Reassigning Detention Fee")).toBeInTheDocument();
   });

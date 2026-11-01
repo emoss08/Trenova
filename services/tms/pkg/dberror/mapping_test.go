@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
@@ -40,12 +41,24 @@ func violationOf(
 func TestMapTurnsKeelErrorsIntoTheCallersErrors(t *testing.T) {
 	t.Parallel()
 
-	declared := violationOf(keel.ConstraintUnique, pgerrcode.UniqueViolation, "idx_commodities_name",
-		"Commodity with this name already exists", []string{"name"}, []string{"Name"})
+	declared := violationOf(
+		keel.ConstraintUnique,
+		pgerrcode.UniqueViolation,
+		"idx_commodities_name",
+		"Commodity with this name already exists",
+		[]string{"name"},
+		[]string{"Name"},
+	)
 	unique := violationOf(keel.ConstraintUnique, pgerrcode.UniqueViolation, "idx_commodities_code",
 		"", []string{"code"}, []string{"Code"})
-	foreignKey := violationOf(keel.ConstraintForeignKey, pgerrcode.ForeignKeyViolation,
-		"fk_commodities_hazmat", "", []string{"hazardousMaterialId"}, []string{"Hazardous Material"})
+	foreignKey := violationOf(
+		keel.ConstraintForeignKey,
+		pgerrcode.ForeignKeyViolation,
+		"fk_commodities_hazmat",
+		"",
+		[]string{"hazardousMaterialId"},
+		[]string{"Hazardous Material"},
+	)
 	notNull := violationOf(keel.ConstraintNotNull, pgerrcode.NotNullViolation, "", "",
 		[]string{"name"}, []string{"Name"})
 	check := violationOf(keel.ConstraintCheck, pgerrcode.CheckViolation, "ck_commodities_temp", "",
@@ -61,7 +74,10 @@ func TestMapTurnsKeelErrorsIntoTheCallersErrors(t *testing.T) {
 		{
 			name: "not found carries the entity name",
 			keel: fmt.Errorf("commodities: %w", keel.ErrNotFound),
-			want: errortypes.NewNotFoundError("{0} not found within your organization", "Commodity"),
+			want: errortypes.NewNotFoundError(
+				"{0} not found within your organization",
+				"Commodity",
+			),
 		},
 		{
 			name: "optimistic lock conflict is a version mismatch on the entity",
@@ -85,7 +101,8 @@ func TestMapTurnsKeelErrorsIntoTheCallersErrors(t *testing.T) {
 			name: "foreign key violation names the reference",
 			keel: foreignKey,
 			want: errortypes.NewValidationError("hazardousMaterialId", errortypes.ErrInvalidReference,
-				"{0} does not exist in your organization", "Hazardous Material").WithInternal(foreignKey),
+				"{0} does not exist in your organization", "Hazardous Material").
+				WithInternal(foreignKey),
 		},
 		{
 			name: "not null violation is required",
@@ -102,8 +119,12 @@ func TestMapTurnsKeelErrorsIntoTheCallersErrors(t *testing.T) {
 		{
 			name: "exclusion violation is an overlap",
 			keel: exclusion,
-			want: errortypes.NewValidationError("", errortypes.ErrDuplicate,
-				"{0} overlaps an existing record in your organization", "Commodity").WithInternal(exclusion),
+			want: errortypes.NewValidationError(
+				"",
+				errortypes.ErrDuplicate,
+				"{0} overlaps an existing record in your organization",
+				"Commodity",
+			).WithInternal(exclusion),
 		},
 	}
 
@@ -159,9 +180,19 @@ func TestHandleVersionConflict(t *testing.T) {
 func TestCountCheckers(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, CreateVersionMismatchError("Shipment", "shp_1"), CheckAffected(0, "Shipment", "shp_1"))
+	assert.Equal(
+		t,
+		CreateVersionMismatchError("Shipment", "shp_1"),
+		CheckAffected(0, "Shipment", "shp_1"),
+	)
 	require.Error(t, CheckFoundCount(0, "Shipment"))
 	assert.NoError(t, CheckAffected(1, "Shipment", "shp_1"))
 	assert.NoError(t, CheckFoundCount(1, "Shipment"))
 	assert.NoError(t, CheckBulkAffected(2, "Shipment", nil))
+	assert.NoError(t, CheckBulkAffected(1, "Shipment", []pulid.ID{"shp_1", "shp_1"}))
+	assert.Equal(
+		t,
+		CreateBulkVersionMismatchError("Shipment", []pulid.ID{"shp_1", "shp_2"}),
+		CheckBulkAffected(1, "Shipment", []pulid.ID{"shp_1", "shp_2"}),
+	)
 }

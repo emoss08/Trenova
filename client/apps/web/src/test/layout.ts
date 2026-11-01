@@ -17,12 +17,36 @@ const STUBBED = {
 
 type StubbedProperty = keyof typeof STUBBED;
 
+/**
+ * How far an element scrolls: as far as the tallest (or widest) box sized inside it, which
+ * is a virtualizer's body, and never less than the element itself. A virtualizer clamps a
+ * scroll to `scrollHeight - clientHeight`, so without this nothing can be scrolled to.
+ */
+const SCROLL_EXTENT = { scrollHeight: "height", scrollWidth: "width" } as const;
+
+type ScrollExtentProperty = keyof typeof SCROLL_EXTENT;
+
+function contentExtent(element: HTMLElement, axis: "height" | "width", own: number): number {
+  let extent = own;
+  for (const child of element.querySelectorAll<HTMLElement>("[style]")) {
+    const value = Number.parseFloat(child.style[axis]);
+    if (Number.isFinite(value)) {
+      extent = Math.max(extent, value);
+    }
+  }
+  return extent;
+}
+
 export function stubLayout(height = 320, width = 480): () => void {
   const proto = HTMLElement.prototype;
   const size = { height, width };
   const properties = Object.keys(STUBBED) as StubbedProperty[];
+  const extents = Object.keys(SCROLL_EXTENT) as ScrollExtentProperty[];
   const previous = new Map(
-    properties.map((property) => [property, Object.getOwnPropertyDescriptor(proto, property)]),
+    [...properties, ...extents].map((property) => [
+      property,
+      Object.getOwnPropertyDescriptor(proto, property),
+    ]),
   );
   for (const property of properties) {
     Object.defineProperty(proto, property, {
@@ -30,9 +54,18 @@ export function stubLayout(height = 320, width = 480): () => void {
       get: () => size[STUBBED[property]],
     });
   }
+  for (const property of extents) {
+    const axis = SCROLL_EXTENT[property];
+    Object.defineProperty(proto, property, {
+      configurable: true,
+      get(this: HTMLElement) {
+        return contentExtent(this, axis, size[axis]);
+      },
+    });
+  }
 
   return () => {
-    for (const property of properties) {
+    for (const property of [...properties, ...extents]) {
       const descriptor = previous.get(property);
       if (descriptor) {
         Object.defineProperty(proto, property, descriptor);

@@ -13,8 +13,13 @@ import {
   fetchSuggestedAgentAudience,
   type AgentAccessPreviewRequest,
 } from "@/lib/graphql/agent-access";
-import { apiService } from "@/services/api";
-import type { ArtifactListParams, ArtifactRowsKey, ThreadListFilter } from "@/services/assistant";
+import {
+  agentDefinitionService,
+  assistantService,
+  type ArtifactListParams,
+  type ArtifactRowsKey,
+  type ThreadListFilter,
+} from "@/services/assistant";
 import type { DeskSearchKind, MentionPageKind } from "@/types/assistant";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -37,7 +42,7 @@ export const assistant = createQueryKeys("assistant", {
   }),
   thread: (id: string) => ({
     queryKey: ["assistant-thread", id],
-    queryFn: () => apiService.assistantService.getThread(id),
+    queryFn: () => assistantService.getThread(id),
   }),
   // Paged newest-first: the page param is the sequence to read above, and
   // nothing for the newest page. useThreadHistory drives it as an infinite
@@ -45,7 +50,7 @@ export const assistant = createQueryKeys("assistant", {
   messages: (threadId: string) => ({
     queryKey: ["assistant-messages", threadId],
     queryFn: ({ pageParam, signal }: { pageParam?: unknown; signal?: AbortSignal }) =>
-      apiService.assistantService.listMessages(threadId, {
+      assistantService.listMessages(threadId, {
         before: typeof pageParam === "number" ? pageParam : undefined,
         signal,
       }),
@@ -55,14 +60,14 @@ export const assistant = createQueryKeys("assistant", {
   threadBudget: (threadId: string) => ({
     queryKey: ["assistant-thread-budget", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.threadBudget(threadId, { signal }),
+      assistantService.threadBudget(threadId, { signal }),
   }),
   // The requests scheduled in a conversation, for its schedule cards. Kept
   // fresh by the "conversation_schedules" realtime event, not polled.
   schedules: (threadId: string) => ({
     queryKey: ["assistant-schedules", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.listThreadSchedules(threadId, { signal }),
+      assistantService.listThreadSchedules(threadId, { signal }),
   }),
   // Every request the person scheduled, across their conversations, for the
   // Desk's Scheduled page: the soonest first, paused ones after. Read as an
@@ -76,14 +81,14 @@ export const assistant = createQueryKeys("assistant", {
   queue: (threadId: string) => ({
     queryKey: ["assistant-queue", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.listQueue(threadId, { signal }),
+      assistantService.listQueue(threadId, { signal }),
   }),
   // What the conversation's agent is waiting on. Kept fresh by the
   // "agent_waits" realtime event, not polled.
   waits: (threadId: string) => ({
     queryKey: ["assistant-waits", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.listWaits(threadId, { signal }),
+      assistantService.listWaits(threadId, { signal }),
   }),
   // The conversation's chapters, oldest first. Kept fresh by the
   // "assistant_chapters" event a chapter opening, being named or merged
@@ -91,7 +96,7 @@ export const assistant = createQueryKeys("assistant", {
   chapters: (threadId: string) => ({
     queryKey: ["assistant-chapters", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.listChapters(threadId, { signal }),
+      assistantService.listChapters(threadId, { signal }),
   }),
   // Where the conversation's case stands and its checklist. Kept fresh by
   // the "assistant_case" and "agent_waits" events and by changes to the
@@ -99,7 +104,7 @@ export const assistant = createQueryKeys("assistant", {
   case: (threadId: string) => ({
     queryKey: ["assistant-case", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.getCase(threadId, { signal }),
+      assistantService.getCase(threadId, { signal }),
   }),
   // Records the person can make a conversation a case about, one kind at a
   // time, paged by the case picker as it scrolls (use-case-records.ts).
@@ -108,32 +113,31 @@ export const assistant = createQueryKeys("assistant", {
   }),
   activeTurns: () => ({
     queryKey: ["assistant-active-turns"],
-    queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.listActiveTurns({ signal }),
+    queryFn: ({ signal }: { signal?: AbortSignal }) => assistantService.listActiveTurns({ signal }),
   }),
   deskSearch: (query: string, kind: DeskSearchKind) => ({
     queryKey: [query, kind],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.searchDesk(query, kind, { signal }),
+      assistantService.searchDesk(query, kind, { signal }),
   }),
   // Which extension commands (/browser, /search) are offered for an agent.
   // Turning an extension on or off invalidates the whole factory.
   commands: (agentId: string) => ({
     queryKey: ["assistant-commands", agentId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.commandAvailability(agentId, { signal }),
+      assistantService.commandAvailability(agentId, { signal }),
   }),
   providers: () => ({
     queryKey: ["assistant-providers"],
-    queryFn: () => apiService.assistantService.listProviders(),
+    queryFn: () => assistantService.listProviders(),
   }),
   proposals: (threadId: string) => ({
     queryKey: ["assistant-proposals", threadId],
-    queryFn: () => apiService.assistantService.listProposals(threadId),
+    queryFn: () => assistantService.listProposals(threadId),
   }),
   plans: (threadId: string) => ({
     queryKey: ["assistant-plans", threadId],
-    queryFn: () => apiService.assistantService.listPlans(threadId),
+    queryFn: () => assistantService.listPlans(threadId),
   }),
   // The first page of a conversation's artifacts by lineage, pinned and
   // newest first, every version with its payload. Every artifact query of a
@@ -142,7 +146,7 @@ export const assistant = createQueryKeys("assistant", {
   artifacts: (threadId: string) => ({
     queryKey: ["assistant-artifacts", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.assistantService.listArtifacts(threadId, { signal, limit: ARTIFACT_FIRST_PAGE }),
+      assistantService.listArtifacts(threadId, { signal, limit: ARTIFACT_FIRST_PAGE }),
     contextQueries: {
       // The same page with each payload cut to what names and draws an
       // artifact in a list: what the Desk's transcript, counts and stack read.
@@ -151,7 +155,7 @@ export const assistant = createQueryKeys("assistant", {
       summary: {
         queryKey: null,
         queryFn: ({ signal }: { signal?: AbortSignal }) =>
-          apiService.assistantService.listArtifacts(threadId, {
+          assistantService.listArtifacts(threadId, {
             signal,
             limit: ARTIFACT_FIRST_PAGE,
             summary: true,
@@ -163,13 +167,13 @@ export const assistant = createQueryKeys("assistant", {
       lineage: (artifactId: string) => ({
         queryKey: [artifactId],
         queryFn: ({ signal }: { signal?: AbortSignal }) =>
-          apiService.assistantService.artifactLineage(threadId, artifactId, { signal }),
+          assistantService.artifactLineage(threadId, artifactId, { signal }),
       }),
       // oxlint-disable-next-line @tanstack/query/exhaustive-deps -- a context query's key is prefixed with its parent's, which names the thread
       slug: (slug: string) => ({
         queryKey: [slug],
         queryFn: ({ signal }: { signal?: AbortSignal }) =>
-          apiService.assistantService.artifactBySlug(threadId, slug, { signal }),
+          assistantService.artifactBySlug(threadId, slug, { signal }),
       }),
       // The list of every artifact to search, paged by useInfiniteQuery.
       browse: (filters: Pick<ArtifactListParams, "q" | "kind" | "pinned">) => ({
@@ -244,33 +248,32 @@ export const assistant = createQueryKeys("assistant", {
   }),
   systemAgent: (systemKey: string) => ({
     queryKey: ["agent-definition-system", systemKey],
-    queryFn: () => apiService.agentDefinitionService.getBySystemKey(systemKey),
+    queryFn: () => agentDefinitionService.getBySystemKey(systemKey),
   }),
   toolCatalog: () => ({
     queryKey: ["agent-tool-catalog"],
-    queryFn: () => apiService.agentDefinitionService.tools(),
+    queryFn: () => agentDefinitionService.tools(),
   }),
   eventKinds: () => ({
     queryKey: ["agent-event-kinds"],
-    queryFn: () => apiService.agentDefinitionService.eventKinds(),
+    queryFn: () => agentDefinitionService.eventKinds(),
   }),
   agent: (id: string) => ({
     queryKey: ["agent-definition", id],
-    queryFn: () => apiService.agentDefinitionService.get(id),
+    queryFn: () => agentDefinitionService.get(id),
   }),
   agentBudget: (id: string) => ({
     queryKey: ["agent-budget", id],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.agentDefinitionService.budget(id, { signal }),
+      agentDefinitionService.budget(id, { signal }),
   }),
   agentTrust: (id: string) => ({
     queryKey: ["agent-trust", id],
-    queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.agentDefinitionService.trust(id, { signal }),
+    queryFn: ({ signal }: { signal?: AbortSignal }) => agentDefinitionService.trust(id, { signal }),
   }),
   agentTemplates: () => ({
     queryKey: ["agent-templates"],
-    queryFn: () => apiService.agentDefinitionService.templates(),
+    queryFn: () => agentDefinitionService.templates(),
   }),
 });
 

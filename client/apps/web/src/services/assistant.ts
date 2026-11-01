@@ -1198,3 +1198,6 @@ export class AgentDefinitionService {
     await api.delete(`/agent-definitions/${id}/`);
   }
 }
+
+export const assistantService = new AssistantService();
+export const agentDefinitionService = new AgentDefinitionService();

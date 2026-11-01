@@ -39,8 +39,9 @@ const countThreadShelves = vi.hoisted(() =>
   vi.fn<(edges: readonly number[], options: { signal?: AbortSignal }) => Promise<unknown>>(),
 );
 
-vi.mock("@/services/api", () => ({
-  apiService: { assistantService: { listThreads, countThreadShelves } },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: { listThreads, countThreadShelves },
 }));
 
 function thread(id: string, overrides: Partial<AssistantThread> = {}): AssistantThread {

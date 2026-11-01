@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/evalcasejobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -20,7 +21,7 @@ func NewScheduleProvider() *ScheduleProvider {
 }
 
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
-	return []*schedule.Schedule{
+	return append([]*schedule.Schedule{
 		{
 			ID:            ReconcileSchedulesScheduleID,
 			Description:   "Keep one schedule behind every scheduled or continuous agent",
@@ -54,27 +55,5 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				"purpose": AssistantRetentionScheduleID,
 			},
 		},
-		{
-			ID:            CaptureEvalCaseCandidatesScheduleID,
-			Description:   "Capture decided proposals as candidate evaluation cases",
-			Spec:          schedule.Every(evalCaseCaptureEvery),
-			Workflow:      CaptureEvalCaseCandidatesWorkflow,
-			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
-			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
-			Memo: map[string]any{
-				"purpose": CaptureEvalCaseCandidatesScheduleID,
-			},
-		},
-		{
-			ID:            PurgeEvalCasesScheduleID,
-			Description:   "Purge expired evaluation cases and those of deleted conversations",
-			Spec:          schedule.Cron("45 4 * * *"),
-			Workflow:      PurgeEvalCasesWorkflow,
-			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
-			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
-			Memo: map[string]any{
-				"purpose": PurgeEvalCasesScheduleID,
-			},
-		},
-	}
+	}, evalcasejobs.Schedules()...)
 }

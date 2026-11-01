@@ -5,7 +5,7 @@ import { act, renderHook } from "@testing-library/react";
 import { rulesSync } from "@trenova/shared/rules/runtime";
 import { tariffFormat } from "@trenova/shared/rules/tariff";
 import type { FormulaLibraryFormValues } from "@trenova/shared/types/formula-library";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LibraryStudioProvider, useLibraryStudio } from "../library-studio-context";
@@ -45,7 +45,9 @@ function renderStudio({
     const methods = useForm<FormulaLibraryFormValues>({
       defaultValues: { name: "fees", description: "", source },
     });
-    form.current = methods;
+    useEffect(() => {
+      form.current = methods;
+    });
     return (
       <QueryClientProvider client={queryClient}>
         <FormProvider {...methods}>

@@ -50,7 +50,7 @@ func TestWorkflows_KeepTheWorkloadClassesApart(t *testing.T) {
 func TestSchedules_StartWorkflowsUnderTheNamesTheyAreRegisteredBy(t *testing.T) {
 	t.Parallel()
 
-	registered := names(NewWorkflows(nil).background())
+	registered := names(backgroundWorkflows(NewWorkflows(nil)))
 	for _, scheduled := range NewScheduleProvider().GetSchedules() {
 		assert.Equal(t,
 			temporaltype.TaskQueueAgentBackground.String(),

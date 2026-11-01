@@ -7,6 +7,7 @@ import { paymentTermChoices } from "@/lib/choices";
 import { Form } from "@trenova/shared/components/ui/form";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,6 +51,7 @@ export function BillingQueueInvoiceTab({ item }: { item: BillingQueueItem }) {
     defaultValues: formValuesOf(item),
   });
   const values = useWatch({ control: form.control });
+  const nowSeconds = useNow();
   const settled = useDebounce(values, AUTOSAVE_MS);
 
   useEffect(() => {
@@ -82,10 +84,7 @@ export function BillingQueueInvoiceTab({ item }: { item: BillingQueueItem }) {
     termCode === "DueOnReceipt" ? 0 : Number(/^Net(\d+)$/u.exec(termCode)?.[1] ?? NaN);
   const dueHint =
     Number.isFinite(netDays) && termCode
-      ? t(
-          "Due {0}",
-          formatUnixDate((values.invoiceDate ?? Math.floor(Date.now() / 1000)) + netDays * 86400),
-        )
+      ? t("Due {0}", formatUnixDate((values.invoiceDate ?? nowSeconds) + netDays * 86400))
       : null;
   const poRequired = (item.review?.issues ?? []).some(
     (issue) => issue.code === "PONumberMissing" && !issue.resolvedAt,

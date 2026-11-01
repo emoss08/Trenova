@@ -521,14 +521,6 @@
       ],
       "rest": [
         {
-          "method": "PATCH",
-          "path": "/account-types/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/account-types/bulk-update-status/"
-        },
-        {
           "method": "GET",
           "path": "/tables/"
         },
@@ -1634,6 +1626,14 @@
           "path": "/assistant/ask/"
         },
         {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
           "method": "GET",
           "path": "/assistant/mentions/"
         },
@@ -2200,6 +2200,8 @@
       "operations": [
         "BulkEditFields",
         "CustomFieldDefinitionTable",
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
@@ -2225,14 +2227,6 @@
         {
           "method": "GET",
           "path": "/custom-fields/definitions/:param/usage/"
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resource-types/"
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resources/:param/"
         },
         {
           "method": "GET",
@@ -2406,14 +2400,6 @@
         },
         {
           "method": "GET",
-          "path": "/distance-profiles/select-options/"
-        },
-        {
-          "method": "GET",
-          "path": "/distance-profiles/select-options/:param"
-        },
-        {
-          "method": "GET",
           "path": "/tables/"
         },
         {
@@ -2510,10 +2496,6 @@
       ],
       "rest": [
         {
-          "method": "PUT",
-          "path": "/hold-reasons/:param/"
-        },
-        {
           "method": "GET",
           "path": "/tables/"
         },
@@ -2539,12 +2521,7 @@
         "UpdateHomeLayout",
         "UpdateHomeLayoutPreset"
       ],
-      "rest": [
-        {
-          "method": "GET",
-          "path": "/roles/select-options/"
-        }
-      ]
+      "rest": []
     },
     {
       "path": "/admin/home-layouts/:id",
@@ -2653,10 +2630,6 @@
         {
           "method": "GET",
           "path": "/locations/"
-        },
-        {
-          "method": "GET",
-          "path": "/roles/select-options/"
         },
         {
           "method": "GET",
@@ -2795,10 +2768,6 @@
         {
           "method": "GET",
           "path": "/locations/"
-        },
-        {
-          "method": "GET",
-          "path": "/roles/select-options/"
         },
         {
           "method": "GET",
@@ -3881,10 +3850,6 @@
       ],
       "rest": [
         {
-          "method": "PATCH",
-          "path": "/accessorial-charges/:param/"
-        },
-        {
           "method": "GET",
           "path": "/tables/"
         },
@@ -3995,6 +3960,7 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "SendFactoringNoa",
+        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "StartBulkEdit",
         "UndoMyBulkEdit",
@@ -4021,18 +3987,6 @@
         {
           "method": "GET",
           "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/customers/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
-        },
-        {
-          "method": "POST",
-          "path": "/customers/bulk-update-status/"
         },
         {
           "method": "POST",
@@ -4139,6 +4093,7 @@
       ],
       "operations": [
         "BulkEditFields",
+        "CreateDocumentType",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
@@ -4151,13 +4106,10 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "StartBulkEdit",
-        "UndoMyBulkEdit"
+        "UndoMyBulkEdit",
+        "UpdateDocumentType"
       ],
       "rest": [
-        {
-          "method": "PUT",
-          "path": "/document-types/:param/"
-        },
         {
           "method": "GET",
           "path": "/tables/"
@@ -4182,6 +4134,7 @@
         "ActivateFactoringAgreement",
         "BulkEditFields",
         "CreateFactoringAgreement",
+        "CreateFactoringCompany",
         "CreateFactoringRemittance",
         "DataTableAggregates",
         "DataTableFacets",
@@ -4226,7 +4179,8 @@
         "StartBulkEdit",
         "TestFactoringTransport",
         "UndoMyBulkEdit",
-        "UpdateFactoringAgreement"
+        "UpdateFactoringAgreement",
+        "UpdateFactoringCompany"
       ],
       "rest": [
         {
@@ -4256,10 +4210,6 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "PUT",
-          "path": "/factoring-companies/:param/"
         },
         {
           "method": "GET",
@@ -4445,6 +4395,14 @@
           "path": "/assistant/ask/"
         },
         {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
           "method": "GET",
           "path": "/assistant/mentions/"
         },
@@ -4671,10 +4629,6 @@
         {
           "method": "GET",
           "path": "/assistant/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/"
         },
         {
           "method": "GET",
@@ -4851,6 +4805,14 @@
           "path": "/assistant/ask/"
         },
         {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
           "method": "GET",
           "path": "/assistant/mentions/"
         },
@@ -5077,10 +5039,6 @@
         {
           "method": "GET",
           "path": "/assistant/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/"
         },
         {
           "method": "GET",
@@ -5292,6 +5250,14 @@
           "path": "/assistant/ask/"
         },
         {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
           "method": "GET",
           "path": "/assistant/mentions/"
         },
@@ -5518,10 +5484,6 @@
         {
           "method": "GET",
           "path": "/assistant/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/"
         },
         {
           "method": "GET",
@@ -5697,6 +5659,14 @@
           "path": "/assistant/ask/"
         },
         {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
           "method": "GET",
           "path": "/assistant/mentions/"
         },
@@ -5923,10 +5893,6 @@
         {
           "method": "GET",
           "path": "/assistant/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/"
         },
         {
           "method": "GET",
@@ -6315,12 +6281,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -6423,6 +6397,13 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AuditLogTable",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
+        "BillingTransferCandidates",
+        "BillingTransferRun",
+        "BillingTransferRunItems",
         "CarrierTrackingLink",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
@@ -6453,6 +6434,7 @@
         "InvoiceFactoring",
         "InvoiceTable",
         "LateChargePreview",
+        "MyActiveBillingTransferRun",
         "OpenInvoiceDispute",
         "RequestMissingFactoringDocuments",
         "ResolveInvoiceDispute",
@@ -6466,6 +6448,42 @@
         "WithdrawInvoiceDispute"
       ],
       "rest": [
+        {
+          "method": "GET",
+          "path": "/billing-queue/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/filter-presets/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
+        },
         {
           "method": "GET",
           "path": "/billing/invoice-adjustments/:param/"
@@ -6571,12 +6589,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -6699,6 +6725,10 @@
         "ApproveShipmentRatingReview",
         "AssignBillingQueueBiller",
         "AuditLogTable",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -6732,6 +6762,10 @@
           "path": "/billing-queue/:param/charges/"
         },
         {
+          "method": "PUT",
+          "path": "/billing-queue/:param/invoice-details/"
+        },
+        {
           "method": "POST",
           "path": "/billing-queue/:param/issues/:param/resolve/"
         },
@@ -6745,10 +6779,6 @@
         },
         {
           "method": "POST",
-          "path": "/billing-queue/:param/post/"
-        },
-        {
-          "method": "POST",
           "path": "/billing-queue/:param/reassign-charge/"
         },
         {
@@ -6756,16 +6786,24 @@
           "path": "/billing-queue/:param/status/"
         },
         {
-          "method": "POST",
-          "path": "/billing-queue/bulk-approve/"
+          "method": "GET",
+          "path": "/billing-queue/assist/"
         },
         {
           "method": "GET",
-          "path": "/billing-queue/bulk-approve/:param/"
+          "path": "/billing-queue/brief/"
         },
         {
           "method": "POST",
-          "path": "/billing-queue/bulk-approve/:param/cancel/"
+          "path": "/billing-queue/bulk/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
         },
         {
           "method": "GET",
@@ -6780,12 +6818,20 @@
           "path": "/billing-queue/filter-presets/:param/"
         },
         {
+          "method": "GET",
+          "path": "/billing-queue/nova-generation/"
+        },
+        {
           "method": "POST",
           "path": "/billing-queue/pod-signatures/redetect/"
         },
         {
           "method": "GET",
-          "path": "/billing-queue/stats/"
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/search-intent/"
         },
         {
           "method": "GET",
@@ -6824,12 +6870,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -7269,12 +7323,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -7414,12 +7476,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -7534,6 +7604,9 @@
         "AssignBillingQueueBiller",
         "AssignFuelCard",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
         "CaptureBatch",
@@ -7621,6 +7694,7 @@
         "SendInvoiceEdi",
         "SettleMyAgentSuggestion",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
@@ -7759,6 +7833,14 @@
         {
           "method": "POST",
           "path": "/assistant/ask/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
         },
         {
           "method": "GET",
@@ -8017,20 +8099,28 @@
           "path": "/billing-queue/:param/status/"
         },
         {
-          "method": "POST",
-          "path": "/billing-queue/bulk-approve/"
+          "method": "GET",
+          "path": "/billing-queue/assist/"
         },
         {
           "method": "GET",
-          "path": "/billing-queue/bulk-approve/:param/"
+          "path": "/billing-queue/brief/"
         },
         {
           "method": "POST",
-          "path": "/billing-queue/bulk-approve/:param/cancel/"
+          "path": "/billing-queue/bulk/"
         },
         {
           "method": "GET",
-          "path": "/billing-queue/stats/"
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
         },
         {
           "method": "GET",
@@ -8077,14 +8167,6 @@
           "path": "/case-checklists/:param/"
         },
         {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/"
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/"
         },
@@ -8105,12 +8187,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -8356,6 +8446,9 @@
         "ArTopOverdueCustomers",
         "AssignBillingQueueBiller",
         "AssignFuelCard",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "CarrierInvoiceMatches",
         "CarrierSettlementDetail",
         "CarrierTrackingLink",
@@ -8428,6 +8521,7 @@
         "ResolveFuelPurchaseImportRows",
         "SendInvoiceEdi",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
@@ -8565,6 +8659,14 @@
         {
           "method": "POST",
           "path": "/assistant/ask/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
         },
         {
           "method": "GET",
@@ -8823,20 +8925,28 @@
           "path": "/billing-queue/:param/status/"
         },
         {
-          "method": "POST",
-          "path": "/billing-queue/bulk-approve/"
+          "method": "GET",
+          "path": "/billing-queue/assist/"
         },
         {
           "method": "GET",
-          "path": "/billing-queue/bulk-approve/:param/"
+          "path": "/billing-queue/brief/"
         },
         {
           "method": "POST",
-          "path": "/billing-queue/bulk-approve/:param/cancel/"
+          "path": "/billing-queue/bulk/"
         },
         {
           "method": "GET",
-          "path": "/billing-queue/stats/"
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
         },
         {
           "method": "GET",
@@ -8871,10 +8981,6 @@
           "path": "/billing/invoices/:param/send/"
         },
         {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/"
         },
@@ -8895,12 +9001,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -9214,6 +9328,9 @@
         "AssignBillingQueueBiller",
         "AssignFuelCard",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
         "CaptureBatch",
@@ -9307,6 +9424,7 @@
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
@@ -9448,6 +9566,14 @@
         {
           "method": "POST",
           "path": "/assistant/ask/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
         },
         {
           "method": "GET",
@@ -9706,20 +9832,28 @@
           "path": "/billing-queue/:param/status/"
         },
         {
-          "method": "POST",
-          "path": "/billing-queue/bulk-approve/"
+          "method": "GET",
+          "path": "/billing-queue/assist/"
         },
         {
           "method": "GET",
-          "path": "/billing-queue/bulk-approve/:param/"
+          "path": "/billing-queue/brief/"
         },
         {
           "method": "POST",
-          "path": "/billing-queue/bulk-approve/:param/cancel/"
+          "path": "/billing-queue/bulk/"
         },
         {
           "method": "GET",
-          "path": "/billing-queue/stats/"
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
         },
         {
           "method": "GET",
@@ -9766,14 +9900,6 @@
           "path": "/case-checklists/:param/"
         },
         {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/"
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/"
         },
@@ -9794,12 +9920,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -10241,14 +10375,6 @@
       ],
       "rest": [
         {
-          "method": "PATCH",
-          "path": "/fleet-codes/:param"
-        },
-        {
-          "method": "POST",
-          "path": "/fleet-codes/bulk-update-status"
-        },
-        {
           "method": "GET",
           "path": "/tables/"
         },
@@ -10269,6 +10395,7 @@
       ],
       "operations": [
         "BulkEditFields",
+        "CreateLocationCategory",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
@@ -10281,7 +10408,8 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "StartBulkEdit",
-        "UndoMyBulkEdit"
+        "UndoMyBulkEdit",
+        "UpdateLocationCategory"
       ],
       "rest": [
         {
@@ -10347,12 +10475,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -12793,14 +12929,6 @@
       ],
       "rest": [
         {
-          "method": "PATCH",
-          "path": "/equipment-manufacturers/:param"
-        },
-        {
-          "method": "POST",
-          "path": "/equipment-manufacturers/bulk-update-status"
-        },
-        {
           "method": "GET",
           "path": "/tables/"
         },
@@ -12873,6 +13001,10 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -12890,6 +13022,8 @@
         "CarrierTrackingLink",
         "CreateCaptureCoverSheets",
         "CreateCaptureRequest",
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
@@ -12918,6 +13052,7 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -12953,7 +13088,35 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
         },
         {
           "method": "GET",
@@ -12966,14 +13129,6 @@
         {
           "method": "GET",
           "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resources/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
         },
         {
           "method": "GET",
@@ -13000,12 +13155,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -13066,10 +13229,6 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param"
         },
         {
           "method": "POST",
@@ -13168,20 +13327,8 @@
           "path": "/shipments/:param/permit-requirements/"
         },
         {
-          "method": "POST",
-          "path": "/shipments/:param/permit-requirements/:param/waive/"
-        },
-        {
           "method": "GET",
           "path": "/shipments/:param/permits/"
-        },
-        {
-          "method": "POST",
-          "path": "/shipments/:param/permits/"
-        },
-        {
-          "method": "PUT",
-          "path": "/shipments/:param/permits/:param/"
         },
         {
           "method": "GET",
@@ -13230,6 +13377,10 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -13247,6 +13398,8 @@
         "CarrierTrackingLink",
         "CreateCaptureCoverSheets",
         "CreateCaptureRequest",
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
@@ -13275,6 +13428,7 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -13310,7 +13464,35 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
         },
         {
           "method": "GET",
@@ -13323,14 +13505,6 @@
         {
           "method": "GET",
           "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resources/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
         },
         {
           "method": "GET",
@@ -13357,12 +13531,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -13423,10 +13605,6 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param"
         },
         {
           "method": "POST",
@@ -13525,20 +13703,8 @@
           "path": "/shipments/:param/permit-requirements/"
         },
         {
-          "method": "POST",
-          "path": "/shipments/:param/permit-requirements/:param/waive/"
-        },
-        {
           "method": "GET",
           "path": "/shipments/:param/permits/"
-        },
-        {
-          "method": "POST",
-          "path": "/shipments/:param/permits/"
-        },
-        {
-          "method": "PUT",
-          "path": "/shipments/:param/permits/:param/"
         },
         {
           "method": "GET",
@@ -13794,6 +13960,10 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -13847,6 +14017,7 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -13882,7 +14053,35 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
         },
         {
           "method": "GET",
@@ -13895,10 +14094,6 @@
         {
           "method": "GET",
           "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
         },
         {
           "method": "GET",
@@ -13925,12 +14120,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -13991,10 +14194,6 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param"
         },
         {
           "method": "POST",
@@ -14093,20 +14292,8 @@
           "path": "/shipments/:param/permit-requirements/"
         },
         {
-          "method": "POST",
-          "path": "/shipments/:param/permit-requirements/:param/waive/"
-        },
-        {
           "method": "GET",
           "path": "/shipments/:param/permits/"
-        },
-        {
-          "method": "POST",
-          "path": "/shipments/:param/permits/"
-        },
-        {
-          "method": "PUT",
-          "path": "/shipments/:param/permits/:param/"
         },
         {
           "method": "GET",
@@ -14635,6 +14822,10 @@
         "AssignWorkerShift",
         "AssignWorkerTraining",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -14668,6 +14859,8 @@
         "CreateWorkerCredential",
         "CreateWorkerPto",
         "CreateWorkerSafetyEvent",
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
@@ -14747,6 +14940,7 @@
         "SetWorkerAvailabilityPreference",
         "ShiftSwapRequests",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -14828,7 +15022,35 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
         },
         {
           "method": "GET",
@@ -14841,14 +15063,6 @@
         {
           "method": "GET",
           "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resources/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
         },
         {
           "method": "GET",
@@ -14875,12 +15089,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -14941,10 +15163,6 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param"
         },
         {
           "method": "POST",
@@ -15043,20 +15261,8 @@
           "path": "/shipments/:param/permit-requirements/"
         },
         {
-          "method": "POST",
-          "path": "/shipments/:param/permit-requirements/:param/waive/"
-        },
-        {
           "method": "GET",
           "path": "/shipments/:param/permits/"
-        },
-        {
-          "method": "POST",
-          "path": "/shipments/:param/permits/"
-        },
-        {
-          "method": "PUT",
-          "path": "/shipments/:param/permits/:param/"
         },
         {
           "method": "GET",
@@ -16055,14 +16261,6 @@
       ],
       "rest": [
         {
-          "method": "PATCH",
-          "path": "/commodities/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/commodities/bulk-update-status/"
-        },
-        {
           "method": "GET",
           "path": "/tables/"
         },
@@ -16098,14 +16296,6 @@
         "UndoMyBulkEdit"
       ],
       "rest": [
-        {
-          "method": "PATCH",
-          "path": "/hazardous-materials/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/hazardous-materials/bulk-update-status/"
-        },
         {
           "method": "GET",
           "path": "/tables/"
@@ -16378,6 +16568,10 @@
         "ArTopOverdueCustomers",
         "AuditLogTable",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidateIds",
         "BillingTransferCandidates",
         "BillingTransferRun",
@@ -16443,6 +16637,7 @@
         "ShipmentCapacity",
         "ShipmentCheckCalls",
         "ShipmentCoverageSuggestions",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -16490,7 +16685,35 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
         },
         {
           "method": "GET",
@@ -16503,10 +16726,6 @@
         {
           "method": "GET",
           "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/"
         },
         {
           "method": "GET",
@@ -16533,12 +16752,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -16623,10 +16850,6 @@
         {
           "method": "GET",
           "path": "/locations/"
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param"
         },
         {
           "method": "POST",
@@ -16917,6 +17140,14 @@
           "path": "/assistant/ask/"
         },
         {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
           "method": "GET",
           "path": "/assistant/mentions/"
         },
@@ -17145,10 +17376,6 @@
           "path": "/assistant/turns/active/"
         },
         {
-          "method": "GET",
-          "path": "/document-types/select-options/"
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/"
         },
@@ -17169,12 +17396,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",
@@ -17400,6 +17635,14 @@
           "path": "/assistant/ask/"
         },
         {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
           "method": "GET",
           "path": "/assistant/mentions/"
         },
@@ -17628,10 +17871,6 @@
           "path": "/assistant/turns/active/"
         },
         {
-          "method": "GET",
-          "path": "/document-types/select-options/"
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/"
         },
@@ -17652,12 +17891,20 @@
           "path": "/documents/:param/content/"
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/"
         },
         {
           "method": "POST",
           "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
         },
         {
           "method": "POST",

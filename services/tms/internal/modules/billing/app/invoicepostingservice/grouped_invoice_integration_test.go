@@ -77,11 +77,13 @@ func runPartialOrderScenario(
 	p.mockLeg(p.lateLeg.ID, p.lateLeg.ProNumber, ord.ID, legFreights[p.lateLeg.ID])
 
 	// First pass: only the ready leg is billable, and the order charge rides along.
-	first, err := svc.CreateFromOrder(ctx, &invoiceports.CreateInvoiceFromOrderRequest{
+	created, err := svc.CreateInvoicesFromOrder(ctx, &invoiceports.CreateInvoiceFromOrderRequest{
 		OrderID:    ord.ID,
 		TenantInfo: p.tenantInfo,
 	}, p.actor)
 	require.NoError(t, err)
+	first := created.Primary
+	require.NotNil(t, first)
 	assert.True(t, decimal.NewFromInt(150).Equal(first.TotalAmount),
 		"first pass should bill the ready leg plus the order charge, got %s", first.TotalAmount)
 

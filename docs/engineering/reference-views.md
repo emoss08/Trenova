@@ -208,8 +208,9 @@ It is derived, never written by hand, in two steps:
    documents of the exports its importers name, so a page that imports one wrapper of
    `lib/graphql/shipment.ts` runs that wrapper's operation, not all of them; a query key factory is
    one module, so a page that imports it runs every operation the factory can. REST calls are
-   `api.<method>(path)` literals, and an `apiService.<service>.<method>` is resolved to that one
-   service method. It writes `pkg/pageaccess/screens_gen.json`.
+   `api.<method>(path)` literals, and an `apiService.<service>.<method>`, or a call on a service's
+   own exported instance (`assistantService.<method>`), is resolved to that one service method.
+   It writes `pkg/pageaccess/screens_gen.json`.
 2. `go run ./internal/api/graphql/gqlext/refgen` reads that file, walks each operation with
    `gqlext.Operations` (the same walk the field guard's checks are built on, so a root, a linked
    record and a part of one are reached exactly as at run time) and joins each REST call to its

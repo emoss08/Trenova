@@ -90,7 +90,7 @@ describe("moveHeadline", () => {
 
   it("names a canceled move as canceled, and a move with no places as still to plan", () => {
     expect(headline([stop("a", "Pickup", "Reno, NV")], "Canceled").title).toBe("Canceled");
-    expect(headline([stop("a", "Pickup", "", { locationId: "", addressLine: null })]).title).toBe(
+    expect(headline([stop("a", "Pickup", "", { locationId: "", addressLine: "" })]).title).toBe(
       "Add the stops to plan this move",
     );
   });

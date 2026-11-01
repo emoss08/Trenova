@@ -66,7 +66,10 @@ func (s *Service) NovaGeneration(
 	return &billingqueueports.NovaGeneration{Phase: billingqueueports.NovaPhaseReviewing}, nil
 }
 
-func (s *Service) HasUnreviewedItems(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+func (s *Service) HasUnreviewedItems(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
 	available, err := s.Availability(ctx, tenantInfo)
 	if err != nil || !available.Review {
 		return false, err
@@ -75,7 +78,10 @@ func (s *Service) HasUnreviewedItems(ctx context.Context, tenantInfo pagination.
 	return s.hasUnreviewed(ctx, tenantInfo)
 }
 
-func (s *Service) hasUnreviewed(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+func (s *Service) hasUnreviewed(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
 	pending, err := s.repo.ListUnreviewedItems(ctx, &billingqueueports.ListUnreviewedItemsRequest{
 		TenantInfo: tenantInfo,
 		Limit:      1,
@@ -84,7 +90,10 @@ func (s *Service) hasUnreviewed(ctx context.Context, tenantInfo pagination.Tenan
 	return len(pending) > 0, err
 }
 
-func (s *Service) needsGeneration(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
+func (s *Service) needsGeneration(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
 	available, err := s.Availability(ctx, tenantInfo)
 	if err != nil {
 		return false, err
@@ -165,20 +174,25 @@ func (s *Service) SubmitReviews(
 		return submission, nil
 	}
 
-	submission.Handle, err = s.batches.SubmitTasks(ctx, &llmports.NovaBatch{
+	handle, err := s.batches.SubmitTasks(ctx, &llmports.NovaBatch{
 		TenantInfo: req.TenantInfo,
 		Task:       aitask.TaskBillingDiagnosis,
 		Items:      items,
 	})
-	if errors.Is(err, llmports.ErrBatchUnsupported) || errors.Is(err, llmports.ErrNoProviderConfigured) {
+	if errors.Is(err, llmports.ErrBatchUnsupported) ||
+		errors.Is(err, llmports.ErrNoProviderConfigured) {
 		submission.Inline = ticketItems(submission.Tickets)
 		submission.Tickets = nil
-		submission.Handle = nil
 
 		return submission, nil
 	}
 	if err != nil {
 		return nil, err
+	}
+	submission.Handle = &billingqueueports.ReviewBatch{
+		ProviderID:  handle.ProviderID,
+		BatchID:     handle.BatchID,
+		SubmittedAt: handle.SubmittedAt,
 	}
 
 	return submission, nil
@@ -301,7 +315,11 @@ func (s *Service) ApplyReviews(
 	return applied, nil
 }
 
-func (s *Service) offerAutoApprove(ctx context.Context, tenantInfo pagination.TenantInfo, itemID pulid.ID) {
+func (s *Service) offerAutoApprove(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	itemID pulid.ID,
+) {
 	if _, err := s.AutoApprove(ctx, tenantInfo, itemID); err != nil {
 		s.l.Info("an item Nova agreed with was not auto-approved",
 			zap.String("billingQueueItemId", itemID.String()), zap.Error(err))

@@ -16,7 +16,7 @@ import (
 type testService struct {
 	l           *zap.Logger
 	messageRepo inboundmessageports.InboundMessageRepository
-	completion  llmports.CompletionService
+	completion  llmports.TaskRunner
 	shipments   inboundqueue.ShipmentFinder
 	parties     inboundqueue.PartyFinder
 	watchtower  watchtowerports.WatchtowerProjector
@@ -84,7 +84,7 @@ func (t *testService) processing() *Service {
 	})
 	return &Service{
 		activityRepo:  t.activityRepo,
-		completion:    t.completion,
+		nova:          t.completion,
 		events:        t.events,
 		hints:         t.hints,
 		indexer:       t.indexer,

@@ -14,7 +14,11 @@ func (r *Sources) Document(
 	ctx context.Context,
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
-	if _, err := r.RequirePermission(ctx, permission.ResourceDocument, permission.OpRead); err != nil {
+	if _, err := r.RequirePermission(
+		ctx,
+		permission.ResourceDocument,
+		permission.OpRead,
+	); err != nil {
 		return nil, err
 	}
 

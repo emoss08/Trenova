@@ -1,4 +1,4 @@
-package billingqueueservice
+package billingqueuewatch
 
 import (
 	"testing"

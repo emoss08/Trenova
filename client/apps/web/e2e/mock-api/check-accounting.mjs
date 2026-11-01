@@ -210,8 +210,6 @@ function expect(condition, message) {
   else fail(message);
 }
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 const status = async (system) =>
   (await op("AccountingSyncStatus", { integrationType: system })).accountingSyncStatus;
 

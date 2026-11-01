@@ -276,10 +276,7 @@ export class OrganizationService {
     organizationId: string,
     data: { requireRoleActivation: boolean; version: number },
   ) {
-    const response = await api.put(
-      `${this.base_url}/${organizationId}/iam/access-settings`,
-      data,
-    );
+    const response = await api.put(`${this.base_url}/${organizationId}/iam/access-settings`, data);
     return safeParse(accessSettingsSchema, response, "AccessSettings");
   }
 
@@ -300,3 +297,5 @@ export class OrganizationService {
     return safeParse(securityBriefingSchema, response, "SecurityBriefing");
   }
 }
+
+export const organizationService = new OrganizationService();

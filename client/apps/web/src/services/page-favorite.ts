@@ -27,3 +27,5 @@ export class PageFavoriteService {
     return safeParse(checkFavoriteResponseSchema, response, "CheckFavoriteResponse");
   }
 }
+
+export const pageFavoriteService = new PageFavoriteService();

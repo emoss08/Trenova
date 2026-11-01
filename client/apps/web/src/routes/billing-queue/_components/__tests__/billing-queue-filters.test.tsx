@@ -15,7 +15,8 @@ vi.mock("@/services/api", () => ({
     },
   },
 }));
-vi.mock("@/lib/graphql/select-options", () => ({
+vi.mock("@/lib/graphql/select-options", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/select-options")>()),
   fetchGraphQLSelectOptions: vi.fn().mockResolvedValue({ count: 0, results: [] }),
 }));
 

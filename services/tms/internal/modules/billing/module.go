@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueassist"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuewatch"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/collectionservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
@@ -251,11 +252,11 @@ func factoringOptions() fx.Option {
 				fx.ResultTags(documentports.DocumentChangeObserverGroup),
 			),
 			fx.Annotate(
-				billingqueueservice.NewDocumentObserver,
+				billingqueuewatch.NewDocumentObserver,
 				fx.ResultTags(documentports.DocumentChangeObserverGroup),
 			),
 			fx.Annotate(
-				billingqueueservice.NewShipmentObserver,
+				billingqueuewatch.NewShipmentObserver,
 				fx.ResultTags(`group:"shipment_event_observers"`),
 			),
 		),

@@ -82,9 +82,14 @@ describe("BillingQueueInvoiceTab", () => {
   it("reads back what the invoice will say once the item is approved", () => {
     renderTab(item({ status: "Approved", poNumber: "PO-1", paymentTerm: null }));
 
-    expect(screen.queryByRole("textbox", { name: /Customer PO/ })).not.toBeInTheDocument();
-    expect(screen.getByText("PO-1")).toBeInTheDocument();
-    expect(screen.getByText("Net 30")).toBeInTheDocument();
+    expect(screen.getByText("Set when it was approved")).toBeInTheDocument();
+    const po = screen.getByRole("textbox", { name: /Customer PO/ });
+    expect(po).toBeDisabled();
+    expect(po).toHaveValue("PO-1");
+    expect(screen.getByRole("button", { name: "Customer default · Net 30" })).toHaveClass(
+      "pointer-events-none",
+    );
     expect(screen.getByText("The day it's approved")).toBeInTheDocument();
+    expect(mocks.updateInvoiceDetails).not.toHaveBeenCalled();
   });
 });

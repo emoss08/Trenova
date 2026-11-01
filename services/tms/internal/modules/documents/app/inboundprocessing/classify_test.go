@@ -18,25 +18,27 @@ import (
 )
 
 type stubCompletion struct {
-	llmports.CompletionService
+	llmports.TaskRunner
 
 	reply string
 	err   error
-	got   *llmports.StructuredCompletionRequest
+	got   *llmports.NovaTask
 }
 
-func (s *stubCompletion) CompleteStructured(
-	_ context.Context, req *llmports.StructuredCompletionRequest,
+func (s *stubCompletion) Run(
+	_ context.Context, task *llmports.NovaTask, out any,
 ) (*llmports.StructuredCompletionResult, error) {
-	s.got = req
+	s.got = task
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	return &llmports.StructuredCompletionResult{
+	result := &llmports.StructuredCompletionResult{
 		Text:            s.reply,
 		ModelIdentifier: "test-model",
-	}, nil
+	}
+
+	return result, llmports.DecodeAnswer(task.Name, s.reply, out)
 }
 
 func classifierFor(reply string, err error) (*testService, *stubCompletion) {
@@ -67,7 +69,7 @@ func TestClassify_ReadsAGoodReply(t *testing.T) {
 	assert.Equal(t, inboundmessage.ClassificationTender, got.Class)
 	assert.InDelta(t, 0.91, got.Confidence, 0.0001)
 	assert.True(t, got.Narrated)
-	assert.Equal(t, aitask.TaskInboundClassification, completion.got.Task)
+	assert.Equal(t, aitask.TaskInboundClassification, completion.got.Name)
 }
 
 /*

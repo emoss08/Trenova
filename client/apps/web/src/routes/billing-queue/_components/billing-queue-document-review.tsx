@@ -15,6 +15,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import type { Document } from "@trenova/shared/types/document";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { shipmentDocumentsQuery } from "../billing-queue-queries";
@@ -47,15 +48,14 @@ function factsPending(doc: Document | null | undefined, nowSeconds: number): boo
 function stillReading(
   doc: Document | null | undefined,
   requested: ReadonlyMap<string, number>,
+  nowMs: number,
 ): boolean {
   if (!doc) return false;
   if (doc.contentStatus === "Extracting") return true;
   const askedAt = requested.get(doc.id);
   // A read that never starts (intelligence turned off for the organization) stops
   // being waited on, so the panel offers to read again rather than spinning.
-  return (
-    doc.contentStatus === "Pending" && askedAt !== undefined && Date.now() - askedAt < READ_WAIT_MS
-  );
+  return doc.contentStatus === "Pending" && askedAt !== undefined && nowMs - askedAt < READ_WAIT_MS;
 }
 
 /**
@@ -78,18 +78,20 @@ export function BillingQueueDocumentReview({
   const { data: item } = useQuery({ ...billingQueue.get(itemId ?? ""), enabled: Boolean(itemId) });
   const shipmentId = item?.shipmentId ?? "";
   const [requested, setRequested] = useState<ReadonlyMap<string, number>>(() => new Map());
+  const nowSeconds = useNow("second");
   const { data: documents = [] } = useQuery({
     ...shipmentDocumentsQuery(shipmentId),
     enabled: Boolean(shipmentId) && open,
     refetchInterval: (query) => {
       const current = query.state.data?.find((doc) => doc.id === documentId);
-      return stillReading(current, requested) || factsPending(current, Date.now() / 1000)
+      return stillReading(current, requested, Date.now()) ||
+        factsPending(current, Date.now() / 1000)
         ? READING_POLL_MS
         : false;
     },
   });
   const document = documents.find((doc) => doc.id === documentId) ?? null;
-  const reading = stillReading(document, requested);
+  const reading = stillReading(document, requested, nowSeconds * 1000);
   const readingQuery = useQuery({
     ...documentReading.get(documentId ?? ""),
     enabled: open,
@@ -117,7 +119,7 @@ export function BillingQueueDocumentReview({
   const readingState: ReadingState =
     novaRead || (extraction?.fields.length ?? 0) > 0
       ? "read"
-      : reading || factsPending(document, Date.now() / 1000)
+      : reading || factsPending(document, nowSeconds)
         ? "reading"
         : readingQuery.isPending
           ? "loading"

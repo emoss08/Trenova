@@ -10,7 +10,8 @@ import (
 )
 
 const pendingEligibility = `d."status" = 'Active' AND d."processing_profile" IN ` +
-	`('rate_confirmation_import', 'assistant_attachment', 'inbound_attachment', 'capture', 'factoring_remittance') ` +
+	`('rate_confirmation_import', 'assistant_attachment', 'inbound_attachment', 'capture', ` +
+	`'factoring_remittance', 'shipment_paperwork') ` +
 	`AND (dc."document_id" IS NULL OR dc."status" IN ('Pending', 'Extracting') ` +
 	`OR d."content_status" IN ('Pending', 'Extracting'))`
 

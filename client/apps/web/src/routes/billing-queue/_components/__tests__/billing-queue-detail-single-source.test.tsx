@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { MemoryRouter } from "react-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
@@ -10,11 +10,16 @@ import { queueItem } from "./split-shipment-fixture";
 
 const { getItem } = vi.hoisted(() => ({ getItem: vi.fn() }));
 
-vi.mock("@/lib/queries/billing-queue", () => ({
-  billingQueue: {
-    get: (id: string) => ({ queryKey: ["billingQueue", "get", id], queryFn: () => getItem(id) }),
-  },
-}));
+vi.mock("@/lib/queries/billing-queue", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/queries/billing-queue")>();
+  return {
+    ...actual,
+    billingQueue: {
+      ...actual.billingQueue,
+      get: (id: string) => ({ queryKey: ["billingQueue", "get", id], queryFn: () => getItem(id) }),
+    },
+  };
+});
 vi.mock("@/services/api", () => ({
   apiService: { billingQueueService: { updateCharges: vi.fn(), reassignCharge: vi.fn() } },
 }));
@@ -60,8 +65,13 @@ describe("billing queue review pane shows each split fact once", () => {
     expect(await screen.findByTestId("payer-bill-total")).toHaveTextContent("$1,500.00");
 
     expect(screen.getAllByText(/of \$4,004\.38 shipment total/)).toHaveLength(1);
-    expect(screen.getAllByText(/Peak Distributing/)).toHaveLength(1);
-    expect(screen.getAllByText(/Acme Manufacturing/)).toHaveLength(1);
+    const lines = screen.getByRole("table", { name: "Charge lines" });
+    const outsideLines = (pattern: RegExp) =>
+      screen.getAllByText(pattern).filter((element) => !lines.contains(element));
+    expect(outsideLines(/Peak Distributing/).map((element) => element.textContent)).toEqual([
+      "Bills Peak Distributing on behalf of Acme Manufacturing",
+    ]);
+    expect(within(lines).getByTestId("payer-line-freight")).toHaveTextContent("Peak Distributing");
     expect(screen.getAllByText(/of \$2,850\.00/)).toHaveLength(1);
     expect(screen.queryByText(/Amount split/)).not.toBeInTheDocument();
   });

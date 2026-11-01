@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { clearSessionCache } from "@/lib/session-cache";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type {
@@ -14,8 +14,7 @@ export function useSwitchOrganization() {
   const { setUser } = useAuthStore();
 
   return useApiMutation<SwitchOrganizationResponse, SwitchOrganizationRequest>({
-    mutationFn: (data: SwitchOrganizationRequest) =>
-      apiService.userService.switchOrganization(data),
+    mutationFn: (data: SwitchOrganizationRequest) => userService.switchOrganization(data),
     resourceName: "Organization",
     onSuccess: async (user) => {
       // The session already acts for the new organization, so the tab confirms it before

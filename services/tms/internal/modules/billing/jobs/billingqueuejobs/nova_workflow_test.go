@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -42,7 +41,9 @@ func novaEnvLeaving(t *testing.T, left bool) *testsuite.TestWorkflowEnvironment 
 	env.RegisterActivity(a.AutoApproveActivity)
 	env.RegisterActivity(a.RefreshBriefActivity)
 	env.OnActivity(a.PublishNovaProgressActivity, mock.Anything, mock.Anything).Return(nil)
-	env.OnActivity(a.NovaLeftUnreviewedActivity, mock.Anything, mock.Anything).Return(left, nil).Maybe()
+	env.OnActivity(a.NovaLeftUnreviewedActivity, mock.Anything, mock.Anything).
+		Return(left, nil).
+		Maybe()
 	env.OnActivity(a.RefreshBriefActivity, mock.Anything, mock.Anything).Return(nil).Once()
 
 	return env
@@ -55,7 +56,10 @@ func novaPayload() *billingqueuecontract.NovaGenerationPayload {
 	}
 }
 
-func progressOf(t *testing.T, env *testsuite.TestWorkflowEnvironment) billingqueueports.NovaGeneration {
+func progressOf(
+	t *testing.T,
+	env *testsuite.TestWorkflowEnvironment,
+) billingqueueports.NovaGeneration {
 	t.Helper()
 	encoded, err := env.QueryWorkflow(billingqueuecontract.NovaGenerationProgressQuery)
 	require.NoError(t, err)
@@ -71,7 +75,7 @@ func TestNovaGeneration_WaitsForTheBatchRecordsItThenWritesTheBrief(t *testing.T
 	env := novaEnv(t)
 	var a *Activities
 	submission := &billingqueueports.ReviewSubmission{
-		Handle: &llmports.BatchHandle{BatchID: "batch_1"},
+		Handle: &billingqueueports.ReviewBatch{BatchID: "batch_1"},
 		Tickets: []billingqueueports.ReviewTicket{
 			{ItemID: pulid.ID("bqi_1"), Hash: "h1"},
 			{ItemID: pulid.ID("bqi_2"), Hash: "h2"},
@@ -79,12 +83,16 @@ func TestNovaGeneration_WaitsForTheBatchRecordsItThenWritesTheBrief(t *testing.T
 	}
 	env.OnActivity(a.SubmitNovaReviewsActivity, mock.Anything, mock.MatchedBy(func(in *SubmitNovaReviewsInput) bool {
 		return !in.Inline
-	})).Return(submission, nil).Once()
+	})).
+		Return(submission, nil).
+		Once()
 	env.OnActivity(a.NovaBatchEndedActivity, mock.Anything, mock.Anything).Return(false, nil).Once()
 	env.OnActivity(a.NovaBatchEndedActivity, mock.Anything, mock.Anything).Return(true, nil).Once()
 	env.OnActivity(a.ApplyNovaReviewsActivity, mock.Anything, mock.MatchedBy(func(in *NovaBatchInput) bool {
 		return in.Submission.Handle.BatchID == "batch_1" && len(in.Submission.Tickets) == 2
-	})).Return(2, nil).Once()
+	})).
+		Return(2, nil).
+		Once()
 
 	env.ExecuteWorkflow(BillingQueueNovaGenerationWorkflow, novaPayload())
 
@@ -100,7 +108,7 @@ func TestNovaGeneration_WaitsForTheBatchRecordsItThenWritesTheBrief(t *testing.T
 
 func batchOfTwo() *billingqueueports.ReviewSubmission {
 	return &billingqueueports.ReviewSubmission{
-		Handle: &llmports.BatchHandle{BatchID: "batch_1"},
+		Handle: &billingqueueports.ReviewBatch{BatchID: "batch_1"},
 		Tickets: []billingqueueports.ReviewTicket{
 			{ItemID: pulid.ID("bqi_1"), Hash: "h1"},
 			{ItemID: pulid.ID("bqi_2"), Hash: "h2"},
@@ -124,15 +132,21 @@ func TestNovaGeneration_SomeoneOpeningTheQueueCancelsTheBatchAndReviewsTheRestAt
 	var a *Activities
 	env.OnActivity(a.SubmitNovaReviewsActivity, mock.Anything, mock.MatchedBy(func(in *SubmitNovaReviewsInput) bool {
 		return !in.Inline
-	})).Return(batchOfTwo(), nil).Once()
+	})).
+		Return(batchOfTwo(), nil).
+		Once()
 	env.OnActivity(a.CancelNovaReviewsActivity, mock.Anything, mock.MatchedBy(func(in *NovaBatchInput) bool {
 		return in.Submission.Handle.BatchID == "batch_1"
-	})).Return(nil).Once()
+	})).
+		Return(nil).
+		Once()
 	env.OnActivity(a.NovaBatchEndedActivity, mock.Anything, mock.Anything).Return(true, nil).Once()
 	env.OnActivity(a.ApplyNovaReviewsActivity, mock.Anything, mock.Anything).Return(1, nil).Once()
 	env.OnActivity(a.SubmitNovaReviewsActivity, mock.Anything, mock.MatchedBy(func(in *SubmitNovaReviewsInput) bool {
 		return in.Inline
-	})).Return(&billingqueueports.ReviewSubmission{Inline: []pulid.ID{"bqi_2"}}, nil).Once()
+	})).
+		Return(&billingqueueports.ReviewSubmission{Inline: []pulid.ID{"bqi_2"}}, nil).
+		Once()
 	env.OnActivity(a.AgentReviewActivity, mock.Anything, mock.Anything).
 		Return(&billingqueueports.AgentReviewOutcome{Reviewed: true}, nil).Once()
 	signalNova(env, billingqueueports.NovaTriggerQueueOpened)
@@ -142,7 +156,12 @@ func TestNovaGeneration_SomeoneOpeningTheQueueCancelsTheBatchAndReviewsTheRestAt
 
 	require.NoError(t, env.GetWorkflowError())
 	env.AssertExpectations(t)
-	assert.Less(t, env.Now().Sub(started), novaBatchFirstCheck, "it stopped waiting the moment the queue was opened")
+	assert.Less(
+		t,
+		env.Now().Sub(started),
+		novaBatchFirstCheck,
+		"it stopped waiting the moment the queue was opened",
+	)
 	assert.Equal(t, billingqueueports.NovaGeneration{
 		Phase: billingqueueports.NovaPhaseDone,
 		Total: 1,
@@ -155,12 +174,16 @@ func TestNovaGeneration_TheScheduleAskingAgainLeavesTheBatchToEnd(t *testing.T) 
 
 	env := novaEnv(t)
 	var a *Activities
-	env.OnActivity(a.SubmitNovaReviewsActivity, mock.Anything, mock.Anything).Return(batchOfTwo(), nil).Once()
+	env.OnActivity(a.SubmitNovaReviewsActivity, mock.Anything, mock.Anything).
+		Return(batchOfTwo(), nil).
+		Once()
 	env.OnActivity(a.NovaBatchEndedActivity, mock.Anything, mock.Anything).Return(true, nil).Once()
 	env.OnActivity(a.ApplyNovaReviewsActivity, mock.Anything, mock.Anything).Return(2, nil).Once()
 	env.OnActivity(a.SubmitNovaReviewsActivity, mock.Anything, mock.MatchedBy(func(in *SubmitNovaReviewsInput) bool {
 		return !in.Inline
-	})).Return(&billingqueueports.ReviewSubmission{}, nil).Once()
+	})).
+		Return(&billingqueueports.ReviewSubmission{}, nil).
+		Once()
 	env.OnActivity(a.RefreshBriefActivity, mock.Anything, mock.Anything).Return(nil)
 	signalNova(env, billingqueueports.NovaTriggerSchedule)
 
@@ -182,14 +205,20 @@ func TestNovaGeneration_ReportsWhenItEndsWithItemsItCouldNotReview(t *testing.T)
 	).Once()
 	env.OnActivity(a.AgentReviewActivity, mock.Anything, mock.Anything).
 		Return((*billingqueueports.AgentReviewOutcome)(nil),
-			temporal.NewNonRetryableApplicationError("provider unavailable", "Unavailable", nil)).Once()
+			temporal.NewNonRetryableApplicationError("provider unavailable", "Unavailable", nil),
+		).
+		Once()
 
 	env.ExecuteWorkflow(BillingQueueNovaGenerationWorkflow, novaPayload())
 
 	require.NoError(t, env.GetWorkflowError())
 	var result billingqueuecontract.NovaGenerationProgress
 	require.NoError(t, env.GetWorkflowResult(&result))
-	assert.True(t, result.LeftUnreviewed, "opening the queue does not send what failed round again at once")
+	assert.True(
+		t,
+		result.LeftUnreviewed,
+		"opening the queue does not send what failed round again at once",
+	)
 	assert.Equal(t, billingqueueports.NovaPhaseDone, result.Generation.Phase)
 }
 
@@ -212,7 +241,9 @@ func TestNovaGeneration_ReviewsOneAtATimeWhenTheProviderCannotBatch(t *testing.T
 	assert.Equal(t, 2, progressOf(t, env).Done)
 }
 
-func TestNovaGeneration_ReviewsAtOnceForSomeoneWaitingAndOffersWhatNovaAgreesWithToAutoApprove(t *testing.T) {
+func TestNovaGeneration_ReviewsAtOnceForSomeoneWaitingAndOffersWhatNovaAgreesWithToAutoApprove(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	env := novaEnv(t)
@@ -220,7 +251,9 @@ func TestNovaGeneration_ReviewsAtOnceForSomeoneWaitingAndOffersWhatNovaAgreesWit
 	agreed, questioned := pulid.ID("bqi_agreed"), pulid.ID("bqi_questioned")
 	env.OnActivity(a.SubmitNovaReviewsActivity, mock.Anything, mock.MatchedBy(func(in *SubmitNovaReviewsInput) bool {
 		return in.Inline
-	})).Return(&billingqueueports.ReviewSubmission{Inline: []pulid.ID{agreed, questioned}}, nil).Once()
+	})).
+		Return(&billingqueueports.ReviewSubmission{Inline: []pulid.ID{agreed, questioned}}, nil).
+		Once()
 	env.OnActivity(a.AgentReviewActivity, mock.Anything, mock.MatchedBy(func(in *billingqueuecontract.RecheckPayload) bool {
 		return in.ItemID == agreed
 	})).
@@ -284,7 +317,11 @@ func TestNovaGeneration_WritesOnlyTheBriefWhenEveryItemIsReviewed(t *testing.T) 
 
 	require.NoError(t, env.GetWorkflowError())
 	env.AssertExpectations(t)
-	assert.Equal(t, billingqueueports.NovaGeneration{Phase: billingqueueports.NovaPhaseDone}, progressOf(t, env))
+	assert.Equal(
+		t,
+		billingqueueports.NovaGeneration{Phase: billingqueueports.NovaPhaseDone},
+		progressOf(t, env),
+	)
 }
 
 func TestNovaGeneration_TakesAnotherPassWhenItemsWereLeftOver(t *testing.T) {

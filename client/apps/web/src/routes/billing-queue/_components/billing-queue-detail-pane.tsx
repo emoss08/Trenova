@@ -159,6 +159,8 @@ function DetailHeader({ item, scrolled }: { item: BillingQueueItem; scrolled: bo
       ? shipment.customer?.name
       : null;
   const deliveredAt = shipment?.actualDeliveryDate ?? null;
+  // The line under the amount names the payer until the shipment delivers.
+  const sublineNamesPayer = !deliveredAt;
 
   return (
     <div
@@ -188,7 +190,7 @@ function DetailHeader({ item, scrolled }: { item: BillingQueueItem; scrolled: bo
             )
           ) : routeWithheld ? (
             <WithheldValue kind="shipment" />
-          ) : (
+          ) : sublineNamesPayer ? null : (
             payerName
           )}
         </span>

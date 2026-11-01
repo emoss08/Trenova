@@ -187,33 +187,50 @@ func TestStreamEndToEnd(t *testing.T) {
 		assert.Contains(t, event.data, `"resource":"shipments"`)
 	})
 
-	t.Run("joining a thread and typing in it reaches the stream", func(t *testing.T) {
+	t.Run("opening and closing a record reaches the stream as presence", func(t *testing.T) {
 		shipmentID := pulid.MustNew("shp_").String()
+		recordURL := server.URL + "/api/v1/realtime/presence/shipment/" + shipmentID + "/"
+		scope := "record:shipment:" + shipmentID
+
 		body, _ := sonic.MarshalString(map[string]any{"connectionId": ready.ConnectionID})
 		joinResp, err := server.Client().Post(
-			server.URL+"/api/v1/shipments/"+shipmentID+"/comments/presence/",
+			recordURL,
 			"application/json",
 			bytes.NewBufferString(body),
 		)
 		require.NoError(t, err)
-		_ = joinResp.Body.Close()
+		t.Cleanup(func() { _ = joinResp.Body.Close() })
 		require.Equal(t, http.StatusOK, joinResp.StatusCode)
 
-		body, _ = sonic.MarshalString(map[string]any{"connectionId": ready.ConnectionID})
-		typingResp, err := server.Client().Post(
-			server.URL+"/api/v1/shipments/"+shipmentID+"/comments/typing/",
-			"application/json",
-			bytes.NewBufferString(body),
+		var members realtimeports.RealtimePresenceSnapshot
+		require.NoError(t, sonic.ConfigDefault.NewDecoder(joinResp.Body).Decode(&members))
+		assert.Equal(t, scope, members.Scope)
+		require.Len(t, members.Members, 1)
+		assert.Equal(t, testUserID.String(), members.Members[0].UserID)
+
+		var entered realtimeports.RealtimePresenceEvent
+		require.NoError(t, sonic.UnmarshalString(stream.next(t, "presence").data, &entered))
+		assert.Equal(t, scope, entered.Scope)
+		assert.Equal(t, realtimeports.RealtimePresenceEnter, entered.Action)
+		assert.Equal(t, testUserID.String(), entered.UserID)
+		assert.Equal(t, "Dana Dispatcher", entered.Name)
+
+		leaveReq, err := http.NewRequestWithContext(
+			t.Context(),
+			http.MethodDelete,
+			recordURL+"?connectionId="+ready.ConnectionID,
+			nil,
 		)
 		require.NoError(t, err)
-		_ = typingResp.Body.Close()
-		require.Equal(t, http.StatusNoContent, typingResp.StatusCode)
+		leaveResp, err := server.Client().Do(leaveReq)
+		require.NoError(t, err)
+		_ = leaveResp.Body.Close()
+		require.Equal(t, http.StatusNoContent, leaveResp.StatusCode)
 
-		var typing realtimeports.RealtimeTypingEvent
-		require.NoError(t, sonic.UnmarshalString(stream.next(t, "typing").data, &typing))
-		assert.Equal(t, "shipment-comments:"+shipmentID, typing.Scope)
-		assert.Equal(t, testUserID.String(), typing.UserID)
-		assert.Equal(t, "Dana Dispatcher", typing.Name)
+		var left realtimeports.RealtimePresenceEvent
+		require.NoError(t, sonic.UnmarshalString(stream.next(t, "presence").data, &left))
+		assert.Equal(t, scope, left.Scope)
+		assert.Equal(t, realtimeports.RealtimePresenceLeave, left.Action)
 	})
 
 	// The regression this replaced: every publish was a blocking HTTPS round

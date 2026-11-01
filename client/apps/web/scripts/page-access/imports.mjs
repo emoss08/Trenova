@@ -7,7 +7,10 @@
  * Most screens reach them through `apiService.<service>.<method>(…)`, the
  * object `services/api.ts` builds from every service class, so that module is
  * never followed as a whole: each `apiService.x.y` a module names is resolved
- * to the one method it calls.
+ * to the one method it calls. A service's own instance
+ * (`export const userService = new UserService()`) is read the same way: a
+ * module that imports it is not sent into the service's module, and each
+ * `userService.y` it names is resolved to that one method.
  */
 
 import { existsSync } from "node:fs";
@@ -99,6 +102,20 @@ function restCall(node) {
   const path = restPath(node.arguments[0]);
 
   return path === null ? null : { method: property.name.toUpperCase(), path };
+}
+
+function instanceCall(node, instances) {
+  if (
+    node.type !== "MemberExpression" ||
+    node.computed ||
+    node.object.type !== "Identifier" ||
+    node.property.type !== "Identifier"
+  ) {
+    return null;
+  }
+  const instance = instances.get(node.object.name);
+
+  return instance ? { ...instance, method: node.property.name } : null;
 }
 
 function memberChain(node) {
@@ -227,6 +244,60 @@ export class ModuleGraph {
     this.paths = paths;
     this.modules = new Map();
     this.services = null;
+    this.instanceClasses = new Map();
+    this.methodsOf = new Map();
+  }
+
+  /** The service instances a module exports: `export const x = new X()`, by name. */
+  instancesOf(file) {
+    const cached = this.instanceClasses.get(file);
+    if (cached) {
+      return cached;
+    }
+    const instances = new Map();
+    for (const statement of parseFile(file).program.body) {
+      if (statement.type !== "ExportNamedDeclaration") continue;
+      for (const declarator of statement.declaration?.declarations ?? []) {
+        const init = declarator.init;
+        if (
+          declarator.id.type === "Identifier" &&
+          init?.type === "NewExpression" &&
+          init.callee.type === "Identifier"
+        ) {
+          instances.set(declarator.id.name, init.callee.name);
+        }
+      }
+    }
+    this.instanceClasses.set(file, instances);
+    return instances;
+  }
+
+  /** The REST calls each method of the class `className` declared in `file` makes. */
+  classMethods(file, className) {
+    const key = `${file}#${className}`;
+    const cached = this.methodsOf.get(key);
+    if (cached) {
+      return cached;
+    }
+    const methods = new Map();
+    walk(parseFile(file).program, (node) => {
+      if (node.type !== "ClassDeclaration" || node.id?.name !== className) return;
+      for (const member of node.body.body) {
+        if (member.type !== "MethodDefinition" && member.type !== "PropertyDefinition") {
+          continue;
+        }
+        const name = member.key?.name;
+        if (!name) continue;
+        const calls = [];
+        walk(member.value, (child) => {
+          const rest = restCall(child);
+          if (rest !== null) calls.push(rest);
+        });
+        methods.set(name, calls);
+      }
+    });
+    this.methodsOf.set(key, methods);
+    return methods;
   }
 
   /** What one module imports and calls. */
@@ -250,8 +321,10 @@ export class ModuleGraph {
       exports: new Map(),
       rest: [],
       services: [],
+      instanceCalls: [],
     };
     const apiServiceNames = new Set();
+    const instances = new Map();
 
     const addNames = (target, names) => {
       const current = info.names.get(target);
@@ -296,12 +369,23 @@ export class ModuleGraph {
           }
           continue;
         }
-        if (target !== null && (values.length > 0 || statement.specifiers.length === 0)) {
+        const exported = target === null ? new Map() : this.instancesOf(target);
+        const followed = values.filter((spec) => {
+          const className =
+            spec.type === "ImportSpecifier" ? exported.get(spec.imported?.name) : undefined;
+          if (className === undefined) return true;
+          instances.set(spec.local.name, { file: target, className });
+          return false;
+        });
+        if (
+          target !== null &&
+          (followed.length > 0 || (values.length === 0 && statement.specifiers.length === 0))
+        ) {
           info.imports.push(target);
-          const named = values.every((spec) => spec.type === "ImportSpecifier");
+          const named = followed.every((spec) => spec.type === "ImportSpecifier");
           addNames(
             target,
-            named && values.length > 0 ? values.map((spec) => spec.imported?.name) : ALL,
+            named && followed.length > 0 ? followed.map((spec) => spec.imported?.name) : ALL,
           );
         }
         continue;
@@ -342,6 +426,11 @@ export class ModuleGraph {
       const chain = memberChain(node);
       if (chain !== null && apiServiceNames.has(chain.root)) {
         info.services.push({ service: chain.service, method: chain.method });
+        return;
+      }
+      const call = instanceCall(node, instances);
+      if (call !== null) {
+        info.instanceCalls.push(call);
       }
     });
 
@@ -385,37 +474,10 @@ export class ModuleGraph {
       }
     });
 
-    const methodsOf = new Map();
-    const classMethods = (className) => {
-      const file = classFiles.get(className);
-      if (!file) return new Map();
-      const key = `${file}#${className}`;
-      if (methodsOf.has(key)) return methodsOf.get(key);
-      const methods = new Map();
-      const { program: classProgram } = parseFile(file);
-      walk(classProgram, (node) => {
-        if (node.type !== "ClassDeclaration" || node.id?.name !== className) return;
-        for (const member of node.body.body) {
-          if (member.type !== "MethodDefinition" && member.type !== "PropertyDefinition") {
-            continue;
-          }
-          const name = member.key?.name;
-          if (!name) continue;
-          const calls = [];
-          walk(member.value, (child) => {
-            const rest = restCall(child);
-            if (rest !== null) calls.push(rest);
-          });
-          methods.set(name, calls);
-        }
-      });
-      methodsOf.set(key, methods);
-      return methods;
-    };
-
     const services = new Map();
     for (const [field, className] of fieldClasses) {
-      services.set(field, classMethods(className));
+      const file = classFiles.get(className);
+      services.set(field, file ? this.classMethods(file, className) : new Map());
     }
     this.services = services;
     return services;
@@ -487,6 +549,11 @@ export class ModuleGraph {
       for (const call of info.rest) addRest(call);
       for (const { service, method } of info.services) {
         for (const call of services.get(service)?.get(method) ?? []) addRest(call);
+      }
+      for (const { file: serviceFile, className, method } of info.instanceCalls) {
+        for (const call of this.classMethods(serviceFile, className).get(method) ?? []) {
+          addRest(call);
+        }
       }
     }
 

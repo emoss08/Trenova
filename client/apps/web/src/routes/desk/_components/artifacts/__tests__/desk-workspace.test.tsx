@@ -81,13 +81,16 @@ function lineageOf(id: string) {
   return { results: all.filter((item) => (item.lineageId || item.id) === root) };
 }
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    assistantService: {
-      listArtifacts: (_threadId: string, options: { q?: string }) =>
-        Promise.resolve(page(options.q ?? "")),
-    },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: {
+    listArtifacts: (_threadId: string, options: { q?: string }) =>
+      Promise.resolve(page(options.q ?? "")),
   },
+}));
+
+vi.mock("@/services/api", async () => ({
+  apiService: { assistantService: (await import("@/services/assistant")).assistantService },
 }));
 
 let clock = Math.floor(Date.now() / 1000) - 3600;

@@ -155,17 +155,23 @@ func (c *memoryCache) ClaimNarration(
 }
 
 type completion struct {
-	llmports.CompletionService
 	reply string
 	calls int
 }
 
-func (c *completion) CompleteStructured(
-	context.Context,
-	*llmports.StructuredCompletionRequest,
+func (c *completion) Available(context.Context, aitask.Task, pagination.TenantInfo) (bool, error) {
+	return true, nil
+}
+
+func (c *completion) Run(
+	_ context.Context,
+	task *llmports.NovaTask,
+	out any,
 ) (*llmports.StructuredCompletionResult, error) {
 	c.calls++
-	return &llmports.StructuredCompletionResult{Text: c.reply, ModelIdentifier: "test"}, nil
+	result := &llmports.StructuredCompletionResult{Text: c.reply, ModelIdentifier: "test"}
+
+	return result, llmports.DecodeAnswer(task.Name, c.reply, out)
 }
 
 func newService(cache *memoryCache, model *completion, enabled ...*aiprovider.Provider) *Service {
@@ -180,7 +186,7 @@ func newService(cache *memoryCache, model *completion, enabled ...*aiprovider.Pr
 		detach:    func(run func()) { run() },
 	}
 	if model != nil {
-		svc.completion = model
+		svc.nova = model
 	}
 	return svc
 }

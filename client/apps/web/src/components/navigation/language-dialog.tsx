@@ -1,7 +1,7 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { filterLanguageOptions, languageOptions } from "@/lib/language-options";
 import { applyLocale, persistLocale } from "@/lib/locale-switch";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { CheckIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import {
   Dialog,
@@ -53,7 +53,7 @@ export function LanguageDialog({
   const [pending, setPending] = useState<Locale | null>(null);
 
   const { mutateAsync: saveLocale } = useApiMutation<User, UpdateMySettings>({
-    mutationFn: (values) => apiService.userService.updateMySettings(values),
+    mutationFn: (values) => userService.updateMySettings(values),
     resourceName: "User Settings",
     onSuccess: (updatedUser) => {
       useAuthStore.getState().setUser(updatedUser);

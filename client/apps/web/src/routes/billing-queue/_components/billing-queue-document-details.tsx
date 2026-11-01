@@ -27,7 +27,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState, type ReactNode } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { shipmentDocumentsQuery } from "../billing-queue-queries";
 import { useBulkRun } from "./use-bulk-run";
@@ -191,6 +191,7 @@ export function BillingQueueDocumentDetails({
     resolver: zodResolver(factsFormSchema),
     defaultValues: formValuesOf(document),
   });
+  const osd = useWatch({ control: form.control, name: "osd" });
 
   const refreshDocuments = () => {
     if (item?.shipmentId) {
@@ -442,7 +443,7 @@ export function BillingQueueDocumentDetails({
                   disabled={!canUpdate}
                 />,
               )}
-              {form.watch("osd") !== "None" || facts?.osdNote
+              {osd !== "None" || facts?.osdNote
                 ? cell(
                     "osdNote",
                     t("Exception note"),

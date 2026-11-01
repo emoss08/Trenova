@@ -283,6 +283,7 @@ describe("requestGraphQL", () => {
   });
 
   it("classifies a problem document the server answered before GraphQL ran", async () => {
+    setCsrfToken("graphql-token");
     fetchMock.mockResolvedValueOnce(
       new Response(
         JSON.stringify({

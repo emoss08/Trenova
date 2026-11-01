@@ -49,6 +49,9 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   `pageAssistantThreadKey`, imported from `page-assistant.tsx`, once put the entire Desk chat
   into the rate confirmation preview. Put shared keys and helpers in a module of their own
   (`page-assistant-thread-key.ts`, `capture-cover-sheet-print.ts`).
+  The same holds for services: `apiService` (`services/api.ts`) constructs every service, so
+  code the shell reaches imports the service's own singleton (`assistantService` from
+  `@/services/assistant`), never `apiService` (web-build.md, "What a first visit downloads").
 - Effect is confined to the API client and SSE client. Components, hooks and forms stay
   Effect-free; forms use zod.
 

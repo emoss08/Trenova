@@ -3,7 +3,12 @@ import { AccountingControlService } from "./accounting-control";
 import { AccountingReportService } from "./accounting-report";
 import { AccountTypeService } from "./account-type";
 import { AIProviderService } from "./ai-provider";
-import { AgentDefinitionService, AssistantService } from "./assistant";
+import {
+  agentDefinitionService,
+  assistantService,
+  type AgentDefinitionService,
+  type AssistantService,
+} from "./assistant";
 import { TableQueryService } from "./table-query";
 import { AgentRunService } from "@/services/agent-run";
 import { InsightService } from "./insight";
@@ -71,8 +76,8 @@ import { JournalReversalService } from "./journal-reversal";
 import { LocationService } from "./location";
 import { ManualJournalService } from "./manual-journal";
 import { NotificationService, notificationService } from "@trenova/shared/services/notification";
-import { OrganizationService } from "./organization";
-import { PageFavoriteService } from "./page-favorite";
+import { organizationService, type OrganizationService } from "./organization";
+import { pageFavoriteService, type PageFavoriteService } from "./page-favorite";
 import { RateConfirmationService } from "./rate-confirmation";
 import { RoutingGuideService } from "./routing-guide";
 import { TenderService } from "./tender";
@@ -193,8 +198,8 @@ class APIService {
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
-    this.organizationService = new OrganizationService();
-    this.pageFavoriteService = new PageFavoriteService();
+    this.organizationService = organizationService;
+    this.pageFavoriteService = pageFavoriteService;
     this.tableConfigurationService = new TableConfigurationService();
     this.userService = userService;
     this.formulaTemplateService = new FormulaTemplateService();
@@ -262,10 +267,10 @@ class APIService {
     this.aiProviderService = new AIProviderService();
     this.agentAnalysisService = new AgentAnalysisService();
     this.agentExtensionService = new AgentExtensionService();
-    this.assistantService = new AssistantService();
+    this.assistantService = assistantService;
     this.tableQueryService = new TableQueryService();
     this.insightService = new InsightService();
-    this.agentDefinitionService = new AgentDefinitionService();
+    this.agentDefinitionService = agentDefinitionService;
     this.agentRunService = new AgentRunService();
     this.analyticService = new AnalyticsService();
     this.assignmentService = new AssignmentService();

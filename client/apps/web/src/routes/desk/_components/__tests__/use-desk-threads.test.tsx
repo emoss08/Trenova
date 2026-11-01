@@ -11,8 +11,9 @@ const listThreads = vi.hoisted(() =>
   vi.fn<(options: { cursor?: string; until?: string }) => Promise<unknown>>(),
 );
 
-vi.mock("@/services/api", () => ({
-  apiService: { assistantService: { listThreads } },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: { listThreads },
 }));
 
 function thread(id: string, title = id): AssistantThread {

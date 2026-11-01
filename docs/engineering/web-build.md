@@ -55,6 +55,16 @@ Things that were on every page and are not any more, and how they were kept off:
   `DataTable` reads, one entry per module. `hooks/__tests__/realtime-query-key-roots.test.ts`
   finds every factory with `import.meta.glob` over `lib/queries/*.ts` and the shared package's,
   so a new factory module is covered without being listed.
+- The `apiService` object (`services/api.ts`), which constructs every REST service and so
+  brings every service, its types and its GraphQL documents. The shell's factories and hooks
+  (user, organization, page favorites, the assistant's queries and thread list, the header's
+  favourite toggle, the reply-ready toast) import the service's own singleton instead
+  (`import { assistantService } from "@/services/assistant"`, `userService` and
+  `notificationService` from `@trenova/shared/services/*`), and `APIService` holds those same
+  instances, so `apiService.assistantService === assistantService`. Code reached from the
+  shell imports a service that way, never `apiService`; a test stubbing such a service mocks
+  the service's own module, keeping its other exports with `importOriginal`. Taking it off
+  the shell cut the startup scripts from 617 to 532 kB gzip, and the budget fell to 544 kB.
 
 `main.tsx` imports `@trenova/shared/styles/app.css` before anything else. A cascade layer is
 ranked by where its name first appears, and component stylesheets carry `@layer base` rules

@@ -17,7 +17,10 @@ const api = vi.hoisted(() => ({
   countThreadShelves: vi.fn<(edges: readonly number[]) => Promise<unknown>>(),
 }));
 
-vi.mock("@/services/api", () => ({ apiService: { assistantService: api } }));
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: api,
+}));
 
 vi.mock("@/components/assistant/use-active-turns", () => ({
   useLiveThreadIds: () => new Set<string>(),
@@ -184,9 +187,7 @@ describe("DeskRailThreads", () => {
     serve({ older: [thread("o", { lastMessageAt: now - 90 * DAY, title: "Old one" })] });
     renderRail();
 
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Older", expanded: false }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: "Older", expanded: false }));
 
     expect(await screen.findByText("Old one")).toBeInTheDocument();
     expect(askedFor(olderShelf)).toBe(true);

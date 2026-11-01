@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { loadUserAvatar } from "@/lib/user-avatars";
 import { notificationPreferencesService } from "@trenova/shared/services/notification-preferences";
 
@@ -8,7 +8,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const userOrganization = createQueryKeys("userOrganization", {
   all: () => ({
     queryKey: ["all"],
-    queryFn: async () => apiService.userService.getUserOrganizations(),
+    queryFn: async () => userService.getUserOrganizations(),
   }),
 });
 
@@ -16,7 +16,7 @@ export const user = createQueryKeys("user", {
   all: null,
   detail: (id: User["id"]) => ({
     queryKey: ["detail", id],
-    queryFn: async () => apiService.userService.get(id),
+    queryFn: async () => userService.get(id),
   }),
   account: (id: string) => ({
     queryKey: ["account", id],
@@ -27,7 +27,7 @@ export const user = createQueryKeys("user", {
   }),
   profilePicture: (id: User["id"], variant: "thumbnail" | "full" = "thumbnail") => ({
     queryKey: ["profile-picture", id, variant],
-    queryFn: async () => (id ? apiService.userService.getProfilePictureURL(id, variant) : null),
+    queryFn: async () => (id ? userService.getProfilePictureURL(id, variant) : null),
   }),
   avatar: (id: string) => ({
     queryKey: ["avatar", id],
@@ -35,11 +35,11 @@ export const user = createQueryKeys("user", {
   }),
   mySessions: () => ({
     queryKey: ["my-sessions"],
-    queryFn: async () => apiService.userService.listMySessions(),
+    queryFn: async () => userService.listMySessions(),
   }),
   mySignIns: () => ({
     queryKey: ["my-sign-ins"],
-    queryFn: async () => apiService.userService.listMySignIns(5),
+    queryFn: async () => userService.listMySignIns(5),
   }),
   myNotificationPreferences: () => ({
     queryKey: ["my-notification-preferences"],

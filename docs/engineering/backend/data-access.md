@@ -260,7 +260,9 @@ struct.
   (`kernel/app/editconflict`) and `errortypes.NewEditConflictError`.
 - **Bulk writes** are one statement, never a loop of single updates:
   `t.Where(t.ID.In(ids...)).UpdateReturning(ctx, db, t.Status.To(status))`, checked with
-  `dberror.CheckBulkAffected(int64(len(rows)), "Tractor", ids)`; `Update` returns the count only,
+  `dberror.CheckBulkAffected(int64(len(rows)), "Tractor", ids)`, which fails, rolling the
+  transaction back, unless every distinct id was written: an id of another tenant or one deleted
+  since the read changes nothing rather than part of the set; `Update` returns the count only,
   `Delete` deletes. A bulk update bumps `version` and stamps `updated_at`. Per-row values in one
   statement: `keel.Unnest` joined into the update. `listquery.OptionalInt64` assigns a nullable
   column from a pointer.

@@ -1,4 +1,4 @@
-package agentjobs
+package evalcasejobs
 
 import (
 	"context"

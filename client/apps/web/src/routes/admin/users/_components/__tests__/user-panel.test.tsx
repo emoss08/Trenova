@@ -53,13 +53,16 @@ vi.mock("@/components/autocomplete-fields", () => ({
 
 vi.mock("../user-roles-editor", () => ({ UserRolesEditor: () => null }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    userService: {
-      getUserOrganizations: vi.fn(async () => []),
-      listOrganizationMemberships: vi.fn(async () => []),
-    },
+vi.mock("@trenova/shared/services/user", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@trenova/shared/services/user")>()),
+  userService: {
+    getUserOrganizations: vi.fn(async () => []),
+    listOrganizationMemberships: vi.fn(async () => []),
   },
+}));
+
+vi.mock("@/services/api", async () => ({
+  apiService: { userService: (await import("@trenova/shared/services/user")).userService },
 }));
 
 const { UserPanel } = await import("../user-panel");

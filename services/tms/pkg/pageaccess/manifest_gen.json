@@ -1,5 +1,5 @@
 {
-  "version": "sha256:039936eddb322c2feec304e6874d56409a52b1ba37c527e47500004e0feba105",
+  "version": "sha256:835c4b4eeb47292da4a7688afc43428b421fbcb7da446d202290b190c8d68ce8",
   "screens": [
     {
       "path": "/",
@@ -758,26 +758,6 @@
         "UndoMyBulkEdit"
       ],
       "endpoints": [
-        {
-          "method": "PATCH",
-          "path": "/account-types/:param/",
-          "requires": [
-            {
-              "resource": "account_type",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/account-types/bulk-update-status/",
-          "requires": [
-            {
-              "resource": "account_type",
-              "operation": "update"
-            }
-          ]
-        },
         {
           "method": "GET",
           "path": "/tables/",
@@ -2594,6 +2574,26 @@
           "requires": [
             {
               "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
+          "requires": [
+            {
+              "resource": "assistant",
               "operation": "create"
             }
           ]
@@ -3615,6 +3615,8 @@
       "operations": [
         "BulkEditFields",
         "CustomFieldDefinitionTable",
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
@@ -3652,16 +3654,6 @@
         {
           "method": "GET",
           "path": "/custom-fields/definitions/:param/usage/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resource-types/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resources/:param/",
           "requires": []
         },
         {
@@ -3933,26 +3925,6 @@
         },
         {
           "method": "GET",
-          "path": "/distance-profiles/select-options/",
-          "requires": [
-            {
-              "resource": "distance_profile",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/distance-profiles/select-options/:param",
-          "requires": [
-            {
-              "resource": "distance_profile",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
           "path": "/tables/",
           "requires": []
         },
@@ -4084,16 +4056,6 @@
       ],
       "endpoints": [
         {
-          "method": "PUT",
-          "path": "/hold-reasons/:param/",
-          "requires": [
-            {
-              "resource": "hold_reason",
-              "operation": "update"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/tables/",
           "requires": []
@@ -4126,18 +4088,7 @@
         "UpdateHomeLayout",
         "UpdateHomeLayoutPreset"
       ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/roles/select-options/",
-          "requires": [
-            {
-              "resource": "role",
-              "operation": "read"
-            }
-          ]
-        }
-      ],
+      "endpoints": [],
       "reads": [],
       "references": [],
       "declared": []
@@ -4308,16 +4259,6 @@
           "requires": [
             {
               "resource": "location",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/roles/select-options/",
-          "requires": [
-            {
-              "resource": "role",
               "operation": "read"
             }
           ]
@@ -4569,16 +4510,6 @@
           "requires": [
             {
               "resource": "location",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/roles/select-options/",
-          "requires": [
-            {
-              "resource": "role",
               "operation": "read"
             }
           ]
@@ -6422,16 +6353,6 @@
       ],
       "endpoints": [
         {
-          "method": "PATCH",
-          "path": "/accessorial-charges/:param/",
-          "requires": [
-            {
-              "resource": "accessorial_charge",
-              "operation": "update"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/tables/",
           "requires": []
@@ -6552,6 +6473,7 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "SendFactoringNoa",
+        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "StartBulkEdit",
         "UndoMyBulkEdit",
@@ -6601,31 +6523,6 @@
             {
               "resource": "invoice",
               "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PATCH",
-          "path": "/customers/:param/",
-          "requires": [
-            {
-              "resource": "customer",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/customers/bulk-update-status/",
-          "requires": [
-            {
-              "resource": "customer",
-              "operation": "update"
             }
           ]
         },
@@ -6809,6 +6706,7 @@
       ],
       "operations": [
         "BulkEditFields",
+        "CreateDocumentType",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
@@ -6821,19 +6719,10 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "StartBulkEdit",
-        "UndoMyBulkEdit"
+        "UndoMyBulkEdit",
+        "UpdateDocumentType"
       ],
       "endpoints": [
-        {
-          "method": "PUT",
-          "path": "/document-types/:param/",
-          "requires": [
-            {
-              "resource": "document_type",
-              "operation": "update"
-            }
-          ]
-        },
         {
           "method": "GET",
           "path": "/tables/",
@@ -6865,6 +6754,7 @@
         "ActivateFactoringAgreement",
         "BulkEditFields",
         "CreateFactoringAgreement",
+        "CreateFactoringCompany",
         "CreateFactoringRemittance",
         "DataTableAggregates",
         "DataTableFacets",
@@ -6909,7 +6799,8 @@
         "StartBulkEdit",
         "TestFactoringTransport",
         "UndoMyBulkEdit",
-        "UpdateFactoringAgreement"
+        "UpdateFactoringAgreement",
+        "UpdateFactoringCompany"
       ],
       "endpoints": [
         {
@@ -6979,16 +6870,6 @@
             {
               "resource": "document",
               "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/factoring-companies/:param/",
-          "requires": [
-            {
-              "resource": "factoring_company",
-              "operation": "update"
             }
           ]
         },
@@ -7301,6 +7182,26 @@
         {
           "method": "POST",
           "path": "/assistant/ask/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
           "requires": [
             {
               "resource": "assistant",
@@ -7712,11 +7613,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -8055,6 +7951,26 @@
           "requires": [
             {
               "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
+          "requires": [
+            {
+              "resource": "assistant",
               "operation": "create"
             }
           ]
@@ -8463,11 +8379,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -8848,6 +8759,26 @@
           "requires": [
             {
               "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
+          "requires": [
+            {
+              "resource": "assistant",
               "operation": "create"
             }
           ]
@@ -9256,11 +9187,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -9598,6 +9524,26 @@
           "requires": [
             {
               "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
+          "requires": [
+            {
+              "resource": "assistant",
               "operation": "create"
             }
           ]
@@ -10006,11 +9952,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -10694,6 +10635,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -10711,6 +10662,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -10922,6 +10883,13 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AuditLogTable",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
+        "BillingTransferCandidates",
+        "BillingTransferRun",
+        "BillingTransferRunItems",
         "CarrierTrackingLink",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
@@ -10952,6 +10920,7 @@
         "InvoiceFactoring",
         "InvoiceTable",
         "LateChargePreview",
+        "MyActiveBillingTransferRun",
         "OpenInvoiceDispute",
         "RequestMissingFactoringDocuments",
         "ResolveInvoiceDispute",
@@ -10965,6 +10934,91 @@
         "WithdrawInvoiceDispute"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/billing-queue/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/activity/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/filter-presets/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
         {
           "method": "GET",
           "path": "/billing/invoice-adjustments/:param/",
@@ -11221,6 +11275,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -11238,6 +11302,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -11464,12 +11538,20 @@
         "factoring_remittance",
         "factoring_reserve",
         "factoring_submission",
-        "invoice"
+        "formula_template",
+        "invoice",
+        "rate_agreement",
+        "shipment"
       ],
       "references": [
+        "commodity",
         "customer",
         "customer_payment",
-        "document_type"
+        "document_type",
+        "location",
+        "tractor",
+        "trailer",
+        "worker"
       ],
       "declared": [
         "invoice_dispute",
@@ -11512,6 +11594,10 @@
         "ApproveShipmentRatingReview",
         "AssignBillingQueueBiller",
         "AuditLogTable",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -11569,6 +11655,16 @@
           ]
         },
         {
+          "method": "PUT",
+          "path": "/billing-queue/:param/invoice-details/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/billing-queue/:param/issues/:param/resolve/",
           "requires": [
@@ -11595,16 +11691,6 @@
         },
         {
           "method": "POST",
-          "path": "/billing-queue/:param/post/",
-          "requires": [
-            {
-              "resource": "billing_queue",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
           "path": "/billing-queue/:param/reassign-charge/",
           "requires": [
             {
@@ -11624,18 +11710,18 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/billing-queue/bulk-approve/",
+          "method": "GET",
+          "path": "/billing-queue/assist/",
           "requires": [
             {
               "resource": "billing_queue",
-              "operation": "update"
+              "operation": "read"
             }
           ]
         },
         {
           "method": "GET",
-          "path": "/billing-queue/bulk-approve/:param/",
+          "path": "/billing-queue/brief/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -11645,7 +11731,27 @@
         },
         {
           "method": "POST",
-          "path": "/billing-queue/bulk-approve/:param/cancel/",
+          "path": "/billing-queue/bulk/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -11684,6 +11790,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/billing-queue/nova-generation/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/billing-queue/pod-signatures/redetect/",
           "requires": [
@@ -11699,7 +11815,17 @@
         },
         {
           "method": "GET",
-          "path": "/billing-queue/stats/",
+          "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/search-intent/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -11798,6 +11924,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -11815,6 +11951,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -12023,6 +12169,8 @@
         }
       ],
       "reads": [
+        "formula_template",
+        "rate_agreement",
         "shipment"
       ],
       "references": [
@@ -12613,6 +12761,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -12630,6 +12788,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -12914,6 +13082,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -12931,6 +13109,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -13158,6 +13346,9 @@
         "AssignBillingQueueBiller",
         "AssignFuelCard",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
         "CaptureBatch",
@@ -13245,6 +13436,7 @@
         "SendInvoiceEdi",
         "SettleMyAgentSuggestion",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
@@ -13533,6 +13725,26 @@
         {
           "method": "POST",
           "path": "/assistant/ask/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
           "requires": [
             {
               "resource": "assistant",
@@ -14011,18 +14223,18 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/billing-queue/bulk-approve/",
+          "method": "GET",
+          "path": "/billing-queue/assist/",
           "requires": [
             {
               "resource": "billing_queue",
-              "operation": "update"
+              "operation": "read"
             }
           ]
         },
         {
           "method": "GET",
-          "path": "/billing-queue/bulk-approve/:param/",
+          "path": "/billing-queue/brief/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -14032,7 +14244,7 @@
         },
         {
           "method": "POST",
-          "path": "/billing-queue/bulk-approve/:param/cancel/",
+          "path": "/billing-queue/bulk/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -14042,7 +14254,27 @@
         },
         {
           "method": "GET",
-          "path": "/billing-queue/stats/",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -14156,16 +14388,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/",
-          "requires": []
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -14216,6 +14438,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -14233,6 +14465,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -14680,6 +14922,7 @@
         "detention_policy",
         "driver_settlement",
         "edi",
+        "formula_template",
         "fuel_card",
         "fuel_purchase",
         "invoice",
@@ -14700,6 +14943,7 @@
         "worker_pto"
       ],
       "references": [
+        "commodity",
         "customer_payment",
         "document_type",
         "equipment_manufacturer",
@@ -14797,6 +15041,9 @@
         "ArTopOverdueCustomers",
         "AssignBillingQueueBiller",
         "AssignFuelCard",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "CarrierInvoiceMatches",
         "CarrierSettlementDetail",
         "CarrierTrackingLink",
@@ -14869,6 +15116,7 @@
         "ResolveFuelPurchaseImportRows",
         "SendInvoiceEdi",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
@@ -15156,6 +15404,26 @@
         {
           "method": "POST",
           "path": "/assistant/ask/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
           "requires": [
             {
               "resource": "assistant",
@@ -15634,18 +15902,18 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/billing-queue/bulk-approve/",
+          "method": "GET",
+          "path": "/billing-queue/assist/",
           "requires": [
             {
               "resource": "billing_queue",
-              "operation": "update"
+              "operation": "read"
             }
           ]
         },
         {
           "method": "GET",
-          "path": "/billing-queue/bulk-approve/:param/",
+          "path": "/billing-queue/brief/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -15655,7 +15923,7 @@
         },
         {
           "method": "POST",
-          "path": "/billing-queue/bulk-approve/:param/cancel/",
+          "path": "/billing-queue/bulk/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -15665,7 +15933,27 @@
         },
         {
           "method": "GET",
-          "path": "/billing-queue/stats/",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -15749,11 +16037,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -15804,6 +16087,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -15821,6 +16114,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -16264,6 +16567,7 @@
         "detention_policy",
         "driver_settlement",
         "edi",
+        "formula_template",
         "fuel_card",
         "fuel_purchase",
         "invoice",
@@ -16284,6 +16588,7 @@
         "worker_pto"
       ],
       "references": [
+        "commodity",
         "customer_payment",
         "document_type",
         "equipment_manufacturer",
@@ -16462,6 +16767,9 @@
         "AssignBillingQueueBiller",
         "AssignFuelCard",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
         "CaptureBatch",
@@ -16555,6 +16863,7 @@
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
@@ -16847,6 +17156,26 @@
         {
           "method": "POST",
           "path": "/assistant/ask/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
           "requires": [
             {
               "resource": "assistant",
@@ -17325,18 +17654,18 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/billing-queue/bulk-approve/",
+          "method": "GET",
+          "path": "/billing-queue/assist/",
           "requires": [
             {
               "resource": "billing_queue",
-              "operation": "update"
+              "operation": "read"
             }
           ]
         },
         {
           "method": "GET",
-          "path": "/billing-queue/bulk-approve/:param/",
+          "path": "/billing-queue/brief/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -17346,7 +17675,7 @@
         },
         {
           "method": "POST",
-          "path": "/billing-queue/bulk-approve/:param/cancel/",
+          "path": "/billing-queue/bulk/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -17356,7 +17685,27 @@
         },
         {
           "method": "GET",
-          "path": "/billing-queue/stats/",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -17470,16 +17819,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/document-types/select-options/",
-          "requires": []
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -17530,6 +17869,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -17547,6 +17896,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -17998,6 +18357,7 @@
         "detention_policy",
         "driver_settlement",
         "edi",
+        "formula_template",
         "fuel_card",
         "fuel_purchase",
         "invoice",
@@ -18018,6 +18378,7 @@
         "worker_pto"
       ],
       "references": [
+        "commodity",
         "customer_payment",
         "document_type",
         "equipment_manufacturer",
@@ -18376,21 +18737,6 @@
       ],
       "endpoints": [
         {
-          "method": "PATCH",
-          "path": "/fleet-codes/:param",
-          "requires": [
-            {
-              "resource": "fleet_code",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/fleet-codes/bulk-update-status",
-          "requires": []
-        },
-        {
           "method": "GET",
           "path": "/tables/",
           "requires": []
@@ -18420,6 +18766,7 @@
       ],
       "operations": [
         "BulkEditFields",
+        "CreateLocationCategory",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
@@ -18432,7 +18779,8 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "StartBulkEdit",
-        "UndoMyBulkEdit"
+        "UndoMyBulkEdit",
+        "UpdateLocationCategory"
       ],
       "endpoints": [
         {
@@ -18535,6 +18883,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -18552,6 +18910,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -23765,26 +24133,6 @@
       ],
       "endpoints": [
         {
-          "method": "PATCH",
-          "path": "/equipment-manufacturers/:param",
-          "requires": [
-            {
-              "resource": "equipment_manufacturer",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/equipment-manufacturers/bulk-update-status",
-          "requires": [
-            {
-              "resource": "equipment_manufacturer",
-              "operation": "update"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/tables/",
           "requires": []
@@ -23877,6 +24225,10 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -23894,6 +24246,8 @@
         "CarrierTrackingLink",
         "CreateCaptureCoverSheets",
         "CreateCaptureRequest",
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
@@ -23922,6 +24276,7 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -23975,7 +24330,72 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -24007,16 +24427,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resources/:param/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -24079,6 +24489,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -24096,6 +24516,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -24251,11 +24681,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param",
-          "requires": []
         },
         {
           "method": "POST",
@@ -24488,42 +24913,12 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/shipments/:param/permit-requirements/:param/waive/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "approve"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/shipments/:param/permits/",
           "requires": [
             {
               "resource": "permit",
               "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/shipments/:param/permits/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/shipments/:param/permits/:param/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "update"
             }
           ]
         },
@@ -24576,6 +24971,7 @@
         "customer",
         "detention",
         "equipment_type",
+        "formula_template",
         "invoice",
         "rate_agreement",
         "shipment",
@@ -24623,6 +25019,10 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -24640,6 +25040,8 @@
         "CarrierTrackingLink",
         "CreateCaptureCoverSheets",
         "CreateCaptureRequest",
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
@@ -24668,6 +25070,7 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -24721,7 +25124,72 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -24753,16 +25221,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resources/:param/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -24825,6 +25283,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -24842,6 +25310,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -24997,11 +25475,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param",
-          "requires": []
         },
         {
           "method": "POST",
@@ -25234,42 +25707,12 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/shipments/:param/permit-requirements/:param/waive/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "approve"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/shipments/:param/permits/",
           "requires": [
             {
               "resource": "permit",
               "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/shipments/:param/permits/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/shipments/:param/permits/:param/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "update"
             }
           ]
         },
@@ -25322,6 +25765,7 @@
         "customer",
         "detention",
         "equipment_type",
+        "formula_template",
         "invoice",
         "rate_agreement",
         "shipment",
@@ -25624,6 +26068,10 @@
         "ArPaymentStats",
         "ArTopOverdueCustomers",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -25677,6 +26125,7 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -25730,7 +26179,72 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -25762,11 +26276,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -25829,6 +26338,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -25846,6 +26365,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -26001,11 +26530,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param",
-          "requires": []
         },
         {
           "method": "POST",
@@ -26238,42 +26762,12 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/shipments/:param/permit-requirements/:param/waive/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "approve"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/shipments/:param/permits/",
           "requires": [
             {
               "resource": "permit",
               "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/shipments/:param/permits/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/shipments/:param/permits/:param/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "update"
             }
           ]
         },
@@ -26305,6 +26799,7 @@
         "carrier",
         "customer",
         "detention",
+        "formula_template",
         "fuel_purchase",
         "fuel_purchase_import",
         "invoice",
@@ -26970,6 +27465,10 @@
         "AssignWorkerShift",
         "AssignWorkerTraining",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidates",
         "BillingTransferRun",
         "BillingTransferRunItems",
@@ -27003,6 +27502,8 @@
         "CreateWorkerCredential",
         "CreateWorkerPto",
         "CreateWorkerSafetyEvent",
+        "CustomFieldFormFields",
+        "CustomFieldResourceTypes",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "CustomerTrackingProfile",
@@ -27082,6 +27583,7 @@
         "SetWorkerAvailabilityPreference",
         "ShiftSwapRequests",
         "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -27181,7 +27683,72 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -27213,16 +27780,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/custom-fields/resources/:param/",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -27285,6 +27842,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -27302,6 +27869,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -27457,11 +28034,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param",
-          "requires": []
         },
         {
           "method": "POST",
@@ -27694,42 +28266,12 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/shipments/:param/permit-requirements/:param/waive/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "approve"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/shipments/:param/permits/",
           "requires": [
             {
               "resource": "permit",
               "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/shipments/:param/permits/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/shipments/:param/permits/:param/",
-          "requires": [
-            {
-              "resource": "permit",
-              "operation": "update"
             }
           ]
         },
@@ -27787,6 +28329,7 @@
         "dot_random_pool",
         "driver_pay_profile",
         "driver_settlement",
+        "formula_template",
         "invoice",
         "performance_review",
         "performance_review_template",
@@ -29261,26 +29804,6 @@
       ],
       "endpoints": [
         {
-          "method": "PATCH",
-          "path": "/commodities/:param/",
-          "requires": [
-            {
-              "resource": "commodity",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/commodities/bulk-update-status/",
-          "requires": [
-            {
-              "resource": "commodity",
-              "operation": "update"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/tables/",
           "requires": []
@@ -29323,26 +29846,6 @@
         "UndoMyBulkEdit"
       ],
       "endpoints": [
-        {
-          "method": "PATCH",
-          "path": "/hazardous-materials/:param/",
-          "requires": [
-            {
-              "resource": "hazardous_material",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/hazardous-materials/bulk-update-status/",
-          "requires": [
-            {
-              "resource": "hazardous_material",
-              "operation": "update"
-            }
-          ]
-        },
         {
           "method": "GET",
           "path": "/tables/",
@@ -29725,6 +30228,10 @@
         "ArTopOverdueCustomers",
         "AuditLogTable",
         "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueItems",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
         "BillingTransferCandidateIds",
         "BillingTransferCandidates",
         "BillingTransferRun",
@@ -29790,6 +30297,7 @@
         "ShipmentCapacity",
         "ShipmentCheckCalls",
         "ShipmentCoverageSuggestions",
+        "ShipmentCustomerBillingRules",
         "ShipmentDetail",
         "ShipmentDriverFeasibility",
         "ShipmentFormSubmissions",
@@ -29867,7 +30375,72 @@
         },
         {
           "method": "GET",
+          "path": "/billing-queue/:param/activity/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/filter-presets/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -29899,11 +30472,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/customers/:param/billing-profile/",
-          "requires": []
         },
         {
           "method": "GET",
@@ -29966,6 +30534,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -29983,6 +30561,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -30193,11 +30781,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/locations/select-options/:param",
-          "requires": []
         },
         {
           "method": "POST",
@@ -30548,6 +31131,7 @@
         "customer",
         "detention",
         "detention_policy",
+        "formula_template",
         "invoice",
         "location",
         "rate_agreement",
@@ -30807,6 +31391,26 @@
         {
           "method": "POST",
           "path": "/assistant/ask/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
           "requires": [
             {
               "resource": "assistant",
@@ -31220,11 +31824,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/document-types/select-options/",
-          "requires": []
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -31275,6 +31874,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -31292,6 +31901,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -31725,6 +32344,26 @@
           "requires": [
             {
               "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/",
+          "requires": [
+            {
+              "resource": "assistant",
               "operation": "create"
             }
           ]
@@ -32135,11 +32774,6 @@
           ]
         },
         {
-          "method": "GET",
-          "path": "/document-types/select-options/",
-          "requires": []
-        },
-        {
           "method": "DELETE",
           "path": "/documents/:param/",
           "requires": [
@@ -32190,6 +32824,16 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/documents/:param/import-assistant/history/",
           "requires": [
@@ -32207,6 +32851,16 @@
               "resource": "assistant",
               "operation": "create"
             },
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/",
+          "requires": [
             {
               "resource": "document",
               "operation": "read"
@@ -34034,6 +34688,96 @@
       "declared": []
     },
     {
+      "name": "BillingQueueFormulaTemplate",
+      "type": "query",
+      "reads": [
+        "formula_template"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "BillingQueueItems",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "shipment",
+          "fields": [
+            "customer",
+            "customerId",
+            "proNumber",
+            "totalChargeAmount"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "BillingQueueRateAgreement",
+      "type": "query",
+      "reads": [
+        "rate_agreement"
+      ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "BillingQueueShipment",
+      "type": "query",
+      "reads": [
+        "shipment"
+      ],
+      "linked": [
+        {
+          "kind": "commodity",
+          "fields": [
+            "name"
+          ]
+        },
+        {
+          "kind": "customer",
+          "fields": [
+            "name"
+          ]
+        },
+        {
+          "kind": "location",
+          "fields": [
+            "city",
+            "name",
+            "state"
+          ]
+        },
+        {
+          "kind": "tractor",
+          "fields": [
+            "code"
+          ]
+        },
+        {
+          "kind": "trailer",
+          "fields": [
+            "code"
+          ]
+        },
+        {
+          "kind": "worker",
+          "fields": [
+            "wholeName"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "BillingTransferCandidateIds",
       "type": "query",
       "reads": [],
@@ -34975,6 +35719,13 @@
       "declared": []
     },
     {
+      "name": "CreateDocumentType",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "CreateDotRandomPool",
       "type": "mutation",
       "reads": [],
@@ -34995,6 +35746,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "CreateFactoringCompany",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -35129,6 +35887,13 @@
     },
     {
       "name": "CreateJobPosition",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CreateLocationCategory",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -35357,6 +36122,20 @@
       "reads": [
         "custom_field_definition"
       ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CustomFieldFormFields",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "CustomFieldResourceTypes",
+      "type": "query",
+      "reads": [],
       "linked": [],
       "declared": []
     },
@@ -41042,6 +41821,13 @@
       "declared": []
     },
     {
+      "name": "ShipmentCustomerBillingRules",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "ShipmentDetail",
       "type": "query",
       "reads": [
@@ -41998,6 +42784,13 @@
       "declared": []
     },
     {
+      "name": "UpdateDocumentType",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "UpdateDotRandomDrawEntry",
       "type": "mutation",
       "reads": [],
@@ -42068,6 +42861,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "UpdateFactoringCompany",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -42188,6 +42988,13 @@
     },
     {
       "name": "UpdateLeaveControl",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UpdateLocationCategory",
       "type": "mutation",
       "reads": [],
       "linked": [],

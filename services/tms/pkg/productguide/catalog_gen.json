@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8673a2b67dee6c21d40a74d5d7043d11066ae8a78c5b29bd055732a09834e991",
+  "version": "sha256:bfb1d1d1e7411e06845573b4c31fbc430a3a6ab7a9fdbb8d05c8960664469285",
   "modules": [
     {
       "id": "home",
@@ -8608,7 +8608,7 @@
           "steps": [
             "Open [Billing queue](/billing/queue), select the item and open the **Charges** tab. Each freight line of the shipment's bill is listed with its quantity and rate, and each charge the tariff billed itself under its own label.",
             "Select **Add charge** to add an accessorial: choose the **Accessorial charge**, **Method**, **Unit** and **Amount**, then **Save**. Charges the tariff billed cannot be edited or deleted here; they come back from the tariff on every re-rate.",
-            "To re-rate the freight, select **Re-rate** beside the rating, or **Adjust terms** beside **Terms**: choose the **Tariff**, change any of its input values, and select **Re-rate**. The freight lines and the tariff's charges are replaced by the new bill."
+            "To re-rate the freight, select **Re-rate** in the **Charges** header, beside the rating and the tariff's terms: choose the **Tariff**, change any of its input values, and select **Re-rate**. The freight lines and the tariff's charges are replaced by the new bill."
           ]
         },
         {
@@ -11968,7 +11968,7 @@
           ],
           "steps": [
             "Open [Console](/dispatch/console).",
-            "In the **Capacity** rail, search with **Search driver, tractor, fleet** or filter by availability, and select a driver.",
+            "In the **Capacity** rail, search with **Search drivers** (by name, tractor code or fleet) or filter by availability, and select a driver.",
             "The inspector lists the driver's best-fit open moves. Select one and assign it."
           ]
         },
