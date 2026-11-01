@@ -54,7 +54,7 @@ describe("UserMenu", () => {
   it("leaves page access to its keybind, even for someone it is offered to", async () => {
     await openMenu();
 
-    expect(await screen.findByRole("menuitem", { name: "Settings" })).toBeInTheDocument();
+    expect(await screen.findByRole("menuitem", { name: /^Settings/ })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "Page access" })).not.toBeInTheDocument();
     expect(useAppDialogsStore.getState()).toMatchObject({ active: null, prepared: [] });
   });

@@ -22,11 +22,8 @@ import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { humanizeTariffName } from "@trenova/shared/lib/tariff-inputs";
 import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import {
-  tariffInputValuesSchema,
-  type TariffBill,
-  type TariffChoice,
-} from "@trenova/shared/types/tariff";
+import { tariffInputValuesSchema, type TariffChoice } from "@trenova/shared/types/tariff";
+import type { StoredTariffBill } from "@trenova/shared/types/tariff-form";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { RatingContractReasoning } from "./rating-contract-reasoning";
@@ -72,7 +69,7 @@ export function RatingBreakdownPopover({
 }: {
   shipmentId: string | null | undefined;
   ratingDetail: NonNullable<Shipment["ratingDetail"]>;
-  bill: TariffBill;
+  bill: StoredTariffBill;
   choices: TariffChoice[];
 }) {
   const t = useT();

@@ -222,7 +222,10 @@ describe("BillingQueueReviewChecks", () => {
     expect(check).toHaveTextContent("rate con doesn't price a fuel surcharge");
     expect(within(check).getByRole("button", { name: "Keep it · bill $1,037.45" })).toBeEnabled();
     expect(within(check).getByRole("button", { name: "Remove it" })).toBeEnabled();
-    expect(screen.queryByTestId("billing-queue-check-pod")).not.toBeInTheDocument();
+    const pod = screen.getByTestId("billing-queue-check-pod");
+    expect(within(pod).getByRole("img", { name: "Clear" })).toBeInTheDocument();
+    expect(pod).toHaveTextContent("PODNot required for this customer");
+    expect(within(pod).queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("shows one flagged charge at a time, turning through them with the chevrons", async () => {

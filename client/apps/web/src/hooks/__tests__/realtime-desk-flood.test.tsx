@@ -8,7 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const handlers = vi.hoisted(() => new Map<string, (data: unknown) => void>());
 
-vi.mock("@trenova/shared/services/realtime", () => ({
+vi.mock("@trenova/shared/services/realtime", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@trenova/shared/services/realtime")>()),
   realtimeClient: {
     on: (event: string, handler: (data: unknown) => void) => {
       handlers.set(event, handler);

@@ -53,10 +53,10 @@ describe("BillingQueueSuggestions", () => {
       recommendation("ApproveReady", ["bqi_1", "bqi_2", "bqi_3"]),
     ]);
 
-    expect(await screen.findByText("Approve 2 Nova agreed with")).toBeInTheDocument();
+    expect(await screen.findByText("Approve the 2 Nova checked")).toBeInTheDocument();
     expect(screen.queryByText("Approve 3 ready items")).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Approve" }));
+    await userEvent.click(screen.getByRole("button", { name: "Approve 2" }));
     expect(run).toHaveBeenCalledWith("Approve", ["bqi_1", "bqi_2"], { assignApprover: true });
   });
 
@@ -67,13 +67,13 @@ describe("BillingQueueSuggestions", () => {
 
   it("assigns the unassigned batch to the person looking at it", async () => {
     const { run } = renderSuggestions([recommendation("AssignToMe", ["bqi_4", "bqi_5"])]);
-    await userEvent.click(await screen.findByRole("button", { name: "Assign me" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Assign 2" }));
     expect(run).toHaveBeenCalledWith("Assign", ["bqi_4", "bqi_5"], { billerId: "usr_me" });
   });
 
   it("asks for a hold reason before holding possible duplicates", async () => {
     const { run, onHoldItems } = renderSuggestions([recommendation("HoldDuplicates", ["bqi_6"])]);
-    await userEvent.click(await screen.findByRole("button", { name: "Hold" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Hold 1" }));
     expect(onHoldItems).toHaveBeenCalledWith(["bqi_6"], "Possible duplicate invoice");
     expect(run).not.toHaveBeenCalled();
   });
@@ -82,7 +82,7 @@ describe("BillingQueueSuggestions", () => {
     const { run, onOpenItem } = renderSuggestions([
       recommendation("ReviewAgentConcerns", ["bqi_7", "bqi_8"], "Agent"),
     ]);
-    await userEvent.click(await screen.findByRole("button", { name: "Review" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Review 2" }));
     expect(onOpenItem).toHaveBeenCalledWith("bqi_7");
     expect(run).not.toHaveBeenCalled();
   });

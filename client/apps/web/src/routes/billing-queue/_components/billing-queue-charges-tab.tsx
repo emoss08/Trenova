@@ -1051,6 +1051,7 @@ function UnbilledRow({
         ) : (
           <AssistMark
             role="img"
+            aria-hidden={false}
             aria-label={t("A rule found this")}
             className="text-foreground-muted mt-0.5 size-3 shrink-0"
           />
@@ -1163,18 +1164,15 @@ function TariffTerms({ inputs }: { inputs: Record<string, unknown> | undefined }
   if (entries.length === 0) return null;
 
   return (
-    <span
-      className="text-foreground-muted flex items-center gap-2.5 text-xs"
-      aria-label={t("Terms")}
-    >
+    <ul className="text-foreground-muted flex items-center gap-2.5 text-xs" aria-label={t("Terms")}>
       {entries.map(([name, value]) => (
-        <span key={name}>
-          {humanizeTariffName(name)}{" "}
+        <li key={name}>
+          <span>{humanizeTariffName(name)}</span>{" "}
           <span className="text-foreground font-mono">
             {formatTariffValue(value as TariffWireValue, t)}
           </span>
-        </span>
+        </li>
       ))}
-    </span>
+    </ul>
   );
 }

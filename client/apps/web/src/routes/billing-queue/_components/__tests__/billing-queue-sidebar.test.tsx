@@ -2,12 +2,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { BillingQueueRow } from "@/lib/graphql/billing-queue";
-import type { BillingQueueLane } from "@trenova/shared/types/billing-queue";
+import {
+  billingQueueStatsSchema,
+  type BillingQueueLane,
+} from "@trenova/shared/types/billing-queue";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import { stubLayout } from "@/test/layout";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BillingQueueCaughtUp, isCaughtUp } from "../billing-queue-caught-up";
 import BillingQueueDetailPane from "../billing-queue-detail-pane";
 import { BillingQueueSidebar } from "../billing-queue-sidebar";
 
@@ -112,6 +116,11 @@ function stats(lanes: Partial<Record<BillingQueueLane, number>>) {
   };
 }
 
+/** The stats as the client reads them, parsed from the server's response. */
+function parsedStats(lanes: Partial<Record<BillingQueueLane, number>>) {
+  return billingQueueStatsSchema.parse(stats(lanes));
+}
+
 function renderWithin(ui: ReactElement, searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -143,12 +152,21 @@ afterEach(() => {
 
 describe("billing queue sidebar", () => {
   it("says the queue is caught up, with today's approvals, when nothing is open", async () => {
-    mocks.stats.mockResolvedValue(stats({}));
-    mocks.lane.mockResolvedValue(lanePage([]));
-    renderWithin(<BillingQueueSidebar selectedItemId={null} onSelectItem={vi.fn()} />);
+    renderWithin(<BillingQueueCaughtUp stats={parsedStats({})} onShowApproved={vi.fn()} />);
 
-    expect(await screen.findByText("You're caught up")).toBeInTheDocument();
-    expect(screen.getByText("4 items approved today · $9,600.00")).toBeInTheDocument();
+    expect(await screen.findByText("You're all caught up")).toBeInTheDocument();
+    expect(
+      screen.getByText("Every shipment that reached billing has been approved and posted."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("4 approved · $9,600.00")).toBeInTheDocument();
+  });
+
+  it("counts the queue caught up only when no lane holds work for a biller", () => {
+    expect(isCaughtUp(undefined)).toBe(false);
+    expect(isCaughtUp(parsedStats({}))).toBe(true);
+    expect(isCaughtUp(parsedStats({ Approved: 3, NeedsYou: 0 }))).toBe(true);
+    expect(isCaughtUp(parsedStats({ Held: 1 }))).toBe(false);
+    expect(isCaughtUp(parsedStats({ Waiting: 2 }))).toBe(false);
   });
 
   it("draws each open lane in working order with the issue its rows wait on", async () => {
@@ -221,7 +239,9 @@ describe("billing queue sidebar", () => {
     expect(mounted.length).toBeGreaterThan(0);
     expect(mounted.length).toBeLessThan(60);
     expect(screen.queryByRole("checkbox", { name: "Select PRO-200" })).not.toBeInTheDocument();
-    expect(screen.getByText("200 items shown")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Ready to approve\s*200/u, expanded: true }),
+    ).toBeInTheDocument();
   });
 
   it("offers to clear the filters when they are what emptied the list", async () => {
