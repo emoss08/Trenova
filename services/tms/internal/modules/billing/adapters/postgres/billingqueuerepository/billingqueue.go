@@ -49,13 +49,15 @@ var laneCursorSort = []pagination.CursorSortField{
 
 func listQuery(
 	req *billingqueueports.ListBillingQueueItemsRequest,
-) *keel.Query[*billingqueue.BillingQueueItem] {
+) (*keel.Query[*billingqueue.BillingQueueItem], *pagination.QueryOptions) {
 	bq := billingqueuedb.BillingQueueItems
+	filter, onShipment := shipmentFilters(req.Filter)
 
 	return bq.Where(
 		keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted)),
 		laneFilter(req),
-	)
+		onShipment,
+	), filter
 }
 
 // shipmentNamed finds an item by its shipment, which is how a biller names one:
@@ -94,12 +96,13 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
+			q, filter := listQuery(req)
 			result, err := listquery.List(
 				ctx,
 				r.db.Keel(ctx),
-				listQuery(req),
+				q,
 				&listquery.Request[billingqueue.BillingQueueItem]{
-					Filter:    req.Filter,
+					Filter:    filter,
 					Shape:     listShape,
 					AlsoMatch: shipmentNamed,
 				},
@@ -128,12 +131,13 @@ func (r *repository) ListConnection(
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*billingqueue.BillingQueueItem], error) {
 			bq := billingqueuedb.BillingQueueItems
+			q, filter := listQuery(req)
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				listQuery(req),
+				q,
 				&listquery.Request[billingqueue.BillingQueueItem]{
-					Filter:    req.Filter,
+					Filter:    filter,
 					Cursor:    req.Cursor,
 					Shape:     listShape,
 					AlsoMatch: shipmentNamed,

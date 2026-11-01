@@ -31,6 +31,7 @@ const (
 	invoiceStateEntity = "FactoringInvoiceState"
 	maxStateBatch      = 500
 	maxCandidateBatch  = 1000
+	openCandidateAlias = "open_inv"
 )
 
 var (
@@ -305,10 +306,11 @@ func (r *invoiceStateRepository) ListCandidateInvoiceIDs(
 func candidateInvoices(req *factoringports.ListCandidateInvoicesRequest) keel.Projection {
 	limit := boundedLimit(req.Limit, maxCandidateBatch)
 	inv := invoicedb.Invoices
+	open := invoicedb.Invoices.As(openCandidateAlias)
 	st := factoringreadinessdb.InvoiceStates
 	after := req.AfterInvoiceID.IsNotNil()
 
-	candidates := keel.CTE("candidates", []string{"id"}, keel.Union(
+	candidates := keel.CTE("candidates", []string{"id"}, keel.UnionAll(
 		inv.Pick(inv.ID).
 			Where(openFactoredInvoices(inv), keel.When(after, inv.ID.Gt(req.AfterInvoiceID))).
 			Order(inv.ID.Asc()).
@@ -317,6 +319,12 @@ func candidateInvoices(req *factoringports.ListCandidateInvoicesRequest) keel.Pr
 			Where(
 				st.Verdict.Ne(factoringreadiness.VerdictExcluded),
 				keel.When(after, st.InvoiceID.Gt(req.AfterInvoiceID)),
+				keel.NotExists(open.Pick(open.ID).Where(
+					open.ID.EqCol(st.InvoiceID),
+					open.OrganizationID.EqCol(st.OrganizationID),
+					open.BusinessUnitID.EqCol(st.BusinessUnitID),
+					openFactoredInvoices(open),
+				)),
 			).
 			Order(st.InvoiceID.Asc()).
 			Limit(limit),

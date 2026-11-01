@@ -143,7 +143,8 @@ func moveSummaryQuery(
 				Coalesce(0).
 				Cast(keel.TypeFloat64),
 		).
-		Where(moveFilters(filter)...)
+		Where(moveFilters(filter)...).
+		Where(openBoardMoveIDs(filter))
 }
 
 // moveUrgency is a move's urgency bucket as SQL, the rule
